@@ -19,7 +19,7 @@ insert into profit_and_less_statement_subject (id, subject) values
 
 --cash_flow_statement
 insert into cash_flow_statement_subject (id, subject) values
-  ('1', '営業活動によるキャッシュー・フロー'), ('2', '投資活動によるキャッシュ・フロー'), ('3', '財務活動によるキャッシュ・フロー'),
+  ('1', '営業活動によるキャッシュ・フロー'), ('2', '投資活動によるキャッシュ・フロー'), ('3', '財務活動によるキャッシュ・フロー'),
   ('4', '現金及び現金同等物の増減額（△は減少）'), ('5', '現金及び現金同等物の期首残高'), ('6', '現金及び現金同等物の期末残高')
   ;
 
