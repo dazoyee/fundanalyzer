@@ -4,11 +4,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class ZaimDao {
+public class BalanceSheetDao {
 
     private final JdbcTemplate jdbc;
 
-    public ZaimDao(final JdbcTemplate jdbc) {
+    public BalanceSheetDao(final JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 }
