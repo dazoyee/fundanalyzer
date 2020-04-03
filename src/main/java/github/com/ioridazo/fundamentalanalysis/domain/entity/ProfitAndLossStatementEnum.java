@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 
-public enum ProfitAndLossStatement {
+public enum ProfitAndLossStatementEnum {
     //    ("賃貸事業収入"),
 //    ("その他賃貸事業収入"),
 //    ("営業収益合計"),
@@ -42,12 +42,12 @@ public enum ProfitAndLossStatement {
 
     private String subject;
 
-    ProfitAndLossStatement(String subject) {
+    ProfitAndLossStatementEnum(String subject) {
         this.subject = subject;
     }
 
     @JsonCreator
-    public static ProfitAndLossStatement fromValue(String subject) {
+    public static ProfitAndLossStatementEnum fromValue(String subject) {
         return Arrays.stream(values())
                 .filter(v -> v.subject == subject)
                 .findFirst()
@@ -61,6 +61,6 @@ public enum ProfitAndLossStatement {
 
     @Override
     public String toString() {
-        return String.format("AuthChangeType[code = %s]", this.subject);
+        return String.format("ProfitAndLossStatementEnum[code = %s]", this.subject);
     }
 }

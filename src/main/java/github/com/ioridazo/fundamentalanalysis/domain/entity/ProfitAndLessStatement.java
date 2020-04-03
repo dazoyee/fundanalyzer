@@ -5,7 +5,7 @@ import lombok.Value;
 import java.time.LocalDate;
 
 @Value
-public class Zaim {
+public class ProfitAndLessStatement {
 
     private String id;
 
@@ -13,7 +13,7 @@ public class Zaim {
 
     private String financialStatementId;
 
-    private String subjectId;
+    private String detailId;
 
     private LocalDate period;
 

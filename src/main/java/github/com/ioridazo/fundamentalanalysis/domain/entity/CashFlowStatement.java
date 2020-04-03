@@ -5,7 +5,7 @@ import lombok.Value;
 import java.time.LocalDate;
 
 @Value
-public class BalanceSheet {
+public class CashFlowStatement {
 
     private String id;
 
