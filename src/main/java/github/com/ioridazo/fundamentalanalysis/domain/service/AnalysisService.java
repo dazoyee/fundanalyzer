@@ -2,6 +2,10 @@ package github.com.ioridazo.fundamentalanalysis.domain.service;
 
 import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetSubjectDao;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.ProfitAndLossStatementEnum;
+import github.com.ioridazo.fundamentalanalysis.edinet.EdinetProxy;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.RequestParameter;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.Type;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,8 +20,18 @@ public class AnalysisService {
 
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
 
-    public AnalysisService(final BalanceSheetSubjectDao balanceSheetSubjectDao) {
+    private EdinetProxy proxy;
+
+    public AnalysisService(
+            final BalanceSheetSubjectDao balanceSheetSubjectDao,
+            final EdinetProxy edinetProxy
+    ) {
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
+        this.proxy = edinetProxy;
+    }
+
+    public Response documentList() {
+        return proxy.documentList(new RequestParameter("2020-04-01", Type.DEFAULT));
     }
 
     public void insert() throws Exception {
