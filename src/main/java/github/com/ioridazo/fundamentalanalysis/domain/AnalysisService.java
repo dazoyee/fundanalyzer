@@ -1,6 +1,7 @@
-package github.com.ioridazo.fundamentalanalysis.domain.service;
+package github.com.ioridazo.fundamentalanalysis.domain;
 
 import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetSubjectDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.EdinetDocumentDao;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.ProfitAndLossStatementEnum;
 import github.com.ioridazo.fundamentalanalysis.edinet.EdinetProxy;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.RequestParameter;
@@ -20,18 +21,28 @@ public class AnalysisService {
 
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
 
+    private EdinetDocumentDao edinetDocumentDao;
+
     private EdinetProxy proxy;
 
     public AnalysisService(
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
+            final EdinetDocumentDao edinetDocumentDao,
             final EdinetProxy edinetProxy
     ) {
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
+        this.edinetDocumentDao = edinetDocumentDao;
         this.proxy = edinetProxy;
     }
 
     public Response documentList() {
         return proxy.documentList(new RequestParameter("2020-04-01", Type.DEFAULT));
+    }
+
+    public String insertDocumentList(RequestParameter parameter) {
+        Response response = proxy.documentList(parameter);
+        response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
+        return "書類一覧を登録できました。\n";
     }
 
     public void insert() throws Exception {

@@ -1,6 +1,8 @@
 package github.com.ioridazo.fundamentalanalysis.web;
 
-import github.com.ioridazo.fundamentalanalysis.domain.service.AnalysisService;
+import github.com.ioridazo.fundamentalanalysis.domain.AnalysisService;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.RequestParameter;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.Type;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,5 +29,15 @@ public class AnalysisController {
     @GetMapping("/edinet")
     public Response edinet() {
         return service.documentList();
+    }
+
+    @GetMapping("/insert/document/list")
+    public String insertDocumentList() {
+        return service.insertDocumentList(
+                new RequestParameter(
+                        "2020-04-01",
+                        Type.GET_LIST
+                )
+        );
     }
 }
