@@ -5,6 +5,7 @@ import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.RequestPara
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.Type;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,12 +32,12 @@ public class AnalysisController {
         return service.documentList();
     }
 
-    @GetMapping("/insert/document/list")
-    public String insertDocumentList() {
+    @GetMapping("/insert/document/list/{date}/{type}")
+    public String insertDocumentList1(@PathVariable String date, @PathVariable String type) {
         return service.insertDocumentList(
                 new RequestParameter(
-                        "2020-04-01",
-                        Type.GET_LIST
+                        date,
+                        "1".equals(type) ? Type.DEFAULT : Type.GET_LIST
                 )
         );
     }

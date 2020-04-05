@@ -41,7 +41,8 @@ public class AnalysisService {
 
     public String insertDocumentList(RequestParameter parameter) {
         Response response = proxy.documentList(parameter);
-        response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
+        if (response.getResults() != null)
+            response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
         return "書類一覧を登録できました。\n";
     }
 
