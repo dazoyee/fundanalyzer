@@ -5,18 +5,18 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 
-public enum Type {
+public enum ListType {
     DEFAULT("1"),
     GET_LIST("2");
 
     private final String code;
 
-    Type(String code) {
+    ListType(String code) {
         this.code = code;
     }
 
     @JsonCreator
-    public static Type fromValue(String code) {
+    public static ListType fromValue(String code) {
         return Arrays.stream(values())
                 .filter(v -> v.code == code)
                 .findFirst()
@@ -30,7 +30,7 @@ public enum Type {
 
     @Override
     public String toString() {
-        return String.format("Type[code = %s]", this.code);
+        return String.format("ListType[code = %s]", this.code);
     }
 
 }

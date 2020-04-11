@@ -3,9 +3,9 @@ package github.com.ioridazo.fundamentalanalysis.edinet.entity.request;
 import lombok.Value;
 
 @Value
-public class RequestParameter {
+public class AcquisitionRequestParameter {
 
-    private String date;
+    private String docId;
 
-    private Type type;
+    private AcquisitionType type;
 }

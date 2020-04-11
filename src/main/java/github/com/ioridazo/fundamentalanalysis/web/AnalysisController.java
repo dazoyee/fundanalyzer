@@ -1,8 +1,10 @@
 package github.com.ioridazo.fundamentalanalysis.web;
 
 import github.com.ioridazo.fundamentalanalysis.domain.AnalysisService;
-import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.RequestParameter;
-import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.Type;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.AcquisitionType;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListType;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,9 +37,25 @@ public class AnalysisController {
     @GetMapping("/insert/document/list/{date}/{type}")
     public String insertDocumentList1(@PathVariable String date, @PathVariable String type) {
         return service.insertDocumentList(
-                new RequestParameter(
+                new ListRequestParameter(
                         date,
-                        "1".equals(type) ? Type.DEFAULT : Type.GET_LIST
+                        ListType.DEFAULT.toValue().equals(type) ? ListType.DEFAULT :
+                                ListType.GET_LIST.toValue().equals(type) ? ListType.GET_LIST :
+                                        null
+                )
+        );
+    }
+
+    @GetMapping("/document/acquisition/{docId}/{type}")
+    public String documentAcquisition(@PathVariable String docId, @PathVariable String type) {
+        return service.documentAcquisition(
+                new AcquisitionRequestParameter(
+                        docId,
+                        AcquisitionType.DEFAULT.toValue().equals(type) ? AcquisitionType.DEFAULT :
+                                AcquisitionType.PDF.toValue() == type ? AcquisitionType.PDF :
+                                        AcquisitionType.ALTERNATIVE.toValue() == type ? AcquisitionType.ALTERNATIVE :
+                                                AcquisitionType.ENGLISH.toValue() == type ? AcquisitionType.ENGLISH :
+                                                        null
                 )
         );
     }
