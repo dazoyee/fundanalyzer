@@ -3,43 +3,50 @@ package github.com.ioridazo.fundamentalanalysis.domain;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetSubjectDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.EdinetDocumentDao;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.ProfitAndLossStatementEnum;
+import github.com.ioridazo.fundamentalanalysis.domain.file.FileOperator;
 import github.com.ioridazo.fundamentalanalysis.edinet.EdinetProxy;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.AcquisitionRequestParameter;
-import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListType;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListType;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.zip.ZipInputStream;
 
 @Service
 public class AnalysisService {
+
+    private final File pathEdinet;
+    private final File pathDecode;
+
+    private EdinetProxy proxy;
+
+    private FileOperator fileOperator;
 
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
 
     private EdinetDocumentDao edinetDocumentDao;
 
-    private EdinetProxy proxy;
-
     public AnalysisService(
+            final EdinetProxy proxy,
+            final FileOperator fileOperator,
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
             final EdinetDocumentDao edinetDocumentDao,
-            final EdinetProxy edinetProxy
+            @Value("${settings.file.path.edinet}") final File pathEdinet,
+            @Value("${settings.file.path.decode}") final File pathDecode
     ) {
+        this.proxy = proxy;
+        this.fileOperator = fileOperator;
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
         this.edinetDocumentDao = edinetDocumentDao;
-        this.proxy = edinetProxy;
+        this.pathEdinet = pathEdinet;
+        this.pathDecode = pathDecode;
     }
 
     public Response documentList() {
@@ -53,9 +60,20 @@ public class AnalysisService {
         return "書類一覧を登録できました。\n";
     }
 
-    public String documentAcquisition(AcquisitionRequestParameter parameter){
-        proxy.documentAcquisition(parameter);
+    public String documentAcquisition(AcquisitionRequestParameter parameter) {
+        proxy.documentAcquisition(
+                pathEdinet,
+                parameter
+        );
         return "書類取得できました。\n";
+    }
+
+    public String operateFile(String docId) {
+        fileOperator.decodeZipFile(
+                new File(pathEdinet + "/" + docId),
+                new File(pathDecode + "/" + docId)
+        );
+        return "解凍できました。\n";
     }
 
     public void insert() throws Exception {

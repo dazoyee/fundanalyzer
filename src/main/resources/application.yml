@@ -1,7 +1,15 @@
 spring:
   profiles:
-        active: dev
-#    active: prod
+    active: dev
+  #    active: prod
+  application:
+    name: fundamental-analysis
 
 edinet:
   api: https://disclosure.edinet-fsa.go.jp
+
+settings:
+  file:
+    path:
+      edinet: C:\${spring.application.name}\edinet
+      decode: C:\${spring.application.name}\decode

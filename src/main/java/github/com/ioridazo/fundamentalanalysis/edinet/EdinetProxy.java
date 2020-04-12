@@ -10,10 +10,10 @@ import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestOperations;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,42 +23,40 @@ public class EdinetProxy {
 
     RestOperations restOperations;
 
-    public EdinetProxy(final RestOperations restOperations) {
+    public EdinetProxy(
+            final RestOperations restOperations
+    ) {
         this.restOperations = restOperations;
     }
 
     public Response documentList(ListRequestParameter parameter) {
-        return exchange(
+        return restOperations.getForObject(
                 "/api/v1/documents.json?date={date}&type={type}",
+                Response.class,
                 param(parameter)
         );
     }
 
-    public void documentAcquisition(AcquisitionRequestParameter parameter) {
+    public void documentAcquisition(File storagePath, AcquisitionRequestParameter parameter) {
+        if (!storagePath.exists()) storagePath.mkdir();
 
-        RequestCallback requestCallback = request -> request.getHeaders()
-                .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
+        RequestCallback requestCallback =
+                request -> request
+                        .getHeaders()
+                        .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
 
         ResponseExtractor<Void> responseExtractor = response -> {
-            Path path = Paths.get("C:/sps_batch/S100IBHG_" + LocalDateTime.now().getMinute() + LocalDateTime.now().getSecond() + ".zip");
+            Path path = Paths.get(storagePath + "/" + parameter.getDocId() + ".zip");
             Files.copy(response.getBody(), path);
             return null;
         };
+
         restOperations.execute(
                 "/api/v1/documents/{docId}?type={type}",
                 HttpMethod.GET,
                 requestCallback,
                 responseExtractor,
                 param(parameter)
-        );
-    }
-
-
-    public Response exchange(String uri, Map parameter) {
-        return restOperations.getForObject(
-                uri,
-                Response.class,
-                parameter
         );
     }
 

@@ -59,4 +59,9 @@ public class AnalysisController {
                 )
         );
     }
+
+    @GetMapping("/operate/file/{docId}")
+    public String operateFile(@PathVariable String docId) {
+        return service.operateFile(docId);
+    }
 }
