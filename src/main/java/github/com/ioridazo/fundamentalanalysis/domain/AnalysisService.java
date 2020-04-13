@@ -18,19 +18,16 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class AnalysisService {
 
     private final File pathEdinet;
     private final File pathDecode;
-
     private EdinetProxy proxy;
-
     private FileOperator fileOperator;
-
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
-
     private EdinetDocumentDao edinetDocumentDao;
 
     public AnalysisService(
@@ -58,6 +55,12 @@ public class AnalysisService {
         if (response.getResults() != null)
             response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
         return "書類一覧を登録できました。\n";
+    }
+
+    public List<String> docIdList(String docTypeCode) {
+        ArrayList<String> docIdList = new ArrayList<>();
+        edinetDocumentDao.findByDocTypeCode(docTypeCode).forEach(document -> docIdList.add(document.getDocId()));
+        return docIdList;
     }
 
     public String documentAcquisition(AcquisitionRequestParameter parameter) {

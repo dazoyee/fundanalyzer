@@ -32,7 +32,8 @@ public class EdinetMapper {
                 results.getXbrlFlag(),
                 results.getPdfFlag(),
                 results.getAttachDocFlag(),
-                results.getEnglishDocFlag()
+                results.getEnglishDocFlag(),
+                null
         );
     }
 }

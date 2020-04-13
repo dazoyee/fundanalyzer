@@ -46,6 +46,11 @@ public class AnalysisController {
         );
     }
 
+    @GetMapping("/document/{docTypeCode}")
+    public String getDocId(@PathVariable String docTypeCode) {
+        return service.docIdList(docTypeCode) + "\n";
+    }
+
     @GetMapping("/document/acquisition/{docId}/{type}")
     public String documentAcquisition(@PathVariable String docId, @PathVariable String type) {
         return service.documentAcquisition(

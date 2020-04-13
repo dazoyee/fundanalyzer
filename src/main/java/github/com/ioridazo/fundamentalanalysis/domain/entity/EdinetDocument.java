@@ -1,11 +1,17 @@
 package github.com.ioridazo.fundamentalanalysis.domain.entity;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
+import java.time.LocalDateTime;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class EdinetDocument {
 
-    private String docID;
+    private String docId;
 
     // 提出者EDINETコード
     private String edinetCode;
@@ -81,4 +87,7 @@ public class EdinetDocument {
 
     // 英文ファイル有無フラグ
     private String englishDocFlag;
+
+    //登録日
+    private LocalDateTime insertDate;
 }
