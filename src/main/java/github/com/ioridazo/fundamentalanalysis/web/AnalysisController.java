@@ -69,4 +69,9 @@ public class AnalysisController {
     public String operateFile(@PathVariable String docId) {
         return service.operateFile(docId);
     }
+
+    @GetMapping("/scrape/{docId}")
+    public String scrape(@PathVariable String docId){
+        return service.scrape(docId);
+    }
 }

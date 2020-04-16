@@ -4,6 +4,7 @@ import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetSubjectDao
 import github.com.ioridazo.fundamentalanalysis.domain.dao.EdinetDocumentDao;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.ProfitAndLossStatementEnum;
 import github.com.ioridazo.fundamentalanalysis.domain.file.FileOperator;
+import github.com.ioridazo.fundamentalanalysis.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundamentalanalysis.edinet.EdinetProxy;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListRequestParameter;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,23 +29,26 @@ public class AnalysisService {
     private final File pathDecode;
     private EdinetProxy proxy;
     private FileOperator fileOperator;
+    private HtmlScraping htmlScraping;
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
     private EdinetDocumentDao edinetDocumentDao;
 
     public AnalysisService(
+            @Value("${settings.file.path.edinet}") final File pathEdinet,
+            @Value("${settings.file.path.decode}") final File pathDecode,
             final EdinetProxy proxy,
             final FileOperator fileOperator,
+            final HtmlScraping htmlScraping,
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
-            final EdinetDocumentDao edinetDocumentDao,
-            @Value("${settings.file.path.edinet}") final File pathEdinet,
-            @Value("${settings.file.path.decode}") final File pathDecode
+            final EdinetDocumentDao edinetDocumentDao
     ) {
-        this.proxy = proxy;
-        this.fileOperator = fileOperator;
-        this.balanceSheetSubjectDao = balanceSheetSubjectDao;
-        this.edinetDocumentDao = edinetDocumentDao;
         this.pathEdinet = pathEdinet;
         this.pathDecode = pathDecode;
+        this.proxy = proxy;
+        this.fileOperator = fileOperator;
+        this.htmlScraping = htmlScraping;
+        this.balanceSheetSubjectDao = balanceSheetSubjectDao;
+        this.edinetDocumentDao = edinetDocumentDao;
     }
 
     public Response documentList() {
@@ -77,6 +82,15 @@ public class AnalysisService {
                 new File(pathDecode + "/" + docId)
         );
         return "解凍できました。\n";
+    }
+
+    public String scrape(String docId) {
+            var fileList = htmlScraping.findFile(
+                    new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
+                    "honbun"
+            );
+            fileList.stream().distinct().forEach(file -> htmlScraping.scrape(file));
+            return "スクレイピングしました。\n";
     }
 
     public void insert() throws Exception {
