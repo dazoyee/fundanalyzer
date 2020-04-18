@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundamentalanalysis.domain.entity;
+package github.com.ioridazo.fundamentalanalysis.domain.entity.master;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

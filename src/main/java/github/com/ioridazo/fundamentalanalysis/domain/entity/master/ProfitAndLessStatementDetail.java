@@ -1,9 +1,9 @@
-package github.com.ioridazo.fundamentalanalysis.domain.entity;
+package github.com.ioridazo.fundamentalanalysis.domain.entity.master;
 
 import lombok.Value;
 
 @Value
-public class CashFlowStatementDetail {
+public class ProfitAndLessStatementDetail {
 
     private String id;
 

@@ -1,6 +1,6 @@
-package github.com.ioridazo.fundamentalanalysis.domain.dao;
+package github.com.ioridazo.fundamentalanalysis.domain.dao.transaction;
 
-import github.com.ioridazo.fundamentalanalysis.domain.entity.EdinetDocument;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.transaction.EdinetDocument;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundamentalanalysis.domain.dao;
+package github.com.ioridazo.fundamentalanalysis.domain.dao.master;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

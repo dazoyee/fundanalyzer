@@ -1,12 +1,12 @@
 package github.com.ioridazo.fundamentalanalysis.domain;
 
-import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetDao;
-import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetDetailDao;
-import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetSubjectDao;
-import github.com.ioridazo.fundamentalanalysis.domain.dao.EdinetDocumentDao;
-import github.com.ioridazo.fundamentalanalysis.domain.dao.FinancialStatementDao;
-import github.com.ioridazo.fundamentalanalysis.domain.entity.BalanceSheet;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.master.BalanceSheetDetailDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.master.BalanceSheetSubjectDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.master.FinancialStatementDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.transaction.BalanceSheetDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.transaction.BalanceSheet;
 import github.com.ioridazo.fundamentalanalysis.domain.file.FileOperator;
 import github.com.ioridazo.fundamentalanalysis.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundamentalanalysis.domain.jsoup.bean.FinancialTableResultBean;

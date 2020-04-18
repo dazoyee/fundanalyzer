@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundamentalanalysis.domain;
 
-import github.com.ioridazo.fundamentalanalysis.domain.entity.EdinetDocument;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Results;
 
 public class EdinetMapper {

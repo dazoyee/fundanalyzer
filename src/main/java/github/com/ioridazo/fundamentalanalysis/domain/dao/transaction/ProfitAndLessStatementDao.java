@@ -1,14 +1,14 @@
-package github.com.ioridazo.fundamentalanalysis.domain.dao;
+package github.com.ioridazo.fundamentalanalysis.domain.dao.transaction;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class CashFlowStatementSubjectDao {
+public class ProfitAndLessStatementDao {
 
     private final JdbcTemplate jdbc;
 
-    public CashFlowStatementSubjectDao(final JdbcTemplate jdbc) {
+    public ProfitAndLessStatementDao(final JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 }

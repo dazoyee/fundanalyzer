@@ -1,6 +1,6 @@
-package github.com.ioridazo.fundamentalanalysis.domain.dao;
+package github.com.ioridazo.fundamentalanalysis.domain.dao.master;
 
-import github.com.ioridazo.fundamentalanalysis.domain.entity.BalanceSheetDetail;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.master.BalanceSheetDetail;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -16,7 +16,7 @@ public class BalanceSheetDetailDao {
         this.jdbc = jdbc;
     }
 
-    public List<BalanceSheetDetail> findAll(){
+    public List<BalanceSheetDetail> findAll() {
         return jdbc.query(
                 "SELECT * FROM balance_sheet_detail",
                 new BeanPropertyRowMapper<>(BalanceSheetDetail.class)
