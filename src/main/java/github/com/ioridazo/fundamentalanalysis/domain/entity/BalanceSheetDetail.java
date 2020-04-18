@@ -1,8 +1,12 @@
 package github.com.ioridazo.fundamentalanalysis.domain.entity;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class BalanceSheetDetail {
 
     private String id;

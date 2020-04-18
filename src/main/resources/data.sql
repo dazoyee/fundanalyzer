@@ -1,3 +1,8 @@
+--company
+insert into company (id, name) values
+  ('0000', 'sample')
+  ;
+
 --financial_statement
 insert into financial_statement (name) values
   ('貸借対照表'),  ('損益計算書'), ('キャッシュ・フロー計算書')

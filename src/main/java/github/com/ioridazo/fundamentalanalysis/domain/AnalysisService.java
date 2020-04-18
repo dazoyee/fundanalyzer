@@ -115,21 +115,31 @@ public class AnalysisService {
         }
     }
 
-    public void insert() throws Exception {
+    public void insert(List<FinancialTableResultBean> beanList) {
 
-        Document document = Jsoup.parse(new File("C:\\Users\\ioiso\\Desktop\\Xbrl_Search_20200331_143611\\S100HGDP\\XBRL\\PublicDoc\\0205010_honbun_jpsps070300-asr-001_G03338-000_2019-08-31_01_2019-11-21_ixbrl.htm"), "UTF-8");
-        String x = ProfitAndLossStatementEnum.OPERATING_PROFIT.toValue();
-        System.out.println(x);
-
-        Elements tables = document.body().children().select("table");
-        Element table = tables.get(2);
-        table.select("tr").forEach(tr -> {
-            ArrayList<String> tdList = new ArrayList<>();
-            tr.select("td").forEach(td -> tdList.add(td.text()));
-
-            System.out.println(tdList.get(0));
-//            if (ProfitAndLossStatementEnum.OPERATING_PROFIT.toValue().equals(tdList.get(0))){
-//            }
+        beanList.forEach(resultBean -> {
+            balanceSheetDetailDao.findAll().stream()
+                    // スクレイピング結果とマスタから一致するものをフィルターにかける
+                    .filter(balanceSheetDetail -> resultBean.getSubject().equals(balanceSheetDetail.getName()))
+                    .findAny()
+                    // 一致するものが存在したら下記
+                    .ifPresent(balanceSheetDetail -> {
+                        balanceSheetDao.insert(new BalanceSheet(
+                                null,
+                                "0000",
+                                FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                                balanceSheetDetail.getId(),
+                                LocalDate.now(),
+                                replaceStringWithInteger(resultBean.getCurrentValue())
+                        ));
+                    });
         });
+    }
+
+    private Integer replaceStringWithInteger(String value) {
+        return Integer.valueOf(value
+                .replace(",", "")
+                .replace("△", "-")
+                .replace("※２ ", ""));
     }
 }

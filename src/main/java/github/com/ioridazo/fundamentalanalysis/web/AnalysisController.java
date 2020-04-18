@@ -19,16 +19,6 @@ public class AnalysisController {
         this.service = service;
     }
 
-    @GetMapping("/insert")
-    public String insert() {
-        try {
-            service.insert();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "string\n";
-    }
-
     @GetMapping("/edinet")
     public Response edinet() {
         return service.documentList();
@@ -72,6 +62,8 @@ public class AnalysisController {
 
     @GetMapping("/scrape/{docId}")
     public String scrape(@PathVariable String docId){
-        return service.scrape(docId);
+        var resultBeanList = service.scrape(docId);
+        service.insert(resultBeanList);
+        return "insert\n";
     }
 }
