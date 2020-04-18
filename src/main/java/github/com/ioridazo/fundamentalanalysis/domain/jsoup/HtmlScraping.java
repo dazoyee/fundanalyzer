@@ -1,8 +1,7 @@
 package github.com.ioridazo.fundamentalanalysis.domain.jsoup;
 
+import github.com.ioridazo.fundamentalanalysis.domain.jsoup.bean.FinancialTableResultBean;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -45,29 +44,20 @@ public class HtmlScraping {
         return filePathList;
     }
 
-    public void scrape(File file) {
-//        Document document = Jsoup.parse(new File("C:\\Users\\ioiso\\Desktop\\Xbrl_Search_20200331_143611\\S100HGDP\\XBRL\\PublicDoc\\0205010_honbun_jpsps070300-asr-001_G03338-000_2019-08-31_01_2019-11-21_ixbrl.htm"), "UTF-8");
-        Document document = null;
-        try {
-            document = Jsoup.parse(file, "UTF-8");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Elements tables = document.body().children().select("table");
-//        Element table = tables.get(0);
-        tables.forEach(table -> {
-            table.select("tr").forEach(tr -> {
-                ArrayList<String> tdList = new ArrayList<>();
-                tr.select("td").forEach(td -> tdList.add(td.text()));
-                System.out.println(tdList.get(0) + "\t" + tdList.get(1) + "\t" + tdList.get(2));
-            });
-        });
-//        table.select("tr").forEach(tr -> {
-//            ArrayList<String> tdList = new ArrayList<>();
-//            tr.select("td").forEach(td -> tdList.add(td.text()));
-//            System.out.println(tdList.get(0));
-//        });
-
+    public List<FinancialTableResultBean> scrape(File file, String keyWord) throws IOException {
+        var resultBeanList = new ArrayList<FinancialTableResultBean>();
+        // ファイルをスクレイピング
+        Jsoup.parse(file, "UTF-8")
+                // 条件に沿った要素を得る
+                .getElementsByAttributeValueContaining("name", keyWord)
+                .select("table")
+                .select("tr")
+                .forEach(tr -> {
+                    var tdList = new ArrayList<String>();
+                    tr.select("td").forEach(td -> tdList.add(td.text()));
+                    // 各要素をbeanに詰める
+                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
+                });
+        return resultBeanList;
     }
 }

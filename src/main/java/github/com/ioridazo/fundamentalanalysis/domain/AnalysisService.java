@@ -1,24 +1,26 @@
 package github.com.ioridazo.fundamentalanalysis.domain;
 
+import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetDetailDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.BalanceSheetSubjectDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.EdinetDocumentDao;
-import github.com.ioridazo.fundamentalanalysis.domain.entity.ProfitAndLossStatementEnum;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.FinancialStatementDao;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.BalanceSheet;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundamentalanalysis.domain.file.FileOperator;
 import github.com.ioridazo.fundamentalanalysis.domain.jsoup.HtmlScraping;
+import github.com.ioridazo.fundamentalanalysis.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundamentalanalysis.edinet.EdinetProxy;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListType;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +32,11 @@ public class AnalysisService {
     private EdinetProxy proxy;
     private FileOperator fileOperator;
     private HtmlScraping htmlScraping;
+    private FinancialStatementDao financialStatementDao;
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
+    private BalanceSheetDetailDao balanceSheetDetailDao;
     private EdinetDocumentDao edinetDocumentDao;
+    private BalanceSheetDao balanceSheetDao;
 
     public AnalysisService(
             @Value("${settings.file.path.edinet}") final File pathEdinet,
@@ -39,16 +44,22 @@ public class AnalysisService {
             final EdinetProxy proxy,
             final FileOperator fileOperator,
             final HtmlScraping htmlScraping,
+            final FinancialStatementDao financialStatementDao,
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
-            final EdinetDocumentDao edinetDocumentDao
+            final BalanceSheetDetailDao balanceSheetDetailDao,
+            final EdinetDocumentDao edinetDocumentDao,
+            final BalanceSheetDao balanceSheetDao
     ) {
         this.pathEdinet = pathEdinet;
         this.pathDecode = pathDecode;
         this.proxy = proxy;
         this.fileOperator = fileOperator;
         this.htmlScraping = htmlScraping;
+        this.financialStatementDao = financialStatementDao;
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
+        this.balanceSheetDetailDao = balanceSheetDetailDao;
         this.edinetDocumentDao = edinetDocumentDao;
+        this.balanceSheetDao = balanceSheetDao;
     }
 
     public Response documentList() {
@@ -84,13 +95,24 @@ public class AnalysisService {
         return "解凍できました。\n";
     }
 
-    public String scrape(String docId) {
-            var fileList = htmlScraping.findFile(
-                    new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
-                    "honbun"
+    public List<FinancialTableResultBean> scrape(String docId) {
+        var fileList = htmlScraping.findFile(
+                new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
+                "honbun"
+        );
+        if (fileList.stream().distinct().count() != 1) {
+            throw new RuntimeException("ファイルが複数ありました");
+        }
+        // StatementOfIncomeTextBlock
+        try {
+            return htmlScraping.scrape(
+                    fileList.stream().distinct().findAny().get(),
+                    "BalanceSheetTextBlock"
             );
-            fileList.stream().distinct().forEach(file -> htmlScraping.scrape(file));
-            return "スクレイピングしました。\n";
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("スクレイピングに失敗しました");
+        }
     }
 
     public void insert() throws Exception {
