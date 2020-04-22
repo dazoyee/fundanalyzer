@@ -19,6 +19,11 @@ public class AnalysisController {
         this.service = service;
     }
 
+    @GetMapping("/company")
+    public String company() {
+        return service.company();
+    }
+
     @GetMapping("/edinet")
     public Response edinet() {
         return service.documentList();
@@ -61,7 +66,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/scrape/{docId}")
-    public String scrape(@PathVariable String docId){
+    public String scrape(@PathVariable String docId) {
         var resultBeanList = service.scrape(docId);
         service.insert(resultBeanList);
         return "insert\n";

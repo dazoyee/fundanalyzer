@@ -11,5 +11,6 @@ edinet:
 settings:
   file:
     path:
+      company: C:\${spring.application.name}\company\EdinetcodeDlInfo.readCsv
       edinet: C:\${spring.application.name}\edinet
       decode: C:\${spring.application.name}\decode

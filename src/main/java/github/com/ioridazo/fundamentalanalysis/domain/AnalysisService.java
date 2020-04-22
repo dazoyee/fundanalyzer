@@ -1,5 +1,7 @@
 package github.com.ioridazo.fundamentalanalysis.domain;
 
+import github.com.ioridazo.fundamentalanalysis.domain.csv.CsvCommander;
+import github.com.ioridazo.fundamentalanalysis.domain.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.master.BalanceSheetDetailDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.master.BalanceSheetSubjectDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.master.FinancialStatementDao;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +30,11 @@ import java.util.List;
 @Service
 public class AnalysisService {
 
+    private final File pathCompany;
     private final File pathEdinet;
     private final File pathDecode;
     private EdinetProxy proxy;
+    private CsvCommander csvCommander;
     private FileOperator fileOperator;
     private HtmlScraping htmlScraping;
     private FinancialStatementDao financialStatementDao;
@@ -39,9 +44,11 @@ public class AnalysisService {
     private BalanceSheetDao balanceSheetDao;
 
     public AnalysisService(
+            @Value("${settings.file.path.company}") final File pathCompany,
             @Value("${settings.file.path.edinet}") final File pathEdinet,
             @Value("${settings.file.path.decode}") final File pathDecode,
             final EdinetProxy proxy,
+            final CsvCommander csvCommander,
             final FileOperator fileOperator,
             final HtmlScraping htmlScraping,
             final FinancialStatementDao financialStatementDao,
@@ -50,9 +57,11 @@ public class AnalysisService {
             final EdinetDocumentDao edinetDocumentDao,
             final BalanceSheetDao balanceSheetDao
     ) {
+        this.pathCompany = pathCompany;
         this.pathEdinet = pathEdinet;
         this.pathDecode = pathDecode;
         this.proxy = proxy;
+        this.csvCommander = csvCommander;
         this.fileOperator = fileOperator;
         this.htmlScraping = htmlScraping;
         this.financialStatementDao = financialStatementDao;
@@ -60,6 +69,15 @@ public class AnalysisService {
         this.balanceSheetDetailDao = balanceSheetDetailDao;
         this.edinetDocumentDao = edinetDocumentDao;
         this.balanceSheetDao = balanceSheetDao;
+    }
+
+    public String company() {
+        var resultBeanList = csvCommander.readCsv(
+                pathCompany,
+                Charset.forName("windows-31j"),
+                EdinetCsvResultBean.class
+        );
+        return "会社を登録しました\n";
     }
 
     public Response documentList() {

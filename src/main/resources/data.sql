@@ -1,5 +1,5 @@
 --company
-insert into company (id, name) values
+insert into company (code, name) values
   ('0000', 'sample')
   ;
 
