@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundamentalanalysis.domain;
+package github.com.ioridazo.fundamentalanalysis.mapper;
 
 import github.com.ioridazo.fundamentalanalysis.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Results;

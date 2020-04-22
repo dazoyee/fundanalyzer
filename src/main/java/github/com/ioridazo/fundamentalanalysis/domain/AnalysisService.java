@@ -17,6 +17,7 @@ import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.Acquisition
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListType;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
+import github.com.ioridazo.fundamentalanalysis.mapper.EdinetMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
