@@ -16,7 +16,7 @@ public class BalanceSheetDao {
     public void insert(BalanceSheet balanceSheet) {
         jdbc.update(
                 "INSERT INTO balance_sheet (company_id, financial_statement_id, detail_id, period, value) VALUES (?,?,?,?,?)",
-                balanceSheet.getCompanyId(),
+                balanceSheet.getCompanyCode(),
                 balanceSheet.getFinancialStatementId(),
                 balanceSheet.getDetailId(),
                 balanceSheet.getPeriod(),

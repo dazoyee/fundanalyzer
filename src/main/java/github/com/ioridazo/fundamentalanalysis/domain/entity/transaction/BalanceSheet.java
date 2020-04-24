@@ -9,7 +9,7 @@ public class BalanceSheet {
 
     private String id;
 
-    private String companyId;
+    private String companyCode;
 
     private String financialStatementId;
 

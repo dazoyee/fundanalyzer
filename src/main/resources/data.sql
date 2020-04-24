@@ -4,8 +4,8 @@ insert into industry (name) values
   ;
 
 --company
-insert into company (code, name) values
-  ('0000', 'sample')
+insert into company (code, company_name, industry_id, edinet_code, insert_date, update_date) values
+  ('00000', 'sample', '1', 'EDINET', sysdate, sysdate)
   ;
 
 --financial_statement
