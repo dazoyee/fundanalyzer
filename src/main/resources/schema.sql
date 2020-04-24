@@ -1,3 +1,10 @@
+--業種
+create TABLE industry(
+  id INT AUTO_INCREMENT,
+  name VARCHAR(100) UNIQUE NOT NULL,
+  PRIMARY KEY(id)
+);
+
 --企業
 create TABLE company(
   code CHAR(4) UNIQUE NOT NULL,

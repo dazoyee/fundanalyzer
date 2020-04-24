@@ -1,3 +1,8 @@
+--industry
+insert into industry (name) values
+  ('sample')
+  ;
+
 --company
 insert into company (code, name) values
   ('0000', 'sample')
