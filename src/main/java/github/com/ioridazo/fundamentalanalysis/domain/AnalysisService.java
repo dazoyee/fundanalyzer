@@ -4,10 +4,13 @@ import github.com.ioridazo.fundamentalanalysis.domain.csv.CsvCommander;
 import github.com.ioridazo.fundamentalanalysis.domain.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.master.BalanceSheetDetailDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.master.BalanceSheetSubjectDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.master.FinancialStatementDao;
+import github.com.ioridazo.fundamentalanalysis.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.transaction.BalanceSheetDao;
 import github.com.ioridazo.fundamentalanalysis.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundamentalanalysis.domain.entity.master.Industry;
 import github.com.ioridazo.fundamentalanalysis.domain.entity.transaction.BalanceSheet;
 import github.com.ioridazo.fundamentalanalysis.domain.file.FileOperator;
 import github.com.ioridazo.fundamentalanalysis.domain.jsoup.HtmlScraping;
@@ -17,6 +20,7 @@ import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.Acquisition
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.request.ListType;
 import github.com.ioridazo.fundamentalanalysis.edinet.entity.response.Response;
+import github.com.ioridazo.fundamentalanalysis.mapper.CsvMapper;
 import github.com.ioridazo.fundamentalanalysis.mapper.EdinetMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,9 @@ public class AnalysisService {
     private CsvCommander csvCommander;
     private FileOperator fileOperator;
     private HtmlScraping htmlScraping;
+    private CsvMapper csvMapper;
+    private IndustryDao industryDao;
+    private CompanyDao companyDao;
     private FinancialStatementDao financialStatementDao;
     private BalanceSheetSubjectDao balanceSheetSubjectDao;
     private BalanceSheetDetailDao balanceSheetDetailDao;
@@ -52,6 +59,9 @@ public class AnalysisService {
             final CsvCommander csvCommander,
             final FileOperator fileOperator,
             final HtmlScraping htmlScraping,
+            final CsvMapper csvMapper,
+            final IndustryDao industryDao,
+            final CompanyDao companyDao,
             final FinancialStatementDao financialStatementDao,
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
             final BalanceSheetDetailDao balanceSheetDetailDao,
@@ -65,6 +75,9 @@ public class AnalysisService {
         this.csvCommander = csvCommander;
         this.fileOperator = fileOperator;
         this.htmlScraping = htmlScraping;
+        this.csvMapper = csvMapper;
+        this.industryDao = industryDao;
+        this.companyDao = companyDao;
         this.financialStatementDao = financialStatementDao;
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
         this.balanceSheetDetailDao = balanceSheetDetailDao;
@@ -78,6 +91,10 @@ public class AnalysisService {
                 Charset.forName("windows-31j"),
                 EdinetCsvResultBean.class
         );
+        resultBeanList.forEach(resultBean -> {
+            industryDao.insert(new Industry(null, resultBean.getIndustry()));
+            csvMapper.map(resultBean).ifPresent(companyDao::insert);
+        });
         return "会社を登録しました\n";
     }
 
