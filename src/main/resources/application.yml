@@ -3,7 +3,7 @@ spring:
     active: dev
   #    active: prod
   application:
-    name: fundamental-analysis
+    name: fundanalyzer
 
 edinet:
   api: https://disclosure.edinet-fsa.go.jp

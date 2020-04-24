@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>github.com.ioridazo</groupId>
-    <artifactId>fundamental-analysis</artifactId>
+    <artifactId>fundanalyzer</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>fundamental-analysis</name>
-    <description>Fundamental Analysis</description>
+    <name>fundanalyzer</name>
+    <description>Analyzing stocks from financial statements</description>
 
     <properties>
         <java.version>11</java.version>
