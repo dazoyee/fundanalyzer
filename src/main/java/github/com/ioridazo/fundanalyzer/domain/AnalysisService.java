@@ -18,9 +18,13 @@ import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBe
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
+import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +34,10 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@Slf4j
 @Service
 public class AnalysisService {
 
@@ -97,11 +104,34 @@ public class AnalysisService {
         return "会社を登録しました\n";
     }
 
-    public String insertDocumentList(final ListRequestParameter parameter) {
-        EdinetResponse response = proxy.documentList(parameter);
-        if (response.getResults() != null) {
-            response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
+    public String documentList(final String date) {
+        handle(LocalDate.parse(date)
+                .datesUntil(LocalDate.parse(date).plusDays(1))
+                .collect(Collectors.toList()));
         return "書類一覧を登録できました。\n";
+    }
+
+    public String documentList(final String startDate, final String endDate) {
+        handle(LocalDate.parse(startDate)
+                .datesUntil(LocalDate.parse(endDate).plusDays(1))
+                .collect(Collectors.toList()));
+        return "書類一覧を登録できました。\n";
+    }
+
+    private void handle(final List<LocalDate> dateList) {
+        dateList.forEach(localDate -> Stream.of(localDate.toString())
+                .filter(date -> Stream.of(date)
+                        .map(d -> proxy.documentList(new ListRequestParameter(d, ListType.DEFAULT)))
+                        .map(EdinetResponse::getMetadata)
+                        .map(Metadata::getResultset)
+                        .map(ResultSet::getCount)
+                        .peek(c -> log.info("EDINETに提出された書類\tdate:{}\tcount:{}", localDate, c))
+                        .anyMatch(c -> !"0".equals(c))
+                )
+                .map(date -> proxy.documentList(new ListRequestParameter(date, ListType.GET_LIST)))
+                .map(EdinetResponse::getResults)
+                .forEach(resultsList -> resultsList.forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results))))
+        );
     }
 
     public List<String> docIdList(final String docTypeCode) {

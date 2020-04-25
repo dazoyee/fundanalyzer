@@ -3,8 +3,6 @@ package github.com.ioridazo.fundanalyzer.web;
 import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
-import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,16 +21,14 @@ public class AnalysisController {
         return service.company();
     }
 
-    @GetMapping("/insert/document/list/{date}/{type}")
-    public String insertDocumentList1(@PathVariable String date, @PathVariable String type) {
-        return service.insertDocumentList(
-                new ListRequestParameter(
-                        date,
-                        ListType.DEFAULT.toValue().equals(type) ? ListType.DEFAULT :
-                                ListType.GET_LIST.toValue().equals(type) ? ListType.GET_LIST :
-                                        null
-                )
-        );
+    @GetMapping("/insert/document/list/{date}")
+    public String documentList(@PathVariable String date) {
+        return service.documentList(date);
+    }
+
+    @GetMapping("/insert/document/list/{fromDate}/{toDate}")
+    public String documentList(@PathVariable String fromDate, @PathVariable String toDate) {
+        return service.documentList(fromDate, toDate);
     }
 
     @GetMapping("/document/{docTypeCode}")

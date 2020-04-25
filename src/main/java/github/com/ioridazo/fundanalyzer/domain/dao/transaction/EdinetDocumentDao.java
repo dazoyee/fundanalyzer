@@ -26,35 +26,41 @@ public class EdinetDocumentDao {
     }
 
     public void insert(final EdinetDocument document) {
-        jdbc.update(
-                "INSERT INTO edinet_document VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                document.getDocId(),
-                document.getEdinetCode(),
-                document.getSecCode(),
-                document.getJcn(),
-                document.getFilerName(),
-                document.getFundCode(),
-                document.getOrdinanceCode(),
-                document.getFormCode(),
-                document.getDocTypeCode(),
-                document.getPeriodStart(),
-                document.getPeriodEnd(),
-                document.getSubmitDateTime(),
-                document.getDocDescription(),
-                document.getIssuerEdinetCode(),
-                document.getSubjectEdinetCode(),
-                document.getSubsidiaryEdinetCode(),
-                document.getCurrentReportReason(),
-                document.getParentDocID(),
-                document.getOpeDateTime(),
-                document.getWithdrawalStatus(),
-                document.getDocInfoEditStatus(),
-                document.getDisclosureStatus(),
-                document.getXbrlFlag(),
-                document.getPdfFlag(),
-                document.getAttachDocFlag(),
-                document.getEnglishDocFlag(),
-                LocalDateTime.now()
-        );
+        var count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM edinet_document WHERE doc_id = ?",
+                String.class,
+                document.getDocId());
+        if ("0".equals(count)) {
+            jdbc.update(
+                    "INSERT INTO edinet_document VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    document.getDocId(),
+                    document.getEdinetCode(),
+                    document.getSecCode(),
+                    document.getJcn(),
+                    document.getFilerName(),
+                    document.getFundCode(),
+                    document.getOrdinanceCode(),
+                    document.getFormCode(),
+                    document.getDocTypeCode(),
+                    document.getPeriodStart(),
+                    document.getPeriodEnd(),
+                    document.getSubmitDateTime(),
+                    document.getDocDescription(),
+                    document.getIssuerEdinetCode(),
+                    document.getSubjectEdinetCode(),
+                    document.getSubsidiaryEdinetCode(),
+                    document.getCurrentReportReason(),
+                    document.getParentDocID(),
+                    document.getOpeDateTime(),
+                    document.getWithdrawalStatus(),
+                    document.getDocInfoEditStatus(),
+                    document.getDisclosureStatus(),
+                    document.getXbrlFlag(),
+                    document.getPdfFlag(),
+                    document.getAttachDocFlag(),
+                    document.getEnglishDocFlag(),
+                    LocalDateTime.now()
+            );
+        }
     }
 }

@@ -75,7 +75,7 @@ create TABLE cash_flow_statement_detail(
   UNIQUE KEY(subject_id, name)
 );
 
---
+--EDINETに提出された書類
 create TABLE edinet_document(
   doc_id VARCHAR(8) NOT NULL,
   edinet_code VARCHAR(6),

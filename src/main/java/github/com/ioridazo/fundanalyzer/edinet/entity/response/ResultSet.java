@@ -10,5 +10,5 @@ public class ResultSet {
 
     // 件数
     @JsonProperty("count")
-    private int count;
+    private String count;
 }
