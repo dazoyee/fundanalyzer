@@ -13,7 +13,7 @@ import java.util.List;
 @Component
 public class CsvCommander {
 
-    public <T> List<T> readCsv(final File file, Charset charset, final Class<? extends T> beanClass) {
+    public <T> List<T> readCsv(final File file, final Charset charset, final Class<? extends T> beanClass) {
         if (!file.exists()) throw new RuntimeException("ファイルがありません");
 
         return new CsvToBeanBuilder<T>(reader(file, charset))
@@ -23,7 +23,7 @@ public class CsvCommander {
                 .parse();
     }
 
-    private Reader reader(File file, Charset charset) {
+    private Reader reader(final File file, final Charset charset) {
         try {
             return Files.newBufferedReader(file.toPath(), charset);
         } catch (IOException e) {

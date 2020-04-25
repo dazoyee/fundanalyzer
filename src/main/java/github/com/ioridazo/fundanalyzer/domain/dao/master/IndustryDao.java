@@ -14,7 +14,7 @@ public class IndustryDao {
         this.jdbc = jdbc;
     }
 
-    public Industry findByName(String name) {
+    public Industry findByName(final String name) {
         return jdbc.queryForObject(
                 "SELECT * FROM industry WHERE name = ?",
                 new BeanPropertyRowMapper<>(Industry.class),
@@ -22,7 +22,7 @@ public class IndustryDao {
         );
     }
 
-    public void insert(Industry industry) {
+    public void insert(final Industry industry) {
         var count = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM industry WHERE name = ?",
                 String.class,

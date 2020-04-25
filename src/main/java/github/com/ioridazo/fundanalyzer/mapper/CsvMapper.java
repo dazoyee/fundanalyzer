@@ -23,7 +23,7 @@ public class CsvMapper {
         this.industryDao = industryDao;
     }
 
-    public Optional<Company> map(EdinetCsvResultBean resultBean) {
+    public Optional<Company> map(final EdinetCsvResultBean resultBean) {
         if (resultBean.getSecuritiesCode().isEmpty()) {
             return Optional.empty();
         }
@@ -40,14 +40,14 @@ public class CsvMapper {
                 null));
     }
 
-    private ListCategories mapToListed(String value) {
+    private ListCategories mapToListed(final String value) {
         if (LISTED.toName().equals(value)) return LISTED;
         else if (UNLISTED.toName().equals(value)) return UNLISTED;
         else if (value.isEmpty()) return ListCategories.NULL;
         else throw new RuntimeException("マッピングエラー");
     }
 
-    private Consolidated mapToConsolidated(String value) {
+    private Consolidated mapToConsolidated(final String value) {
         if (CONSOLIDATED.toName().equals(value)) return CONSOLIDATED;
         else if (NO_CONSOLIDATED.toName().equals(value)) return NO_CONSOLIDATED;
         else if (value.isEmpty()) return Consolidated.NULL;

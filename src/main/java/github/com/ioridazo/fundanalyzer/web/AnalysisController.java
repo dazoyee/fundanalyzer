@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AnalysisController {
 
-    private AnalysisService service;
+    final private AnalysisService service;
 
     public AnalysisController(final AnalysisService service) {
         this.service = service;

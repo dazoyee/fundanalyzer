@@ -38,18 +38,18 @@ public class AnalysisService {
     private final File pathCompany;
     private final File pathEdinet;
     private final File pathDecode;
-    private EdinetProxy proxy;
-    private CsvCommander csvCommander;
-    private FileOperator fileOperator;
-    private HtmlScraping htmlScraping;
-    private CsvMapper csvMapper;
-    private IndustryDao industryDao;
-    private CompanyDao companyDao;
-    private FinancialStatementDao financialStatementDao;
-    private BalanceSheetSubjectDao balanceSheetSubjectDao;
-    private BalanceSheetDetailDao balanceSheetDetailDao;
-    private EdinetDocumentDao edinetDocumentDao;
-    private BalanceSheetDao balanceSheetDao;
+    private final EdinetProxy proxy;
+    private final CsvCommander csvCommander;
+    private final FileOperator fileOperator;
+    private final HtmlScraping htmlScraping;
+    private final CsvMapper csvMapper;
+    private final IndustryDao industryDao;
+    private final CompanyDao companyDao;
+    private final FinancialStatementDao financialStatementDao;
+    private final BalanceSheetSubjectDao balanceSheetSubjectDao;
+    private final BalanceSheetDetailDao balanceSheetDetailDao;
+    private final EdinetDocumentDao edinetDocumentDao;
+    private final BalanceSheetDao balanceSheetDao;
 
     public AnalysisService(
             @Value("${settings.file.path.company}") final File pathCompany,
@@ -102,20 +102,20 @@ public class AnalysisService {
         return proxy.documentList(new ListRequestParameter("2020-04-01", ListType.DEFAULT));
     }
 
-    public String insertDocumentList(ListRequestParameter parameter) {
+    public String insertDocumentList(final ListRequestParameter parameter) {
         Response response = proxy.documentList(parameter);
         if (response.getResults() != null)
             response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
         return "書類一覧を登録できました。\n";
     }
 
-    public List<String> docIdList(String docTypeCode) {
+    public List<String> docIdList(final String docTypeCode) {
         ArrayList<String> docIdList = new ArrayList<>();
         edinetDocumentDao.findByDocTypeCode(docTypeCode).forEach(document -> docIdList.add(document.getDocId()));
         return docIdList;
     }
 
-    public String documentAcquisition(AcquisitionRequestParameter parameter) {
+    public String documentAcquisition(final AcquisitionRequestParameter parameter) {
         proxy.documentAcquisition(
                 pathEdinet,
                 parameter
@@ -123,7 +123,7 @@ public class AnalysisService {
         return "書類取得できました。\n";
     }
 
-    public String operateFile(String docId) {
+    public String operateFile(final String docId) {
         fileOperator.decodeZipFile(
                 new File(pathEdinet + "/" + docId),
                 new File(pathDecode + "/" + docId)
@@ -131,7 +131,7 @@ public class AnalysisService {
         return "解凍できました。\n";
     }
 
-    public List<FinancialTableResultBean> scrape(String docId) {
+    public List<FinancialTableResultBean> scrape(final String docId) {
         var fileList = htmlScraping.findFile(
                 new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
                 "honbun"
@@ -151,7 +151,7 @@ public class AnalysisService {
         }
     }
 
-    public void insert(List<FinancialTableResultBean> beanList) {
+    public void insert(final List<FinancialTableResultBean> beanList) {
 
         beanList.forEach(resultBean -> {
             balanceSheetDetailDao.findAll().stream()
@@ -172,7 +172,7 @@ public class AnalysisService {
         });
     }
 
-    private Integer replaceStringWithInteger(String value) {
+    private Integer replaceStringWithInteger(final String value) {
         return Integer.valueOf(value
                 .replace(",", "")
                 .replace("△", "-")

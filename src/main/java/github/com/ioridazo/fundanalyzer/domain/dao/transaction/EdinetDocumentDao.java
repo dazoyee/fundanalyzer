@@ -25,7 +25,7 @@ public class EdinetDocumentDao {
         );
     }
 
-    public void insert(EdinetDocument document) {
+    public void insert(final EdinetDocument document) {
         jdbc.update(
                 "INSERT INTO edinet_document VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 document.getDocId(),

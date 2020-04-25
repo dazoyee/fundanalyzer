@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.response.Results;
 
 public class EdinetMapper {
 
-    public static EdinetDocument map(Results results) {
+    public static EdinetDocument map(final Results results) {
         return new EdinetDocument(
                 results.getDocID(),
                 results.getEdinetCode(),

@@ -15,7 +15,7 @@ public class CompanyDao {
         this.jdbc = jdbc;
     }
 
-    public void insert(Company company) {
+    public void insert(final Company company) {
         jdbc.update(
                 "INSERT INTO company VALUES (?,?,?,?,?,?,?,?,?,?)",
                 company.getCode(),

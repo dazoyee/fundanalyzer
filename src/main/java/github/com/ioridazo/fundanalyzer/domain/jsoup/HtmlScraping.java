@@ -16,7 +16,7 @@ public class HtmlScraping {
     public HtmlScraping() {
     }
 
-    public List<File> findFile(File filePath, String keyWord) {
+    public List<File> findFile(final File filePath, final String keyWord) {
 
         List<File> filePathList = new ArrayList<>();
         for (final File file : Objects.requireNonNull(filePath.listFiles())) {
@@ -44,7 +44,7 @@ public class HtmlScraping {
         return filePathList;
     }
 
-    public List<FinancialTableResultBean> scrape(File file, String keyWord) throws IOException {
+    public List<FinancialTableResultBean> scrape(final File file, final String keyWord) throws IOException {
         var resultBeanList = new ArrayList<FinancialTableResultBean>();
         // ファイルをスクレイピング
         Jsoup.parse(file, "UTF-8")

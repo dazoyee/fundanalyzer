@@ -20,7 +20,7 @@ public class FileOperator {
     public FileOperator() {
     }
 
-    public void decodeZipFile(File fileInputPath, File fileOutputPath) {
+    public void decodeZipFile(final File fileInputPath, final File fileOutputPath) {
         byte[] buffer = new byte[1024];
 
         try {

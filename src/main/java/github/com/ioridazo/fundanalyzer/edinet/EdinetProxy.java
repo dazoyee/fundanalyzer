@@ -21,11 +21,9 @@ import java.util.Map;
 @Component
 public class EdinetProxy {
 
-    RestOperations restOperations;
+    final private RestOperations restOperations;
 
-    public EdinetProxy(
-            final RestOperations restOperations
-    ) {
+    public EdinetProxy(final RestOperations restOperations) {
         this.restOperations = restOperations;
     }
 
