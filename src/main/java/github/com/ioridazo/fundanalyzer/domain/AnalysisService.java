@@ -18,8 +18,7 @@ import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBe
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
-import github.com.ioridazo.fundanalyzer.edinet.entity.response.Response;
+import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -98,13 +97,9 @@ public class AnalysisService {
         return "会社を登録しました\n";
     }
 
-    public Response documentList() {
-        return proxy.documentList(new ListRequestParameter("2020-04-01", ListType.DEFAULT));
-    }
-
     public String insertDocumentList(final ListRequestParameter parameter) {
-        Response response = proxy.documentList(parameter);
-        if (response.getResults() != null)
+        EdinetResponse response = proxy.documentList(parameter);
+        if (response.getResults() != null) {
             response.getResults().forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results)));
         return "書類一覧を登録できました。\n";
     }

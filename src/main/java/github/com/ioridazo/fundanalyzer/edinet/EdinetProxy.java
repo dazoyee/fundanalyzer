@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.edinet;
 
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.edinet.entity.response.Response;
+import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,10 +27,10 @@ public class EdinetProxy {
         this.restOperations = restOperations;
     }
 
-    public Response documentList(ListRequestParameter parameter) {
+    public EdinetResponse documentList(ListRequestParameter parameter) {
         return restOperations.getForObject(
                 "/api/v1/documents.json?date={date}&type={type}",
-                Response.class,
+                EdinetResponse.class,
                 param(parameter)
         );
     }

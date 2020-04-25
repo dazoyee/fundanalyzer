@@ -5,7 +5,6 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequest
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
-import github.com.ioridazo.fundanalyzer.edinet.entity.response.Response;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,11 +21,6 @@ public class AnalysisController {
     @GetMapping("/company")
     public String company() {
         return service.company();
-    }
-
-    @GetMapping("/edinet")
-    public Response edinet() {
-        return service.documentList();
     }
 
     @GetMapping("/insert/document/list/{date}/{type}")
