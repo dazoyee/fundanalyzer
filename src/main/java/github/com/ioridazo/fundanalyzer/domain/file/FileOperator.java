@@ -28,12 +28,14 @@ public class FileOperator {
             BufferedInputStream bis = new BufferedInputStream(fis);
             ZipInputStream zis = new ZipInputStream(bis, Charset.forName("MS932"));
 
-            if (!fileOutputPath.exists()) fileOutputPath.mkdir();
+            if (!fileOutputPath.exists()) //noinspection ResultOfMethodCallIgnored
+                fileOutputPath.mkdir();
 
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
                 File newFile = new File(fileOutputPath + "/" + File.separator + zipEntry.getName());
 
+                //noinspection ResultOfMethodCallIgnored
                 new File(newFile.getParent()).mkdirs();
 
                 FileOutputStream fos = new FileOutputStream(newFile);

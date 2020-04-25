@@ -9,7 +9,7 @@ public enum CashFlowStatementEnum {
     // 何か
     ;
 
-    private String subject;
+    private final String subject;
 
     CashFlowStatementEnum(String subject) {
         this.subject = subject;
@@ -18,7 +18,7 @@ public enum CashFlowStatementEnum {
     @JsonCreator
     public static CashFlowStatementEnum fromValue(String subject) {
         return Arrays.stream(values())
-                .filter(v -> v.subject == subject)
+                .filter(v -> v.subject.equals(subject))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(subject)));
     }

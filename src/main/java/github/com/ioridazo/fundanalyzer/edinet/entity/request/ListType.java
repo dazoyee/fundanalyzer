@@ -18,7 +18,7 @@ public enum ListType {
     @JsonCreator
     public static ListType fromValue(String code) {
         return Arrays.stream(values())
-                .filter(v -> v.code == code)
+                .filter(v -> v.code.equals(code))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
     }

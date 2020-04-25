@@ -12,9 +12,9 @@ public enum Consolidated {
     NULL("9", "情報なし"),
     ;
 
-    private String code;
+    private final String code;
 
-    private String name;
+    private final String name;
 
     Consolidated(String code, String name) {
         this.code = code;
@@ -24,7 +24,7 @@ public enum Consolidated {
     @JsonCreator
     public static Consolidated fromValue(String code) {
         return Arrays.stream(values())
-                .filter(v -> v.code == code)
+                .filter(v -> v.code.equals(code))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
     }

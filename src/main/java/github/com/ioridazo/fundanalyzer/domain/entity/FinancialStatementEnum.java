@@ -13,9 +13,9 @@ public enum FinancialStatementEnum {
 
     ;
 
-    private String id;
+    private final String id;
 
-    private String name;
+    private final String name;
 
     FinancialStatementEnum(String id, String name) {
         this.id = id;
@@ -25,7 +25,7 @@ public enum FinancialStatementEnum {
     @JsonCreator
     public static FinancialStatementEnum fromValue(String code) {
         return Arrays.stream(values())
-                .filter(v -> v.id == code)
+                .filter(v -> v.id.equals(code))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
     }

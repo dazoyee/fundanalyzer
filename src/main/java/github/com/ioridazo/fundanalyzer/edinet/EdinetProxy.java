@@ -36,7 +36,8 @@ public class EdinetProxy {
     }
 
     public void documentAcquisition(File storagePath, AcquisitionRequestParameter parameter) {
-        if (!storagePath.exists()) storagePath.mkdir();
+        if (!storagePath.exists()) //noinspection ResultOfMethodCallIgnored
+            storagePath.mkdir();
 
         RequestCallback requestCallback =
                 request -> request
@@ -58,15 +59,15 @@ public class EdinetProxy {
         );
     }
 
-    private Map param(ListRequestParameter parameter) {
-        var param = new HashMap<>();
+    private Map<String, String> param(ListRequestParameter parameter) {
+        var param = new HashMap<String, String>();
         param.put("date", parameter.getDate());
         param.put("type", parameter.getType().toValue());
         return param;
     }
 
-    private Map param(AcquisitionRequestParameter parameter) {
-        var param = new HashMap<>();
+    private Map<String, String> param(AcquisitionRequestParameter parameter) {
+        var param = new HashMap<String, String>();
         param.put("docId", parameter.getDocId());
         param.put("type", parameter.getType().toValue());
         return param;

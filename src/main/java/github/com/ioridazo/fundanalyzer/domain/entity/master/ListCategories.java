@@ -12,9 +12,9 @@ public enum ListCategories {
     NULL("9", "情報なし"),
     ;
 
-    private String code;
+    private final String code;
 
-    private String name;
+    private final String name;
 
     ListCategories(String code, String name) {
         this.code = code;
@@ -24,7 +24,7 @@ public enum ListCategories {
     @JsonCreator
     public static ListCategories fromValue(String code) {
         return Arrays.stream(values())
-                .filter(v -> v.code == code)
+                .filter(v -> v.code.equals(code))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
     }

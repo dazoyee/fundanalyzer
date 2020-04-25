@@ -40,7 +40,7 @@ public enum ProfitAndLossStatementEnum {
 //    ("当期未処分利益又は当期未処理損失（△）"),
     ;
 
-    private String subject;
+    private final String subject;
 
     ProfitAndLossStatementEnum(String subject) {
         this.subject = subject;
@@ -49,7 +49,7 @@ public enum ProfitAndLossStatementEnum {
     @JsonCreator
     public static ProfitAndLossStatementEnum fromValue(String subject) {
         return Arrays.stream(values())
-                .filter(v -> v.subject == subject)
+                .filter(v -> v.subject.equals(subject))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(subject)));
     }

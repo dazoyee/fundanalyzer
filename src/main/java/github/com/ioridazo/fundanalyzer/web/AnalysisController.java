@@ -52,9 +52,9 @@ public class AnalysisController {
                 new AcquisitionRequestParameter(
                         docId,
                         AcquisitionType.DEFAULT.toValue().equals(type) ? AcquisitionType.DEFAULT :
-                                AcquisitionType.PDF.toValue() == type ? AcquisitionType.PDF :
-                                        AcquisitionType.ALTERNATIVE.toValue() == type ? AcquisitionType.ALTERNATIVE :
-                                                AcquisitionType.ENGLISH.toValue() == type ? AcquisitionType.ENGLISH :
+                                AcquisitionType.PDF.toValue().equals(type) ? AcquisitionType.PDF :
+                                        AcquisitionType.ALTERNATIVE.toValue().equals(type) ? AcquisitionType.ALTERNATIVE :
+                                                AcquisitionType.ENGLISH.toValue().equals(type) ? AcquisitionType.ENGLISH :
                                                         null
                 )
         );

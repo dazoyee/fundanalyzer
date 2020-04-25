@@ -28,9 +28,9 @@ public enum DocTypeCode {
     CORRECTED_HALF_YEARLY_REPORT("170", "訂正半期報告書"),
     ;
 
-    private String code;
+    private final String code;
 
-    private String name;
+    private final String name;
 
     DocTypeCode(String code, String name) {
         this.code = code;
@@ -40,7 +40,7 @@ public enum DocTypeCode {
     @JsonCreator
     public static DocTypeCode fromValue(String code) {
         return Arrays.stream(values())
-                .filter(v -> v.code == code)
+                .filter(v -> v.code.equals(code))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
     }

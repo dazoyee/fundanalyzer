@@ -89,7 +89,7 @@ public enum BalanceSheetEnum {
 //    ("負債純資産合計"),
     ;
 
-    private String subject;
+    private final String subject;
 
     BalanceSheetEnum(String subject) {
         this.subject = subject;
@@ -98,7 +98,7 @@ public enum BalanceSheetEnum {
     @JsonCreator
     public static BalanceSheetEnum fromValue(String subject) {
         return Arrays.stream(values())
-                .filter(v -> v.subject == subject)
+                .filter(v -> v.subject.equals(subject))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(subject)));
     }

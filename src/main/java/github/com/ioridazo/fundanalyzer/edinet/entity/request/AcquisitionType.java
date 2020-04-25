@@ -21,7 +21,7 @@ public enum AcquisitionType {
     @JsonCreator
     public static AcquisitionType fromValue(String code) {
         return Arrays.stream(values())
-                .filter(v -> v.code == code)
+                .filter(v -> v.code.equals(code))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
     }

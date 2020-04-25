@@ -142,7 +142,7 @@ public class AnalysisService {
         // StatementOfIncomeTextBlock
         try {
             return htmlScraping.scrape(
-                    fileList.stream().distinct().findAny().get(),
+                    fileList.stream().distinct().findAny().orElse(null),
                     "BalanceSheetTextBlock"
             );
         } catch (IOException e) {
@@ -153,23 +153,20 @@ public class AnalysisService {
 
     public void insert(final List<FinancialTableResultBean> beanList) {
 
-        beanList.forEach(resultBean -> {
-            balanceSheetDetailDao.findAll().stream()
-                    // スクレイピング結果とマスタから一致するものをフィルターにかける
-                    .filter(balanceSheetDetail -> resultBean.getSubject().equals(balanceSheetDetail.getName()))
-                    .findAny()
-                    // 一致するものが存在したら下記
-                    .ifPresent(balanceSheetDetail -> {
-                        balanceSheetDao.insert(new BalanceSheet(
-                                null,
-                                "0000",
-                                FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                                balanceSheetDetail.getId(),
-                                LocalDate.now(),
-                                replaceStringWithInteger(resultBean.getCurrentValue())
-                        ));
-                    });
-        });
+        beanList.forEach(resultBean -> balanceSheetDetailDao.findAll().stream()
+                // スクレイピング結果とマスタから一致するものをフィルターにかける
+                .filter(balanceSheetDetail -> resultBean.getSubject().equals(balanceSheetDetail.getName()))
+                .findAny()
+                // 一致するものが存在したら下記
+                .ifPresent(balanceSheetDetail -> balanceSheetDao.insert(new BalanceSheet(
+                        null,
+                        "0000",
+                        FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                        balanceSheetDetail.getId(),
+                        LocalDate.now(),
+                        replaceStringWithInteger(resultBean.getCurrentValue())
+                )))
+        );
     }
 
     private Integer replaceStringWithInteger(final String value) {
