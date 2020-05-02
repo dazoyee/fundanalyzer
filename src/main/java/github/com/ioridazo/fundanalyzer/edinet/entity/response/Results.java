@@ -14,7 +14,7 @@ public class Results {
 
     // 書類管理番号
     @JsonProperty("docID")
-    private String docID;
+    private String docId;
 
     // 提出者EDINETコード
     @JsonProperty("edinetCode")

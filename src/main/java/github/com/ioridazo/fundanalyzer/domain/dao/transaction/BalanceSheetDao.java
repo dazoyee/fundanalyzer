@@ -1,26 +1,15 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.BalanceSheet;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.seasar.doma.Dao;
+import org.seasar.doma.Insert;
+import org.seasar.doma.boot.ConfigAutowireable;
+import org.seasar.doma.jdbc.Result;
 
-@Repository
-public class BalanceSheetDao {
+@ConfigAutowireable
+@Dao
+public interface BalanceSheetDao {
 
-    private final JdbcTemplate jdbc;
-
-    public BalanceSheetDao(final JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
-
-    public void insert(final BalanceSheet balanceSheet) {
-        jdbc.update(
-                "INSERT INTO balance_sheet (company_id, financial_statement_id, detail_id, period, value) VALUES (?,?,?,?,?)",
-                balanceSheet.getCompanyCode(),
-                balanceSheet.getFinancialStatementId(),
-                balanceSheet.getDetailId(),
-                balanceSheet.getPeriod(),
-                balanceSheet.getValue()
-        );
-    }
+    @Insert
+    Result<BalanceSheet> insert(final BalanceSheet balanceSheet);
 }

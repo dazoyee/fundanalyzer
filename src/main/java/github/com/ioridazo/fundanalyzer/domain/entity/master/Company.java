@@ -1,43 +1,47 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
+import org.seasar.doma.Column;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Value
+@Entity(immutable = true)
+@Table(name = "company")
 public class Company {
 
     // 証券コード
-    private String code;
+    @Id
+    String code;
 
     // 銘柄名
-    private String companyName;
+    String companyName;
 
     // 業種
-    private String industryId;
+    String industryId;
 
     // EDINETコード
-    private String edinetCode;
+    String edinetCode;
 
     // 上場区分
-    private ListCategories listCategories;
+    ListCategories listCategories;
 
     // 連結の有無
-    private Consolidated consolidated;
+    Consolidated consolidated;
 
     // 資本金
-    private Integer capitalStock;
+    Integer capitalStock;
 
     // 決算日
-    private String settlementDate;
+    String settlementDate;
 
     // 登録日
-    private LocalDateTime insertDate;
+    @Column(updatable = false)
+    LocalDateTime insertDate;
 
     // 更新日
-    private LocalDateTime updateDate;
+    LocalDateTime updateDate;
 }

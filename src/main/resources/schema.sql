@@ -112,11 +112,11 @@ create TABLE edinet_document(
 create TABLE document(
   doc_id CHAR(8) NOT NULL REFERENCES edinet_document(doc_id),
   doc_type_code CHAR(3),
-  downloaded CHAR(1),
-  decoded CHAR(1),
-  scraped_balance_sheet CHAR(1),
-  scraped_profit_and_less_statement CHAR(1),
-  scraped_cash_flow_statement CHAR(1),
+  downloaded CHAR(1) DEFAULT '0',
+  decoded CHAR(1) DEFAULT '0',
+  scraped_balance_sheet CHAR(1) DEFAULT '0',
+  scraped_profit_and_less_statement CHAR(1) DEFAULT '0',
+  scraped_cash_flow_statement CHAR(1) DEFAULT '0',
   PRIMARY KEY(doc_id)
 );
 

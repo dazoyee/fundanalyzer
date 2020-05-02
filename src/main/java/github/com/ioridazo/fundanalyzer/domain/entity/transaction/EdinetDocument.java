@@ -1,93 +1,97 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
+import org.seasar.doma.Column;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Value
+@Entity(immutable = true)
+@Table(name = "edinet_document")
 public class EdinetDocument {
 
-    private String docId;
+    @Id
+    String docId;
 
     // 提出者EDINETコード
-    private String edinetCode;
+    String edinetCode;
 
     // 提出者証券コード
-    private String secCode;
+    String secCode;
 
     // 提出者法人番号
-    private String jcn;
+    String jcn;
 
     // 提出者名
-    private String filerName;
+    String filerName;
 
     // ファンドコード
-    private String fundCode;
+    String fundCode;
 
     // 府令コード
-    private String ordinanceCode;
+    String ordinanceCode;
 
     // 様式コード
-    private String formCode;
+    String formCode;
 
     // 書類種別コード
-    private String docTypeCode;
+    String docTypeCode;
 
     // 期間（自）
-    private String periodStart;
+    String periodStart;
 
     // 期間（至）
-    private String periodEnd;
+    String periodEnd;
 
     // 提出日時
-    private String submitDateTime;
+    String submitDateTime;
 
     // 提出書類概要
-    private String docDescription;
+    String docDescription;
 
     //発行会社EDINETコード
-    private String issuerEdinetCode;
+    String issuerEdinetCode;
 
     // 対象EDINETコード
-    private String subjectEdinetCode;
+    String subjectEdinetCode;
 
     // 小会社EDINETコード
-    private String subsidiaryEdinetCode;
+    String subsidiaryEdinetCode;
 
     // 臨報提出事由
-    private String currentReportReason;
+    String currentReportReason;
 
     // 親書類管理番号
-    private String parentDocID;
+    String parentDocID;
 
     // 操作日時
-    private String opeDateTime;
+    String opeDateTime;
 
     // 取下区分
-    private String withdrawalStatus;
+    String withdrawalStatus;
 
     // 書類情報修正区分
-    private String docInfoEditStatus;
+    String docInfoEditStatus;
 
     // 開示不開示区分
-    private String disclosureStatus;
+    String disclosureStatus;
 
     // XBRL有無フラグ
-    private String xbrlFlag;
+    String xbrlFlag;
 
     // PDF有無フラグ
-    private String pdfFlag;
+    String pdfFlag;
 
     // 代替書面・添付文書有無フラグ
-    private String attachDocFlag;
+    String attachDocFlag;
 
     // 英文ファイル有無フラグ
-    private String englishDocFlag;
+    String englishDocFlag;
 
     //登録日
-    private LocalDateTime insertDate;
+    @Column(updatable = false)
+    LocalDateTime insertDate;
 }

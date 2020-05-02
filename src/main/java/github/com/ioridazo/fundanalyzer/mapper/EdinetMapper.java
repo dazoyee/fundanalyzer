@@ -7,7 +7,7 @@ public class EdinetMapper {
 
     public static EdinetDocument map(final Results results) {
         return new EdinetDocument(
-                results.getDocID(),
+                results.getDocId(),
                 results.getEdinetCode(),
                 results.getSecCode(),
                 results.getJcn(),

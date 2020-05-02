@@ -16,3 +16,7 @@ spring:
   #      charset: Windows-31J
   thymeleaf:
     encoding: UTF-8
+
+doma:
+  dialect: h2
+  naming: snake-upper-case

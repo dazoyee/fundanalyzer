@@ -1,33 +1,15 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.seasar.doma.Dao;
+import org.seasar.doma.Insert;
+import org.seasar.doma.boot.ConfigAutowireable;
+import org.seasar.doma.jdbc.Result;
 
-import java.time.LocalDateTime;
+@ConfigAutowireable
+@Dao
+public interface CompanyDao {
 
-@Repository
-public class CompanyDao {
-
-    private final JdbcTemplate jdbc;
-
-    public CompanyDao(final JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
-
-    public void insert(final Company company) {
-        jdbc.update(
-                "INSERT INTO company VALUES (?,?,?,?,?,?,?,?,?,?)",
-                company.getCode(),
-                company.getCompanyName(),
-                company.getIndustryId(),
-                company.getEdinetCode(),
-                company.getListCategories().toValue(),
-                company.getConsolidated().toValue(),
-                company.getCapitalStock(),
-                company.getSettlementDate(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
-    }
+    @Insert
+    Result<Company> insert(final Company company);
 }

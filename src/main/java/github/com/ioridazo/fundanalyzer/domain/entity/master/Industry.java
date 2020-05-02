@@ -1,15 +1,17 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Value
+@Entity(immutable = true)
+@Table(name = "industry")
 public class Industry {
 
-    private String id;
+    @Id
+    String id;
 
-    private String name;
+    String name;
 }

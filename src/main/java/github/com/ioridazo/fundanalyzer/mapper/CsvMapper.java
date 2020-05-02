@@ -30,7 +30,7 @@ public class CsvMapper {
         return Optional.of(new Company(
                 resultBean.getSecuritiesCode(),
                 resultBean.getSubmitterName(),
-                industryDao.findByName(resultBean.getIndustry()).getId(),
+                industryDao.selectByName(resultBean.getIndustry()).getId(),
                 resultBean.getEdinetCode(),
                 mapToListed(resultBean.getListCategories()),
                 mapToConsolidated(resultBean.getConsolidated()),

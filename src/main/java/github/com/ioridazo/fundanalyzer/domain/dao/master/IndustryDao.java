@@ -1,38 +1,22 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.seasar.doma.Dao;
+import org.seasar.doma.Insert;
+import org.seasar.doma.Select;
+import org.seasar.doma.boot.ConfigAutowireable;
+import org.seasar.doma.jdbc.Result;
 
-@Repository
-public class IndustryDao {
+@ConfigAutowireable
+@Dao
+public interface IndustryDao {
 
-    private final JdbcTemplate jdbc;
+    @Select
+    Industry selectByName(final String name);
 
-    public IndustryDao(final JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
+    @Select
+    String countByName(final String name);
 
-    public Industry findByName(final String name) {
-        return jdbc.queryForObject(
-                "SELECT * FROM industry WHERE name = ?",
-                new BeanPropertyRowMapper<>(Industry.class),
-                name
-        );
-    }
-
-    public void insert(final Industry industry) {
-        var count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM industry WHERE name = ?",
-                String.class,
-                industry.getName());
-
-        if ("0".equals(count)) {
-            jdbc.update(
-                    "INSERT INTO industry (name) VALUES (?)",
-                    industry.getName()
-            );
-        }
-    }
+    @Insert
+    Result<Industry> insert(final Industry industry);
 }

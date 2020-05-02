@@ -1,66 +1,24 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import org.seasar.doma.Dao;
+import org.seasar.doma.Insert;
+import org.seasar.doma.Select;
+import org.seasar.doma.boot.ConfigAutowireable;
+import org.seasar.doma.jdbc.Result;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
-public class EdinetDocumentDao {
+@ConfigAutowireable
+@Dao
+public interface EdinetDocumentDao {
 
-    private final JdbcTemplate jdbc;
+    @Select
+    List<EdinetDocument> selectByDocTypeCode(final String docTypeCode);
 
-    public EdinetDocumentDao(final JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
+    @Select
+    String countByDocId(final String docId);
 
-    public List<EdinetDocument> findByDocTypeCode(String docTypeCode) {
-        return jdbc.query(
-                "SELECT * FROM edinet_document WHERE doc_type_code = ?",
-                new BeanPropertyRowMapper<>(EdinetDocument.class),
-                docTypeCode
-        );
-    }
-
-    public void insert(final EdinetDocument document) {
-        var count = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM edinet_document WHERE doc_id = ?",
-                String.class,
-                document.getDocId());
-        if ("0".equals(count)) {
-            jdbc.update(
-                    "INSERT INTO edinet_document VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    document.getDocId(),
-                    document.getEdinetCode(),
-                    document.getSecCode(),
-                    document.getJcn(),
-                    document.getFilerName(),
-                    document.getFundCode(),
-                    document.getOrdinanceCode(),
-                    document.getFormCode(),
-                    document.getDocTypeCode(),
-                    document.getPeriodStart(),
-                    document.getPeriodEnd(),
-                    document.getSubmitDateTime(),
-                    document.getDocDescription(),
-                    document.getIssuerEdinetCode(),
-                    document.getSubjectEdinetCode(),
-                    document.getSubsidiaryEdinetCode(),
-                    document.getCurrentReportReason(),
-                    document.getParentDocID(),
-                    document.getOpeDateTime(),
-                    document.getWithdrawalStatus(),
-                    document.getDocInfoEditStatus(),
-                    document.getDisclosureStatus(),
-                    document.getXbrlFlag(),
-                    document.getPdfFlag(),
-                    document.getAttachDocFlag(),
-                    document.getEnglishDocFlag(),
-                    LocalDateTime.now()
-            );
-        }
-    }
+    @Insert
+    Result<EdinetDocument> insert(final EdinetDocument edinetDocument);
 }

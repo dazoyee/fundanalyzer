@@ -1,28 +1,33 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import org.seasar.doma.Entity;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 @Builder
-@Data
-//@Entity // todo イミュータブル
+@Getter
+@AllArgsConstructor
+@Entity(immutable = true)
 @Table(name = "document")
 public class Document {
 
     @Id
-    private String docId;
+    private final String docId;
 
-    private String docTypeCode;
+    private final String docTypeCode;
 
-    private String downloaded;
+    private final String filerName;
 
-    private String decoded;
+    private final String downloaded;
 
-    private String scrapedBalanceSheet;
+    private final String decoded;
 
-    private String scrapedProfitAndLessStatement;
+    private final String scrapedBalanceSheet;
 
-    private String scrapedCashFlowStatement;
+    private final String scrapedProfitAndLessStatement;
+
+    private final String scrapedCashFlowStatement;
 }

@@ -1,21 +1,27 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
 import lombok.Value;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
 
 import java.time.LocalDate;
 
 @Value
+@Entity(immutable = true)
+@Table(name = "balance_sheet")
 public class BalanceSheet {
 
-    private String id;
+    @Id
+    String id;
 
-    private String companyCode;
+    String companyCode;
 
-    private String financialStatementId;
+    String financialStatementId;
 
-    private String detailId;
+    String detailId;
 
-    private LocalDate period;
+    LocalDate period;
 
-    private int value;
+    int value;
 }
