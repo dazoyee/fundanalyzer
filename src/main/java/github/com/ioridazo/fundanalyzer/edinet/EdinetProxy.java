@@ -27,7 +27,7 @@ public class EdinetProxy {
         this.restOperations = restOperations;
     }
 
-    public EdinetResponse documentList(ListRequestParameter parameter) {
+    public EdinetResponse list(ListRequestParameter parameter) {
         return restOperations.getForObject(
                 "/api/v1/documents.json?date={date}&type={type}",
                 EdinetResponse.class,
@@ -35,7 +35,7 @@ public class EdinetProxy {
         );
     }
 
-    public void documentAcquisition(File storagePath, AcquisitionRequestParameter parameter) {
+    public void acquisition(File storagePath, AcquisitionRequestParameter parameter) {
         if (!storagePath.exists()) //noinspection ResultOfMethodCallIgnored
             storagePath.mkdir();
 

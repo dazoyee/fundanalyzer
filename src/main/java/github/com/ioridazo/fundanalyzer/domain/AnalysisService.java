@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.BalanceSheetDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
@@ -17,6 +18,7 @@ import github.com.ioridazo.fundanalyzer.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
@@ -32,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,6 +56,7 @@ public class AnalysisService {
     private final BalanceSheetSubjectDao balanceSheetSubjectDao;
     private final BalanceSheetDetailDao balanceSheetDetailDao;
     private final EdinetDocumentDao edinetDocumentDao;
+    private final DocumentDao documentDao;
     private final BalanceSheetDao balanceSheetDao;
 
     public AnalysisService(
@@ -72,6 +74,7 @@ public class AnalysisService {
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
             final BalanceSheetDetailDao balanceSheetDetailDao,
             final EdinetDocumentDao edinetDocumentDao,
+            final DocumentDao documentDao,
             final BalanceSheetDao balanceSheetDao
     ) {
         this.pathCompany = pathCompany;
@@ -88,6 +91,7 @@ public class AnalysisService {
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
         this.balanceSheetDetailDao = balanceSheetDetailDao;
         this.edinetDocumentDao = edinetDocumentDao;
+        this.documentDao = documentDao;
         this.balanceSheetDao = balanceSheetDao;
     }
 
@@ -104,56 +108,61 @@ public class AnalysisService {
         return "会社を登録しました\n";
     }
 
-    public String documentList(final String date) {
-        handle(LocalDate.parse(date)
-                .datesUntil(LocalDate.parse(date).plusDays(1))
-                .collect(Collectors.toList()));
+    public String getDocumentFile(final String startDate, final String endDate, final String docTypeCode) {
+        // 書類リストをデータベースに登録する
+        insertDocument(LocalDate.parse(startDate), LocalDate.parse(endDate));
+
+        // zipファイルを取得して解凍する
+        unZipFiles(docTypeCode);
         return "書類一覧を登録できました。\n";
     }
 
-    public String documentList(final String startDate, final String endDate) {
-        handle(LocalDate.parse(startDate)
-                .datesUntil(LocalDate.parse(endDate).plusDays(1))
-                .collect(Collectors.toList()));
-        return "書類一覧を登録できました。\n";
+    private void insertDocument(final LocalDate startDate, final LocalDate endDate) {
+        startDate.datesUntil(endDate.plusDays(1)).collect(Collectors.toList())
+                .forEach(localDate -> Stream.of(localDate.toString())
+                                .filter(date -> Stream.of(date)
+                                        // EDINETに提出書類の問い合わせ
+                                        .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                                        .map(EdinetResponse::getMetadata)
+                                        .map(Metadata::getResultset)
+                                        .map(ResultSet::getCount)
+                                        .peek(c -> log.info("EDINETに提出された書類\tdate:{}\tcount:{}", localDate, c))
+                                        .anyMatch(c -> !"0".equals(c))
+                                )
+                                // 書類が0件ではないときは書類リストを取得する
+                                .map(date -> proxy.list(new ListRequestParameter(date, ListType.GET_LIST)))
+                                .map(EdinetResponse::getResults)
+                                .forEach(resultsList -> resultsList.forEach(results -> {
+                                    edinetDocumentDao.insert(EdinetMapper.map(results));
+                                    // TODO doma
+//                            documentDao.insert(Document.builder()
+//                                    .docId(results.getDocID())
+//                                    .docTypeCode(results.getDocTypeCode())
+//                                    .build());
+                                }))
+                );
     }
 
-    private void handle(final List<LocalDate> dateList) {
-        dateList.forEach(localDate -> Stream.of(localDate.toString())
-                .filter(date -> Stream.of(date)
-                        .map(d -> proxy.documentList(new ListRequestParameter(d, ListType.DEFAULT)))
-                        .map(EdinetResponse::getMetadata)
-                        .map(Metadata::getResultset)
-                        .map(ResultSet::getCount)
-                        .peek(c -> log.info("EDINETに提出された書類\tdate:{}\tcount:{}", localDate, c))
-                        .anyMatch(c -> !"0".equals(c))
-                )
-                .map(date -> proxy.documentList(new ListRequestParameter(date, ListType.GET_LIST)))
-                .map(EdinetResponse::getResults)
-                .forEach(resultsList -> resultsList.forEach(results -> edinetDocumentDao.insert(EdinetMapper.map(results))))
-        );
-    }
-
-    public List<String> docIdList(final String docTypeCode) {
-        ArrayList<String> docIdList = new ArrayList<>();
-        edinetDocumentDao.findByDocTypeCode(docTypeCode).forEach(document -> docIdList.add(document.getDocId()));
-        return docIdList;
-    }
-
-    public String documentAcquisition(final AcquisitionRequestParameter parameter) {
-        proxy.documentAcquisition(
-                pathEdinet,
-                parameter
-        );
-        return "書類取得できました。\n";
-    }
-
-    public String operateFile(final String docId) {
-        fileOperator.decodeZipFile(
-                new File(pathEdinet + "/" + docId),
-                new File(pathDecode + "/" + docId)
-        );
-        return "解凍できました。\n";
+    private void unZipFiles(final String docTypeCode) {
+        // 対象書類をリストにする
+        edinetDocumentDao.findByDocTypeCode(docTypeCode).forEach(document -> {
+//            if (document.getDownloaded().equals("0")) { TODO doma
+            // 書類をダウンロードする
+            log.info("書類をダウンロードを開始\t書類種別コード:{}\t銘柄名:{}", document.getDocTypeCode(), document.getFilerName());
+            proxy.acquisition(
+                    pathEdinet,
+                    new AcquisitionRequestParameter(document.getDocId(), AcquisitionType.DEFAULT)
+            );
+            // TODO ステータス更新：書類ダウンロード済み
+            // 書類を解凍する
+            fileOperator.decodeZipFile(
+                    new File(pathEdinet + "/" + document.getDocId()),
+                    new File(pathDecode + "/" + document.getDocId())
+            );
+            // TODO ステータス更新：書類zip解凍済み
+            log.info("正常終了\t書類コード:{}", document.getDocId());
+//            }
+        });
     }
 
     public List<FinancialTableResultBean> scrape(final String docId) {

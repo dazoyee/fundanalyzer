@@ -75,6 +75,7 @@ create TABLE cash_flow_statement_detail(
   UNIQUE KEY(subject_id, name)
 );
 
+--TODO VARCHAR==>CHAR
 --EDINETに提出された書類
 create TABLE edinet_document(
   doc_id VARCHAR(8) NOT NULL,
@@ -104,6 +105,18 @@ create TABLE edinet_document(
   attach_doc_flag VARCHAR(1),
   english_doc_flag VARCHAR(1),
   insert_date DATETIME NOT NULL,
+  PRIMARY KEY(doc_id)
+);
+
+--書類ステータス
+create TABLE document(
+  doc_id CHAR(8) NOT NULL REFERENCES edinet_document(doc_id),
+  doc_type_code CHAR(3),
+  downloaded CHAR(1),
+  decoded CHAR(1),
+  scraped_balance_sheet CHAR(1),
+  scraped_profit_and_less_statement CHAR(1),
+  scraped_cash_flow_statement CHAR(1),
   PRIMARY KEY(doc_id)
 );
 
