@@ -3,6 +3,8 @@ package github.com.ioridazo.fundanalyzer.mapper;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Results;
 
+import java.time.LocalDateTime;
+
 public class EdinetMapper {
 
     public static EdinetDocument map(final Results results) {
@@ -33,7 +35,7 @@ public class EdinetMapper {
                 results.getPdfFlag(),
                 results.getAttachDocFlag(),
                 results.getEnglishDocFlag(),
-                null
+                LocalDateTime.now()
         );
     }
 }

@@ -17,7 +17,7 @@ public interface DocumentDao {
     @Select
     List<Document> selectByDocTypeCode(final String docTypeCode);
 
-    @Insert
+    @Insert(excludeNull = true)
     Result<Document> insert(final Document document);
 
     @Update
