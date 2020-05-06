@@ -27,10 +27,10 @@ public class Company {
     String edinetCode;
 
     // 上場区分
-    ListCategories listCategories;
+    String listCategories;
 
     // 連結の有無
-    Consolidated consolidated;
+    String consolidated;
 
     // 資本金
     Integer capitalStock;

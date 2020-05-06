@@ -17,6 +17,6 @@ public interface IndustryDao {
     @Select
     String countByName(final String name);
 
-    @Insert
+    @Insert(include = "name")
     Result<Industry> insert(final Industry industry);
 }

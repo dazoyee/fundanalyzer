@@ -106,6 +106,7 @@ public class AnalysisService {
         resultBeanList.forEach(resultBean -> {
             if ("0".equals(industryDao.countByName(resultBean.getIndustry())))
                 industryDao.insert(new Industry(null, resultBean.getIndustry()));
+            // TODO ２回目のINSERTへの処理
             csvMapper.map(resultBean).ifPresent(companyDao::insert);
         });
         return "会社を登録しました\n";

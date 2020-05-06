@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ListCategories;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated.CONSOLIDATED;
@@ -30,14 +31,14 @@ public class CsvMapper {
         return Optional.of(new Company(
                 resultBean.getSecuritiesCode(),
                 resultBean.getSubmitterName(),
-                industryDao.selectByName(resultBean.getIndustry()).getId(),
+                String.valueOf(industryDao.selectByName(resultBean.getIndustry()).getId()),
                 resultBean.getEdinetCode(),
-                mapToListed(resultBean.getListCategories()),
-                mapToConsolidated(resultBean.getConsolidated()),
+                mapToListed(resultBean.getListCategories()).toValue(),
+                mapToConsolidated(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate(),
-                null,
-                null));
+                LocalDateTime.now(),
+                LocalDateTime.now()));
     }
 
     private ListCategories mapToListed(final String value) {
