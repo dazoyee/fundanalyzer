@@ -20,40 +20,35 @@ public class FileOperator {
     public FileOperator() {
     }
 
-    public void decodeZipFile(final File fileInputPath, final File fileOutputPath) {
+    public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
         byte[] buffer = new byte[1024];
 
-        try {
-            FileInputStream fis = new FileInputStream(fileInputPath + ".zip");
-            BufferedInputStream bis = new BufferedInputStream(fis);
-            ZipInputStream zis = new ZipInputStream(bis, Charset.forName("MS932"));
+        FileInputStream fis = new FileInputStream(fileInputPath + ".zip");
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        ZipInputStream zis = new ZipInputStream(bis, Charset.forName("MS932"));
 
-            if (!fileOutputPath.exists()) //noinspection ResultOfMethodCallIgnored
-                fileOutputPath.mkdir();
+        if (!fileOutputPath.exists()) //noinspection ResultOfMethodCallIgnored
+            fileOutputPath.mkdir();
 
-            ZipEntry zipEntry = zis.getNextEntry();
-            while (zipEntry != null) {
-                File newFile = new File(fileOutputPath + "/" + File.separator + zipEntry.getName());
+        ZipEntry zipEntry = zis.getNextEntry();
+        while (zipEntry != null) {
+            File newFile = new File(fileOutputPath + "/" + File.separator + zipEntry.getName());
 
-                //noinspection ResultOfMethodCallIgnored
-                new File(newFile.getParent()).mkdirs();
+            //noinspection ResultOfMethodCallIgnored
+            new File(newFile.getParent()).mkdirs();
 
-                FileOutputStream fos = new FileOutputStream(newFile);
-                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fos);
+            FileOutputStream fos = new FileOutputStream(newFile);
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fos);
 
-                int len;
-                while ((len = zis.read(buffer)) > 0) {
-                    bufferedOutputStream.write(buffer, 0, len);
-                }
-                bufferedOutputStream.close();
-
-                zipEntry = zis.getNextEntry();
+            int len;
+            while ((len = zis.read(buffer)) > 0) {
+                bufferedOutputStream.write(buffer, 0, len);
             }
-            zis.closeEntry();
-            zis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.error("zipファイルの解凍に失敗しました。");
+            bufferedOutputStream.close();
+
+            zipEntry = zis.getNextEntry();
         }
+        zis.closeEntry();
+        zis.close();
     }
 }

@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.csv;
 
 import com.opencsv.bean.CsvToBeanBuilder;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -14,7 +15,11 @@ import java.util.List;
 public class CsvCommander {
 
     public <T> List<T> readCsv(final File file, final Charset charset, final Class<? extends T> beanClass) {
-        if (!file.exists()) throw new RuntimeException("ファイルがありません");
+        if (!file.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            file.mkdirs();
+            throw new FundanalyzerRuntimeException("対象ファイルがありませんでした。");
+        }
 
         return new CsvToBeanBuilder<T>(reader(file, charset))
                 .withType(beanClass)
@@ -27,7 +32,7 @@ public class CsvCommander {
         try {
             return Files.newBufferedReader(file.toPath(), charset);
         } catch (IOException e) {
-            throw new RuntimeException("ファイル形式に問題がありました");
+            throw new FundanalyzerRuntimeException("ファイル形式に問題があったため、読み取り出来ませんでした。", e);
         }
     }
 }

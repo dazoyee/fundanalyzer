@@ -26,16 +26,19 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -117,8 +120,8 @@ public class AnalysisService {
         insertDocument(LocalDate.parse(startDate), LocalDate.parse(endDate));
 
         // zipファイルを取得して解凍する
-        unZipFiles(docTypeCode);
-        return "書類一覧を登録できました。\n";
+        final var unZipFiles = unZipFiles(docTypeCode);
+        return "書類リストをデータベースに登録完了\nzipファイルを取得して解凍完了\n成功：" + unZipFiles.getFirst().size() + "\t失敗：" + unZipFiles.getSecond().size() + "\n";
     }
 
     private void insertDocument(final LocalDate startDate, final LocalDate endDate) {
@@ -148,7 +151,10 @@ public class AnalysisService {
                 );
     }
 
-    private void unZipFiles(final String docTypeCode) {
+    private Pair<List<String>, List<String>> unZipFiles(final String docTypeCode) {
+        List<String> successList = new ArrayList<>();
+        List<String> failureList = new ArrayList<>();
+
         // 対象書類をリストにする
         documentDao.selectByDocTypeCode(docTypeCode).forEach(document -> {
             if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
@@ -160,14 +166,21 @@ public class AnalysisService {
                 );
                 documentDao.update(Document.builder().downloaded(DocumentStatus.DONE.toValue()).build());
                 // 書類を解凍する
-                fileOperator.decodeZipFile(
-                        new File(pathEdinet + "/" + document.getDocId()),
-                        new File(pathDecode + "/" + document.getDocId())
-                );
-                documentDao.update(Document.builder().decoded(DocumentStatus.DONE.toValue()).build());
-                log.info("正常終了\t書類コード:{}", document.getDocId());
+                try {
+                    fileOperator.decodeZipFile(
+                            new File(pathEdinet + "/" + document.getDocId()),
+                            new File(pathDecode + "/" + document.getDocId())
+                    );
+                    documentDao.update(Document.builder().decoded(DocumentStatus.DONE.toValue()).build());
+                    successList.add(document.getDocId());
+                    log.info("正常終了\t書類コード:{}", document.getDocId());
+                } catch (IOException e) {
+                    log.error("zipファイルの解凍に失敗しました。対象ファイル：{}", document.getDocId());
+                    failureList.add(document.getDocId());
+                }
             }
         });
+        return Pair.of(successList, failureList);
     }
 
     public List<FinancialTableResultBean> scrape(final String docId) {
@@ -176,7 +189,7 @@ public class AnalysisService {
                 "honbun"
         );
         if (fileList.stream().distinct().count() != 1) {
-            throw new RuntimeException("ファイルが複数ありました");
+            throw new FundanalyzerRuntimeException("ファイルが複数ありました");
         }
         // StatementOfIncomeTextBlock
         try {
@@ -186,7 +199,7 @@ public class AnalysisService {
             );
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("スクレイピングに失敗しました");
+            throw new FundanalyzerRuntimeException("スクレイピングに失敗しました");
         }
     }
 

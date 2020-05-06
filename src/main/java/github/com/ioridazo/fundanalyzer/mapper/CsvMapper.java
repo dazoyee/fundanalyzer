@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ListCategories;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -45,13 +46,13 @@ public class CsvMapper {
         if (LISTED.toName().equals(value)) return LISTED;
         else if (UNLISTED.toName().equals(value)) return UNLISTED;
         else if (value.isEmpty()) return ListCategories.NULL;
-        else throw new RuntimeException("マッピングエラー");
+        else throw new FundanalyzerRuntimeException("マッピングエラー");
     }
 
     private Consolidated mapToConsolidated(final String value) {
         if (CONSOLIDATED.toName().equals(value)) return CONSOLIDATED;
         else if (NO_CONSOLIDATED.toName().equals(value)) return NO_CONSOLIDATED;
         else if (value.isEmpty()) return Consolidated.NULL;
-        else throw new RuntimeException("マッピングエラー");
+        else throw new FundanalyzerRuntimeException("マッピングエラー");
     }
 }
