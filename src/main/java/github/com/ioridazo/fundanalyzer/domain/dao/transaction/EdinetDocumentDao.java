@@ -14,6 +14,9 @@ import java.util.List;
 public interface EdinetDocumentDao {
 
     @Select
+    List<EdinetDocument> selectByDocId(final String docId);
+
+    @Select
     List<EdinetDocument> selectByDocTypeCode(final String docTypeCode);
 
     @Select
