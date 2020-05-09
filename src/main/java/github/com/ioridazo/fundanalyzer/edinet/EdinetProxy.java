@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.edinet;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -82,7 +81,7 @@ public class EdinetProxy {
                             Files.copy(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip"));
                         } catch (final FileAlreadyExistsException e) {
                             log.error("重複ファイル：\"{}\"", e.getFile());
-                            throw new FundanalyzerFileException("ファイルが既に存在しています。スタックトレースを参考に確認してください。", e);
+                            throw e;
                         }
                         return null;
                     },
@@ -111,8 +110,13 @@ public class EdinetProxy {
                         "EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", e);
             }
         } catch (final ResourceAccessException e) {
-            throw new FundanalyzerRestClientException(
-                    "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+            //noinspection StatementWithEmptyBody
+            if (e.getCause() instanceof FileAlreadyExistsException) {
+                // ファイルが既に存在していた場合、throwしない
+            } else {
+                throw new FundanalyzerRestClientException(
+                        "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+            }
         }
     }
 }

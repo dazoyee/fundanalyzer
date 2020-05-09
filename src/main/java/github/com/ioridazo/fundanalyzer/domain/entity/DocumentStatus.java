@@ -7,8 +7,9 @@ import java.util.Arrays;
 
 public enum DocumentStatus {
 
-    NOT_YET("0", "未済"),
-    DONE("1", "済"),
+    NOT_YET("0", "未着手"),
+    DONE("1", "完了"),
+    ERROR("9", "失敗"),
     ;
 
     private final String code;

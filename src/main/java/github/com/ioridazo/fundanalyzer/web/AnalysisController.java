@@ -21,18 +21,11 @@ public class AnalysisController {
 
     @GetMapping("/edinet/{date}")
     public String documentList(@PathVariable String date) {
-        return service.getDocumentFile(date, date, "120");
+        return service.document(date, date, "120");
     }
 
     @GetMapping("/edinet/{fromDate}/{toDate}")
     public String documentList(@PathVariable String fromDate, @PathVariable String toDate) {
-        return service.getDocumentFile(fromDate, toDate, "120");
-    }
-
-    @GetMapping("/scrape/{docId}")
-    public String scrape(@PathVariable String docId) {
-        var resultBeanList = service.scrape(docId);
-        service.insert(resultBeanList);
-        return "insert\n";
+        return service.document(fromDate, toDate, "120");
     }
 }

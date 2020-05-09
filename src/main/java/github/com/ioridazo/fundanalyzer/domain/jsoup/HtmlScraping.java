@@ -1,6 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
@@ -9,20 +12,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
+@Slf4j
 @Component
 public class HtmlScraping {
 
     public HtmlScraping() {
     }
 
-    public List<File> findFile(final File filePath, final String keyWord) {
-
+    public Optional<File> findFile(final File filePath, final String keyWord)
+            throws FundanalyzerFileException, FundanalyzerRuntimeException {
         List<File> filePathList = new ArrayList<>();
+
         for (final File file : Objects.requireNonNull(filePath.listFiles())) {
-            var filePathName = new File(filePath + "/" + file.getName());
+            final var filePathName = new File(filePath + "/" + file.getName());
             // 対象のディレクトリから"honbun"ファイルを取得
-            if (file.getName().contains(keyWord)) {
+            if (file.getName().contains("honbun")) {
                 // クエリをhに絞って探索
                 List.of("h1", "h2", "h3", "h4", "h5").forEach(query -> {
                     try {
@@ -32,32 +38,42 @@ public class HtmlScraping {
                                 .children()
                                 .select(query)
                                 .forEach(hQuery -> {
-                                    if (hQuery.text().contains("貸借対照表")) filePathList.add(filePathName);
-                                    if (hQuery.text().contains("損益計算書")) filePathList.add(filePathName);
+                                    if (hQuery.text().contains(keyWord)) filePathList.add(filePathName);
                                 });
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.error("ファイル認識エラー：{}", filePathName.getName());
+                        throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
                     }
                 });
             }
         }
-        return filePathList;
+        if (filePathList.size() > 1) {
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", keyWord, file));
+            throw new FundanalyzerFileException(keyWord + "に関するファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
+        }
+        return filePathList.stream().findAny();
     }
 
-    public List<FinancialTableResultBean> scrape(final File file, final String keyWord) throws IOException {
+    public List<FinancialTableResultBean> scrapeFinancialStatement(
+            final File file, final String keyWord) throws FundanalyzerFileException {
         var resultBeanList = new ArrayList<FinancialTableResultBean>();
         // ファイルをスクレイピング
-        Jsoup.parse(file, "UTF-8")
-                // 条件に沿った要素を得る
-                .getElementsByAttributeValueContaining("name", keyWord)
-                .select("table")
-                .select("tr")
-                .forEach(tr -> {
-                    var tdList = new ArrayList<String>();
-                    tr.select("td").forEach(td -> tdList.add(td.text()));
-                    // 各要素をbeanに詰める
-                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
-                });
+        try {
+            Jsoup.parse(file, "UTF-8")
+                    // 条件に沿った要素を得る
+                    .getElementsByAttributeValueContaining("name", keyWord)
+                    .select("table")
+                    .select("tr")
+                    .forEach(tr -> {
+                        var tdList = new ArrayList<String>();
+                        tr.select("td").forEach(td -> tdList.add(td.text()));
+                        // 各要素をbeanに詰める
+                        resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
+                    });
+        } catch (IOException e) {
+            log.error("スクレイピングエラー：{}", file.getName());
+            throw new FundanalyzerFileException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+        }
         return resultBeanList;
     }
 }

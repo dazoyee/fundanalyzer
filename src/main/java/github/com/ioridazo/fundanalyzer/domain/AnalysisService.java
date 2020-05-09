@@ -12,9 +12,12 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.BalanceSheet;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import github.com.ioridazo.fundanalyzer.domain.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
@@ -26,6 +29,7 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
@@ -40,6 +44,7 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,16 +120,45 @@ public class AnalysisService {
         return "会社を登録しました\n";
     }
 
-    public String getDocumentFile(final String startDate, final String endDate, final String docTypeCode) {
+    public String document(final String startDate, final String endDate, final String docTypeCode) {
         // 書類リストをデータベースに登録する
         insertDocument(LocalDate.parse(startDate), LocalDate.parse(endDate));
 
         // zipファイルを取得して解凍する
         final var unZipFiles = unZipFiles(docTypeCode);
-        return "書類リストをデータベースに登録完了\nzipファイルを取得して解凍完了\n成功：" + unZipFiles.getFirst().size() + "\t失敗：" + unZipFiles.getSecond().size() + "\n";
+        unZipFiles.getFirst().forEach(docId -> {
+            final var edinetCode = edinetDocumentDao.selectByDocId(docId).stream()
+                    .map(EdinetDocument::getEdinetCode)
+                    .distinct()
+                    .findAny()
+                    .orElseThrow();
+            final var company = companyDao.selectByEdinetCode(edinetCode);
+            try {
+                // スクレイピングする
+                final var beanList = scrape(docId, FinancialStatementEnum.BALANCE_SHEET);
+                // DBに登録する
+                insert(
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        balanceSheetDetailDao.selectAll(),
+                        beanList,
+                        bs -> balanceSheetDao.insert((BalanceSheet) bs),
+                        company.getCode()
+                );
+            } catch (FundanalyzerRuntimeException e) {
+                System.out.println("スクレイピング失敗：" + docId);
+            }
+        });
+
+        final var documents = documentDao.selectByDocTypeCode(docTypeCode);
+        var count = documents.stream()
+                .map(Document::getScrapedBalanceSheet)
+                .filter(s -> s.equals(DocumentStatus.ERROR.toValue()))
+                .count();
+        // TODO return
+        return "成功：" + (documents.stream().count() - count) + "\t失敗：" + count + "\n";
     }
 
-    private void insertDocument(final LocalDate startDate, final LocalDate endDate) {
+    void insertDocument(final LocalDate startDate, final LocalDate endDate) {
         startDate.datesUntil(endDate.plusDays(1)).collect(Collectors.toList())
                 .forEach(localDate -> Stream.of(localDate.toString())
                         .filter(date -> Stream.of(date)
@@ -151,7 +185,7 @@ public class AnalysisService {
                 );
     }
 
-    private Pair<List<String>, List<String>> unZipFiles(final String docTypeCode) {
+    Pair<List<String>, List<String>> unZipFiles(final String docTypeCode) {
         List<String> successList = new ArrayList<>();
         List<String> failureList = new ArrayList<>();
 
@@ -164,14 +198,14 @@ public class AnalysisService {
                         pathEdinet,
                         new AcquisitionRequestParameter(document.getDocId(), AcquisitionType.DEFAULT)
                 );
-                documentDao.update(Document.builder().downloaded(DocumentStatus.DONE.toValue()).build());
+                documentDao.update(Document.builder().docId(document.getDocId()).downloaded(DocumentStatus.DONE.toValue()).build());
                 // 書類を解凍する
                 try {
                     fileOperator.decodeZipFile(
                             new File(pathEdinet + "/" + document.getDocId()),
                             new File(pathDecode + "/" + document.getDocId())
                     );
-                    documentDao.update(Document.builder().decoded(DocumentStatus.DONE.toValue()).build());
+                    documentDao.update(Document.builder().docId(document.getDocId()).decoded(DocumentStatus.DONE.toValue()).build());
                     successList.add(document.getDocId());
                     log.info("正常終了\t書類コード:{}", document.getDocId());
                 } catch (IOException e) {
@@ -183,38 +217,44 @@ public class AnalysisService {
         return Pair.of(successList, failureList);
     }
 
-    public List<FinancialTableResultBean> scrape(final String docId) {
-        var fileList = htmlScraping.findFile(
-                new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
-                "honbun"
-        );
-        if (fileList.stream().distinct().count() != 1) {
-            throw new FundanalyzerRuntimeException("ファイルが複数ありました");
-        }
-        // StatementOfIncomeTextBlock
+    List<FinancialTableResultBean> scrape(
+            final String docId,
+            final FinancialStatementEnum financialStatement) throws FundanalyzerRuntimeException {
         try {
-            return htmlScraping.scrape(
-                    fileList.stream().distinct().findAny().orElse(null),
-                    "BalanceSheetTextBlock"
+            final var file = htmlScraping.findFile(
+                    new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
+                    financialStatement.getName()
             );
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new FundanalyzerRuntimeException("スクレイピングに失敗しました");
+            return htmlScraping.scrapeFinancialStatement(
+                    file.orElseThrow(() ->
+                            new FundanalyzerRuntimeException(financialStatement.getName() + "に関連するファイルが存在しませんでした。")),
+                    financialStatement.getKeyWord()
+            );
+        } catch (FundanalyzerFileException | FundanalyzerRuntimeException e) {
+            documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.ERROR.toValue()).build());
+            throw new FundanalyzerRuntimeException(
+                    "スクレイピングに失敗しました。スタックトレースから内容を確認してください。");
         }
+        // "損益計算書"
+        // StatementOfIncomeTextBlock
     }
 
-    public void insert(final List<FinancialTableResultBean> beanList) {
-
-        beanList.forEach(resultBean -> balanceSheetDetailDao.selectAll().stream()
+    <T extends Detail> void insert(
+            final FinancialStatementEnum financialStatement,
+            final List<T> detailList,
+            final List<FinancialTableResultBean> beanList,
+            final Consumer<FinancialStatement> insert,
+            final String companyCode) {
+        beanList.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
-                .filter(balanceSheetDetail -> resultBean.getSubject().equals(balanceSheetDetail.getName()))
+                .filter(detail -> resultBean.getSubject().equals(detail.getName()))
                 .findAny()
                 // 一致するものが存在したら下記
-                .ifPresent(balanceSheetDetail -> balanceSheetDao.insert(new BalanceSheet(
+                .ifPresent(detail -> insert.accept(new FinancialStatement(
                         null,
-                        "0000",
-                        FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                        balanceSheetDetail.getId(),
+                        companyCode,
+                        financialStatement.toValue(),
+                        detail.getId(),
                         LocalDate.now(),
                         replaceStringWithInteger(resultBean.getCurrentValue())
                 )))
