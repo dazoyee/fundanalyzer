@@ -20,6 +20,6 @@ public interface DocumentDao {
     @Insert(excludeNull = true)
     Result<Document> insert(final Document document);
 
-    @Update
+    @Update(excludeNull = true)
     Result<Document> update(final Document document);
 }
