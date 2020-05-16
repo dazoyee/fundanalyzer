@@ -1,14 +1,16 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BalanceSheetSubject;
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.boot.ConfigAutowireable;
 
-@Repository
-public class BalanceSheetSubjectDao {
+import java.util.List;
 
-    private final JdbcTemplate jdbc;
+@ConfigAutowireable
+@Dao
+public interface BalanceSheetSubjectDao {
 
-    public BalanceSheetSubjectDao(final JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
+    @Select
+    List<BalanceSheetSubject> selectAll();
 }

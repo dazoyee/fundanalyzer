@@ -1,57 +1,30 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
+import lombok.Value;
+import org.seasar.doma.Entity;
+import org.seasar.doma.GeneratedValue;
+import org.seasar.doma.GenerationType;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
+
 import java.time.LocalDate;
 
+@Value
+@Entity(immutable = true)
+@Table(name = "financial_statement")
 public class FinancialStatement {
 
-    String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Integer id;
 
     String companyCode;
 
     String financialStatementId;
 
-    String detailId;
+    String subjectId;
 
     LocalDate period;
 
-    int value;
-
-    public FinancialStatement(
-            String id,
-            String companyCode,
-            String financialStatementId,
-            String detailId,
-            LocalDate period,
-            int value) {
-        this.id = id;
-        this.companyCode = companyCode;
-        this.financialStatementId = financialStatementId;
-        this.detailId = detailId;
-        this.period = period;
-        this.value = value;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getCompanyCode() {
-        return companyCode;
-    }
-
-    public String getFinancialStatementId() {
-        return financialStatementId;
-    }
-
-    public String getDetailId() {
-        return detailId;
-    }
-
-    public LocalDate getPeriod() {
-        return period;
-    }
-
-    public int getValue() {
-        return value;
-    }
+    Long value;
 }
