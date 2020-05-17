@@ -2,19 +2,16 @@ package github.com.ioridazo.fundanalyzer.domain;
 
 import github.com.ioridazo.fundanalyzer.domain.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.BalanceSheetDetailDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BalanceSheetSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.BalanceSheetDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.BalanceSheet;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
@@ -44,6 +41,8 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,12 +61,10 @@ public class AnalysisService {
     private final CsvMapper csvMapper;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
-    private final FinancialStatementDao financialStatementDao;
     private final BalanceSheetSubjectDao balanceSheetSubjectDao;
-    private final BalanceSheetDetailDao balanceSheetDetailDao;
     private final EdinetDocumentDao edinetDocumentDao;
     private final DocumentDao documentDao;
-    private final BalanceSheetDao balanceSheetDao;
+    private final FinancialStatementDao financialStatementDao;
 
     public AnalysisService(
             @Value("${settings.file.path.company}") final File pathCompany,
@@ -80,12 +77,10 @@ public class AnalysisService {
             final CsvMapper csvMapper,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
-            final FinancialStatementDao financialStatementDao,
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
-            final BalanceSheetDetailDao balanceSheetDetailDao,
             final EdinetDocumentDao edinetDocumentDao,
             final DocumentDao documentDao,
-            final BalanceSheetDao balanceSheetDao
+            final FinancialStatementDao financialStatementDao
     ) {
         this.pathCompany = pathCompany;
         this.pathEdinet = pathEdinet;
@@ -97,12 +92,10 @@ public class AnalysisService {
         this.csvMapper = csvMapper;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
-        this.financialStatementDao = financialStatementDao;
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
-        this.balanceSheetDetailDao = balanceSheetDetailDao;
         this.edinetDocumentDao = edinetDocumentDao;
         this.documentDao = documentDao;
-        this.balanceSheetDao = balanceSheetDao;
+        this.financialStatementDao = financialStatementDao;
     }
 
     public String company() {
@@ -124,30 +117,69 @@ public class AnalysisService {
         // 書類リストをデータベースに登録する
         insertDocument(LocalDate.parse(startDate), LocalDate.parse(endDate));
 
+        // FIXME 応急処置 取得済ファイルのステータス更新
+        for (final File file : Objects.requireNonNull(pathDecode.listFiles())) {
+            documentDao.update(Document.builder()
+                    .docId(file.getName())
+                    .downloaded(DocumentStatus.DONE.toValue())
+                    .decoded(DocumentStatus.DONE.toValue())
+                    .build()
+            );
+        }
+
         // zipファイルを取得して解凍する
-        final var unZipFiles = unZipFiles(docTypeCode);
-        unZipFiles.getFirst().forEach(docId -> {
+        // FIXME
+        var docIdList = unZipFiles(docTypeCode).getFirst();
+        docIdList = documentDao.selectByDocTypeCode("120").stream()
+                .filter(document -> document.getDecoded().equals(DocumentStatus.DONE.toValue()))
+                .map(Document::getDocId)
+                .collect(Collectors.toList());
+
+        docIdList.forEach(docId -> {
             final var edinetCode = edinetDocumentDao.selectByDocId(docId).stream()
                     .map(EdinetDocument::getEdinetCode)
                     .distinct()
                     .findAny()
                     .orElseThrow();
-            final var company = companyDao.selectByEdinetCode(edinetCode);
+
+            // FIXME
+            var company = "00000";
+            if (companyDao.selectByEdinetCode(edinetCode) != null) {
+                company = companyDao.selectByEdinetCode(edinetCode).getCode();
+            }
+
             try {
-                // スクレイピングする
-                final var beanList = scrape(docId, FinancialStatementEnum.BALANCE_SHEET);
-                // DBに登録する
-                insert(
-                        FinancialStatementEnum.BALANCE_SHEET,
-                        balanceSheetDetailDao.selectAll(),
-                        beanList,
-                        bs -> balanceSheetDao.insert((BalanceSheet) bs),
-                        company.getCode()
-                );
-            } catch (FundanalyzerRuntimeException e) {
+                try {
+                    // スクレイピングする
+                    final var beanList = scrape(docId, FinancialStatementEnum.BALANCE_SHEET);
+                    // DBに登録する
+                    insert(
+                            FinancialStatementEnum.BALANCE_SHEET,
+                            balanceSheetSubjectDao.selectAll(),
+                            beanList,
+                            financialStatementDao::insert,
+                            company
+                    );
+                } catch (FundanalyzerFileException e) {
+                    // CONSOLIDATED_BALANCE_SHEET
+                    final var beanList = scrape(docId, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET);
+                    insert(
+                            FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET,
+                            balanceSheetSubjectDao.selectAll(),
+                            beanList,
+                            financialStatementDao::insert,
+                            company
+                    );
+                }
+                documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.DONE.toValue()).build());
+            } catch (FundanalyzerRuntimeException | FundanalyzerFileException e) {
+                log.error(e.getMessage());  // TODO エラーハンドリング
+                documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.ERROR.toValue()).build());
                 System.out.println("スクレイピング失敗：" + docId);
             }
         });
+
+        // TODO ステータス更新のタイミングがバラバラなので、統一する
 
         final var documents = documentDao.selectByDocTypeCode(docTypeCode);
         var count = documents.stream()
@@ -158,7 +190,7 @@ public class AnalysisService {
         return "成功：" + (documents.stream().count() - count) + "\t失敗：" + count + "\n";
     }
 
-    void insertDocument(final LocalDate startDate, final LocalDate endDate) {
+    public void insertDocument(final LocalDate startDate, final LocalDate endDate) {
         startDate.datesUntil(endDate.plusDays(1)).collect(Collectors.toList())
                 .forEach(localDate -> Stream.of(localDate.toString())
                         .filter(date -> Stream.of(date)
@@ -174,17 +206,19 @@ public class AnalysisService {
                         .map(date -> proxy.list(new ListRequestParameter(date, ListType.GET_LIST)))
                         .map(EdinetResponse::getResults)
                         .forEach(resultsList -> resultsList.forEach(results -> {
-                            if ("0".equals(edinetDocumentDao.countByDocId(results.getDocId())))
+                            if ("0".equals(edinetDocumentDao.countByDocId(results.getDocId()))) {
                                 edinetDocumentDao.insert(EdinetMapper.map(results));
-                            documentDao.insert(Document.builder()
-                                    .docId(results.getDocId())
-                                    .docTypeCode(results.getDocTypeCode())
-                                    .filerName(results.getFilerName())
-                                    .build());
+                                documentDao.insert(Document.builder()
+                                        .docId(results.getDocId())
+                                        .docTypeCode(results.getDocTypeCode())
+                                        .filerName(results.getFilerName())
+                                        .build());
+                            }
                         }))
                 );
     }
 
+    // TODO 戻り値をList<String> -> String にする
     Pair<List<String>, List<String>> unZipFiles(final String docTypeCode) {
         List<String> successList = new ArrayList<>();
         List<String> failureList = new ArrayList<>();
@@ -214,27 +248,23 @@ public class AnalysisService {
                 }
             }
         });
+        // TODO return はデコードできたかどうかを返す -> DocumentStatusを返すか？
         return Pair.of(successList, failureList);
     }
 
     List<FinancialTableResultBean> scrape(
             final String docId,
-            final FinancialStatementEnum financialStatement) throws FundanalyzerRuntimeException {
-        try {
+            final FinancialStatementEnum financialStatement) throws FundanalyzerFileException {
             final var file = htmlScraping.findFile(
                     new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
-                    financialStatement.getName()
+                    financialStatement
             );
+            // スクレイピング処理
             return htmlScraping.scrapeFinancialStatement(
                     file.orElseThrow(() ->
                             new FundanalyzerRuntimeException(financialStatement.getName() + "に関連するファイルが存在しませんでした。")),
                     financialStatement.getKeyWord()
             );
-        } catch (FundanalyzerFileException | FundanalyzerRuntimeException e) {
-            documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.ERROR.toValue()).build());
-            throw new FundanalyzerRuntimeException(
-                    "スクレイピングに失敗しました。スタックトレースから内容を確認してください。");
-        }
         // "損益計算書"
         // StatementOfIncomeTextBlock
     }
@@ -256,15 +286,21 @@ public class AnalysisService {
                         financialStatement.toValue(),
                         detail.getId(),
                         LocalDate.now(),
-                        replaceStringWithInteger(resultBean.getCurrentValue())
+                        replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null)
                 )))
         );
     }
 
-    private Integer replaceStringWithInteger(final String value) {
-        return Integer.valueOf(value
-                .replace(",", "")
-                .replace("△", "-")
-                .replace("※２ ", ""));
+    private Optional<Long> replaceStringWithInteger(final String value) {
+        System.out.println(value);
+        return Optional.of(value)
+                .filter(s -> !s.isEmpty())
+                .map(s -> Long.parseLong(s
+                        .replace(",", "")
+                        .replace("△", "-")
+                        .replace("※２ ", "")
+                        .replace("*2 ", "")
+                ));
+        // TODO 数値に変換できなかったときのエラーハンドリング
     }
 }

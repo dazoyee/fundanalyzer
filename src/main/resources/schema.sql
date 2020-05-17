@@ -102,6 +102,6 @@ create TABLE financial_statement(
   financial_statement_id VARCHAR(10) NOT NULL,
   subject_id VARCHAR(10) NOT NULL,
   period DATE NOT NULL,
-  value INT NOT NULL,
+  value BIGINT,
   PRIMARY KEY(id)
 );

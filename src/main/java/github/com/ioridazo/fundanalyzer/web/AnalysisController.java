@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+
 @RestController
 public class AnalysisController {
 
@@ -19,13 +21,19 @@ public class AnalysisController {
         return service.company();
     }
 
-    @GetMapping("/edinet/{date}")
+    @GetMapping("/edinet/document/{date}")
     public String documentList(@PathVariable String date) {
+        service.insertDocument(LocalDate.parse(date), LocalDate.parse(date));
+        return "documentList\n";
+    }
+
+    @GetMapping("/edinet/{date}")
+    public String document(@PathVariable String date) {
         return service.document(date, date, "120");
     }
 
     @GetMapping("/edinet/{fromDate}/{toDate}")
-    public String documentList(@PathVariable String fromDate, @PathVariable String toDate) {
+    public String document(@PathVariable String fromDate, @PathVariable String toDate) {
         return service.document(fromDate, toDate, "120");
     }
 }

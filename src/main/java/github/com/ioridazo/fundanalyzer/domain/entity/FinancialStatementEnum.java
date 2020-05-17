@@ -8,8 +8,9 @@ import java.util.Arrays;
 public enum FinancialStatementEnum {
 
     BALANCE_SHEET("1", "貸借対照表", "BalanceSheetTextBlock"),
-    PROFIT_AND_LESS_STATEMENT("2", "損益計算書", "StatementOfIncomeTextBlock"),
-    CASH_FLOW_STATEMENT("3", "キャッシュ・フロー計算書", ""),
+    CONSOLIDATED_BALANCE_SHEET("2", "連結貸借対照表", "BalanceSheetTextBlock"),
+    PROFIT_AND_LESS_STATEMENT("3", "損益計算書", "StatementOfIncomeTextBlock"),
+    CASH_FLOW_STATEMENT("4", "キャッシュ・フロー計算書", ""),
 
     ;
 

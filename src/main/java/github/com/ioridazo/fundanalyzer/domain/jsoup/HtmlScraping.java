@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -21,7 +22,7 @@ public class HtmlScraping {
     public HtmlScraping() {
     }
 
-    public Optional<File> findFile(final File filePath, final String keyWord)
+    public Optional<File> findFile(final File filePath, final FinancialStatementEnum financialStatement)
             throws FundanalyzerFileException, FundanalyzerRuntimeException {
         List<File> filePathList = new ArrayList<>();
 
@@ -29,28 +30,24 @@ public class HtmlScraping {
             final var filePathName = new File(filePath + "/" + file.getName());
             // 対象のディレクトリから"honbun"ファイルを取得
             if (file.getName().contains("honbun")) {
-                // クエリをhに絞って探索
-                List.of("h1", "h2", "h3", "h4", "h5").forEach(query -> {
-                    try {
-                        // hクエリの存在する分だけ回す
-                        Jsoup.parse(filePathName, "UTF-8")
-                                .body()
-                                .children()
-                                .select(query)
-                                .forEach(hQuery -> {
-                                    if (hQuery.text().contains(keyWord)) filePathList.add(filePathName);
-                                });
-                    } catch (IOException e) {
-                        log.error("ファイル認識エラー：{}", filePathName.getName());
-                        throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+                try {
+                    if (Jsoup.parse(filePathName, "UTF-8")
+                            .getElementsByAttributeValueContaining("name", financialStatement.getKeyWord())
+                            .hasText()) {
+                        // キーワードが存在したらファイルリストに加える
+                        filePathList.add(filePathName);
                     }
-                });
+                } catch (IOException e) {
+                    log.error("ファイル認識エラー\tfilePath:\"{}\"", filePathName.getPath());
+                    throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+                }
             }
         }
         if (filePathList.size() > 1) {
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", keyWord, file));
-            throw new FundanalyzerFileException(keyWord + "に関するファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", financialStatement.getKeyWord(), file));
+            throw new FundanalyzerFileException(financialStatement.getKeyWord() + "に関するファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
         }
+        log.info("ファイル正常応答\tキーワード：{}\t対象ファイル：{}", financialStatement.getKeyWord(), filePathList.stream().findAny().orElse(null));
         return filePathList.stream().findAny();
     }
 
@@ -67,6 +64,7 @@ public class HtmlScraping {
                     .forEach(tr -> {
                         var tdList = new ArrayList<String>();
                         tr.select("td").forEach(td -> tdList.add(td.text()));
+                        System.out.println(tdList); // FIXME
                         // 各要素をbeanに詰める
                         resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
                     });
