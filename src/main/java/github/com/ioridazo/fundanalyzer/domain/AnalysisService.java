@@ -187,7 +187,7 @@ public class AnalysisService {
                 .filter(s -> s.equals(DocumentStatus.ERROR.toValue()))
                 .count();
         // TODO return
-        return "成功：" + (documents.stream().count() - count) + "\t失敗：" + count + "\n";
+        return "成功：" + ((long) documents.size() - count) + "\t失敗：" + count + "\n";
     }
 
     public void insertDocument(final LocalDate startDate, final LocalDate endDate) {
@@ -252,19 +252,24 @@ public class AnalysisService {
         return Pair.of(successList, failureList);
     }
 
+    public String period() {
+        final var period = htmlScraping.scrapePeriod(new File("C:\\Users\\iorid\\Desktop\\Xbrl_Search_20200517_145049\\S100G3R1\\XBRL\\PublicDoc"));
+        return period.get("period") + period.get("fromDate") + period.get("toDate") + "\n";
+    }
+
     List<FinancialTableResultBean> scrape(
             final String docId,
             final FinancialStatementEnum financialStatement) throws FundanalyzerFileException {
-            final var file = htmlScraping.findFile(
-                    new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
-                    financialStatement
-            );
-            // スクレイピング処理
-            return htmlScraping.scrapeFinancialStatement(
-                    file.orElseThrow(() ->
-                            new FundanalyzerRuntimeException(financialStatement.getName() + "に関連するファイルが存在しませんでした。")),
-                    financialStatement.getKeyWord()
-            );
+        final var file = htmlScraping.findFile(
+                new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
+                financialStatement
+        );
+        // スクレイピング処理
+        return htmlScraping.scrapeFinancialStatement(
+                file.orElseThrow(() ->
+                        new FundanalyzerRuntimeException(financialStatement.getName() + "に関連するファイルが存在しませんでした。")),
+                financialStatement.getKeyWord()
+        );
         // "損益計算書"
         // StatementOfIncomeTextBlock
     }
