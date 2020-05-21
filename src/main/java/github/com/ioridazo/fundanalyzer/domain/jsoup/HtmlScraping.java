@@ -49,10 +49,12 @@ public class HtmlScraping {
 
         // 対象のディレクトリから"honbun"ファイルを取得
         getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
-            final var filePathName = new File(filePath + "/" + file.getName());
-            if (elementsByKeyMatch(filePathName, new keyMatch("name", financialStatement.getKeyWord())).hasText()) {
-                // キーワードが存在したらファイルリストに加える
-                filePathList.add(filePathName);
+            if (file.isFile()) {
+                final var filePathName = new File(filePath + "/" + file.getName());
+                if (elementsByKeyMatch(filePathName, new keyMatch("name", financialStatement.getKeyWord())).hasText()) {
+                    // キーワードが存在したらファイルリストに加える
+                    filePathList.add(filePathName);
+                }
             }
         });
 
@@ -87,6 +89,7 @@ public class HtmlScraping {
     }
 
     Elements elementsByKeyMatch(final File file, final keyMatch keyMatch) {
+        System.out.println(file.getName());
         try {
             return Jsoup.parse(file, "UTF-8")
                     .getElementsByAttributeValueContaining(keyMatch.getKey(), keyMatch.getMatch());
