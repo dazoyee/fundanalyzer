@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.PeriodResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
@@ -12,15 +13,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.Normalizer;
-import java.time.LocalDate;
-import java.time.chrono.JapaneseChronology;
-import java.time.chrono.JapaneseDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -33,7 +27,7 @@ public class HtmlScraping {
     public HtmlScraping() {
     }
 
-    public Map<String, String> scrapePeriod(final File filePath) {
+    public PeriodResultBean scrapePeriod(final File filePath) {
         final var file = getFilesByTitleKeywordContaining("header", filePath)
                 .stream().findAny().orElseThrow(FundanalyzerRuntimeException::new);
         final var fiscalYearCoverPage = elementsByKeyMatch(file, new keyMatch("name", "FiscalYearCoverPage"));
@@ -45,9 +39,8 @@ public class HtmlScraping {
         } else if (accountingPeriodCoverPage.hasText()) {
             periodString = accountingPeriodCoverPage.text();
         }
-        final var period = new Period(periodString);
-        return Map.of("period", period.getPeriod(), "fromDate", period.getFromDate(), "toDate", period.getToDate());
-
+        System.out.println(periodString);
+        return new PeriodResultBean(periodString);
     }
 
     public Optional<File> findFile(final File filePath, final FinancialStatementEnum financialStatement)
@@ -100,35 +93,6 @@ public class HtmlScraping {
         } catch (IOException e) {
             log.error("ファイル認識エラー\tfilePath:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
-        }
-    }
-
-    @Value
-    static class Period {
-        String period;
-        String fromDate;
-        String toDate;
-
-        public Period(String scraped) {
-            this.period = Objects.requireNonNull(scraped)
-                    .substring(scraped.indexOf("第"), scraped.indexOf("期") + 1);
-            this.fromDate = parseLocalDateString(Objects.requireNonNull(scraped)
-                    .substring(scraped.indexOf("自　") + 2, scraped.indexOf("日") + 1));
-            this.toDate = parseLocalDateString(Objects.requireNonNull(scraped)
-                    .substring(scraped.indexOf("至　") + 2, scraped.lastIndexOf("日") + 1));
-        }
-
-        String parseLocalDateString(String scrapedDate) {
-            final var normalizeDate = Normalizer.normalize(scrapedDate, Normalizer.Form.NFKC);
-            try {
-                return LocalDate.from(JapaneseDate.from(
-                        DateTimeFormatter
-                                .ofPattern("Gy年M月d日")
-                                .withChronology(JapaneseChronology.INSTANCE)
-                                .parse(normalizeDate))).toString();
-            } catch (DateTimeParseException e) {
-                return LocalDate.parse(normalizeDate, DateTimeFormatter.ofPattern("y年M月d日")).toString();
-            }
         }
     }
 

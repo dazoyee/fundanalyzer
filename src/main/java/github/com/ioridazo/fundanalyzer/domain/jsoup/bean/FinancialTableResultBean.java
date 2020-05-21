@@ -2,12 +2,26 @@ package github.com.ioridazo.fundanalyzer.domain.jsoup.bean;
 
 import lombok.Value;
 
+import java.util.Optional;
+
 @Value
 public class FinancialTableResultBean {
 
-    private String subject;
+    String subject;
 
-    private String previousValue;
+    String previousValue;
 
-    private String currentValue;
+    String currentValue;
+
+    public Optional<String> getSubject() {
+        return Optional.ofNullable(subject);
+    }
+
+    public Optional<String> getPreviousValue() {
+        return Optional.ofNullable(previousValue);
+    }
+
+//    public Optional<String> getCurrentValue() {
+//        return Optional.ofNullable(currentValue);
+//    }
 }

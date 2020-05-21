@@ -36,9 +36,4 @@ public class AnalysisController {
     public String document(@PathVariable String fromDate, @PathVariable String toDate) {
         return service.document(fromDate, toDate, "120");
     }
-
-    @GetMapping("/scrape")
-    public String scrape() {
-        return service.period();
-    }
 }

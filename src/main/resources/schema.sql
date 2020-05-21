@@ -101,7 +101,9 @@ create TABLE financial_statement(
   company_code CHAR(5) NOT NULL REFERENCES company(code),
   financial_statement_id VARCHAR(10) NOT NULL,
   subject_id VARCHAR(10) NOT NULL,
-  period DATE NOT NULL,
+  term VARCHAR(10) NOT NULL,
+  from_date DATE NOT NULL,
+  to_date DATE NOT NULL,
   value BIGINT,
   PRIMARY KEY(id)
 );

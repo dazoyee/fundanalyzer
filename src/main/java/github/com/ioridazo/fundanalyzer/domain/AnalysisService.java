@@ -18,6 +18,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialState
 import github.com.ioridazo.fundanalyzer.domain.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.PeriodResultBean;
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
@@ -113,6 +114,7 @@ public class AnalysisService {
         return "会社を登録しました\n";
     }
 
+    // TODO try-catchはこのパイプラインでまとめて処理する
     public String document(final String startDate, final String endDate, final String docTypeCode) {
         // 書類リストをデータベースに登録する
         insertDocument(LocalDate.parse(startDate), LocalDate.parse(endDate));
@@ -151,22 +153,24 @@ public class AnalysisService {
             try {
                 try {
                     // スクレイピングする
-                    final var beanList = scrape(docId, FinancialStatementEnum.BALANCE_SHEET);
+                    final var scrapeResultBean = scrape(docId, FinancialStatementEnum.BALANCE_SHEET);
                     // DBに登録する
                     insert(
                             FinancialStatementEnum.BALANCE_SHEET,
+                            scrapeResultBean.getFirst(),
                             balanceSheetSubjectDao.selectAll(),
-                            beanList,
+                            scrapeResultBean.getSecond(),
                             financialStatementDao::insert,
                             company
                     );
                 } catch (FundanalyzerFileException e) {
                     // CONSOLIDATED_BALANCE_SHEET
-                    final var beanList = scrape(docId, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET);
+                    final var scrapeResultBean = scrape(docId, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET);
                     insert(
                             FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET,
+                            scrapeResultBean.getFirst(),
                             balanceSheetSubjectDao.selectAll(),
-                            beanList,
+                            scrapeResultBean.getSecond(),
                             financialStatementDao::insert,
                             company
                     );
@@ -252,37 +256,32 @@ public class AnalysisService {
         return Pair.of(successList, failureList);
     }
 
-    public String period() {
-        final var period = htmlScraping.scrapePeriod(new File("C:\\Users\\iorid\\Desktop\\Xbrl_Search_20200517_145049\\S100G3R1\\XBRL\\PublicDoc"));
-        return period.get("period") + period.get("fromDate") + period.get("toDate") + "\n";
-    }
-
-    List<FinancialTableResultBean> scrape(
+    Pair<PeriodResultBean, List<FinancialTableResultBean>> scrape(
             final String docId,
             final FinancialStatementEnum financialStatement) throws FundanalyzerFileException {
-        final var file = htmlScraping.findFile(
-                new File(pathDecode + "/" + docId + "/XBRL/PublicDoc"),
-                financialStatement
-        );
+        final var targetFile = new File(pathDecode + "/" + docId + "/XBRL/PublicDoc");
         // スクレイピング処理
-        return htmlScraping.scrapeFinancialStatement(
-                file.orElseThrow(() ->
-                        new FundanalyzerRuntimeException(financialStatement.getName() + "に関連するファイルが存在しませんでした。")),
-                financialStatement.getKeyWord()
-        );
+        return Pair.of(
+                htmlScraping.scrapePeriod(targetFile),
+                htmlScraping.scrapeFinancialStatement(
+                        htmlScraping.findFile(targetFile, financialStatement).orElseThrow(() ->
+                                new FundanalyzerRuntimeException(financialStatement.getName() + "に関連するファイルが存在しませんでした。")),
+                        financialStatement.getKeyWord()
+                ));
         // "損益計算書"
         // StatementOfIncomeTextBlock
     }
 
     <T extends Detail> void insert(
             final FinancialStatementEnum financialStatement,
+            final PeriodResultBean period,
             final List<T> detailList,
             final List<FinancialTableResultBean> beanList,
             final Consumer<FinancialStatement> insert,
             final String companyCode) {
         beanList.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
-                .filter(detail -> resultBean.getSubject().equals(detail.getName()))
+                .filter(detail -> Objects.equals(resultBean.getSubject().orElse(null), detail.getName()))
                 .findAny()
                 // 一致するものが存在したら下記
                 .ifPresent(detail -> insert.accept(new FinancialStatement(
@@ -290,16 +289,17 @@ public class AnalysisService {
                         companyCode,
                         financialStatement.toValue(),
                         detail.getId(),
-                        LocalDate.now(),
+                        period.getTerm().orElseThrow(),
+                        period.getFromDate().orElseThrow(),
+                        period.getToDate().orElseThrow(),
                         replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null)
                 )))
         );
     }
 
     private Optional<Long> replaceStringWithInteger(final String value) {
-        System.out.println(value);
         return Optional.of(value)
-                .filter(s -> !s.isEmpty())
+                .filter(v -> !v.isEmpty())
                 .map(s -> Long.parseLong(s
                         .replace(",", "")
                         .replace("△", "-")
