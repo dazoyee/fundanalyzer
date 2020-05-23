@@ -7,15 +7,14 @@ import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.util.List;
+
 @ConfigAutowireable
 @Dao
 public interface IndustryDao {
 
     @Select
-    Industry selectByName(final String name);
-
-    @Select
-    String countByName(final String name);
+    List<Industry> selectAll();
 
     @Insert(include = "name")
     Result<Industry> insert(final Industry industry);

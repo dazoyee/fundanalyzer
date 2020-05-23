@@ -61,7 +61,6 @@ public class AnalysisService {
     private final CsvCommander csvCommander;
     private final FileOperator fileOperator;
     private final HtmlScraping htmlScraping;
-    private final CsvMapper csvMapper;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final BalanceSheetSubjectDao balanceSheetSubjectDao;
@@ -77,7 +76,6 @@ public class AnalysisService {
             final CsvCommander csvCommander,
             final FileOperator fileOperator,
             final HtmlScraping htmlScraping,
-            final CsvMapper csvMapper,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final BalanceSheetSubjectDao balanceSheetSubjectDao,
@@ -92,7 +90,6 @@ public class AnalysisService {
         this.csvCommander = csvCommander;
         this.fileOperator = fileOperator;
         this.htmlScraping = htmlScraping;
-        this.csvMapper = csvMapper;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.balanceSheetSubjectDao = balanceSheetSubjectDao;
@@ -104,17 +101,35 @@ public class AnalysisService {
     public String company() {
         log.info("CSVファイルから会社情報の取得処理を開始します。");
 
-        var resultBeanList = csvCommander.readCsv(
+        final var resultBeanList = csvCommander.readCsv(
                 pathCompany,
                 Charset.forName("windows-31j"),
                 EdinetCsvResultBean.class
         );
-        resultBeanList.forEach(resultBean -> {
-            if ("0".equals(industryDao.countByName(resultBean.getIndustry())))
-                industryDao.insert(new Industry(null, resultBean.getIndustry()));
-            // TODO ２回目のINSERTへの処理
-            csvMapper.map(resultBean).ifPresent(companyDao::insert);
-        });
+
+        final var resultBeanIndustryList = resultBeanList.stream()
+                .map(EdinetCsvResultBean::getIndustry)
+                .distinct()
+                .collect(Collectors.toList());
+
+        var dbIndustryList = industryDao.selectAll().stream()
+                .map(Industry::getName)
+                .collect(Collectors.toList());
+
+        // Industryの登録
+        resultBeanIndustryList.forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
+                .filter(rb -> dbIndustryList.stream().noneMatch(rb::equals))
+                .forEach(rb -> industryDao.insert(new Industry(null, rb)))
+        );
+
+        final var industryList = industryDao.selectAll();
+        final var companyList = companyDao.selectAll();
+        resultBeanList.forEach(resultBean -> Stream.of(resultBean)
+                .filter(rb -> companyList.stream()
+                        .map(Company::getCode)
+                        .noneMatch(code -> resultBean.getSecuritiesCode().equals(code)))
+                .forEach(rb -> CsvMapper.map(industryList, rb).ifPresent(companyDao::insert))
+        );
 
         log.info("会社情報をデータベースに正常に登録しました。");
 
