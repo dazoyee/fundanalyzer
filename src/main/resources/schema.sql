@@ -87,6 +87,7 @@ create TABLE document(
   doc_id CHAR(8) NOT NULL REFERENCES edinet_document(doc_id),
   doc_type_code CHAR(3),
   filer_name VARCHAR(128),
+  submit_date DATE NOT NULL,
   downloaded CHAR(1) NOT NULL DEFAULT '0' CHECK(downloaded IN('0', '1', '9')),
   decoded CHAR(1) NOT NULL DEFAULT '0' CHECK(decoded IN('0', '1', '9')),
   scraped_balance_sheet CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_balance_sheet IN('0', '1', '9')),

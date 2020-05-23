@@ -39,7 +39,6 @@ public class HtmlScraping {
         } else if (accountingPeriodCoverPage.hasText()) {
             periodString = accountingPeriodCoverPage.text();
         }
-        System.out.println(periodString);
         return new PeriodResultBean(periodString);
     }
 

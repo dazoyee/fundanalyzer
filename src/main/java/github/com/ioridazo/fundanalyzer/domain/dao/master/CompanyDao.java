@@ -7,12 +7,14 @@ import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.util.Optional;
+
 @ConfigAutowireable
 @Dao
 public interface CompanyDao {
 
     @Select
-    Company selectByEdinetCode(final String edinetCode);
+    Optional<Company> selectByEdinetCode(final String edinetCode);
 
     @Insert
     Result<Company> insert(final Company company);

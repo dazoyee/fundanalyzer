@@ -23,13 +23,13 @@ public class AnalysisController {
 
     @GetMapping("/edinet/document/{date}")
     public String documentList(@PathVariable String date) {
-        service.insertDocument(LocalDate.parse(date), LocalDate.parse(date));
+        service.insertDocumentList(LocalDate.parse(date));
         return "documentList\n";
     }
 
     @GetMapping("/edinet/{date}")
     public String document(@PathVariable String date) {
-        return service.document(date, date, "120");
+        return service.document(date, "120");
     }
 
     @GetMapping("/edinet/{fromDate}/{toDate}")

@@ -8,6 +8,7 @@ import org.seasar.doma.Update;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @ConfigAutowireable
@@ -15,7 +16,7 @@ import java.util.List;
 public interface DocumentDao {
 
     @Select
-    List<Document> selectByDocTypeCode(final String docTypeCode);
+    List<Document> selectByDateAndDocTypeCode(final LocalDate submitDate, final String docTypeCode);
 
     @Insert(excludeNull = true)
     Result<Document> insert(final Document document);
