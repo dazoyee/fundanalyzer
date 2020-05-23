@@ -1,11 +1,50 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
-import lombok.Value;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
 
-@Value
-public class BalanceSheetSubject {
+@Entity(immutable = true)
+@Table(name = "balance_sheet_detail")
+public class BalanceSheetSubject extends Detail {
 
-    private String id;
+    @Id
+    private final String id;
 
-    private String subject;
+    private final String outlineSubjectId;
+
+    private final String detailSubjectId;
+
+    private final String name;
+
+    public BalanceSheetSubject(
+            String id,
+            String outlineSubjectId,
+            String detailSubjectId,
+            String name) {
+        this.id = id;
+        this.outlineSubjectId = outlineSubjectId;
+        this.detailSubjectId = detailSubjectId;
+        this.name = name;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getOutlineSubjectId() {
+        return outlineSubjectId;
+    }
+
+    @Override
+    public String getDetailSubjectId() {
+        return detailSubjectId;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }

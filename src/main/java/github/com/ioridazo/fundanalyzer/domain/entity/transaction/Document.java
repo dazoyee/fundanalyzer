@@ -8,6 +8,8 @@ import org.seasar.doma.Entity;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
+import java.time.LocalDate;
+
 @Builder
 @Getter
 @AllArgsConstructor
@@ -23,6 +25,9 @@ public class Document {
 
     @Column(updatable = false)
     private final String filerName;
+
+    @Column(updatable = false)
+    private final LocalDate submitDate;
 
     private final String downloaded;
 

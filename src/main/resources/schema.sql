@@ -20,60 +20,34 @@ create TABLE company(
   PRIMARY KEY(code)
 );
 
---財務諸表
-create TABLE financial_statement(
-  id INT AUTO_INCREMENT,
-  name VARCHAR(20) UNIQUE NOT NULL,
-  PRIMARY KEY(id)
-);
-
---大項目一覧（貸借対照表）
+--貸借対照表
 create TABLE balance_sheet_subject(
   id INT AUTO_INCREMENT,
-  subject VARCHAR(20) UNIQUE NOT NULL,
-  PRIMARY KEY(id)
-);
-
---大項目一覧（損益計算書）
-create TABLE profit_and_less_statement_subject(
-  id INT AUTO_INCREMENT,
-  subject VARCHAR(20) UNIQUE NOT NULL,
-  PRIMARY KEY(id)
-);
-
---大項目一覧（キャッシュ・フロー計算書）
-create TABLE cash_flow_statement_subject(
-  id INT AUTO_INCREMENT,
-  subject VARCHAR(20) UNIQUE NOT NULL,
-  PRIMARY KEY(id)
-);
-
---小項目一覧（貸借対照表）
-create TABLE balance_sheet_detail(
-  id INT AUTO_INCREMENT,
-  subject_id VARCHAR(10) NOT NULL REFERENCES balance_sheet_subject(id),
+  outline_subject_id VARCHAR(10),
+  detail_subject_id VARCHAR(10),
   name VARCHAR(50) NOT NULL,
   PRIMARY KEY(id)
 --  UNIQUE KEY(subject_id, name)
 );
 
---小項目一覧（損益計算書）
-create TABLE profit_and_less_statement_detail(
+--損益計算書
+create TABLE profit_and_less_statement_subject(
   id INT AUTO_INCREMENT,
-  subject_id VARCHAR(10) NOT NULL REFERENCES profit_and_less_statement_subject(id),
+  outline_subject_id VARCHAR(10),
+  detail_subject_id VARCHAR(10),
   name VARCHAR(50) NOT NULL,
-  PRIMARY KEY(id),
-  UNIQUE KEY(subject_id, name)
+  PRIMARY KEY(id)
+--  UNIQUE KEY(subject_id, name)
 );
 
---小項目一覧（キャッシュ・フロー計算書）
-create TABLE cash_flow_statement_detail(
-  id INT AUTO_INCREMENT,
-  subject_id VARCHAR(10) NOT NULL REFERENCES cash_flow_statement_subject(id),
-  name VARCHAR(50) NOT NULL,
-  PRIMARY KEY(id),
-  UNIQUE KEY(subject_id, name)
-);
+--キャッシュ・フロー計算書
+--create TABLE cash_flow_statement_detail(
+--  id INT AUTO_INCREMENT,
+--  subject_id VARCHAR(10) NOT NULL REFERENCES cash_flow_statement_subject(id),
+--  name VARCHAR(50) NOT NULL,
+--  PRIMARY KEY(id),
+--  UNIQUE KEY(subject_id, name)
+--);
 
 --TODO VARCHAR==>CHAR
 --EDINETに提出された書類
@@ -113,43 +87,24 @@ create TABLE document(
   doc_id CHAR(8) NOT NULL REFERENCES edinet_document(doc_id),
   doc_type_code CHAR(3),
   filer_name VARCHAR(128),
-  downloaded CHAR(1) NOT NULL DEFAULT '0',
-  decoded CHAR(1) NOT NULL DEFAULT '0',
-  scraped_balance_sheet CHAR(1) NOT NULL DEFAULT '0',
-  scraped_profit_and_less_statement CHAR(1) NOT NULL DEFAULT '0',
-  scraped_cash_flow_statement CHAR(1) NOT NULL DEFAULT '0',
+  submit_date DATE NOT NULL,
+  downloaded CHAR(1) NOT NULL DEFAULT '0' CHECK(downloaded IN('0', '1', '9')),
+  decoded CHAR(1) NOT NULL DEFAULT '0' CHECK(decoded IN('0', '1', '9')),
+  scraped_balance_sheet CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_balance_sheet IN('0', '1', '9')),
+  scraped_profit_and_less_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_profit_and_less_statement IN('0', '1', '9')),
+  scraped_cash_flow_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_cash_flow_statement IN('0', '1', '9')),
   PRIMARY KEY(doc_id)
 );
 
---貸借対照表
-create TABLE balance_sheet(
+--財務諸表
+create TABLE financial_statement(
   id INT AUTO_INCREMENT,
   company_code CHAR(5) NOT NULL REFERENCES company(code),
-  financial_statement_id VARCHAR(10) NOT NULL REFERENCES financial_statement(id),
-  detail_id VARCHAR(10) NOT NULL REFERENCES balance_sheet_detail(id),
-  period DATE NOT NULL,
-  value INT NOT NULL,
-  PRIMARY KEY(id)
-);
-
---損益計算書
-create TABLE profit_and_less_statement(
-  id INT AUTO_INCREMENT,
-  company_code CHAR(5) NOT NULL REFERENCES company(code),
-  financial_statement_id VARCHAR(10) NOT NULL REFERENCES financial_statement(id),
-  detail_id VARCHAR(10) NOT NULL REFERENCES profit_and_less_statement_detail(id),
-  period DATE NOT NULL,
-  value INT NOT NULL,
-  PRIMARY KEY(id)
-);
-
---キャッシュ・フロー計算書
-create TABLE cash_flow_statement(
-  id INT AUTO_INCREMENT,
-  company_code CHAR(5) NOT NULL REFERENCES company(code),
-  financial_statement_id VARCHAR(10) NOT NULL REFERENCES financial_statement(id),
-  detail_id VARCHAR(10) NOT NULL REFERENCES cash_flow_statement_detail(id),
-  period DATE NOT NULL,
-  value INT NOT NULL,
+  financial_statement_id VARCHAR(10) NOT NULL,
+  subject_id VARCHAR(10) NOT NULL,
+  term VARCHAR(10) NOT NULL,
+  from_date DATE NOT NULL,
+  to_date DATE NOT NULL,
+  value BIGINT,
   PRIMARY KEY(id)
 );

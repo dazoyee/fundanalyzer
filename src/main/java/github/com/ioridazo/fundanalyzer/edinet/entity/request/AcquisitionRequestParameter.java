@@ -5,7 +5,7 @@ import lombok.Value;
 @Value
 public class AcquisitionRequestParameter {
 
-    private String docId;
+    String docId;
 
-    private AcquisitionType type;
+    AcquisitionType type;
 }

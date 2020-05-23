@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.edinet;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -33,11 +32,17 @@ public class EdinetProxy {
 
     public EdinetResponse list(final ListRequestParameter parameter) {
         try {
-            return restOperations.getForObject(
+            log.info("EDINETへの書類一覧APIを開始します。");
+
+            final var response = restOperations.getForObject(
                     "/api/v1/documents.json?date={date}&type={type}",
                     EdinetResponse.class,
                     Map.of("date", parameter.getDate(), "type", parameter.getType().toValue())
             );
+
+            log.info("EDINETから書類一覧APIが正常に返却されました。\tレスポンスボディ:{}", response);
+
+            return response;
 
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
@@ -71,6 +76,8 @@ public class EdinetProxy {
             storagePath.mkdirs();
 
         try {
+            log.info("EDINETへの書類取得APIを開始します。");
+
             restOperations.execute(
                     "/api/v1/documents/{docId}?type={type}",
                     HttpMethod.GET,
@@ -82,12 +89,14 @@ public class EdinetProxy {
                             Files.copy(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip"));
                         } catch (final FileAlreadyExistsException e) {
                             log.error("重複ファイル：\"{}\"", e.getFile());
-                            throw new FundanalyzerFileException("ファイルが既に存在しています。スタックトレースを参考に確認してください。", e);
+                            throw e;
                         }
                         return null;
                     },
                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
             );
+
+            log.info("EDINETから書類取得APIが正常に終了しました。");
 
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
@@ -111,8 +120,13 @@ public class EdinetProxy {
                         "EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", e);
             }
         } catch (final ResourceAccessException e) {
-            throw new FundanalyzerRestClientException(
-                    "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+            //noinspection StatementWithEmptyBody
+            if (e.getCause() instanceof FileAlreadyExistsException) {
+                // ファイルが既に存在していた場合、throwしない
+            } else {
+                throw new FundanalyzerRestClientException(
+                        "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+            }
         }
     }
 }

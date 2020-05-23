@@ -14,10 +14,10 @@ import java.util.List;
 public interface EdinetDocumentDao {
 
     @Select
-    List<EdinetDocument> selectByDocTypeCode(final String docTypeCode);
+    List<EdinetDocument> selectAll();
 
     @Select
-    String countByDocId(final String docId);
+    List<EdinetDocument> selectByDocId(final String docId);
 
     @Insert
     Result<EdinetDocument> insert(final EdinetDocument edinetDocument);

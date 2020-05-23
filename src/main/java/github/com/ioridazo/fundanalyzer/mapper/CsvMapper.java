@@ -1,14 +1,14 @@
 package github.com.ioridazo.fundanalyzer.mapper;
 
 import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ListCategories;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated.CONSOLIDATED;
@@ -16,23 +16,16 @@ import static github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated
 import static github.com.ioridazo.fundanalyzer.domain.entity.master.ListCategories.LISTED;
 import static github.com.ioridazo.fundanalyzer.domain.entity.master.ListCategories.UNLISTED;
 
-@Component
 public class CsvMapper {
 
-    final private IndustryDao industryDao;
-
-    public CsvMapper(final IndustryDao industryDao) {
-        this.industryDao = industryDao;
-    }
-
-    public Optional<Company> map(final EdinetCsvResultBean resultBean) {
+    public static Optional<Company> map(final List<Industry> industryList, final EdinetCsvResultBean resultBean) {
         if (resultBean.getSecuritiesCode().isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(new Company(
                 resultBean.getSecuritiesCode(),
                 resultBean.getSubmitterName(),
-                String.valueOf(industryDao.selectByName(resultBean.getIndustry()).getId()),
+                mapToIndustryId(industryList, resultBean.getIndustry()),
                 resultBean.getEdinetCode(),
                 mapToListed(resultBean.getListCategories()).toValue(),
                 mapToConsolidated(resultBean.getConsolidated()).toValue(),
@@ -42,14 +35,23 @@ public class CsvMapper {
                 LocalDateTime.now()));
     }
 
-    private ListCategories mapToListed(final String value) {
+    private static String mapToIndustryId(final List<Industry> industryList, final String industryName) {
+        return industryList.stream()
+                .filter(industry -> industryName.equals(industry.getName()))
+                .map(Industry::getId)
+                .map(String::valueOf)
+                .findAny()
+                .orElseThrow();
+    }
+
+    private static ListCategories mapToListed(final String value) {
         if (LISTED.toName().equals(value)) return LISTED;
         else if (UNLISTED.toName().equals(value)) return UNLISTED;
         else if (value.isEmpty()) return ListCategories.NULL;
         else throw new FundanalyzerRuntimeException("マッピングエラー");
     }
 
-    private Consolidated mapToConsolidated(final String value) {
+    private static Consolidated mapToConsolidated(final String value) {
         if (CONSOLIDATED.toName().equals(value)) return CONSOLIDATED;
         else if (NO_CONSOLIDATED.toName().equals(value)) return NO_CONSOLIDATED;
         else if (value.isEmpty()) return Consolidated.NULL;

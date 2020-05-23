@@ -32,7 +32,7 @@ public class CsvCommander {
         try {
             return Files.newBufferedReader(file.toPath(), charset);
         } catch (IOException e) {
-            throw new FundanalyzerRuntimeException("ファイル形式に問題があったため、読み取り出来ませんでした。", e);
+            throw new FundanalyzerRuntimeException("ファイル形式に問題があったため、読み取りに失敗しました。", e);
         }
     }
 }
