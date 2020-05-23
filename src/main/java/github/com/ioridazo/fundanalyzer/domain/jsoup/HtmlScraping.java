@@ -61,7 +61,6 @@ public class HtmlScraping {
             filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", financialStatement.getKeyWord(), file));
             throw new FundanalyzerFileException(financialStatement.getKeyWord() + "に関するファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
         }
-        log.info("ファイル正常応答\tキーワード：{}\t対象ファイル：{}", financialStatement.getKeyWord(), filePathList.stream().findAny().orElse(null));
         return filePathList.stream().findAny();
     }
 
@@ -88,12 +87,11 @@ public class HtmlScraping {
     }
 
     Elements elementsByKeyMatch(final File file, final keyMatch keyMatch) {
-        System.out.println(file.getName());
         try {
             return Jsoup.parse(file, "UTF-8")
                     .getElementsByAttributeValueContaining(keyMatch.getKey(), keyMatch.getMatch());
         } catch (IOException e) {
-            log.error("ファイル認識エラー\tfilePath:\"{}\"", file.getPath());
+            log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
         }
     }

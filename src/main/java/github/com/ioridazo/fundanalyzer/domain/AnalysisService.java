@@ -102,6 +102,8 @@ public class AnalysisService {
     }
 
     public String company() {
+        log.info("CSVファイルから会社情報の取得処理を開始します。");
+
         var resultBeanList = csvCommander.readCsv(
                 pathCompany,
                 Charset.forName("windows-31j"),
@@ -113,6 +115,9 @@ public class AnalysisService {
             // TODO ２回目のINSERTへの処理
             csvMapper.map(resultBean).ifPresent(companyDao::insert);
         });
+
+        log.info("会社情報をデータベースに正常に登録しました。");
+
         return "会社を登録しました\n";
     }
 
@@ -190,7 +195,9 @@ public class AnalysisService {
                     );
                 }
 
+                log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
                 documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.DONE.toValue()).build());
+
             } catch (FundanalyzerFileException | FundanalyzerRuntimeException e) {
                 documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.ERROR.toValue()).build());
                 log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
@@ -203,6 +210,7 @@ public class AnalysisService {
                 .filter(s -> s.equals(DocumentStatus.ERROR.toValue()))
                 .count();
         // TODO return
+        log.info("すべての書類登録処理が正常に終了しました。\t対象日:{}\t書類種別コード:{}", date, docTypeCode);
         return "成功：" + ((long) documents.size() - count) + "\t失敗：" + count + "\n";
     }
 
