@@ -10,7 +10,8 @@ public enum FinancialStatementEnum {
     BALANCE_SHEET("1", "貸借対照表", "BalanceSheetTextBlock"),
     CONSOLIDATED_BALANCE_SHEET("2", "連結貸借対照表", "BalanceSheetTextBlock"),
     PROFIT_AND_LESS_STATEMENT("3", "損益計算書", "StatementOfIncomeTextBlock"),
-    CASH_FLOW_STATEMENT("4", "キャッシュ・フロー計算書", ""),
+    INCOME_AND_SURPLUS_STATEMENT("4", "損益及び剰余金計算書", "StatementOfIncomeAndRetainedEarningsTextBlock"),
+    CASH_FLOW_STATEMENT("5", "キャッシュ・フロー計算書", ""),
 
     ;
 

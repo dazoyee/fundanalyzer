@@ -39,6 +39,9 @@ public class HtmlScraping {
         } else if (accountingPeriodCoverPage.hasText()) {
             periodString = accountingPeriodCoverPage.text();
         }
+
+        log.info("処理を正常に実施しました。\tスクレイピング対象ファイル:{}", file.getPath());
+
         return new PeriodResultBean(periodString);
     }
 
@@ -77,6 +80,9 @@ public class HtmlScraping {
                     // 各要素をbeanに詰める
                     resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
                 });
+
+        log.info("処理を正常に実施しました。\tスクレイピング対象ファイル:{}", file.getPath());
+
         return resultBeanList;
     }
 

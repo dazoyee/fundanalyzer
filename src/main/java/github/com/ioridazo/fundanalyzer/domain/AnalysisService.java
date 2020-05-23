@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BalanceSheetSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.ProfitAndLessStatementSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
@@ -63,7 +64,8 @@ public class AnalysisService {
     private final HtmlScraping htmlScraping;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
-    private final BalanceSheetSubjectDao balanceSheetSubjectDao;
+    private final BalanceSheetSubjectDao bsSubjectDao;
+    private final ProfitAndLessStatementSubjectDao plSubjectDao;
     private final EdinetDocumentDao edinetDocumentDao;
     private final DocumentDao documentDao;
     private final FinancialStatementDao financialStatementDao;
@@ -78,7 +80,8 @@ public class AnalysisService {
             final HtmlScraping htmlScraping,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
-            final BalanceSheetSubjectDao balanceSheetSubjectDao,
+            final BalanceSheetSubjectDao bsSubjectDao,
+            final ProfitAndLessStatementSubjectDao plSubjectDao,
             final EdinetDocumentDao edinetDocumentDao,
             final DocumentDao documentDao,
             final FinancialStatementDao financialStatementDao
@@ -92,7 +95,8 @@ public class AnalysisService {
         this.htmlScraping = htmlScraping;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
-        this.balanceSheetSubjectDao = balanceSheetSubjectDao;
+        this.bsSubjectDao = bsSubjectDao;
+        this.plSubjectDao = plSubjectDao;
         this.edinetDocumentDao = edinetDocumentDao;
         this.documentDao = documentDao;
         this.financialStatementDao = financialStatementDao;
@@ -181,10 +185,12 @@ public class AnalysisService {
                     .distinct()
                     .findAny()
                     .orElseThrow();
+            final var companyCode = companyDao.selectByEdinetCode(edinetCode)
+                    .map(Company::getCode)
+                    .orElse("00000");
 
+            final var targetFile = new File(pathDecode + "/" + date + "/" + docId);
             try {
-                final var targetFile = new File(pathDecode + "/" + date + "/" + docId);
-
                 try {
                     // スクレイピングする
                     final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.BALANCE_SHEET);
@@ -192,10 +198,10 @@ public class AnalysisService {
                     insertFinancialStatement(
                             FinancialStatementEnum.BALANCE_SHEET,
                             scrapeResultBean.getFirst(),
-                            balanceSheetSubjectDao.selectAll(),
+                            bsSubjectDao.selectAll(),
                             scrapeResultBean.getSecond(),
                             financialStatementDao::insert,
-                            companyDao.selectByEdinetCode(edinetCode).map(Company::getCode).orElse("00000")
+                            companyCode
                     );
                 } catch (FundanalyzerRuntimeException e) {
                     // CONSOLIDATED_BALANCE_SHEET
@@ -203,10 +209,10 @@ public class AnalysisService {
                     insertFinancialStatement(
                             FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET,
                             scrapeResultBean.getFirst(),
-                            balanceSheetSubjectDao.selectAll(),
+                            bsSubjectDao.selectAll(),
                             scrapeResultBean.getSecond(),
                             financialStatementDao::insert,
-                            companyDao.selectByEdinetCode(edinetCode).map(Company::getCode).orElse("00000")
+                            companyCode
                     );
                 }
 
@@ -216,6 +222,40 @@ public class AnalysisService {
             } catch (FundanalyzerFileException | FundanalyzerRuntimeException e) {
                 documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.ERROR.toValue()).build());
                 log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
+            }
+
+            try {
+                try {
+                    // スクレイピングする
+                    final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
+                    // DBに登録する
+                    insertFinancialStatement(
+                            FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                            scrapeResultBean.getFirst(),
+                            plSubjectDao.selectAll(),
+                            scrapeResultBean.getSecond(),
+                            financialStatementDao::insert,
+                            companyCode
+                    );
+                } catch (FundanalyzerRuntimeException e) {
+                    // INCOME_AND_SURPLUS_STATEMENT
+                    final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT);
+                    insertFinancialStatement(
+                            FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT,
+                            scrapeResultBean.getFirst(),
+                            plSubjectDao.selectAll(),
+                            scrapeResultBean.getSecond(),
+                            financialStatementDao::insert,
+                            companyCode
+                    );
+                }
+
+                log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
+                documentDao.update(Document.builder().docId(docId).scrapedProfitAndLessStatement(DocumentStatus.DONE.toValue()).build());
+
+            } catch (FundanalyzerFileException | FundanalyzerRuntimeException e) {
+                documentDao.update(Document.builder().docId(docId).scrapedProfitAndLessStatement(DocumentStatus.ERROR.toValue()).build());
+                log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
             }
         });
 
@@ -311,7 +351,7 @@ public class AnalysisService {
             final FinancialStatementEnum financialStatement) throws FundanalyzerFileException {
         final var targetFile = new File(pathDoc + "/XBRL/PublicDoc");
 
-        log.info("スクレイピング処理を開始します。\t対象ファイルパス:{}", targetFile.getPath());
+        log.info("スクレイピング処理を開始します。\t対象ファイルパス:\"{}\"", targetFile.getPath());
 
         try {
             final var file = htmlScraping.findFile(targetFile, financialStatement).orElseThrow(FundanalyzerRuntimeException::new);

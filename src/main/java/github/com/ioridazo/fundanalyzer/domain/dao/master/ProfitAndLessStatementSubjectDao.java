@@ -1,14 +1,16 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ProfitAndLessStatementSubject;
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.boot.ConfigAutowireable;
 
-@Repository
-public class ProfitAndLessStatementSubjectDao {
+import java.util.List;
 
-    private final JdbcTemplate jdbc;
+@ConfigAutowireable
+@Dao
+public interface ProfitAndLessStatementSubjectDao {
 
-    public ProfitAndLessStatementSubjectDao(final JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
+    @Select
+    List<ProfitAndLessStatementSubject> selectAll();
 }
