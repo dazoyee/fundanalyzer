@@ -53,7 +53,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Service
-public class AnalysisService {
+public class documentService {
 
     private final File pathCompany;
     private final File pathEdinet;
@@ -70,7 +70,7 @@ public class AnalysisService {
     private final DocumentDao documentDao;
     private final FinancialStatementDao financialStatementDao;
 
-    public AnalysisService(
+    public documentService(
             @Value("${settings.file.path.company}") final File pathCompany,
             @Value("${settings.file.path.edinet}") final File pathEdinet,
             @Value("${settings.file.path.decode}") final File pathDecode,
