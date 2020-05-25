@@ -8,6 +8,7 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Value
 @Entity(immutable = true)
@@ -31,4 +32,8 @@ public class FinancialStatement {
     LocalDate toDate;
 
     Long value;
+
+    public Optional<Long> getValue() {
+        return Optional.ofNullable(value);
+    }
 }

@@ -13,7 +13,7 @@ public enum BalanceSheetEnum {
 //    ("前払費用"),
 //    ("その他"),
 //    ("貸倒引当金"),
-    TOTAL_CURRENT_ASSETS("流動資産合計"),
+    TOTAL_CURRENT_ASSETS("9", "流動資産合計"),
     //    BUILDINGS("建物"),
 //    ("減価償却累計額"),
 //    ("建物（純額）"),
@@ -57,7 +57,7 @@ public enum BalanceSheetEnum {
 //    ("敷金及び保証金"),
 //    ("信託差入敷金及び保証金"),
 //    ("長期前払費用"),
-    TOTAL_INVESTMENTS_AND_OTHER_ASSETS("投資その他の資産合計"),
+    TOTAL_INVESTMENTS_AND_OTHER_ASSETS("56", "投資その他の資産合計"),
     //    ("固定資産合計"),
 //    ("投資法人債発行費"),
 //    ("繰延資産合計"),
@@ -72,12 +72,12 @@ public enum BalanceSheetEnum {
 //    ("未払消費税等"),
 //    ("前受金"),
 //    ("その他"),
-    TOTAL_CURRENT_LIABILITIES("流動負債合計"),
+    TOTAL_CURRENT_LIABILITIES("73", "流動負債合計"),
     //    ("投資法人債"),
 //    ("長期借入金"),
 //    ("預り敷金及び保証金"),
 //    ("資産除去債務"),
-    TOTAL_FIXED_LIABILITIES("固定負債合計"),
+    TOTAL_FIXED_LIABILITIES("79", "固定負債合計"),
 //    ("負債合計"),
 //    ("出資総額"),
 //    ("圧縮積立金"),
@@ -89,9 +89,12 @@ public enum BalanceSheetEnum {
 //    ("負債純資産合計"),
     ;
 
+    private final String outlineSubjectId;
+
     private final String subject;
 
-    BalanceSheetEnum(String subject) {
+    BalanceSheetEnum(final String outlineSubjectId, final String subject) {
+        this.outlineSubjectId = outlineSubjectId;
         this.subject = subject;
     }
 
@@ -105,11 +108,16 @@ public enum BalanceSheetEnum {
 
     @JsonValue
     public String toValue() {
+        return this.outlineSubjectId;
+    }
+
+    @JsonValue
+    public String getSubject() {
         return this.subject;
     }
 
-    @Override
-    public String toString() {
-        return String.format("BalanceSheetEnum[code = %s]", this.subject);
-    }
+//    @Override
+//    public String toString() {
+//        return String.format("BalanceSheetEnum[code = %s]", this.subject);
+//    }
 }

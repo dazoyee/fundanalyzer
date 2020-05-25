@@ -92,3 +92,8 @@ insert into profit_and_less_statement_subject (outline_subject_id, detail_subjec
 -- ('5', '現金及び現金同等物の期首残高'),
 -- ('6', '現金及び現金同等物の期末残高')
 -- ;
+
+--financial_statement
+insert into financial_statement (company_code, financial_statement_id, subject_id, term, from_date, to_date, value) values
+  ('00000', '1', '1', '第0期', sysdate, sysdate, 1)
+  ;

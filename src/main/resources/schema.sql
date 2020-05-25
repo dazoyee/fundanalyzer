@@ -106,5 +106,6 @@ create TABLE financial_statement(
   from_date DATE NOT NULL,
   to_date DATE NOT NULL,
   value BIGINT,
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(company_code, financial_statement_id, subject_id, to_date)
 );
