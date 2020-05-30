@@ -20,7 +20,6 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialState
 import github.com.ioridazo.fundanalyzer.domain.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
-import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.PeriodResultBean;
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
@@ -36,7 +35,6 @@ import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -271,19 +269,17 @@ public class DocumentService {
     }
 
     public void scrape(final LocalDate targetDate, final String docId) {
-        final var companyCode = companyDao.selectByEdinetCode(
-                edinetDocumentDao.selectByDocId(docId).stream()
-                        .map(EdinetDocument::getEdinetCode)
-                        .distinct()
-                        .findAny()
-                        .orElseThrow())
+        final var edinetDocument = edinetDocumentDao.selectByDocId(docId);
+        final var companyCode = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode())
                 .map(Company::getCode)
                 .orElse("00000");
 
-        final var targetFile = new File(pathDecode + "/" + targetDate + "/" + docId);
+        final var targetFile = new File(pathDecode + "/" + targetDate + "/" + docId + "/XBRL/PublicDoc");
+
+        log.info("スクレイピング処理を開始します。\t対象ファイルパス:\"{}\"", targetFile.getPath());
 
         try {
-            scrapeBalanceSheet(targetFile, companyCode);
+            scrapeBalanceSheet(targetFile, companyCode, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
             documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
@@ -292,7 +288,7 @@ public class DocumentService {
         }
 
         try {
-            scrapeProfitAndLessStatement(targetFile, companyCode);
+            scrapeProfitAndLessStatement(targetFile, companyCode, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
             documentDao.update(Document.builder().docId(docId).scrapedProfitAndLessStatement(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
@@ -300,131 +296,102 @@ public class DocumentService {
             log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
         }
 
-        scrapeNumberOfShares(targetDate, "");
+        scrapeNumberOfShares(targetFile, companyCode, edinetDocument);
+        log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
+        documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.DONE.toValue()).build());
+
+        log.info("スクレイピング処理が正常に完了しました。");
     }
 
-    void scrapeBalanceSheet(final File targetFile, final String companyCode) throws FundanalyzerFileException {
+    void scrapeBalanceSheet(
+            final File targetFile,
+            final String companyCode,
+            final EdinetDocument edinetDocument) throws FundanalyzerFileException {
         try {
             // スクレイピングする
-            final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.BALANCE_SHEET);
+            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.BALANCE_SHEET).orElseThrow(FundanalyzerRuntimeException::new);
+            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.BALANCE_SHEET.getKeyWord());
             // DBに登録する
             insertFinancialStatement(
                     FinancialStatementEnum.BALANCE_SHEET,
-                    scrapeResultBean.getFirst(),
                     bsSubjectDao.selectAll(),
-                    scrapeResultBean.getSecond(),
+                    resultBeans,
                     financialStatementDao::insert,
-                    companyCode
+                    companyCode,
+                    edinetDocument
             );
         } catch (FundanalyzerRuntimeException e) {
             // CONSOLIDATED_BALANCE_SHEET
-            final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET);
+            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET).orElseThrow(FundanalyzerRuntimeException::new);
+            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET.getKeyWord());
+            // DBに登録する
             insertFinancialStatement(
                     FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET,
-                    scrapeResultBean.getFirst(),
                     bsSubjectDao.selectAll(),
-                    scrapeResultBean.getSecond(),
+                    resultBeans,
                     financialStatementDao::insert,
-                    companyCode
+                    companyCode,
+                    edinetDocument
             );
         }
     }
 
-    void scrapeProfitAndLessStatement(final File targetFile, final String companyCode) throws FundanalyzerFileException {
+    void scrapeProfitAndLessStatement(
+            final File targetFile,
+            final String companyCode,
+            final EdinetDocument edinetDocument) throws FundanalyzerFileException {
         try {
             // スクレイピングする
-            final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
+            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT).orElseThrow(FundanalyzerRuntimeException::new);
+            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.getKeyWord());
             // DBに登録する
             insertFinancialStatement(
                     FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
-                    scrapeResultBean.getFirst(),
                     plSubjectDao.selectAll(),
-                    scrapeResultBean.getSecond(),
+                    resultBeans,
                     financialStatementDao::insert,
-                    companyCode
+                    companyCode,
+                    edinetDocument
             );
         } catch (FundanalyzerRuntimeException e) {
             // INCOME_AND_SURPLUS_STATEMENT
-            final var scrapeResultBean = scrape(targetFile, FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT);
+            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT).orElseThrow(FundanalyzerRuntimeException::new);
+            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT.getKeyWord());
+            // DBに登録する
             insertFinancialStatement(
                     FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT,
-                    scrapeResultBean.getFirst(),
                     plSubjectDao.selectAll(),
-                    scrapeResultBean.getSecond(),
+                    resultBeans,
                     financialStatementDao::insert,
-                    companyCode
+                    companyCode,
+                    edinetDocument
             );
         }
     }
 
-    public void scrapeNumberOfShares(final LocalDate targetDate, final String docTypeCode) {
-
-        final var docIdList = documentDao.selectByDateAndDocTypeCode(targetDate, docTypeCode)
-                .stream()
-                .map(Document::getDocId)
-                .collect(Collectors.toList());
-        docIdList.forEach(docId -> {
-            final var edinetCode = edinetDocumentDao.selectByDocId(docId).stream()
-                    .map(EdinetDocument::getEdinetCode)
-                    .distinct()
-                    .findAny()
-                    .orElseThrow();
-            final var companyCode = companyDao.selectByEdinetCode(edinetCode)
-                    .map(Company::getCode)
-                    .orElse("00000");
-            final var targetFile = new File(pathDecode + "/" + targetDate + "/" + docId);
-            try {
-                final var period = htmlScraping.scrapePeriod(targetFile);
-
-                financialStatementDao.insert(new FinancialStatement(
-                        null,
-                        companyCode,
-                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
-                        "0",
-                        period.getTerm().orElseThrow(),
-                        period.getFromDate().orElseThrow(),
-                        period.getToDate().orElseThrow(),
-                        null,
-                        htmlScraping.findNumberOfShares(targetFile)
-                ));
-            } catch (FundanalyzerRuntimeException e) {
-                log.error("おそらくperiod取得で失敗したからとばす。");
-            }
-        });
-    }
-
-    // TODO これの解体
-    Pair<PeriodResultBean, List<FinancialTableResultBean>> scrape(
-            final File pathDoc,
-            final FinancialStatementEnum financialStatement) throws FundanalyzerFileException {
-        final var targetFile = new File(pathDoc + "/XBRL/PublicDoc");
-
-        log.info("スクレイピング処理を開始します。\t対象ファイルパス:\"{}\"", targetFile.getPath());
-
-        try {
-            final var file = htmlScraping.findFile(targetFile, financialStatement).orElseThrow(FundanalyzerRuntimeException::new);
-
-            final var resultBeanListPair = Pair.of(
-                    htmlScraping.scrapePeriod(targetFile),
-                    htmlScraping.scrapeFinancialStatement(file, financialStatement.getKeyWord())
-            );
-
-            log.info("スクレイピング処理が正常に完了しました。");
-
-            return resultBeanListPair;
-        } catch (FundanalyzerRuntimeException e) {
-            log.error("ファイルが存在しませんでした。\tスクレイピングワード:{}", financialStatement.getName());
-            throw e;
-        }
+    void scrapeNumberOfShares(
+            final File targetFile,
+            final String companyCode,
+            final EdinetDocument edinetDocument) {
+        financialStatementDao.insert(new FinancialStatement(
+                null,
+                companyCode,
+                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                "0",
+                LocalDate.parse(edinetDocument.getPeriodStart()),
+                LocalDate.parse(edinetDocument.getPeriodEnd()),
+                null,
+                htmlScraping.findNumberOfShares(targetFile)
+        ));
     }
 
     <T extends Detail> void insertFinancialStatement(
             final FinancialStatementEnum financialStatement,
-            final PeriodResultBean period,
             final List<T> detailList,
             final List<FinancialTableResultBean> beanList,
             final Consumer<FinancialStatement> insert,
-            final String companyCode) {
+            final String companyCode,
+            final EdinetDocument edinetDocument) {
         log.info("スクレイピングの情報をデータベースに登録します。" +
                         "\t対象:{}" +
                         "\t会社コード:{}",
@@ -441,9 +408,8 @@ public class DocumentService {
                         companyCode,
                         financialStatement.toValue(),
                         detail.getId(),
-                        period.getTerm().orElseThrow(),
-                        period.getFromDate().orElseThrow(),
-                        period.getToDate().orElseThrow(),
+                        LocalDate.parse(edinetDocument.getPeriodStart()),
+                        LocalDate.parse(edinetDocument.getPeriodEnd()),
                         replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null),
                         null
                 )))

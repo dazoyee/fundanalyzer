@@ -25,11 +25,9 @@ public class FinancialStatement {
 
     String subjectId;
 
-    String term;
+    LocalDate periodStart;
 
-    LocalDate fromDate;
-
-    LocalDate toDate;
+    LocalDate periodEnd;
 
     Long value;
 

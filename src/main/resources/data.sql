@@ -94,6 +94,6 @@ insert into profit_and_less_statement_subject (outline_subject_id, detail_subjec
 -- ;
 
 --financial_statement
-insert into financial_statement (company_code, financial_statement_id, subject_id, term, from_date, to_date, value) values
-  ('00000', '1', '1', '第0期', sysdate, sysdate, 1)
+insert into financial_statement (company_code, financial_statement_id, subject_id, period_start, period_end, value) values
+  ('00000', '1', '1', sysdate, sysdate, 1)
   ;

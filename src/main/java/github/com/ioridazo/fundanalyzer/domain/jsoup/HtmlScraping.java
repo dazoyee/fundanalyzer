@@ -2,7 +2,6 @@ package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
-import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.PeriodResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
@@ -25,24 +24,6 @@ import java.util.stream.Stream;
 public class HtmlScraping {
 
     public HtmlScraping() {
-    }
-
-    public PeriodResultBean scrapePeriod(final File filePath) {
-        final var file = getFilesByTitleKeywordContaining("header", filePath)
-                .stream().findAny().orElseThrow(FundanalyzerRuntimeException::new);
-        final var fiscalYearCoverPage = elementsByKeyMatch(file, new keyMatch("name", "FiscalYearCoverPage"));
-        final var accountingPeriodCoverPage = elementsByKeyMatch(file, new keyMatch("name", "AccountingPeriodCoverPage"));
-
-        String periodString = null;
-        if (fiscalYearCoverPage.hasText()) {
-            periodString = fiscalYearCoverPage.text();
-        } else if (accountingPeriodCoverPage.hasText()) {
-            periodString = accountingPeriodCoverPage.text();
-        }
-
-        log.info("処理を正常に実施しました。\tスクレイピング対象ファイル:{}", file.getPath());
-
-        return new PeriodResultBean(periodString);
     }
 
     public Optional<File> findFile(final File filePath, final FinancialStatementEnum financialStatement)
