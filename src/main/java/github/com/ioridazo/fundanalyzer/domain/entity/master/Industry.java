@@ -7,6 +7,7 @@ import org.seasar.doma.GenerationType;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 @Entity(immutable = true)
 @Table(name = "industry")
@@ -14,7 +15,7 @@ public class Industry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    private final Integer id;
 
-    String name;
+    private final String name;
 }

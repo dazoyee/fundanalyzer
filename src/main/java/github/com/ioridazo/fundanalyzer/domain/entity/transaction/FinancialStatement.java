@@ -10,6 +10,7 @@ import org.seasar.doma.Table;
 import java.time.LocalDate;
 import java.util.Optional;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 @Entity(immutable = true)
 @Table(name = "financial_statement")
@@ -17,21 +18,21 @@ public class FinancialStatement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    private final Integer id;
 
-    String companyCode;
+    private final String companyCode;
 
-    String financialStatementId;
+    private final String financialStatementId;
 
-    String subjectId;
+    private final String subjectId;
 
-    LocalDate periodStart;
+    private final LocalDate periodStart;
 
-    LocalDate periodEnd;
+    private final LocalDate periodEnd;
 
-    Long value;
+    private final Long value;
 
-    String numberOfShares;
+    private final String numberOfShares;
 
     public Optional<Long> getValue() {
         return Optional.ofNullable(value);
