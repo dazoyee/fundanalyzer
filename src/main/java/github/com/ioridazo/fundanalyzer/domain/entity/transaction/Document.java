@@ -33,6 +33,8 @@ public class Document {
 
     private final String decoded;
 
+    private final String scrapedNumberOfShares;
+
     private final String scrapedBalanceSheet;
 
     private final String scrapedProfitAndLessStatement;

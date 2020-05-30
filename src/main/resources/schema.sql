@@ -90,6 +90,7 @@ create TABLE document(
   submit_date DATE NOT NULL,
   downloaded CHAR(1) NOT NULL DEFAULT '0' CHECK(downloaded IN('0', '1', '9')),
   decoded CHAR(1) NOT NULL DEFAULT '0' CHECK(decoded IN('0', '1', '9')),
+  scraped_number_of_shares CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_number_of_shares IN('0', '1', '5', '9')),
   scraped_balance_sheet CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_balance_sheet IN('0', '1', '9')),
   scraped_profit_and_less_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_profit_and_less_statement IN('0', '1', '9')),
   scraped_cash_flow_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_cash_flow_statement IN('0', '1', '9')),
@@ -106,6 +107,7 @@ create TABLE financial_statement(
   from_date DATE NOT NULL,
   to_date DATE NOT NULL,
   value BIGINT,
-  PRIMARY KEY(id),
-  UNIQUE KEY(company_code, financial_statement_id, subject_id, to_date)
+  number_of_shares VARCHAR,
+--FIXME  UNIQUE KEY(company_code, financial_statement_id, subject_id, to_date),
+  PRIMARY KEY(id)
 );

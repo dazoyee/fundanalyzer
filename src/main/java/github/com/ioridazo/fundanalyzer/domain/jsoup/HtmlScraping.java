@@ -86,6 +86,30 @@ public class HtmlScraping {
         return resultBeanList;
     }
 
+    public String findNumberOfShares(final File filePath) {
+        List<File> filePathList = new ArrayList<>();
+
+        // 対象のディレクトリから"honbun"ファイルを取得
+        getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
+            if (file.isFile()) {
+                final var filePathName = new File(filePath + "/" + file.getName());
+                if (elementsContainingText(filePathName, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getKeyWord()).hasText()) {
+                    // キーワードが存在したらファイルリストに加える
+                    filePathList.add(filePathName);
+                }
+            }
+        });
+
+        if (filePathList.size() > 1) {
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getKeyWord(), file));
+            return "複数ファイルあり";
+        } else if (filePathList.isEmpty()) {
+            return "ファイルなし";
+        } else {
+            return filePathList.stream().findAny().get().getPath();
+        }
+    }
+
     List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {
         return Stream.of(Objects.requireNonNull(filePath.listFiles()))
                 .filter(file -> file.getName().contains(keyword))
@@ -96,6 +120,15 @@ public class HtmlScraping {
         try {
             return Jsoup.parse(file, "UTF-8")
                     .getElementsByAttributeValueContaining(keyMatch.getKey(), keyMatch.getMatch());
+        } catch (IOException e) {
+            log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
+            throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+        }
+    }
+
+    Elements elementsContainingText(final File file, final String keyword) {
+        try {
+            return Jsoup.parse(file, "UTF-8").getElementsContainingText(keyword);
         } catch (IOException e) {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);

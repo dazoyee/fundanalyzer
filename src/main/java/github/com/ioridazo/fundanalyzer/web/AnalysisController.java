@@ -42,6 +42,12 @@ public class AnalysisController {
         return documentService.document(fromDate, toDate, "120");
     }
 
+    @GetMapping("/number-of-shares/{date}")
+    public String string(@PathVariable String date) {
+        documentService.scrapeNumberOfShares(date, "120");
+        return "number-of-shares-end\n";
+    }
+
     @GetMapping("/analysis/{company}/{year}")
     public String analysis(@PathVariable String company, @PathVariable String year) {
         return analysisService.analyze(company, year);

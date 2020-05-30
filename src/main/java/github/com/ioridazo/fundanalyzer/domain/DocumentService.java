@@ -368,8 +368,43 @@ public class DocumentService {
             log.error("ファイルが存在しませんでした。\tスクレイピングワード:{}", financialStatement.getName());
             throw e;
         }
-        // "損益計算書"
-        // StatementOfIncomeTextBlock
+    }
+
+    public void scrapeNumberOfShares(final String date, final String docTypeCode) {
+
+        final var docIdList = documentDao.selectByDateAndDocTypeCode(LocalDate.parse(date), docTypeCode)
+                .stream()
+                .map(Document::getDocId)
+                .collect(Collectors.toList());
+        docIdList.forEach(docId -> {
+            final var edinetCode = edinetDocumentDao.selectByDocId(docId).stream()
+                    .map(EdinetDocument::getEdinetCode)
+                    .distinct()
+                    .findAny()
+                    .orElseThrow();
+            final var companyCode = companyDao.selectByEdinetCode(edinetCode)
+                    .map(Company::getCode)
+                    .orElse("00000");
+            final var targetFile = new File(pathDecode + "/" + date + "/" + docId);
+            try {
+                final var period = htmlScraping.scrapePeriod(targetFile);
+
+                financialStatementDao.insert(new FinancialStatement(
+                        null,
+                        companyCode,
+                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                        "0",
+                        period.getTerm().orElseThrow(),
+                        period.getFromDate().orElseThrow(),
+                        period.getToDate().orElseThrow(),
+                        null,
+                        htmlScraping.findNumberOfShares(targetFile)
+                ));
+            } catch (FundanalyzerRuntimeException e) {
+                log.error("おそらくperiod取得で失敗したからとばす。");
+            }
+
+        });
     }
 
     <T extends Detail> void insertFinancialStatement(
@@ -398,7 +433,8 @@ public class DocumentService {
                         period.getTerm().orElseThrow(),
                         period.getFromDate().orElseThrow(),
                         period.getToDate().orElseThrow(),
-                        replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null)
+                        replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null),
+                        null
                 )))
         );
 

@@ -33,6 +33,8 @@ public class FinancialStatement {
 
     Long value;
 
+    String numberOfShares;
+
     public Optional<Long> getValue() {
         return Optional.ofNullable(value);
     }
