@@ -9,7 +9,7 @@ public enum ListCategories {
 
     LISTED("1", "上場"),
     UNLISTED("0", "非上場"),
-    NULL("9", "情報なし"),
+    NULL("9", ""),
     ;
 
     private final String code;
@@ -22,11 +22,11 @@ public enum ListCategories {
     }
 
     @JsonCreator
-    public static ListCategories fromValue(String code) {
+    public static ListCategories fromName(String name) {
         return Arrays.stream(values())
-                .filter(v -> v.code.equals(code))
+                .filter(v -> v.name.equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
+                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(name)));
     }
 
     @JsonValue
@@ -34,7 +34,7 @@ public enum ListCategories {
         return this.code;
     }
 
-    public String toName() {
+    public String getName() {
         return this.name;
     }
 

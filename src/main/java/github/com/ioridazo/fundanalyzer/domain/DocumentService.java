@@ -130,7 +130,7 @@ public class DocumentService {
                 .filter(rb -> companyList.stream()
                         .map(Company::getCode)
                         .noneMatch(code -> resultBean.getSecuritiesCode().equals(code)))
-                .forEach(rb -> CsvMapper.map(industryList, rb).ifPresent(companyDao::insert))
+                .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
         );
 
         log.info("会社情報をデータベースに正常に登録しました。");
@@ -146,7 +146,7 @@ public class DocumentService {
         // 書類リストをデータベースに登録する
         dateList.forEach(localDate -> document(localDate.toString(), docTypeCode));
 
-        return "\n";
+        return "ドキュメントを登録しました\n";
     }
 
     public String document(final String date, final String docTypeCode) {
@@ -167,7 +167,7 @@ public class DocumentService {
             scrape(LocalDate.parse(date), docId);
         });
 
-        return "\n";
+        return "ドキュメントを登録しました\n";
     }
 
     public void insertDocumentList(final LocalDate date) {
@@ -270,16 +270,14 @@ public class DocumentService {
 
     public void scrape(final LocalDate targetDate, final String docId) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(docId);
-        final var companyCode = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode())
-                .map(Company::getCode)
-                .orElse("00000");
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode());
 
         final var targetFile = new File(pathDecode + "/" + targetDate + "/" + docId + "/XBRL/PublicDoc");
 
         log.info("スクレイピング処理を開始します。\t対象ファイルパス:\"{}\"", targetFile.getPath());
 
         try {
-            scrapeBalanceSheet(targetFile, companyCode, edinetDocument);
+            scrapeBalanceSheet(targetFile, company, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
             documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
@@ -288,7 +286,7 @@ public class DocumentService {
         }
 
         try {
-            scrapeProfitAndLessStatement(targetFile, companyCode, edinetDocument);
+            scrapeProfitAndLessStatement(targetFile, company, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
             documentDao.update(Document.builder().docId(docId).scrapedProfitAndLessStatement(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
@@ -296,7 +294,7 @@ public class DocumentService {
             log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
         }
 
-        scrapeNumberOfShares(targetFile, companyCode, edinetDocument);
+        scrapeNumberOfShares(targetFile, company, edinetDocument);
         log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
         documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.DONE.toValue()).build());
 
@@ -305,7 +303,7 @@ public class DocumentService {
 
     void scrapeBalanceSheet(
             final File targetFile,
-            final String companyCode,
+            final Company company,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
         try {
             // スクレイピングする
@@ -317,7 +315,7 @@ public class DocumentService {
                     bsSubjectDao.selectAll(),
                     resultBeans,
                     financialStatementDao::insert,
-                    companyCode,
+                    company,
                     edinetDocument
             );
         } catch (FundanalyzerRuntimeException e) {
@@ -330,7 +328,7 @@ public class DocumentService {
                     bsSubjectDao.selectAll(),
                     resultBeans,
                     financialStatementDao::insert,
-                    companyCode,
+                    company,
                     edinetDocument
             );
         }
@@ -338,7 +336,7 @@ public class DocumentService {
 
     void scrapeProfitAndLessStatement(
             final File targetFile,
-            final String companyCode,
+            final Company company,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
         try {
             // スクレイピングする
@@ -350,7 +348,7 @@ public class DocumentService {
                     plSubjectDao.selectAll(),
                     resultBeans,
                     financialStatementDao::insert,
-                    companyCode,
+                    company,
                     edinetDocument
             );
         } catch (FundanalyzerRuntimeException e) {
@@ -363,7 +361,7 @@ public class DocumentService {
                     plSubjectDao.selectAll(),
                     resultBeans,
                     financialStatementDao::insert,
-                    companyCode,
+                    company,
                     edinetDocument
             );
         }
@@ -371,11 +369,12 @@ public class DocumentService {
 
     void scrapeNumberOfShares(
             final File targetFile,
-            final String companyCode,
+            final Company company,
             final EdinetDocument edinetDocument) {
         financialStatementDao.insert(new FinancialStatement(
                 null,
-                companyCode,
+                company.getCode(),
+                company.getEdinetCode(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
                 LocalDate.parse(edinetDocument.getPeriodStart()),
@@ -390,13 +389,15 @@ public class DocumentService {
             final List<T> detailList,
             final List<FinancialTableResultBean> beanList,
             final Consumer<FinancialStatement> insert,
-            final String companyCode,
+            final Company company,
             final EdinetDocument edinetDocument) {
         log.info("スクレイピングの情報をデータベースに登録します。" +
                         "\t対象:{}" +
-                        "\t会社コード:{}",
+                        "\t会社コード:{}" +
+                        "\tEDINETコード:{}",
                 financialStatement.getName(),
-                companyCode);
+                company.getCode(),
+                company.getEdinetCode());
 
         beanList.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
@@ -405,7 +406,8 @@ public class DocumentService {
                 // 一致するものが存在したら下記
                 .ifPresent(detail -> insert.accept(new FinancialStatement(
                         null,
-                        companyCode,
+                        company.getCode(),
+                        company.getEdinetCode(),
                         financialStatement.toValue(),
                         detail.getId(),
                         LocalDate.parse(edinetDocument.getPeriodStart()),

@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 public class Company {
 
     // 証券コード
-    @Id
     private final String code;
 
     // 銘柄名
@@ -25,6 +24,7 @@ public class Company {
     private final String industryId;
 
     // EDINETコード
+    @Id
     private final String edinetCode;
 
     // 上場区分

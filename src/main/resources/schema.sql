@@ -7,17 +7,17 @@ create TABLE industry(
 
 --企業
 create TABLE company(
-  code CHAR(5),
+  code CHAR(5) UNIQUE,
   company_name VARCHAR(100) NOT NULL,
   industry_id VARCHAR(10) NOT NULL REFERENCES industry(id),
-  edinet_code CHAR(6) UNIQUE NOT NULL,
-  list_categories CHAR(1),
-  consolidated CHAR(1),
+  edinet_code CHAR(6) NOT NULL,
+  list_categories CHAR(1) CHECK(list_categories IN('0', '1', '9')),
+  consolidated CHAR(1) CHECK(consolidated IN('0', '1', '9')),
   capital_stock INT,
   settlement_date VARCHAR(6),
   insert_date DATETIME NOT NULL,
   update_date DATETIME NOT NULL,
-  PRIMARY KEY(code)
+  PRIMARY KEY(edinet_code)
 );
 
 --貸借対照表
@@ -99,13 +99,14 @@ create TABLE document(
 --財務諸表
 create TABLE financial_statement(
   id INT AUTO_INCREMENT,
-  company_code CHAR(5) NOT NULL REFERENCES company(code),
+  company_code CHAR(5) REFERENCES company(code),
+  edinet_code CHAR(6) NOT NULL REFERENCES company(edinet_code),
   financial_statement_id VARCHAR(10) NOT NULL,
   subject_id VARCHAR(10) NOT NULL,
   period_start DATE NOT NULL,
   period_end DATE NOT NULL,
   value BIGINT,
   number_of_shares VARCHAR,
---FIXME  UNIQUE KEY(company_code, financial_statement_id, subject_id, to_date),
+  UNIQUE KEY(edinet_code, financial_statement_id, subject_id, period_end),
   PRIMARY KEY(id)
 );

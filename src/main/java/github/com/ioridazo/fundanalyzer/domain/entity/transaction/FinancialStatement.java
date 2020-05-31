@@ -22,6 +22,8 @@ public class FinancialStatement {
 
     private final String companyCode;
 
+    private final String edinetCode;
+
     private final String financialStatementId;
 
     private final String subjectId;
@@ -34,7 +36,15 @@ public class FinancialStatement {
 
     private final String numberOfShares;
 
+    public Optional<String> getCompanyCode() {
+        return Optional.ofNullable(companyCode);
+    }
+
     public Optional<Long> getValue() {
         return Optional.ofNullable(value);
+    }
+
+    public Optional<String> getNumberOfShares() {
+        return Optional.ofNullable(numberOfShares);
     }
 }
