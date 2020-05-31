@@ -11,9 +11,10 @@ import org.seasar.doma.jdbc.Result;
 @Dao
 public interface FinancialStatementDao {
 
+    // 検索結果が1件以上存在することを保証する
     @Select(ensureResult = true)
     FinancialStatement selectByUniqueKey(
-            final String companyCode,
+            final String edinetCode,
             final String financialStatementId,
             final String subjectId,
             final String dayOfYear);

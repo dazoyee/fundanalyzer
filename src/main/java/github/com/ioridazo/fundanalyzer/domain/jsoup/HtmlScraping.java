@@ -2,7 +2,6 @@ package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
-import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.PeriodResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
@@ -25,24 +24,6 @@ import java.util.stream.Stream;
 public class HtmlScraping {
 
     public HtmlScraping() {
-    }
-
-    public PeriodResultBean scrapePeriod(final File filePath) {
-        final var file = getFilesByTitleKeywordContaining("header", filePath)
-                .stream().findAny().orElseThrow(FundanalyzerRuntimeException::new);
-        final var fiscalYearCoverPage = elementsByKeyMatch(file, new keyMatch("name", "FiscalYearCoverPage"));
-        final var accountingPeriodCoverPage = elementsByKeyMatch(file, new keyMatch("name", "AccountingPeriodCoverPage"));
-
-        String periodString = null;
-        if (fiscalYearCoverPage.hasText()) {
-            periodString = fiscalYearCoverPage.text();
-        } else if (accountingPeriodCoverPage.hasText()) {
-            periodString = accountingPeriodCoverPage.text();
-        }
-
-        log.info("処理を正常に実施しました。\tスクレイピング対象ファイル:{}", file.getPath());
-
-        return new PeriodResultBean(periodString);
     }
 
     public Optional<File> findFile(final File filePath, final FinancialStatementEnum financialStatement)
@@ -86,6 +67,30 @@ public class HtmlScraping {
         return resultBeanList;
     }
 
+    public String findNumberOfShares(final File filePath) {
+        List<File> filePathList = new ArrayList<>();
+
+        // 対象のディレクトリから"honbun"ファイルを取得
+        getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
+            if (file.isFile()) {
+                final var filePathName = new File(filePath + "/" + file.getName());
+                if (elementsContainingText(filePathName, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getKeyWord()).hasText()) {
+                    // キーワードが存在したらファイルリストに加える
+                    filePathList.add(filePathName);
+                }
+            }
+        });
+
+        if (filePathList.size() > 1) {
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getKeyWord(), file));
+            return "複数ファイルあり";
+        } else if (filePathList.isEmpty()) {
+            return "ファイルなし";
+        } else {
+            return filePathList.stream().findAny().get().getPath();
+        }
+    }
+
     List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {
         return Stream.of(Objects.requireNonNull(filePath.listFiles()))
                 .filter(file -> file.getName().contains(keyword))
@@ -96,6 +101,15 @@ public class HtmlScraping {
         try {
             return Jsoup.parse(file, "UTF-8")
                     .getElementsByAttributeValueContaining(keyMatch.getKey(), keyMatch.getMatch());
+        } catch (IOException e) {
+            log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
+            throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+        }
+    }
+
+    Elements elementsContainingText(final File file, final String keyword) {
+        try {
+            return Jsoup.parse(file, "UTF-8").getElementsContainingText(keyword);
         } catch (IOException e) {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);

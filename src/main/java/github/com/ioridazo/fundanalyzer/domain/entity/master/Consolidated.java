@@ -9,7 +9,7 @@ public enum Consolidated {
 
     CONSOLIDATED("1", "有"),
     NO_CONSOLIDATED("0", "無"),
-    NULL("9", "情報なし"),
+    NULL("9", ""),
     ;
 
     private final String code;
@@ -22,11 +22,11 @@ public enum Consolidated {
     }
 
     @JsonCreator
-    public static Consolidated fromValue(String code) {
+    public static Consolidated fromName(String name) {
         return Arrays.stream(values())
-                .filter(v -> v.code.equals(code))
+                .filter(v -> v.name.equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(code)));
+                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(name)));
     }
 
     @JsonValue
@@ -35,7 +35,7 @@ public enum Consolidated {
     }
 
     @JsonValue
-    public String toName() {
+    public String getName() {
         return this.name;
     }
 

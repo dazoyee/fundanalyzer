@@ -17,7 +17,7 @@ public interface EdinetDocumentDao {
     List<EdinetDocument> selectAll();
 
     @Select
-    List<EdinetDocument> selectByDocId(final String docId);
+    EdinetDocument selectByDocId(final String docId);
 
     @Insert
     Result<EdinetDocument> insert(final EdinetDocument edinetDocument);
