@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
+import org.seasar.doma.GeneratedValue;
+import org.seasar.doma.GenerationType;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
@@ -18,6 +20,10 @@ import java.time.LocalDate;
 public class Document {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private final Integer id;
+
+    @Column(updatable = false)
     private final String docId;
 
     @Column(updatable = false)

@@ -51,6 +51,7 @@ create TABLE profit_and_less_statement_subject(
 
 --EDINETに提出された書類
 create TABLE edinet_document(
+  id INT AUTO_INCREMENT,
   doc_id CHAR(8) NOT NULL,
   edinet_code CHAR(6),
   sec_code CHAR(5),
@@ -78,12 +79,13 @@ create TABLE edinet_document(
   attach_doc_flag CHAR(1),
   english_doc_flag CHAR(1),
   insert_date DATETIME NOT NULL,
-  PRIMARY KEY(doc_id)
+  PRIMARY KEY(id)
 );
 
 --書類ステータス
 create TABLE document(
-  doc_id CHAR(8) NOT NULL REFERENCES edinet_document(doc_id),
+  id INT AUTO_INCREMENT,
+  doc_id CHAR(8) NOT NULL,
   doc_type_code CHAR(3),
   filer_name VARCHAR(128),
   submit_date DATE NOT NULL,
@@ -93,7 +95,7 @@ create TABLE document(
   scraped_balance_sheet CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_balance_sheet IN('0', '1', '9')),
   scraped_profit_and_less_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_profit_and_less_statement IN('0', '1', '9')),
   scraped_cash_flow_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_cash_flow_statement IN('0', '1', '9')),
-  PRIMARY KEY(doc_id)
+  PRIMARY KEY(id)
 );
 
 --財務諸表

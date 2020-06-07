@@ -144,9 +144,9 @@ public class DocumentService {
                 .collect(Collectors.toList());
 
         // 書類リストをデータベースに登録する
-        dateList.forEach(localDate -> document(localDate.toString(), docTypeCode));
+        dateList.forEach(this::insertDocumentList);
 
-        return "ドキュメントを登録しました\n";
+        return "ドキュメントリストをDBに登録しました\n";
     }
 
     public String document(final String date, final String docTypeCode) {
