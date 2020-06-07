@@ -8,6 +8,7 @@ import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
@@ -18,6 +19,9 @@ public interface CompanyDao {
 
     @Select
     Company selectByEdinetCode(final String edinetCode);
+
+    @Select
+    Optional<Company> selectByCompanyCode(final String companyCode);
 
     @Insert
     Result<Company> insert(final Company company);

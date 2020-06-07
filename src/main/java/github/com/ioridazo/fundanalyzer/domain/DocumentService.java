@@ -296,7 +296,7 @@ public class DocumentService {
 
         scrapeNumberOfShares(targetFile, company, edinetDocument);
         log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
-        documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.DONE.toValue()).build());
+        documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue()).build());
 
         log.info("スクレイピング処理が正常に完了しました。");
     }
