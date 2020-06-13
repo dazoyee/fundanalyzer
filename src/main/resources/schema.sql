@@ -87,7 +87,7 @@ create TABLE document(
   id INT AUTO_INCREMENT,
   doc_id CHAR(8) NOT NULL,
   doc_type_code CHAR(3),
-  filer_name VARCHAR(128),
+  edinet_code CHAR(6) REFERENCES company(edinet_code),
   submit_date DATE NOT NULL,
   downloaded CHAR(1) NOT NULL DEFAULT '0' CHECK(downloaded IN('0', '1', '9')),
   decoded CHAR(1) NOT NULL DEFAULT '0' CHECK(decoded IN('0', '1', '9')),

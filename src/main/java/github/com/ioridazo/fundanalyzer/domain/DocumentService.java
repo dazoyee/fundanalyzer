@@ -126,10 +126,11 @@ public class DocumentService {
 
         final var industryList = industryDao.selectAll();
         final var companyList = companyDao.selectAll();
+        //noinspection EqualsBetweenInconvertibleTypes
         resultBeanList.forEach(resultBean -> Stream.of(resultBean)
                 .filter(rb -> companyList.stream()
                         .map(Company::getCode)
-                        .noneMatch(code -> resultBean.getSecuritiesCode().equals(code)))
+                        .noneMatch(resultBean.getSecuritiesCode()::equals))
                 .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
         );
 
@@ -153,21 +154,26 @@ public class DocumentService {
         // 書類リストをデータベースに登録する
         insertDocumentList(LocalDate.parse(date));
 
-        // 対象ファイルリスト取得
+        // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
         final var docIdList = documentDao.selectByDateAndDocTypeCode(LocalDate.parse(date), docTypeCode)
                 .stream()
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
                 .map(Document::getDocId)
                 .collect(Collectors.toList());
 
-        docIdList.forEach(docId -> {
-            // 書類取得
-            store(LocalDate.parse(date), docId);
+        if (docIdList.isEmpty()) {
+            return "対象のドキュメントは存在しませんでした。\n";
+        } else {
+            docIdList.forEach(docId -> {
+                // 書類取得
+                store(LocalDate.parse(date), docId);
 
-            // スクレイピング
-            scrape(LocalDate.parse(date), docId);
-        });
+                // スクレイピング
+                scrape(LocalDate.parse(date), docId);
+            });
 
-        return "ドキュメントを登録しました\n";
+            return "ドキュメントを登録しました\n";
+        }
     }
 
     public void insertDocumentList(final LocalDate date) {
@@ -199,7 +205,7 @@ public class DocumentService {
                                 documentDao.insert(Document.builder()
                                         .docId(r.getDocId())
                                         .docTypeCode(r.getDocTypeCode())
-                                        .filerName(r.getFilerName())
+                                        .edinetCode(r.getEdinetCode())
                                         .submitDate(date)
                                         .build()
                                 );
@@ -270,7 +276,7 @@ public class DocumentService {
 
     public void scrape(final LocalDate targetDate, final String docId) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(docId);
-        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode());
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
 
         final var targetFile = new File(pathDecode + "/" + targetDate + "/" + docId + "/XBRL/PublicDoc");
 
@@ -373,12 +379,12 @@ public class DocumentService {
             final EdinetDocument edinetDocument) {
         financialStatementDao.insert(new FinancialStatement(
                 null,
-                company.getCode(),
+                company.getCode().orElse(null),
                 company.getEdinetCode(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
-                LocalDate.parse(edinetDocument.getPeriodStart()),
-                LocalDate.parse(edinetDocument.getPeriodEnd()),
+                LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
+                LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
                 null,
                 htmlScraping.findNumberOfShares(targetFile)
         ));
@@ -406,12 +412,12 @@ public class DocumentService {
                 // 一致するものが存在したら下記
                 .ifPresent(detail -> insert.accept(new FinancialStatement(
                         null,
-                        company.getCode(),
+                        company.getCode().orElse(null),
                         company.getEdinetCode(),
                         financialStatement.toValue(),
                         detail.getId(),
-                        LocalDate.parse(edinetDocument.getPeriodStart()),
-                        LocalDate.parse(edinetDocument.getPeriodEnd()),
+                        LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
+                        LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
                         replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null),
                         null
                 )))
@@ -421,14 +427,20 @@ public class DocumentService {
     }
 
     private Optional<Long> replaceStringWithInteger(final String value) {
-        return Optional.of(value)
-                .filter(v -> !v.isEmpty())
-                .map(s -> Long.parseLong(s
-                        .replace(",", "")
-                        .replace("△", "-")
-                        .replace("※２ ", "")
-                        .replace("*2 ", "")
-                ));
-        // TODO 数値に変換できなかったときのエラーハンドリング
+        try {
+            return Optional.of(value)
+                    .filter(v -> !v.isBlank())
+                    .filter(v -> !" ".equals(v))
+                    .map(s -> Long.parseLong(s
+                            .replace(",", "")
+                            .replace("△", "-")
+                            .replace("※２ ", "")
+                            .replace("*2 ", "")
+                            .replace("※ ", "")
+                    ));
+        } catch (NumberFormatException e) {
+            log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
+            return Optional.empty();
+        }
     }
 }

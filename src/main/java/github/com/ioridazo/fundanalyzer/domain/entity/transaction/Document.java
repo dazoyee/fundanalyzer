@@ -19,18 +19,16 @@ import java.time.LocalDate;
 @Table(name = "document")
 public class Document {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private final Integer id;
 
-    @Column(updatable = false)
+    @Id
     private final String docId;
 
     @Column(updatable = false)
     private final String docTypeCode;
 
     @Column(updatable = false)
-    private final String filerName;
+    private final String edinetCode;
 
     @Column(updatable = false)
     private final LocalDate submitDate;

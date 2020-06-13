@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -9,9 +10,9 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
+@AllArgsConstructor
 @Entity(immutable = true)
 @Table(name = "edinet_document")
 public class EdinetDocument {
@@ -100,4 +101,20 @@ public class EdinetDocument {
     //登録日
     @Column(updatable = false)
     private final LocalDateTime insertDate;
+
+    public String getDocId() {
+        return docId;
+    }
+
+    public Optional<String> getEdinetCode() {
+        return Optional.ofNullable(edinetCode);
+    }
+
+    public Optional<String> getPeriodStart() {
+        return Optional.ofNullable(periodStart);
+    }
+
+    public Optional<String> getPeriodEnd() {
+        return Optional.ofNullable(periodEnd);
+    }
 }

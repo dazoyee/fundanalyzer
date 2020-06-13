@@ -7,6 +7,7 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -45,4 +46,8 @@ public class Company {
 
     // 更新日
     private final LocalDateTime updateDate;
+
+    public Optional<String> getCode() {
+        return Optional.ofNullable(code);
+    }
 }
