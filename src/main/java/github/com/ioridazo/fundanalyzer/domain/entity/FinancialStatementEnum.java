@@ -7,10 +7,10 @@ import java.util.Arrays;
 
 public enum FinancialStatementEnum {
 
-    BALANCE_SHEET("1", "貸借対照表", "BalanceSheetTextBlock"),
+    BALANCE_SHEET("1", "貸借対照表", "jpcrp_cor:BalanceSheetTextBlock"),
     CONSOLIDATED_BALANCE_SHEET("1", "連結貸借対照表", "BalanceSheetTextBlock"),
     PROFIT_AND_LESS_STATEMENT("2", "損益計算書", "StatementOfIncomeTextBlock"),
-    INCOME_AND_SURPLUS_STATEMENT("2", "損益及び剰余金計算書", "StatementOfIncomeAndRetainedEarningsTextBlock"),
+    INCOME_AND_SURPLUS_STATEMENT("2", "損益及び剰余金計算書", "jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock"),
     CASH_FLOW_STATEMENT("3", "キャッシュ・フロー計算書", ""),
     TOTAL_NUMBER_OF_SHARES("4", "株式総数", "株式総数");
 

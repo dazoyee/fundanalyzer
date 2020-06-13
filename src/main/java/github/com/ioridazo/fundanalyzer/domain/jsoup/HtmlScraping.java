@@ -100,7 +100,7 @@ public class HtmlScraping {
     Elements elementsByKeyMatch(final File file, final keyMatch keyMatch) {
         try {
             return Jsoup.parse(file, "UTF-8")
-                    .getElementsByAttributeValueContaining(keyMatch.getKey(), keyMatch.getMatch());
+                    .getElementsByAttributeValue(keyMatch.getKey(), keyMatch.getMatch());
         } catch (IOException e) {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
