@@ -1,3 +1,1 @@
-SELECT
-  *
-FROM industry
+SELECT * FROM industry

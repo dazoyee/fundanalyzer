@@ -1,12 +1,12 @@
 --industry
-insert into industry (name) values
-  ('sample')
-  ;
+--insert into industry (name) values
+--  ('sample')
+--  ;
 
 --company
-insert into company (code, company_name, industry_id, edinet_code, insert_date, update_date) values
-  ('00000', 'sample', '1', 'E00000', sysdate, sysdate)
-  ;
+--insert into company (code, company_name, industry_id, edinet_code, insert_date, update_date) values
+--  ('00000', 'sample', '1', 'E00000', sysdate, sysdate)
+--  ;
 
 --balance_sheet_subject
 insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) values
@@ -94,6 +94,6 @@ insert into profit_and_less_statement_subject (outline_subject_id, detail_subjec
 -- ;
 
 --financial_statement
-insert into financial_statement (company_code, edinet_code, financial_statement_id, subject_id, period_start, period_end, value) values
-  ('00000', 'E00000', '1', '1', sysdate, sysdate, 1)
-  ;
+--insert into financial_statement (company_code, edinet_code, financial_statement_id, subject_id, period_start, period_end, value) values
+--  ('00000', 'E00000', '1', '1', sysdate, sysdate, 1)
+--  ;

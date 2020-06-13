@@ -126,11 +126,10 @@ public class DocumentService {
 
         final var industryList = industryDao.selectAll();
         final var companyList = companyDao.selectAll();
-        //noinspection EqualsBetweenInconvertibleTypes
         resultBeanList.forEach(resultBean -> Stream.of(resultBean)
                 .filter(rb -> companyList.stream()
-                        .map(Company::getCode)
-                        .noneMatch(resultBean.getSecuritiesCode()::equals))
+                        .map(Company::getEdinetCode)
+                        .noneMatch(rb.getEdinetCode()::equals))
                 .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
         );
 
