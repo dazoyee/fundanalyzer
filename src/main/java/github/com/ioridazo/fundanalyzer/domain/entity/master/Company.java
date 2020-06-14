@@ -7,41 +7,47 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 @Entity(immutable = true)
 @Table(name = "company")
 public class Company {
 
     // 証券コード
-    @Id
-    String code;
+    private final String code;
 
     // 銘柄名
-    String companyName;
+    private final String companyName;
 
     // 業種
-    String industryId;
+    private final String industryId;
 
     // EDINETコード
-    String edinetCode;
+    @Id
+    private final String edinetCode;
 
     // 上場区分
-    String listCategories;
+    private final String listCategories;
 
     // 連結の有無
-    String consolidated;
+    private final String consolidated;
 
     // 資本金
-    Integer capitalStock;
+    private final Integer capitalStock;
 
     // 決算日
-    String settlementDate;
+    private final String settlementDate;
 
     // 登録日
     @Column(updatable = false)
-    LocalDateTime insertDate;
+    private final LocalDateTime insertDate;
 
     // 更新日
-    LocalDateTime updateDate;
+    private final LocalDateTime updateDate;
+
+    public Optional<String> getCode() {
+        return Optional.ofNullable(code);
+    }
 }

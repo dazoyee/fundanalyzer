@@ -4,14 +4,17 @@ import lombok.Value;
 
 import java.util.Optional;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 public class FinancialTableResultBean {
 
-    String subject;
+    private final String subject;
 
-    String previousValue;
+    private final String previousValue;
 
-    String currentValue;
+    private final String currentValue;
+
+    private final Unit unit;
 
     public Optional<String> getSubject() {
         return Optional.ofNullable(subject);

@@ -23,7 +23,7 @@ public class CsvCommander {
 
         return new CsvToBeanBuilder<T>(reader(file, charset))
                 .withType(beanClass)
-                .withSkipLines(0)
+                .withSkipLines(1)
                 .build()
                 .parse();
     }

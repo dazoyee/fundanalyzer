@@ -18,7 +18,10 @@ public interface CompanyDao {
     List<Company> selectAll();
 
     @Select
-    Optional<Company> selectByEdinetCode(final String edinetCode);
+    Company selectByEdinetCode(final String edinetCode);
+
+    @Select
+    Optional<Company> selectByCode(final String code);
 
     @Insert
     Result<Company> insert(final Company company);

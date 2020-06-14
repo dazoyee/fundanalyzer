@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
+import org.seasar.doma.GeneratedValue;
+import org.seasar.doma.GenerationType;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
@@ -17,6 +19,8 @@ import java.time.LocalDate;
 @Table(name = "document")
 public class Document {
 
+    private final Integer id;
+
     @Id
     private final String docId;
 
@@ -24,7 +28,7 @@ public class Document {
     private final String docTypeCode;
 
     @Column(updatable = false)
-    private final String filerName;
+    private final String edinetCode;
 
     @Column(updatable = false)
     private final LocalDate submitDate;
@@ -32,6 +36,8 @@ public class Document {
     private final String downloaded;
 
     private final String decoded;
+
+    private final String scrapedNumberOfShares;
 
     private final String scrapedBalanceSheet;
 
