@@ -20,6 +20,14 @@ create TABLE company(
   PRIMARY KEY(edinet_code)
 );
 
+--スクレイピングキーワード
+create TABLE scraping_keyword(
+  id INT AUTO_INCREMENT,
+  financial_statement_id VARCHAR(10) NOT NULL,
+  keyword VARCHAR UNIQUE NOT NULL,
+  PRIMARY KEY(id)
+);
+
 --貸借対照表
 create TABLE balance_sheet_subject(
   id INT AUTO_INCREMENT,

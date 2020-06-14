@@ -8,6 +8,13 @@
 --  ('00000', 'sample', '1', 'E00000', sysdate, sysdate)
 --  ;
 
+--scraping_keyword
+insert into scraping_keyword (financial_statement_id, keyword) values
+  ('1', 'jpcrp_cor:BalanceSheetTextBlock'),
+  ('2', 'StatementOfIncomeTextBlock'),('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock'),
+  ('4', '株式総数')
+  ;
+
 --balance_sheet_subject
 insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '流動資産'),

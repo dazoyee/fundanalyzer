@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -26,7 +25,7 @@ public class HtmlScraping {
     public HtmlScraping() {
     }
 
-    public Optional<File> findFile(final File filePath, final FinancialStatementEnum financialStatement)
+    public Optional<File> findFile(final File filePath, final String keyword)
             throws FundanalyzerFileException, FundanalyzerRuntimeException {
         List<File> filePathList = new ArrayList<>();
 
@@ -34,7 +33,7 @@ public class HtmlScraping {
         getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
             if (file.isFile()) {
                 final var filePathName = new File(filePath + "/" + file.getName());
-                if (elementsByKeyMatch(filePathName, new keyMatch("name", financialStatement.getKeyWord())).hasText()) {
+                if (elementsByKeyMatch(filePathName, new keyMatch("name", keyword)).hasText()) {
                     // キーワードが存在したらファイルリストに加える
                     filePathList.add(filePathName);
                 }
@@ -42,8 +41,8 @@ public class HtmlScraping {
         });
 
         if (filePathList.size() > 1) {
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", financialStatement.getKeyWord(), file));
-            throw new FundanalyzerFileException(financialStatement.getKeyWord() + "に関するファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", keyword, file));
+            throw new FundanalyzerFileException("ファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
         }
         return filePathList.stream().findAny();
     }
@@ -62,7 +61,7 @@ public class HtmlScraping {
                     resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
                 });
 
-        log.info("処理を正常に実施しました。\tスクレイピング対象ファイル:{}", file.getPath());
+        log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
 
         return resultBeanList;
     }
@@ -74,7 +73,7 @@ public class HtmlScraping {
         getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
             if (file.isFile()) {
                 final var filePathName = new File(filePath + "/" + file.getName());
-                if (elementsContainingText(filePathName, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getKeyWord()).hasText()) {
+                if (elementsContainingText(filePathName, "株式総数").hasText()) {
                     // キーワードが存在したらファイルリストに加える
                     filePathList.add(filePathName);
                 }
@@ -82,7 +81,7 @@ public class HtmlScraping {
         });
 
         if (filePathList.size() > 1) {
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getKeyWord(), file));
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", "株式総数", file));
             return "複数ファイルあり";
         } else if (filePathList.isEmpty()) {
             return "ファイルなし";

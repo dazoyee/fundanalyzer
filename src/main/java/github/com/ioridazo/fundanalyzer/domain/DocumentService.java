@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.BalanceSheetSubjectDao
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.ProfitAndLessStatementSubjectDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
@@ -14,6 +15,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
@@ -30,7 +32,6 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -62,6 +64,7 @@ public class DocumentService {
     private final HtmlScraping htmlScraping;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
+    private final ScrapingKeywordDao scrapingKeywordDao;
     private final BalanceSheetSubjectDao bsSubjectDao;
     private final ProfitAndLessStatementSubjectDao plSubjectDao;
     private final EdinetDocumentDao edinetDocumentDao;
@@ -78,6 +81,7 @@ public class DocumentService {
             final HtmlScraping htmlScraping,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
+            final ScrapingKeywordDao scrapingKeywordDao,
             final BalanceSheetSubjectDao bsSubjectDao,
             final ProfitAndLessStatementSubjectDao plSubjectDao,
             final EdinetDocumentDao edinetDocumentDao,
@@ -93,6 +97,7 @@ public class DocumentService {
         this.htmlScraping = htmlScraping;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
+        this.scrapingKeywordDao = scrapingKeywordDao;
         this.bsSubjectDao = bsSubjectDao;
         this.plSubjectDao = plSubjectDao;
         this.edinetDocumentDao = edinetDocumentDao;
@@ -164,6 +169,8 @@ public class DocumentService {
             return "対象のドキュメントは存在しませんでした。\n";
         } else {
             docIdList.forEach(docId -> {
+                System.out.println("--------------------------------------------------");
+
                 // 書類取得
                 store(LocalDate.parse(date), docId);
 
@@ -306,69 +313,69 @@ public class DocumentService {
         log.info("スクレイピング処理が正常に完了しました。");
     }
 
+    // TODO 汎化
     void scrapeBalanceSheet(
             final File targetFile,
             final Company company,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
-        try {
-            // スクレイピングする
-            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.BALANCE_SHEET).orElseThrow(FundanalyzerRuntimeException::new);
-            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.BALANCE_SHEET.getKeyWord());
-            // DBに登録する
-            insertFinancialStatement(
-                    FinancialStatementEnum.BALANCE_SHEET,
-                    bsSubjectDao.selectAll(),
-                    resultBeans,
-                    financialStatementDao::insert,
-                    company,
-                    edinetDocument
-            );
-        } catch (FundanalyzerRuntimeException e) {
-            // CONSOLIDATED_BALANCE_SHEET
-            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET).orElseThrow(FundanalyzerRuntimeException::new);
-            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET.getKeyWord());
-            // DBに登録する
-            insertFinancialStatement(
-                    FinancialStatementEnum.CONSOLIDATED_BALANCE_SHEET,
-                    bsSubjectDao.selectAll(),
-                    resultBeans,
-                    financialStatementDao::insert,
-                    company,
-                    edinetDocument
-            );
+        final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
+                FinancialStatementEnum.BALANCE_SHEET.toValue());
+        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
+            log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
+            try {
+                final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
+                log.info("\"{}\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
+                                "\tファイル名:{}",
+                        scrapingKeyword.getKeyword(),
+                        file.getPath());
+
+                final var resultBeans = htmlScraping.scrapeFinancialStatement(file, scrapingKeyword.getKeyword());
+                // DBに登録する
+                insertFinancialStatement(
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        bsSubjectDao.selectAll(),
+                        resultBeans,
+                        financialStatementDao::insert,
+                        company,
+                        edinetDocument
+                );
+                return;
+            } catch (NoSuchElementException ignored) {
+                log.info("\"{}\"に合致するファイルは存在しませんでした。", scrapingKeyword.getKeyword());
+            }
         }
+        throw new FundanalyzerFileException();
     }
 
     void scrapeProfitAndLessStatement(
             final File targetFile,
             final Company company,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
-        try {
-            // スクレイピングする
-            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT).orElseThrow(FundanalyzerRuntimeException::new);
-            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.getKeyWord());
-            // DBに登録する
-            insertFinancialStatement(
-                    FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
-                    plSubjectDao.selectAll(),
-                    resultBeans,
-                    financialStatementDao::insert,
-                    company,
-                    edinetDocument
-            );
-        } catch (FundanalyzerRuntimeException e) {
-            // INCOME_AND_SURPLUS_STATEMENT
-            final var file = htmlScraping.findFile(targetFile, FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT).orElseThrow(FundanalyzerRuntimeException::new);
-            final var resultBeans = htmlScraping.scrapeFinancialStatement(file, FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT.getKeyWord());
-            // DBに登録する
-            insertFinancialStatement(
-                    FinancialStatementEnum.INCOME_AND_SURPLUS_STATEMENT,
-                    plSubjectDao.selectAll(),
-                    resultBeans,
-                    financialStatementDao::insert,
-                    company,
-                    edinetDocument
-            );
+        final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
+                FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue());
+        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
+            log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
+            try {
+                final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
+                log.info("\"{}\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
+                                "\tファイル名:{}",
+                        scrapingKeyword.getKeyword(),
+                        file.getPath());
+
+                final var resultBeans = htmlScraping.scrapeFinancialStatement(file, scrapingKeyword.getKeyword());
+                // DBに登録する
+                insertFinancialStatement(
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                        plSubjectDao.selectAll(),
+                        resultBeans,
+                        financialStatementDao::insert,
+                        company,
+                        edinetDocument
+                );
+                break;
+            } catch (NoSuchElementException ignored) {
+                log.info("\"{}\"に合致するファイルは存在しませんでした。", scrapingKeyword.getKeyword());
+            }
         }
     }
 
