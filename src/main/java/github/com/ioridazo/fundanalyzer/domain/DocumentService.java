@@ -37,6 +37,7 @@ import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -396,6 +397,7 @@ public class DocumentService {
         ));
     }
 
+    @Transactional
     <T extends Detail> void insertFinancialStatement(
             final FinancialStatementEnum financialStatement,
             final List<T> detailList,
