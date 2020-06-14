@@ -22,6 +22,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialState
 import github.com.ioridazo.fundanalyzer.domain.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.HtmlScraping;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
@@ -426,7 +427,7 @@ public class DocumentService {
                         detail.getId(),
                         LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
                         LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                        replaceStringWithInteger(resultBean.getCurrentValue()).orElse(null),
+                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
                         null
                 )))
         );
@@ -434,7 +435,7 @@ public class DocumentService {
         log.info("スクレイピング情報のデータベース登録処理が正常に終了しました。");
     }
 
-    private Optional<Long> replaceStringWithInteger(final String value) {
+    private Optional<Long> replaceInteger(final String value, final Unit unit) {
         try {
             return Optional.of(value)
                     .filter(v -> !v.isBlank())
@@ -445,7 +446,8 @@ public class DocumentService {
                             .replace("※２ ", "")
                             .replace("*2 ", "")
                             .replace("※ ", "")
-                    ));
+                    ))
+                    .map(l -> l * unit.getValue());
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
             return Optional.empty();

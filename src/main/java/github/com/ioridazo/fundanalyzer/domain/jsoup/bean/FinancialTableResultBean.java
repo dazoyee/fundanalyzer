@@ -14,6 +14,8 @@ public class FinancialTableResultBean {
 
     private final String currentValue;
 
+    private final Unit unit;
+
     public Optional<String> getSubject() {
         return Optional.ofNullable(subject);
     }

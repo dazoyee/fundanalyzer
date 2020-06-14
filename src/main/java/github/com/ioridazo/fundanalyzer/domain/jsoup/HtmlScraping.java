@@ -1,11 +1,13 @@
 package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
@@ -49,17 +51,34 @@ public class HtmlScraping {
 
     public List<FinancialTableResultBean> scrapeFinancialStatement(final File file, final String keyWord) {
         var resultBeanList = new ArrayList<FinancialTableResultBean>();
-        // ファイルをスクレイピング
-        elementsByKeyMatch(file, new keyMatch("name", keyWord))
+
+        Unit unit;
+        if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
                 .select("table")
-                .select("tr")
-                .forEach(tr -> {
-                    var tdList = new ArrayList<String>();
-                    tr.select("td").forEach(td -> tdList.add(td.text()));
-                    System.out.println(tdList); // FIXME
-                    // 各要素をbeanに詰める
-                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2)));
-                });
+                .stream()
+                .map(Element::text)
+                .anyMatch(s -> s.contains(Unit.THOUSANDS_OF_YEN.getName()))) {
+            unit = Unit.THOUSANDS_OF_YEN;
+        } else if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                .select("table")
+                .stream()
+                .map(Element::text)
+                .anyMatch(s -> s.contains(Unit.MILLIONS_OF_YEN.getName()))) {
+            unit = Unit.MILLIONS_OF_YEN;
+        } else {
+            throw new FundanalyzerRuntimeException("財務諸表の金額単位を識別できませんでした。");
+        }
+
+        // ファイルをスクレイピング
+        for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                .select("table")
+                .select("tr")) {
+            var tdList = new ArrayList<String>();
+            tr.select("td").forEach(td -> tdList.add(td.text()));
+            System.out.println(tdList); // FIXME
+            // 各要素をbeanに詰める
+            resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
+        }
 
         log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
 

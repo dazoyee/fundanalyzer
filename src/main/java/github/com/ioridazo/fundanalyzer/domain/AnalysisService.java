@@ -69,11 +69,15 @@ public class AnalysisService {
                     year).getValue().orElseThrow();
             System.out.println("営業利益 : " + operatingProfit);
 
-            final var v = (operatingProfit * 10 + totalCurrentAssets - (totalCurrentLiabilities * 1.2) + totalInvestmentsAndOtherAssets)
-                    - (totalFixedLiabilities)
-                    / 100;
+            final var v =
+                    (
+                            operatingProfit * 10
+                                    + totalCurrentAssets - (totalCurrentLiabilities * 1.2) + totalInvestmentsAndOtherAssets
+                                    - totalFixedLiabilities
+                    )
+                            / 10000000;
 
-            return String.valueOf(v);
+            return v +"\n";
         } catch (NoSuchElementException e) {
             log.error(e.getMessage());
             throw new FundanalyzerRuntimeException("データベースには値がNULLで登録されています。");
