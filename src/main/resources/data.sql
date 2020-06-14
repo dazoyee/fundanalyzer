@@ -11,7 +11,7 @@
 --scraping_keyword
 insert into scraping_keyword (financial_statement_id, keyword) values
   ('1', 'jpcrp_cor:BalanceSheetTextBlock'),
-  ('2', 'StatementOfIncomeTextBlock'),('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock'),
+  ('2', 'jpcrp_cor:StatementOfIncomeTextBlock'),('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock'),
   ('4', '株式総数')
   ;
 
@@ -19,7 +19,8 @@ insert into scraping_keyword (financial_statement_id, keyword) values
 insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '流動資産'),
 --  (null, '1', '現金及び預金'), (null, '1', '信託現金及び信託預金'), (null, '1', '営業未収入金'), (null, '1', 'リース投資資産'), (null, '1', '前払費用'),
---  (null, '1', 'その他'), (null, '1', '貸倒引当金'), (null, '1', '流動資産合計'),
+--  (null, '1', 'その他'), (null, '1', '貸倒引当金'),
+  (null, '1', '流動資産合計'),
   ('2', null, '有形固定資産'),
 --  (null, '2', '建物'), (null, '2', '減価償却累計額'), (null, '2', '建物（純額）'), (null, '2', '建物附属設備'), (null, '2', '減価償却累計額'),
 --  (null, '2', '建物附属設備（純額）'), (null, '2', '構築物'), (null, '2', '減価償却累計額'), (null, '2', '構築物（純額）'), (null, '2', '機械及び装置'),
@@ -31,7 +32,8 @@ insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) 
   ('3', null, '無形固定資産'),
 --  (null, '3', '借地権'), (null, '3', '信託借地権'), (null, '3', 'その他'), (null, '3', '無形固定資産合計'),
   ('4', null, '投資その他の資産'),
---  (null, '4', '修繕積立金'), (null, '4', '敷金及び保証金'), (null, '4', '信託差入敷金及び保証金'), (null, '4', '長期前払費用'), (null, '4', '投資その他の資産合計'),
+--  (null, '4', '修繕積立金'), (null, '4', '敷金及び保証金'), (null, '4', '信託差入敷金及び保証金'), (null, '4', '長期前払費用'),
+  (null, '4', '投資その他の資産合計'),
   ('5', '5', '固定資産合計'),
   ('6', null, '繰延資産'),
 --  (null, '6', '投資法人債発行費'), (null, '6', '繰延資産合計'),
@@ -39,9 +41,10 @@ insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) 
   ('8', null, '流動負債'),
 --  (null, '8', '営業未払金'), (null, '8', '短期借入金'), (null, '8', '8年内返済予定の長期借入金'), (null, '8', '8年内償還予定の投資法人債'), (null, '8', '未払金'),
 --  (null, '8', '未払費用'), (null, '8', '未払法人税等'), (null, '8', '未払消費税等'), (null, '8', '前受金'), (null, '8', 'その他'),
---  (null, '8', '流動負債合計'),
+  (null, '8', '流動負債合計'),
   ('9', null, '固定負債'),
---  (null, '9', '投資法人債'), (null, '9', '長期借入金'), (null, '9', '預り敷金及び保証金'), (null, '9', '資産除去債務'), (null, '9', '固定負債合計'),
+--  (null, '9', '投資法人債'), (null, '9', '長期借入金'), (null, '9', '預り敷金及び保証金'), (null, '9', '資産除去債務'),
+  (null, '9', '固定負債合計'),
   ('10', '10', '負債合計'),
   ('11', null, '投資主資本'),
 --  (null, '11', '出資総額'),
@@ -54,6 +57,7 @@ insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) 
   -- TODO 項目追加
  ;
 
+-- TODO 追加したらEnumの修正
 --profit_and_less_statement_subject
 insert into profit_and_less_statement_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '営業収益'),

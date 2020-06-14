@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
+
 @Slf4j
 @Service
 public class AnalysisService {
@@ -26,7 +28,7 @@ public class AnalysisService {
 
     public String analyze(final String companyCode, final String year) {
         try {
-            final var company = companyDao.selectByCompanyCode(companyCode).orElseThrow();
+            final var company = companyDao.selectByCode(companyCode).orElseThrow();
             // 流動資産合計
             final var totalCurrentAssets = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
@@ -55,7 +57,7 @@ public class AnalysisService {
             final var totalFixedLiabilities = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                    BalanceSheetEnum.TOTAL_CURRENT_LIABILITIES.toValue(),
+                    BalanceSheetEnum.TOTAL_FIXED_LIABILITIES.toValue(),
                     year).getValue().orElseThrow();
             System.out.println("固定負債合計 : " + totalFixedLiabilities);
 
@@ -72,6 +74,9 @@ public class AnalysisService {
                     / 100;
 
             return String.valueOf(v);
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+            throw new FundanalyzerRuntimeException("データベースには値がNULLで登録されています。");
         } catch (EmptyResultDataAccessException e) {
             log.error(e.getMessage());
             throw new FundanalyzerRuntimeException("値なし");

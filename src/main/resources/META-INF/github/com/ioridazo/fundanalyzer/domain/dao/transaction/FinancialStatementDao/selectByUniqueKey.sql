@@ -8,4 +8,4 @@ and
 and
   subject_id = /* subjectId */'10'
 and
-  to_date like /* @prefix(dayOfYear) */'2020%'
+  period_end like /* @prefix(dayOfYear) */'2020%'

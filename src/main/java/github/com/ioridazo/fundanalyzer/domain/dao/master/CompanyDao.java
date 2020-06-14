@@ -21,7 +21,7 @@ public interface CompanyDao {
     Company selectByEdinetCode(final String edinetCode);
 
     @Select
-    Optional<Company> selectByCompanyCode(final String companyCode);
+    Optional<Company> selectByCode(final String code);
 
     @Insert
     Result<Company> insert(final Company company);
