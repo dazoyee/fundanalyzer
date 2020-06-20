@@ -40,34 +40,17 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
-    public List<CompanyViewBean> analyze(final String year) {
+    private static LocalDate generatePeriod(final String year) {
+        return LocalDate.of(Integer.parseInt(year), 1, 1);
+    }
 
+    public List<CompanyViewBean> viewCompany(final String year) {
+        final var resultList = analysisResultDao.selectByPeriod(generatePeriod(year));
         final var companyList = companyDao.selectAll().stream()
                 .filter(company -> company.getCode().isPresent())
                 .collect(Collectors.toList());
-        final var companyCodeList = companyList.stream()
-                .map(Company::getCode)
-                .map(Optional::get)
-                .collect(Collectors.toList());
-
-        companyCodeList.forEach(companyCode -> {
-            try {
-                analysisResultDao.insert(new AnalysisResult(
-                                null,
-                                companyCode,
-                                calculate(companyCode, year),
-                                LocalDate.of(Integer.parseInt(year), 1, 1),
-                                LocalDateTime.now()
-                        )
-                );
-            } catch (FundanalyzerCalculateException ignored) {
-                log.info("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
-            }
-        });
-
-        final var resultList = analysisResultDao.selectByPeriod(LocalDate.of(Integer.parseInt(year), 1, 1));
-
         var viewBeanList = new ArrayList<CompanyViewBean>();
+
         resultList.forEach(analysisResult -> viewBeanList.add(new CompanyViewBean(
                 analysisResult.getCompanyCode(),
                 companyList.stream()
@@ -78,7 +61,39 @@ public class AnalysisService {
                 analysisResult.getCorporateValue(),
                 analysisResult.getPeriod().getYear()
         )));
+
         return viewBeanList;
+    }
+
+    public List<CompanyViewBean> analyze(final String year) {
+        final var companyCodeList = companyDao.selectAll().stream()
+                .map(Company::getCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        final var resultListAlready = analysisResultDao.selectByPeriod(generatePeriod(year));
+        companyCodeList.forEach(companyCode -> {
+            //noinspection StatementWithEmptyBody
+            if (isAnalyzed(resultListAlready, companyCode)) {
+                // 分析済
+            } else {
+                try {
+                    analysisResultDao.insert(new AnalysisResult(
+                                    null,
+                                    companyCode,
+                                    calculate(companyCode, year),
+                                    LocalDate.of(Integer.parseInt(year), 1, 1),
+                                    LocalDateTime.now()
+                            )
+                    );
+                } catch (FundanalyzerCalculateException ignored) {
+                    log.info("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
+                }
+            }
+        });
+
+        return viewCompany(year);
     }
 
     private BigDecimal calculate(final String companyCode, final String year) throws FundanalyzerCalculateException {
@@ -139,5 +154,10 @@ public class AnalysisService {
                     "\tmessage:{}", e.getMessage());
             throw new FundanalyzerCalculateException(e);
         }
+    }
+
+    private boolean isAnalyzed(final List<AnalysisResult> resultList, final String companyCode) {
+        return resultList.stream()
+                .anyMatch(analysisResult -> companyCode.equals(analysisResult.getCompanyCode()));
     }
 }

@@ -43,6 +43,12 @@ public class AnalysisController {
         return documentService.document(fromDate, toDate, "120");
     }
 
+    @GetMapping("/view/company/{year}")
+    public String viewCompany(@PathVariable String year, final Model model) {
+        model.addAttribute("companies", analysisService.viewCompany(year));
+        return "index";
+    }
+
     @GetMapping("/analysis/{year}")
     public String analysis(@PathVariable String year, final Model model) {
         model.addAttribute("companies", analysisService.analyze(year));
