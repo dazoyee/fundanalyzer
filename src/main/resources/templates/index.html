@@ -1,0 +1,31 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+            rel="stylesheet">
+    <title>会社一覧</title>
+</head>
+<body>
+<h1>会社一覧</h1>
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>code</th>
+        <th>name</th>
+        <th>value</th>
+        <th>year</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="company : ${companies}">
+        <td th:text="${company.code}">証券コード</td>
+        <td th:text="${company.name}">会社名</td>
+        <td th:text="${company.corporateValue}">300</td>
+        <td th:text="${company.period}">2020</td>
+    </tr>
+    </tbody>
+</table>
+<!--<a href="search.html" th:href="@{/search}">Back</a> &lt;!&ndash;/* (6) */&ndash;&gt;-->
+</body>
+</html>
