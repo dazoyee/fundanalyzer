@@ -2,13 +2,14 @@ package github.com.ioridazo.fundanalyzer.web;
 
 import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.DocumentService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
-@RestController
+@Controller
 public class AnalysisController {
 
     final private DocumentService documentService;
@@ -42,8 +43,15 @@ public class AnalysisController {
         return documentService.document(fromDate, toDate, "120");
     }
 
-    @GetMapping("/analysis/{company}/{year}")
-    public String analysis(@PathVariable String company, @PathVariable String year) {
-        return analysisService.analyze(company, year);
+    @GetMapping("/view/company/{year}")
+    public String viewCompany(@PathVariable String year, final Model model) {
+        model.addAttribute("companies", analysisService.viewCompany(year));
+        return "index";
+    }
+
+    @GetMapping("/analysis/{year}")
+    public String analysis(@PathVariable String year, final Model model) {
+        model.addAttribute("companies", analysisService.analyze(year));
+        return "index";
     }
 }
