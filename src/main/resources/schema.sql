@@ -120,3 +120,14 @@ create TABLE financial_statement(
   UNIQUE KEY(edinet_code, financial_statement_id, subject_id, period_end),
   PRIMARY KEY(id)
 );
+
+--企業価値
+create TABLE analysis_result(
+  id INT AUTO_INCREMENT,
+  company_code CHAR(5) NOT NULL REFERENCES company(code),
+  corporate_value FLOAT NOT NULL,
+  period DATE NOT NULL,
+  insert_date DATETIME NOT NULL,
+  UNIQUE KEY(company_code, period),
+  PRIMARY KEY(id)
+);

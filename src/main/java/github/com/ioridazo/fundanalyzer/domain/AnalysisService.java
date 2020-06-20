@@ -1,15 +1,20 @@
 package github.com.ioridazo.fundanalyzer.domain;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BalanceSheetEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.ProfitAndLossStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -18,12 +23,15 @@ public class AnalysisService {
 
     private final CompanyDao companyDao;
     private final FinancialStatementDao financialStatementDao;
+    private final AnalysisResultDao analysisResultDao;
 
     public AnalysisService(
             CompanyDao companyDao,
-            FinancialStatementDao financialStatementDao) {
+            FinancialStatementDao financialStatementDao,
+            AnalysisResultDao analysisResultDao) {
         this.companyDao = companyDao;
         this.financialStatementDao = financialStatementDao;
+        this.analysisResultDao = analysisResultDao;
     }
 
     public String analyze(final String companyCode, final String year) {
@@ -77,7 +85,17 @@ public class AnalysisService {
                     )
                             / 10000000;
 
-            return v +"\n";
+            analysisResultDao.insert(new AnalysisResult(
+                    null,
+                    companyCode,
+                    BigDecimal.valueOf(v),
+                    LocalDate.of(Integer.parseInt(year), 1, 1),
+                    LocalDateTime.now()
+            ));
+
+            final var result = analysisResultDao.selectByUniqueKey(companyCode, LocalDate.of(Integer.parseInt(year), 1, 1));
+
+            return result + "\n";
         } catch (NoSuchElementException e) {
             log.error(e.getMessage());
             throw new FundanalyzerRuntimeException("データベースには値がNULLで登録されています。");
