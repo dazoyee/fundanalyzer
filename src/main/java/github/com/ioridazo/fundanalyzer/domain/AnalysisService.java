@@ -17,52 +17,31 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
+
 @Slf4j
 @Service
 public class AnalysisService {
 
+    private final ViewService viewService;
     private final CompanyDao companyDao;
     private final FinancialStatementDao financialStatementDao;
     private final AnalysisResultDao analysisResultDao;
 
     public AnalysisService(
+            ViewService viewService,
             CompanyDao companyDao,
             FinancialStatementDao financialStatementDao,
             AnalysisResultDao analysisResultDao) {
+        this.viewService = viewService;
         this.companyDao = companyDao;
         this.financialStatementDao = financialStatementDao;
         this.analysisResultDao = analysisResultDao;
-    }
-
-    private static LocalDate mapToPeriod(final String year) {
-        return LocalDate.of(Integer.parseInt(year), 1, 1);
-    }
-
-    public List<CompanyViewBean> viewCompany(final String year) {
-        final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
-        final var companyList = companyDao.selectAll().stream()
-                .filter(company -> company.getCode().isPresent())
-                .collect(Collectors.toList());
-        var viewBeanList = new ArrayList<CompanyViewBean>();
-
-        companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
-                company.getCode().orElseThrow(),
-                company.getCompanyName(),
-                resultList.stream()
-                        .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
-                        .map(AnalysisResult::getCorporateValue)
-                        .findAny()
-                        .orElse(null),
-                Integer.parseInt(year)
-                )));
-
-        return viewBeanList;
     }
 
     public List<CompanyViewBean> analyze(final String year) {
@@ -93,7 +72,7 @@ public class AnalysisService {
             }
         });
 
-        return viewCompany(year);
+        return viewService.viewCompany(year);
     }
 
     private BigDecimal calculate(final String companyCode, final String year) throws FundanalyzerCalculateException {
