@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web;
 
 import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.ViewService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,38 +15,58 @@ public class AnalysisController {
 
     final private DocumentService documentService;
     final private AnalysisService analysisService;
+    final private ViewService viewService;
 
     public AnalysisController(
             DocumentService documentService,
-            AnalysisService analysisService) {
+            AnalysisService analysisService,
+            ViewService viewService) {
         this.documentService = documentService;
         this.analysisService = analysisService;
+        this.viewService = viewService;
     }
 
     @GetMapping("/company")
-    public String company() {
-        return documentService.company();
+    public String company(final Model model) {
+        documentService.company();
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
     }
 
-    @GetMapping("/edinet/document/{date}")
-    public String documentList(@PathVariable String date) {
+    @GetMapping("/edinet/list/{date}")
+    public String documentList(@PathVariable String date, final Model model) {
+        documentService.company();
         documentService.insertDocumentList(LocalDate.parse(date));
-        return "documentList\n";
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
     }
 
-    @GetMapping("/edinet/{date}")
-    public String document(@PathVariable String date) {
-        return documentService.document(date, "120");
+    @GetMapping("/edinet/list/{fromDate}/{toDate}")
+    public String document(@PathVariable String fromDate, @PathVariable String toDate, final Model model) {
+        documentService.company();
+        documentService.document(fromDate, toDate, "120");
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
     }
 
-    @GetMapping("/edinet/{fromDate}/{toDate}")
-    public String document(@PathVariable String fromDate, @PathVariable String toDate) {
-        return documentService.document(fromDate, toDate, "120");
+    @GetMapping("/scrape/{date}")
+    public String document(@PathVariable String date, final Model model) {
+        documentService.company();
+        documentService.document(date, "120");
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
     }
 
     @GetMapping("/view/company/{year}")
     public String viewCompany(@PathVariable String year, final Model model) {
-        model.addAttribute("companies", analysisService.viewCompany(year));
+        documentService.company();
+        documentService.document("2020-05-22", "120");
+
+        model.addAttribute("companies", viewService.viewCompany(year));
         return "index";
     }
 

@@ -1,3 +1,1 @@
-SELECT
-  *
-FROM balance_sheet_subject
+SELECT * FROM balance_sheet_subject

@@ -18,5 +18,5 @@ public class CompanyViewBean {
     private final BigDecimal corporateValue;
 
     // 対象年
-    private final int period;
+    private final Integer period;
 }

@@ -1,5 +1,3 @@
-SELECT
-  *
-FROM industry
+SELECT * FROM industry
 WHERE
   name = /* name */'name'
