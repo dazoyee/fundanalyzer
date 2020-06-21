@@ -116,7 +116,6 @@ create TABLE financial_statement(
   period_start DATE NOT NULL,
   period_end DATE NOT NULL,
   value BIGINT,
-  number_of_shares VARCHAR,
   UNIQUE KEY(edinet_code, financial_statement_id, subject_id, period_end),
   PRIMARY KEY(id)
 );

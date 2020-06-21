@@ -139,13 +139,21 @@ public class AnalysisService {
                     year).getValue().orElseThrow();
             System.out.println("営業利益 : " + operatingProfit);
 
+            // 株式総数
+            final var numberOfShares = financialStatementDao.selectByUniqueKey(
+                    company.getEdinetCode(),
+                    FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                    "0",
+                    year).getValue().orElseThrow();
+            System.out.println("株式総数 ： " + numberOfShares);
+
             final var v =
                     (
                             operatingProfit * 10
                                     + totalCurrentAssets - (totalCurrentLiabilities * 1.2) + totalInvestmentsAndOtherAssets
                                     - totalFixedLiabilities
                     )
-                            / 10000000;
+                            / numberOfShares;
 
             return BigDecimal.valueOf(v);
 

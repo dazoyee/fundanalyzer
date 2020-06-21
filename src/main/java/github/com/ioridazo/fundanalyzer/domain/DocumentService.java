@@ -308,9 +308,14 @@ public class DocumentService {
             log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
         }
 
-        scrapeNumberOfShares(targetFile, company, edinetDocument);
-        log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
-        documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue()).build());
+        try {
+            scrapeNumberOfShares(targetFile, company, edinetDocument);
+            log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
+            documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.DONE.toValue()).build());
+        } catch (FundanalyzerFileException e) {
+            documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
+            log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
+        }
 
         log.info("スクレイピング処理が正常に完了しました。");
     }
@@ -374,28 +379,45 @@ public class DocumentService {
                         company,
                         edinetDocument
                 );
-                break;
+                return;
             } catch (NoSuchElementException ignored) {
                 log.info("\"{}\"に合致するファイルは存在しませんでした。", scrapingKeyword.getKeyword());
             }
         }
+        throw new FundanalyzerFileException();
     }
 
     void scrapeNumberOfShares(
             final File targetFile,
             final Company company,
-            final EdinetDocument edinetDocument) {
-        financialStatementDao.insert(new FinancialStatement(
-                null,
-                company.getCode().orElse(null),
-                company.getEdinetCode(),
-                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
-                "0",
-                LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
-                LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                null,
-                htmlScraping.findNumberOfShares(targetFile)
-        ));
+            final EdinetDocument edinetDocument) throws FundanalyzerFileException {
+        final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
+                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue());
+        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
+            log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
+            try {
+                final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
+                log.info("\"{}\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
+                                "\tファイル名:{}",
+                        scrapingKeyword.getKeyword(),
+                        file.getPath());
+
+                financialStatementDao.insert(new FinancialStatement(
+                        null,
+                        company.getCode().orElse(null),
+                        company.getEdinetCode(),
+                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                        "0",
+                        LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
+                        LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
+                        replaceInteger(htmlScraping.findNumberOfShares(file, scrapingKeyword.getKeyword())).orElse(null)
+                ));
+                return;
+            } catch (NoSuchElementException ignored) {
+                log.info("\"{}\"に合致するファイルは存在しませんでした。", scrapingKeyword.getKeyword());
+            }
+        }
+        throw new FundanalyzerFileException();
     }
 
     @Transactional
@@ -427,15 +449,14 @@ public class DocumentService {
                         detail.getId(),
                         LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
                         LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
-                        null
+                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
                 )))
         );
 
         log.info("スクレイピング情報のデータベース登録処理が正常に終了しました。");
     }
 
-    private Optional<Long> replaceInteger(final String value, final Unit unit) {
+    private Optional<Long> replaceInteger(final String value) {
         try {
             return Optional.of(value)
                     .filter(v -> !v.isBlank())
@@ -446,11 +467,14 @@ public class DocumentService {
                             .replace("※２ ", "")
                             .replace("*2 ", "")
                             .replace("※ ", "")
-                    ))
-                    .map(l -> l * unit.getValue());
+                    ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
             return Optional.empty();
         }
+    }
+
+    private Optional<Long> replaceInteger(final String value, final Unit unit) {
+        return replaceInteger(value).map(l -> l * unit.getValue());
     }
 }
