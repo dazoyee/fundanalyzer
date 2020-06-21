@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,7 @@ public class ViewService {
                 null
         )));
 
-        return viewBeanList;
+        return sortedCode(viewBeanList);
     }
 
     public List<CompanyViewBean> viewCompany(final String year) {
@@ -62,6 +63,12 @@ public class ViewService {
                 Integer.parseInt(year)
         )));
 
-        return viewBeanList;
+        return sortedCode(viewBeanList);
+    }
+
+    private List<CompanyViewBean> sortedCode(final List<CompanyViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(CompanyViewBean::getCode))
+                .collect(Collectors.toList());
     }
 }
