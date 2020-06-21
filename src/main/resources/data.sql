@@ -12,7 +12,7 @@
 insert into scraping_keyword (financial_statement_id, keyword) values
   ('1', 'jpcrp_cor:BalanceSheetTextBlock'),
   ('2', 'jpcrp_cor:StatementOfIncomeTextBlock'),('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock'),
-  ('4', '株式総数')
+  ('4', 'jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock')
   ;
 
 --balance_sheet_subject

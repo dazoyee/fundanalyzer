@@ -34,17 +34,11 @@ public class FinancialStatement {
 
     private final Long value;
 
-    private final String numberOfShares;
-
     public Optional<String> getCompanyCode() {
         return Optional.ofNullable(companyCode);
     }
 
     public Optional<Long> getValue() {
         return Optional.ofNullable(value);
-    }
-
-    public Optional<String> getNumberOfShares() {
-        return Optional.ofNullable(numberOfShares);
     }
 }

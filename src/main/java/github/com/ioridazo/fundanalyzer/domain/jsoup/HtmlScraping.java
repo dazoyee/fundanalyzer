@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.NumberOfSharesResultBean;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -85,28 +86,28 @@ public class HtmlScraping {
         return resultBeanList;
     }
 
-    public String findNumberOfShares(final File filePath) {
-        List<File> filePathList = new ArrayList<>();
+    public String findNumberOfShares(final File file, final String keyWord) {
+        var resultBeanList = new ArrayList<NumberOfSharesResultBean>();
 
-        // 対象のディレクトリから"honbun"ファイルを取得
-        getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
-            if (file.isFile()) {
-                final var filePathName = new File(filePath + "/" + file.getName());
-                if (elementsContainingText(filePathName, "株式総数").hasText()) {
-                    // キーワードが存在したらファイルリストに加える
-                    filePathList.add(filePathName);
-                }
-            }
-        });
-
-        if (filePathList.size() > 1) {
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", "株式総数", file));
-            return "複数ファイルあり";
-        } else if (filePathList.isEmpty()) {
-            return "ファイルなし";
-        } else {
-            return filePathList.stream().findAny().get().getPath();
+        // ファイルをスクレイピング
+        for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                .select("table")
+                .select("tr")) {
+            var tdList = new ArrayList<String>();
+            tr.select("td").forEach(td -> tdList.add(td.text()));
+            System.out.println(tdList); // FIXME
+            // 各要素をbeanに詰める
+            resultBeanList.add(new NumberOfSharesResultBean(
+                    tdList.get(0), tdList.get(1), tdList.get(2), tdList.get(3), tdList.get(4)));
         }
+        final var numberOfShares = resultBeanList.stream()
+                .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
+                .collect(Collectors.toList())
+                .get(resultBeanList.size() - 1);
+
+        log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
+
+        return numberOfShares;
     }
 
     List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {
