@@ -40,27 +40,27 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
-    private static LocalDate generatePeriod(final String year) {
+    private static LocalDate mapToPeriod(final String year) {
         return LocalDate.of(Integer.parseInt(year), 1, 1);
     }
 
     public List<CompanyViewBean> viewCompany(final String year) {
-        final var resultList = analysisResultDao.selectByPeriod(generatePeriod(year));
+        final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
         final var companyList = companyDao.selectAll().stream()
                 .filter(company -> company.getCode().isPresent())
                 .collect(Collectors.toList());
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
-        resultList.forEach(analysisResult -> viewBeanList.add(new CompanyViewBean(
-                analysisResult.getCompanyCode(),
-                companyList.stream()
-                        .filter(company -> analysisResult.getCompanyCode().equals(company.getCode().orElseThrow()))
+        companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
+                company.getCode().orElseThrow(),
+                company.getCompanyName(),
+                resultList.stream()
+                        .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
+                        .map(AnalysisResult::getCorporateValue)
                         .findAny()
-                        .orElseThrow()
-                        .getCompanyName(),
-                analysisResult.getCorporateValue(),
-                analysisResult.getPeriod().getYear()
-        )));
+                        .orElse(null),
+                Integer.parseInt(year)
+                )));
 
         return viewBeanList;
     }
@@ -72,7 +72,7 @@ public class AnalysisService {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        final var resultListAlready = analysisResultDao.selectByPeriod(generatePeriod(year));
+        final var resultListAlready = analysisResultDao.selectByPeriod(mapToPeriod(year));
         companyCodeList.forEach(companyCode -> {
             //noinspection StatementWithEmptyBody
             if (isAnalyzed(resultListAlready, companyCode)) {
