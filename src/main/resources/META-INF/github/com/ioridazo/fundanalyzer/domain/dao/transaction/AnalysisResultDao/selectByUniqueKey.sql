@@ -1,6 +1,4 @@
-select
-  *
-from analysis_result
+select * from analysis_result
 where
   company_code = /* companyCode */'00000'
 and

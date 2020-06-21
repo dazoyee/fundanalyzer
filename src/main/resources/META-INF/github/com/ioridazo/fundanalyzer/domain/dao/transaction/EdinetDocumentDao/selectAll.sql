@@ -1,3 +1,1 @@
-select
-  *
-from edinet_document
+select * from edinet_document
