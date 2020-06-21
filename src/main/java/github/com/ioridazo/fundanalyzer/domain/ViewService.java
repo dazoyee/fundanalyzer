@@ -3,25 +3,32 @@ package github.com.ioridazo.fundanalyzer.domain;
 import github.com.ioridazo.fundanalyzer.domain.bean.CompanyViewBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class ViewService {
 
     private final CompanyDao companyDao;
+    private final EdinetDocumentDao edinetDocumentDao;
     private final AnalysisResultDao analysisResultDao;
 
     public ViewService(
             CompanyDao companyDao,
+            EdinetDocumentDao edinetDocumentDao,
             AnalysisResultDao analysisResultDao) {
         this.companyDao = companyDao;
+        this.edinetDocumentDao = edinetDocumentDao;
         this.analysisResultDao = analysisResultDao;
     }
 
@@ -47,10 +54,18 @@ public class ViewService {
 
     public List<CompanyViewBean> viewCompany(final String year) {
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
-        final var companyList = companyDao.selectAll().stream()
-                .filter(company -> company.getCode().isPresent())
-                .collect(Collectors.toList());
+        var companyList = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
+
+        // ドキュメント取得済の会社のみ画面表示する
+        edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", year).stream()
+                .map(EdinetDocument::getEdinetCode)
+                .map(Optional::get)
+                .forEach(edinetCode -> companyDao.selectAll().stream()
+                        .filter(company -> edinetCode.equals(company.getEdinetCode()))
+                        .filter(company -> company.getCode().isPresent())
+                        .findAny()
+                        .ifPresent(companyList::add));
 
         companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
                 company.getCode().orElseThrow(),
