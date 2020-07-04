@@ -15,6 +15,7 @@ public enum ProfitAndLossStatementEnum {
 //    ("その他営業費用"),
 //    ("営業費用合計"),
     OPERATING_PROFIT("3", "営業利益"),
+    OPERATING_PROFIT2("4", "営業利益又は営業損失（△）"),
 //    ("受取利息"),
 //    ("未払分配金戻入"),
 //    ("還付加算金"),
