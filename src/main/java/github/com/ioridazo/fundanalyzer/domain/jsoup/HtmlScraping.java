@@ -75,10 +75,14 @@ public class HtmlScraping {
                 .select("table")
                 .select("tr")) {
             var tdList = new ArrayList<String>();
-            tr.select("td").forEach(td -> tdList.add(td.text()));
+            tr.select("td").forEach(td -> {
+                if (!td.text().equals(" "))
+                    tdList.add(td.text());
+            });
             System.out.println(tdList); // FIXME
             // 各要素をbeanに詰める
-            resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
+            if (tdList.size() >= 3)
+                resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
         }
 
         log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
