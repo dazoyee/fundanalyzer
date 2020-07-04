@@ -174,10 +174,14 @@ public class DocumentService {
                 System.out.println("--------------------------------------------------");
 
                 // 書類取得
-                store(LocalDate.parse(date), docId);
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocId(docId).getDownloaded())) {
+                    store(LocalDate.parse(date), docId);
+                }
 
                 // スクレイピング
-                scrape(LocalDate.parse(date), docId);
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocId(docId).getScrapedBalanceSheet())) {
+                    scrape(LocalDate.parse(date), docId);
+                }
             });
 
             return "ドキュメントを登録しました\n";

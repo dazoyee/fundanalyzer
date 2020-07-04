@@ -16,6 +16,9 @@ import java.util.List;
 public interface DocumentDao {
 
     @Select
+    Document selectByDocId(final String docId);
+
+    @Select
     List<Document> selectByDateAndDocTypeCode(final LocalDate submitDate, final String docTypeCode);
 
     @Insert(excludeNull = true)
