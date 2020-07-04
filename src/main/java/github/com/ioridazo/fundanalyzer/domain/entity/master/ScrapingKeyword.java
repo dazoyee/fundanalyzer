@@ -20,4 +20,6 @@ public class ScrapingKeyword {
     private final String financialStatementId;
 
     private final String keyword;
+
+    private final String remarks;
 }

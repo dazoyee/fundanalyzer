@@ -25,6 +25,7 @@ create TABLE scraping_keyword(
   id INT AUTO_INCREMENT,
   financial_statement_id VARCHAR(10) NOT NULL,
   keyword VARCHAR UNIQUE NOT NULL,
+  remarks VARCHAR,
   PRIMARY KEY(id)
 );
 

@@ -331,9 +331,10 @@ public class DocumentService {
             log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
             try {
                 final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
-                log.info("\"{}\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
+                log.info("\"{}（{}）\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
                                 "\tファイル名:{}",
                         scrapingKeyword.getKeyword(),
+                        scrapingKeyword.getRemarks(),
                         file.getPath());
 
                 final var resultBeans = htmlScraping.scrapeFinancialStatement(file, scrapingKeyword.getKeyword());
@@ -364,9 +365,10 @@ public class DocumentService {
             log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
             try {
                 final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
-                log.info("\"{}\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
+                log.info("\"{}（{}）\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
                                 "\tファイル名:{}",
                         scrapingKeyword.getKeyword(),
+                        scrapingKeyword.getRemarks(),
                         file.getPath());
 
                 final var resultBeans = htmlScraping.scrapeFinancialStatement(file, scrapingKeyword.getKeyword());
@@ -397,9 +399,10 @@ public class DocumentService {
             log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
             try {
                 final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
-                log.info("\"{}\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
+                log.info("\"{}（{}）\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
                                 "\tファイル名:{}",
                         scrapingKeyword.getKeyword(),
+                        scrapingKeyword.getRemarks(),
                         file.getPath());
 
                 financialStatementDao.insert(new FinancialStatement(

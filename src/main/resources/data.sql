@@ -9,10 +9,10 @@
 --  ;
 
 --scraping_keyword
-insert into scraping_keyword (financial_statement_id, keyword) values
-  ('1', 'jpcrp_cor:BalanceSheetTextBlock'),
-  ('2', 'jpcrp_cor:StatementOfIncomeTextBlock'),('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock'),
-  ('4', 'jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock')
+insert into scraping_keyword (financial_statement_id, keyword, remarks) values
+  ('1', 'jpcrp_cor:ConsolidatedBalanceSheetTextBlock', '連結貸借対照表'), ('1', 'jpcrp_cor:BalanceSheetTextBlock', '貸借対照表'),
+  ('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock', '連結損益計算書'), ('2', 'jpcrp_cor:StatementOfIncomeTextBlock', '損益計算書'),
+  ('4', 'jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock', '株式総数')
   ;
 
 --balance_sheet_subject
