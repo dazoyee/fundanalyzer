@@ -1,13 +1,3 @@
---industry
---insert into industry (name) values
---  ('sample')
---  ;
-
---company
---insert into company (code, company_name, industry_id, edinet_code, insert_date, update_date) values
---  ('00000', 'sample', '1', 'E00000', sysdate, sysdate)
---  ;
-
 --scraping_keyword
 insert into scraping_keyword (financial_statement_id, keyword, remarks) values
   ('1', 'jpcrp_cor:ConsolidatedBalanceSheetTextBlock', '連結貸借対照表'), ('1', 'jpcrp_cor:BalanceSheetTextBlock', '貸借対照表'),
@@ -103,8 +93,3 @@ insert into profit_and_less_statement_subject (outline_subject_id, detail_subjec
 -- ('5', '現金及び現金同等物の期首残高'),
 -- ('6', '現金及び現金同等物の期末残高')
 -- ;
-
---financial_statement
---insert into financial_statement (company_code, edinet_code, financial_statement_id, subject_id, period_start, period_end, value) values
---  ('00000', 'E00000', '1', '1', sysdate, sysdate, 1)
---  ;

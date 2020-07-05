@@ -36,7 +36,6 @@ create TABLE balance_sheet_subject(
   detail_subject_id VARCHAR(10),
   name VARCHAR(50) NOT NULL,
   PRIMARY KEY(id)
---  UNIQUE KEY(subject_id, name)
 );
 
 --損益計算書
@@ -46,7 +45,6 @@ create TABLE profit_and_less_statement_subject(
   detail_subject_id VARCHAR(10),
   name VARCHAR(50) NOT NULL,
   PRIMARY KEY(id)
---  UNIQUE KEY(subject_id, name)
 );
 
 --キャッシュ・フロー計算書
