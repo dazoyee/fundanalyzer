@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
 import lombok.Value;
+import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
 import org.seasar.doma.GenerationType;
@@ -8,6 +9,7 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -33,6 +35,9 @@ public class FinancialStatement {
     private final LocalDate periodEnd;
 
     private final Long value;
+
+    @Column(updatable = false)
+    private final LocalDateTime createdAt;
 
     public Optional<String> getCompanyCode() {
         return Optional.ofNullable(companyCode);

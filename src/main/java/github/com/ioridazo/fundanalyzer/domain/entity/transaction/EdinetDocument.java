@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
@@ -72,7 +71,7 @@ public class EdinetDocument {
     private final String currentReportReason;
 
     // 親書類管理番号
-    private final String parentDocID;
+    private final String parentDocId;
 
     // 操作日時
     private final String opeDateTime;
@@ -98,9 +97,9 @@ public class EdinetDocument {
     // 英文ファイル有無フラグ
     private final String englishDocFlag;
 
-    //登録日
+    // 登録日
     @Column(updatable = false)
-    private final LocalDateTime insertDate;
+    private final LocalDateTime createdAt;
 
     public String getDocId() {
         return docId;

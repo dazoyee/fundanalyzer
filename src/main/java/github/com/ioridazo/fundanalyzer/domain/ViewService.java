@@ -53,21 +53,22 @@ public class ViewService {
     }
 
     public List<CompanyViewBean> viewCompany(final String year) {
+        final var companyAll = companyDao.selectAll();
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
-        var companyList = new ArrayList<Company>();
+        var presentCompanies = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
         // ドキュメント取得済の会社のみ画面表示する
         edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", year).stream()
                 .map(EdinetDocument::getEdinetCode)
                 .map(Optional::get)
-                .forEach(edinetCode -> companyDao.selectAll().stream()
+                .forEach(edinetCode -> companyAll.stream()
                         .filter(company -> edinetCode.equals(company.getEdinetCode()))
                         .filter(company -> company.getCode().isPresent())
                         .findAny()
-                        .ifPresent(companyList::add));
+                        .ifPresent(presentCompanies::add));
 
-        companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
+        presentCompanies.forEach(company -> viewBeanList.add(new CompanyViewBean(
                 company.getCode().orElseThrow(),
                 company.getCompanyName(),
                 resultList.stream()

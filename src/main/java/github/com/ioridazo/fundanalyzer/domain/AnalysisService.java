@@ -61,8 +61,8 @@ public class AnalysisService {
                     analysisResultDao.insert(new AnalysisResult(
                                     null,
                                     companyCode,
-                                    calculate(companyCode, year),
                                     LocalDate.of(Integer.parseInt(year), 1, 1),
+                                    calculate(companyCode, year),
                                     LocalDateTime.now()
                             )
                     );
@@ -111,11 +111,21 @@ public class AnalysisService {
             System.out.println("固定負債合計 : " + totalFixedLiabilities);
 
             // 営業利益
-            final var operatingProfit = financialStatementDao.selectByUniqueKey(
-                    company.getEdinetCode(),
-                    FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
-                    ProfitAndLossStatementEnum.OPERATING_PROFIT.toValue(),
-                    year).getValue().orElseThrow();
+            Long operatingProfit;
+            try {
+                operatingProfit = financialStatementDao.selectByUniqueKey(
+                        company.getEdinetCode(),
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
+                        ProfitAndLossStatementEnum.OPERATING_PROFIT.toValue(),
+                        year).getValue().orElseThrow();
+            } catch (EmptyResultDataAccessException e) {
+                operatingProfit = financialStatementDao.selectByUniqueKey(
+                        company.getEdinetCode(),
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
+                        ProfitAndLossStatementEnum.OPERATING_PROFIT2.toValue(),
+                        year).getValue().orElseThrow();
+            }
+
             System.out.println("営業利益 : " + operatingProfit);
 
             // 株式総数

@@ -9,7 +9,7 @@ public enum DocumentStatus {
 
     NOT_YET("0", "未着手"),
     DONE("1", "完了"),
-    HALF_WAY("5", "途中"),
+    //    HALF_WAY("5", "途中"),
     ERROR("9", "失敗"),
     ;
 

@@ -22,7 +22,7 @@ public class Company {
     private final String companyName;
 
     // 業種
-    private final String industryId;
+    private final Integer industryId;
 
     // EDINETコード
     @Id
@@ -42,10 +42,10 @@ public class Company {
 
     // 登録日
     @Column(updatable = false)
-    private final LocalDateTime insertDate;
+    private final LocalDateTime createdAt;
 
     // 更新日
-    private final LocalDateTime updateDate;
+    private final LocalDateTime updatedAt;
 
     public Optional<String> getCode() {
         return Optional.ofNullable(code);

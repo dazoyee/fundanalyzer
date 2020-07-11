@@ -5,12 +5,17 @@ spring:
   application:
     name: fundanalyzer
 
+#logging:
+#  file:
+#    name: ${spring.application.name}
+#    path: C:/${spring.application.name}/log/
+
 edinet:
   api: https://disclosure.edinet-fsa.go.jp
 
 settings:
   file:
     path:
-      company: C:\${spring.application.name}\company\EdinetcodeDlInfo.csv
-      edinet: C:\${spring.application.name}\edinet
-      decode: C:\${spring.application.name}\decode
+      company: C:/${spring.application.name}/company/EdinetcodeDlInfo.csv
+      edinet: C:/${spring.application.name}/edinet
+      decode: C:/${spring.application.name}/decode
