@@ -453,6 +453,8 @@ public class DocumentService {
                             .replace("※２ ", "")
                             .replace("*2 ", "")
                             .replace("※ ", "")
+                            .replace("※１ ", "")
+                            .replace("※１,※２ ", "")
                     ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
