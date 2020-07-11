@@ -24,10 +24,10 @@ public class AnalysisResult {
 
     private final String companyCode;
 
-    private final BigDecimal corporateValue;
-
     private final LocalDate period;
 
+    private final BigDecimal corporateValue;
+
     @Column(updatable = false)
-    private final LocalDateTime insertDate;
+    private final LocalDateTime createdAt;
 }

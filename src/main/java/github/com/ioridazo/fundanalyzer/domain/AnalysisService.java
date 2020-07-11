@@ -61,8 +61,8 @@ public class AnalysisService {
                     analysisResultDao.insert(new AnalysisResult(
                                     null,
                                     companyCode,
-                                    calculate(companyCode, year),
                                     LocalDate.of(Integer.parseInt(year), 1, 1),
+                                    calculate(companyCode, year),
                                     LocalDateTime.now()
                             )
                     );

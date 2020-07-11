@@ -2,10 +2,10 @@ package github.com.ioridazo.fundanalyzer.domain;
 
 import github.com.ioridazo.fundanalyzer.domain.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.BalanceSheetSubjectDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.BsSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.ProfitAndLessStatementSubjectDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -67,8 +68,8 @@ public class DocumentService {
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final ScrapingKeywordDao scrapingKeywordDao;
-    private final BalanceSheetSubjectDao bsSubjectDao;
-    private final ProfitAndLessStatementSubjectDao plSubjectDao;
+    private final BsSubjectDao bsSubjectDao;
+    private final PlSubjectDao plSubjectDao;
     private final EdinetDocumentDao edinetDocumentDao;
     private final DocumentDao documentDao;
     private final FinancialStatementDao financialStatementDao;
@@ -84,8 +85,8 @@ public class DocumentService {
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final ScrapingKeywordDao scrapingKeywordDao,
-            final BalanceSheetSubjectDao bsSubjectDao,
-            final ProfitAndLessStatementSubjectDao plSubjectDao,
+            final BsSubjectDao bsSubjectDao,
+            final PlSubjectDao plSubjectDao,
             final EdinetDocumentDao edinetDocumentDao,
             final DocumentDao documentDao,
             final FinancialStatementDao financialStatementDao
@@ -128,7 +129,7 @@ public class DocumentService {
         // Industryの登録
         resultBeanIndustryList.forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
                 .filter(rb -> dbIndustryList.stream().noneMatch(rb::equals))
-                .forEach(rb -> industryDao.insert(new Industry(null, rb)))
+                .forEach(rb -> industryDao.insert(new Industry(null, rb, LocalDateTime.now())))
         );
 
         final var industryList = industryDao.selectAll();
@@ -161,10 +162,10 @@ public class DocumentService {
         insertDocumentList(LocalDate.parse(date));
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var docIdList = documentDao.selectByDateAndDocTypeCode(LocalDate.parse(date), docTypeCode)
+        final var docIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), docTypeCode)
                 .stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
-                .map(Document::getDocId)
+                .map(Document::getDocumentId)
                 .collect(Collectors.toList());
 
         if (docIdList.isEmpty()) {
@@ -174,12 +175,12 @@ public class DocumentService {
                 System.out.println("--------------------------------------------------");
 
                 // 書類取得
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocId(docId).getDownloaded())) {
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getDownloaded())) {
                     store(LocalDate.parse(date), docId);
                 }
 
                 // スクレイピング
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocId(docId).getScrapedBalanceSheet())) {
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedBs())) {
                     scrape(LocalDate.parse(date), docId);
                 }
             });
@@ -215,10 +216,12 @@ public class DocumentService {
                             .forEach(r -> {
                                 edinetDocumentDao.insert(EdinetMapper.map(r));
                                 documentDao.insert(Document.builder()
-                                        .docId(r.getDocId())
-                                        .docTypeCode(r.getDocTypeCode())
+                                        .documentId(r.getDocId())
+                                        .documentTypeCode(r.getDocTypeCode())
                                         .edinetCode(r.getEdinetCode())
                                         .submitDate(date)
+                                        .createdAt(LocalDateTime.now())
+                                        .updatedAt(LocalDateTime.now())
                                         .build()
                                 );
                             });
@@ -236,7 +239,7 @@ public class DocumentService {
 
         if (fileListAlready.isPresent() && fileListAlready.get().stream().anyMatch(docId::equals)) {
             documentDao.update(Document.builder()
-                    .docId(docId)
+                    .documentId(docId)
                     .downloaded(DocumentStatus.DONE.toValue())
                     .decoded(DocumentStatus.DONE.toValue())
                     .build()
@@ -258,7 +261,7 @@ public class DocumentService {
 
             log.info("書類のダウンロード処理が完了しました。zipファイルの解凍処理を実行します。");
 
-            documentDao.update(Document.builder().docId(docId).downloaded(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.DONE.toValue()).build());
 
             fileOperator.decodeZipFile(
                     new File(pathEdinet + "/" + targetDate.toString() + "/" + docId),
@@ -267,7 +270,7 @@ public class DocumentService {
 
             log.info("zipファイルの解凍処理が正常に実行されました。");
 
-            documentDao.update(Document.builder().docId(docId).decoded(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.DONE.toValue()).build());
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
@@ -275,14 +278,14 @@ public class DocumentService {
                             "\t書類管理番号:{}",
                     targetDate,
                     docId);
-            documentDao.update(Document.builder().docId(docId).downloaded(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.ERROR.toValue()).build());
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
                             "\t処理対象日:{}" +
                             "\t書類管理番号:{}",
                     targetDate,
                     docId);
-            documentDao.update(Document.builder().docId(docId).decoded(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.ERROR.toValue()).build());
         }
     }
 
@@ -297,27 +300,27 @@ public class DocumentService {
         try {
             scrapeBalanceSheet(targetFile, company, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
-            documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().docId(docId).scrapedBalanceSheet(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
             log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "貸借対照表");
         }
 
         try {
             scrapeProfitAndLessStatement(targetFile, company, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
-            documentDao.update(Document.builder().docId(docId).scrapedProfitAndLessStatement(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().docId(docId).scrapedProfitAndLessStatement(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
             log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "損益計算書");
         }
 
         try {
             scrapeNumberOfShares(targetFile, company, edinetDocument);
             log.info("ファイル情報をデータベースに正常に登録されました。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
-            documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.DONE.toValue()).build());
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().docId(docId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
             log.error("ファイル情報をデータベースに登録できませんでした。\t書類管理番号:{}\t対象:{}", docId, "株式総数");
         }
 
@@ -417,7 +420,8 @@ public class DocumentService {
                         "0",
                         LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
                         LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                        replaceInteger(htmlScraping.findNumberOfShares(file, scrapingKeyword.getKeyword())).orElse(null)
+                        replaceInteger(htmlScraping.findNumberOfShares(file, scrapingKeyword.getKeyword())).orElse(null),
+                        LocalDateTime.now()
                 ));
                 return;
             } catch (NoSuchElementException ignored) {
@@ -456,7 +460,8 @@ public class DocumentService {
                         detail.getId(),
                         LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
                         LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
+                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
+                        LocalDateTime.now()
                 )))
         );
 

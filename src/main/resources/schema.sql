@@ -1,12 +1,13 @@
 --業種
-create TABLE industry(
+CREATE TABLE industry(
   id INT AUTO_INCREMENT,
   name VARCHAR(100) UNIQUE NOT NULL,
+  created_at DATETIME NOT NULL,
   PRIMARY KEY(id)
 );
 
 --企業
-create TABLE company(
+CREATE TABLE company(
   code CHAR(5) UNIQUE,
   company_name VARCHAR(100) NOT NULL,
   industry_id VARCHAR(10) NOT NULL REFERENCES industry(id),
@@ -15,22 +16,23 @@ create TABLE company(
   consolidated CHAR(1) CHECK(consolidated IN('0', '1', '9')),
   capital_stock INT,
   settlement_date VARCHAR(6),
-  insert_date DATETIME NOT NULL,
-  update_date DATETIME NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
   PRIMARY KEY(edinet_code)
 );
 
 --スクレイピングキーワード
-create TABLE scraping_keyword(
+CREATE TABLE scraping_keyword(
   id INT AUTO_INCREMENT,
   financial_statement_id VARCHAR(10) NOT NULL,
   keyword VARCHAR UNIQUE NOT NULL,
   remarks VARCHAR,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY(id)
 );
 
 --貸借対照表
-create TABLE balance_sheet_subject(
+CREATE TABLE bs_subject(
   id INT AUTO_INCREMENT,
   outline_subject_id VARCHAR(10),
   detail_subject_id VARCHAR(10),
@@ -39,7 +41,7 @@ create TABLE balance_sheet_subject(
 );
 
 --損益計算書
-create TABLE profit_and_less_statement_subject(
+CREATE TABLE pl_subject(
   id INT AUTO_INCREMENT,
   outline_subject_id VARCHAR(10),
   detail_subject_id VARCHAR(10),
@@ -57,7 +59,7 @@ create TABLE profit_and_less_statement_subject(
 --);
 
 --EDINETに提出された書類
-create TABLE edinet_document(
+CREATE TABLE edinet_document(
   id INT AUTO_INCREMENT,
   doc_id CHAR(8) NOT NULL,
   edinet_code CHAR(6),
@@ -85,28 +87,34 @@ create TABLE edinet_document(
   pdf_flag CHAR(1),
   attach_doc_flag CHAR(1),
   english_doc_flag CHAR(1),
-  insert_date DATETIME NOT NULL,
+  created_at DATETIME NOT NULL,
   PRIMARY KEY(id)
 );
 
 --書類ステータス
-create TABLE document(
+CREATE TABLE document(
   id INT AUTO_INCREMENT,
-  doc_id CHAR(8) NOT NULL,
-  doc_type_code CHAR(3),
+  document_id CHAR(8) NOT NULL,
+  document_type_code CHAR(3),
   edinet_code CHAR(6) REFERENCES company(edinet_code),
   submit_date DATE NOT NULL,
   downloaded CHAR(1) NOT NULL DEFAULT '0' CHECK(downloaded IN('0', '1', '9')),
   decoded CHAR(1) NOT NULL DEFAULT '0' CHECK(decoded IN('0', '1', '9')),
   scraped_number_of_shares CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_number_of_shares IN('0', '1', '5', '9')),
-  scraped_balance_sheet CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_balance_sheet IN('0', '1', '9')),
-  scraped_profit_and_less_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_profit_and_less_statement IN('0', '1', '9')),
-  scraped_cash_flow_statement CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_cash_flow_statement IN('0', '1', '9')),
+  number_of_shares_document_path VARCHAR,
+  scraped_bs CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_bs IN('0', '1', '9')),
+  bs_document_path VARCHAR,
+  scraped_pl CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_pl IN('0', '1', '9')),
+  pl_document_path VARCHAR,
+  scraped_cf CHAR(1) NOT NULL DEFAULT '0' CHECK(scraped_cf IN('0', '1', '9')),
+  cf_document_path VARCHAR,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
   PRIMARY KEY(id)
 );
 
 --財務諸表
-create TABLE financial_statement(
+CREATE TABLE financial_statement(
   id INT AUTO_INCREMENT,
   company_code CHAR(5) REFERENCES company(code),
   edinet_code CHAR(6) NOT NULL REFERENCES company(edinet_code),
@@ -115,17 +123,18 @@ create TABLE financial_statement(
   period_start DATE NOT NULL,
   period_end DATE NOT NULL,
   value BIGINT,
-  UNIQUE KEY(edinet_code, financial_statement_id, subject_id, period_end),
-  PRIMARY KEY(id)
+  created_at DATETIME NOT NULL,
+  PRIMARY KEY(id),
+  UNIQUE KEY(edinet_code, financial_statement_id, subject_id, period_end)
 );
 
 --企業価値
-create TABLE analysis_result(
+CREATE TABLE analysis_result(
   id INT AUTO_INCREMENT,
   company_code CHAR(5) NOT NULL REFERENCES company(code),
-  corporate_value FLOAT NOT NULL,
   period DATE NOT NULL,
-  insert_date DATETIME NOT NULL,
-  UNIQUE KEY(company_code, period),
-  PRIMARY KEY(id)
+  corporate_value FLOAT NOT NULL,
+  created_at DATETIME NOT NULL,
+  PRIMARY KEY(id),
+  UNIQUE KEY(company_code, period)
 );

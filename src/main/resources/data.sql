@@ -6,7 +6,7 @@ insert into scraping_keyword (financial_statement_id, keyword, remarks) values
   ;
 
 --balance_sheet_subject
-insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) values
+insert into bs_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '流動資産'),
 --  (null, '1', '現金及び預金'), (null, '1', '信託現金及び信託預金'), (null, '1', '営業未収入金'), (null, '1', 'リース投資資産'), (null, '1', '前払費用'),
 --  (null, '1', 'その他'), (null, '1', '貸倒引当金'),
@@ -49,7 +49,7 @@ insert into balance_sheet_subject (outline_subject_id, detail_subject_id, name) 
 
 -- TODO 追加したらEnumの修正
 --profit_and_less_statement_subject
-insert into profit_and_less_statement_subject (outline_subject_id, detail_subject_id, name) values
+insert into pl_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '営業収益'),
 --  (null, '1', '賃貸事業収入'), (null, '1', 'その他賃貸事業収入'), (null, '1', '営業収益合計'),
   ('2', null, '営業費用'),

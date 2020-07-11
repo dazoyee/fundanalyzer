@@ -5,8 +5,8 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 @Entity(immutable = true)
-@Table(name = "balance_sheet_detail")
-public class BalanceSheetSubject extends Detail {
+@Table(name = "bs_subject")
+public class BsSubject extends Detail {
 
     @Id
     private final String id;
@@ -17,7 +17,7 @@ public class BalanceSheetSubject extends Detail {
 
     private final String name;
 
-    public BalanceSheetSubject(
+    public BsSubject(
             String id,
             String outlineSubjectId,
             String detailSubjectId,

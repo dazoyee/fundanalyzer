@@ -9,6 +9,7 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Builder
 @Getter
@@ -20,10 +21,10 @@ public class Document {
     private final Integer id;
 
     @Id
-    private final String docId;
+    private final String documentId;
 
     @Column(updatable = false)
-    private final String docTypeCode;
+    private final String documentTypeCode;
 
     @Column(updatable = false)
     private final String edinetCode;
@@ -37,9 +38,22 @@ public class Document {
 
     private final String scrapedNumberOfShares;
 
-    private final String scrapedBalanceSheet;
+    private final String numberOfSharesDocumentPath;
 
-    private final String scrapedProfitAndLessStatement;
+    private final String scrapedBs;
 
-    private final String scrapedCashFlowStatement;
+    private final String bsDocumentPath;
+
+    private final String scrapedPl;
+
+    private final String plDocumentPath;
+
+    private final String scrapedCf;
+
+    private final String cfDocumentPath;
+
+    @Column(updatable = false)
+    private final LocalDateTime createdAt;
+
+    private final LocalDateTime updatedAt;
 }

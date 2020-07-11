@@ -1,11 +1,14 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
 import lombok.Value;
+import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
 import org.seasar.doma.GenerationType;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
+
+import java.time.LocalDateTime;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -22,4 +25,7 @@ public class ScrapingKeyword {
     private final String keyword;
 
     private final String remarks;
+
+    @Column(updatable = false)
+    private final LocalDateTime createdAt;
 }

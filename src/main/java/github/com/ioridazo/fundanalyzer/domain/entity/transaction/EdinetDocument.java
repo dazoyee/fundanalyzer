@@ -100,7 +100,7 @@ public class EdinetDocument {
 
     //登録日
     @Column(updatable = false)
-    private final LocalDateTime insertDate;
+    private final LocalDateTime createdAt;
 
     public String getDocId() {
         return docId;

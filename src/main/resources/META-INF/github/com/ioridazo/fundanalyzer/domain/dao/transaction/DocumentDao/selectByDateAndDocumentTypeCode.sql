@@ -2,4 +2,4 @@ select * from document
 where
   submit_date = /* submitDate */'yyyy-MM-dd'
 and
-  doc_type_code = /* docTypeCode */'120'
+  document_type_code = /* documentTypeCode */'120'
