@@ -108,7 +108,7 @@ public class DocumentService {
         this.financialStatementDao = financialStatementDao;
     }
 
-    public String company() {
+    public void company() {
         log.info("CSVファイルから会社情報の取得処理を開始します。");
 
         final var resultBeanList = csvCommander.readCsv(
@@ -142,34 +142,30 @@ public class DocumentService {
         );
 
         log.info("会社情報をデータベースに正常に登録しました。");
-
-        return "会社を登録しました\n";
     }
 
-    public String document(final String startDate, final String endDate, final String docTypeCode) {
+    public void edinetList(final String startDate, final String endDate) {
         final var dateList = LocalDate.parse(startDate)
                 .datesUntil(LocalDate.parse(endDate).plusDays(1))
                 .collect(Collectors.toList());
 
         // 書類リストをデータベースに登録する
         dateList.forEach(this::insertDocumentList);
-
-        return "ドキュメントリストをDBに登録しました\n";
     }
 
-    public String document(final String date, final String docTypeCode) {
+    public void document(final String date, final String documentTypeCode) {
         // 書類リストをデータベースに登録する
         insertDocumentList(LocalDate.parse(date));
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var docIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), docTypeCode)
+        final var docIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), documentTypeCode)
                 .stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
                 .map(Document::getDocumentId)
                 .collect(Collectors.toList());
 
         if (docIdList.isEmpty()) {
-            return "対象のドキュメントは存在しませんでした。\n";
+            log.warn("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
             docIdList.forEach(docId -> {
                 System.out.println("--------------------------------------------------");
@@ -185,7 +181,7 @@ public class DocumentService {
                 }
             });
 
-            return "ドキュメントを登録しました\n";
+            log.info("{}付のドキュメントに対して処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
         }
     }
 

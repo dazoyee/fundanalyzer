@@ -26,8 +26,40 @@ public class AnalysisController {
         this.viewService = viewService;
     }
 
-    @GetMapping("/company")
+    @GetMapping("fundanalyzer/v1/company")
     public String company(final Model model) {
+        documentService.company();
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
+    }
+
+    @GetMapping("fundanalyzer/v1/edinet/list/{fromDate}/{toDate}")
+    public String edinet(@PathVariable String fromDate, @PathVariable String toDate, final Model model) {
+        documentService.edinetList(fromDate, toDate);
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
+    }
+
+    @GetMapping("fundanalyzer/v1/document/{date}")
+    public String document(@PathVariable String date, final Model model) {
+        documentService.document(date, "120");
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
+    }
+
+    @GetMapping("fundanalyzer/v1/analysis/{year}")
+    public String analysis(@PathVariable String year, final Model model) {
+        model.addAttribute("companies", analysisService.analyze(year));
+        return "index";
+    }
+
+    // -------------------------------------------------------
+
+    @GetMapping("/company")
+    public String devCompany(final Model model) {
         documentService.company();
 
         model.addAttribute("companies", viewService.viewCompany());
@@ -46,14 +78,14 @@ public class AnalysisController {
     @GetMapping("/edinet/list/{fromDate}/{toDate}")
     public String document(@PathVariable String fromDate, @PathVariable String toDate, final Model model) {
         documentService.company();
-        documentService.document(fromDate, toDate, "120");
+        documentService.edinetList(fromDate, toDate);
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 
     @GetMapping("/scrape/{date}")
-    public String document(@PathVariable String date, final Model model) {
+    public String devDocument(@PathVariable String date, final Model model) {
         documentService.company();
         documentService.document(date, "120");
 
@@ -71,7 +103,7 @@ public class AnalysisController {
     }
 
     @GetMapping("/analysis/{year}")
-    public String analysis(@PathVariable String year, final Model model) {
+    public String devAnalysis(@PathVariable String year, final Model model) {
         model.addAttribute("companies", analysisService.analyze(year));
         return "index";
     }
