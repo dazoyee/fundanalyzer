@@ -1,11 +1,11 @@
---scraping_keyword
+-- scraping_keyword
 insert into scraping_keyword (financial_statement_id, keyword, remarks) values
   ('1', 'jpcrp_cor:ConsolidatedBalanceSheetTextBlock', '連結貸借対照表'), ('1', 'jpcrp_cor:BalanceSheetTextBlock', '貸借対照表'),
   ('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock', '連結損益計算書'), ('2', 'jpcrp_cor:StatementOfIncomeTextBlock', '損益計算書'),
   ('4', 'jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock', '株式総数')
   ;
 
---balance_sheet_subject
+-- bs_subject
 insert into bs_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '流動資産'),
 --  (null, '1', '現金及び預金'), (null, '1', '信託現金及び信託預金'), (null, '1', '営業未収入金'), (null, '1', 'リース投資資産'), (null, '1', '前払費用'),
@@ -48,7 +48,7 @@ insert into bs_subject (outline_subject_id, detail_subject_id, name) values
  ;
 
 -- TODO 追加したらEnumの修正
---profit_and_less_statement_subject
+-- pl_subject
 insert into pl_subject (outline_subject_id, detail_subject_id, name) values
   ('1', null, '営業収益'),
 --  (null, '1', '賃貸事業収入'), (null, '1', 'その他賃貸事業収入'), (null, '1', '営業収益合計'),
@@ -72,12 +72,15 @@ insert into pl_subject (outline_subject_id, detail_subject_id, name) values
   ('13', '13', '当期未処分利益又は当期未処理損失（△）')
   ;
 
---cash_flow_statement
+-- cash_flow_statement
+/*
 --insert into cash_flow_statement_subject (id, subject) values
 --  ('1', '営業活動によるキャッシュ・フロー'), ('2', '投資活動によるキャッシュ・フロー'), ('3', '財務活動によるキャッシュ・フロー'),
 --  ('4', '現金及び現金同等物の増減額（△は減少）'), ('5', '現金及び現金同等物の期首残高'), ('6', '現金及び現金同等物の期末残高')
 --  ;
---cash_flow_statement_subject
+*/
+-- cash_flow_statement_subject
+/*
 --insert into cash_flow_statement_detail (subject_id, name) values
 -- ('1', '税引前当期純利益'), ('1', '減価償却費'), ('1', '長期前払費用償却額'), ('1', '投資法人債発行費償却'), ('1', '受取利息'),
 -- ('1', '支払利息'), ('1', '固定資産除却損'), ('1', '営業未収入金の増減額（△は増加）'), ('1', '未収消費税等の増減額（△は増加）'), ('1', '未払消費税等の増減額（△は減少）'),
@@ -93,3 +96,4 @@ insert into pl_subject (outline_subject_id, detail_subject_id, name) values
 -- ('5', '現金及び現金同等物の期首残高'),
 -- ('6', '現金及び現金同等物の期末残高')
 -- ;
+*/

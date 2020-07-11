@@ -22,7 +22,7 @@ public class Company {
     private final String companyName;
 
     // 業種
-    private final String industryId;
+    private final Integer industryId;
 
     // EDINETコード
     @Id

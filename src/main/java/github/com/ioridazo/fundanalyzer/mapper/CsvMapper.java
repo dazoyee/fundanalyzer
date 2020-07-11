@@ -26,11 +26,10 @@ public class CsvMapper {
         );
     }
 
-    private static String mapToIndustryId(final List<Industry> industryList, final String industryName) {
+    private static Integer mapToIndustryId(final List<Industry> industryList, final String industryName) {
         return industryList.stream()
                 .filter(industry -> industryName.equals(industry.getName()))
                 .map(Industry::getId)
-                .map(String::valueOf)
                 .findAny()
                 .orElseThrow();
     }
