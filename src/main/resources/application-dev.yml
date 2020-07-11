@@ -4,15 +4,15 @@ server:
 spring:
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:fundamental-analysis
+    url: jdbc:h2:mem:fundanalyzer
     username: sa
     password:
-  #    initialation-mode: EMBEDDED
   h2:
     console:
       enabled: true
-  http:
-  #    encoding:
-  #      charset: Windows-31J
   thymeleaf:
     encoding: UTF-8
+
+doma:
+  dialect: h2
+  naming: snake-upper-case

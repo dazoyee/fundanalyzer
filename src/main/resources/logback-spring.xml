@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+
+    <property name="name" value="fundanalyzer" />
+    <property name="home" value="C:/fundanalyzer/log" />
+    <timestamp key="date" datePattern="yyyyMMdd" />
+
+    <!--設定開発用 -->
+    <springProfile name="dev">
+        <property name="springProfile" value="dev" />
+        <property name="maxHistory" value="3" />
+    </springProfile>
+
+    <!--設定本番用 -->
+    <springProfile name="prod">
+        <property name="springProfile" value="prod" />
+        <property name="maxHistory" value="31" />
+    </springProfile>
+
+    <!-- アプリケーションログのファイル書き出し -->
+    <appender name="INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--ファイル名 -->
+        <file>${home}/${springProfile}/${date}_${name}_${springProfile}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日ごとにローテーションさせて、過去ファイルはYYYYMMフォルダに格納する-->
+            <fileNamePattern>${home}/${springProfile}/%d{yyyyMM,aux}/%d{yyyyMMdd}_${name}_${springProfile}.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level - %-40(%c{40}) : %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <!--ファイル名 -->
+        <file>${home}/${springProfile}/[WARN]${date}_${name}_${springProfile}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日ごとにローテーションさせて、過去ファイルはYYYYMMフォルダに格納する-->
+            <fileNamePattern>${home}/${springProfile}/%d{yyyyMM,aux}/[WARN]%d{yyyyMMdd}_${name}_${springProfile}.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level - %-40(%c{40}) : %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--rootログレベルと使用出力ルール -->
+    <root level="INFO">
+        <appender-ref ref="INFO" />
+        <appender-ref ref="WARN" />
+    </root>
+<!--    <root level="WARN">-->
+<!--    </root>-->
+
+</configuration>
