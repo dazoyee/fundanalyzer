@@ -33,9 +33,29 @@
         </encoder>
     </appender>
 
+    <appender name="WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <!--ファイル名 -->
+        <file>${home}/${springProfile}/[WARN]${date}_${name}_${springProfile}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 日ごとにローテーションさせて、過去ファイルはYYYYMMフォルダに格納する-->
+            <fileNamePattern>${home}/${springProfile}/%d{yyyyMM,aux}/[WARN]%d{yyyyMMdd}_${name}_${springProfile}.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level - %-40(%c{40}) : %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!--rootログレベルと使用出力ルール -->
     <root level="INFO">
         <appender-ref ref="INFO" />
+        <appender-ref ref="WARN" />
     </root>
+<!--    <root level="WARN">-->
+<!--    </root>-->
 
 </configuration>
