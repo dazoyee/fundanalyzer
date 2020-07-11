@@ -1,0 +1,15 @@
+server:
+  port: 8890
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=JST
+    username: fundanalyzer
+    password: fundanalyzer
+    driverClassName: com.mysql.jdbc.Driver
+  thymeleaf:
+    encoding: UTF-8
+
+doma:
+  dialect: mysql
+  naming: snake-upper-case
