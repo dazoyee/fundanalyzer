@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
