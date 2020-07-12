@@ -58,6 +58,12 @@ public class AnalysisController {
 
     // -------------------------------------------------------
 
+    @GetMapping("/edinet/list")
+    public String edinetList(final Model model) {
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "edinet";
+    }
+
     @GetMapping("/company")
     public String devCompany(final Model model) {
         documentService.company();
@@ -71,8 +77,8 @@ public class AnalysisController {
         documentService.company();
         documentService.insertDocumentList(LocalDate.parse(date));
 
-        model.addAttribute("companies", viewService.viewCompany());
-        return "index";
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "edinet";
     }
 
     @GetMapping("/edinet/list/{fromDate}/{toDate}")
@@ -80,8 +86,8 @@ public class AnalysisController {
         documentService.company();
         documentService.edinetList(fromDate, toDate);
 
-        model.addAttribute("companies", viewService.viewCompany());
-        return "index";
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "edinet";
     }
 
     @GetMapping("/scrape/{date}")

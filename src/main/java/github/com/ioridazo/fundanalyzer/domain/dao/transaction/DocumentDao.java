@@ -19,6 +19,9 @@ public interface DocumentDao {
     Document selectByDocumentId(final String documentId);
 
     @Select
+    List<Document> selectByDocumentTypeCode(final String documentTypeCode);
+
+    @Select
     List<Document> selectByDateAndDocumentTypeCode(final LocalDate submitDate, final String documentTypeCode);
 
     @Insert(excludeNull = true)
