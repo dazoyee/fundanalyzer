@@ -39,8 +39,8 @@ public class ViewService {
         this.analysisResultDao = analysisResultDao;
     }
 
-    public static LocalDate mapToPeriod(final String year) {
-        return LocalDate.of(Integer.parseInt(year), 1, 1);
+    public static LocalDate mapToPeriod(final int year) {
+        return LocalDate.of(year, 1, 1);
     }
 
     public List<CompanyViewBean> viewCompany() {
@@ -59,14 +59,14 @@ public class ViewService {
         return sortedCode(viewBeanList);
     }
 
-    public List<CompanyViewBean> viewCompany(final String year) {
+    public List<CompanyViewBean> viewCompany(final int year) {
         final var companyAll = companyDao.selectAll();
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
         var presentCompanies = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
         // ドキュメント取得済の会社のみ画面表示する
-        edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", year).stream()
+        edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", String.valueOf(year)).stream()
                 .map(EdinetDocument::getEdinetCode)
                 .map(Optional::get)
                 .forEach(edinetCode -> companyAll.stream()
@@ -83,7 +83,7 @@ public class ViewService {
                         .map(AnalysisResult::getCorporateValue)
                         .findAny()
                         .orElse(null),
-                Integer.parseInt(year)
+                year
         )));
 
         return sortedCode(viewBeanList);

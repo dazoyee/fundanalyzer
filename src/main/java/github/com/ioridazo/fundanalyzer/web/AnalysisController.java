@@ -26,6 +26,18 @@ public class AnalysisController {
         this.viewService = viewService;
     }
 
+    @GetMapping("fundanalyzer/v1/index")
+    public String index(final Model model) {
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
+    }
+
+    @GetMapping("fundanalyzer/v1/edinet/list")
+    public String edinetList(final Model model) {
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "edinet";
+    }
+
     @GetMapping("fundanalyzer/v1/company")
     public String company(final Model model) {
         documentService.company();
@@ -42,24 +54,21 @@ public class AnalysisController {
         return "index";
     }
 
-    @GetMapping("fundanalyzer/v1/document/{date}")
-    public String document(@PathVariable String date, final Model model) {
+    @GetMapping("fundanalyzer/v1/document/analysis/{date}")
+    public String documentAnalysis(@PathVariable String date, final Model model) {
+        final var year = LocalDate.parse(date).getYear();
+
         documentService.document(date, "120");
+        analysisService.analyze(year);
 
-        model.addAttribute("companies", viewService.viewCompany());
-        return "index";
-    }
-
-    @GetMapping("fundanalyzer/v1/analysis/{year}")
-    public String analysis(@PathVariable String year, final Model model) {
-        model.addAttribute("companies", analysisService.analyze(year));
+        model.addAttribute("companies", viewService.viewCompany(year));
         return "index";
     }
 
     // -------------------------------------------------------
 
     @GetMapping("/edinet/list")
-    public String edinetList(final Model model) {
+    public String devEdinetList(final Model model) {
         model.addAttribute("edinetList", viewService.edinetList("120"));
         return "edinet";
     }
@@ -104,13 +113,15 @@ public class AnalysisController {
         documentService.company();
         documentService.document("2020-05-22", "120");
 
-        model.addAttribute("companies", viewService.viewCompany(year));
+        model.addAttribute("companies", viewService.viewCompany(Integer.parseInt(year)));
         return "index";
     }
 
     @GetMapping("/analysis/{year}")
     public String devAnalysis(@PathVariable String year, final Model model) {
-        model.addAttribute("companies", analysisService.analyze(year));
+        analysisService.analyze(Integer.parseInt(year));
+
+        model.addAttribute("companies", viewService.viewCompany(Integer.parseInt(year)));
         return "index";
     }
 }
