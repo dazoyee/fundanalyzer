@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.LocalDate;
 
@@ -46,16 +47,14 @@ public class AnalysisController {
         return "index";
     }
 
-    @GetMapping("fundanalyzer/v1/edinet/list/{fromDate}/{toDate}")
-    public String edinet(@PathVariable String fromDate, @PathVariable String toDate, final Model model) {
+    @PostMapping("fundanalyzer/v1/edinet/list")
+    public String edinet(final String fromDate, final String toDate) {
         documentService.edinetList(fromDate, toDate);
-
-        model.addAttribute("companies", viewService.viewCompany());
-        return "index";
+        return "redirect:/fundanalyzer/v1/edinet/list";
     }
 
-    @GetMapping("fundanalyzer/v1/document/analysis/{date}")
-    public String documentAnalysis(@PathVariable String date, final Model model) {
+    @PostMapping("fundanalyzer/v1/document/analysis")
+    public String documentAnalysis(final String date, final Model model) {
         final var year = LocalDate.parse(date).getYear();
 
         documentService.document(date, "120");

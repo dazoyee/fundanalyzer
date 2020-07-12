@@ -47,13 +47,18 @@ public class ViewService {
         final var companyList = companyDao.selectAll().stream()
                 .filter(company -> company.getCode().isPresent())
                 .collect(Collectors.toList());
+        final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(LocalDate.now().getYear()));
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
         companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
                 company.getCode().orElseThrow(),
                 company.getCompanyName(),
-                null,
-                null
+                resultList.stream()
+                        .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
+                        .map(AnalysisResult::getCorporateValue)
+                        .findAny()
+                        .orElse(null),
+                LocalDate.now().getYear()
         )));
 
         return sortedCode(viewBeanList);
