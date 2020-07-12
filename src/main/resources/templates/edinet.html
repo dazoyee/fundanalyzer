@@ -1,0 +1,45 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+            rel="stylesheet">
+    <title>EDINETリスト</title>
+</head>
+<body>
+<h1>EDINETリスト</h1>
+<form method="post" th:action="@{/fundanalyzer/v1/edinet/list}">
+    <input type="date" name="fromDate"/> ～
+    <input type="date" name="toDate"/>
+    <button type="submit" class="btn">取得する</button>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>提出日</th>
+        <th>総件数</th>
+        <th>処理対象件数</th>
+        <th>処理済件数</th>
+        <th>分析済件数</th>
+        <th>未分析件数</th>
+        <th>未処理件数</th>
+        <th>対象外件数</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="edinet : ${edinetList}">
+        <td th:text="${edinet.submitDate}">提出日</td>
+        <td th:text="${edinet.countAll}">総件数</td>
+        <td th:text="${edinet.countTarget}">処理対象件数</td>
+        <td th:text="${edinet.countScraped}">処理済件数</td>
+        <td th:text="${edinet.countAnalyzed}">分析済件数</td>
+        <td th:text="${edinet.countNotAnalyzed}">未分析件数</td>
+        <td th:text="${edinet.countNotScraped}">未処理件数</td>
+        <td th:text="${edinet.countNotTarget}">対象外件数</td>
+    </tr>
+    </tbody>
+</table>
+<!--<a href="search.html" th:href="@{/search}">Back</a> &lt;!&ndash;/* (6) */&ndash;&gt;-->
+</body>
+</html>
