@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain;
 
-import github.com.ioridazo.fundanalyzer.domain.bean.CompanyViewBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
@@ -44,7 +43,7 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
-    public List<CompanyViewBean> analyze(final String year) {
+    public void analyze(final int year) {
         final var companyCodeList = companyDao.selectAll().stream()
                 .map(Company::getCode)
                 .filter(Optional::isPresent)
@@ -61,7 +60,7 @@ public class AnalysisService {
                     analysisResultDao.insert(new AnalysisResult(
                                     null,
                                     companyCode,
-                                    LocalDate.of(Integer.parseInt(year), 1, 1),
+                                    LocalDate.of(year, 1, 1),
                                     calculate(companyCode, year),
                                     LocalDateTime.now()
                             )
@@ -71,11 +70,9 @@ public class AnalysisService {
                 }
             }
         });
-
-        return viewService.viewCompany(year);
     }
 
-    private BigDecimal calculate(final String companyCode, final String year) throws FundanalyzerCalculateException {
+    private BigDecimal calculate(final String companyCode, final int year) throws FundanalyzerCalculateException {
         try {
             final var company = companyDao.selectByCode(companyCode).orElseThrow();
             // 流動資産合計
@@ -83,7 +80,8 @@ public class AnalysisService {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     BalanceSheetEnum.TOTAL_CURRENT_ASSETS.toValue(),
-                    year).getValue().orElseThrow();
+                    String.valueOf(year)
+            ).getValue().orElseThrow();
             System.out.println("流動資産合計 : " + totalCurrentAssets);
 
             // 投資その他の資産合計
@@ -91,7 +89,8 @@ public class AnalysisService {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     BalanceSheetEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.toValue(),
-                    year).getValue().orElseThrow();
+                    String.valueOf(year)
+            ).getValue().orElseThrow();
             System.out.println("投資その他の資産合計 : " + totalInvestmentsAndOtherAssets);
 
             // 流動負債合計
@@ -99,7 +98,8 @@ public class AnalysisService {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     BalanceSheetEnum.TOTAL_CURRENT_LIABILITIES.toValue(),
-                    year).getValue().orElseThrow();
+                    String.valueOf(year)
+            ).getValue().orElseThrow();
             System.out.println("流動負債合計 : " + totalCurrentLiabilities);
 
             // 固定負債合計
@@ -107,7 +107,8 @@ public class AnalysisService {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     BalanceSheetEnum.TOTAL_FIXED_LIABILITIES.toValue(),
-                    year).getValue().orElseThrow();
+                    String.valueOf(year)
+            ).getValue().orElseThrow();
             System.out.println("固定負債合計 : " + totalFixedLiabilities);
 
             // 営業利益
@@ -117,13 +118,15 @@ public class AnalysisService {
                         company.getEdinetCode(),
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         ProfitAndLossStatementEnum.OPERATING_PROFIT.toValue(),
-                        year).getValue().orElseThrow();
+                        String.valueOf(year)
+                ).getValue().orElseThrow();
             } catch (EmptyResultDataAccessException e) {
                 operatingProfit = financialStatementDao.selectByUniqueKey(
                         company.getEdinetCode(),
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         ProfitAndLossStatementEnum.OPERATING_PROFIT2.toValue(),
-                        year).getValue().orElseThrow();
+                        String.valueOf(year)
+                ).getValue().orElseThrow();
             }
 
             System.out.println("営業利益 : " + operatingProfit);
@@ -133,7 +136,8 @@ public class AnalysisService {
                     company.getEdinetCode(),
                     FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                     "0",
-                    year).getValue().orElseThrow();
+                    String.valueOf(year)
+            ).getValue().orElseThrow();
             System.out.println("株式総数 ： " + numberOfShares);
 
             final var v =
