@@ -40,7 +40,7 @@ public class EdinetProxy {
                     Map.of("date", parameter.getDate(), "type", parameter.getType().toValue())
             );
 
-            log.info("EDINETから書類一覧APIが正常に返却されました。\tレスポンスボディ:{}", response);
+            log.info("EDINETから書類一覧APIが正常に返却されました。");
 
             return response;
 

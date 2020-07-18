@@ -151,7 +151,7 @@ public class AnalysisService {
             return BigDecimal.valueOf(v);
 
         } catch (NoSuchElementException | EmptyResultDataAccessException e) {
-            log.error("データベースに値が存在しないか、またはNULLで登録されています。次のエラーメッセージを確認してください。" +
+            log.info("データベースに値が存在しないか、またはNULLで登録されています。次のエラーメッセージを確認してください。" +
                     "\tmessage:{}", e.getMessage());
             throw new FundanalyzerCalculateException(e);
         }
