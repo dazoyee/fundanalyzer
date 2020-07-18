@@ -45,7 +45,7 @@ public class ViewService {
         return LocalDate.of(year, 1, 1);
     }
 
-    public List<CompanyViewBean> viewCompany() {
+    public List<CompanyViewBean> viewCompanyAll() {
         final var companyList = companyDao.selectAll().stream()
                 .filter(company -> company.getCode().isPresent())
                 .collect(Collectors.toList());
@@ -60,8 +60,19 @@ public class ViewService {
                         .map(AnalysisResult::getCorporateValue)
                         .findAny()
                         .orElse(null),
-                LocalDate.now().getYear()
+                null
         )));
+
+        return sortedCode(viewBeanList);
+    }
+
+    public List<CompanyViewBean> viewCompany() {
+        var viewBeanList = new ArrayList<CompanyViewBean>();
+
+        List.of(
+                LocalDate.now().getYear(),
+                LocalDate.now().minusYears(1).getYear()
+        ).forEach(year -> viewBeanList.addAll((viewCompany(year))));
 
         return sortedCode(viewBeanList);
     }
@@ -72,7 +83,6 @@ public class ViewService {
         var presentCompanies = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
-        // ドキュメント取得済の会社のみ画面表示する
         edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", String.valueOf(year)).stream()
                 .map(EdinetDocument::getEdinetCode)
                 .map(Optional::get)
@@ -114,7 +124,7 @@ public class ViewService {
         documentGroupBySubmitDate.forEach((submitDate, countAll) ->
                 viewBeanList.add(counter(documentList, submitDate, countAll)));
 
-        return viewBeanList;
+        return sortedDate(viewBeanList);
     }
 
     EdinetListViewBean counter(final List<Document> documentList, final LocalDate submitDate, final Long countAll) {
@@ -214,6 +224,12 @@ public class ViewService {
     private List<CompanyViewBean> sortedCode(final List<CompanyViewBean> viewBeanList) {
         return viewBeanList.stream()
                 .sorted(Comparator.comparing(CompanyViewBean::getCode))
+                .collect(Collectors.toList());
+    }
+
+    private List<EdinetListViewBean> sortedDate(final List<EdinetListViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
                 .collect(Collectors.toList());
     }
 }
