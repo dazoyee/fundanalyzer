@@ -32,10 +32,12 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -212,15 +215,23 @@ public class DocumentService {
                             .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
                             .forEach(r -> {
                                 edinetDocumentDao.insert(EdinetMapper.map(r));
-                                documentDao.insert(Document.builder()
-                                        .documentId(r.getDocId())
-                                        .documentTypeCode(r.getDocTypeCode())
-                                        .edinetCode(r.getEdinetCode())
-                                        .submitDate(date)
-                                        .createdAt(LocalDateTime.now())
-                                        .updatedAt(LocalDateTime.now())
-                                        .build()
-                                );
+                                try {
+                                    documentDao.insert(Document.builder()
+                                            .documentId(r.getDocId())
+                                            .documentTypeCode(r.getDocTypeCode())
+                                            .edinetCode(r.getEdinetCode())
+                                            .submitDate(date)
+                                            .createdAt(LocalDateTime.now())
+                                            .updatedAt(LocalDateTime.now())
+                                            .build()
+                                    );
+                                } catch (NestedRuntimeException e) {
+                                    if (e.contains(SQLIntegrityConstraintViolationException.class)) {
+                                        log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
+                                        throw new FundanalyzerSqlForeignKeyException(e);
+                                    }
+                                    throw new RuntimeException(e);
+                                }
                             });
                 }));
         log.info("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{}", date);

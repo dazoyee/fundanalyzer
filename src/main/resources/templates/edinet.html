@@ -8,6 +8,12 @@
 </head>
 <body>
 <h1>EDINETリスト</h1>
+<p th:if="${error}" class="alert alert-danger" role="alert">
+    <th:block th:each="error: ${error}"><!-- 改行コードでsplitしてループ -->
+        <th:block th:text="${error}"/>
+        <br/>
+    </th:block>
+</p>
 <form method="post" th:action="@{/fundanalyzer/v1/edinet/list}">
     <input type="date" name="fromDate"/> ～
     <input type="date" name="toDate"/>
