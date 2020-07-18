@@ -50,68 +50,79 @@ public class HtmlScraping {
         return filePathList.stream().findAny();
     }
 
-    public List<FinancialTableResultBean> scrapeFinancialStatement(final File file, final String keyWord) {
-        var resultBeanList = new ArrayList<FinancialTableResultBean>();
+    public List<FinancialTableResultBean> scrapeFinancialStatement(
+            final File file, final String keyWord) throws FundanalyzerFileException {
+        try {
+            var resultBeanList = new ArrayList<FinancialTableResultBean>();
 
-        Unit unit;
-        if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                .select("table")
-                .stream()
-                .map(Element::text)
-                .anyMatch(s -> s.contains(Unit.THOUSANDS_OF_YEN.getName()))) {
-            unit = Unit.THOUSANDS_OF_YEN;
-        } else if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                .select("table")
-                .stream()
-                .map(Element::text)
-                .anyMatch(s -> s.contains(Unit.MILLIONS_OF_YEN.getName()))) {
-            unit = Unit.MILLIONS_OF_YEN;
-        } else {
-            throw new FundanalyzerRuntimeException("財務諸表の金額単位を識別できませんでした。");
+            Unit unit;
+            if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                    .select("table")
+                    .stream()
+                    .map(Element::text)
+                    .anyMatch(s -> s.contains(Unit.THOUSANDS_OF_YEN.getName()))) {
+                unit = Unit.THOUSANDS_OF_YEN;
+            } else if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                    .select("table")
+                    .stream()
+                    .map(Element::text)
+                    .anyMatch(s -> s.contains(Unit.MILLIONS_OF_YEN.getName()))) {
+                unit = Unit.MILLIONS_OF_YEN;
+            } else {
+                throw new FundanalyzerRuntimeException("財務諸表の金額単位を識別できませんでした。");
+            }
+
+            // ファイルをスクレイピング
+            for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                    .select("table")
+                    .select("tr")) {
+                var tdList = new ArrayList<String>();
+                tr.select("td").forEach(td -> {
+                    if (!td.text().equals(" "))
+                        tdList.add(td.text());
+                });
+                System.out.println(tdList);
+                // 各要素をbeanに詰める
+                if (tdList.size() >= 3)
+                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
+            }
+
+            log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
+
+            return resultBeanList;
+        } catch (Exception e) {
+            log.error("想定外のエラーが発生しました。", e);
+            throw new FundanalyzerFileException(e);
         }
-
-        // ファイルをスクレイピング
-        for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                .select("table")
-                .select("tr")) {
-            var tdList = new ArrayList<String>();
-            tr.select("td").forEach(td -> {
-                if (!td.text().equals(" "))
-                    tdList.add(td.text());
-            });
-            System.out.println(tdList); // FIXME
-            // 各要素をbeanに詰める
-            if (tdList.size() >= 3)
-                resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
-        }
-
-        log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
-
-        return resultBeanList;
     }
 
-    public String findNumberOfShares(final File file, final String keyWord) {
-        var resultBeanList = new ArrayList<NumberOfSharesResultBean>();
+    public String findNumberOfShares(final File file, final String keyWord) throws FundanalyzerFileException {
+        try {
+            var resultBeanList = new ArrayList<NumberOfSharesResultBean>();
 
-        // ファイルをスクレイピング
-        for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                .select("table")
-                .select("tr")) {
-            var tdList = new ArrayList<String>();
-            tr.select("td").forEach(td -> tdList.add(td.text()));
-            System.out.println(tdList); // FIXME
-            // 各要素をbeanに詰める
-            resultBeanList.add(new NumberOfSharesResultBean(
-                    tdList.get(0), tdList.get(1), tdList.get(2), tdList.get(3), tdList.get(4)));
+            // ファイルをスクレイピング
+            for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
+                    .select("table")
+                    .select("tr")) {
+                var tdList = new ArrayList<String>();
+                tr.select("td").forEach(td -> tdList.add(td.text()));
+                System.out.println(tdList);
+                // 各要素をbeanに詰める
+                resultBeanList.add(new NumberOfSharesResultBean(
+                        tdList.get(0), tdList.get(1), tdList.get(2), tdList.get(3), tdList.get(4)));
+            }
+            final var numberOfShares = resultBeanList.stream()
+                    .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
+                    .collect(Collectors.toList())
+                    .get(resultBeanList.size() - 1);
+
+            log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
+
+            return numberOfShares;
+        } catch (Exception e) {
+            log.error("想定外のエラーが発生しました。", e);
+            throw new FundanalyzerFileException(e);
         }
-        final var numberOfShares = resultBeanList.stream()
-                .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
-                .collect(Collectors.toList())
-                .get(resultBeanList.size() - 1);
-
-        log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
-
-        return numberOfShares;
     }
 
     List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {

@@ -323,7 +323,10 @@ public class DocumentService {
 
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
-            log.error("データベースの登録でエラー発生しました。\t対象:{}\t書類管理番号:{}", "貸借対照表", docId);
+            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                            "\t対象:{}" +
+                            "\t書類管理番号:{}",
+                    "貸借対照表", docId);
         }
 
         // 損益計算書
@@ -347,7 +350,10 @@ public class DocumentService {
 
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
-            log.error("データベースの登録でエラー発生しました。\t対象:{}\t書類管理番号:{}", "損益計算書", docId);
+            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                            "\t対象:{}" +
+                            "\t書類管理番号:{}",
+                    "損益計算書", docId);
         }
 
         // 株式総数
@@ -377,7 +383,10 @@ public class DocumentService {
 
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
-            log.error("データベースの登録でエラー発生しました。\t対象:{}\t書類管理番号:{}", "株式総数", docId);
+            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                            "\t対象:{}" +
+                            "\t書類管理番号:{}",
+                    "株式総数", docId);
         }
     }
 
@@ -416,7 +425,7 @@ public class DocumentService {
             final Company company,
             final List<T> detailList,
             final Consumer<FinancialStatement> insert,
-            final EdinetDocument edinetDocument) {
+            final EdinetDocument edinetDocument) throws FundanalyzerFileException {
 
         final var resultBeans = htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
 
