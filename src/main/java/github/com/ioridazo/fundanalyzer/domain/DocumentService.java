@@ -188,7 +188,7 @@ public class DocumentService {
         }
     }
 
-    @Transactional  // TODO 機能しているか確認する
+    @Transactional
     public void insertDocumentList(final LocalDate date) {
         final var docIdList = edinetDocumentDao.selectAll().stream()
                 .map(EdinetDocument::getDocId)
