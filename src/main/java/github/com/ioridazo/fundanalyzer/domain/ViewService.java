@@ -14,6 +14,8 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -92,6 +94,14 @@ public class ViewService {
         )));
 
         return sortedCode(viewBeanList);
+    }
+
+    public String companyUpdated() {
+        return companyDao.selectAll().stream()
+                .map(Company::getUpdatedAt)
+                .max(LocalDateTime::compareTo)
+                .orElseThrow()
+                .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
     }
 
     public List<EdinetListViewBean> edinetList(final String documentTypeCode) {

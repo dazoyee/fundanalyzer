@@ -9,6 +9,11 @@ spring:
 #  file:
 #    name: ${spring.application.name}
 #    path: C:/${spring.application.name}/log/
+logging:
+  level:
+    org.seasar.doma:
+      jdbc:
+        UtilLoggingJdbcLogger: WARN
 
 edinet:
   api: https://disclosure.edinet-fsa.go.jp
