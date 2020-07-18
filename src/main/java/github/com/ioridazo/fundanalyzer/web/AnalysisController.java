@@ -35,6 +35,7 @@ public class AnalysisController {
 
     @GetMapping("fundanalyzer/v1/edinet/list")
     public String edinetList(final Model model) {
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetList("120"));
         return "edinet";
     }
@@ -68,6 +69,7 @@ public class AnalysisController {
 
     @GetMapping("/edinet/list")
     public String devEdinetList(final Model model) {
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetList("120"));
         return "edinet";
     }
@@ -85,6 +87,7 @@ public class AnalysisController {
         documentService.company();
         documentService.insertDocumentList(LocalDate.parse(date));
 
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetList("120"));
         return "edinet";
     }
@@ -94,6 +97,7 @@ public class AnalysisController {
         documentService.company();
         documentService.edinetList(fromDate, toDate);
 
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetList("120"));
         return "edinet";
     }
