@@ -45,6 +45,14 @@ public class ViewService {
         return LocalDate.of(year, 1, 1);
     }
 
+    public static Optional<String> codeConverter(final String edinetCode, final List<Company> companyAll) {
+        return companyAll.stream()
+                .filter(company -> edinetCode.equals(company.getEdinetCode()))
+                .map(Company::getCode)
+                .findAny()
+                .orElseThrow();
+    }
+
     public List<CompanyViewBean> viewCompanyAll() {
         final var companyList = companyDao.selectAll().stream()
                 .filter(company -> company.getCode().isPresent())
@@ -137,13 +145,8 @@ public class ViewService {
                 // list edinetCode
                 .map(Document::getEdinetCode)
                 // filter companyCode is present
-                .filter(ec -> companyAll.stream()
-                        .filter(company -> ec.equals(company.getEdinetCode()))
-                        .map(Company::getCode)
-                        .findAny()
-                        .orElseThrow()
-                        .isPresent()
-                ).collect(Collectors.toList());
+                .filter(ec -> codeConverter(ec, companyAll).isPresent())
+                .collect(Collectors.toList());
 
         // 処理済件数
         final var scrapedList = targetList.stream()
@@ -168,32 +171,24 @@ public class ViewService {
                 // filter analysis is done
                 .filter(ec -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        companyAll.stream()
-                                .filter(company -> ec.equals(company.getEdinetCode()))
-                                .map(Company::getCode)
-                                .findAny()
-                                .orElseThrow()
-                                .orElseThrow(),
+                        codeConverter(ec, companyAll).orElseThrow(),
                         // period
                         LocalDate.of(submitDate.getYear(), 1, 1)
                         ).isPresent()
                 ).count();
 
         // 未分析件数
-        final var countNotAnalyzed = scrapedList.stream()
+        final var notAnalyzedCode = scrapedList.stream()
                 // filter analysis is done
                 .filter(ec -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        companyAll.stream()
-                                .filter(company -> ec.equals(company.getEdinetCode()))
-                                .map(Company::getCode)
-                                .findAny()
-                                .orElseThrow()
-                                .orElseThrow(),
+                        codeConverter(ec, companyAll).orElseThrow(),
                         // period
                         LocalDate.of(submitDate.getYear(), 1, 1)
                         ).isEmpty()
-                ).count();
+                )
+                .map(ec -> codeConverter(ec, companyAll).orElseThrow())
+                .collect(Collectors.joining("\n"));
 
         // 対象外件数
         final var countNotTarget = documentList.stream()
@@ -202,13 +197,8 @@ public class ViewService {
                 // list edinetCode
                 .map(Document::getEdinetCode)
                 // filter companyCode is empty
-                .filter(ec -> companyAll.stream()
-                        .filter(company -> ec.equals(company.getEdinetCode()))
-                        .map(Company::getCode)
-                        .findAny()
-                        .orElseThrow()
-                        .isEmpty()
-                ).count();
+                .filter(ec -> codeConverter(ec, companyAll).isEmpty())
+                .count();
 
         return new EdinetListViewBean(
                 submitDate,
@@ -216,7 +206,7 @@ public class ViewService {
                 (long) targetList.size(),
                 (long) scrapedList.size(),
                 countAnalyzed,
-                countNotAnalyzed,
+                notAnalyzedCode,
                 (long) targetList.size() - scrapedList.size(),
                 countNotTarget);
     }
