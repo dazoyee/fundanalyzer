@@ -45,7 +45,15 @@ public class ViewService {
         return LocalDate.of(year, 1, 1);
     }
 
-    public List<CompanyViewBean> viewCompany() {
+    public static Optional<String> codeConverter(final String edinetCode, final List<Company> companyAll) {
+        return companyAll.stream()
+                .filter(company -> edinetCode.equals(company.getEdinetCode()))
+                .map(Company::getCode)
+                .findAny()
+                .orElseThrow();
+    }
+
+    public List<CompanyViewBean> viewCompanyAll() {
         final var companyList = companyDao.selectAll().stream()
                 .filter(company -> company.getCode().isPresent())
                 .collect(Collectors.toList());
@@ -53,6 +61,7 @@ public class ViewService {
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
         companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
+                null,
                 company.getCode().orElseThrow(),
                 company.getCompanyName(),
                 resultList.stream()
@@ -60,19 +69,30 @@ public class ViewService {
                         .map(AnalysisResult::getCorporateValue)
                         .findAny()
                         .orElse(null),
-                LocalDate.now().getYear()
+                null
         )));
 
-        return sortedCode(viewBeanList);
+        return sortedCompany(viewBeanList);
+    }
+
+    public List<CompanyViewBean> viewCompany() {
+        var viewBeanList = new ArrayList<CompanyViewBean>();
+
+        List.of(
+                LocalDate.now().getYear(),
+                LocalDate.now().minusYears(1).getYear()
+        ).forEach(year -> viewBeanList.addAll((viewCompany(year))));
+
+        return sortedCompany(viewBeanList);
     }
 
     public List<CompanyViewBean> viewCompany(final int year) {
         final var companyAll = companyDao.selectAll();
+        final var documentList = documentDao.selectByDocumentTypeCode("120");
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
         var presentCompanies = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
-        // ドキュメント取得済の会社のみ画面表示する
         edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", String.valueOf(year)).stream()
                 .map(EdinetDocument::getEdinetCode)
                 .map(Optional::get)
@@ -83,6 +103,12 @@ public class ViewService {
                         .ifPresent(presentCompanies::add));
 
         presentCompanies.forEach(company -> viewBeanList.add(new CompanyViewBean(
+                documentList.stream()
+                        .filter(document -> company.getEdinetCode().equals(document.getEdinetCode()))
+                        .map(Document::getSubmitDate)
+                        .filter(submitDate -> year == submitDate.getYear())
+                        .findAny()
+                        .orElseThrow(),
                 company.getCode().orElseThrow(),
                 company.getCompanyName(),
                 resultList.stream()
@@ -93,7 +119,7 @@ public class ViewService {
                 year
         )));
 
-        return sortedCode(viewBeanList);
+        return sortedCompany(viewBeanList);
     }
 
     public String companyUpdated() {
@@ -114,7 +140,7 @@ public class ViewService {
         documentGroupBySubmitDate.forEach((submitDate, countAll) ->
                 viewBeanList.add(counter(documentList, submitDate, countAll)));
 
-        return viewBeanList;
+        return sortedEdinetList(viewBeanList);
     }
 
     EdinetListViewBean counter(final List<Document> documentList, final LocalDate submitDate, final Long countAll) {
@@ -127,13 +153,8 @@ public class ViewService {
                 // list edinetCode
                 .map(Document::getEdinetCode)
                 // filter companyCode is present
-                .filter(ec -> companyAll.stream()
-                        .filter(company -> ec.equals(company.getEdinetCode()))
-                        .map(Company::getCode)
-                        .findAny()
-                        .orElseThrow()
-                        .isPresent()
-                ).collect(Collectors.toList());
+                .filter(ec -> codeConverter(ec, companyAll).isPresent())
+                .collect(Collectors.toList());
 
         // 処理済件数
         final var scrapedList = targetList.stream()
@@ -158,32 +179,24 @@ public class ViewService {
                 // filter analysis is done
                 .filter(ec -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        companyAll.stream()
-                                .filter(company -> ec.equals(company.getEdinetCode()))
-                                .map(Company::getCode)
-                                .findAny()
-                                .orElseThrow()
-                                .orElseThrow(),
+                        codeConverter(ec, companyAll).orElseThrow(),
                         // period
                         LocalDate.of(submitDate.getYear(), 1, 1)
                         ).isPresent()
                 ).count();
 
         // 未分析件数
-        final var countNotAnalyzed = scrapedList.stream()
+        final var notAnalyzedCode = scrapedList.stream()
                 // filter analysis is done
                 .filter(ec -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        companyAll.stream()
-                                .filter(company -> ec.equals(company.getEdinetCode()))
-                                .map(Company::getCode)
-                                .findAny()
-                                .orElseThrow()
-                                .orElseThrow(),
+                        codeConverter(ec, companyAll).orElseThrow(),
                         // period
                         LocalDate.of(submitDate.getYear(), 1, 1)
                         ).isEmpty()
-                ).count();
+                )
+                .map(ec -> codeConverter(ec, companyAll).orElseThrow())
+                .collect(Collectors.joining("\n"));
 
         // 対象外件数
         final var countNotTarget = documentList.stream()
@@ -192,13 +205,8 @@ public class ViewService {
                 // list edinetCode
                 .map(Document::getEdinetCode)
                 // filter companyCode is empty
-                .filter(ec -> companyAll.stream()
-                        .filter(company -> ec.equals(company.getEdinetCode()))
-                        .map(Company::getCode)
-                        .findAny()
-                        .orElseThrow()
-                        .isEmpty()
-                ).count();
+                .filter(ec -> codeConverter(ec, companyAll).isEmpty())
+                .count();
 
         return new EdinetListViewBean(
                 submitDate,
@@ -206,14 +214,23 @@ public class ViewService {
                 (long) targetList.size(),
                 (long) scrapedList.size(),
                 countAnalyzed,
-                countNotAnalyzed,
+                notAnalyzedCode,
                 (long) targetList.size() - scrapedList.size(),
                 countNotTarget);
     }
 
-    private List<CompanyViewBean> sortedCode(final List<CompanyViewBean> viewBeanList) {
+    private List<CompanyViewBean> sortedCompany(final List<CompanyViewBean> viewBeanList) {
         return viewBeanList.stream()
-                .sorted(Comparator.comparing(CompanyViewBean::getCode))
+                .sorted(Comparator
+                        .comparing(CompanyViewBean::getSubmitDate).reversed()
+                        .thenComparing(CompanyViewBean::getCode)
+                )
+                .collect(Collectors.toList());
+    }
+
+    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
                 .collect(Collectors.toList());
     }
 }

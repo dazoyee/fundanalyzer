@@ -2,12 +2,14 @@ package github.com.ioridazo.fundanalyzer.domain;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BalanceSheetEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.ProfitAndLossStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,10 +18,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
 
@@ -27,31 +29,38 @@ import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
 @Service
 public class AnalysisService {
 
-    private final ViewService viewService;
     private final CompanyDao companyDao;
+    private final EdinetDocumentDao edinetDocumentDao;
     private final FinancialStatementDao financialStatementDao;
     private final AnalysisResultDao analysisResultDao;
 
     public AnalysisService(
-            ViewService viewService,
             CompanyDao companyDao,
+            EdinetDocumentDao edinetDocumentDao,
             FinancialStatementDao financialStatementDao,
             AnalysisResultDao analysisResultDao) {
-        this.viewService = viewService;
         this.companyDao = companyDao;
+        this.edinetDocumentDao = edinetDocumentDao;
         this.financialStatementDao = financialStatementDao;
         this.analysisResultDao = analysisResultDao;
     }
 
     public void analyze(final int year) {
-        final var companyCodeList = companyDao.selectAll().stream()
-                .map(Company::getCode)
-                .filter(Optional::isPresent)
+        final var companyAll = companyDao.selectAll();
+        var presentCompanies = new ArrayList<Company>();
+
+        edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", String.valueOf(year)).stream()
+                .map(EdinetDocument::getEdinetCode)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .forEach(edinetCode -> companyAll.stream()
+                        .filter(company -> edinetCode.equals(company.getEdinetCode()))
+                        .filter(company -> company.getCode().isPresent())
+                        .findAny()
+                        .ifPresent(presentCompanies::add));
 
         final var resultListAlready = analysisResultDao.selectByPeriod(mapToPeriod(year));
-        companyCodeList.forEach(companyCode -> {
+        presentCompanies.forEach(company -> {
+            final var companyCode = company.getCode().orElseThrow();
             //noinspection StatementWithEmptyBody
             if (isAnalyzed(resultListAlready, companyCode)) {
                 // 分析済
@@ -66,10 +75,11 @@ public class AnalysisService {
                             )
                     );
                 } catch (FundanalyzerCalculateException ignored) {
-                    log.info("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
+                    log.warn("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
                 }
             }
         });
+        log.info("すべての企業分析が正常に終了しました。\t対象月:{}", year);
     }
 
     private BigDecimal calculate(final String companyCode, final int year) throws FundanalyzerCalculateException {
@@ -82,7 +92,6 @@ public class AnalysisService {
                     BalanceSheetEnum.TOTAL_CURRENT_ASSETS.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
-            System.out.println("流動資産合計 : " + totalCurrentAssets);
 
             // 投資その他の資産合計
             final var totalInvestmentsAndOtherAssets = financialStatementDao.selectByUniqueKey(
@@ -91,7 +100,6 @@ public class AnalysisService {
                     BalanceSheetEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
-            System.out.println("投資その他の資産合計 : " + totalInvestmentsAndOtherAssets);
 
             // 流動負債合計
             final var totalCurrentLiabilities = financialStatementDao.selectByUniqueKey(
@@ -100,7 +108,6 @@ public class AnalysisService {
                     BalanceSheetEnum.TOTAL_CURRENT_LIABILITIES.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
-            System.out.println("流動負債合計 : " + totalCurrentLiabilities);
 
             // 固定負債合計
             final var totalFixedLiabilities = financialStatementDao.selectByUniqueKey(
@@ -109,7 +116,6 @@ public class AnalysisService {
                     BalanceSheetEnum.TOTAL_FIXED_LIABILITIES.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
-            System.out.println("固定負債合計 : " + totalFixedLiabilities);
 
             // 営業利益
             Long operatingProfit;
@@ -129,8 +135,6 @@ public class AnalysisService {
                 ).getValue().orElseThrow();
             }
 
-            System.out.println("営業利益 : " + operatingProfit);
-
             // 株式総数
             final var numberOfShares = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
@@ -138,7 +142,6 @@ public class AnalysisService {
                     "0",
                     String.valueOf(year)
             ).getValue().orElseThrow();
-            System.out.println("株式総数 ： " + numberOfShares);
 
             final var v =
                     (
@@ -151,8 +154,8 @@ public class AnalysisService {
             return BigDecimal.valueOf(v);
 
         } catch (NoSuchElementException | EmptyResultDataAccessException e) {
-            log.error("データベースに値が存在しないか、またはNULLで登録されています。次のエラーメッセージを確認してください。" +
-                    "\tmessage:{}", e.getMessage());
+            log.info("データベースに値が存在しないか、またはNULLで登録されています。次のエラーメッセージを確認してください。" +
+                    "\t会社コード:{}\tmessage:{}", companyCode, e.getMessage());
             throw new FundanalyzerCalculateException(e);
         }
     }

@@ -44,7 +44,7 @@ public class AnalysisController {
     public String company(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.viewCompanyAll());
         return "index";
     }
 
@@ -78,7 +78,7 @@ public class AnalysisController {
     public String devCompany(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.viewCompanyAll());
         return "index";
     }
 

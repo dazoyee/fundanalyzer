@@ -16,6 +16,7 @@
 <table class="table table-bordered">
     <thead>
     <tr>
+        <th>date</th>
         <th>code</th>
         <th>name</th>
         <th>value</th>
@@ -24,6 +25,7 @@
     </thead>
     <tbody>
     <tr th:each="company : ${companies}">
+        <td th:text="${company.submitDate}">提出日</td>
         <td th:text="${company.code}">証券コード</td>
         <td th:text="${company.name}">会社名</td>
         <td th:text="${company.corporateValue}">300</td>

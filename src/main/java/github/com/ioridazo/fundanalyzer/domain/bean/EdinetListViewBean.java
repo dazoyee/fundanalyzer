@@ -18,7 +18,7 @@ public class EdinetListViewBean {
 
     private final Long countAnalyzed;
 
-    private final Long countNotAnalyzed;
+    private final String notAnalyzedCode;
 
     private final Long countNotScraped;
 
