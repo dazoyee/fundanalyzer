@@ -61,6 +61,7 @@ public class ViewService {
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
         companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
+                null,
                 company.getCode().orElseThrow(),
                 company.getCompanyName(),
                 resultList.stream()
@@ -71,7 +72,7 @@ public class ViewService {
                 null
         )));
 
-        return sortedCode(viewBeanList);
+        return sortedCompany(viewBeanList);
     }
 
     public List<CompanyViewBean> viewCompany() {
@@ -82,11 +83,12 @@ public class ViewService {
                 LocalDate.now().minusYears(1).getYear()
         ).forEach(year -> viewBeanList.addAll((viewCompany(year))));
 
-        return sortedCode(viewBeanList);
+        return sortedCompany(viewBeanList);
     }
 
     public List<CompanyViewBean> viewCompany(final int year) {
         final var companyAll = companyDao.selectAll();
+        final var documentList = documentDao.selectByDocumentTypeCode("120");
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
         var presentCompanies = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
@@ -101,6 +103,12 @@ public class ViewService {
                         .ifPresent(presentCompanies::add));
 
         presentCompanies.forEach(company -> viewBeanList.add(new CompanyViewBean(
+                documentList.stream()
+                        .filter(document -> company.getEdinetCode().equals(document.getEdinetCode()))
+                        .map(Document::getSubmitDate)
+                        .filter(submitDate -> year == submitDate.getYear())
+                        .findAny()
+                        .orElseThrow(),
                 company.getCode().orElseThrow(),
                 company.getCompanyName(),
                 resultList.stream()
@@ -111,7 +119,7 @@ public class ViewService {
                 year
         )));
 
-        return sortedCode(viewBeanList);
+        return sortedCompany(viewBeanList);
     }
 
     public String companyUpdated() {
@@ -132,7 +140,7 @@ public class ViewService {
         documentGroupBySubmitDate.forEach((submitDate, countAll) ->
                 viewBeanList.add(counter(documentList, submitDate, countAll)));
 
-        return sortedDate(viewBeanList);
+        return sortedEdinetList(viewBeanList);
     }
 
     EdinetListViewBean counter(final List<Document> documentList, final LocalDate submitDate, final Long countAll) {
@@ -211,13 +219,16 @@ public class ViewService {
                 countNotTarget);
     }
 
-    private List<CompanyViewBean> sortedCode(final List<CompanyViewBean> viewBeanList) {
+    private List<CompanyViewBean> sortedCompany(final List<CompanyViewBean> viewBeanList) {
         return viewBeanList.stream()
-                .sorted(Comparator.comparing(CompanyViewBean::getCode))
+                .sorted(Comparator
+                        .comparing(CompanyViewBean::getSubmitDate).reversed()
+                        .thenComparing(CompanyViewBean::getCode)
+                )
                 .collect(Collectors.toList());
     }
 
-    private List<EdinetListViewBean> sortedDate(final List<EdinetListViewBean> viewBeanList) {
+    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
         return viewBeanList.stream()
                 .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
                 .collect(Collectors.toList());
