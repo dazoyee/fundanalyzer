@@ -14,4 +14,8 @@ public class FundanalyzerFileException extends IOException {
     public FundanalyzerFileException(final String message, final Throwable throwable) {
         super(message, throwable);
     }
+
+    public FundanalyzerFileException(Throwable cause) {
+        super(cause);
+    }
 }
