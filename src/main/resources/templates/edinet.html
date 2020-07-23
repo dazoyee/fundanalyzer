@@ -14,12 +14,21 @@
         <br/>
     </th:block>
 </p>
+<p th:if="${message}" class="alert alert-info" role="alert">
+    <th:block th:each="message: ${message}"><!-- 改行コードでsplitしてループ -->
+        <th:block th:text="${message}"/>
+        <br/>
+    </th:block>
+</p>
 <label>会社リスト更新日：</label>
 <p th:text="${companyUpdated}"></p>
 <form method="post" th:action="@{/fundanalyzer/v1/edinet/list}">
     <input type="date" name="fromDate"/> ～
     <input type="date" name="toDate"/>
     <button type="submit" class="btn">取得する</button>
+</form>
+<form method="post" th:action="@{/fundanalyzer/v1/reset/status}">
+    <button type="submit" class="btn">ステータス初期化</button>
 </form>
 
 <table class="table table-bordered">

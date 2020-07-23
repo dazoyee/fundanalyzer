@@ -36,6 +36,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyExcep
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
@@ -179,13 +180,57 @@ public class DocumentService {
                 }
 
                 // スクレイピング
+                final var edinetDocument = edinetDocumentDao.selectByDocId(docId);
+                final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
+                final var targetDirectory = new File(pathDecode + "/" + date + "/" + docId + "/XBRL/PublicDoc");
+
+                // 貸借対照表
                 if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedBs())) {
-                    scrape(LocalDate.parse(date), docId);
+                    scrapeBs(targetDirectory, company, edinetDocument, docId);
+                }
+                // 損益計算書
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedPl())) {
+                    scrapePl(targetDirectory, company, edinetDocument, docId);
+                }
+                // 株式総数
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedNumberOfShares())) {
+                    scrapeNs(targetDirectory, company, edinetDocument, docId);
                 }
             });
 
             log.info("{}付のドキュメントに対して処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
         }
+    }
+
+    public void resetForRetry() {
+        final var documentList = documentDao.selectByDocumentTypeCode("120");
+        // 貸借対照表
+        documentList.stream()
+                .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
+                .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
+                .map(Document::getDocumentId)
+                .forEach(documentId -> {
+                    documentDao.update(Document.builder()
+                            .documentId(documentId)
+                            .scrapedBs(DocumentStatus.NOT_YET.toValue())
+                            .build()
+                    );
+                    log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
+                });
+
+        // 損益計算書
+        documentList.stream()
+                .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
+                .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
+                .map(Document::getDocumentId)
+                .forEach(documentId -> {
+                    documentDao.update(Document.builder()
+                            .documentId(documentId)
+                            .scrapedPl(DocumentStatus.NOT_YET.toValue())
+                            .build()
+                    );
+                    log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
+                });
     }
 
     @Transactional
@@ -282,27 +327,20 @@ public class DocumentService {
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
-                            "\t処理対象日:{}" +
-                            "\t書類管理番号:{}",
-                    targetDate,
-                    docId);
+                            "\t処理対象日:{}\t書類管理番号:{}",
+                    targetDate, docId
+            );
             documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.ERROR.toValue()).build());
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
-                            "\t処理対象日:{}" +
-                            "\t書類管理番号:{}",
-                    targetDate,
-                    docId);
+                            "\t処理対象日:{}\t書類管理番号:{}",
+                    targetDate, docId
+            );
             documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.ERROR.toValue()).build());
         }
     }
 
-    public void scrape(final LocalDate targetDate, final String docId) {
-        final var edinetDocument = edinetDocumentDao.selectByDocId(docId);
-        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
-        final var targetDirectory = new File(pathDecode + "/" + targetDate + "/" + docId + "/XBRL/PublicDoc");
-
-        // 貸借対照表
+    public void scrapeBs(final File targetDirectory, final Company company, final EdinetDocument edinetDocument, final String documentId) {
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.BALANCE_SHEET);
             insertFinancialStatement(
@@ -315,21 +353,22 @@ public class DocumentService {
                     edinetDocument);
 
             documentDao.update(Document.builder()
-                    .documentId(docId)
+                    .documentId(documentId)
                     .scrapedBs(DocumentStatus.DONE.toValue())
                     .bsDocumentPath(targetFile.getFirst().getPath())
                     .build()
             );
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(documentId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}" +
-                            "\t書類管理番号:{}",
-                    "貸借対照表", docId);
+                            "\t対象:{}\t書類管理番号:{}",
+                    "貸借対照表", documentId
+            );
         }
+    }
 
-        // 損益計算書
+    public void scrapePl(final File targetDirectory, final Company company, final EdinetDocument edinetDocument, final String documentId) {
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
             insertFinancialStatement(
@@ -342,21 +381,22 @@ public class DocumentService {
                     edinetDocument);
 
             documentDao.update(Document.builder()
-                    .documentId(docId)
+                    .documentId(documentId)
                     .scrapedPl(DocumentStatus.DONE.toValue())
                     .plDocumentPath(targetFile.getFirst().getPath())
                     .build()
             );
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(documentId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}" +
-                            "\t書類管理番号:{}",
-                    "損益計算書", docId);
+                            "\t対象:{}\t書類管理番号:{}",
+                    "損益計算書", documentId
+            );
         }
+    }
 
-        // 株式総数
+    public void scrapeNs(final File targetDirectory, final Company company, final EdinetDocument edinetDocument, final String documentId) {
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
             financialStatementDao.insert(new FinancialStatement(
@@ -372,21 +412,22 @@ public class DocumentService {
             ));
 
             log.info("データベースに正常に登録されました。\t対象:{}\tファイル名:{}",
-                    "株式総数", targetFile.getFirst().getName());
+                    "株式総数", targetFile.getFirst().getName()
+            );
 
             documentDao.update(Document.builder()
-                    .documentId(docId)
+                    .documentId(documentId)
                     .scrapedNumberOfShares(DocumentStatus.DONE.toValue())
                     .numberOfSharesDocumentPath(targetFile.getFirst().getPath())
                     .build()
             );
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder().documentId(documentId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}" +
-                            "\t書類管理番号:{}",
-                    "株式総数", docId);
+                            "\t対象:{}\t書類管理番号:{}",
+                    "株式総数", documentId
+            );
         }
     }
 
@@ -406,7 +447,8 @@ public class DocumentService {
                                 "\tファイル名:{}",
                         scrapingKeyword.getKeyword(),
                         scrapingKeyword.getRemarks(),
-                        file.getPath());
+                        file.getPath()
+                );
 
                 return Pair.of(file, scrapingKeyword);
 
@@ -430,33 +472,48 @@ public class DocumentService {
         final var resultBeans = htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
 
         log.info("スクレイピングの情報をデータベースに登録します。" +
-                        "\t対象:{}" +
-                        "\t会社コード:{}" +
-                        "\tEDINETコード:{}",
+                        "\t対象:{}\t会社コード:{}\tEDINETコード:{}",
                 financialStatement.getName(),
                 company.getCode(),
-                company.getEdinetCode());
+                company.getEdinetCode()
+        );
 
         resultBeans.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
                 .filter(detail -> Objects.equals(resultBean.getSubject().orElse(null), detail.getName()))
                 .findAny()
                 // 一致するものが存在したら下記
-                .ifPresent(detail -> insert.accept(new FinancialStatement(
-                        null,
-                        company.getCode().orElse(null),
-                        company.getEdinetCode(),
-                        financialStatement.toValue(),
-                        detail.getId(),
-                        LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
-                        LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
-                        LocalDateTime.now()
-                )))
-        );
+                .ifPresent(detail -> {
+                    try {
+                        insert.accept(new FinancialStatement(
+                                null,
+                                company.getCode().orElse(null),
+                                company.getEdinetCode(),
+                                financialStatement.toValue(),
+                                detail.getId(),
+                                LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
+                                LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
+                                replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
+                                LocalDateTime.now()
+                        ));
+                    } catch (NestedRuntimeException e) {
+                        if (e.contains(UniqueConstraintException.class)) {
+                            log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                            "\t企業コード:{}\t財務諸表名:{}\t科目名:{}\t対象年:{}",
+                                    company.getCode().orElse(null),
+                                    financialStatement.getName(),
+                                    detail.getName(),
+                                    edinetDocument.getPeriodEnd().orElseThrow().substring(0, 4)
+                            );
+                        } else {
+                            throw e;
+                        }
+                    }
+                }));
 
         log.info("データベースに正常に登録されました。\t対象:{}\tファイル名:{}",
-                financialStatement.getName(), targetFile.getName());
+                financialStatement.getName(), targetFile.getName()
+        );
     }
 
     private Optional<Long> replaceInteger(final String value) {

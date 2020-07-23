@@ -65,6 +65,16 @@ public class AnalysisController {
         return "index";
     }
 
+    @PostMapping("fundanalyzer/v1/reset/status")
+    public String resetStatus(final Model model) {
+        documentService.resetForRetry();
+
+        model.addAttribute("message", "更新しました");
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "edinet";
+    }
+
     // -------------------------------------------------------
 
     @GetMapping("/edinet/list")
@@ -106,6 +116,14 @@ public class AnalysisController {
     public String devDocument(@PathVariable String date, final Model model) {
         documentService.company();
         documentService.document(date, "120");
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
+    }
+
+    @GetMapping("/reset/status")
+    public String devResetStatus(final Model model) {
+        documentService.resetForRetry();
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";
