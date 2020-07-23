@@ -55,14 +55,13 @@ public class AnalysisController {
     }
 
     @PostMapping("fundanalyzer/v1/document/analysis")
-    public String documentAnalysis(final String date, final Model model) {
-        final var year = LocalDate.parse(date).getYear();
-
-        documentService.document(date, "120");
+    public String documentAnalysis(final String fromDate, final String toDate) {
+        final var year = LocalDate.parse(toDate).getYear();
+        LocalDate.parse(fromDate)
+                .datesUntil(LocalDate.parse(toDate).plusDays(1))
+                .forEach(date -> documentService.document(date.toString(), "120"));
         analysisService.analyze(year);
-
-        model.addAttribute("companies", viewService.viewCompany(year));
-        return "index";
+        return "redirect:/fundanalyzer/v1/index";
     }
 
     @PostMapping("fundanalyzer/v1/reset/status")
