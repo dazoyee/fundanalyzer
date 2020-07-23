@@ -82,9 +82,13 @@ public class HtmlScraping {
                         tdList.add(td.text());
                 });
                 System.out.println(tdList);
+                // TODO 取得前に年度の確認
                 // 各要素をbeanに詰める
-                if (tdList.size() >= 3)
+                if (tdList.size() == 2) {
+                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), null, tdList.get(1), unit));
+                } else if (tdList.size() == 3) {
                     resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
+                }
             }
 
             log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());

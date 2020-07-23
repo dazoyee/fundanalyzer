@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS bs_subject(
   outline_subject_id VARCHAR(10) COMMENT '大科目ID',
   detail_subject_id VARCHAR(10) COMMENT '小科目ID',
   name VARCHAR(100) NOT NULL COMMENT '科目名',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(outline_subject_id, detail_subject_id)
 );
 
 -- 損益計算書
@@ -46,7 +47,8 @@ CREATE TABLE IF NOT EXISTS pl_subject(
   outline_subject_id VARCHAR(10) COMMENT '大科目ID',
   detail_subject_id VARCHAR(10) COMMENT '小科目ID',
   name VARCHAR(100) NOT NULL COMMENT '科目名',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(outline_subject_id, detail_subject_id)
 );
 
 -- キャッシュ・フロー計算書

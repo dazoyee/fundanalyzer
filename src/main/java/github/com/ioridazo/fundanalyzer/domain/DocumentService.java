@@ -529,6 +529,8 @@ public class DocumentService {
                             .replace("※ ", "")
                             .replace("※１ ", "")
                             .replace("※１,※２ ", "")
+                            .replace("※１,※２ ", "")
+                            .replace(" 株", "")
                     ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
