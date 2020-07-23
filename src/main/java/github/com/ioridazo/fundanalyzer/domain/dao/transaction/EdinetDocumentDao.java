@@ -19,6 +19,9 @@ public interface EdinetDocumentDao {
     @Select
     EdinetDocument selectByDocId(final String docId);
 
+    @Select(ensureResult = true)
+    EdinetDocument selectDocIdBy(final String edinetCode, final String docTypeCode, final String dayOfYear);
+
     @Select
     List<EdinetDocument> selectByDocTypeCodeAndPeriodEnd(final String docTypeCode, final String dayOfYear);
 
