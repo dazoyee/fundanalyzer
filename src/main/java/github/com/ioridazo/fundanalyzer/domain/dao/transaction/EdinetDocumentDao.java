@@ -19,6 +19,10 @@ public interface EdinetDocumentDao {
     @Select
     EdinetDocument selectByDocId(final String docId);
 
+    // 検索結果が1件以上存在することを保証する
+    @Select(ensureResult = true)
+    EdinetDocument selectDocIdBy(final String edinetCode, final String docTypeCode, final String dayOfYear);
+
     @Select
     List<EdinetDocument> selectByDocTypeCodeAndPeriodEnd(final String docTypeCode, final String dayOfYear);
 

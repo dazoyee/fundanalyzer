@@ -7,13 +7,14 @@ import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.util.Optional;
+
 @ConfigAutowireable
 @Dao
 public interface FinancialStatementDao {
 
-    // 検索結果が1件以上存在することを保証する
-    @Select(ensureResult = true)
-    FinancialStatement selectByUniqueKey(
+    @Select
+    Optional<FinancialStatement> selectByUniqueKey(
             final String edinetCode,
             final String financialStatementId,
             final String subjectId,
