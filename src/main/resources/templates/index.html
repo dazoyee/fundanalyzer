@@ -9,7 +9,8 @@
 <body>
 <h1>会社一覧</h1>
 <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
-    <input type="date" name="date"/>
+    <input type="date" name="fromDate"/> ～
+    <input type="date" name="toDate"/>
     <button type="submit" class="btn">取得/分析する</button>
 </form>
 

@@ -13,4 +13,7 @@ public interface BsSubjectDao {
 
     @Select
     List<BsSubject> selectAll();
+
+    @Select
+    BsSubject selectByUniqueKey(final String outlineSubjectId, final String detailSubjectId);
 }

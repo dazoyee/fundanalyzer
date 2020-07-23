@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS bs_subject(
   outline_subject_id VARCHAR(10) COMMENT '大科目ID',
   detail_subject_id VARCHAR(10) COMMENT '小科目ID',
   name VARCHAR(100) NOT NULL COMMENT '科目名',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(outline_subject_id, detail_subject_id)
 );
 
 -- 損益計算書
@@ -46,7 +47,8 @@ CREATE TABLE IF NOT EXISTS pl_subject(
   outline_subject_id VARCHAR(10) COMMENT '大科目ID',
   detail_subject_id VARCHAR(10) COMMENT '小科目ID',
   name VARCHAR(100) NOT NULL COMMENT '科目名',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(outline_subject_id, detail_subject_id)
 );
 
 -- キャッシュ・フロー計算書
@@ -104,11 +106,11 @@ CREATE TABLE IF NOT EXISTS document(
   decoded CHAR(1) NOT NULL DEFAULT '0'  COMMENT 'ファイル解凍ステータス' CHECK(decoded IN('0', '1', '9')),
   scraped_number_of_shares CHAR(1) NOT NULL DEFAULT '0'  COMMENT 'スクレイピング（株式総数）ステータス' CHECK(scraped_number_of_shares IN('0', '1', '5', '9')),
   number_of_shares_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（株式総数）パス',
-  scraped_bs CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（貸借対照表）ステータス' CHECK(scraped_bs IN('0', '1', '9')),
+  scraped_bs CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（貸借対照表）ステータス' CHECK(scraped_bs IN('0', '1','5', '9')),
   bs_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（貸借対照表）パス',
-  scraped_pl CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（損益計算書）ステータス' CHECK(scraped_pl IN('0', '1', '9')),
+  scraped_pl CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（損益計算書）ステータス' CHECK(scraped_pl IN('0', '1','5', '9')),
   pl_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（損益計算書）パス',
-  scraped_cf CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（キャッシュ・フロー計算書）ステータス' CHECK(scraped_cf IN('0', '1', '9')),
+  scraped_cf CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（キャッシュ・フロー計算書）ステータス' CHECK(scraped_cf IN('0', '1','5', '9')),
   cf_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（キャッシュ・フロー計算書）パス',
   created_at DATETIME NOT NULL COMMENT '登録日',
   updated_at DATETIME NOT NULL COMMENT '更新日',

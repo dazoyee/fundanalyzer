@@ -55,14 +55,23 @@ public class AnalysisController {
     }
 
     @PostMapping("fundanalyzer/v1/document/analysis")
-    public String documentAnalysis(final String date, final Model model) {
-        final var year = LocalDate.parse(date).getYear();
-
-        documentService.document(date, "120");
+    public String documentAnalysis(final String fromDate, final String toDate) {
+        final var year = LocalDate.parse(toDate).getYear();
+        LocalDate.parse(fromDate)
+                .datesUntil(LocalDate.parse(toDate).plusDays(1))
+                .forEach(date -> documentService.document(date.toString(), "120"));
         analysisService.analyze(year);
+        return "redirect:/fundanalyzer/v1/index";
+    }
 
-        model.addAttribute("companies", viewService.viewCompany(year));
-        return "index";
+    @PostMapping("fundanalyzer/v1/reset/status")
+    public String resetStatus(final Model model) {
+        documentService.resetForRetry();
+
+        model.addAttribute("message", "更新しました");
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "edinet";
     }
 
     // -------------------------------------------------------
@@ -106,6 +115,14 @@ public class AnalysisController {
     public String devDocument(@PathVariable String date, final Model model) {
         documentService.company();
         documentService.document(date, "120");
+
+        model.addAttribute("companies", viewService.viewCompany());
+        return "index";
+    }
+
+    @GetMapping("/reset/status")
+    public String devResetStatus(final Model model) {
+        documentService.resetForRetry();
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";
