@@ -1,8 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.util.Arrays;
 
 public enum BsEnum {
@@ -13,7 +10,7 @@ public enum BsEnum {
 //    ("前払費用"),
 //    ("その他"),
 //    ("貸倒引当金"),
-    TOTAL_CURRENT_ASSETS("2", "流動資産合計"),
+    TOTAL_CURRENT_ASSETS("1", "1", "流動資産合計"),
     //    BUILDINGS("建物"),
 //    ("減価償却累計額"),
 //    ("建物（純額）"),
@@ -57,7 +54,7 @@ public enum BsEnum {
 //    ("敷金及び保証金"),
 //    ("信託差入敷金及び保証金"),
 //    ("長期前払費用"),
-    TOTAL_INVESTMENTS_AND_OTHER_ASSETS("6", "投資その他の資産合計"),
+    TOTAL_INVESTMENTS_AND_OTHER_ASSETS("4", "1", "投資その他の資産合計"),
     //    ("固定資産合計"),
 //    ("投資法人債発行費"),
 //    ("繰延資産合計"),
@@ -72,12 +69,12 @@ public enum BsEnum {
 //    ("未払消費税等"),
 //    ("前受金"),
 //    ("その他"),
-    TOTAL_CURRENT_LIABILITIES("11", "流動負債合計"),
+    TOTAL_CURRENT_LIABILITIES("8", "1", "流動負債合計"),
     //    ("投資法人債"),
 //    ("長期借入金"),
 //    ("預り敷金及び保証金"),
 //    ("資産除去債務"),
-    TOTAL_FIXED_LIABILITIES("13", "固定負債合計"),
+    TOTAL_FIXED_LIABILITIES("9", "1", "固定負債合計"),
 //    ("負債合計"),
 //    ("出資総額"),
 //    ("圧縮積立金"),
@@ -90,15 +87,15 @@ public enum BsEnum {
     ;
 
     private final String outlineSubjectId;
-
+    private final String detailSubjectId;
     private final String subject;
 
-    BsEnum(final String outlineSubjectId, final String subject) {
+    BsEnum(final String outlineSubjectId, final String detailSubjectId, final String subject) {
         this.outlineSubjectId = outlineSubjectId;
+        this.detailSubjectId = detailSubjectId;
         this.subject = subject;
     }
 
-    @JsonCreator
     public static BsEnum fromValue(String subject) {
         return Arrays.stream(values())
                 .filter(v -> v.subject.equals(subject))
@@ -106,18 +103,15 @@ public enum BsEnum {
                 .orElseThrow(() -> new IllegalArgumentException(String.valueOf(subject)));
     }
 
-    @JsonValue
-    public String toValue() {
+    public String getOutlineSubjectId() {
         return this.outlineSubjectId;
     }
 
-    @JsonValue
+    public String getDetailSubjectId() {
+        return this.detailSubjectId;
+    }
+
     public String getSubject() {
         return this.subject;
     }
-
-//    @Override
-//    public String toString() {
-//        return String.format("BalanceSheetEnum[code = %s]", this.subject);
-//    }
 }

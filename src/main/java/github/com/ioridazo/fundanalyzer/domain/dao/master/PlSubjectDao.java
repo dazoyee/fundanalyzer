@@ -15,5 +15,8 @@ public interface PlSubjectDao {
     List<PlSubject> selectAll();
 
     @Select
+    PlSubject selectByUniqueKey(final String outlineSubjectId, final String detailSubjectId);
+
+    @Select
     List<PlSubject> selectByOutlineSubjectId(final String outlineSubjectId);
 }

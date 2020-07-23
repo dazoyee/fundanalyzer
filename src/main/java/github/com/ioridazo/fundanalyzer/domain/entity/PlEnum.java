@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.Arrays;
 
 public enum PlEnum {
     //    ("賃貸事業収入"),
@@ -14,7 +14,7 @@ public enum PlEnum {
 //    ("会計監査人報酬"),
 //    ("その他営業費用"),
 //    ("営業費用合計"),
-    OPERATING_PROFIT("3", "営業利益"),
+    OPERATING_PROFIT("3", null, "営業利益"),
 //    ("受取利息"),
 //    ("未払分配金戻入"),
 //    ("還付加算金"),
@@ -37,35 +37,32 @@ public enum PlEnum {
 //    ("当期未処分利益又は当期未処理損失（△）"),
     ;
 
-    private final String id;
-
+    private final String outlineSubjectId;
+    private final String detailSubjectId;
     private final String subject;
 
-    PlEnum(final String id, final String subject) {
-        this.id = id;
+    PlEnum(String outlineSubjectId, String detailSubjectId, String subject) {
+        this.outlineSubjectId = outlineSubjectId;
+        this.detailSubjectId = detailSubjectId;
         this.subject = subject;
     }
 
-//    @JsonCreator
-//    public static ProfitAndLossStatementEnum fromValue(String subject) {
-//        return Arrays.stream(values())
-//                .filter(v -> v.subject.equals(subject))
-//                .findFirst()
-//                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(subject)));
-//    }
-
-    @JsonValue
-    public String toValue() {
-        return this.id;
+    public static PlEnum fromValue(String subject) {
+        return Arrays.stream(values())
+                .filter(v -> v.subject.equals(subject))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(subject)));
     }
 
-    @JsonValue
+    public String getOutlineSubjectId() {
+        return this.outlineSubjectId;
+    }
+
+    public String getDetailSubjectId() {
+        return this.detailSubjectId;
+    }
+
     public String getSubject() {
         return this.subject;
     }
-
-//    @Override
-//    public String toString() {
-//        return String.format("ProfitAndLossStatementEnum[code = %s]", this.subject);
-//    }
 }
