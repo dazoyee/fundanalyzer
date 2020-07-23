@@ -13,4 +13,7 @@ public interface PlSubjectDao {
 
     @Select
     List<PlSubject> selectAll();
+
+    @Select
+    List<PlSubject> selectByOutlineSubjectId(final String outlineSubjectId);
 }

@@ -1,13 +1,15 @@
 package github.com.ioridazo.fundanalyzer.domain;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.BalanceSheetEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.ProfitAndLossStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
 
@@ -30,16 +33,19 @@ import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
 public class AnalysisService {
 
     private final CompanyDao companyDao;
+    private final PlSubjectDao plSubjectDao;
     private final EdinetDocumentDao edinetDocumentDao;
     private final FinancialStatementDao financialStatementDao;
     private final AnalysisResultDao analysisResultDao;
 
     public AnalysisService(
             CompanyDao companyDao,
+            PlSubjectDao plSubjectDao,
             EdinetDocumentDao edinetDocumentDao,
             FinancialStatementDao financialStatementDao,
             AnalysisResultDao analysisResultDao) {
         this.companyDao = companyDao;
+        this.plSubjectDao = plSubjectDao;
         this.edinetDocumentDao = edinetDocumentDao;
         this.financialStatementDao = financialStatementDao;
         this.analysisResultDao = analysisResultDao;
@@ -89,7 +95,7 @@ public class AnalysisService {
             final var totalCurrentAssets = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                    BalanceSheetEnum.TOTAL_CURRENT_ASSETS.toValue(),
+                    BsEnum.TOTAL_CURRENT_ASSETS.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
 
@@ -97,7 +103,7 @@ public class AnalysisService {
             final var totalInvestmentsAndOtherAssets = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                    BalanceSheetEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.toValue(),
+                    BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
 
@@ -105,7 +111,7 @@ public class AnalysisService {
             final var totalCurrentLiabilities = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                    BalanceSheetEnum.TOTAL_CURRENT_LIABILITIES.toValue(),
+                    BsEnum.TOTAL_CURRENT_LIABILITIES.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
 
@@ -113,26 +119,27 @@ public class AnalysisService {
             final var totalFixedLiabilities = financialStatementDao.selectByUniqueKey(
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                    BalanceSheetEnum.TOTAL_FIXED_LIABILITIES.toValue(),
+                    BsEnum.TOTAL_FIXED_LIABILITIES.toValue(),
                     String.valueOf(year)
             ).getValue().orElseThrow();
 
             // 営業利益
-            Long operatingProfit;
-            try {
-                operatingProfit = financialStatementDao.selectByUniqueKey(
-                        company.getEdinetCode(),
-                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
-                        ProfitAndLossStatementEnum.OPERATING_PROFIT.toValue(),
-                        String.valueOf(year)
-                ).getValue().orElseThrow();
-            } catch (EmptyResultDataAccessException e) {
-                operatingProfit = financialStatementDao.selectByUniqueKey(
-                        company.getEdinetCode(),
-                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
-                        ProfitAndLossStatementEnum.OPERATING_PROFIT2.toValue(),
-                        String.valueOf(year)
-                ).getValue().orElseThrow();
+            final var plSubjectIdList = plSubjectDao.selectByOutlineSubjectId(PlEnum.OPERATING_PROFIT.toValue()).stream()
+                    .map(PlSubject::getId)
+                    .collect(Collectors.toList());
+
+            Optional<Long> operatingProfit = Optional.empty();
+            for (final String plSubjectId : plSubjectIdList) {
+                try {
+                    operatingProfit = financialStatementDao.selectByUniqueKey(
+                            company.getEdinetCode(),
+                            FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
+                            plSubjectId,
+                            String.valueOf(year)
+                    ).getValue();
+                    break;
+                } catch (EmptyResultDataAccessException ignored) {
+                }
             }
 
             // 株式総数
@@ -145,7 +152,7 @@ public class AnalysisService {
 
             final var v =
                     (
-                            operatingProfit * 10
+                            operatingProfit.orElseThrow() * 10
                                     + totalCurrentAssets - (totalCurrentLiabilities * 1.2) + totalInvestmentsAndOtherAssets
                                     - totalFixedLiabilities
                     )
