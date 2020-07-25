@@ -113,8 +113,6 @@ public class DocumentService {
     }
 
     public void company() {
-        log.info("CSVファイルから会社情報の取得処理を開始します。");
-
         final var resultBeanList = csvCommander.readCsv(
                 pathCompany,
                 Charset.forName("windows-31j"),
@@ -145,7 +143,7 @@ public class DocumentService {
                 .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
         );
 
-        log.info("会社情報をデータベースに正常に登録しました。");
+        log.info("CSVファイルから会社情報の登録が完了しました。");
     }
 
     public void edinetList(final String startDate, final String endDate) {
@@ -172,7 +170,7 @@ public class DocumentService {
             log.warn("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
             docIdList.forEach(docId -> {
-                System.out.println("--------------------------------------------------");
+                System.out.println("-------------" + docId + "-------------");
 
                 // 書類取得
                 if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getDownloaded())) {
@@ -198,7 +196,7 @@ public class DocumentService {
                 }
             });
 
-            log.info("{}付のドキュメントに対して処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
+            log.info("{}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
         }
     }
 
@@ -241,19 +239,19 @@ public class DocumentService {
 
         Stream.of(date.toString())
                 .filter(dateString -> Stream.of(dateString)
-                        .peek(d -> log.info("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
-                        // EDINETに提出書類の問い合わせ
-                        .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
-                        .map(EdinetResponse::getMetadata)
-                        .map(Metadata::getResultset)
-                        .map(ResultSet::getCount)
-                        .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t対象ファイル件数:{}", c))
-                        .anyMatch(c -> !"0".equals(c))
+//                        .peek(d -> log.info("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
+                                // EDINETに提出書類の問い合わせ
+                                .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                                .map(EdinetResponse::getMetadata)
+                                .map(Metadata::getResultset)
+                                .map(ResultSet::getCount)
+                                .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
+                                .anyMatch(c -> !"0".equals(c))
                 )
                 // 書類が0件ではないときは書類リストを取得する
-                .peek(dateString -> log.info("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
+//                .peek(dateString -> log.info("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
                 .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
-                .peek(er -> log.info("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
+//                .peek(er -> log.info("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
                 .forEach(resultsList -> resultsList.forEach(results -> {
                     Stream.of(results)
@@ -305,14 +303,12 @@ public class DocumentService {
 
     void download(final LocalDate targetDate, final String docId) {
         try {
-            log.info("書類のダウンロード処理を実行します。\t書類管理番号:{}", docId);
+            log.info("書類のダウンロードおよびzipファイルの解凍処理を実行します。\t書類管理番号:{}", docId);
 
             proxy.acquisition(
                     new File(pathEdinet.getPath() + "/" + targetDate),
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
-
-            log.info("書類のダウンロード処理が完了しました。zipファイルの解凍処理を実行します。");
 
             documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.DONE.toValue()).build());
 
@@ -321,7 +317,7 @@ public class DocumentService {
                     new File(pathDecode + "/" + targetDate.toString() + "/" + docId)
             );
 
-            log.info("zipファイルの解凍処理が正常に実行されました。");
+            log.info("書類のダウンロードおよびzipファイルの解凍処理が正常に実行されました。");
 
             documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.DONE.toValue()).build());
 
@@ -411,8 +407,11 @@ public class DocumentService {
                     LocalDateTime.now()
             ));
 
-            log.info("データベースに正常に登録されました。\t対象:{}\tファイル名:{}",
-                    "株式総数", targetFile.getFirst().getName()
+            log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "株式総数",
+                    targetFile.getFirst().getName()
             );
 
             documentDao.update(Document.builder()
@@ -437,23 +436,23 @@ public class DocumentService {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
                 financialStatement.toValue());
 
-        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
-            log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
+        System.out.println("↓ ↓ ↓ ↓ ↓ " + financialStatement.getName() + " ↓ ↓ ↓ ↓ ↓");
+        log.info("\"{}\" のスクレイピング処理を開始します。", financialStatement.getName());
 
+        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
             try {
                 final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
 
-                log.info("\"{}（{}）\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
-                                "\tファイル名:{}",
-                        scrapingKeyword.getKeyword(),
-                        scrapingKeyword.getRemarks(),
-                        file.getPath()
+                log.info("対象ファイルの存在を正常に確認できました。\t財務諸表名:{}\tキーワード:{}",
+                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
                 );
 
                 return Pair.of(file, scrapingKeyword);
 
             } catch (NoSuchElementException ignored) {
-                log.info("\"{}\"に合致するファイルは存在しませんでした。", scrapingKeyword.getKeyword());
+                log.info("次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{}\tキーワード:{}",
+                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
+                );
             }
         }
         throw new FundanalyzerFileException();
@@ -468,15 +467,7 @@ public class DocumentService {
             final List<T> detailList,
             final Consumer<FinancialStatement> insert,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
-
         final var resultBeans = htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
-
-        log.info("スクレイピングの情報をデータベースに登録します。" +
-                        "\t対象:{}\t会社コード:{}\tEDINETコード:{}",
-                financialStatement.getName(),
-                company.getCode(),
-                company.getEdinetCode()
-        );
 
         resultBeans.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
@@ -511,8 +502,11 @@ public class DocumentService {
                     }
                 }));
 
-        log.info("データベースに正常に登録されました。\t対象:{}\tファイル名:{}",
-                financialStatement.getName(), targetFile.getName()
+        log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                company.getCode().orElseThrow(),
+                company.getEdinetCode(),
+                financialStatement.getName(),
+                targetFile.getPath()
         );
     }
 

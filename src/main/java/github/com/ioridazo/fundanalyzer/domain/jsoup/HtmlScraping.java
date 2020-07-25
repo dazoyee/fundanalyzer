@@ -91,8 +91,6 @@ public class HtmlScraping {
                 }
             }
 
-            log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
-
             return resultBeanList;
         } catch (Exception e) {
             log.error("想定外のエラーが発生しました。", e);
@@ -120,14 +118,10 @@ public class HtmlScraping {
                 }
             }
             // FIXME 当てずっぽうで値を取得しているので、正しく取得するか、バリデーションチェックを行う
-            final var numberOfShares = resultBeanList.stream()
+            return resultBeanList.stream()
                     .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
                     .collect(Collectors.toList())
                     .get(resultBeanList.size() - 1);
-
-            log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
-
-            return numberOfShares;
         } catch (Exception e) {
             log.error("想定外のエラーが発生しました。", e);
             throw new FundanalyzerFileException(e);
