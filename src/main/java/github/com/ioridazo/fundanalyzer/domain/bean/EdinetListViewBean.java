@@ -20,6 +20,8 @@ public class EdinetListViewBean {
 
     private final String notAnalyzedCode;
 
+    private final String cantScrapedCode;
+
     private final Long countNotScraped;
 
     private final Long countNotTarget;
