@@ -112,10 +112,10 @@ public class HtmlScraping {
                 tr.select("td").forEach(td -> tdList.add(td.text()));
                 System.out.println(tdList);
                 // 各要素をbeanに詰める
-                try {
+                if (tdList.size() == 5) {
                     resultBeanList.add(new NumberOfSharesResultBean(
                             tdList.get(0), tdList.get(1), tdList.get(2), tdList.get(3), tdList.get(4)));
-                } catch (IndexOutOfBoundsException e) {
+                } else {
                     log.info("株式総数取得のためのテーブル形式に合致しなかったため、取得範囲対象外の項目として処理を進めます。");
                 }
             }

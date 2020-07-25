@@ -188,6 +188,12 @@ public class AnalysisService {
             } catch (FundanalyzerNoSuchPlElementException ignored) {
             }
         }
+        final var docId = edinetDocumentDao.selectDocIdBy(
+                codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
+                "120",
+                String.valueOf(year)
+        ).getEdinetCode().orElseThrow();
+        documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
         log.info("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                 "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), "営業利益", year);
         throw new FundanalyzerCalculateException();

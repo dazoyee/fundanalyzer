@@ -524,13 +524,14 @@ public class DocumentService {
                     .map(s -> Long.parseLong(s
                             .replace(",", "")
                             .replace("△", "-")
+                            .replace("※ ", "")
+                            .replace("※１", "")
+                            .replace("※１ ", "")
+                            .replace("※２ ", "")
                             .replace("※２ ", "")
                             .replace("*2 ", "")
-                            .replace("※ ", "")
-                            .replace("※１ ", "")
-                            .replace("※１,※２ ", "")
-                            .replace("※１,※２ ", "")
                             .replace(" 株", "")
+                            .replace("－", "0")
                     ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
