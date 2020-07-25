@@ -185,7 +185,7 @@ public class ViewService {
                         ).isPresent()
                 ).count();
 
-        // 未分析件数
+        // 未分析企業コード
         final var notAnalyzedCode = scrapedList.stream()
                 // filter analysis is done
                 .filter(ec -> analysisResultDao.selectByUniqueKey(
@@ -197,6 +197,43 @@ public class ViewService {
                 )
                 .map(ec -> codeConverter(ec, companyAll).orElseThrow())
                 .collect(Collectors.joining("\n"));
+
+        // 処理中企業コード
+        final var cantScrapedCode = targetList.stream()
+                // filter no all done
+                .filter(ec -> documentList.stream()
+                        .filter(document -> ec.equals(document.getEdinetCode()))
+                        .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs()) &&
+                                DocumentStatus.DONE.toValue().equals(document.getScrapedPl()) &&
+                                DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
+                )
+                // filter no all notYet
+                .filter(ec -> documentList.stream()
+                        .filter(document -> ec.equals(document.getEdinetCode()))
+                        .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()) &&
+                                DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()) &&
+                                DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
+                )
+                .map(ec -> codeConverter(ec, companyAll).orElseThrow())
+                .collect(Collectors.joining("\n"));
+
+        // 未処理件数
+        final var countNotScraped = targetList.stream()
+                // filter scrapedBs is notYet
+                .filter(ec -> documentList.stream()
+                        .filter(document -> ec.equals(document.getEdinetCode()))
+                        .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
+                )
+                // filter scrapedPl is notYet
+                .filter(ec -> documentList.stream()
+                        .filter(document -> ec.equals(document.getEdinetCode()))
+                        .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
+                )
+                // filter scrapedNumberOfShares is notYet
+                .filter(ec -> documentList.stream()
+                        .filter(document -> ec.equals(document.getEdinetCode()))
+                        .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares()))
+                ).count();
 
         // 対象外件数
         final var countNotTarget = documentList.stream()
@@ -215,7 +252,8 @@ public class ViewService {
                 (long) scrapedList.size(),
                 countAnalyzed,
                 notAnalyzedCode,
-                (long) targetList.size() - scrapedList.size(),
+                cantScrapedCode,
+                countNotScraped,
                 countNotTarget);
     }
 
