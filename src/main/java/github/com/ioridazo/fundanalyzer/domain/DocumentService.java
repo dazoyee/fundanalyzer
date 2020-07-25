@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -112,9 +111,8 @@ public class DocumentService {
         this.financialStatementDao = financialStatementDao;
     }
 
+    @Transactional
     public void company() {
-        log.info("CSVファイルから会社情報の取得処理を開始します。");
-
         final var resultBeanList = csvCommander.readCsv(
                 pathCompany,
                 Charset.forName("windows-31j"),
@@ -145,7 +143,7 @@ public class DocumentService {
                 .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
         );
 
-        log.info("会社情報をデータベースに正常に登録しました。");
+        log.info("CSVファイルから会社情報の登録が完了しました。");
     }
 
     public void edinetList(final String startDate, final String endDate) {
@@ -162,43 +160,39 @@ public class DocumentService {
         insertDocumentList(LocalDate.parse(date));
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var docIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), documentTypeCode)
+        final var documentIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), documentTypeCode)
                 .stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
                 .map(Document::getDocumentId)
                 .collect(Collectors.toList());
 
-        if (docIdList.isEmpty()) {
+        if (documentIdList.isEmpty()) {
             log.warn("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
-            docIdList.forEach(docId -> {
-                System.out.println("--------------------------------------------------");
+            documentIdList.forEach(documentId -> {
+                System.out.println("-------------" + documentId + "-------------");
 
                 // 書類取得
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getDownloaded())) {
-                    store(LocalDate.parse(date), docId);
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getDownloaded())) {
+                    store(LocalDate.parse(date), documentId);
                 }
 
                 // スクレイピング
-                final var edinetDocument = edinetDocumentDao.selectByDocId(docId);
-                final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
-                final var targetDirectory = new File(pathDecode + "/" + date + "/" + docId + "/XBRL/PublicDoc");
-
                 // 貸借対照表
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedBs())) {
-                    scrapeBs(targetDirectory, company, edinetDocument, docId);
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getScrapedBs())) {
+                    scrapeBs(documentId, LocalDate.parse(date));
                 }
                 // 損益計算書
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedPl())) {
-                    scrapePl(targetDirectory, company, edinetDocument, docId);
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getScrapedPl())) {
+                    scrapePl(documentId, LocalDate.parse(date));
                 }
                 // 株式総数
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(docId).getScrapedNumberOfShares())) {
-                    scrapeNs(targetDirectory, company, edinetDocument, docId);
+                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getScrapedNumberOfShares())) {
+                    scrapeNs(documentId, LocalDate.parse(date));
                 }
             });
 
-            log.info("{}付のドキュメントに対して処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
+            log.info("{}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
         }
     }
 
@@ -233,6 +227,13 @@ public class DocumentService {
                 });
     }
 
+    public void scrape(final String documentId) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
+        scrapeBs(documentId);
+        scrapePl(documentId);
+        scrapeNs(documentId);
+    }
+
     @Transactional
     public void insertDocumentList(final LocalDate date) {
         final var docIdList = edinetDocumentDao.selectAll().stream()
@@ -241,19 +242,19 @@ public class DocumentService {
 
         Stream.of(date.toString())
                 .filter(dateString -> Stream.of(dateString)
-                        .peek(d -> log.info("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
-                        // EDINETに提出書類の問い合わせ
-                        .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
-                        .map(EdinetResponse::getMetadata)
-                        .map(Metadata::getResultset)
-                        .map(ResultSet::getCount)
-                        .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t対象ファイル件数:{}", c))
-                        .anyMatch(c -> !"0".equals(c))
+//                        .peek(d -> log.info("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
+                                // EDINETに提出書類の問い合わせ
+                                .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                                .map(EdinetResponse::getMetadata)
+                                .map(Metadata::getResultset)
+                                .map(ResultSet::getCount)
+                                .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
+                                .anyMatch(c -> !"0".equals(c))
                 )
                 // 書類が0件ではないときは書類リストを取得する
-                .peek(dateString -> log.info("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
+//                .peek(dateString -> log.info("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
                 .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
-                .peek(er -> log.info("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
+//                .peek(er -> log.info("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
                 .forEach(resultsList -> resultsList.forEach(results -> {
                     Stream.of(results)
@@ -305,14 +306,12 @@ public class DocumentService {
 
     void download(final LocalDate targetDate, final String docId) {
         try {
-            log.info("書類のダウンロード処理を実行します。\t書類管理番号:{}", docId);
+            log.info("書類のダウンロードおよびzipファイルの解凍処理を実行します。\t書類管理番号:{}", docId);
 
             proxy.acquisition(
                     new File(pathEdinet.getPath() + "/" + targetDate),
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
-
-            log.info("書類のダウンロード処理が完了しました。zipファイルの解凍処理を実行します。");
 
             documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.DONE.toValue()).build());
 
@@ -321,7 +320,7 @@ public class DocumentService {
                     new File(pathDecode + "/" + targetDate.toString() + "/" + docId)
             );
 
-            log.info("zipファイルの解凍処理が正常に実行されました。");
+            log.info("書類のダウンロードおよびzipファイルの解凍処理が正常に実行されました。");
 
             documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.DONE.toValue()).build());
 
@@ -340,7 +339,15 @@ public class DocumentService {
         }
     }
 
-    public void scrapeBs(final File targetDirectory, final Company company, final EdinetDocument edinetDocument, final String documentId) {
+    void scrapeBs(final String documentId) {
+        scrapeBs(documentId, documentDao.selectByDocumentId(documentId).getSubmitDate());
+    }
+
+    void scrapeBs(final String documentId, final LocalDate date) {
+        final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
+        final var targetDirectory = new File(pathDecode + "/" + date + "/" + documentId + "/XBRL/PublicDoc");
+
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.BALANCE_SHEET);
             insertFinancialStatement(
@@ -349,7 +356,6 @@ public class DocumentService {
                     FinancialStatementEnum.BALANCE_SHEET,
                     company,
                     bsSubjectDao.selectAll(),
-                    financialStatementDao::insert,
                     edinetDocument);
 
             documentDao.update(Document.builder()
@@ -368,7 +374,15 @@ public class DocumentService {
         }
     }
 
-    public void scrapePl(final File targetDirectory, final Company company, final EdinetDocument edinetDocument, final String documentId) {
+    void scrapePl(final String documentId) {
+        scrapePl(documentId, documentDao.selectByDocumentId(documentId).getSubmitDate());
+    }
+
+    void scrapePl(final String documentId, final LocalDate date) {
+        final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
+        final var targetDirectory = new File(pathDecode + "/" + date + "/" + documentId + "/XBRL/PublicDoc");
+
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
             insertFinancialStatement(
@@ -377,7 +391,6 @@ public class DocumentService {
                     FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
                     company,
                     plSubjectDao.selectAll(),
-                    financialStatementDao::insert,
                     edinetDocument);
 
             documentDao.update(Document.builder()
@@ -396,23 +409,30 @@ public class DocumentService {
         }
     }
 
-    public void scrapeNs(final File targetDirectory, final Company company, final EdinetDocument edinetDocument, final String documentId) {
+    void scrapeNs(final String documentId) {
+        scrapeNs(documentId, documentDao.selectByDocumentId(documentId).getSubmitDate());
+    }
+
+    void scrapeNs(final String documentId, final LocalDate date) {
+        final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
+        final var targetDirectory = new File(pathDecode + "/" + date + "/" + documentId + "/XBRL/PublicDoc");
+
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
-            financialStatementDao.insert(new FinancialStatement(
-                    null,
-                    company.getCode().orElse(null),
-                    company.getEdinetCode(),
-                    FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+            insertOfFinancialStatement(
+                    company,
+                    FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
                     "0",
-                    LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
-                    LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                    replaceInteger(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null),
-                    LocalDateTime.now()
-            ));
+                    edinetDocument,
+                    replaceInteger(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
+            );
 
-            log.info("データベースに正常に登録されました。\t対象:{}\tファイル名:{}",
-                    "株式総数", targetFile.getFirst().getName()
+            log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "株式総数",
+                    targetFile.getFirst().getName()
             );
 
             documentDao.update(Document.builder()
@@ -437,83 +457,90 @@ public class DocumentService {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
                 financialStatement.toValue());
 
-        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
-            log.info("\"{}\"に合致するファイルの探索を開始します。", scrapingKeyword.getKeyword());
+        System.out.println("↓ ↓ ↓ ↓ ↓ " + financialStatement.getName() + " ↓ ↓ ↓ ↓ ↓");
+        log.info("\"{}\" のスクレイピング処理を開始します。", financialStatement.getName());
 
+        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
             try {
                 final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
 
-                log.info("\"{}（{}）\"に合致するファイルが１つ存在しています。スクレイピング処理を開始します。" +
-                                "\tファイル名:{}",
-                        scrapingKeyword.getKeyword(),
-                        scrapingKeyword.getRemarks(),
-                        file.getPath()
+                log.info("対象ファイルの存在を正常に確認できました。\t財務諸表名:{}\tキーワード:{}",
+                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
                 );
 
                 return Pair.of(file, scrapingKeyword);
 
             } catch (NoSuchElementException ignored) {
-                log.info("\"{}\"に合致するファイルは存在しませんでした。", scrapingKeyword.getKeyword());
+                log.info("次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{}\tキーワード:{}",
+                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
+                );
             }
         }
         throw new FundanalyzerFileException();
     }
 
-    @Transactional
     <T extends Detail> void insertFinancialStatement(
             final File targetFile,
             final ScrapingKeyword scrapingKeyword,
             final FinancialStatementEnum financialStatement,
             final Company company,
             final List<T> detailList,
-            final Consumer<FinancialStatement> insert,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
-
         final var resultBeans = htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
-
-        log.info("スクレイピングの情報をデータベースに登録します。" +
-                        "\t対象:{}\t会社コード:{}\tEDINETコード:{}",
-                financialStatement.getName(),
-                company.getCode(),
-                company.getEdinetCode()
-        );
 
         resultBeans.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
                 .filter(detail -> Objects.equals(resultBean.getSubject().orElse(null), detail.getName()))
                 .findAny()
                 // 一致するものが存在したら下記
-                .ifPresent(detail -> {
-                    try {
-                        insert.accept(new FinancialStatement(
-                                null,
-                                company.getCode().orElse(null),
-                                company.getEdinetCode(),
-                                financialStatement.toValue(),
-                                detail.getId(),
-                                LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
-                                LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
-                                replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
-                                LocalDateTime.now()
-                        ));
-                    } catch (NestedRuntimeException e) {
-                        if (e.contains(UniqueConstraintException.class)) {
-                            log.info("一意制約違反のため、データベースへの登録をスキップします。" +
-                                            "\t企業コード:{}\t財務諸表名:{}\t科目名:{}\t対象年:{}",
-                                    company.getCode().orElse(null),
-                                    financialStatement.getName(),
-                                    detail.getName(),
-                                    edinetDocument.getPeriodEnd().orElseThrow().substring(0, 4)
-                            );
-                        } else {
-                            throw e;
-                        }
-                    }
-                }));
+                .ifPresent(detail -> insertOfFinancialStatement(
+                        company,
+                        financialStatement,
+                        detail.getId(),
+                        edinetDocument,
+                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
+                )));
 
-        log.info("データベースに正常に登録されました。\t対象:{}\tファイル名:{}",
-                financialStatement.getName(), targetFile.getName()
+        log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                company.getCode().orElseThrow(),
+                company.getEdinetCode(),
+                financialStatement.getName(),
+                targetFile.getPath()
         );
+    }
+
+    @Transactional
+    private void insertOfFinancialStatement(
+            final Company company,
+            final FinancialStatementEnum financialStatement,
+            final String dId,
+            final EdinetDocument edinetDocument,
+            final Long value) {
+        try {
+            financialStatementDao.insert(new FinancialStatement(
+                    null,
+                    company.getCode().orElse(null),
+                    company.getEdinetCode(),
+                    financialStatement.toValue(),
+                    dId,
+                    LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
+                    LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
+                    value,
+                    LocalDateTime.now()
+            ));
+        } catch (NestedRuntimeException e) {
+            if (e.contains(UniqueConstraintException.class)) {
+                log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                "\t企業コード:{}\t財務諸表名:{}\t科目ID:{}\t対象年:{}",
+                        company.getCode().orElse(null),
+                        financialStatement.getName(),
+                        dId,
+                        edinetDocument.getPeriodEnd().orElseThrow().substring(0, 4)
+                );
+            } else {
+                throw e;
+            }
+        }
     }
 
     private Optional<Long> replaceInteger(final String value) {
@@ -524,13 +551,14 @@ public class DocumentService {
                     .map(s -> Long.parseLong(s
                             .replace(",", "")
                             .replace("△", "-")
+                            .replace("※ ", "")
+                            .replace("※１", "")
+                            .replace("※１ ", "")
+                            .replace("※２ ", "")
                             .replace("※２ ", "")
                             .replace("*2 ", "")
-                            .replace("※ ", "")
-                            .replace("※１ ", "")
-                            .replace("※１,※２ ", "")
-                            .replace("※１,※２ ", "")
                             .replace(" 株", "")
+                            .replace("－", "0")
                     ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);

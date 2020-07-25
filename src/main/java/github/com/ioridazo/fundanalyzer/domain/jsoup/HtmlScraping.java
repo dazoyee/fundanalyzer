@@ -91,8 +91,6 @@ public class HtmlScraping {
                 }
             }
 
-            log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
-
             return resultBeanList;
         } catch (Exception e) {
             log.error("想定外のエラーが発生しました。", e);
@@ -112,22 +110,18 @@ public class HtmlScraping {
                 tr.select("td").forEach(td -> tdList.add(td.text()));
                 System.out.println(tdList);
                 // 各要素をbeanに詰める
-                try {
+                if (tdList.size() == 5) {
                     resultBeanList.add(new NumberOfSharesResultBean(
                             tdList.get(0), tdList.get(1), tdList.get(2), tdList.get(3), tdList.get(4)));
-                } catch (IndexOutOfBoundsException e) {
+                } else {
                     log.info("株式総数取得のためのテーブル形式に合致しなかったため、取得範囲対象外の項目として処理を進めます。");
                 }
             }
             // FIXME 当てずっぽうで値を取得しているので、正しく取得するか、バリデーションチェックを行う
-            final var numberOfShares = resultBeanList.stream()
+            return resultBeanList.stream()
                     .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
                     .collect(Collectors.toList())
                     .get(resultBeanList.size() - 1);
-
-            log.info("スクレイピング処理を正常に実施しました。\t対象ファイル:{}", file.getPath());
-
-            return numberOfShares;
         } catch (Exception e) {
             log.error("想定外のエラーが発生しました。", e);
             throw new FundanalyzerFileException(e);

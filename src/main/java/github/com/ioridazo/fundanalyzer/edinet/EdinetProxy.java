@@ -32,18 +32,11 @@ public class EdinetProxy {
 
     public EdinetResponse list(final ListRequestParameter parameter) {
         try {
-            log.info("EDINETへの書類一覧APIを開始します。");
-
-            final var response = restOperations.getForObject(
+            return restOperations.getForObject(
                     "/api/v1/documents.json?date={date}&type={type}",
                     EdinetResponse.class,
                     Map.of("date", parameter.getDate(), "type", parameter.getType().toValue())
             );
-
-            log.info("EDINETから書類一覧APIが正常に返却されました。");
-
-            return response;
-
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
                             "\tHTTPステータスコード:{}" +
@@ -76,8 +69,6 @@ public class EdinetProxy {
             storagePath.mkdirs();
 
         try {
-            log.info("EDINETへの書類取得APIを開始します。");
-
             restOperations.execute(
                     "/api/v1/documents/{docId}?type={type}",
                     HttpMethod.GET,
@@ -95,9 +86,6 @@ public class EdinetProxy {
                     },
                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
             );
-
-            log.info("EDINETから書類取得APIが正常に終了しました。");
-
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
                             "\tHTTPステータスコード:{}" +
