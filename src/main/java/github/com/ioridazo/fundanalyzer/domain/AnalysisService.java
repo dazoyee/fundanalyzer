@@ -92,7 +92,7 @@ public class AnalysisService {
                             )
                     );
                 } catch (FundanalyzerCalculateException ignored) {
-                    log.warn("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
+                    log.info("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
                 }
             }
         });
@@ -142,7 +142,7 @@ public class AnalysisService {
                     String.valueOf(year)
             ).getDocId();
             documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.HALF_WAY.toValue()).build());
-            log.info("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+            log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                     "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), bsEnum.getSubject(), year);
             throw new FundanalyzerCalculateException(e);
         }
@@ -165,7 +165,7 @@ public class AnalysisService {
                     String.valueOf(year)
             ).getEdinetCode().orElseThrow();
             documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
-            log.info("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+            log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                     "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), plEnum.getSubject(), year);
             throw new FundanalyzerCalculateException(e);
         }
@@ -194,7 +194,7 @@ public class AnalysisService {
                 String.valueOf(year)
         ).getEdinetCode().orElseThrow();
         documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
-        log.info("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+        log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                 "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), "営業利益", year);
         throw new FundanalyzerCalculateException();
     }
@@ -215,7 +215,7 @@ public class AnalysisService {
                     String.valueOf(year)
             ).getEdinetCode().orElseThrow();
             documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue()).build());
-            log.info("株式総数がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+            log.warn("株式総数がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                     "\t会社コード:{}\t対象年:{}", company.getCode().orElseThrow(), year);
             throw new FundanalyzerCalculateException(e);
         }

@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -227,6 +228,19 @@ public class DocumentService {
                 });
     }
 
+    public void scrape(final LocalDate date) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
+        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .collect(Collectors.toList());
+
+        documentList.forEach(d -> {
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
+        });
+    }
+
     public void scrape(final String documentId) {
         log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
         scrapeBs(documentId);
@@ -357,6 +371,7 @@ public class DocumentService {
                     company,
                     bsSubjectDao.selectAll(),
                     edinetDocument);
+            checkBs(company, edinetDocument);
 
             documentDao.update(Document.builder()
                     .documentId(documentId)
@@ -425,7 +440,7 @@ public class DocumentService {
                     FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
                     "0",
                     edinetDocument,
-                    replaceInteger(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
+                    parseValue(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
             );
 
             log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
@@ -498,7 +513,7 @@ public class DocumentService {
                         financialStatement,
                         detail.getId(),
                         edinetDocument,
-                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
+                        parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
                 )));
 
         log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
@@ -543,22 +558,72 @@ public class DocumentService {
         }
     }
 
-    private Optional<Long> replaceInteger(final String value) {
+    private void checkBs(final Company company, final EdinetDocument edinetDocument) {
+        final var totalCurrentLiabilities = financialStatementDao.selectByUniqueKey(
+                edinetDocument.getEdinetCode().orElse(null),
+                FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                bsSubjectDao.selectByUniqueKey(
+                        BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId(),
+                        BsEnum.TOTAL_CURRENT_LIABILITIES.getDetailSubjectId()
+                ).getId(),
+                edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+        ).map(FinancialStatement::getValue);
+        final var totalLiabilities = financialStatementDao.selectByUniqueKey(
+                edinetDocument.getEdinetCode().orElse(null),
+                FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                bsSubjectDao.selectByUniqueKey(
+                        BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId(),
+                        BsEnum.TOTAL_LIABILITIES.getDetailSubjectId()
+                ).getId(),
+                edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+        ).map(FinancialStatement::getValue);
+
+        if (totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent()) {
+            if (totalCurrentLiabilities.get().isPresent() && (totalLiabilities.get().isPresent())) {
+                if (totalCurrentLiabilities.get().get().equals(totalLiabilities.get().get())) {
+                    insertOfFinancialStatement(
+                            company,
+                            FinancialStatementEnum.BALANCE_SHEET,
+                            bsSubjectDao.selectByUniqueKey(
+                                    BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
+                                    BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
+                            ).getId(),
+                            edinetDocument,
+                            0L
+                    );
+
+                    log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
+                                    "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
+                            company.getCode().orElseThrow(),
+                            edinetDocument.getDocId(),
+                            totalCurrentLiabilities.get().get(),
+                            totalLiabilities.get().get()
+                    );
+                }
+
+            }
+        }
+    }
+
+    private Optional<Long> parseValue(final String value) {
         try {
             return Optional.of(value)
                     .filter(v -> !v.isBlank())
                     .filter(v -> !" ".equals(v))
                     .map(s -> Long.parseLong(s
+                            .replace("※ ", "")
+                            .replace("※1", "").replace("※１", "")
+                            .replace("※2", "").replace("※２", "")
+                            .replace("※3", "").replace("※３", "")
+                            .replace("※4", "").replace("※４", "")
+                            .replace("※10", "")
+                            .replace("※11", "")
+                            .replace("*1", "").replace("*2", "")
+                            .replace("株", "")
+                            .replace("－", "0")
+                            .replace(" ", "").replace(" ", "")
                             .replace(",", "")
                             .replace("△", "-")
-                            .replace("※ ", "")
-                            .replace("※１", "")
-                            .replace("※１ ", "")
-                            .replace("※２ ", "")
-                            .replace("※２ ", "")
-                            .replace("*2 ", "")
-                            .replace(" 株", "")
-                            .replace("－", "0")
                     ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
@@ -566,7 +631,7 @@ public class DocumentService {
         }
     }
 
-    private Optional<Long> replaceInteger(final String value, final Unit unit) {
-        return replaceInteger(value).map(l -> l * unit.getValue());
+    private Optional<Long> parseValue(final String value, final Unit unit) {
+        return parseValue(value).map(l -> l * unit.getValue());
     }
 }

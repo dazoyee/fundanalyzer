@@ -48,12 +48,13 @@ public class AnalysisController {
         return "index";
     }
 
-    @PostMapping("fundanalyzer/v1/edinet/list")
-    public String edinet(final String fromDate, final String toDate) {
-        documentService.edinetList(fromDate, toDate);
-        return "redirect:/fundanalyzer/v1/edinet/list";
-    }
-
+    /**
+     * 指定提出日の書類をメインの一連処理をする
+     *
+     * @param fromDate 提出日
+     * @param toDate   提出日
+     * @return Index
+     */
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String documentAnalysis(final String fromDate, final String toDate) {
         final var year = LocalDate.parse(toDate).getYear();
@@ -64,6 +65,72 @@ public class AnalysisController {
         return "redirect:/fundanalyzer/v1/index";
     }
 
+    /**
+     * 指定提出日の書類を分析する
+     *
+     * @param date  提出日
+     * @param model model
+     * @return Index
+     */
+    @PostMapping("fundanalyzer/v1/scrape/date")
+    public String scrapeByDate(final String date, final Model model) {
+        documentService.scrape(LocalDate.parse(date));
+
+        model.addAttribute("message", "更新しました");
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "index";
+    }
+
+    /**
+     * 指定書類IDを分析する
+     *
+     * @param documentId 書類ID
+     * @param model model
+     * @return Index
+     */
+    @PostMapping("fundanalyzer/v1/scrape/id")
+    public String scrapeById(final String documentId, final Model model) {
+        documentService.scrape(documentId);
+
+        model.addAttribute("message", "更新しました");
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "index";
+    }
+
+    /**
+     * EDINETから提出書類一覧を取得する
+     *
+     * @param fromDate 提出日
+     * @param toDate   提出日
+     * @return EdinetList
+     */
+    @PostMapping("fundanalyzer/v1/edinet/list")
+    public String edinet(final String fromDate, final String toDate) {
+        documentService.edinetList(fromDate, toDate);
+        return "redirect:/fundanalyzer/v1/edinet/list";
+    }
+
+    /**
+     * すべてのリストを参照する
+     *
+     * @param model model
+     * @return EdinetList
+     */
+    @PostMapping("fundanalyzer/v1/edinet/list/all")
+    public String edinetListAll(final Model model) {
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
+        model.addAttribute("edinetList", viewService.edinetListAll("120"));
+        return "edinet";
+    }
+
+    /**
+     * 処理ステータスが未完のものを初期化する
+     *
+     * @param model model
+     * @return EdinetList
+     */
     @PostMapping("fundanalyzer/v1/reset/status")
     public String resetStatus(final Model model) {
         documentService.resetForRetry();
@@ -72,17 +139,6 @@ public class AnalysisController {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetList("120"));
         return "edinet";
-    }
-
-    @PostMapping("fundanalyzer/v1/scrape")
-    public String resetStatus(final String documentId, final Model model) {
-        documentService.resetForRetry();
-        documentService.scrape(documentId);
-
-        model.addAttribute("message", "更新しました");
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
-        return "index";
     }
 
     // -------------------------------------------------------
