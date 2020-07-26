@@ -102,22 +102,24 @@ public class ViewService {
                         .findAny()
                         .ifPresent(presentCompanies::add));
 
-        presentCompanies.forEach(company -> viewBeanList.add(new CompanyViewBean(
-                documentList.stream()
-                        .filter(document -> company.getEdinetCode().equals(document.getEdinetCode()))
-                        .map(Document::getSubmitDate)
-                        .filter(submitDate -> year == submitDate.getYear())
-                        .findAny()
-                        .orElseThrow(),
-                company.getCode().orElseThrow(),
-                company.getCompanyName(),
-                resultList.stream()
-                        .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
-                        .map(AnalysisResult::getCorporateValue)
-                        .findAny()
-                        .orElse(null),
-                year
-        )));
+        presentCompanies.forEach(company -> documentList.stream()
+                .filter(document -> company.getEdinetCode().equals(document.getEdinetCode()))
+                .map(Document::getSubmitDate)
+                .filter(submitDate -> year == submitDate.getYear())
+                .findAny()
+                // 指定対象年に合致する提出日が存在する場合
+                .ifPresent(submitDate -> viewBeanList.add(new CompanyViewBean(
+                        submitDate,
+                        company.getCode().orElseThrow(),
+                        company.getCompanyName(),
+                        resultList.stream()
+                                .filter(ar -> company.getCode().get().equals(ar.getCompanyCode()))
+                                .map(AnalysisResult::getCorporateValue)
+                                .findAny()
+                                .orElse(null),
+                        year
+                )))
+        );
 
         return sortedCompany(viewBeanList);
     }
