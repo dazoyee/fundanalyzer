@@ -32,16 +32,21 @@ public class HtmlScraping {
             throws FundanalyzerFileException, FundanalyzerRuntimeException {
         List<File> filePathList = new ArrayList<>();
 
-        // 対象のディレクトリから"honbun"ファイルを取得
-        getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
-            if (file.isFile()) {
-                final var filePathName = new File(filePath + "/" + file.getName());
-                if (elementsByKeyMatch(filePathName, new keyMatch("name", keyword)).hasText()) {
-                    // キーワードが存在したらファイルリストに加える
-                    filePathList.add(filePathName);
+        try {
+            // 対象のディレクトリから"honbun"ファイルを取得
+            getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
+                if (file.isFile()) {
+                    final var filePathName = new File(filePath + "/" + file.getName());
+                    if (elementsByKeyMatch(filePathName, new keyMatch("name", keyword)).hasText()) {
+                        // キーワードが存在したらファイルリストに加える
+                        filePathList.add(filePathName);
+                    }
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            log.error("想定外のエラーが発生しました。", e);
+            throw new FundanalyzerFileException(e);
+        }
 
         if (filePathList.size() > 1) {
             filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", keyword, file));
@@ -129,7 +134,7 @@ public class HtmlScraping {
     }
 
     List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {
-        return Stream.of(Objects.requireNonNull(filePath.listFiles()))
+        return Stream.of(Objects.requireNonNull(filePath.listFiles(), filePath.getPath()))
                 .filter(file -> file.getName().contains(keyword))
                 .collect(Collectors.toList());
     }

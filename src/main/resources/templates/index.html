@@ -13,7 +13,11 @@
     <input type="date" name="toDate"/>
     <button type="submit" class="btn">取得/分析する</button>
 </form>
-<form method="post" th:action="@{/fundanalyzer/v1/scrape}">
+<form method="post" th:action="@{/fundanalyzer/v1/scrape/date}">
+    <input type="date" name="date"/>
+    <button type="submit" class="btn">分析する</button>
+</form>
+<form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
     <input type="text" name="documentId" placeholder="書類ID"/>
     <button type="submit" class="btn">分析する</button>
 </form>
