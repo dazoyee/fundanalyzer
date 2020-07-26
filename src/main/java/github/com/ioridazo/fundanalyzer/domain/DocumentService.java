@@ -438,7 +438,7 @@ public class DocumentService {
                     FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
                     "0",
                     edinetDocument,
-                    replaceInteger(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
+                    parseValue(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
             );
 
             log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
@@ -511,7 +511,7 @@ public class DocumentService {
                         financialStatement,
                         detail.getId(),
                         edinetDocument,
-                        replaceInteger(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
+                        parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
                 )));
 
         log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
@@ -556,22 +556,25 @@ public class DocumentService {
         }
     }
 
-    private Optional<Long> replaceInteger(final String value) {
+    private Optional<Long> parseValue(final String value) {
         try {
             return Optional.of(value)
                     .filter(v -> !v.isBlank())
                     .filter(v -> !" ".equals(v))
                     .map(s -> Long.parseLong(s
+                            .replace("※ ", "")
+                            .replace("※1", "").replace("※１", "")
+                            .replace("※2", "").replace("※２", "")
+                            .replace("※3", "").replace("※３", "")
+                            .replace("※4", "").replace("※４", "")
+                            .replace("※10", "")
+                            .replace("※11", "")
+                            .replace("*1", "").replace("*2", "")
+                            .replace("株", "")
+                            .replace("－", "0")
+                            .replace(" ", "").replace(" ", "")
                             .replace(",", "")
                             .replace("△", "-")
-                            .replace("※ ", "")
-                            .replace("※１", "")
-                            .replace("※１ ", "")
-                            .replace("※２ ", "")
-                            .replace("※２ ", "")
-                            .replace("*2 ", "")
-                            .replace(" 株", "")
-                            .replace("－", "0")
                     ));
         } catch (NumberFormatException e) {
             log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
@@ -579,7 +582,7 @@ public class DocumentService {
         }
     }
 
-    private Optional<Long> replaceInteger(final String value, final Unit unit) {
-        return replaceInteger(value).map(l -> l * unit.getValue());
+    private Optional<Long> parseValue(final String value, final Unit unit) {
+        return parseValue(value).map(l -> l * unit.getValue());
     }
 }
