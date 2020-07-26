@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -370,6 +371,7 @@ public class DocumentService {
                     company,
                     bsSubjectDao.selectAll(),
                     edinetDocument);
+            checkBs(company, edinetDocument);
 
             documentDao.update(Document.builder()
                     .documentId(documentId)
@@ -552,6 +554,53 @@ public class DocumentService {
                 );
             } else {
                 throw e;
+            }
+        }
+    }
+
+    private void checkBs(final Company company, final EdinetDocument edinetDocument) {
+        final var totalCurrentLiabilities = financialStatementDao.selectByUniqueKey(
+                edinetDocument.getEdinetCode().orElse(null),
+                FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                bsSubjectDao.selectByUniqueKey(
+                        BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId(),
+                        BsEnum.TOTAL_CURRENT_LIABILITIES.getDetailSubjectId()
+                ).getId(),
+                edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+        ).map(FinancialStatement::getValue);
+        final var totalLiabilities = financialStatementDao.selectByUniqueKey(
+                edinetDocument.getEdinetCode().orElse(null),
+                FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                bsSubjectDao.selectByUniqueKey(
+                        BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId(),
+                        BsEnum.TOTAL_LIABILITIES.getDetailSubjectId()
+                ).getId(),
+                edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+        ).map(FinancialStatement::getValue);
+
+        if (totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent()) {
+            if (totalCurrentLiabilities.get().isPresent() && (totalLiabilities.get().isPresent())) {
+                if (totalCurrentLiabilities.get().get().equals(totalLiabilities.get().get())) {
+                    insertOfFinancialStatement(
+                            company,
+                            FinancialStatementEnum.BALANCE_SHEET,
+                            bsSubjectDao.selectByUniqueKey(
+                                    BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
+                                    BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
+                            ).getId(),
+                            edinetDocument,
+                            0L
+                    );
+
+                    log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
+                                    "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
+                            company.getCode().orElseThrow(),
+                            edinetDocument.getDocId(),
+                            totalCurrentLiabilities.get().get(),
+                            totalLiabilities.get().get()
+                    );
+                }
+
             }
         }
     }
