@@ -128,11 +128,21 @@ public class ViewService {
         return companyDao.selectAll().stream()
                 .map(Company::getUpdatedAt)
                 .max(LocalDateTime::compareTo)
-                .orElseThrow()
-                .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
+                .map(dateTime -> dateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")))
+                .orElse("null");
     }
 
     public List<EdinetListViewBean> edinetList(final String documentTypeCode) {
+        final var viewBeanList = edinetListAll(documentTypeCode);
+
+        viewBeanList.removeIf(vb -> vb.getCountTarget().equals(vb.getCountScraped()) &&
+                vb.getCountTarget().equals(vb.getCountAnalyzed())
+        );
+
+        return sortedEdinetList(viewBeanList);
+    }
+
+    public List<EdinetListViewBean> edinetListAll(final String documentTypeCode) {
         final var viewBeanList = new ArrayList<EdinetListViewBean>();
         final var documentList = documentDao.selectByDocumentTypeCode(documentTypeCode);
 
