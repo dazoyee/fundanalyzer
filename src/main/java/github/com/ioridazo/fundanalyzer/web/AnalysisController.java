@@ -74,9 +74,18 @@ public class AnalysisController {
         return "edinet";
     }
 
-    @PostMapping("fundanalyzer/v1/scrape")
-    public String resetStatus(final String documentId, final Model model) {
-        documentService.resetForRetry();
+    @PostMapping("fundanalyzer/v1/scrape/date")
+    public String scrapeByDate(final String date, final Model model) {
+        documentService.scrape(LocalDate.parse(date));
+
+        model.addAttribute("message", "更新しました");
+        model.addAttribute("companyUpdated", viewService.companyUpdated());
+        model.addAttribute("edinetList", viewService.edinetList("120"));
+        return "index";
+    }
+
+    @PostMapping("fundanalyzer/v1/scrape/id")
+    public String scrapeById(final String documentId, final Model model) {
         documentService.scrape(documentId);
 
         model.addAttribute("message", "更新しました");

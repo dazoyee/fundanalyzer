@@ -227,6 +227,19 @@ public class DocumentService {
                 });
     }
 
+    public void scrape(final LocalDate date) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
+        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .collect(Collectors.toList());
+
+        documentList.forEach(d -> {
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
+        });
+    }
+
     public void scrape(final String documentId) {
         log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
         scrapeBs(documentId);
