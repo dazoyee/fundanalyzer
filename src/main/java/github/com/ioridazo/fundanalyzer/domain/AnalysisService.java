@@ -62,6 +62,11 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
+    public void analyze(final String documentId){
+        edinetDocumentDao.selectByDocId(documentId).getPeriodEnd()
+                .ifPresent(d -> analyze(Integer.parseInt(d.substring(0,4))));
+    }
+
     public void analyze(final int year) {
         final var companyAll = companyDao.selectAll();
         var presentCompanies = new ArrayList<Company>();
