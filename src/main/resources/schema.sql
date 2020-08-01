@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS edinet_document(
   attach_doc_flag CHAR(1) COMMENT '代替書面・添付文書有無フラグ',
   english_doc_flag CHAR(1) COMMENT '英文ファイル有無フラグ',
   created_at DATETIME NOT NULL COMMENT '登録日',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(doc_id)
 );
 
 -- 書類ステータス
@@ -114,7 +115,8 @@ CREATE TABLE IF NOT EXISTS document(
   cf_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（キャッシュ・フロー計算書）パス',
   created_at DATETIME NOT NULL COMMENT '登録日',
   updated_at DATETIME NOT NULL COMMENT '更新日',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(document_id)
 );
 
 -- 財務諸表

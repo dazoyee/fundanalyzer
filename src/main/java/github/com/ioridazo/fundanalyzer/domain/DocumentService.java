@@ -274,7 +274,20 @@ public class DocumentService {
                     Stream.of(results)
                             .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
                             .forEach(r -> {
-                                edinetDocumentDao.insert(EdinetMapper.map(r));
+                                try {
+                                    edinetDocumentDao.insert(EdinetMapper.map(r));
+                                } catch (NestedRuntimeException e) {
+                                    if (e.contains(UniqueConstraintException.class)) {
+                                        log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                                        "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
+                                                "edinet_document",
+                                                r.getDocId(),
+                                                r.getEdinetCode(),
+                                                r.getFilerName(),
+                                                r.getDocTypeCode()
+                                        );
+                                    }
+                                }
                                 try {
                                     documentDao.insert(Document.builder()
                                             .documentId(r.getDocId())
@@ -286,11 +299,22 @@ public class DocumentService {
                                             .build()
                                     );
                                 } catch (NestedRuntimeException e) {
-                                    if (e.contains(SQLIntegrityConstraintViolationException.class)) {
+                                    if (e.contains(UniqueConstraintException.class)) {
+                                        log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                                        "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
+                                                "document",
+                                                r.getDocId(),
+                                                r.getEdinetCode(),
+                                                r.getFilerName(),
+                                                r.getDocTypeCode()
+                                        );
+                                    } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
                                         log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
                                         throw new FundanalyzerSqlForeignKeyException(e);
+                                    } else {
+                                        log.error("想定外のエラーが発生しました。", e);
+                                        throw new RuntimeException(e);
                                     }
-                                    throw new RuntimeException(e);
                                 }
                             });
                 }));
