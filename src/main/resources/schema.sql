@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS edinet_document(
   attach_doc_flag CHAR(1) COMMENT '代替書面・添付文書有無フラグ',
   english_doc_flag CHAR(1) COMMENT '英文ファイル有無フラグ',
   created_at DATETIME NOT NULL COMMENT '登録日',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(doc_id)
 );
 
 -- 書類ステータス
@@ -112,9 +113,11 @@ CREATE TABLE IF NOT EXISTS document(
   pl_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（損益計算書）パス',
   scraped_cf CHAR(1) NOT NULL DEFAULT '0' COMMENT 'スクレイピング（キャッシュ・フロー計算書）ステータス' CHECK(scraped_cf IN('0', '1','5', '9')),
   cf_document_path VARCHAR(256) COMMENT 'ドキュメントファイル（キャッシュ・フロー計算書）パス',
+  removed CHAR(1) NOT NULL DEFAULT '0' COMMENT '除外フラグ' CHECK(removed IN('0', '1')),
   created_at DATETIME NOT NULL COMMENT '登録日',
   updated_at DATETIME NOT NULL COMMENT '更新日',
-  PRIMARY KEY(id)
+  PRIMARY KEY(id),
+  UNIQUE KEY(document_id)
 );
 
 -- 財務諸表
@@ -142,3 +145,5 @@ CREATE TABLE IF NOT EXISTS analysis_result(
   PRIMARY KEY(id),
   UNIQUE KEY(company_code, period)
 );
+
+--

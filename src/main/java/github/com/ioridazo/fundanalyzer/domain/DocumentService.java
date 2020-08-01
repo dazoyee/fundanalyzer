@@ -197,6 +197,120 @@ public class DocumentService {
         }
     }
 
+    @Transactional
+    public void insertDocumentList(final LocalDate date) {
+        final var docIdList = edinetDocumentDao.selectAll().stream()
+                .map(EdinetDocument::getDocId)
+                .collect(Collectors.toList());
+
+        Stream.of(date.toString())
+                .filter(dateString -> Stream.of(dateString)
+                        .peek(d -> log.trace("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
+                                // EDINETに提出書類の問い合わせ
+                                .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                                .map(EdinetResponse::getMetadata)
+                                .map(Metadata::getResultset)
+                                .map(ResultSet::getCount)
+                                .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
+                                .anyMatch(c -> !"0".equals(c))
+                )
+                // 書類が0件ではないときは書類リストを取得する
+                .peek(dateString -> log.trace("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
+                .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
+                .peek(er -> log.trace("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
+                .map(EdinetResponse::getResults)
+                .forEach(resultsList -> resultsList.forEach(results -> {
+                    Stream.of(results)
+                            .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
+                            .forEach(r -> {
+                                try {
+                                    edinetDocumentDao.insert(EdinetMapper.map(r));
+                                } catch (NestedRuntimeException e) {
+                                    if (e.contains(UniqueConstraintException.class)) {
+                                        log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                                        "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
+                                                "edinet_document",
+                                                r.getDocId(),
+                                                r.getEdinetCode(),
+                                                r.getFilerName(),
+                                                r.getDocTypeCode()
+                                        );
+                                    }
+                                }
+                                try {
+                                    documentDao.insert(Document.builder()
+                                            .documentId(r.getDocId())
+                                            .documentTypeCode(r.getDocTypeCode())
+                                            .edinetCode(r.getEdinetCode())
+                                            .submitDate(date)
+                                            .createdAt(LocalDateTime.now())
+                                            .updatedAt(LocalDateTime.now())
+                                            .build()
+                                    );
+                                } catch (NestedRuntimeException e) {
+                                    if (e.contains(UniqueConstraintException.class)) {
+                                        log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                                        "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
+                                                "document",
+                                                r.getDocId(),
+                                                r.getEdinetCode(),
+                                                r.getFilerName(),
+                                                r.getDocTypeCode()
+                                        );
+                                    } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
+                                        log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
+                                        throw new FundanalyzerSqlForeignKeyException(e);
+                                    } else {
+                                        log.error("想定外のエラーが発生しました。", e);
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            });
+                }));
+        log.info("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{}", date);
+    }
+
+    public void store(final LocalDate targetDate, final String docId) {
+        // 取得済ファイルリスト
+        final var fileListAlready = Optional.ofNullable(new File(pathDecode.getPath() + "/" + targetDate).listFiles())
+                .map(Arrays::stream)
+                .map(fileList -> fileList.map(File::getName))
+                .map(fileName -> fileName.collect(Collectors.toList()))
+                .or(Optional::empty);
+
+        if (fileListAlready.isPresent() && fileListAlready.get().stream().anyMatch(docId::equals)) {
+            documentDao.update(Document.builder()
+                    .documentId(docId)
+                    .downloaded(DocumentStatus.DONE.toValue())
+                    .decoded(DocumentStatus.DONE.toValue())
+                    .build()
+            );
+        } else {
+            // ファイル取得
+            download(targetDate, docId);
+        }
+    }
+
+    public void scrape(final LocalDate date) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
+        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .collect(Collectors.toList());
+
+        documentList.forEach(d -> {
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
+        });
+    }
+
+    public void scrape(final String documentId) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
+        scrapeBs(documentId);
+        scrapePl(documentId);
+        scrapeNs(documentId);
+    }
+
     public void resetForRetry() {
         final var documentList = documentDao.selectByDocumentTypeCode("120");
         // 貸借対照表
@@ -226,96 +340,6 @@ public class DocumentService {
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
-    }
-
-    public void scrape(final LocalDate date) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
-        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
-                .collect(Collectors.toList());
-
-        documentList.forEach(d -> {
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
-        });
-    }
-
-    public void scrape(final String documentId) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
-        scrapeBs(documentId);
-        scrapePl(documentId);
-        scrapeNs(documentId);
-    }
-
-    @Transactional
-    public void insertDocumentList(final LocalDate date) {
-        final var docIdList = edinetDocumentDao.selectAll().stream()
-                .map(EdinetDocument::getDocId)
-                .collect(Collectors.toList());
-
-        Stream.of(date.toString())
-                .filter(dateString -> Stream.of(dateString)
-//                        .peek(d -> log.info("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
-                                // EDINETに提出書類の問い合わせ
-                                .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
-                                .map(EdinetResponse::getMetadata)
-                                .map(Metadata::getResultset)
-                                .map(ResultSet::getCount)
-                                .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
-                                .anyMatch(c -> !"0".equals(c))
-                )
-                // 書類が0件ではないときは書類リストを取得する
-//                .peek(dateString -> log.info("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
-                .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
-//                .peek(er -> log.info("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
-                .map(EdinetResponse::getResults)
-                .forEach(resultsList -> resultsList.forEach(results -> {
-                    Stream.of(results)
-                            .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
-                            .forEach(r -> {
-                                edinetDocumentDao.insert(EdinetMapper.map(r));
-                                try {
-                                    documentDao.insert(Document.builder()
-                                            .documentId(r.getDocId())
-                                            .documentTypeCode(r.getDocTypeCode())
-                                            .edinetCode(r.getEdinetCode())
-                                            .submitDate(date)
-                                            .createdAt(LocalDateTime.now())
-                                            .updatedAt(LocalDateTime.now())
-                                            .build()
-                                    );
-                                } catch (NestedRuntimeException e) {
-                                    if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                                        log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
-                                        throw new FundanalyzerSqlForeignKeyException(e);
-                                    }
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                }));
-        log.info("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{}", date);
-    }
-
-    public void store(final LocalDate targetDate, final String docId) {
-        // 取得済ファイルリスト
-        final var fileListAlready = Optional.ofNullable(new File(pathDecode.getPath() + "/" + targetDate).listFiles())
-                .map(Arrays::stream)
-                .map(fileList -> fileList.map(File::getName))
-                .map(fileName -> fileName.collect(Collectors.toList()))
-                .or(Optional::empty);
-
-        if (fileListAlready.isPresent() && fileListAlready.get().stream().anyMatch(docId::equals)) {
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.DONE.toValue())
-                    .decoded(DocumentStatus.DONE.toValue())
-                    .build()
-            );
-        } else {
-            // ファイル取得
-            download(targetDate, docId);
-        }
     }
 
     void download(final LocalDate targetDate, final String docId) {
@@ -383,8 +407,11 @@ public class DocumentService {
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(documentId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}\t書類管理番号:{}",
-                    "貸借対照表", documentId
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "貸借対照表",
+                    targetDirectory.getPath()
             );
         }
     }
@@ -418,8 +445,11 @@ public class DocumentService {
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(documentId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}\t書類管理番号:{}",
-                    "損益計算書", documentId
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "損益計算書",
+                    targetDirectory.getPath()
             );
         }
     }
@@ -447,7 +477,7 @@ public class DocumentService {
                     company.getCode().orElseThrow(),
                     company.getEdinetCode(),
                     "株式総数",
-                    targetFile.getFirst().getName()
+                    targetFile.getFirst().getPath()
             );
 
             documentDao.update(Document.builder()
@@ -460,8 +490,11 @@ public class DocumentService {
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(documentId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}\t書類管理番号:{}",
-                    "株式総数", documentId
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "株式総数",
+                    targetDirectory.getPath()
             );
         }
     }
@@ -600,7 +633,6 @@ public class DocumentService {
                             totalLiabilities.get().get()
                     );
                 }
-
             }
         }
     }
@@ -616,8 +648,15 @@ public class DocumentService {
                             .replace("※2", "").replace("※２", "")
                             .replace("※3", "").replace("※３", "")
                             .replace("※4", "").replace("※４", "")
-                            .replace("※10", "")
-                            .replace("※11", "")
+                            .replace("※5", "").replace("※５", "")
+                            .replace("※6", "").replace("※６", "")
+                            .replace("※7", "").replace("※７", "")
+                            .replace("※8", "").replace("※８", "")
+                            .replace("※9", "").replace("※９", "")
+                            .replace("※10", "").replace("※11", "")
+                            .replace("※12", "").replace("※13", "")
+                            .replace("※14", "").replace("※15", "")
+                            .replace("※16", "").replace("※17", "")
                             .replace("*1", "").replace("*2", "")
                             .replace("株", "")
                             .replace("－", "0")
