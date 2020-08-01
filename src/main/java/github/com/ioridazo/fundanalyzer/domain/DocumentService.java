@@ -383,8 +383,11 @@ public class DocumentService {
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(documentId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}\t書類管理番号:{}",
-                    "貸借対照表", documentId
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "貸借対照表",
+                    targetDirectory.getPath()
             );
         }
     }
@@ -418,8 +421,11 @@ public class DocumentService {
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(documentId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}\t書類管理番号:{}",
-                    "損益計算書", documentId
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "損益計算書",
+                    targetDirectory.getPath()
             );
         }
     }
@@ -447,7 +453,7 @@ public class DocumentService {
                     company.getCode().orElseThrow(),
                     company.getEdinetCode(),
                     "株式総数",
-                    targetFile.getFirst().getName()
+                    targetFile.getFirst().getPath()
             );
 
             documentDao.update(Document.builder()
@@ -460,8 +466,11 @@ public class DocumentService {
         } catch (FundanalyzerFileException e) {
             documentDao.update(Document.builder().documentId(documentId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\t対象:{}\t書類管理番号:{}",
-                    "株式総数", documentId
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                    company.getCode().orElseThrow(),
+                    company.getEdinetCode(),
+                    "株式総数",
+                    targetDirectory.getPath()
             );
         }
     }
