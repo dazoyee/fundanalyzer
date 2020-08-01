@@ -197,57 +197,6 @@ public class DocumentService {
         }
     }
 
-    public void resetForRetry() {
-        final var documentList = documentDao.selectByDocumentTypeCode("120");
-        // 貸借対照表
-        documentList.stream()
-                .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
-                .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
-                .map(Document::getDocumentId)
-                .forEach(documentId -> {
-                    documentDao.update(Document.builder()
-                            .documentId(documentId)
-                            .scrapedBs(DocumentStatus.NOT_YET.toValue())
-                            .build()
-                    );
-                    log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
-                });
-
-        // 損益計算書
-        documentList.stream()
-                .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
-                .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
-                .map(Document::getDocumentId)
-                .forEach(documentId -> {
-                    documentDao.update(Document.builder()
-                            .documentId(documentId)
-                            .scrapedPl(DocumentStatus.NOT_YET.toValue())
-                            .build()
-                    );
-                    log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
-                });
-    }
-
-    public void scrape(final LocalDate date) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
-        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
-                .collect(Collectors.toList());
-
-        documentList.forEach(d -> {
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
-        });
-    }
-
-    public void scrape(final String documentId) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
-        scrapeBs(documentId);
-        scrapePl(documentId);
-        scrapeNs(documentId);
-    }
-
     @Transactional
     public void insertDocumentList(final LocalDate date) {
         final var docIdList = edinetDocumentDao.selectAll().stream()
@@ -256,7 +205,7 @@ public class DocumentService {
 
         Stream.of(date.toString())
                 .filter(dateString -> Stream.of(dateString)
-//                        .peek(d -> log.info("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
+                        .peek(d -> log.trace("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
                                 // EDINETに提出書類の問い合わせ
                                 .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
                                 .map(EdinetResponse::getMetadata)
@@ -266,9 +215,9 @@ public class DocumentService {
                                 .anyMatch(c -> !"0".equals(c))
                 )
                 // 書類が0件ではないときは書類リストを取得する
-//                .peek(dateString -> log.info("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
+                .peek(dateString -> log.trace("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
                 .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
-//                .peek(er -> log.info("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
+                .peek(er -> log.trace("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
                 .forEach(resultsList -> resultsList.forEach(results -> {
                     Stream.of(results)
@@ -340,6 +289,57 @@ public class DocumentService {
             // ファイル取得
             download(targetDate, docId);
         }
+    }
+
+    public void scrape(final LocalDate date) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
+        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .collect(Collectors.toList());
+
+        documentList.forEach(d -> {
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
+            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
+        });
+    }
+
+    public void scrape(final String documentId) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
+        scrapeBs(documentId);
+        scrapePl(documentId);
+        scrapeNs(documentId);
+    }
+
+    public void resetForRetry() {
+        final var documentList = documentDao.selectByDocumentTypeCode("120");
+        // 貸借対照表
+        documentList.stream()
+                .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
+                .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
+                .map(Document::getDocumentId)
+                .forEach(documentId -> {
+                    documentDao.update(Document.builder()
+                            .documentId(documentId)
+                            .scrapedBs(DocumentStatus.NOT_YET.toValue())
+                            .build()
+                    );
+                    log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
+                });
+
+        // 損益計算書
+        documentList.stream()
+                .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
+                .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
+                .map(Document::getDocumentId)
+                .forEach(documentId -> {
+                    documentDao.update(Document.builder()
+                            .documentId(documentId)
+                            .scrapedPl(DocumentStatus.NOT_YET.toValue())
+                            .build()
+                    );
+                    log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
+                });
     }
 
     void download(final LocalDate targetDate, final String docId) {
@@ -633,7 +633,6 @@ public class DocumentService {
                             totalLiabilities.get().get()
                     );
                 }
-
             }
         }
     }

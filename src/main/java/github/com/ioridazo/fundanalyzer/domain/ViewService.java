@@ -162,6 +162,8 @@ public class ViewService {
         final var targetList = documentList.stream()
                 // filter submitDate
                 .filter(document -> submitDate.equals(document.getSubmitDate()))
+                // filter removed
+                .filter(document -> !document.getRemoved())
                 // list edinetCode
                 .map(Document::getEdinetCode)
                 // filter companyCode is present

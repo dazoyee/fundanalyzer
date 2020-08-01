@@ -52,8 +52,14 @@ public class Document {
 
     private final String cfDocumentPath;
 
+    private final String removed;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
     private final LocalDateTime updatedAt;
+
+    public boolean getRemoved() {
+        return "1".equals(removed);
+    }
 }
