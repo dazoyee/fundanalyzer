@@ -3,11 +3,13 @@ package github.com.ioridazo.fundanalyzer.domain;
 import github.com.ioridazo.fundanalyzer.domain.bean.CompanyViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
@@ -25,16 +27,19 @@ import java.util.stream.Collectors;
 @Service
 public class ViewService {
 
+    private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final EdinetDocumentDao edinetDocumentDao;
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
 
     public ViewService(
+            IndustryDao industryDao,
             CompanyDao companyDao,
             EdinetDocumentDao edinetDocumentDao,
             DocumentDao documentDao,
             AnalysisResultDao analysisResultDao) {
+        this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.edinetDocumentDao = edinetDocumentDao;
         this.documentDao = documentDao;
@@ -87,6 +92,8 @@ public class ViewService {
     }
 
     public List<CompanyViewBean> viewCompany(final int year) {
+        final var bank = industryDao.selectByName("銀行業");
+        final var insurance = industryDao.selectByName("保険業");
         final var companyAll = companyDao.selectAll();
         final var documentList = documentDao.selectByDocumentTypeCode("120");
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
@@ -99,6 +106,9 @@ public class ViewService {
                 .forEach(edinetCode -> companyAll.stream()
                         .filter(company -> edinetCode.equals(company.getEdinetCode()))
                         .filter(company -> company.getCode().isPresent())
+                        // 銀行業、保険業は対象外とする
+                        .filter(company -> !bank.getId().equals(company.getIndustryId()))
+                        .filter(company -> !insurance.getId().equals(company.getIndustryId()))
                         .findAny()
                         .ifPresent(presentCompanies::add));
 
@@ -156,6 +166,8 @@ public class ViewService {
     }
 
     EdinetListViewBean counter(final List<Document> documentList, final LocalDate submitDate, final Long countAll) {
+        final var bank = industryDao.selectByName("銀行業");
+        final var insurance = industryDao.selectByName("保険業");
         final var companyAll = companyDao.selectAll();
 
         // 処理対象件数
@@ -168,6 +180,16 @@ public class ViewService {
                 .map(Document::getEdinetCode)
                 // filter companyCode is present
                 .filter(ec -> codeConverter(ec, companyAll).isPresent())
+                // filter no bank
+                .filter(ec -> companyAll.stream()
+                        .filter(company -> ec.equals(company.getEdinetCode()))
+                        .noneMatch(company -> bank.getId().equals(company.getIndustryId()))
+                )
+                // filter no insurance
+                .filter(ec -> companyAll.stream()
+                        .filter(company -> ec.equals(company.getEdinetCode()))
+                        .noneMatch(company -> insurance.getId().equals(company.getIndustryId()))
+                )
                 .collect(Collectors.toList());
 
         // 処理済件数

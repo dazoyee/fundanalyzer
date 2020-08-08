@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BsSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
@@ -37,6 +38,7 @@ import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
 @Service
 public class AnalysisService {
 
+    private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final BsSubjectDao bsSubjectDao;
     private final PlSubjectDao plSubjectDao;
@@ -46,6 +48,7 @@ public class AnalysisService {
     private final AnalysisResultDao analysisResultDao;
 
     public AnalysisService(
+            IndustryDao industryDao,
             CompanyDao companyDao,
             BsSubjectDao bsSubjectDao,
             PlSubjectDao plSubjectDao,
@@ -53,6 +56,7 @@ public class AnalysisService {
             DocumentDao documentDao,
             FinancialStatementDao financialStatementDao,
             AnalysisResultDao analysisResultDao) {
+        this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.bsSubjectDao = bsSubjectDao;
         this.plSubjectDao = plSubjectDao;
@@ -68,6 +72,8 @@ public class AnalysisService {
     }
 
     public void analyze(final int year) {
+        final var bank = industryDao.selectByName("銀行業");
+        final var insurance = industryDao.selectByName("保険業");
         final var companyAll = companyDao.selectAll();
         var presentCompanies = new ArrayList<Company>();
 
@@ -77,6 +83,9 @@ public class AnalysisService {
                 .forEach(edinetCode -> companyAll.stream()
                         .filter(company -> edinetCode.equals(company.getEdinetCode()))
                         .filter(company -> company.getCode().isPresent())
+                        // 銀行業、保険業は対象外とする
+                        .filter(company -> !bank.getId().equals(company.getIndustryId()))
+                        .filter(company -> !insurance.getId().equals(company.getIndustryId()))
                         .findAny()
                         .ifPresent(presentCompanies::add));
 
@@ -148,7 +157,12 @@ public class AnalysisService {
             ).getDocId();
             documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.HALF_WAY.toValue()).build());
             log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                    "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), bsEnum.getSubject(), year);
+                    "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
+                    company.getCode().orElseThrow(),
+                    bsEnum.getSubject(),
+                    year,
+                    documentDao.selectByDocumentId(docId).getBsDocumentPath()
+            );
             throw new FundanalyzerCalculateException(e);
         }
     }
