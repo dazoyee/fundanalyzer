@@ -205,19 +205,19 @@ public class DocumentService {
 
         Stream.of(date.toString())
                 .filter(dateString -> Stream.of(dateString)
-                        .peek(d -> log.trace("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
-                                // EDINETに提出書類の問い合わせ
-                                .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
-                                .map(EdinetResponse::getMetadata)
-                                .map(Metadata::getResultset)
-                                .map(ResultSet::getCount)
-                                .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
-                                .anyMatch(c -> !"0".equals(c))
+                        .peek(d -> log.debug("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
+                        // EDINETに提出書類の問い合わせ
+                        .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                        .map(EdinetResponse::getMetadata)
+                        .map(Metadata::getResultset)
+                        .map(ResultSet::getCount)
+                        .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
+                        .anyMatch(c -> !"0".equals(c))
                 )
                 // 書類が0件ではないときは書類リストを取得する
-                .peek(dateString -> log.trace("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
+                .peek(dateString -> log.debug("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
                 .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
-                .peek(er -> log.trace("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
+                .peek(er -> log.debug("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
                 .forEach(resultsList -> resultsList.forEach(results -> {
                     Stream.of(results)
@@ -592,47 +592,52 @@ public class DocumentService {
     }
 
     private void checkBs(final Company company, final EdinetDocument edinetDocument) {
-        final var totalCurrentLiabilities = financialStatementDao.selectByUniqueKey(
-                edinetDocument.getEdinetCode().orElse(null),
-                FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                bsSubjectDao.selectByUniqueKey(
-                        BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId(),
-                        BsEnum.TOTAL_CURRENT_LIABILITIES.getDetailSubjectId()
-                ).getId(),
-                edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
-        ).map(FinancialStatement::getValue);
-        final var totalLiabilities = financialStatementDao.selectByUniqueKey(
-                edinetDocument.getEdinetCode().orElse(null),
-                FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                bsSubjectDao.selectByUniqueKey(
-                        BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId(),
-                        BsEnum.TOTAL_LIABILITIES.getDetailSubjectId()
-                ).getId(),
-                edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
-        ).map(FinancialStatement::getValue);
+        final var totalCurrentLiabilities = bsSubjectDao.selectByOutlineSubjectId(
+                BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId()).stream()
+                .map(bsSubject -> financialStatementDao.selectByUniqueKey(
+                        edinetDocument.getEdinetCode().orElse(null),
+                        FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                        bsSubject.getId(),
+                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                        ).flatMap(FinancialStatement::getValue)
+                )
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findAny();
+
+        final var totalLiabilities = bsSubjectDao.selectByOutlineSubjectId(
+                BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()).stream()
+                .map(bsSubject -> financialStatementDao.selectByUniqueKey(
+                        edinetDocument.getEdinetCode().orElse(null),
+                        FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                        bsSubject.getId(),
+                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                        ).flatMap(FinancialStatement::getValue)
+                )
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findAny();
 
         if (totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent()) {
-            if (totalCurrentLiabilities.get().isPresent() && (totalLiabilities.get().isPresent())) {
-                if (totalCurrentLiabilities.get().get().equals(totalLiabilities.get().get())) {
-                    insertOfFinancialStatement(
-                            company,
-                            FinancialStatementEnum.BALANCE_SHEET,
-                            bsSubjectDao.selectByUniqueKey(
-                                    BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
-                                    BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
-                            ).getId(),
-                            edinetDocument,
-                            0L
-                    );
+            if (totalCurrentLiabilities.get().equals(totalLiabilities.get())) {
+                insertOfFinancialStatement(
+                        company,
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        bsSubjectDao.selectByUniqueKey(
+                                BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
+                                BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
+                        ).getId(),
+                        edinetDocument,
+                        0L
+                );
 
-                    log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
-                                    "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
-                            company.getCode().orElseThrow(),
-                            edinetDocument.getDocId(),
-                            totalCurrentLiabilities.get().get(),
-                            totalLiabilities.get().get()
-                    );
-                }
+                log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
+                                "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
+                        company.getCode().orElseThrow(),
+                        edinetDocument.getDocId(),
+                        totalCurrentLiabilities.get(),
+                        totalLiabilities.get()
+                );
             }
         }
     }

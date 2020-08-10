@@ -13,14 +13,11 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNoSuchBsElementException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNoSuchNsElementException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNoSuchPlElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +27,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static github.com.ioridazo.fundanalyzer.domain.ViewService.mapToPeriod;
 
@@ -66,9 +62,9 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
-    public void analyze(final String documentId){
+    public void analyze(final String documentId) {
         edinetDocumentDao.selectByDocId(documentId).getPeriodEnd()
-                .ifPresent(d -> analyze(Integer.parseInt(d.substring(0,4))));
+                .ifPresent(d -> analyze(Integer.parseInt(d.substring(0, 4))));
     }
 
     public void analyze(final int year) {
@@ -125,7 +121,7 @@ public class AnalysisService {
         // 固定負債合計
         final var totalFixedLiabilities = bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, year);
         // 営業利益
-        final var operatingProfit = operatingProfit(company, year);
+        final var operatingProfit = plValues(company, PlEnum.OPERATING_PROFIT, year);
         // 株式総数
         final var numberOfShares = numberOfSharesValue(company, year);
 
@@ -140,104 +136,83 @@ public class AnalysisService {
     }
 
     private Long bsValues(final Company company, final BsEnum bsEnum, final int year) {
-        final var subjectId = bsSubjectDao.selectByUniqueKey(bsEnum.getOutlineSubjectId(), bsEnum.getDetailSubjectId()).getId();
-        try {
-            return financialStatementDao.selectByUniqueKey(
-                    company.getEdinetCode(),
-                    FinancialStatementEnum.BALANCE_SHEET.toValue(),
-                    subjectId,
-                    String.valueOf(year)
-            ).map(fs -> fs.getValue().orElseThrow(FundanalyzerNoSuchBsElementException::new)
-            ).orElseThrow(FundanalyzerNoSuchBsElementException::new);
-        } catch (FundanalyzerNoSuchBsElementException e) {
-            final var docId = edinetDocumentDao.selectDocIdBy(
-                    codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
-                    "120",
-                    String.valueOf(year)
-            ).getDocId();
-            documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.HALF_WAY.toValue()).build());
-            log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                    "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
-                    company.getCode().orElseThrow(),
-                    bsEnum.getSubject(),
-                    year,
-                    documentDao.selectByDocumentId(docId).getBsDocumentPath()
-            );
-            throw new FundanalyzerCalculateException(e);
-        }
+        return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
+                .map(bsSubject -> financialStatementDao.selectByUniqueKey(
+                        company.getEdinetCode(),
+                        FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                        bsSubject.getId(),
+                        String.valueOf(year)
+                        ).flatMap(FinancialStatement::getValue)
+                )
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findAny()
+                .orElseThrow(() -> {
+                    final var docId = edinetDocumentDao.selectDocIdBy(
+                            codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
+                            "120",
+                            String.valueOf(year)
+                    ).getDocId();
+                    documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.HALF_WAY.toValue()).build());
+                    log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                                    "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
+                            company.getCode().orElseThrow(),
+                            bsEnum.getSubject(),
+                            year,
+                            documentDao.selectByDocumentId(docId).getBsDocumentPath()
+                    );
+                    throw new FundanalyzerCalculateException();
+                });
     }
 
     private Long plValues(final Company company, final PlEnum plEnum, final int year) {
-        final var subjectId = plSubjectDao.selectByUniqueKey(plEnum.getOutlineSubjectId(), plEnum.getDetailSubjectId()).getId();
-        try {
-            return financialStatementDao.selectByUniqueKey(
-                    company.getEdinetCode(),
-                    FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
-                    subjectId,
-                    String.valueOf(year)
-            ).map(fs -> fs.getValue().orElseThrow(FundanalyzerNoSuchPlElementException::new)
-            ).orElseThrow(FundanalyzerNoSuchPlElementException::new);
-        } catch (FundanalyzerNoSuchPlElementException e) {
-            final var docId = edinetDocumentDao.selectDocIdBy(
-                    codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
-                    "120",
-                    String.valueOf(year)
-            ).getEdinetCode().orElseThrow();
-            documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
-            log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                    "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), plEnum.getSubject(), year);
-            throw new FundanalyzerCalculateException(e);
-        }
-    }
-
-    private Long operatingProfit(final Company company, final int year) {
-        final var plSubjectIdList = plSubjectDao.selectByOutlineSubjectId(PlEnum.OPERATING_PROFIT.getOutlineSubjectId()).stream()
-                .map(PlSubject::getId)
-                .collect(Collectors.toList());
-
-        for (String subjectId : plSubjectIdList) {
-            try {
-                return financialStatementDao.selectByUniqueKey(
+        return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
+                .map(plSubject -> financialStatementDao.selectByUniqueKey(
                         company.getEdinetCode(),
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
-                        subjectId,
+                        plSubject.getId(),
                         String.valueOf(year)
-                ).map(fs -> fs.getValue().orElseThrow(FundanalyzerNoSuchPlElementException::new)
-                ).orElseThrow(FundanalyzerNoSuchPlElementException::new);
-            } catch (FundanalyzerNoSuchPlElementException ignored) {
-            }
-        }
-        final var docId = edinetDocumentDao.selectDocIdBy(
-                codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
-                "120",
-                String.valueOf(year)
-        ).getEdinetCode().orElseThrow();
-        documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
-        log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                "\t会社コード:{}\t科目名:{}\t対象年:{}", company.getCode().orElseThrow(), "営業利益", year);
-        throw new FundanalyzerCalculateException();
+                        ).flatMap(FinancialStatement::getValue)
+                )
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findAny()
+                .orElseThrow(() -> {
+                    final var docId = edinetDocumentDao.selectDocIdBy(
+                            codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
+                            "120",
+                            String.valueOf(year)
+                    ).getDocId();
+                    documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
+                    log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                                    "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
+                            company.getCode().orElseThrow(),
+                            plEnum.getSubject(),
+                            year,
+                            documentDao.selectByDocumentId(docId).getPlDocumentPath()
+                    );
+                    throw new FundanalyzerCalculateException();
+                });
     }
 
     private Long numberOfSharesValue(final Company company, final int year) {
-        try {
-            return financialStatementDao.selectByUniqueKey(
-                    company.getEdinetCode(),
-                    FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
-                    "0",
-                    String.valueOf(year)
-            ).map(fs -> fs.getValue().orElseThrow(FundanalyzerNoSuchNsElementException::new)
-            ).orElseThrow(FundanalyzerNoSuchNsElementException::new);
-        } catch (FundanalyzerNoSuchNsElementException e) {
-            final var docId = edinetDocumentDao.selectDocIdBy(
-                    codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
-                    "120",
-                    String.valueOf(year)
-            ).getEdinetCode().orElseThrow();
-            documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue()).build());
-            log.warn("株式総数がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                    "\t会社コード:{}\t対象年:{}", company.getCode().orElseThrow(), year);
-            throw new FundanalyzerCalculateException(e);
-        }
+        return financialStatementDao.selectByUniqueKey(
+                company.getEdinetCode(),
+                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                "0",
+                String.valueOf(year)
+        ).flatMap(FinancialStatement::getValue)
+                .orElseThrow(() -> {
+                    final var docId = edinetDocumentDao.selectDocIdBy(
+                            codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
+                            "120",
+                            String.valueOf(year)
+                    ).getEdinetCode().orElseThrow();
+                    documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue()).build());
+                    log.warn("株式総数がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                            "\t会社コード:{}\t対象年:{}", company.getCode().orElseThrow(), year);
+                    throw new FundanalyzerCalculateException();
+                });
     }
 
     private boolean isAnalyzed(final List<AnalysisResult> resultList, final String companyCode) {
