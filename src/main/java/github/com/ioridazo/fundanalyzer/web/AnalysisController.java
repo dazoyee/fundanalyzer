@@ -57,24 +57,25 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String documentAnalysis(final String fromDate, final String toDate) {
-        final var year = LocalDate.parse(toDate).getYear();
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
-                .forEach(date -> documentService.document(date.toString(), "120"));
-        analysisService.analyze(year);
+                .forEach(date -> {
+                    documentService.document(date.toString(), "120");
+                    analysisService.analyze(date);
+                });
         return "redirect:/fundanalyzer/v1/index";
     }
 
     /**
      * 指定提出日の書類を分析する
      *
-     * @param date  提出日
+     * @param date 提出日
      * @return Index
      */
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
         documentService.scrape(LocalDate.parse(date));
-        analysisService.analyze(LocalDate.parse(date).getYear());
+        analysisService.analyze(LocalDate.parse(date));
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -196,11 +197,13 @@ public class AnalysisController {
         return "index";
     }
 
-    @GetMapping("/analysis/{year}")
-    public String devAnalysis(@PathVariable String year, final Model model) {
-        analysisService.analyze(Integer.parseInt(year));
+    @GetMapping("/scrape/analysis/{date}")
+    public String scrapeAndAnalyze(@PathVariable String date, final Model model) {
+        documentService.company();
+        documentService.document(date, "120");
+        analysisService.analyze(LocalDate.parse(date));
 
-        model.addAttribute("companies", viewService.viewCompany(Integer.parseInt(year)));
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 }
