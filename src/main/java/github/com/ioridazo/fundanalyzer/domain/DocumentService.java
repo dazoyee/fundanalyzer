@@ -13,6 +13,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatemen
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
@@ -164,6 +165,7 @@ public class DocumentService {
         final var documentIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), documentTypeCode)
                 .stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .filter(document -> !document.getRemoved())
                 .map(Document::getDocumentId)
                 .collect(Collectors.toList());
 
@@ -172,24 +174,40 @@ public class DocumentService {
         } else {
             documentIdList.forEach(documentId -> {
                 System.out.println("-------------" + documentId + "-------------");
+                final var document = documentDao.selectByDocumentId(documentId);
 
                 // 書類取得
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getDownloaded())) {
+                if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
                     store(LocalDate.parse(date), documentId);
                 }
 
                 // スクレイピング
                 // 貸借対照表
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getScrapedBs())) {
+                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
                     scrapeBs(documentId, LocalDate.parse(date));
                 }
                 // 損益計算書
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getScrapedPl())) {
+                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
                     scrapePl(documentId, LocalDate.parse(date));
                 }
                 // 株式総数
-                if (DocumentStatus.NOT_YET.toValue().equals(documentDao.selectByDocumentId(documentId).getScrapedNumberOfShares())) {
+                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
                     scrapeNs(documentId, LocalDate.parse(date));
+                }
+
+                // 除外フラグON
+                if (List.of(
+                        document.getScrapedBs(),
+                        document.getScrapedPl(),
+                        document.getScrapedNumberOfShares()
+                ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
+                    documentDao.update(Document.builder()
+                            .documentId(documentId)
+                            .removed(Flag.ON.toValue())
+                            .updatedAt(LocalDateTime.now())
+                            .build()
+                    );
+                    log.info("処理ステータスがすべて \"9（ERROR）\" となったため、除外フラグをONにしました。\t書類ID:{}", documentId);
                 }
             });
 
@@ -296,6 +314,7 @@ public class DocumentService {
         log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
         final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .filter(document -> !document.getRemoved())
                 .collect(Collectors.toList());
 
         documentList.forEach(d -> {
@@ -318,6 +337,7 @@ public class DocumentService {
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
+                .filter(document -> !document.getRemoved())
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
                     documentDao.update(Document.builder()
@@ -333,6 +353,7 @@ public class DocumentService {
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
+                .filter(document -> !document.getRemoved())
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
                     documentDao.update(Document.builder()
