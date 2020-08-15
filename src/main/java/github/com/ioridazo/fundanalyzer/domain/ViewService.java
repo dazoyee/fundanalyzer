@@ -6,13 +6,10 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,19 +26,16 @@ public class ViewService {
 
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
-    private final EdinetDocumentDao edinetDocumentDao;
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
 
     public ViewService(
             IndustryDao industryDao,
             CompanyDao companyDao,
-            EdinetDocumentDao edinetDocumentDao,
             DocumentDao documentDao,
             AnalysisResultDao analysisResultDao) {
         this.industryDao = industryDao;
         this.companyDao = companyDao;
-        this.edinetDocumentDao = edinetDocumentDao;
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
     }
@@ -100,9 +94,8 @@ public class ViewService {
         var presentCompanies = new ArrayList<Company>();
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
-        edinetDocumentDao.selectByDocTypeCodeAndPeriodEnd("120", String.valueOf(year)).stream()
-                .map(EdinetDocument::getEdinetCode)
-                .map(Optional::get)
+        documentDao.selectByTypeAndPeriod("120", String.valueOf(year)).stream()
+                .map(Document::getEdinetCode)
                 .forEach(edinetCode -> companyAll.stream()
                         .filter(company -> edinetCode.equals(company.getEdinetCode()))
                         .filter(company -> company.getCode().isPresent())
@@ -110,7 +103,8 @@ public class ViewService {
                         .filter(company -> !bank.getId().equals(company.getIndustryId()))
                         .filter(company -> !insurance.getId().equals(company.getIndustryId()))
                         .findAny()
-                        .ifPresent(presentCompanies::add));
+                        .ifPresent(presentCompanies::add)
+                );
 
         presentCompanies.forEach(company -> documentList.stream()
                 .filter(document -> company.getEdinetCode().equals(document.getEdinetCode()))
@@ -175,19 +169,17 @@ public class ViewService {
                 // filter submitDate
                 .filter(document -> submitDate.equals(document.getSubmitDate()))
                 // filter removed
-                .filter(document -> !document.getRemoved())
-                // list edinetCode
-                .map(Document::getEdinetCode)
+                .filter(Document::getNotRemoved)
                 // filter companyCode is present
-                .filter(ec -> codeConverter(ec, companyAll).isPresent())
+                .filter(d -> codeConverter(d.getEdinetCode(), companyAll).isPresent())
                 // filter no bank
-                .filter(ec -> companyAll.stream()
-                        .filter(company -> ec.equals(company.getEdinetCode()))
+                .filter(d -> companyAll.stream()
+                        .filter(company -> d.getEdinetCode().equals(company.getEdinetCode()))
                         .noneMatch(company -> bank.getId().equals(company.getIndustryId()))
                 )
                 // filter no insurance
-                .filter(ec -> companyAll.stream()
-                        .filter(company -> ec.equals(company.getEdinetCode()))
+                .filter(d -> companyAll.stream()
+                        .filter(company -> d.getEdinetCode().equals(company.getEdinetCode()))
                         .noneMatch(company -> insurance.getId().equals(company.getIndustryId()))
                 )
                 .collect(Collectors.toList());
@@ -195,79 +187,81 @@ public class ViewService {
         // 処理済件数
         final var scrapedList = targetList.stream()
                 // filter scrapedBs is done
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
                 )
                 // filter scrapedPl is done
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
                 )
                 // filter scrapedNumberOfShares is done
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares()))
                 ).collect(Collectors.toList());
 
         // 分析済件数
         final var countAnalyzed = scrapedList.stream()
                 // filter analysis is done
-                .filter(ec -> analysisResultDao.selectByUniqueKey(
+                .filter(d -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        codeConverter(ec, companyAll).orElseThrow(),
+                        codeConverter(d.getEdinetCode(), companyAll).orElseThrow(),
                         // period
-                        LocalDate.of(submitDate.getYear(), 1, 1)
+                        d.getPeriod()
                         ).isPresent()
                 ).count();
 
         // 未分析企業コード
         final var notAnalyzedCode = scrapedList.stream()
                 // filter analysis is done
-                .filter(ec -> analysisResultDao.selectByUniqueKey(
+                .filter(d -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        codeConverter(ec, companyAll).orElseThrow(),
+                        codeConverter(d.getEdinetCode(), companyAll).orElseThrow(),
                         // period
-                        LocalDate.of(submitDate.getYear(), 1, 1)
+                        d.getPeriod()
                         ).isEmpty()
                 )
+                .map(Document::getEdinetCode)
                 .map(ec -> codeConverter(ec, companyAll).orElseThrow())
                 .collect(Collectors.joining("\n"));
 
         // 処理中企業コード
         final var cantScrapedCode = targetList.stream()
                 // filter no all done
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs()) &&
                                 DocumentStatus.DONE.toValue().equals(document.getScrapedPl()) &&
                                 DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
                 )
                 // filter no all notYet
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()) &&
                                 DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()) &&
                                 DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
                 )
+                .map(Document::getEdinetCode)
                 .map(ec -> codeConverter(ec, companyAll).orElseThrow())
                 .collect(Collectors.joining("\n"));
 
         // 未処理件数
         final var countNotScraped = targetList.stream()
                 // filter scrapedBs is notYet
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
                 )
                 // filter scrapedPl is notYet
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
                 )
                 // filter scrapedNumberOfShares is notYet
-                .filter(ec -> documentList.stream()
-                        .filter(document -> ec.equals(document.getEdinetCode()))
+                .filter(d -> documentList.stream()
+                        .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
                         .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares()))
                 ).count();
 

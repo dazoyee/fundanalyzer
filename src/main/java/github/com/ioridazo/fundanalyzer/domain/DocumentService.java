@@ -162,10 +162,10 @@ public class DocumentService {
         insertDocumentList(LocalDate.parse(date));
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentIdList = documentDao.selectByDateAndDocumentTypeCode(LocalDate.parse(date), documentTypeCode)
+        final var documentIdList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date))
                 .stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
-                .filter(document -> !document.getRemoved())
+                .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .collect(Collectors.toList());
 
@@ -260,6 +260,7 @@ public class DocumentService {
                                             .documentId(r.getDocId())
                                             .documentTypeCode(r.getDocTypeCode())
                                             .edinetCode(r.getEdinetCode())
+                                            .period(r.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(r.getPeriodEnd().substring(0, 4)), 1, 1) : null)
                                             .submitDate(date)
                                             .createdAt(LocalDateTime.now())
                                             .updatedAt(LocalDateTime.now())
@@ -310,11 +311,11 @@ public class DocumentService {
         }
     }
 
-    public void scrape(final LocalDate date) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", date);
-        final var documentList = documentDao.selectByDateAndDocumentTypeCode(date, "120").stream()
+    public void scrape(final LocalDate submitDate) {
+        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", submitDate);
+        final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
-                .filter(document -> !document.getRemoved())
+                .filter(Document::getNotRemoved)
                 .collect(Collectors.toList());
 
         documentList.forEach(d -> {
@@ -337,7 +338,7 @@ public class DocumentService {
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
-                .filter(document -> !document.getRemoved())
+                .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
                     documentDao.update(Document.builder()
@@ -353,7 +354,7 @@ public class DocumentService {
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
-                .filter(document -> !document.getRemoved())
+                .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
                     documentDao.update(Document.builder()
