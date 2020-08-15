@@ -12,7 +12,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
@@ -25,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -137,6 +140,7 @@ public class AnalysisService {
 
     private Long bsValues(final Company company, final BsEnum bsEnum, final int year) {
         return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
+                .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
                         company.getEdinetCode(),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
@@ -167,6 +171,7 @@ public class AnalysisService {
 
     private Long plValues(final Company company, final PlEnum plEnum, final int year) {
         return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
+                .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
                 .map(plSubject -> financialStatementDao.selectByUniqueKey(
                         company.getEdinetCode(),
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
@@ -207,10 +212,20 @@ public class AnalysisService {
                             codeConverter(company.getCode().orElseThrow(), companyDao.selectAll()),
                             "120",
                             String.valueOf(year)
-                    ).getEdinetCode().orElseThrow();
-                    documentDao.update(Document.builder().documentId(docId).scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue()).build());
-                    log.warn("株式総数がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                            "\t会社コード:{}\t対象年:{}", company.getCode().orElseThrow(), year);
+                    ).getDocId();
+                    documentDao.update(Document.builder()
+                            .documentId(docId)
+                            .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
+                            .updatedAt(LocalDateTime.now())
+                            .build()
+                    );
+                    log.warn("  株式総数の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                                    "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
+                            company.getCode().orElseThrow(),
+                            "株式総数",
+                            year,
+                            documentDao.selectByDocumentId(docId).getNumberOfSharesDocumentPath()
+                    );
                     throw new FundanalyzerCalculateException();
                 });
     }
