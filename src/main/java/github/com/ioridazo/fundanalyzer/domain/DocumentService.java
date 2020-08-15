@@ -725,7 +725,7 @@ public class DocumentService {
                             .replace("※16", "").replace("※17", "")
                             .replace("*1", "").replace("*2", "")
                             .replace("株", "")
-                            .replace("－", "0")
+                            .replace("－", "0").replace("―", "0")
                             .replace(" ", "").replace(" ", "")
                             .replace(",", "")
                             .replace("△", "-")
