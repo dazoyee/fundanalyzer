@@ -283,6 +283,7 @@ public class DocumentService {
                     .documentId(docId)
                     .downloaded(DocumentStatus.DONE.toValue())
                     .decoded(DocumentStatus.DONE.toValue())
+                    .updatedAt(LocalDateTime.now())
                     .build()
             );
         } else {
@@ -322,6 +323,7 @@ public class DocumentService {
                     documentDao.update(Document.builder()
                             .documentId(documentId)
                             .scrapedBs(DocumentStatus.NOT_YET.toValue())
+                            .updatedAt(LocalDateTime.now())
                             .build()
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
@@ -336,6 +338,7 @@ public class DocumentService {
                     documentDao.update(Document.builder()
                             .documentId(documentId)
                             .scrapedPl(DocumentStatus.NOT_YET.toValue())
+                            .updatedAt(LocalDateTime.now())
                             .build()
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
@@ -351,7 +354,12 @@ public class DocumentService {
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
 
-            documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(docId)
+                    .downloaded(DocumentStatus.DONE.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build()
+            );
 
             fileOperator.decodeZipFile(
                     new File(pathEdinet + "/" + targetDate.toString() + "/" + docId),
@@ -360,20 +368,34 @@ public class DocumentService {
 
             log.info("書類のダウンロードおよびzipファイルの解凍処理が正常に実行されました。");
 
-            documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.DONE.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(docId)
+                    .decoded(DocumentStatus.DONE.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build());
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
                             "\t処理対象日:{}\t書類管理番号:{}",
                     targetDate, docId
             );
-            documentDao.update(Document.builder().documentId(docId).downloaded(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(docId)
+                    .downloaded(DocumentStatus.ERROR.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build()
+            );
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
                             "\t処理対象日:{}\t書類管理番号:{}",
                     targetDate, docId
             );
-            documentDao.update(Document.builder().documentId(docId).decoded(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(docId)
+                    .decoded(DocumentStatus.ERROR.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build()
+            );
         }
     }
 
@@ -401,11 +423,17 @@ public class DocumentService {
                     .documentId(documentId)
                     .scrapedBs(DocumentStatus.DONE.toValue())
                     .bsDocumentPath(targetFile.getFirst().getPath())
+                    .updatedAt(LocalDateTime.now())
                     .build()
             );
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().documentId(documentId).scrapedBs(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(documentId)
+                    .scrapedBs(DocumentStatus.ERROR.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build()
+            );
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
                             "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
                     company.getCode().orElseThrow(),
@@ -439,11 +467,17 @@ public class DocumentService {
                     .documentId(documentId)
                     .scrapedPl(DocumentStatus.DONE.toValue())
                     .plDocumentPath(targetFile.getFirst().getPath())
+                    .updatedAt(LocalDateTime.now())
                     .build()
             );
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().documentId(documentId).scrapedPl(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(documentId)
+                    .scrapedPl(DocumentStatus.ERROR.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build()
+            );
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
                             "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
                     company.getCode().orElseThrow(),
@@ -484,11 +518,17 @@ public class DocumentService {
                     .documentId(documentId)
                     .scrapedNumberOfShares(DocumentStatus.DONE.toValue())
                     .numberOfSharesDocumentPath(targetFile.getFirst().getPath())
+                    .updatedAt(LocalDateTime.now())
                     .build()
             );
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.builder().documentId(documentId).scrapedNumberOfShares(DocumentStatus.ERROR.toValue()).build());
+            documentDao.update(Document.builder()
+                    .documentId(documentId)
+                    .scrapedNumberOfShares(DocumentStatus.ERROR.toValue())
+                    .updatedAt(LocalDateTime.now())
+                    .build()
+            );
             log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
                             "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
                     company.getCode().orElseThrow(),

@@ -157,7 +157,12 @@ public class AnalysisService {
                             "120",
                             String.valueOf(year)
                     ).getDocId();
-                    documentDao.update(Document.builder().documentId(docId).scrapedBs(DocumentStatus.HALF_WAY.toValue()).build());
+                    documentDao.update(Document.builder()
+                            .documentId(docId)
+                            .scrapedBs(DocumentStatus.HALF_WAY.toValue())
+                            .updatedAt(LocalDateTime.now())
+                            .build()
+                    );
                     log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
                             company.getCode().orElseThrow(),
@@ -188,7 +193,12 @@ public class AnalysisService {
                             "120",
                             String.valueOf(year)
                     ).getDocId();
-                    documentDao.update(Document.builder().documentId(docId).scrapedPl(DocumentStatus.HALF_WAY.toValue()).build());
+                    documentDao.update(Document.builder()
+                            .documentId(docId)
+                            .scrapedPl(DocumentStatus.HALF_WAY.toValue())
+                            .updatedAt(LocalDateTime.now())
+                            .build()
+                    );
                     log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
                             company.getCode().orElseThrow(),
