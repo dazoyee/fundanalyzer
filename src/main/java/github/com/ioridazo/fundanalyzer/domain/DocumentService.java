@@ -36,7 +36,6 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
-import github.com.ioridazo.fundanalyzer.mapper.EdinetMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
@@ -242,7 +241,7 @@ public class DocumentService {
                             .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
                             .forEach(r -> {
                                 try {
-                                    edinetDocumentDao.insert(EdinetMapper.map(r));
+                                    edinetDocumentDao.insert(EdinetDocument.of(r));
                                 } catch (NestedRuntimeException e) {
                                     if (e.contains(UniqueConstraintException.class)) {
                                         log.info("一意制約違反のため、データベースへの登録をスキップします。" +

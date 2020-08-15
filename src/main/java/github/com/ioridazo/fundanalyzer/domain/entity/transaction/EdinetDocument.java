@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
+import github.com.ioridazo.fundanalyzer.edinet.entity.response.Results;
 import lombok.AllArgsConstructor;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -100,6 +101,39 @@ public class EdinetDocument {
     // 登録日
     @Column(updatable = false)
     private final LocalDateTime createdAt;
+
+    public static EdinetDocument of(final Results results) {
+        return new EdinetDocument(
+                null,
+                results.getDocId(),
+                results.getEdinetCode(),
+                results.getSecCode(),
+                results.getJcn(),
+                results.getFilerName(),
+                results.getFundCode(),
+                results.getOrdinanceCode(),
+                results.getFormCode(),
+                results.getDocTypeCode(),
+                results.getPeriodStart(),
+                results.getPeriodEnd(),
+                results.getSubmitDateTime(),
+                results.getDocDescription(),
+                results.getIssuerEdinetCode(),
+                results.getSubjectEdinetCode(),
+                results.getSubsidiaryEdinetCode(),
+                results.getCurrentReportReason(),
+                results.getParentDocID(),
+                results.getOpeDateTime(),
+                results.getWithdrawalStatus(),
+                results.getDocInfoEditStatus(),
+                results.getDisclosureStatus(),
+                results.getXbrlFlag(),
+                results.getPdfFlag(),
+                results.getAttachDocFlag(),
+                results.getEnglishDocFlag(),
+                LocalDateTime.now()
+        );
+    }
 
     public String getDocId() {
         return docId;
