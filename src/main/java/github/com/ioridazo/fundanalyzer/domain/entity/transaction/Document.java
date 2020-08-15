@@ -30,6 +30,9 @@ public class Document {
     private final String edinetCode;
 
     @Column(updatable = false)
+    private final LocalDate period;
+
+    @Column(updatable = false)
     private final LocalDate submitDate;
 
     private final String downloaded;
@@ -59,7 +62,7 @@ public class Document {
 
     private final LocalDateTime updatedAt;
 
-    public boolean getRemoved() {
-        return "1".equals(removed);
+    public boolean getNotRemoved() {
+        return "0".equals(removed);
     }
 }

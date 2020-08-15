@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS document(
   document_id CHAR(8) NOT NULL COMMENT '書類ID',
   document_type_code CHAR(3) COMMENT '書類種別コード',
   edinet_code CHAR(6) COMMENT 'EDINETコード' REFERENCES company(edinet_code),
+  period DATE COMMENT '対象期間',
   submit_date DATE NOT NULL COMMENT '提出日',
   downloaded CHAR(1) NOT NULL DEFAULT '0' COMMENT 'ダウンロードステータス' CHECK(downloaded IN('0', '1', '9')),
   decoded CHAR(1) NOT NULL DEFAULT '0'  COMMENT 'ファイル解凍ステータス' CHECK(decoded IN('0', '1', '9')),

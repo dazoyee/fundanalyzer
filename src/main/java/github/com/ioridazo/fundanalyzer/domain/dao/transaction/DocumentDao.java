@@ -18,11 +18,18 @@ public interface DocumentDao {
     @Select
     Document selectByDocumentId(final String documentId);
 
+    // 検索結果が1件以上存在することを保証する
+    @Select(ensureResult = true)
+    Document selectDocumentIdBy(final String edinetCode, final String documentTypeCode, final String yearOfPeriod);
+
     @Select
     List<Document> selectByDocumentTypeCode(final String documentTypeCode);
 
     @Select
-    List<Document> selectByDateAndDocumentTypeCode(final LocalDate submitDate, final String documentTypeCode);
+    List<Document> selectByTypeAndSubmitDate(final String documentTypeCode, final LocalDate submitDate);
+
+    @Select
+    List<Document> selectByTypeAndPeriod(final String documentTypeCode, final String yearOfPeriod);
 
     @Insert(excludeNull = true)
     Result<Document> insert(final Document document);
