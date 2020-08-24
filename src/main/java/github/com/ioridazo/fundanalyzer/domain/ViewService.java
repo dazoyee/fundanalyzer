@@ -71,7 +71,7 @@ public class ViewService {
                 null
         )));
 
-        return sortedCompany(viewBeanList);
+        return sortedCompanyAll(viewBeanList);
     }
 
     public List<CompanyViewBean> viewCompany() {
@@ -293,6 +293,12 @@ public class ViewService {
                         .comparing(CompanyViewBean::getSubmitDate).reversed()
                         .thenComparing(CompanyViewBean::getCode)
                 )
+                .collect(Collectors.toList());
+    }
+
+    private List<CompanyViewBean> sortedCompanyAll(final List<CompanyViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(CompanyViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
