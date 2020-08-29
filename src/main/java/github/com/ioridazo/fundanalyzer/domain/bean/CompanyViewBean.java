@@ -21,6 +21,12 @@ public class CompanyViewBean {
     // 企業価値
     private final BigDecimal corporateValue;
 
+    // 株価
+    private final Double stockPrice;
+
+    // 割安度
+    private final BigDecimal discountRate;
+
     // 対象年
     private final Integer period;
 }

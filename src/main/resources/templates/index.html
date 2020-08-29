@@ -28,7 +28,9 @@
         <th>date</th>
         <th>code</th>
         <th>name</th>
-        <th>value</th>
+        <th>corporateValue</th>
+        <th>stockPrice</th>
+        <th>discountRate</th>
         <th>year</th>
     </tr>
     </thead>
@@ -38,6 +40,8 @@
         <td th:text="${company.code}">証券コード</td>
         <td th:text="${company.name}">会社名</td>
         <td th:text="${company.corporateValue}">300</td>
+        <td th:text="${company.stockPrice}">200</td>
+        <td th:text="${company.discountRate}">100</td>
         <td th:text="${company.period}">2020</td>
     </tr>
     </tbody>

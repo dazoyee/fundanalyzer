@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web;
 
 import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.StockService;
 import github.com.ioridazo.fundanalyzer.domain.ViewService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,16 +15,19 @@ import java.time.LocalDate;
 @Controller
 public class AnalysisController {
 
-    final private DocumentService documentService;
-    final private AnalysisService analysisService;
-    final private ViewService viewService;
+    private final DocumentService documentService;
+    private final AnalysisService analysisService;
+    private final StockService stockService;
+    private final ViewService viewService;
 
     public AnalysisController(
-            DocumentService documentService,
-            AnalysisService analysisService,
-            ViewService viewService) {
+            final DocumentService documentService,
+            final AnalysisService analysisService,
+            final StockService stockService,
+            final ViewService viewService) {
         this.documentService = documentService;
         this.analysisService = analysisService;
+        this.stockService = stockService;
         this.viewService = viewService;
     }
 
@@ -202,6 +206,7 @@ public class AnalysisController {
         documentService.company();
         documentService.document(date, "120");
         analysisService.analyze(LocalDate.parse(date));
+        stockService.importStockPrice(date);
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";
