@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.NumberOfSharesResultBean;
 import github.com.ioridazo.fundanalyzer.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
@@ -11,6 +12,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,9 +45,9 @@ public class HtmlScraping {
                     }
                 }
             });
-        } catch (Exception e) {
-            log.error("想定外のエラーが発生しました。", e);
-            throw new FundanalyzerFileException(e);
+        } catch (Throwable t) {
+            log.error("想定外のエラーが発生しました。", t);
+            throw new FundanalyzerFileException(t);
         }
 
         if (filePathList.size() > 1) {
@@ -97,9 +99,9 @@ public class HtmlScraping {
             }
 
             return resultBeanList;
-        } catch (Exception e) {
-            log.error("想定外のエラーが発生しました。", e);
-            throw new FundanalyzerFileException(e);
+        } catch (Throwable t) {
+            log.error("想定外のエラーが発生しました。", t);
+            throw new FundanalyzerFileException(t);
         }
     }
 
@@ -127,10 +129,53 @@ public class HtmlScraping {
                     .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
                     .collect(Collectors.toList())
                     .get(resultBeanList.size() - 1);
-        } catch (Exception e) {
-            log.error("想定外のエラーが発生しました。", e);
-            throw new FundanalyzerFileException(e);
+        } catch (Throwable t) {
+            log.error("想定外のエラーが発生しました。", t);
+            throw new FundanalyzerFileException(t);
         }
+    }
+
+    public NikkeiResultBean nikkei(final String code) {
+        final var url = UriComponentsBuilder
+                .newInstance()
+                .scheme("https").host("www.nikkei.com")
+                .path("/nkd/company/")
+                .queryParam("scode", code.substring(0, 4))
+                .toUriString();
+        try {
+            return new NikkeiResultBean(
+                    selectStock(url, ".m-stockPriceElm dd").first().text(),
+                    selectStock(url, ".m-stockInfo_date").first().text(),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("始値")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("高値")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("安値")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_right li").stream()
+                            .filter(e -> e.text().contains("売買高")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_right li").stream()
+                            .filter(e -> e.text().contains("PER")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("PBR")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("ROE")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("普通株式数")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("時価総額")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("株式益回り")).map(Element::text).findAny().orElse(null),
+                    selectStock(url, ".m-stockInfo_detail_left li").stream()
+                            .filter(e -> e.text().contains("株主優待")).map(Element::text).findAny().orElse(null)
+            );
+        } catch (Throwable t) {
+            log.warn("株価の過程でエラーが発生しました。次のURLを確認してください。" +
+                    "\t企業コード:{}\tURL:{}\tmessage:{}", code, url, t.getMessage()
+            );
+            throw new FundanalyzerRuntimeException();
+        }
+
     }
 
     List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {
@@ -155,6 +200,16 @@ public class HtmlScraping {
         } catch (IOException e) {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+        }
+    }
+
+    private Elements selectStock(final String url, final String cssQuery) {
+        try {
+            return Jsoup.connect(url).get()
+                    .select(cssQuery);
+        } catch (IOException e) {
+            log.error("株価の取得に失敗しました。\tURL:{}", url);
+            throw new FundanalyzerRuntimeException();
         }
     }
 
