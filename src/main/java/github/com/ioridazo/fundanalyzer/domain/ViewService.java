@@ -6,12 +6,15 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,16 +31,19 @@ public class ViewService {
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
+    private final StockPriceDao stockPriceDao;
 
     public ViewService(
-            IndustryDao industryDao,
-            CompanyDao companyDao,
-            DocumentDao documentDao,
-            AnalysisResultDao analysisResultDao) {
+            final IndustryDao industryDao,
+            final CompanyDao companyDao,
+            final DocumentDao documentDao,
+            final AnalysisResultDao analysisResultDao,
+            final StockPriceDao stockPriceDao) {
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
+        this.stockPriceDao = stockPriceDao;
     }
 
     public static LocalDate mapToPeriod(final int year) {
@@ -59,19 +65,29 @@ public class ViewService {
         final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(LocalDate.now().getYear()));
         var viewBeanList = new ArrayList<CompanyViewBean>();
 
-        companyList.forEach(company -> viewBeanList.add(new CompanyViewBean(
-                null,
-                company.getCode().orElseThrow(),
-                company.getCompanyName(),
-                resultList.stream()
-                        .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
-                        .map(AnalysisResult::getCorporateValue)
-                        .findAny()
-                        .orElse(null),
-                null
-        )));
+        companyList.forEach(company -> {
+            final var corporateValue = resultList.stream()
+                    .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
+                    .map(AnalysisResult::getCorporateValue)
+                    .findAny()
+                    .orElse(null);
+            final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+            final var stockPrice = stockPriceList.stream()
+                    .max(Comparator.comparing(StockPrice::getTargetDate));
+            viewBeanList.add(new CompanyViewBean(
+                    company.getCode().orElseThrow(),
+                    company.getCompanyName(),
+                    null,
+                    corporateValue,
+                    null,
+                    stockPrice.map(StockPrice::getTargetDate).orElse(null),
+                    stockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
+                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
+                    null
+            ));
+        });
 
-        return sortedCompany(viewBeanList);
+        return sortedCompanyAll(viewBeanList);
     }
 
     public List<CompanyViewBean> viewCompany() {
@@ -112,17 +128,33 @@ public class ViewService {
                 .filter(submitDate -> year == submitDate.getYear())
                 .findAny()
                 // 指定対象年に合致する提出日が存在する場合
-                .ifPresent(submitDate -> viewBeanList.add(new CompanyViewBean(
-                        submitDate,
-                        company.getCode().orElseThrow(),
-                        company.getCompanyName(),
-                        resultList.stream()
-                                .filter(ar -> company.getCode().get().equals(ar.getCompanyCode()))
-                                .map(AnalysisResult::getCorporateValue)
-                                .findAny()
-                                .orElse(null),
-                        year
-                )))
+                .ifPresent(submitDate -> {
+                    final var corporateValue = resultList.stream()
+                            .filter(ar -> company.getCode().orElseThrow().equals(ar.getCompanyCode()))
+                            .map(AnalysisResult::getCorporateValue)
+                            .findAny()
+                            .orElse(null);
+                    final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+                    final var latestStockPrice = stockPriceList.stream()
+                            .max(Comparator.comparing(StockPrice::getTargetDate))
+                            .orElseThrow();
+                    viewBeanList.add(new CompanyViewBean(
+                            company.getCode().map(c -> c.substring(0, 4)).orElseThrow(),
+                            company.getCompanyName(),
+                            submitDate,
+                            corporateValue,
+                            stockPriceList.stream()
+                                    .filter(stockPrice -> submitDate.equals(stockPrice.getTargetDate()))
+                                    .map(StockPrice::getStockPrice)
+                                    .map(Optional::get)
+                                    .findAny()
+                                    .orElse(null),
+                            latestStockPrice.getTargetDate(),
+                            latestStockPrice.getStockPrice().orElse(null),
+                            corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.getStockPrice().orElse(0.0))) : null,
+                            year
+                    ));
+                })
         );
 
         return sortedCompany(viewBeanList);
@@ -293,6 +325,12 @@ public class ViewService {
                         .comparing(CompanyViewBean::getSubmitDate).reversed()
                         .thenComparing(CompanyViewBean::getCode)
                 )
+                .collect(Collectors.toList());
+    }
+
+    private List<CompanyViewBean> sortedCompanyAll(final List<CompanyViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(CompanyViewBean::getCode))
                 .collect(Collectors.toList());
     }
 

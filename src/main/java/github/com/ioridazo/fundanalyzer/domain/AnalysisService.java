@@ -20,6 +20,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialState
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -57,6 +58,7 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
+    @Transactional
     public void analyze(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
         final var companyCode = convertToCompanyCode(document.getEdinetCode(), companyDao.selectAll());
@@ -74,6 +76,7 @@ public class AnalysisService {
         }
     }
 
+    @Transactional
     public void analyze(final LocalDate submitDate) {
         final var bank = industryDao.selectByName("銀行業");
         final var insurance = industryDao.selectByName("保険業");
