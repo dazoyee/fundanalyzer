@@ -72,7 +72,7 @@ public class ViewService {
                     .findAny()
                     .orElse(null);
             final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
-            final var stockPrice = stockPriceList.stream()
+            final var latestStockPrice = stockPriceList.stream()
                     .max(Comparator.comparing(StockPrice::getTargetDate));
             viewBeanList.add(new CompanyViewBean(
                     company.getCode().orElseThrow(),
@@ -80,9 +80,9 @@ public class ViewService {
                     null,
                     corporateValue,
                     null,
-                    stockPrice.map(StockPrice::getTargetDate).orElse(null),
-                    stockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
-                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
+                    latestStockPrice.map(StockPrice::getTargetDate).orElse(null),
+                    latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
+                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
                     null
             ));
         });
@@ -136,8 +136,7 @@ public class ViewService {
                             .orElse(null);
                     final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
                     final var latestStockPrice = stockPriceList.stream()
-                            .max(Comparator.comparing(StockPrice::getTargetDate))
-                            .orElseThrow();
+                            .max(Comparator.comparing(StockPrice::getTargetDate));
                     viewBeanList.add(new CompanyViewBean(
                             company.getCode().map(c -> c.substring(0, 4)).orElseThrow(),
                             company.getCompanyName(),
@@ -149,9 +148,9 @@ public class ViewService {
                                     .map(Optional::get)
                                     .findAny()
                                     .orElse(null),
-                            latestStockPrice.getTargetDate(),
-                            latestStockPrice.getStockPrice().orElse(null),
-                            corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.getStockPrice().orElse(0.0))) : null,
+                            latestStockPrice.map(StockPrice::getTargetDate).orElse(null),
+                            latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
+                            corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
                             year
                     ));
                 })
