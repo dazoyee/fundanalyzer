@@ -169,7 +169,7 @@ public class DocumentService {
                 .collect(Collectors.toList());
 
         if (documentIdList.isEmpty()) {
-            log.warn("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
+            log.info("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
             documentIdList.forEach(documentId -> {
                 System.out.println("-------------" + documentId + "-------------");

@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web;
 
 import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.StockService;
 import github.com.ioridazo.fundanalyzer.domain.ViewService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,16 +15,19 @@ import java.time.LocalDate;
 @Controller
 public class AnalysisController {
 
-    final private DocumentService documentService;
-    final private AnalysisService analysisService;
-    final private ViewService viewService;
+    private final DocumentService documentService;
+    private final AnalysisService analysisService;
+    private final StockService stockService;
+    private final ViewService viewService;
 
     public AnalysisController(
-            DocumentService documentService,
-            AnalysisService analysisService,
-            ViewService viewService) {
+            final DocumentService documentService,
+            final AnalysisService analysisService,
+            final StockService stockService,
+            final ViewService viewService) {
         this.documentService = documentService;
         this.analysisService = analysisService;
+        this.stockService = stockService;
         this.viewService = viewService;
     }
 
@@ -62,6 +66,7 @@ public class AnalysisController {
                 .forEach(date -> {
                     documentService.document(date.toString(), "120");
                     analysisService.analyze(date);
+                    stockService.importStockPrice(date);
                 });
         return "redirect:/fundanalyzer/v1/index";
     }
@@ -89,6 +94,21 @@ public class AnalysisController {
     public String scrapeById(final String documentId) {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
+        return "redirect:/fundanalyzer/v1/index";
+    }
+
+    /**
+     * 指定日に提出した企業の株価を取得する
+     *
+     * @param fromDate 提出日
+     * @param toDate   提出日
+     * @return Index
+     */
+    @PostMapping("fundanalyzer/v1/import/stock/date")
+    public String importStocks(final String fromDate, final String toDate) {
+        LocalDate.parse(fromDate)
+                .datesUntil(LocalDate.parse(toDate).plusDays(1))
+                .forEach(stockService::importStockPrice);
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -202,6 +222,7 @@ public class AnalysisController {
         documentService.company();
         documentService.document(date, "120");
         analysisService.analyze(LocalDate.parse(date));
+        stockService.importStockPrice(LocalDate.parse(date));
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";

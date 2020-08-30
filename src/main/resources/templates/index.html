@@ -21,24 +21,37 @@
     <input type="text" name="documentId" placeholder="書類ID"/>
     <button type="submit" class="btn">分析する</button>
 </form>
+<form method="post" th:action="@{/fundanalyzer/v1/import/stock/date}">
+    <input type="date" name="fromDate"/> ～
+    <input type="date" name="toDate"/>
+    <button type="submit" class="btn">取得する（株価）</button>
+</form>
 
 <table class="table table-bordered">
     <thead>
     <tr>
-        <th>date</th>
-        <th>code</th>
-        <th>name</th>
-        <th>value</th>
-        <th>year</th>
+        <th>コード</th>
+        <th>会社名</th>
+        <th>提出日</th>
+        <th>企業価値</th>
+        <th>提出日株価</th>
+        <th>株価取得日</th>
+        <th>最新株価</th>
+        <th>割安度</th>
+        <th>対象年</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="company : ${companies}">
-        <td th:text="${company.submitDate}">提出日</td>
         <td th:text="${company.code}">証券コード</td>
         <td th:text="${company.name}">会社名</td>
-        <td th:text="${company.corporateValue}">300</td>
-        <td th:text="${company.period}">2020</td>
+        <td th:text="${company.submitDate}">提出日</td>
+        <td th:text="${company.corporateValue}">企業価値</td>
+        <td th:text="${company.stockPriceOfSubmitDate}">提出日株価</td>
+        <td th:text="${company.importDate}">株価取得日</td>
+        <td th:text="${company.latestStockPrice}">最新株価</td>
+        <td th:text="${company.discountRate}">割安度</td>
+        <td th:text="${company.period}">対象年</td>
     </tr>
     </tbody>
 </table>

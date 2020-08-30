@@ -147,4 +147,25 @@ CREATE TABLE IF NOT EXISTS analysis_result(
   UNIQUE KEY(company_code, period)
 );
 
---
+-- 株価
+CREATE TABLE IF NOT EXISTS stock_price(
+  id INT AUTO_INCREMENT,
+  company_code CHAR(5) NOT NULL COMMENT '企業コード' REFERENCES company(code),
+  target_date DATE NOT NULL COMMENT '対象日付',
+  stock_price FLOAT COMMENT '終値',
+  opening_price FLOAT COMMENT '始値',
+  high_price FLOAT COMMENT '高値',
+  low_price FLOAT COMMENT '安値',
+  volume INT COMMENT '出来高',
+  per VARCHAR(10) COMMENT '予想PER',
+  pbr VARCHAR(10) COMMENT '実績PBR',
+  roe VARCHAR(10) COMMENT '予想ROE',
+  number_of_shares VARCHAR(50) COMMENT '普通株式数',
+  market_capitalization VARCHAR(50) COMMENT '時価総額',
+  dividend_yield VARCHAR(10) COMMENT '予想配当利回り',
+  shareholder_benefit VARCHAR(100) COMMENT '株式優待',
+  source_of CHAR(1) COMMENT '取得元',
+  created_at DATETIME NOT NULL COMMENT '登録日',
+  PRIMARY KEY(id),
+  UNIQUE KEY(company_code, target_date, stock_price)
+);
