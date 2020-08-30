@@ -66,6 +66,7 @@ public class AnalysisController {
                 .forEach(date -> {
                     documentService.document(date.toString(), "120");
                     analysisService.analyze(date);
+                    stockService.importStockPrice(date);
                 });
         return "redirect:/fundanalyzer/v1/index";
     }
@@ -93,6 +94,21 @@ public class AnalysisController {
     public String scrapeById(final String documentId) {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
+        return "redirect:/fundanalyzer/v1/index";
+    }
+
+    /**
+     * 指定日に提出した企業の株価を取得する
+     *
+     * @param fromDate 提出日
+     * @param toDate   提出日
+     * @return Index
+     */
+    @PostMapping("fundanalyzer/v1/import/stock/date")
+    public String importStocks(final String fromDate, final String toDate) {
+        LocalDate.parse(fromDate)
+                .datesUntil(LocalDate.parse(toDate).plusDays(1))
+                .forEach(stockService::importStockPrice);
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -206,7 +222,7 @@ public class AnalysisController {
         documentService.company();
         documentService.document(date, "120");
         analysisService.analyze(LocalDate.parse(date));
-        stockService.importStockPrice(date);
+        stockService.importStockPrice(LocalDate.parse(date));
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";

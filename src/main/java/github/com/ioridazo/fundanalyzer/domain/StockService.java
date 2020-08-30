@@ -40,8 +40,8 @@ public class StockService {
         this.stockPriceDao = stockPriceDao;
     }
 
-    public void importStockPrice(final String date) {
-        documentDao.selectByTypeAndSubmitDate("120", LocalDate.parse(date)).stream()
+    public void importStockPrice(final LocalDate date) {
+        documentDao.selectByTypeAndSubmitDate("120", date).stream()
                 .map(Document::getEdinetCode)
                 .map(this::convertToCompanyCode)
                 .filter(Optional::isPresent)

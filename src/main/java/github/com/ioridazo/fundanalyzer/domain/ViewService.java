@@ -73,17 +73,16 @@ public class ViewService {
                     .orElse(null);
             final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
             final var stockPrice = stockPriceList.stream()
-                    .max(Comparator.comparing(StockPrice::getTargetDate))
-                    .orElseThrow();
+                    .max(Comparator.comparing(StockPrice::getTargetDate));
             viewBeanList.add(new CompanyViewBean(
                     company.getCode().orElseThrow(),
                     company.getCompanyName(),
                     null,
                     corporateValue,
                     null,
-                    stockPrice.getTargetDate(),
-                    stockPrice.getStockPrice().orElse(0.0),
-                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice.getStockPrice().orElse(0.0))) : null,
+                    stockPrice.map(StockPrice::getTargetDate).orElse(null),
+                    stockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
+                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
                     null
             ));
         });
