@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -70,16 +71,19 @@ public class ViewService {
                     .map(AnalysisResult::getCorporateValue)
                     .findAny()
                     .orElse(null);
-            final var stockPrice = stockPriceDao.selectByCode(company.getCode().orElseThrow())
-                    .getStockPrice()
-                    .orElse(0.0);
+            final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+            final var stockPrice = stockPriceList.stream()
+                    .max(Comparator.comparing(StockPrice::getTargetDate))
+                    .orElseThrow();
             viewBeanList.add(new CompanyViewBean(
-                    null,
                     company.getCode().orElseThrow(),
                     company.getCompanyName(),
+                    null,
                     corporateValue,
-                    stockPrice,
-                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice)) : null,
+                    null,
+                    stockPrice.getTargetDate(),
+                    stockPrice.getStockPrice().orElse(0.0),
+                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice.getStockPrice().orElse(0.0))) : null,
                     null
             ));
         });
@@ -131,16 +135,24 @@ public class ViewService {
                             .map(AnalysisResult::getCorporateValue)
                             .findAny()
                             .orElse(null);
-                    final var stockPrice = stockPriceDao.selectByCode(company.getCode().orElseThrow())
-                            .getStockPrice()
-                            .orElse(0.0);
+                    final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+                    final var latestStockPrice = stockPriceList.stream()
+                            .max(Comparator.comparing(StockPrice::getTargetDate))
+                            .orElseThrow();
                     viewBeanList.add(new CompanyViewBean(
-                            submitDate,
-                            company.getCode().orElseThrow(),
+                            company.getCode().map(c -> c.substring(0, 4)).orElseThrow(),
                             company.getCompanyName(),
+                            submitDate,
                             corporateValue,
-                            stockPrice,
-                            corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(stockPrice)) : null,
+                            stockPriceList.stream()
+                                    .filter(stockPrice -> submitDate.equals(stockPrice.getTargetDate()))
+                                    .map(StockPrice::getStockPrice)
+                                    .map(Optional::get)
+                                    .findAny()
+                                    .orElse(null),
+                            latestStockPrice.getTargetDate(),
+                            latestStockPrice.getStockPrice().orElse(null),
+                            corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.getStockPrice().orElse(0.0))) : null,
                             year
                     ));
                 })

@@ -9,20 +9,26 @@ import java.time.LocalDate;
 @Value
 public class CompanyViewBean {
 
-    // 提出日
-    private final LocalDate submitDate;
-
     // 証券コード
     private final String code;
 
     // 会社名
     private final String name;
 
+    // 提出日
+    private final LocalDate submitDate;
+
     // 企業価値
     private final BigDecimal corporateValue;
 
-    // 株価
-    private final Double stockPrice;
+    // 提出日株価
+    private final Double stockPriceOfSubmitDate;
+
+    // 株価取得日
+    private final LocalDate importDate;
+
+    // 最新株価
+    private final Double latestStockPrice;
 
     // 割安度
     private final BigDecimal discountRate;
