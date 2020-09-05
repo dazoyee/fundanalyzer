@@ -113,6 +113,17 @@ public class AnalysisController {
     }
 
     /**
+     * 割安比率でソートする
+     *
+     * @return Index
+     */
+    @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
+    public String sortedDiscountRate(final Model model) {
+        model.addAttribute("companies", viewService.sortedCompanyByDiscountRate());
+        return "index";
+    }
+
+    /**
      * EDINETから提出書類一覧を取得する
      *
      * @param fromDate 提出日
