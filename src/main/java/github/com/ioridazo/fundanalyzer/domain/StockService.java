@@ -76,7 +76,7 @@ public class StockService {
         stockPriceDao.insert(new StockPrice(
                 null,
                 code,
-                LocalDate.parse(nikkei.getTargetDate(), DateTimeFormatter.ofPattern("yyyy/M/dd")),
+                LocalDate.parse(nikkei.getTargetDate(), DateTimeFormatter.ofPattern("yyyy/M/d")),
                 parseDouble(nikkei.getStockPrice()).orElse(null),
                 parseDouble(nikkei.getOpeningPrice()).orElse(null),
                 parseDouble(nikkei.getHighPrice()).orElse(null),
@@ -120,7 +120,7 @@ public class StockService {
     private boolean isNotInserted(final String code, final String targetDateAsString, List<StockPrice> stockPriceList) {
         final LocalDate targetDate;
         if (targetDateAsString.contains("/")) {
-            targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/dd"));
+            targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
         } else {
             targetDate = LocalDate.parse(targetDateAsString);
         }
@@ -151,7 +151,11 @@ public class StockService {
                     .map(v -> v.replace(",", ""))
                     .map(v -> {
                         try {
-                            return Integer.valueOf(v);
+                            if (v.equals("--")) {
+                                return null;
+                            } else {
+                                return Integer.valueOf(v);
+                            }
                         } catch (NumberFormatException e2) {
                             log.warn("株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", v);
                             return null;
