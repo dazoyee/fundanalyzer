@@ -171,8 +171,7 @@ public class DocumentService {
         if (documentIdList.isEmpty()) {
             log.info("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
-            documentIdList.forEach(documentId -> {
-                System.out.println("-------------" + documentId + "-------------");
+            documentIdList.parallelStream().forEach(documentId -> {
                 final var document = documentDao.selectByDocumentId(documentId);
 
                 // 書類取得
@@ -566,7 +565,6 @@ public class DocumentService {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
                 financialStatement.toValue());
 
-        System.out.println("↓ ↓ ↓ ↓ ↓ " + financialStatement.getName() + " ↓ ↓ ↓ ↓ ↓");
         log.info("\"{}\" のスクレイピング処理を開始します。", financialStatement.getName());
 
         for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
