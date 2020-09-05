@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,7 @@ public class HtmlScraping {
                     if (!td.text().equals(" "))
                         tdList.add(td.text());
                 });
-                System.out.println(tdList);
+//                System.out.println(tdList);
                 // TODO 取得前に年度の確認
                 // 各要素をbeanに詰める
                 if (tdList.size() == 2) {
@@ -117,7 +118,7 @@ public class HtmlScraping {
                     .select("tr")) {
                 var tdList = new ArrayList<String>();
                 tr.select("td").forEach(td -> tdList.add(td.text()));
-                System.out.println(tdList);
+//                System.out.println(tdList);
                 // 各要素をbeanに詰める
                 if (tdList.size() == 5) {
                     resultBeanList.add(new NumberOfSharesResultBean(
@@ -172,6 +173,9 @@ public class HtmlScraping {
                     document.select(".m-stockInfo_detail_left li").stream()
                             .filter(e -> e.text().contains("株主優待")).map(Element::text).findAny().orElse(null)
             );
+        } catch (SocketTimeoutException e) {
+            log.info("日経との通信でタイムアウトエラーが発生しました。\t企業コード:{}\tURL:{}", code, url);
+            throw new FundanalyzerRuntimeException();
         } catch (Throwable t) {
             log.warn("株価の過程でエラーが発生しました。次のURLを確認してください。" +
                     "\t企業コード:{}\tURL:{}\tmessage:{}", code, url, t.getMessage()
@@ -204,6 +208,9 @@ public class HtmlScraping {
                         }
                     });
             return resultBeanList;
+        } catch (SocketTimeoutException e) {
+            log.info("kabuoji3との通信でタイムアウトエラーが発生しました。\t企業コード:{}\tURL:{}", code, url);
+            throw new FundanalyzerRuntimeException();
         } catch (Throwable t) {
             log.warn("株価の過程でエラーが発生しました。次のURLを確認してください。" +
                     "\t企業コード:{}\tURL:{}\tmessage:{}", code, url, t.getMessage()

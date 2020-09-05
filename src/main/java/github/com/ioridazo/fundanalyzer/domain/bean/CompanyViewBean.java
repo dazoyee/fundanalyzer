@@ -22,13 +22,16 @@ public class CompanyViewBean {
     private final BigDecimal corporateValue;
 
     // 提出日株価
-    private final Double stockPriceOfSubmitDate;
+    private final BigDecimal stockPriceOfSubmitDate;
 
     // 株価取得日
     private final LocalDate importDate;
 
     // 最新株価
-    private final Double latestStockPrice;
+    private final BigDecimal latestStockPrice;
+
+    // 割安値
+    private final BigDecimal discountValue;
 
     // 割安度
     private final BigDecimal discountRate;
