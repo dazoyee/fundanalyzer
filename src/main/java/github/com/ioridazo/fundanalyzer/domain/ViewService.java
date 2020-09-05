@@ -15,6 +15,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -72,17 +73,25 @@ public class ViewService {
                     .findAny()
                     .orElse(null);
             final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+            final var targetDateLatestStockPrice = stockPriceList.stream()
+                    .max(Comparator.comparing(StockPrice::getTargetDate))
+                    .map(StockPrice::getTargetDate).orElse(null);
             final var latestStockPrice = stockPriceList.stream()
-                    .max(Comparator.comparing(StockPrice::getTargetDate));
+                    .max(Comparator.comparing(StockPrice::getTargetDate))
+                    .flatMap(StockPrice::getStockPrice)
+                    .map(BigDecimal::valueOf)
+                    .orElse(null);
+
             viewBeanList.add(new CompanyViewBean(
                     company.getCode().orElseThrow(),
                     company.getCompanyName(),
                     null,
                     corporateValue,
                     null,
-                    latestStockPrice.map(StockPrice::getTargetDate).orElse(null),
-                    latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
-                    corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
+                    targetDateLatestStockPrice,
+                    latestStockPrice,
+                    corporateValue != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
+                    corporateValue != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
                     null
             ));
         });
@@ -135,8 +144,15 @@ public class ViewService {
                             .findAny()
                             .orElse(null);
                     final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+                    final var targetDateLatestStockPrice = stockPriceList.stream()
+                            .max(Comparator.comparing(StockPrice::getTargetDate))
+                            .map(StockPrice::getTargetDate).orElse(null);
                     final var latestStockPrice = stockPriceList.stream()
-                            .max(Comparator.comparing(StockPrice::getTargetDate));
+                            .max(Comparator.comparing(StockPrice::getTargetDate))
+                            .flatMap(StockPrice::getStockPrice)
+                            .map(BigDecimal::valueOf)
+                            .orElse(null);
+
                     viewBeanList.add(new CompanyViewBean(
                             company.getCode().map(c -> c.substring(0, 4)).orElseThrow(),
                             company.getCompanyName(),
@@ -147,10 +163,12 @@ public class ViewService {
                                     .map(StockPrice::getStockPrice)
                                     .map(Optional::get)
                                     .findAny()
+                                    .map(BigDecimal::valueOf)
                                     .orElse(null),
-                            latestStockPrice.map(StockPrice::getTargetDate).orElse(null),
-                            latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(null),
-                            corporateValue != null ? corporateValue.subtract(BigDecimal.valueOf(latestStockPrice.flatMap(StockPrice::getStockPrice).orElse(0.0))) : null,
+                            targetDateLatestStockPrice,
+                            latestStockPrice,
+                            corporateValue != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
+                            corporateValue != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
                             year
                     ));
                 })
@@ -324,6 +342,12 @@ public class ViewService {
                         .comparing(CompanyViewBean::getSubmitDate).reversed()
                         .thenComparing(CompanyViewBean::getCode)
                 )
+                .collect(Collectors.toList());
+    }
+
+    public List<CompanyViewBean> sortedCompanyByDiscountRate() {
+        return viewCompany().stream()
+                .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
 

@@ -26,6 +26,9 @@
     <input type="date" name="toDate"/>
     <button type="submit" class="btn">取得する（株価）</button>
 </form>
+<form method="get" th:action="@{/fundanalyzer/v1/index/sort/discount-rate}">
+    <button type="submit" class="btn">割安比率ソート</button>
+</form>
 
 <table class="table table-bordered">
     <thead>
@@ -37,7 +40,8 @@
         <th>提出日株価</th>
         <th>株価取得日</th>
         <th>最新株価</th>
-        <th>割安度</th>
+        <th>割安値</th>
+        <th class="warning">割安比率</th>
         <th>対象年</th>
     </tr>
     </thead>
@@ -50,7 +54,8 @@
         <td th:text="${company.stockPriceOfSubmitDate}">提出日株価</td>
         <td th:text="${company.importDate}">株価取得日</td>
         <td th:text="${company.latestStockPrice}">最新株価</td>
-        <td th:text="${company.discountRate}">割安度</td>
+        <td th:text="${company.discountValue}">割安値</td>
+        <td th:text="${company.discountRate}">割安比率</td>
         <td th:text="${company.period}">対象年</td>
     </tr>
     </tbody>
