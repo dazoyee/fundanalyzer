@@ -90,8 +90,8 @@ public class ViewService {
                     null,
                     targetDateLatestStockPrice,
                     latestStockPrice,
-                    corporateValue != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
-                    corporateValue != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
+                    corporateValue != null && latestStockPrice != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
+                    corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
                     null
             ));
         });
@@ -167,8 +167,8 @@ public class ViewService {
                                     .orElse(null),
                             targetDateLatestStockPrice,
                             latestStockPrice,
-                            corporateValue != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
-                            corporateValue != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
+                            corporateValue != null && latestStockPrice != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
+                            corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
                             year
                     ));
                 })
