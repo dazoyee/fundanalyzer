@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -64,5 +67,37 @@ public class Document {
 
     public boolean getNotRemoved() {
         return "0".equals(removed);
+    }
+
+    public static Document ofUpdated(
+            final FinancialStatementEnum fs,
+            final String documentId,
+            final DocumentStatus status,
+            final String path,
+            final LocalDateTime updatedAt) {
+        switch (fs) {
+            case BALANCE_SHEET:
+                return Document.builder()
+                        .documentId(documentId)
+                        .scrapedBs(status.toValue())
+                        .bsDocumentPath(path)
+                        .updatedAt(updatedAt)
+                        .build();
+            case PROFIT_AND_LESS_STATEMENT:
+                return Document.builder()
+                        .documentId(documentId)
+                        .scrapedPl(status.toValue())
+                        .plDocumentPath(path)
+                        .updatedAt(updatedAt)
+                        .build();
+            case TOTAL_NUMBER_OF_SHARES:
+                return Document.builder()
+                        .documentId(documentId)
+                        .scrapedNumberOfShares(status.toValue())
+                        .numberOfSharesDocumentPath(path)
+                        .updatedAt(updatedAt)
+                        .build();
+        }
+        throw new FundanalyzerRuntimeException();
     }
 }
