@@ -91,7 +91,7 @@ public class ViewService {
                     targetDateLatestStockPrice,
                     latestStockPrice,
                     corporateValue != null && latestStockPrice != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
-                    corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
+                    corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : null,
                     null
             ));
         });
@@ -168,7 +168,7 @@ public class ViewService {
                             targetDateLatestStockPrice,
                             latestStockPrice,
                             corporateValue != null && latestStockPrice != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
-                            corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP) : null,
+                            corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : null,
                             year
                     ));
                 })
@@ -347,6 +347,10 @@ public class ViewService {
 
     public List<CompanyViewBean> sortedCompanyByDiscountRate() {
         return viewCompany().stream()
+                // not null
+                .filter(cvb -> cvb.getDiscountRate() != null)
+                // 100%以上を表示
+                .filter(cvb-> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
                 .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
