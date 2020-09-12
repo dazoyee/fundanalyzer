@@ -289,7 +289,7 @@ public class DocumentService {
 
     public void store(final LocalDate targetDate, final String docId) {
         // 取得済ファイルリスト
-        final var fileListAlready = Optional.ofNullable(new File(pathDecode.getPath() + "/" + targetDate).listFiles())
+        final var fileListAlready = Optional.ofNullable(new File(filePath(pathDecode, targetDate)).listFiles())
                 .map(Arrays::stream)
                 .map(fileList -> fileList.map(File::getName))
                 .map(fileName -> fileName.collect(Collectors.toList()))
@@ -370,7 +370,7 @@ public class DocumentService {
             log.info("書類のダウンロードおよびzipファイルの解凍処理を実行します。\t書類管理番号:{}", docId);
 
             proxy.acquisition(
-                    new File(pathEdinet.getPath() + "/" + targetDate),
+                    new File(filePath(pathEdinet, targetDate)),
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
 
@@ -382,8 +382,8 @@ public class DocumentService {
             );
 
             fileOperator.decodeZipFile(
-                    new File(pathEdinet + "/" + targetDate.toString() + "/" + docId),
-                    new File(pathDecode + "/" + targetDate.toString() + "/" + docId)
+                    new File(filePath(pathEdinet, targetDate) + "/" + docId),
+                    new File(filePath(pathDecode, targetDate) + "/" + docId)
             );
 
             log.info("書類のダウンロードおよびzipファイルの解凍処理が正常に実行されました。");
@@ -426,7 +426,7 @@ public class DocumentService {
     void scrapeBs(final String documentId, final LocalDate date) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
         final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
-        final var targetDirectory = new File(pathDecode + "/" + date + "/" + documentId + "/XBRL/PublicDoc");
+        final var targetDirectory = new File(filePath(pathDecode, date) + "/" + documentId + "/XBRL/PublicDoc");
 
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.BALANCE_SHEET);
@@ -471,7 +471,7 @@ public class DocumentService {
     void scrapePl(final String documentId, final LocalDate date) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
         final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
-        final var targetDirectory = new File(pathDecode + "/" + date + "/" + documentId + "/XBRL/PublicDoc");
+        final var targetDirectory = new File(filePath(pathDecode, date) + "/" + documentId + "/XBRL/PublicDoc");
 
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
@@ -515,7 +515,7 @@ public class DocumentService {
     void scrapeNs(final String documentId, final LocalDate date) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
         final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
-        final var targetDirectory = new File(pathDecode + "/" + date + "/" + documentId + "/XBRL/PublicDoc");
+        final var targetDirectory = new File(filePath(pathDecode, date) + "/" + documentId + "/XBRL/PublicDoc");
 
         try {
             final var targetFile = findTargetFile(targetDirectory, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
@@ -699,6 +699,10 @@ public class DocumentService {
                 );
             }
         }
+    }
+
+    private String filePath(final File prePath, final LocalDate targetDate) {
+        return prePath.getPath() + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate;
     }
 
     private Optional<Long> parseValue(final String value) {
