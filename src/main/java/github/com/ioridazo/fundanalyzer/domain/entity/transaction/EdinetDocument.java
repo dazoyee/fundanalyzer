@@ -106,7 +106,7 @@ public class EdinetDocument {
         return new EdinetDocument(
                 null,
                 results.getDocId(),
-                results.getEdinetCode(),
+                results.getEdinetCode().orElse(null),
                 results.getSecCode(),
                 results.getJcn(),
                 results.getFilerName(),

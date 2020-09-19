@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.Optional;
+
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Results {
@@ -115,4 +117,8 @@ public class Results {
     // 英文ファイル有無フラグ
     @JsonProperty("englishDocFlag")
     private String englishDocFlag;
+
+    public Optional<String> getEdinetCode() {
+        return Optional.ofNullable(edinetCode);
+    }
 }

@@ -143,7 +143,7 @@ public class ScrapingLogic {
             final LocalDate date,
             final List<T> detailList) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
-        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null)).orElseThrow();
         final var targetDirectory = makeDocumentPath(pathDecode, date, documentId);
 
         try {

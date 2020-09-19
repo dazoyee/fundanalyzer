@@ -23,7 +23,6 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
-import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,36 +83,46 @@ public class DocumentService {
         this.documentDao = documentDao;
     }
 
+    LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
     @Transactional
     public void company() {
+        // CSV読み取り
         final var resultBeanList = csvCommander.readCsv(
                 new File(pathCompany),
                 Charset.forName("windows-31j"),
                 EdinetCsvResultBean.class
         );
 
-        final var resultBeanIndustryList = resultBeanList.stream()
-                .map(EdinetCsvResultBean::getIndustry)
-                .distinct()
-                .collect(Collectors.toList());
-
         var dbIndustryList = industryDao.selectAll().stream()
                 .map(Industry::getName)
                 .collect(Collectors.toList());
 
         // Industryの登録
-        resultBeanIndustryList.forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
-                .filter(rb -> dbIndustryList.stream().noneMatch(rb::equals))
-                .forEach(rb -> industryDao.insert(new Industry(null, rb, LocalDateTime.now())))
-        );
+        resultBeanList.stream()
+                .map(EdinetCsvResultBean::getIndustry)
+                .distinct()
+                .forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
+                        .filter(industryName -> dbIndustryList.stream().noneMatch(industryName::equals))
+                        .forEach(industryName -> industryDao.insert(new Industry(null, industryName, nowLocalDateTime())))
+                );
 
-        final var industryList = industryDao.selectAll();
+
+        // Companyの登録
         final var companyList = companyDao.selectAll();
-        resultBeanList.forEach(resultBean -> Stream.of(resultBean)
-                .filter(rb -> companyList.stream()
-                        .map(Company::getEdinetCode)
-                        .noneMatch(rb.getEdinetCode()::equals))
-                .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
+        final var industryList = industryDao.selectAll();
+        resultBeanList.forEach(resultBean -> {
+                    final var match = companyList.stream()
+                            .map(Company::getEdinetCode)
+                            .anyMatch(resultBean.getEdinetCode()::equals);
+                    if (match) {
+                        companyDao.update(Company.of(industryList, resultBean));
+                    } else {
+                        companyDao.insert(Company.of(industryList, resultBean));
+                    }
+                }
         );
 
         log.info("CSVファイルから会社情報の登録が完了しました。");
@@ -135,7 +144,7 @@ public class DocumentService {
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
         final var documentIdList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date))
                 .stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                 .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .collect(Collectors.toList());
@@ -143,7 +152,7 @@ public class DocumentService {
         if (documentIdList.isEmpty()) {
             log.info("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
-            documentIdList.forEach(documentId -> {
+            documentIdList.parallelStream().forEach(documentId -> {
                 final var document = documentDao.selectByDocumentId(documentId);
 
                 // 書類取得
@@ -226,10 +235,17 @@ public class DocumentService {
                                     }
                                 }
                                 try {
+                                    // 万が一Companyが登録されていない場合には登録する
+                                    r.getEdinetCode().ifPresent(ed -> {
+                                        if (companyDao.selectByEdinetCode(ed).isEmpty()) {
+                                            insertCompanyForSqlForeignKey(ed, r.getFilerName());
+                                        }
+                                    });
+
                                     documentDao.insert(Document.builder()
                                             .documentId(r.getDocId())
                                             .documentTypeCode(r.getDocTypeCode())
-                                            .edinetCode(r.getEdinetCode())
+                                            .edinetCode(r.getEdinetCode().orElse(null))
                                             .period(r.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(r.getPeriodEnd().substring(0, 4)), 1, 1) : null)
                                             .submitDate(date)
                                             .createdAt(LocalDateTime.now())
@@ -284,7 +300,7 @@ public class DocumentService {
     public void scrape(final LocalDate submitDate) {
         log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", submitDate);
         final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                 .filter(Document::getNotRemoved)
                 .collect(Collectors.toList());
 
@@ -335,6 +351,12 @@ public class DocumentService {
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
+    }
+
+    private void insertCompanyForSqlForeignKey(final String edinetCode, final String companyName) {
+        companyDao.insert(Company.ofSqlForeignKey(edinetCode, companyName, nowLocalDateTime()));
+        log.warn("会社情報が登録されていないため、仮情報を登録します。" +
+                "\tEDINETコード:{}\t会社名:{}", edinetCode, companyName);
     }
 
     private void scrapeBs(final String documentId) {
