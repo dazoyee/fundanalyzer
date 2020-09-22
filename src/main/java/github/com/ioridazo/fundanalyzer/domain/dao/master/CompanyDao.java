@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
+import org.seasar.doma.Update;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
@@ -18,11 +19,14 @@ public interface CompanyDao {
     List<Company> selectAll();
 
     @Select
-    Company selectByEdinetCode(final String edinetCode);
+    Optional<Company> selectByEdinetCode(final String edinetCode);
 
     @Select
     Optional<Company> selectByCode(final String code);
 
     @Insert
     Result<Company> insert(final Company company);
+
+    @Update
+    Result<Company> update(final Company company);
 }

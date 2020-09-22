@@ -81,7 +81,7 @@ public class ScrapingLogic {
         this.scrapingKeywordDao = scrapingKeywordDao;
     }
 
-    public void download(final LocalDate targetDate, final String docId) {
+    public void download(final String docId, final LocalDate targetDate) {
         try {
             log.info("書類のダウンロードおよびzipファイルの解凍処理を実行します。\t書類管理番号:{}", docId);
 
@@ -143,7 +143,7 @@ public class ScrapingLogic {
             final LocalDate date,
             final List<T> detailList) {
         final var edinetDocument = edinetDocumentDao.selectByDocId(documentId);
-        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null));
+        final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null)).orElseThrow();
         final var targetDirectory = makeDocumentPath(pathDecode, date, documentId);
 
         try {
