@@ -185,7 +185,7 @@ public class AnalysisController {
     @GetMapping("/edinet/list/{date}")
     public String documentList(@PathVariable String date, final Model model) {
         documentService.company();
-        documentService.insertDocumentList(LocalDate.parse(date));
+        documentService.edinetList(LocalDate.parse(date));
 
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetList("120"));

@@ -23,7 +23,6 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
-import github.com.ioridazo.fundanalyzer.mapper.CsvMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,85 +83,105 @@ public class DocumentService {
         this.documentDao = documentDao;
     }
 
-    @Transactional
+    LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
+    /**
+     * CSVから読み取って業種と会社情報をDBに登録する
+     */
     public void company() {
+        // CSV読み取り
         final var resultBeanList = csvCommander.readCsv(
                 new File(pathCompany),
                 Charset.forName("windows-31j"),
                 EdinetCsvResultBean.class
         );
 
-        final var resultBeanIndustryList = resultBeanList.stream()
-                .map(EdinetCsvResultBean::getIndustry)
-                .distinct()
-                .collect(Collectors.toList());
-
-        var dbIndustryList = industryDao.selectAll().stream()
-                .map(Industry::getName)
-                .collect(Collectors.toList());
-
         // Industryの登録
-        resultBeanIndustryList.forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
-                .filter(rb -> dbIndustryList.stream().noneMatch(rb::equals))
-                .forEach(rb -> industryDao.insert(new Industry(null, rb, LocalDateTime.now())))
-        );
+        insertIndustry(resultBeanList);
 
-        final var industryList = industryDao.selectAll();
-        final var companyList = companyDao.selectAll();
-        resultBeanList.forEach(resultBean -> Stream.of(resultBean)
-                .filter(rb -> companyList.stream()
-                        .map(Company::getEdinetCode)
-                        .noneMatch(rb.getEdinetCode()::equals))
-                .forEach(rb -> companyDao.insert(CsvMapper.map(industryList, rb)))
-        );
+        // Companyの登録
+        insertCompany(resultBeanList);
 
         log.info("CSVファイルから会社情報の登録が完了しました。");
     }
 
-    public void edinetList(final String startDate, final String endDate) {
-        final var dateList = LocalDate.parse(startDate)
-                .datesUntil(LocalDate.parse(endDate).plusDays(1))
+    @Transactional
+    void insertIndustry(final List<EdinetCsvResultBean> resultBeanList) {
+        final var dbIndustryList = industryDao.selectAll().stream()
+                .map(Industry::getName)
                 .collect(Collectors.toList());
 
-        // 書類リストをデータベースに登録する
-        dateList.forEach(this::insertDocumentList);
+        resultBeanList.stream()
+                .map(EdinetCsvResultBean::getIndustry)
+                .distinct()
+                .forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
+                        .filter(industryName -> dbIndustryList.stream().noneMatch(industryName::equals))
+                        .forEach(industryName -> industryDao.insert(new Industry(null, industryName, nowLocalDateTime())))
+                );
     }
 
+    @Transactional
+    void insertCompany(final List<EdinetCsvResultBean> resultBeanList) {
+        final var companyList = companyDao.selectAll();
+        final var industryList = industryDao.selectAll();
+        resultBeanList.forEach(resultBean -> {
+                    final var match = companyList.stream()
+                            .map(Company::getEdinetCode)
+                            .anyMatch(resultBean.getEdinetCode()::equals);
+                    if (match) {
+                        companyDao.update(Company.of(industryList, resultBean, nowLocalDateTime()));
+                    } else {
+                        companyDao.insert(Company.of(industryList, resultBean, nowLocalDateTime()));
+                    }
+                }
+        );
+    }
+
+    /**
+     * 一連の処理を行う
+     * edinetList（書類リストのDB登録）
+     * ↓
+     * store（書類取得）
+     * ↓
+     * scrape（スクレイピング）
+     *
+     * @param date             書類取得対象日（提出日）
+     * @param documentTypeCode 書類種別コード
+     */
     public void document(final String date, final String documentTypeCode) {
         // 書類リストをデータベースに登録する
-        insertDocumentList(LocalDate.parse(date));
+        edinetList(LocalDate.parse(date));
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentIdList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date))
+        final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date))
                 .stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                 .filter(Document::getNotRemoved)
-                .map(Document::getDocumentId)
                 .collect(Collectors.toList());
 
-        if (documentIdList.isEmpty()) {
+        if (documentList.isEmpty()) {
             log.info("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
         } else {
-            documentIdList.forEach(documentId -> {
-                final var document = documentDao.selectByDocumentId(documentId);
-
+            documentList.parallelStream().forEach(document -> {
                 // 書類取得
                 if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
-                    store(LocalDate.parse(date), documentId);
+                    store(document.getDocumentId(), LocalDate.parse(date));
                 }
 
                 // スクレイピング
                 // 貸借対照表
                 if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
-                    scrapeBs(documentId, LocalDate.parse(date));
+                    scrapeBs(document.getDocumentId(), LocalDate.parse(date));
                 }
                 // 損益計算書
                 if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
-                    scrapePl(documentId, LocalDate.parse(date));
+                    scrapePl(document.getDocumentId(), LocalDate.parse(date));
                 }
                 // 株式総数
                 if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
-                    scrapeNs(documentId, LocalDate.parse(date));
+                    scrapeNs(document.getDocumentId(), LocalDate.parse(date));
                 }
 
                 // 除外フラグON
@@ -172,12 +191,12 @@ public class DocumentService {
                         document.getScrapedNumberOfShares()
                 ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
                     documentDao.update(Document.builder()
-                            .documentId(documentId)
+                            .documentId(document.getDocumentId())
                             .removed(Flag.ON.toValue())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(nowLocalDateTime())
                             .build()
                     );
-                    log.info("処理ステータスがすべて \"9（ERROR）\" となったため、除外フラグをONにしました。\t書類ID:{}", documentId);
+                    log.info("処理ステータスがすべて \"9（ERROR）\" となったため、除外フラグをONにしました。\t書類ID:{}", document);
                 }
             });
 
@@ -185,8 +204,28 @@ public class DocumentService {
         }
     }
 
+    /**
+     * EDINETから提供される書類リストをDBに登録する
+     *
+     * @param startDate ここ日から
+     * @param endDate   ここ日まで
+     */
+    public void edinetList(final String startDate, final String endDate) {
+        final var dateList = LocalDate.parse(startDate)
+                .datesUntil(LocalDate.parse(endDate).plusDays(1))
+                .collect(Collectors.toList());
+
+        // 書類リストをデータベースに登録する
+        dateList.forEach(this::edinetList);
+    }
+
+    /**
+     * EDINETから提供される書類リストをDBに登録する
+     *
+     * @param date この日
+     */
     @Transactional
-    public void insertDocumentList(final LocalDate date) {
+    public void edinetList(final LocalDate date) {
         final var docIdList = edinetDocumentDao.selectAll().stream()
                 .map(EdinetDocument::getDocId)
                 .collect(Collectors.toList());
@@ -212,7 +251,7 @@ public class DocumentService {
                             .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
                             .forEach(r -> {
                                 try {
-                                    edinetDocumentDao.insert(EdinetDocument.of(r));
+                                    edinetDocumentDao.insert(EdinetDocument.of(r, nowLocalDateTime()));
                                 } catch (NestedRuntimeException e) {
                                     if (e.contains(UniqueConstraintException.class)) {
                                         log.info("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -226,14 +265,21 @@ public class DocumentService {
                                     }
                                 }
                                 try {
+                                    // 万が一Companyが登録されていない場合には登録する
+                                    r.getEdinetCode().ifPresent(ed -> {
+                                        if (companyDao.selectByEdinetCode(ed).isEmpty()) {
+                                            insertCompanyForSqlForeignKey(ed, r.getFilerName());
+                                        }
+                                    });
+
                                     documentDao.insert(Document.builder()
                                             .documentId(r.getDocId())
                                             .documentTypeCode(r.getDocTypeCode())
-                                            .edinetCode(r.getEdinetCode())
+                                            .edinetCode(r.getEdinetCode().orElse(null))
                                             .period(r.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(r.getPeriodEnd().substring(0, 4)), 1, 1) : null)
                                             .submitDate(date)
-                                            .createdAt(LocalDateTime.now())
-                                            .updatedAt(LocalDateTime.now())
+                                            .createdAt(nowLocalDateTime())
+                                            .updatedAt(nowLocalDateTime())
                                             .build()
                                     );
                                 } catch (NestedRuntimeException e) {
@@ -259,47 +305,59 @@ public class DocumentService {
         log.info("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{}", date);
     }
 
-    public void store(final LocalDate targetDate, final String docId) {
-        // 取得済ファイルリスト
-        final var fileListAlready = Optional.ofNullable(makeTargetPath(pathDecode, targetDate).listFiles())
-                .map(Arrays::stream)
-                .map(fileList -> fileList.map(File::getName))
-                .map(fileName -> fileName.collect(Collectors.toList()))
-                .or(Optional::empty);
-
-        if (fileListAlready.isPresent() && fileListAlready.get().stream().anyMatch(docId::equals)) {
+    /**
+     * フォルダに対象ファイルが存在するかを確認して、ダウンロードorステータス更新する
+     *
+     * @param docId      書類管理番号
+     * @param targetDate 書類取得対象日（提出日）
+     */
+    public void store(final String docId, final LocalDate targetDate) {
+        // 既にファイルが存在しているか確認する
+        if (fileListAlready(targetDate).stream()
+                .anyMatch(docIdList -> docIdList.stream().anyMatch(docId::equals))) {
             documentDao.update(Document.builder()
                     .documentId(docId)
                     .downloaded(DocumentStatus.DONE.toValue())
                     .decoded(DocumentStatus.DONE.toValue())
-                    .updatedAt(LocalDateTime.now())
+                    .updatedAt(nowLocalDateTime())
                     .build()
             );
         } else {
             // ファイル取得
-            scrapingLogic.download(targetDate, docId);
+            scrapingLogic.download(docId, targetDate);
         }
     }
 
-    public void scrape(final LocalDate submitDate) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t対象日:{}", submitDate);
-        final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).getCode().isPresent())
-                .filter(Document::getNotRemoved)
-                .collect(Collectors.toList());
+    Optional<List<String>> fileListAlready(final LocalDate targetDate) {
+        // 取得済ファイルリスト
+        return Optional.ofNullable(makeTargetPath(pathDecode, targetDate).listFiles())
+                .map(Arrays::stream)
+                .map(fileList -> fileList.map(File::getName))
+                .map(fileName -> fileName.collect(Collectors.toList()))
+                .or(Optional::empty);
+    }
 
-        documentList.forEach(d -> {
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) scrapeBs(d.getDocumentId());
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) scrapePl(d.getDocumentId());
-            if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) scrapeNs(d.getDocumentId());
-        });
+    public void scrape(final LocalDate submitDate) {
+        documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
+                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
+                .filter(Document::getNotRemoved)
+                .forEach(d -> {
+                    if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs()))
+                        scrapeBs(d.getDocumentId(), submitDate);
+                    if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl()))
+                        scrapePl(d.getDocumentId(), submitDate);
+                    if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares()))
+                        scrapeNs(d.getDocumentId(), submitDate);
+                });
+        log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t対象日:{}", submitDate);
     }
 
     public void scrape(final String documentId) {
-        log.info("次のドキュメントに対してスクレイピング処理を実行します。\t書類ID:{}", documentId);
-        scrapeBs(documentId);
-        scrapePl(documentId);
-        scrapeNs(documentId);
+        final var submitDate = documentDao.selectByDocumentId(documentId).getSubmitDate();
+        scrapeBs(documentId, submitDate);
+        scrapePl(documentId, submitDate);
+        scrapeNs(documentId, submitDate);
+        log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{}", documentId);
     }
 
     public void resetForRetry() {
@@ -314,7 +372,7 @@ public class DocumentService {
                     documentDao.update(Document.builder()
                             .documentId(documentId)
                             .scrapedBs(DocumentStatus.NOT_YET.toValue())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(nowLocalDateTime())
                             .build()
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
@@ -330,15 +388,17 @@ public class DocumentService {
                     documentDao.update(Document.builder()
                             .documentId(documentId)
                             .scrapedPl(DocumentStatus.NOT_YET.toValue())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(nowLocalDateTime())
                             .build()
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
     }
 
-    private void scrapeBs(final String documentId) {
-        scrapeBs(documentId, documentDao.selectByDocumentId(documentId).getSubmitDate());
+    private void insertCompanyForSqlForeignKey(final String edinetCode, final String companyName) {
+        companyDao.insert(Company.ofSqlForeignKey(edinetCode, companyName, nowLocalDateTime()));
+        log.warn("会社情報が登録されていないため、仮情報を登録します。" +
+                "\tEDINETコード:{}\t会社名:{}", edinetCode, companyName);
     }
 
     private void scrapeBs(final String documentId, final LocalDate targetDate) {
@@ -350,10 +410,6 @@ public class DocumentService {
         );
     }
 
-    private void scrapePl(final String documentId) {
-        scrapePl(documentId, documentDao.selectByDocumentId(documentId).getSubmitDate());
-    }
-
     private void scrapePl(final String documentId, final LocalDate targetDate) {
         scrapingLogic.scrape(
                 FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
@@ -361,10 +417,6 @@ public class DocumentService {
                 targetDate,
                 plSubjectDao.selectAll()
         );
-    }
-
-    private void scrapeNs(final String documentId) {
-        scrapeNs(documentId, documentDao.selectByDocumentId(documentId).getSubmitDate());
     }
 
     private void scrapeNs(final String documentId, final LocalDate targetDate) {

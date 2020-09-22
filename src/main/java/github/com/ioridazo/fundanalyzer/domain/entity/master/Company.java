@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
+import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -7,6 +8,7 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -49,5 +51,49 @@ public class Company {
 
     public Optional<String> getCode() {
         return Optional.ofNullable(code);
+    }
+
+    public static Company of(
+            final List<Industry> industryList,
+            final EdinetCsvResultBean resultBean,
+            final LocalDateTime createdAt) {
+        return new Company(
+                resultBean.getSecuritiesCode().isBlank() ? null : resultBean.getSecuritiesCode(),
+                resultBean.getSubmitterName(),
+                mapToIndustryId(industryList, resultBean.getIndustry()),
+                resultBean.getEdinetCode(),
+                ListCategories.fromName(resultBean.getListCategories()).toValue(),
+                Consolidated.fromName(resultBean.getConsolidated()).toValue(),
+                resultBean.getCapitalStock(),
+                resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                createdAt,
+                createdAt
+        );
+    }
+
+    public static Company ofSqlForeignKey(
+            final String edinetCode,
+            final String companyName,
+            final LocalDateTime createdAt) {
+        return new Company(
+                null,
+                companyName,
+                40,
+                edinetCode,
+                null,
+                null,
+                null,
+                null,
+                createdAt,
+                createdAt
+        );
+    }
+
+    private static Integer mapToIndustryId(final List<Industry> industryList, final String industryName) {
+        return industryList.stream()
+                .filter(industry -> industryName.equals(industry.getName()))
+                .map(Industry::getId)
+                .findAny()
+                .orElseThrow();
     }
 }
