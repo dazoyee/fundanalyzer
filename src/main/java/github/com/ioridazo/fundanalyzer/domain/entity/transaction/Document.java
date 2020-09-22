@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.Id;
@@ -14,9 +14,9 @@ import org.seasar.doma.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
+@Value
 @Builder
-@Getter
-@AllArgsConstructor
 @Entity(immutable = true)
 @Table(name = "document")
 public class Document {

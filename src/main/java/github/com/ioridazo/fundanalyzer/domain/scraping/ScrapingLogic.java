@@ -81,7 +81,7 @@ public class ScrapingLogic {
         this.scrapingKeywordDao = scrapingKeywordDao;
     }
 
-    public void download(final LocalDate targetDate, final String docId) {
+    public void download(final String docId, final LocalDate targetDate) {
         try {
             log.info("書類のダウンロードおよびzipファイルの解凍処理を実行します。\t書類管理番号:{}", docId);
 

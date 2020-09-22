@@ -53,7 +53,10 @@ public class Company {
         return Optional.ofNullable(code);
     }
 
-    public static Company of(final List<Industry> industryList, final EdinetCsvResultBean resultBean) {
+    public static Company of(
+            final List<Industry> industryList,
+            final EdinetCsvResultBean resultBean,
+            final LocalDateTime createdAt) {
         return new Company(
                 resultBean.getSecuritiesCode().isBlank() ? null : resultBean.getSecuritiesCode(),
                 resultBean.getSubmitterName(),
@@ -63,12 +66,15 @@ public class Company {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                createdAt,
+                createdAt
         );
     }
 
-    public static Company ofSqlForeignKey(final String edinetCode, final String companyName, final LocalDateTime createdAt) {
+    public static Company ofSqlForeignKey(
+            final String edinetCode,
+            final String companyName,
+            final LocalDateTime createdAt) {
         return new Company(
                 null,
                 companyName,

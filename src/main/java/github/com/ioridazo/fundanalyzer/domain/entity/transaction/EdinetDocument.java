@@ -2,6 +2,9 @@ package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Results;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
@@ -13,96 +16,99 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @AllArgsConstructor
+@NoArgsConstructor
+@ToString
+@EqualsAndHashCode
 @Entity(immutable = true)
 @Table(name = "edinet_document")
 public class EdinetDocument {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private final Integer id;
+    private Integer id;
 
-    private final String docId;
+    private String docId;
 
     // 提出者EDINETコード
-    private final String edinetCode;
+    private String edinetCode;
 
     // 提出者証券コード
-    private final String secCode;
+    private String secCode;
 
     // 提出者法人番号
-    private final String jcn;
+    private String jcn;
 
     // 提出者名
-    private final String filerName;
+    private String filerName;
 
     // ファンドコード
-    private final String fundCode;
+    private String fundCode;
 
     // 府令コード
-    private final String ordinanceCode;
+    private String ordinanceCode;
 
     // 様式コード
-    private final String formCode;
+    private String formCode;
 
     // 書類種別コード
-    private final String docTypeCode;
+    private String docTypeCode;
 
     // 期間（自）
-    private final String periodStart;
+    private String periodStart;
 
     // 期間（至）
-    private final String periodEnd;
+    private String periodEnd;
 
     // 提出日時
-    private final String submitDateTime;
+    private String submitDateTime;
 
     // 提出書類概要
-    private final String docDescription;
+    private String docDescription;
 
     //発行会社EDINETコード
-    private final String issuerEdinetCode;
+    private String issuerEdinetCode;
 
     // 対象EDINETコード
-    private final String subjectEdinetCode;
+    private String subjectEdinetCode;
 
     // 小会社EDINETコード
-    private final String subsidiaryEdinetCode;
+    private String subsidiaryEdinetCode;
 
     // 臨報提出事由
-    private final String currentReportReason;
+    private String currentReportReason;
 
     // 親書類管理番号
-    private final String parentDocId;
+    private String parentDocId;
 
     // 操作日時
-    private final String opeDateTime;
+    private String opeDateTime;
 
     // 取下区分
-    private final String withdrawalStatus;
+    private String withdrawalStatus;
 
     // 書類情報修正区分
-    private final String docInfoEditStatus;
+    private String docInfoEditStatus;
 
     // 開示不開示区分
-    private final String disclosureStatus;
+    private String disclosureStatus;
 
     // XBRL有無フラグ
-    private final String xbrlFlag;
+    private String xbrlFlag;
 
     // PDF有無フラグ
-    private final String pdfFlag;
+    private String pdfFlag;
 
     // 代替書面・添付文書有無フラグ
-    private final String attachDocFlag;
+    private String attachDocFlag;
 
     // 英文ファイル有無フラグ
-    private final String englishDocFlag;
+    private String englishDocFlag;
 
     // 登録日
     @Column(updatable = false)
-    private final LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
-    public static EdinetDocument of(final Results results) {
+    public static EdinetDocument of(final Results results, final LocalDateTime createdAt) {
         return new EdinetDocument(
                 null,
                 results.getDocId(),
@@ -131,12 +137,16 @@ public class EdinetDocument {
                 results.getPdfFlag(),
                 results.getAttachDocFlag(),
                 results.getEnglishDocFlag(),
-                LocalDateTime.now()
+                createdAt
         );
     }
 
     public String getDocId() {
         return docId;
+    }
+
+    public void setDocId(final String docId) {
+        this.docId = docId;
     }
 
     public Optional<String> getEdinetCode() {
