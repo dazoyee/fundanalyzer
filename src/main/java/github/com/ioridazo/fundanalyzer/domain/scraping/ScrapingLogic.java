@@ -146,74 +146,86 @@ public class ScrapingLogic {
         final var company = companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null)).orElseThrow();
         final var targetDirectory = makeDocumentPath(pathDecode, date, documentId);
 
-        try {
-            final var targetFile = findTargetFile(targetDirectory, fs);
-            if (FinancialStatementEnum.BALANCE_SHEET.equals(fs) ||
-                    FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
-                // 貸借対照表、損益計算書
-                insertFinancialStatement(
-                        targetFile.getFirst(),
-                        targetFile.getSecond(),
-                        fs,
-                        company,
-                        detailList,
-                        edinetDocument
+        // 財務諸表登録年（period_end）が重複していないか確認する
+        if (beforeCheck(company, fs, edinetDocument)) {
+            try {
+                final var targetFile = findTargetFile(targetDirectory, fs);
+                if (FinancialStatementEnum.BALANCE_SHEET.equals(fs) ||
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
+                    // 貸借対照表、損益計算書
+                    insertFinancialStatement(
+                            targetFile.getFirst(),
+                            targetFile.getSecond(),
+                            fs,
+                            company,
+                            detailList,
+                            edinetDocument
+                    );
+
+                    if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)) {
+                        checkBs(company, edinetDocument);
+                    }
+                } else if (FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.equals(fs)) {
+                    // 株式総数
+                    insertFinancialStatement(
+                            company,
+                            FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
+                            "0",
+                            edinetDocument,
+                            parseValue(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
+                    );
+                }
+
+                log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
+                        company.getCode().orElseThrow(),
+                        company.getEdinetCode(),
+                        fs.getName(),
+                        targetFile.getFirst().getPath()
                 );
 
-                if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)) {
-                    checkBs(company, edinetDocument);
-                }
-            } else if (FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.equals(fs)) {
-                // 株式総数
-                insertFinancialStatement(
-                        company,
-                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
-                        "0",
-                        edinetDocument,
-                        parseValue(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).orElse(null)
+                documentDao.update(Document.ofUpdated(
+                        fs,
+                        documentId,
+                        DocumentStatus.DONE,
+                        targetFile.getFirst().getPath(),
+                        LocalDateTime.now()
+                ));
+
+            } catch (FundanalyzerFileException e) {
+                documentDao.update(Document.ofUpdated(
+                        fs,
+                        documentId,
+                        DocumentStatus.ERROR,
+                        null,
+                        LocalDateTime.now()
+                ));
+                log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                                "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
+                        company.getCode().orElseThrow(),
+                        company.getEdinetCode(),
+                        fs.getName(),
+                        targetDirectory.getPath()
                 );
             }
-
-            log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
+        } else {
+            log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
+                    "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
                     company.getCode().orElseThrow(),
                     company.getEdinetCode(),
+                    company.getCompanyName(),
                     fs.getName(),
-                    targetFile.getFirst().getPath()
-            );
-
-            documentDao.update(Document.ofUpdated(
-                    fs,
                     documentId,
-                    DocumentStatus.DONE,
-                    targetFile.getFirst().getPath(),
-                    LocalDateTime.now()
-            ));
-
-        } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.ofUpdated(
-                    fs,
-                    documentId,
-                    DocumentStatus.ERROR,
-                    null,
-                    LocalDateTime.now()
-            ));
-            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
-                    company.getCode().orElseThrow(),
-                    company.getEdinetCode(),
-                    fs.getName(),
-                    targetDirectory.getPath()
+                    edinetDocument.getPeriodEnd().orElseThrow()
             );
         }
     }
 
     private Pair<File, ScrapingKeyword> findTargetFile(
             final File targetFile,
-            final FinancialStatementEnum financialStatement) throws FundanalyzerFileException {
-        final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(
-                financialStatement.toValue());
+            final FinancialStatementEnum fs) throws FundanalyzerFileException {
+        final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
 
-        log.info("\"{}\" のスクレイピング処理を開始します。", financialStatement.getName());
+        log.info("\"{}\" のスクレイピング処理を開始します。", fs.getName());
 
         for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
             try {
@@ -237,7 +249,7 @@ public class ScrapingLogic {
     private <T extends Detail> void insertFinancialStatement(
             final File targetFile,
             final ScrapingKeyword scrapingKeyword,
-            final FinancialStatementEnum financialStatement,
+            final FinancialStatementEnum fs,
             final Company company,
             final List<T> detailList,
             final EdinetDocument edinetDocument) throws FundanalyzerFileException {
@@ -250,7 +262,7 @@ public class ScrapingLogic {
                 // 一致するものが存在したら下記
                 .ifPresent(detail -> insertFinancialStatement(
                         company,
-                        financialStatement,
+                        fs,
                         detail.getId(),
                         edinetDocument,
                         parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
@@ -260,7 +272,7 @@ public class ScrapingLogic {
     @Transactional
     private void insertFinancialStatement(
             final Company company,
-            final FinancialStatementEnum financialStatement,
+            final FinancialStatementEnum fs,
             final String dId,
             final EdinetDocument edinetDocument,
             final Long value) {
@@ -269,7 +281,7 @@ public class ScrapingLogic {
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
-                    financialStatement.toValue(),
+                    fs.toValue(),
                     dId,
                     LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
                     LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
@@ -281,7 +293,7 @@ public class ScrapingLogic {
                 log.info("一意制約違反のため、データベースへの登録をスキップします。" +
                                 "\t企業コード:{}\t財務諸表名:{}\t科目ID:{}\t対象年:{}",
                         company.getCode().orElse(null),
-                        financialStatement.getName(),
+                        fs.getName(),
                         dId,
                         edinetDocument.getPeriodEnd().orElseThrow().substring(0, 4)
                 );
@@ -289,6 +301,23 @@ public class ScrapingLogic {
                 throw e;
             }
         }
+    }
+
+    private boolean beforeCheck(
+            final Company company,
+            final FinancialStatementEnum fs,
+            final EdinetDocument edinetDocument) {
+        final var targetYear = edinetDocument.getPeriodEnd().orElseThrow().substring(0, 4);
+        final var fsList = financialStatementDao.selectByEdinetCodeAndFsAndYear(company.getEdinetCode(), fs.toValue(), targetYear);
+
+        if (fsList.isEmpty()) {
+            return true;
+        } else return fsList.stream()
+                .map(FinancialStatement::getPeriodEnd)
+                .distinct()
+                .map(LocalDate::getYear)
+                .map(String::valueOf)
+                .noneMatch(targetYear::equals);
     }
 
     private void checkBs(final Company company, final EdinetDocument edinetDocument) {
