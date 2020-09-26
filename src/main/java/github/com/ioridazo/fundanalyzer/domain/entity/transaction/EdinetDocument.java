@@ -160,4 +160,13 @@ public class EdinetDocument {
     public Optional<String> getPeriodEnd() {
         return Optional.ofNullable(periodEnd);
     }
+
+    // for test
+    public void setPeriodStart(final String periodStart) {
+        this.periodStart = periodStart;
+    }
+
+    public void setPeriodEnd(final String periodEnd) {
+        this.periodEnd = periodEnd;
+    }
 }
