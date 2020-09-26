@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
@@ -7,6 +8,7 @@ import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.util.List;
 import java.util.Optional;
 
 @ConfigAutowireable
@@ -18,6 +20,12 @@ public interface FinancialStatementDao {
             final String edinetCode,
             final String financialStatementId,
             final String subjectId,
+            final String dayOfYear);
+
+    @Select
+    List<FinancialStatement> selectByEdinetCodeAndFsAndYear(
+            final String edinetCode,
+            final String financialStatementId,
             final String dayOfYear);
 
     @Insert
