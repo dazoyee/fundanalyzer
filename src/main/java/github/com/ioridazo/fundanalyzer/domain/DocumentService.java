@@ -107,6 +107,11 @@ public class DocumentService {
         log.info("CSVファイルから会社情報の登録が完了しました。");
     }
 
+    /**
+     * 業種をDBに登録する
+     *
+     * @param resultBeanList CSV読み取り結果
+     */
     @Transactional
     void insertIndustry(final List<EdinetCsvResultBean> resultBeanList) {
         final var dbIndustryList = industryDao.selectAll().stream()
@@ -122,6 +127,11 @@ public class DocumentService {
                 );
     }
 
+    /**
+     * 会社をDBに登録する
+     *
+     * @param resultBeanList CSV読み取り結果
+     */
     @Transactional
     void insertCompany(final List<EdinetCsvResultBean> resultBeanList) {
         final var companyList = companyDao.selectAll();
@@ -328,6 +338,12 @@ public class DocumentService {
         }
     }
 
+    /**
+     * 既にダウンロード済のファイルリスト
+     *
+     * @param targetDate 書類取得対象日（提出日）
+     * @return 既にダウンロード済のファイルリスト
+     */
     Optional<List<String>> fileListAlready(final LocalDate targetDate) {
         // 取得済ファイルリスト
         return Optional.ofNullable(makeTargetPath(pathDecode, targetDate).listFiles())
@@ -337,29 +353,44 @@ public class DocumentService {
                 .or(Optional::empty);
     }
 
-    public void scrape(final LocalDate submitDate) {
-        documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
+    /**
+     * 書類取得対象日（提出日）に紐づくドキュメントのステータスを確認して、<br/>
+     * 財務諸表のスクレイピング処理を行う
+     *
+     * @param targetDate 書類取得対象日（提出日）
+     */
+    public void scrape(final LocalDate targetDate) {
+        documentDao.selectByTypeAndSubmitDate("120", targetDate).stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                 .filter(Document::getNotRemoved)
                 .forEach(d -> {
                     if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs()))
-                        scrapeBs(d.getDocumentId(), submitDate);
+                        scrapeBs(d.getDocumentId(), targetDate);
                     if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl()))
-                        scrapePl(d.getDocumentId(), submitDate);
+                        scrapePl(d.getDocumentId(), targetDate);
                     if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares()))
-                        scrapeNs(d.getDocumentId(), submitDate);
+                        scrapeNs(d.getDocumentId(), targetDate);
                 });
-        log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t対象日:{}", submitDate);
+        log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t対象日:{}", targetDate);
     }
 
+    /**
+     * 書類IDに紐づく財務諸表のスクレイピング処理を行う
+     *
+     * @param documentId 書類ID
+     */
     public void scrape(final String documentId) {
-        final var submitDate = documentDao.selectByDocumentId(documentId).getSubmitDate();
-        scrapeBs(documentId, submitDate);
-        scrapePl(documentId, submitDate);
-        scrapeNs(documentId, submitDate);
+        final var targetDate = documentDao.selectByDocumentId(documentId).getSubmitDate();
+        scrapeBs(documentId, targetDate);
+        scrapePl(documentId, targetDate);
+        scrapeNs(documentId, targetDate);
         log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{}", documentId);
     }
 
+    /**
+     * 貸借対照表と損益計算書の処理ステータスが処理中（5）またはエラー（9）の
+     * ドキュメントをステータス初期化する
+     */
     public void resetForRetry() {
         final var documentList = documentDao.selectByDocumentTypeCode("120");
         // 貸借対照表
