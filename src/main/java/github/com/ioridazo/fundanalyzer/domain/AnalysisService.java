@@ -58,6 +58,15 @@ public class AnalysisService {
         this.analysisResultDao = analysisResultDao;
     }
 
+    LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
+    /**
+     * 対象書類の分析結果をデータベースに登録する
+     *
+     * @param documentId 書類ID
+     */
     @Transactional
     public void analyze(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
@@ -68,7 +77,7 @@ public class AnalysisService {
                             companyCode,
                             document.getPeriod(),
                             calculate(companyCode, document.getPeriod()),
-                            LocalDateTime.now()
+                            nowLocalDateTime()
                     )
             );
         } catch (FundanalyzerCalculateException ignored) {
@@ -76,13 +85,18 @@ public class AnalysisService {
         }
     }
 
-    @Transactional
+    /**
+     * 対象書類の分析結果をデータベースに登録する
+     *
+     * @param submitDate 提出日
+     */
     public void analyze(final LocalDate submitDate) {
+        final var companyAll = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");
         final var insurance = industryDao.selectByName("保険業");
-        final var companyAll = companyDao.selectAll();
 
         documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
+                // target company code
                 .filter(document -> companyAll.stream()
                         .filter(company -> document.getEdinetCode().equals(company.getEdinetCode()))
                         .filter(company -> company.getCode().isPresent())
@@ -90,30 +104,24 @@ public class AnalysisService {
                         .filter(company -> !bank.getId().equals(company.getIndustryId()))
                         .anyMatch(company -> !insurance.getId().equals(company.getIndustryId()))
                 )
-                // is analyzed
+                // only not analyze
                 .filter(document -> analysisResultDao.selectByUniqueKey(
                         convertToCompanyCode(document.getEdinetCode(), companyAll), document.getPeriod()
                         ).isEmpty()
                 )
-                .forEach(document -> {
-                    final var companyCode = convertToCompanyCode(document.getEdinetCode(), companyAll);
-                    try {
-                        analysisResultDao.insert(new AnalysisResult(
-                                        null,
-                                        companyCode,
-                                        document.getPeriod(),
-                                        calculate(companyCode, document.getPeriod()),
-                                        LocalDateTime.now()
-                                )
-                        );
-                    } catch (FundanalyzerCalculateException ignored) {
-                        log.info("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
-                    }
-                });
+                .forEach(document -> analyze(document.getDocumentId()));
 
         log.info("すべての企業分析が正常に終了しました。\t対象提出日:{}", submitDate);
     }
 
+    /**
+     * 企業価値を算出する
+     *
+     * @param companyCode 企業コード
+     * @param period      対象年
+     * @return 企業価値
+     * @throws FundanalyzerCalculateException 算出に失敗したとき
+     */
     BigDecimal calculate(final String companyCode, final LocalDate period) throws FundanalyzerCalculateException {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
 
@@ -128,7 +136,7 @@ public class AnalysisService {
         // 営業利益
         final var operatingProfit = plValues(company, PlEnum.OPERATING_PROFIT, period);
         // 株式総数
-        final var numberOfShares = numberOfSharesValue(company, period);
+        final var numberOfShares = nsValue(company, period);
 
         return BigDecimal.valueOf(
                 (
@@ -140,7 +148,15 @@ public class AnalysisService {
         );
     }
 
-    private Long bsValues(final Company company, final BsEnum bsEnum, final LocalDate period) {
+    /**
+     * 貸借対照表の値を取得する
+     *
+     * @param company 会社情報
+     * @param bsEnum  貸借対照表の対象科目
+     * @param period  対象年
+     * @return 科目の値
+     */
+    Long bsValues(final Company company, final BsEnum bsEnum, final LocalDate period) {
         return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
                 .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
@@ -162,7 +178,7 @@ public class AnalysisService {
                     documentDao.update(Document.builder()
                             .documentId(docId)
                             .scrapedBs(DocumentStatus.HALF_WAY.toValue())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(nowLocalDateTime())
                             .build()
                     );
                     log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
@@ -176,7 +192,15 @@ public class AnalysisService {
                 });
     }
 
-    private Long plValues(final Company company, final PlEnum plEnum, final LocalDate period) {
+    /**
+     * 損益計算書の値を取得する
+     *
+     * @param company 会社情報
+     * @param plEnum  損益計算書の対象科目
+     * @param period  対象年
+     * @return 科目の値
+     */
+    Long plValues(final Company company, final PlEnum plEnum, final LocalDate period) {
         return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
                 .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
                 .map(plSubject -> financialStatementDao.selectByUniqueKey(
@@ -198,7 +222,7 @@ public class AnalysisService {
                     documentDao.update(Document.builder()
                             .documentId(docId)
                             .scrapedPl(DocumentStatus.HALF_WAY.toValue())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(nowLocalDateTime())
                             .build()
                     );
                     log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
@@ -212,7 +236,14 @@ public class AnalysisService {
                 });
     }
 
-    private Long numberOfSharesValue(final Company company, final LocalDate period) {
+    /**
+     * 株式総数の値を取得する
+     *
+     * @param company 会社情報
+     * @param period  対象年
+     * @return 株式総数の値
+     */
+    Long nsValue(final Company company, final LocalDate period) {
         return financialStatementDao.selectByUniqueKey(
                 company.getEdinetCode(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
@@ -228,7 +259,7 @@ public class AnalysisService {
                     documentDao.update(Document.builder()
                             .documentId(docId)
                             .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(nowLocalDateTime())
                             .build()
                     );
                     log.warn("  株式総数の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
