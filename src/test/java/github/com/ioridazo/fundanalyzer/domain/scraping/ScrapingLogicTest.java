@@ -394,7 +394,7 @@ class ScrapingLogicTest {
             verify(scrapingLogic, times(0))
                     .insertFinancialStatement(any(), any(), any(), any(), any(), any());
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(0)).update(any());
+            verify(documentDao, times(1)).update(any());
         }
 
         @DisplayName("scrape : スクレイピング処理時にエラー発生したときの処理を確認する")
@@ -620,7 +620,6 @@ class ScrapingLogicTest {
                     Unit.MILLIONS_OF_YEN
             );
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
-
 
             when(htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword()))
                     .thenReturn(List.of(resultBean));
