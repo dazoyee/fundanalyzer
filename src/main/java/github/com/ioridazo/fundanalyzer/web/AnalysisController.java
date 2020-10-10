@@ -48,7 +48,7 @@ public class AnalysisController {
     public String company(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompanyAll());
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 
@@ -178,7 +178,7 @@ public class AnalysisController {
     public String devCompany(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompanyAll());
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 
@@ -224,7 +224,7 @@ public class AnalysisController {
         documentService.company();
         documentService.document("2020-05-22", "120");
 
-        model.addAttribute("companies", viewService.viewCompany(Integer.parseInt(year)));
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 

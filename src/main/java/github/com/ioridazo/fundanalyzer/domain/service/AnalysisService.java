@@ -17,6 +17,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -70,7 +70,7 @@ public class AnalysisService {
     @Transactional
     public void analyze(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
-        final var companyCode = convertToCompanyCode(document.getEdinetCode(), companyDao.selectAll());
+        final var companyCode = Converter.toCompanyCode(document.getEdinetCode(), companyDao.selectAll()).orElseThrow();
         try {
             analysisResultDao.insert(new AnalysisResult(
                             null,
@@ -106,7 +106,7 @@ public class AnalysisService {
                 )
                 // only not analyze
                 .filter(document -> analysisResultDao.selectByUniqueKey(
-                        convertToCompanyCode(document.getEdinetCode(), companyAll), document.getPeriod()
+                        Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(), document.getPeriod()
                         ).isEmpty()
                 )
                 .forEach(document -> analyze(document.getDocumentId()));
@@ -171,7 +171,7 @@ public class AnalysisService {
                 .findAny()
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
-                            convertToEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()),
+                            Converter.toEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                             "120",
                             String.valueOf(period.getYear())
                     ).getDocumentId();
@@ -215,7 +215,7 @@ public class AnalysisService {
                 .findAny()
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
-                            convertToEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()),
+                            Converter.toEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                             "120",
                             String.valueOf(period.getYear())
                     ).getDocumentId();
@@ -252,7 +252,7 @@ public class AnalysisService {
         ).flatMap(FinancialStatement::getValue)
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
-                            convertToEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()),
+                            Converter.toEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                             "120",
                             String.valueOf(period.getYear())
                     ).getDocumentId();
@@ -271,24 +271,5 @@ public class AnalysisService {
                     );
                     throw new FundanalyzerCalculateException();
                 });
-    }
-
-    private String convertToEdinetCode(final String companyCode, final List<Company> companyAll) {
-        return companyAll.stream()
-                .filter(company -> company.getCode().isPresent())
-                .filter(company -> companyCode.equals(company.getCode().get()))
-                .map(Company::getEdinetCode)
-                .findAny()
-                .orElseThrow();
-    }
-
-    private String convertToCompanyCode(final String edinetCode, final List<Company> companyAll) {
-        return companyAll.stream()
-                .filter(company -> company.getCode().isPresent())
-                .filter(company -> edinetCode.equals(company.getEdinetCode()))
-                .map(Company::getCode)
-                .map(Optional::get)
-                .findAny()
-                .orElseThrow();
     }
 }

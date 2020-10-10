@@ -12,6 +12,11 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.util.Converter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -47,134 +53,107 @@ public class ViewService {
         this.stockPriceDao = stockPriceDao;
     }
 
-    public static LocalDate mapToPeriod(final int year) {
-        return LocalDate.of(year, 1, 1);
-    }
-
-    public static Optional<String> codeConverter(final String edinetCode, final List<Company> companyAll) {
-        return companyAll.stream()
-                .filter(company -> edinetCode.equals(company.getEdinetCode()))
-                .map(Company::getCode)
-                .findAny()
-                .orElseThrow();
-    }
-
-    public List<CompanyViewBean> viewCompanyAll() {
-        final var companyList = companyDao.selectAll().stream()
-                .filter(company -> company.getCode().isPresent())
-                .collect(Collectors.toList());
-        final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(LocalDate.now().getYear()));
-        var viewBeanList = new ArrayList<CompanyViewBean>();
-
-        companyList.forEach(company -> {
-            final var corporateValue = resultList.stream()
-                    .filter(analysisResult -> company.getCode().orElseThrow().equals(analysisResult.getCompanyCode()))
-                    .map(AnalysisResult::getCorporateValue)
-                    .findAny()
-                    .orElse(null);
-            final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
-            final var targetDateLatestStockPrice = stockPriceList.stream()
-                    .max(Comparator.comparing(StockPrice::getTargetDate))
-                    .map(StockPrice::getTargetDate).orElse(null);
-            final var latestStockPrice = stockPriceList.stream()
-                    .max(Comparator.comparing(StockPrice::getTargetDate))
-                    .flatMap(StockPrice::getStockPrice)
-                    .map(BigDecimal::valueOf)
-                    .orElse(null);
-
-            viewBeanList.add(new CompanyViewBean(
-                    company.getCode().orElseThrow(),
-                    company.getCompanyName(),
-                    null,
-                    corporateValue,
-                    null,
-                    targetDateLatestStockPrice,
-                    latestStockPrice,
-                    corporateValue != null && latestStockPrice != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
-                    corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : null,
-                    null
-            ));
-        });
-
-        return sortedCompanyAll(viewBeanList);
-    }
-
     public List<CompanyViewBean> viewCompany() {
-        var viewBeanList = new ArrayList<CompanyViewBean>();
-
-        List.of(
-                LocalDate.now().getYear(),
-                LocalDate.now().minusYears(1).getYear()
-        ).forEach(year -> viewBeanList.addAll((viewCompany(year))));
-
-        return sortedCompany(viewBeanList);
-    }
-
-    public List<CompanyViewBean> viewCompany(final int year) {
+        final var companyList = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");
         final var insurance = industryDao.selectByName("保険業");
-        final var companyAll = companyDao.selectAll();
-        final var documentList = documentDao.selectByDocumentTypeCode("120");
-        final var resultList = analysisResultDao.selectByPeriod(mapToPeriod(year));
-        var presentCompanies = new ArrayList<Company>();
-        var viewBeanList = new ArrayList<CompanyViewBean>();
 
-        documentDao.selectByTypeAndPeriod("120", String.valueOf(year)).stream()
-                .map(Document::getEdinetCode)
-                .forEach(edinetCode -> companyAll.stream()
-                        .filter(company -> edinetCode.equals(company.getEdinetCode()))
-                        .filter(company -> company.getCode().isPresent())
-                        // 銀行業、保険業は対象外とする
-                        .filter(company -> !bank.getId().equals(company.getIndustryId()))
-                        .filter(company -> !insurance.getId().equals(company.getIndustryId()))
-                        .findAny()
-                        .ifPresent(presentCompanies::add)
-                );
-
-        presentCompanies.forEach(company -> documentList.stream()
-                .filter(document -> company.getEdinetCode().equals(document.getEdinetCode()))
-                .map(Document::getSubmitDate)
-                .filter(submitDate -> year == submitDate.getYear())
-                .findAny()
-                // 指定対象年に合致する提出日が存在する場合
-                .ifPresent(submitDate -> {
-                    final var corporateValue = resultList.stream()
-                            .filter(ar -> company.getCode().orElseThrow().equals(ar.getCompanyCode()))
-                            .map(AnalysisResult::getCorporateValue)
-                            .findAny()
-                            .orElse(null);
-                    final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
-                    final var targetDateLatestStockPrice = stockPriceList.stream()
-                            .max(Comparator.comparing(StockPrice::getTargetDate))
-                            .map(StockPrice::getTargetDate).orElse(null);
-                    final var latestStockPrice = stockPriceList.stream()
-                            .max(Comparator.comparing(StockPrice::getTargetDate))
-                            .flatMap(StockPrice::getStockPrice)
-                            .map(BigDecimal::valueOf)
-                            .orElse(null);
-
-                    viewBeanList.add(new CompanyViewBean(
-                            company.getCode().map(c -> c.substring(0, 4)).orElseThrow(),
+        return companyList.stream()
+                .filter(company -> company.getCode().isPresent())
+                // 銀行業、保険業は対象外とする
+                .filter(company -> !bank.getId().equals(company.getIndustryId()))
+                .filter(company -> !insurance.getId().equals(company.getIndustryId()))
+                .map(company -> {
+                    final var submitDate = latestSubmitDate(company);
+                    final var corporateValue = corporateValue(company);
+                    final var latestStockPrice = latestStockPrice(company);
+                    return new CompanyViewBean(
+                            company.getCode().get(),
                             company.getCompanyName(),
-                            submitDate,
-                            corporateValue,
-                            stockPriceList.stream()
-                                    .filter(stockPrice -> submitDate.equals(stockPrice.getTargetDate()))
-                                    .map(StockPrice::getStockPrice)
-                                    .map(Optional::get)
-                                    .findAny()
-                                    .map(BigDecimal::valueOf)
-                                    .orElse(null),
-                            targetDateLatestStockPrice,
-                            latestStockPrice,
-                            corporateValue != null && latestStockPrice != null ? corporateValue.subtract(latestStockPrice).setScale(3, RoundingMode.HALF_UP) : null,
-                            corporateValue != null && latestStockPrice != null ? corporateValue.divide(latestStockPrice, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : null,
-                            year
-                    ));
+                            submitDate.orElse(null),
+                            corporateValue.getCorporateValue().orElse(null),
+                            corporateValue.getStandardDeviation().orElse(null),
+                            submitDate.flatMap(sd -> stockPriceOfSubmitDate(company, sd)).orElse(null),
+                            latestStockPrice.getFirst().orElse(null),
+                            latestStockPrice.getSecond().orElse(null),
+                            discountValue(corporateValue.getCorporateValue().orElse(null), latestStockPrice.getSecond().orElse(null)).getFirst().orElse(null),
+                            discountValue(corporateValue.getCorporateValue().orElse(null), latestStockPrice.getSecond().orElse(null)).getSecond().orElse(null),
+                            corporateValue.getCountYear().orElse(null)
+                    );
                 })
-        );
+                // 提出日が存在したら表示する
+                .filter(companyViewBean -> companyViewBean.getSubmitDate() != null)
+                .sorted(Comparator
+                        .comparing(CompanyViewBean::getSubmitDate).reversed()
+                        .thenComparing(CompanyViewBean::getCode)
+                ).collect(Collectors.toList());
+    }
 
-        return sortedCompany(viewBeanList);
+    Optional<LocalDate> latestSubmitDate(final Company company) {
+        return documentDao.selectByDocumentTypeCode("120").stream()
+                .filter(d -> company.getEdinetCode().equals(d.getEdinetCode()))
+                .max(Comparator.comparing(Document::getSubmitDate))
+                .map(Document::getSubmitDate);
+    }
+
+    CorporateValue corporateValue(final Company company) {
+        final var corporateValueList = analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow()).stream()
+                .map(AnalysisResult::getCorporateValue)
+                .map(BigDecimal::doubleValue)
+                .collect(Collectors.toList());
+
+        if (!corporateValueList.isEmpty()) {
+            // 平均値
+            final var average = corporateValueList.stream().mapToDouble(Double::doubleValue).average();
+            if (average.isPresent()) {
+                // 分散
+                final var variance = corporateValueList.stream()
+                        .mapToDouble(Double::doubleValue)
+                        .map(value -> Math.pow(value - average.getAsDouble(), 2.0)) // 2乗
+                        .average();
+                if (variance.isPresent()) {
+                    // 標準偏差
+                    return CorporateValue.of(
+                            BigDecimal.valueOf(average.getAsDouble()),
+                            BigDecimal.valueOf(Math.sqrt(variance.getAsDouble())),
+                            BigDecimal.valueOf(corporateValueList.size())
+                    );
+                }
+            }
+        }
+        return CorporateValue.of();
+    }
+
+    Optional<BigDecimal> stockPriceOfSubmitDate(final Company company, final LocalDate submitDate) {
+        return stockPriceDao.selectByCode(company.getCode().orElseThrow()).stream()
+                .filter(sp -> submitDate.equals(sp.getTargetDate()))
+                .map(StockPrice::getStockPrice)
+                .map(Optional::get)
+                .findAny()
+                .map(BigDecimal::valueOf);
+    }
+
+    Pair<Optional<LocalDate>, Optional<BigDecimal>> latestStockPrice(final Company company) {
+        final var stockPrice = stockPriceDao.selectByCode(company.getCode().orElseThrow()).stream()
+                .max(Comparator.comparing(StockPrice::getTargetDate));
+        return Pair.of(
+                stockPrice.map(StockPrice::getTargetDate),
+                stockPrice.flatMap(StockPrice::getStockPrice).map(BigDecimal::valueOf)
+        );
+    }
+
+    Pair<Optional<BigDecimal>, Optional<BigDecimal>> discountValue(
+            final BigDecimal corporateValue, final BigDecimal latestStockPrice) {
+        try {
+            final var cv = Objects.requireNonNull(corporateValue);
+            final var sp = Objects.requireNonNull(latestStockPrice);
+            return Pair.of(
+                    Optional.of(cv.subtract(sp).setScale(3, RoundingMode.HALF_UP)),
+                    Optional.of(cv.divide(sp, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)))
+            );
+        } catch (NullPointerException e) {
+            return Pair.of(Optional.empty(), Optional.empty());
+        }
     }
 
     public String companyUpdated() {
@@ -220,7 +199,7 @@ public class ViewService {
                 // filter removed
                 .filter(Document::getNotRemoved)
                 // filter companyCode is present
-                .filter(d -> codeConverter(d.getEdinetCode(), companyAll).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), companyAll).isPresent())
                 // filter no bank
                 .filter(d -> companyAll.stream()
                         .filter(company -> d.getEdinetCode().equals(company.getEdinetCode()))
@@ -256,7 +235,7 @@ public class ViewService {
                 // filter analysis is done
                 .filter(d -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        codeConverter(d.getEdinetCode(), companyAll).orElseThrow(),
+                        Converter.toCompanyCode(d.getEdinetCode(), companyAll).orElseThrow(),
                         // period
                         d.getPeriod()
                         ).isPresent()
@@ -267,13 +246,13 @@ public class ViewService {
                 // filter analysis is done
                 .filter(d -> analysisResultDao.selectByUniqueKey(
                         // companyCode
-                        codeConverter(d.getEdinetCode(), companyAll).orElseThrow(),
+                        Converter.toCompanyCode(d.getEdinetCode(), companyAll).orElseThrow(),
                         // period
                         d.getPeriod()
                         ).isEmpty()
                 )
                 .map(Document::getEdinetCode)
-                .map(ec -> codeConverter(ec, companyAll).orElseThrow())
+                .map(ec -> Converter.toCompanyCode(ec, companyAll).orElseThrow())
                 .collect(Collectors.joining("\n"));
 
         // 処理中企業コード
@@ -293,7 +272,7 @@ public class ViewService {
                                 DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
                 )
                 .map(Document::getEdinetCode)
-                .map(ec -> codeConverter(ec, companyAll).orElseThrow())
+                .map(ec -> Converter.toCompanyCode(ec, companyAll).orElseThrow())
                 .collect(Collectors.joining("\n"));
 
         // 未処理件数
@@ -321,7 +300,7 @@ public class ViewService {
                 // list edinetCode
                 .map(Document::getEdinetCode)
                 // filter companyCode is empty
-                .filter(ec -> codeConverter(ec, companyAll).isEmpty())
+                .filter(ec -> Converter.toCompanyCode(ec, companyAll).isEmpty())
                 .count();
 
         return new EdinetListViewBean(
@@ -336,28 +315,13 @@ public class ViewService {
                 countNotTarget);
     }
 
-    private List<CompanyViewBean> sortedCompany(final List<CompanyViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator
-                        .comparing(CompanyViewBean::getSubmitDate).reversed()
-                        .thenComparing(CompanyViewBean::getCode)
-                )
-                .collect(Collectors.toList());
-    }
-
     public List<CompanyViewBean> sortedCompanyByDiscountRate() {
         return viewCompany().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
                 // 100%以上を表示
-                .filter(cvb-> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
                 .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
-                .collect(Collectors.toList());
-    }
-
-    private List<CompanyViewBean> sortedCompanyAll(final List<CompanyViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator.comparing(CompanyViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -365,5 +329,40 @@ public class ViewService {
         return viewBeanList.stream()
                 .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
                 .collect(Collectors.toList());
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Data
+    static class CorporateValue {
+        // 企業価値
+        private BigDecimal corporateValue;
+        // 標準偏差
+        private BigDecimal standardDeviation;
+        // 対象年カウント
+        private BigDecimal countYear;
+
+        public static CorporateValue of() {
+            return new CorporateValue();
+        }
+
+        public static CorporateValue of(
+                final BigDecimal corporateValue,
+                final BigDecimal standardDeviation,
+                final BigDecimal countYear) {
+            return new CorporateValue(corporateValue, standardDeviation, countYear);
+        }
+
+        public Optional<BigDecimal> getCorporateValue() {
+            return Optional.ofNullable(corporateValue);
+        }
+
+        public Optional<BigDecimal> getStandardDeviation() {
+            return Optional.ofNullable(standardDeviation);
+        }
+
+        public Optional<BigDecimal> getCountYear() {
+            return Optional.ofNullable(countYear);
+        }
     }
 }
