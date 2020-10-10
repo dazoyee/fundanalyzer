@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.domain;
+package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.bean.CompanyViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;

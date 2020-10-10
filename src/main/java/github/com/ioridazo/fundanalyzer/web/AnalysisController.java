@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.web;
 
-import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
-import github.com.ioridazo.fundanalyzer.domain.DocumentService;
-import github.com.ioridazo.fundanalyzer.domain.StockService;
-import github.com.ioridazo.fundanalyzer.domain.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.service.StockService;
+import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
