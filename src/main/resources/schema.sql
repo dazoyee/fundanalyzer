@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS document(
 -- 財務諸表
 CREATE TABLE IF NOT EXISTS financial_statement(
   id INT AUTO_INCREMENT,
-  company_code CHAR(5) COMMENT '企業コード' REFERENCES company(code),
+  company_code CHAR(5) COMMENT '企業コード',
   edinet_code CHAR(6) NOT NULL COMMENT 'EDINETコード' REFERENCES company(edinet_code),
   financial_statement_id VARCHAR(10) NOT NULL COMMENT '財務諸表ID',
   subject_id VARCHAR(10) NOT NULL COMMENT '科目ID',
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS financial_statement(
 -- 企業価値
 CREATE TABLE IF NOT EXISTS analysis_result(
   id INT AUTO_INCREMENT,
-  company_code CHAR(5) NOT NULL COMMENT '企業コード' REFERENCES company(code),
+  company_code CHAR(5) NOT NULL COMMENT '企業コード',
   period DATE NOT NULL COMMENT '期間',
   corporate_value FLOAT NOT NULL COMMENT '企業価値',
   created_at DATETIME NOT NULL COMMENT '登録日',
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS analysis_result(
 -- 株価
 CREATE TABLE IF NOT EXISTS stock_price(
   id INT AUTO_INCREMENT,
-  company_code CHAR(5) NOT NULL COMMENT '企業コード' REFERENCES company(code),
+  company_code CHAR(5) NOT NULL COMMENT '企業コード',
   target_date DATE NOT NULL COMMENT '対象日付',
   stock_price FLOAT COMMENT '終値',
   opening_price FLOAT COMMENT '始値',
@@ -167,5 +167,5 @@ CREATE TABLE IF NOT EXISTS stock_price(
   source_of CHAR(1) COMMENT '取得元',
   created_at DATETIME NOT NULL COMMENT '登録日',
   PRIMARY KEY(id),
-  UNIQUE KEY(company_code, target_date, stock_price)
+  UNIQUE KEY(company_code, target_date, source_of)
 );

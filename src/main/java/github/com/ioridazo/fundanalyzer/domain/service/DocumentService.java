@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.domain;
+package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
@@ -256,62 +256,60 @@ public class DocumentService {
                 .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
                 .peek(er -> log.debug("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
-                .forEach(resultsList -> resultsList.forEach(results -> {
-                    Stream.of(results)
-                            .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
-                            .forEach(r -> {
-                                try {
-                                    edinetDocumentDao.insert(EdinetDocument.of(r, nowLocalDateTime()));
-                                } catch (NestedRuntimeException e) {
-                                    if (e.contains(UniqueConstraintException.class)) {
-                                        log.info("一意制約違反のため、データベースへの登録をスキップします。" +
-                                                        "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
-                                                "edinet_document",
-                                                r.getDocId(),
-                                                r.getEdinetCode(),
-                                                r.getFilerName(),
-                                                r.getDocTypeCode()
-                                        );
-                                    }
-                                }
-                                try {
-                                    // 万が一Companyが登録されていない場合には登録する
-                                    r.getEdinetCode().ifPresent(ed -> {
-                                        if (companyDao.selectByEdinetCode(ed).isEmpty()) {
-                                            insertCompanyForSqlForeignKey(ed, r.getFilerName());
-                                        }
-                                    });
-
-                                    documentDao.insert(Document.builder()
-                                            .documentId(r.getDocId())
-                                            .documentTypeCode(r.getDocTypeCode())
-                                            .edinetCode(r.getEdinetCode().orElse(null))
-                                            .period(r.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(r.getPeriodEnd().substring(0, 4)), 1, 1) : null)
-                                            .submitDate(date)
-                                            .createdAt(nowLocalDateTime())
-                                            .updatedAt(nowLocalDateTime())
-                                            .build()
+                .forEach(resultsList -> resultsList.forEach(results -> Stream.of(results)
+                        .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
+                        .forEach(r -> {
+                            try {
+                                edinetDocumentDao.insert(EdinetDocument.of(r, nowLocalDateTime()));
+                            } catch (NestedRuntimeException e) {
+                                if (e.contains(UniqueConstraintException.class)) {
+                                    log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                                    "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
+                                            "edinet_document",
+                                            r.getDocId(),
+                                            r.getEdinetCode(),
+                                            r.getFilerName(),
+                                            r.getDocTypeCode()
                                     );
-                                } catch (NestedRuntimeException e) {
-                                    if (e.contains(UniqueConstraintException.class)) {
-                                        log.info("一意制約違反のため、データベースへの登録をスキップします。" +
-                                                        "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
-                                                "document",
-                                                r.getDocId(),
-                                                r.getEdinetCode(),
-                                                r.getFilerName(),
-                                                r.getDocTypeCode()
-                                        );
-                                    } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                                        log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
-                                        throw new FundanalyzerSqlForeignKeyException(e);
-                                    } else {
-                                        log.error("想定外のエラーが発生しました。", e);
-                                        throw new RuntimeException(e);
-                                    }
                                 }
-                            });
-                }));
+                            }
+                            try {
+                                // 万が一Companyが登録されていない場合には登録する
+                                r.getEdinetCode().ifPresent(ed -> {
+                                    if (companyDao.selectByEdinetCode(ed).isEmpty()) {
+                                        insertCompanyForSqlForeignKey(ed, r.getFilerName());
+                                    }
+                                });
+
+                                documentDao.insert(Document.builder()
+                                        .documentId(r.getDocId())
+                                        .documentTypeCode(r.getDocTypeCode())
+                                        .edinetCode(r.getEdinetCode().orElse(null))
+                                        .period(r.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(r.getPeriodEnd().substring(0, 4)), 1, 1) : null)
+                                        .submitDate(date)
+                                        .createdAt(nowLocalDateTime())
+                                        .updatedAt(nowLocalDateTime())
+                                        .build()
+                                );
+                            } catch (NestedRuntimeException e) {
+                                if (e.contains(UniqueConstraintException.class)) {
+                                    log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                                                    "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
+                                            "document",
+                                            r.getDocId(),
+                                            r.getEdinetCode(),
+                                            r.getFilerName(),
+                                            r.getDocTypeCode()
+                                    );
+                                } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
+                                    log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
+                                    throw new FundanalyzerSqlForeignKeyException(e);
+                                } else {
+                                    log.error("想定外のエラーが発生しました。", e);
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        })));
         log.info("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{}", date);
     }
 
