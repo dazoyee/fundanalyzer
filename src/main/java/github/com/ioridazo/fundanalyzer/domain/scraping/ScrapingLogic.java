@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatemen
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
@@ -227,6 +228,12 @@ public class ScrapingLogic {
                 );
             }
         } else {
+            documentDao.update(Document.builder()
+                    .documentId(documentId)
+                    .removed(Flag.ON.toValue())
+                    .updatedAt(nowLocalDateTime())
+                    .build()
+            );
             log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
                             "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
                     company.getCode().orElseThrow(),

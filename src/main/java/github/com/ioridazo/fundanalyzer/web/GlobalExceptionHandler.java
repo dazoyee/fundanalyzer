@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web;
 
-import github.com.ioridazo.fundanalyzer.domain.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;

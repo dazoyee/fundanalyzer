@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.web;
 
-import github.com.ioridazo.fundanalyzer.domain.AnalysisService;
-import github.com.ioridazo.fundanalyzer.domain.DocumentService;
-import github.com.ioridazo.fundanalyzer.domain.StockService;
-import github.com.ioridazo.fundanalyzer.domain.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.service.StockService;
+import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,7 +48,7 @@ public class AnalysisController {
     public String company(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompanyAll());
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 
@@ -178,7 +178,7 @@ public class AnalysisController {
     public String devCompany(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompanyAll());
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 
@@ -224,7 +224,7 @@ public class AnalysisController {
         documentService.company();
         documentService.document("2020-05-22", "120");
 
-        model.addAttribute("companies", viewService.viewCompany(Integer.parseInt(year)));
+        model.addAttribute("companies", viewService.viewCompany());
         return "index";
     }
 

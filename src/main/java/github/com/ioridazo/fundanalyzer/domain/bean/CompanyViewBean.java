@@ -21,6 +21,9 @@ public class CompanyViewBean {
     // 企業価値
     private final BigDecimal corporateValue;
 
+    // 標準偏差
+    private final BigDecimal standardDeviation;
+
     // 提出日株価
     private final BigDecimal stockPriceOfSubmitDate;
 
@@ -36,6 +39,6 @@ public class CompanyViewBean {
     // 割安度
     private final BigDecimal discountRate;
 
-    // 対象年
-    private final Integer period;
+    // 対象年カウント
+    private final BigDecimal countYear;
 }

@@ -19,6 +19,9 @@ public interface AnalysisResultDao {
     Optional<AnalysisResult> selectByUniqueKey(final String companyCode, final LocalDate period);
 
     @Select
+    List<AnalysisResult> selectByCompanyCode(final String code);
+
+    @Select
     List<AnalysisResult> selectByPeriod(final LocalDate period);
 
     @Insert

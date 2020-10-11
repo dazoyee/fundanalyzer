@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.domain;
+package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
@@ -54,13 +54,13 @@ public class StockService {
                         final var stockPriceList = stockPriceDao.selectByCode(code);
 
                         // 日経
-                        if (isNotInserted(code, nikkei.getTargetDate(), stockPriceList)) {
+                        if (isNotInserted(nikkei.getTargetDate(), stockPriceList)) {
                             insertStockPrice(code, nikkei);
                         }
 
                         // kabuoji3
                         kabuoji3List.forEach(kabuoji3 -> {
-                            if (isNotInserted(code, kabuoji3.getTargetDate(), stockPriceList)) {
+                            if (isNotInserted(kabuoji3.getTargetDate(), stockPriceList)) {
                                 insertStockPrice(code, kabuoji3);
                             }
                         });
@@ -117,7 +117,7 @@ public class StockService {
         ));
     }
 
-    private boolean isNotInserted(final String code, final String targetDateAsString, List<StockPrice> stockPriceList) {
+    private boolean isNotInserted(final String targetDateAsString, final List<StockPrice> stockPriceList) {
         final LocalDate targetDate;
         if (targetDateAsString.contains("/")) {
             targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
