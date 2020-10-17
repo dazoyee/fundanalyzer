@@ -124,6 +124,17 @@ public class AnalysisController {
     }
 
     /**
+     * すべての企業情報を表示する
+     *
+     * @return Index
+     */
+    @GetMapping("fundanalyzer/v1/index/all")
+    public String indexAll(final Model model) {
+        model.addAttribute("companies", viewService.viewCompanyAll());
+        return "index";
+    }
+
+    /**
      * EDINETから提出書類一覧を取得する
      *
      * @param fromDate 提出日
@@ -137,7 +148,7 @@ public class AnalysisController {
     }
 
     /**
-     * すべてのリストを参照する
+     * すべてのEDINETリストを表示する
      *
      * @param model model
      * @return EdinetList
