@@ -1,15 +1,23 @@
 package github.com.ioridazo.fundanalyzer.domain.bean;
 
 import lombok.Value;
+import org.seasar.doma.Column;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Id;
+import org.seasar.doma.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
-public class CompanyViewBean {
+@Entity(immutable = true)
+@Table(name = "corporate_view")
+public class CorporateViewBean {
 
     // 証券コード
+    @Id
     private final String code;
 
     // 会社名
@@ -41,4 +49,9 @@ public class CompanyViewBean {
 
     // 対象年カウント
     private final BigDecimal countYear;
+
+    @Column(updatable = false)
+    private final LocalDateTime createdAt;
+
+    private final LocalDateTime updatedAt;
 }

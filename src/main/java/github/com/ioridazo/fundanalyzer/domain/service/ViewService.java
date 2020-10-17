@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.domain.bean.CompanyViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
@@ -16,8 +17,11 @@ import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -31,6 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ViewService {
 
@@ -39,18 +44,25 @@ public class ViewService {
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
     private final StockPriceDao stockPriceDao;
+    private final CorporateViewDao corporateViewDao;
 
     public ViewService(
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
             final AnalysisResultDao analysisResultDao,
-            final StockPriceDao stockPriceDao) {
+            final StockPriceDao stockPriceDao,
+            final CorporateViewDao corporateViewDao) {
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
         this.stockPriceDao = stockPriceDao;
+        this.corporateViewDao = corporateViewDao;
+    }
+
+    LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
     }
 
     /**
@@ -58,8 +70,8 @@ public class ViewService {
      *
      * @return 会社一覧
      */
-    public List<CompanyViewBean> viewCompany() {
-        return sortedCompanyList(getCompanyViewBean().stream()
+    public List<CorporateViewBean> viewCompany() {
+        return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
                 // 100%以上を表示
@@ -72,8 +84,8 @@ public class ViewService {
      *
      * @return 会社一覧
      */
-    public List<CompanyViewBean> viewCompanyAll() {
-        return sortedCompanyList(getCompanyViewBean());
+    public List<CorporateViewBean> viewCompanyAll() {
+        return sortedCompanyList(getCorporateViewBeanList());
     }
 
     /**
@@ -81,25 +93,38 @@ public class ViewService {
      *
      * @return ソート後のリスト
      */
-    public List<CompanyViewBean> sortedCompanyByDiscountRate() {
-        return getCompanyViewBean().stream()
+    public List<CorporateViewBean> sortedCompanyByDiscountRate() {
+        return getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
                 // 100%以上を表示
                 .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
-                .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
+                .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
 
-    private List<CompanyViewBean> getCompanyViewBean() {
-        return companyAllTargeted().stream()
+    private List<CorporateViewBean> getCorporateViewBeanList() {
+        return corporateViewDao.selectAll().stream()
+                // 提出日が存在したら表示する
+                .filter(corporateViewBean -> corporateViewBean.getSubmitDate() != null)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 非同期で表示するリストをアップデートする
+     */
+    @Async
+    @Transactional
+    public void updateCorporateView() {
+        final var beanAllList = corporateViewDao.selectAll();
+        companyAllTargeted().stream()
                 .map(company -> {
                     final var submitDate = latestSubmitDate(company);
                     final var corporateValue = corporateValue(company);
                     final var stockPrice = submitDate.map(sd -> stockPrice(company, sd)).orElse(StockPriceValue.of());
                     final var discountValue = discountValue(corporateValue.getCorporateValue().orElse(null), stockPrice.getLatestStockPrice().orElse(null));
-                    return new CompanyViewBean(
-                            company.getCode().orElseThrow(),
+                    return new CorporateViewBean(
+                            company.getCode().orElseThrow().substring(0, 4),
                             company.getCompanyName(),
                             submitDate.orElse(null),
                             corporateValue.getCorporateValue().orElse(null),
@@ -109,12 +134,22 @@ public class ViewService {
                             stockPrice.getLatestStockPrice().orElse(null),
                             discountValue.getFirst().orElse(null),
                             discountValue.getSecond().orElse(null),
-                            corporateValue.getCountYear().orElse(null)
+                            corporateValue.getCountYear().orElse(null),
+                            nowLocalDateTime(),
+                            nowLocalDateTime()
                     );
                 })
-                // 提出日が存在したら表示する
-                .filter(companyViewBean -> companyViewBean.getSubmitDate() != null)
-                .collect(Collectors.toList());
+                .forEach(corporateViewBean -> {
+                    final var match = beanAllList.stream()
+                            .map(CorporateViewBean::getCode)
+                            .anyMatch(corporateViewBean.getCode()::equals);
+                    if (match) {
+                        corporateViewDao.update(corporateViewBean);
+                    } else {
+                        corporateViewDao.insert(corporateViewBean);
+                    }
+                });
+        log.info("表示アップデートが正常に終了しました。");
     }
 
     /**
@@ -385,11 +420,11 @@ public class ViewService {
                 .collect(Collectors.toList());
     }
 
-    private List<CompanyViewBean> sortedCompanyList(final List<CompanyViewBean> viewBeanList) {
+    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
         return viewBeanList.stream()
                 .sorted(Comparator
-                        .comparing(CompanyViewBean::getSubmitDate).reversed()
-                        .thenComparing(CompanyViewBean::getCode))
+                        .comparing(CorporateViewBean::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewBean::getCode))
                 .collect(Collectors.toList());
     }
 

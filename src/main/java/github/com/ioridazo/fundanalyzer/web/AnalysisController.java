@@ -68,6 +68,7 @@ public class AnalysisController {
                     analysisService.analyze(date);
                     stockService.importStockPrice(date);
                 });
+        viewService.updateCorporateView();
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -81,6 +82,7 @@ public class AnalysisController {
     public String scrapeByDate(final String date) {
         documentService.scrape(LocalDate.parse(date));
         analysisService.analyze(LocalDate.parse(date));
+        viewService.updateCorporateView();
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -94,6 +96,7 @@ public class AnalysisController {
     public String scrapeById(final String documentId) {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
+        viewService.updateCorporateView();
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -109,6 +112,7 @@ public class AnalysisController {
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(stockService::importStockPrice);
+        viewService.updateCorporateView();
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -217,6 +221,7 @@ public class AnalysisController {
     public String devDocument(@PathVariable String date, final Model model) {
         documentService.company();
         documentService.document(date, "120");
+        viewService.updateCorporateView();
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";
@@ -234,6 +239,7 @@ public class AnalysisController {
     public String viewCompany(@PathVariable String year, final Model model) {
         documentService.company();
         documentService.document("2020-05-22", "120");
+        viewService.updateCorporateView();
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";
@@ -245,6 +251,7 @@ public class AnalysisController {
         documentService.document(date, "120");
         analysisService.analyze(LocalDate.parse(date));
         stockService.importStockPrice(LocalDate.parse(date));
+        viewService.updateCorporateView();
 
         model.addAttribute("companies", viewService.viewCompany());
         return "index";

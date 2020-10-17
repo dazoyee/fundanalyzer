@@ -1,5 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
@@ -24,11 +26,15 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ViewServiceTest {
@@ -38,6 +44,7 @@ class ViewServiceTest {
     private DocumentDao documentDao;
     private AnalysisResultDao analysisResultDao;
     private StockPriceDao stockPriceDao;
+    private CorporateViewDao corporateViewDao;
 
     private ViewService service;
 
@@ -48,22 +55,24 @@ class ViewServiceTest {
         documentDao = Mockito.mock(DocumentDao.class);
         analysisResultDao = Mockito.mock(AnalysisResultDao.class);
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        corporateViewDao = mock(CorporateViewDao.class);
 
         service = Mockito.spy(new ViewService(
                 industryDao,
                 companyDao,
                 documentDao,
                 analysisResultDao,
-                stockPriceDao
+                stockPriceDao,
+                corporateViewDao
         ));
     }
 
     @Nested
-    class viewCompany {
+    class updateCorporateView {
 
         @DisplayName("viewCompany : 表示リストに格納する処理を確認する")
         @Test
-        void viewCompany_ok() {
+        void updateCorporateView_ok() {
             var company = new Company(
                     "code",
                     "会社名",
@@ -77,6 +86,7 @@ class ViewServiceTest {
                     null
             );
             var submitDate = LocalDate.parse("2019-10-11");
+            var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
@@ -90,22 +100,25 @@ class ViewServiceTest {
             ).when(service).stockPrice(company, submitDate);
             doReturn(Pair.of(Optional.of(BigDecimal.valueOf(1000)), Optional.of(BigDecimal.valueOf(200))))
                     .when(service).discountValue(any(), any());
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
 
-            var actual = service.viewCompany();
+            assertDoesNotThrow(() -> service.updateCorporateView());
 
-            assertAll("CompanyViewBean",
-                    () -> assertEquals("code", actual.get(0).getCode()),
-                    () -> assertEquals("会社名", actual.get(0).getName()),
-                    () -> assertEquals(LocalDate.parse("2019-10-11"), actual.get(0).getSubmitDate()),
-                    () -> assertEquals(BigDecimal.valueOf(2000), actual.get(0).getCorporateValue()),
-                    () -> assertEquals(BigDecimal.valueOf(10), actual.get(0).getStandardDeviation()),
-                    () -> assertEquals(BigDecimal.valueOf(900), actual.get(0).getStockPriceOfSubmitDate()),
-                    () -> assertEquals(LocalDate.parse("2020-10-11"), actual.get(0).getImportDate()),
-                    () -> assertEquals(BigDecimal.valueOf(1000), actual.get(0).getLatestStockPrice()),
-                    () -> assertEquals(BigDecimal.valueOf(1000), actual.get(0).getDiscountValue()),
-                    () -> assertEquals(BigDecimal.valueOf(200), actual.get(0).getDiscountRate()),
-                    () -> assertEquals(BigDecimal.valueOf(3), actual.get(0).getCountYear())
-            );
+            verify(corporateViewDao, times(1)).insert(new CorporateViewBean(
+                    "code",
+                    "会社名",
+                    LocalDate.parse("2019-10-11"),
+                    BigDecimal.valueOf(2000),
+                    BigDecimal.valueOf(10),
+                    BigDecimal.valueOf(900),
+                    LocalDate.parse("2020-10-11"),
+                    BigDecimal.valueOf(1000),
+                    BigDecimal.valueOf(1000),
+                    BigDecimal.valueOf(200),
+                    BigDecimal.valueOf(3),
+                    createdAt,
+                    createdAt
+            ));
         }
 
         @DisplayName("latestSubmitDate : 対象の書類が存在したときの処理を確認する")
