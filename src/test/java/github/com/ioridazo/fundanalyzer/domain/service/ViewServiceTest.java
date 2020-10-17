@@ -181,7 +181,7 @@ class ViewServiceTest {
             var actual = service.corporateValue(company);
 
             assertAll("CorporateValue",
-                    () -> assertEquals(BigDecimal.valueOf(1000.0), actual.getCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(100000, 2), actual.getCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(100.0), actual.getStandardDeviation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
             );
@@ -312,13 +312,13 @@ class ViewServiceTest {
         @DisplayName("discountValue : 割安値が算出されることを確認する")
         @Test
         void discountValue_ok() {
-            var corporateValue = BigDecimal.valueOf(2000.0);
+            var corporateValue = BigDecimal.valueOf(2132.0512495);
             var latestStockPrice = BigDecimal.valueOf(1000.0);
 
             var actual = service.discountValue(corporateValue, latestStockPrice);
 
-            assertEquals(BigDecimal.valueOf(1000000, 3), actual.getFirst().orElseThrow());
-            assertEquals(BigDecimal.valueOf(200.0), actual.getSecond().orElseThrow());
+            assertEquals(BigDecimal.valueOf(1132.05), actual.getFirst().orElseThrow());
+            assertEquals(BigDecimal.valueOf(213.205), actual.getSecond().orElseThrow());
         }
 
         @DisplayName("discountValue : 割安値を算出しないときの処理を確認する")
@@ -331,6 +331,67 @@ class ViewServiceTest {
 
             assertNull(actual.getFirst().orElse(null));
             assertNull(actual.getSecond().orElse(null));
+        }
+    }
+
+    @Nested
+    class corporateValue {
+
+        @DisplayName("corporateValue : 企業価値を算出するロジックを確認する")
+        @Test
+        void corporateValue_scale() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(500.250515), null);
+
+            when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1));
+
+            var actual = service.corporateValue(company);
+
+            assertAll("CorporateValue",
+                    () -> assertEquals(BigDecimal.valueOf(500.25), actual.getCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(0, 1), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(1), actual.getCountYear().orElseThrow())
+            );
+        }
+
+        @DisplayName("corporateValue : 企業価値を算出するロジックを確認する")
+        @Test
+        void corporateValue_sd() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(500.250515), null);
+            var analysisResult2 = new AnalysisResult(2, "code", null, BigDecimal.valueOf(418.02101), null);
+
+            when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
+
+            var actual = service.corporateValue(company);
+
+            assertAll("CorporateValue",
+                    () -> assertEquals(BigDecimal.valueOf(459.14), actual.getCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(41.115), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
+            );
         }
     }
 

@@ -20,6 +20,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,20 +54,52 @@ public class ViewService {
     }
 
     /**
-     * 企業価値等を算出して表示する
+     * 企業価値等を算出して一定以上を表示する
      *
      * @return 会社一覧
      */
     public List<CompanyViewBean> viewCompany() {
+        return sortedCompanyList(getCompanyViewBean().stream()
+                // not null
+                .filter(cvb -> cvb.getDiscountRate() != null)
+                // 100%以上を表示
+                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+                .collect(Collectors.toList()));
+    }
+
+    /**
+     * 企業価値等を算出してすべてを表示する
+     *
+     * @return 会社一覧
+     */
+    public List<CompanyViewBean> viewCompanyAll() {
+        return sortedCompanyList(getCompanyViewBean());
+    }
+
+    /**
+     * 企業価値等を割安度でソートする
+     *
+     * @return ソート後のリスト
+     */
+    public List<CompanyViewBean> sortedCompanyByDiscountRate() {
+        return getCompanyViewBean().stream()
+                // not null
+                .filter(cvb -> cvb.getDiscountRate() != null)
+                // 100%以上を表示
+                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+                .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private List<CompanyViewBean> getCompanyViewBean() {
         return companyAllTargeted().stream()
                 .map(company -> {
                     final var submitDate = latestSubmitDate(company);
                     final var corporateValue = corporateValue(company);
                     final var stockPrice = submitDate.map(sd -> stockPrice(company, sd)).orElse(StockPriceValue.of());
                     final var discountValue = discountValue(corporateValue.getCorporateValue().orElse(null), stockPrice.getLatestStockPrice().orElse(null));
-                    //noinspection OptionalGetWithoutIsPresent
                     return new CompanyViewBean(
-                            company.getCode().get(),
+                            company.getCode().orElseThrow(),
                             company.getCompanyName(),
                             submitDate.orElse(null),
                             corporateValue.getCorporateValue().orElse(null),
@@ -81,9 +114,6 @@ public class ViewService {
                 })
                 // 提出日が存在したら表示する
                 .filter(companyViewBean -> companyViewBean.getSubmitDate() != null)
-                .sorted(Comparator
-                        .comparing(CompanyViewBean::getSubmitDate).reversed()
-                        .thenComparing(CompanyViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -109,29 +139,29 @@ public class ViewService {
     CorporateValue corporateValue(final Company company) {
         final var corporateValueList = analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow()).stream()
                 .map(AnalysisResult::getCorporateValue)
-                .map(BigDecimal::doubleValue)
                 .collect(Collectors.toList());
 
         if (!corporateValueList.isEmpty()) {
             // 平均値
-            final var average = corporateValueList.stream().mapToDouble(Double::doubleValue).average();
-            if (average.isPresent()) {
-                // 分散
-                final var variance = corporateValueList.stream()
-                        .mapToDouble(Double::doubleValue)
-                        .map(value -> Math.pow(value - average.getAsDouble(), 2.0)) // 2乗
-                        .average();
-                if (variance.isPresent()) {
-                    // 標準偏差
-                    return CorporateValue.of(
-                            BigDecimal.valueOf(average.getAsDouble()),
-                            BigDecimal.valueOf(Math.sqrt(variance.getAsDouble())),
-                            BigDecimal.valueOf(corporateValueList.size())
-                    );
-                }
-            }
+            final var average = corporateValueList.stream()
+                    // sum
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    // average
+                    .divide(BigDecimal.valueOf(corporateValueList.size()), 2, RoundingMode.HALF_UP);
+            // 標準偏差
+            final var standardDeviation = corporateValueList.stream()
+                    // (value - average) ^2
+                    .map(value -> value.subtract(average).pow(2))
+                    // sum
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    // average
+                    .divide(BigDecimal.valueOf(corporateValueList.size()), 3, RoundingMode.HALF_UP)
+                    // sqrt
+                    .sqrt(new MathContext(5, RoundingMode.HALF_UP));
+            return CorporateValue.of(average, standardDeviation, BigDecimal.valueOf(corporateValueList.size()));
+        } else {
+            return CorporateValue.of();
         }
-        return CorporateValue.of();
     }
 
     /**
@@ -176,8 +206,8 @@ public class ViewService {
             final var cv = Objects.requireNonNull(corporateValue);
             final var sp = Objects.requireNonNull(latestStockPrice);
             return Pair.of(
-                    Optional.of(cv.subtract(sp).setScale(3, RoundingMode.HALF_UP)),
-                    Optional.of(cv.divide(sp, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)))
+                    Optional.of(cv.subtract(sp).abs(new MathContext(6))),
+                    Optional.of(cv.divide(sp, 5, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).setScale(3, RoundingMode.HALF_UP))
             );
         } catch (NullPointerException e) {
             return Pair.of(Optional.empty(), Optional.empty());
@@ -204,7 +234,7 @@ public class ViewService {
      * @return 処理状況リスト
      */
     public List<EdinetListViewBean> edinetList(final String documentTypeCode) {
-        final var viewBeanList = edinetListAll(documentTypeCode);
+        final var viewBeanList = getEdinetList(documentTypeCode);
         viewBeanList.removeIf(
                 el -> el.getCountTarget().equals(el.getCountScraped()) &&
                         el.getCountTarget().equals(el.getCountAnalyzed())
@@ -219,8 +249,12 @@ public class ViewService {
      * @return 処理状況リスト
      */
     public List<EdinetListViewBean> edinetListAll(final String documentTypeCode) {
+        return sortedEdinetList(getEdinetList(documentTypeCode));
+    }
+
+    private List<EdinetListViewBean> getEdinetList(final String documentTypeCode) {
         final var documentList = documentDao.selectByDocumentTypeCode(documentTypeCode);
-        return sortedEdinetList(documentList.stream()
+        return documentList.stream()
                 // 提出日ごとに件数をカウントする
                 .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
                 // map -> stream
@@ -230,7 +264,7 @@ public class ViewService {
                         documentList,
                         companyAllTargeted()
                 ))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
     }
 
     private EdinetListViewBean counter(
@@ -338,21 +372,6 @@ public class ViewService {
         );
     }
 
-    /**
-     * 企業価値等を割安度でソートする
-     *
-     * @return ソート後のリスト
-     */
-    public List<CompanyViewBean> sortedCompanyByDiscountRate() {
-        return viewCompany().stream()
-                // not null
-                .filter(cvb -> cvb.getDiscountRate() != null)
-                // 100%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
-                .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
-                .collect(Collectors.toList());
-    }
-
     private List<Company> companyAllTargeted() {
         final var companyList = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");
@@ -363,6 +382,14 @@ public class ViewService {
                 // 銀行業、保険業は対象外とする
                 .filter(company -> !bank.getId().equals(company.getIndustryId()))
                 .filter(company -> !insurance.getId().equals(company.getIndustryId()))
+                .collect(Collectors.toList());
+    }
+
+    private List<CompanyViewBean> sortedCompanyList(final List<CompanyViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator
+                        .comparing(CompanyViewBean::getSubmitDate).reversed()
+                        .thenComparing(CompanyViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
