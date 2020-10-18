@@ -33,14 +33,14 @@ public class AnalysisController {
 
     @GetMapping("fundanalyzer/v1/index")
     public String index(final Model model) {
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
     @GetMapping("fundanalyzer/v1/edinet/list")
     public String edinetList(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 
@@ -48,7 +48,7 @@ public class AnalysisController {
     public String company(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
@@ -69,6 +69,7 @@ public class AnalysisController {
                     stockService.importStockPrice(date);
                 });
         viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -83,6 +84,7 @@ public class AnalysisController {
         documentService.scrape(LocalDate.parse(date));
         analysisService.analyze(LocalDate.parse(date));
         viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -97,6 +99,7 @@ public class AnalysisController {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
         viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -123,7 +126,7 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
     public String sortedDiscountRate(final Model model) {
-        model.addAttribute("companies", viewService.sortedCompanyByDiscountRate());
+        model.addAttribute("companies", viewService.sortByDiscountRate());
         return "index";
     }
 
@@ -134,7 +137,7 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index/all")
     public String indexAll(final Model model) {
-        model.addAttribute("companies", viewService.viewCompanyAll());
+        model.addAttribute("companies", viewService.corporateViewAll());
         return "index";
     }
 
@@ -160,7 +163,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/edinet/list/all")
     public String edinetListAll(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListAll("120"));
+        model.addAttribute("edinetList", viewService.edinetListViewAll());
         return "edinet";
     }
 
@@ -176,7 +179,7 @@ public class AnalysisController {
 
         model.addAttribute("message", "更新しました");
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 
@@ -185,7 +188,7 @@ public class AnalysisController {
     @GetMapping("/edinet/list")
     public String devEdinetList(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 
@@ -193,28 +196,8 @@ public class AnalysisController {
     public String devCompany(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
-    }
-
-    @GetMapping("/edinet/list/{date}")
-    public String documentList(@PathVariable String date, final Model model) {
-        documentService.company();
-        documentService.edinetList(LocalDate.parse(date));
-
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
-        return "edinet";
-    }
-
-    @GetMapping("/edinet/list/{fromDate}/{toDate}")
-    public String document(@PathVariable String fromDate, @PathVariable String toDate, final Model model) {
-        documentService.company();
-        documentService.edinetList(fromDate, toDate);
-
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
-        return "edinet";
     }
 
     @GetMapping("/scrape/{date}")
@@ -223,7 +206,7 @@ public class AnalysisController {
         documentService.document(date, "120");
         viewService.updateCorporateView();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
@@ -231,7 +214,7 @@ public class AnalysisController {
     public String devResetStatus(final Model model) {
         documentService.resetForRetry();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
@@ -241,7 +224,7 @@ public class AnalysisController {
         documentService.document("2020-05-22", "120");
         viewService.updateCorporateView();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
@@ -252,8 +235,9 @@ public class AnalysisController {
         analysisService.analyze(LocalDate.parse(date));
         stockService.importStockPrice(LocalDate.parse(date));
         viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 }

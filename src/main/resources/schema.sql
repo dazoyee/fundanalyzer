@@ -188,3 +188,20 @@ create TABLE IF NOT EXISTS corporate_view(
   PRIMARY KEY(code),
   UNIQUE KEY(code)
 );
+
+-- EDINET処理一覧
+create TABLE IF NOT EXISTS edinet_list_view(
+  submit_date DATE NOT NULL COMMENT '提出日',
+  count_all INT NOT NULL COMMENT '総件数',
+  count_target INT NOT NULL COMMENT '処理対象件数',
+  count_scraped INT NOT NULL COMMENT '処理済件数',
+  count_analyzed INT NOT NULL COMMENT '分析済件数',
+  cant_scraped_code VARCHAR(100) COMMENT '未分析コード',
+  not_analyzed_code VARCHAR(100) COMMENT '処理確認コード',
+  count_not_scraped INT NOT NULL COMMENT '未処理件数',
+  count_not_target INT NOT NULL COMMENT '対象外件数',
+  created_at DATETIME NOT NULL COMMENT '登録日',
+  updated_at DATETIME NOT NULL COMMENT '更新日',
+  PRIMARY KEY(submit_date),
+  UNIQUE KEY(submit_date)
+);

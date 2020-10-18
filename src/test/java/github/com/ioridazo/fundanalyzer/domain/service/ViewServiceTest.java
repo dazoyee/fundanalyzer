@@ -2,6 +2,8 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
@@ -32,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,6 +46,7 @@ class ViewServiceTest {
     private AnalysisResultDao analysisResultDao;
     private StockPriceDao stockPriceDao;
     private CorporateViewDao corporateViewDao;
+    private EdinetListViewDao edinetListViewDao;
 
     private ViewService service;
 
@@ -55,7 +57,8 @@ class ViewServiceTest {
         documentDao = Mockito.mock(DocumentDao.class);
         analysisResultDao = Mockito.mock(AnalysisResultDao.class);
         stockPriceDao = Mockito.mock(StockPriceDao.class);
-        corporateViewDao = mock(CorporateViewDao.class);
+        corporateViewDao = Mockito.mock(CorporateViewDao.class);
+        edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
 
         service = Mockito.spy(new ViewService(
                 industryDao,
@@ -63,14 +66,15 @@ class ViewServiceTest {
                 documentDao,
                 analysisResultDao,
                 stockPriceDao,
-                corporateViewDao
+                corporateViewDao,
+                edinetListViewDao
         ));
     }
 
     @Nested
-    class updateCorporateView {
+    class corporateView {
 
-        @DisplayName("viewCompany : 表示リストに格納する処理を確認する")
+        @DisplayName("updateCorporateView : 表示リストに格納する処理を確認する")
         @Test
         void updateCorporateView_ok() {
             var company = new Company(
@@ -439,11 +443,11 @@ class ViewServiceTest {
     }
 
     @Nested
-    class edinetList {
+    class edinetListView {
 
-        @DisplayName("edinetListAll : 処理状況の表示ができることを確認する")
+        @DisplayName("updateEdinetList : 処理状況の表示ができることを確認する")
         @Test
-        void edinetListAll_ok() {
+        void updateEdinetList_ok() {
             var documentTypeCode = "120";
             final var document1 = Document.builder()
                     .edinetCode("edinetCode")
@@ -475,36 +479,42 @@ class ViewServiceTest {
                     null,
                     null
             );
+            var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
             when(documentDao.selectByDocumentTypeCode(documentTypeCode)).thenReturn(List.of(document1, document2));
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
 
-            final var actual = service.edinetListAll(documentTypeCode);
+            assertDoesNotThrow(() -> service.updateEdinetListView("120"));
 
-            assertAll("EdinetListViewBean",
-                    () -> assertAll(
-                            () -> assertEquals(LocalDate.parse("2020-10-11"), actual.get(0).getSubmitDate()),
-                            () -> assertEquals(Long.valueOf(1), actual.get(0).getCountAll()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(0).getCountTarget()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(0).getCountScraped()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(0).getCountAnalyzed()),
-                            () -> assertEquals("", actual.get(0).getNotAnalyzedCode()),
-                            () -> assertEquals("", actual.get(0).getCantScrapedCode()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(0).getCountNotScraped()),
-                            () -> assertEquals(Long.valueOf(1), actual.get(0).getCountNotTarget())),
-                    () -> assertAll(
-                            () -> assertEquals(LocalDate.parse("2020-10-10"), actual.get(1).getSubmitDate()),
-                            () -> assertEquals(Long.valueOf(1), actual.get(1).getCountAll()),
-                            () -> assertEquals(Long.valueOf(1), actual.get(1).getCountTarget()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(1).getCountScraped()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(1).getCountAnalyzed()),
-                            () -> assertEquals("", actual.get(1).getNotAnalyzedCode()),
-                            () -> assertEquals("", actual.get(1).getCantScrapedCode()),
-                            () -> assertEquals(Long.valueOf(1), actual.get(1).getCountNotScraped()),
-                            () -> assertEquals(Long.valueOf(0), actual.get(1).getCountNotTarget()))
-            );
+            verify(edinetListViewDao, times(1)).insert(new EdinetListViewBean(
+                    LocalDate.parse("2020-10-11"),
+                    1L,
+                    0L,
+                    0L,
+                    0L,
+                    "",
+                    "",
+                    0L,
+                    1L,
+                    createdAt,
+                    createdAt
+            ));
+            verify(edinetListViewDao, times(1)).insert(new EdinetListViewBean(
+                    LocalDate.parse("2020-10-10"),
+                    1L,
+                    1L,
+                    0L,
+                    0L,
+                    "",
+                    "",
+                    1L,
+                    0L,
+                    createdAt,
+                    createdAt
+            ));
         }
     }
 }

@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
@@ -45,6 +46,7 @@ public class ViewService {
     private final AnalysisResultDao analysisResultDao;
     private final StockPriceDao stockPriceDao;
     private final CorporateViewDao corporateViewDao;
+    private final EdinetListViewDao edinetListViewDao;
 
     public ViewService(
             final IndustryDao industryDao,
@@ -52,13 +54,15 @@ public class ViewService {
             final DocumentDao documentDao,
             final AnalysisResultDao analysisResultDao,
             final StockPriceDao stockPriceDao,
-            final CorporateViewDao corporateViewDao) {
+            final CorporateViewDao corporateViewDao,
+            final EdinetListViewDao edinetListViewDao) {
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
         this.stockPriceDao = stockPriceDao;
         this.corporateViewDao = corporateViewDao;
+        this.edinetListViewDao = edinetListViewDao;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -70,7 +74,7 @@ public class ViewService {
      *
      * @return 会社一覧
      */
-    public List<CorporateViewBean> viewCompany() {
+    public List<CorporateViewBean> corporateView() {
         return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
@@ -84,7 +88,7 @@ public class ViewService {
      *
      * @return 会社一覧
      */
-    public List<CorporateViewBean> viewCompanyAll() {
+    public List<CorporateViewBean> corporateViewAll() {
         return sortedCompanyList(getCorporateViewBeanList());
     }
 
@@ -93,7 +97,7 @@ public class ViewService {
      *
      * @return ソート後のリスト
      */
-    public List<CorporateViewBean> sortedCompanyByDiscountRate() {
+    public List<CorporateViewBean> sortByDiscountRate() {
         return getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
@@ -265,11 +269,10 @@ public class ViewService {
     /**
      * 処理状況を表示するためのリストを取得する
      *
-     * @param documentTypeCode 書類種別コード
      * @return 処理状況リスト
      */
-    public List<EdinetListViewBean> edinetList(final String documentTypeCode) {
-        final var viewBeanList = getEdinetList(documentTypeCode);
+    public List<EdinetListViewBean> edinetListview() {
+        final var viewBeanList = edinetListViewDao.selectAll();
         viewBeanList.removeIf(
                 el -> el.getCountTarget().equals(el.getCountScraped()) &&
                         el.getCountTarget().equals(el.getCountAnalyzed())
@@ -280,26 +283,43 @@ public class ViewService {
     /**
      * すべての処理状況を表示するためのリストを取得する
      *
-     * @param documentTypeCode 書類種別コード
      * @return 処理状況リスト
      */
-    public List<EdinetListViewBean> edinetListAll(final String documentTypeCode) {
-        return sortedEdinetList(getEdinetList(documentTypeCode));
+    public List<EdinetListViewBean> edinetListViewAll() {
+        return sortedEdinetList(edinetListViewDao.selectAll());
     }
 
-    private List<EdinetListViewBean> getEdinetList(final String documentTypeCode) {
+    /**
+     * 非同期で表示する処理状況リストをアップデートする
+     *
+     * @param documentTypeCode 書類種別コード
+     */
+    @Async
+    @Transactional
+    public void updateEdinetListView(final String documentTypeCode) {
+        final var beanAllList = edinetListViewDao.selectAll();
         final var documentList = documentDao.selectByDocumentTypeCode(documentTypeCode);
-        return documentList.stream()
+        documentList.stream()
                 // 提出日ごとに件数をカウントする
                 .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
                 // map -> stream
                 .entrySet()
                 .stream().map(localDateLongEntry -> counter(localDateLongEntry.getKey(),
-                        localDateLongEntry.getValue(),
-                        documentList,
-                        companyAllTargeted()
-                ))
-                .collect(Collectors.toList());
+                localDateLongEntry.getValue(),
+                documentList,
+                companyAllTargeted()
+        ))
+                .forEach(edinetListViewBean -> {
+                    final var match = beanAllList.stream()
+                            .map(EdinetListViewBean::getSubmitDate)
+                            .anyMatch(edinetListViewBean.getSubmitDate()::equals);
+                    if (match) {
+                        edinetListViewDao.update(edinetListViewBean);
+                    } else {
+                        edinetListViewDao.insert(edinetListViewBean);
+                    }
+                });
+        log.info("処理状況アップデートが正常に終了しました。");
     }
 
     private EdinetListViewBean counter(
@@ -403,7 +423,10 @@ public class ViewService {
                         ).count(),
 
                 // 対象外件数
-                countAll - targetList.size()
+                countAll - targetList.size(),
+
+                nowLocalDateTime(),
+                nowLocalDateTime()
         );
     }
 
