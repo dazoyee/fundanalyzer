@@ -133,6 +133,7 @@ public class ViewService {
                             submitDate.orElse(null),
                             corporateValue.getCorporateValue().orElse(null),
                             corporateValue.getStandardDeviation().orElse(null),
+                            corporateValue.getCoefficientOfVariation().orElse(null),
                             stockPrice.getStockPriceOfSubmitDate().orElse(null),
                             stockPrice.getImportDate().orElse(null),
                             stockPrice.getLatestStockPrice().orElse(null),
@@ -197,7 +198,9 @@ public class ViewService {
                     .divide(BigDecimal.valueOf(corporateValueList.size()), 3, RoundingMode.HALF_UP)
                     // sqrt
                     .sqrt(new MathContext(5, RoundingMode.HALF_UP));
-            return CorporateValue.of(average, standardDeviation, BigDecimal.valueOf(corporateValueList.size()));
+            // 変動係数
+            final var coefficientOfVariation = standardDeviation.divide(average, 3, RoundingMode.HALF_UP);
+            return CorporateValue.of(average, standardDeviation, coefficientOfVariation, BigDecimal.valueOf(corporateValueList.size()));
         } else {
             return CorporateValue.of();
         }
@@ -465,6 +468,8 @@ public class ViewService {
         private BigDecimal corporateValue;
         // 標準偏差
         private BigDecimal standardDeviation;
+        // 変動係数
+        private BigDecimal coefficientOfVariation;
         // 対象年カウント
         private BigDecimal countYear;
 
@@ -475,8 +480,9 @@ public class ViewService {
         public static CorporateValue of(
                 final BigDecimal corporateValue,
                 final BigDecimal standardDeviation,
+                final BigDecimal coefficientOfVariation,
                 final BigDecimal countYear) {
-            return new CorporateValue(corporateValue, standardDeviation, countYear);
+            return new CorporateValue(corporateValue, standardDeviation, coefficientOfVariation, countYear);
         }
 
         public Optional<BigDecimal> getCorporateValue() {
@@ -485,6 +491,10 @@ public class ViewService {
 
         public Optional<BigDecimal> getStandardDeviation() {
             return Optional.ofNullable(standardDeviation);
+        }
+
+        public Optional<BigDecimal> getCoefficientOfVariation() {
+            return Optional.ofNullable(coefficientOfVariation);
         }
 
         public Optional<BigDecimal> getCountYear() {

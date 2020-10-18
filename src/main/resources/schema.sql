@@ -177,6 +177,7 @@ create TABLE IF NOT EXISTS corporate_view(
   submit_date DATE COMMENT '提出日',
   corporate_value FLOAT COMMENT '企業価値',
   standard_deviation FLOAT COMMENT '標準偏差',
+  coefficient_of_variation FLOAT COMMENT '変動係数',
   stock_price_of_submit_date FLOAT COMMENT '提出日株価',
   import_date DATE COMMENT '株価取得日',
   latest_stock_price FLOAT COMMENT '最新株価',

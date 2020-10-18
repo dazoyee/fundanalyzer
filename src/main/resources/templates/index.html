@@ -41,6 +41,7 @@
         <th>提出日</th>
         <th>企業価値</th>
         <th>標準偏差</th>
+        <th>変動係数</th>
         <th>提出日株価</th>
         <th>株価取得日</th>
         <th>最新株価</th>
@@ -56,6 +57,7 @@
         <td th:text="${company.submitDate}">提出日</td>
         <td th:text="${company.corporateValue}">企業価値</td>
         <td th:text="${company.standardDeviation}">標準偏差</td>
+        <td th:text="${company.coefficientOfVariation}">変動係数</td>
         <td th:text="${company.stockPriceOfSubmitDate}">提出日株価</td>
         <td th:text="${company.importDate}">株価取得日</td>
         <td th:text="${company.latestStockPrice}">最新株価</td>

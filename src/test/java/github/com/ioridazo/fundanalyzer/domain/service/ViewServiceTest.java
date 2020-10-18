@@ -97,7 +97,7 @@ class ViewServiceTest {
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
             doReturn(Optional.of(submitDate)).when(service).latestSubmitDate(company);
             doReturn(ViewService.CorporateValue.of(
-                    BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(3)
+                    BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(0.1), BigDecimal.valueOf(3)
             )).when(service).corporateValue(company);
             doReturn(ViewService.StockPriceValue.of(
                     BigDecimal.valueOf(900), LocalDate.parse("2020-10-11"), BigDecimal.valueOf(1000))
@@ -114,6 +114,7 @@ class ViewServiceTest {
                     LocalDate.parse("2019-10-11"),
                     BigDecimal.valueOf(2000),
                     BigDecimal.valueOf(10),
+                    BigDecimal.valueOf(0.1),
                     BigDecimal.valueOf(900),
                     LocalDate.parse("2020-10-11"),
                     BigDecimal.valueOf(1000),
@@ -200,6 +201,7 @@ class ViewServiceTest {
             assertAll("CorporateValue",
                     () -> assertEquals(BigDecimal.valueOf(100000, 2), actual.getCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(100.0), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(100, 3), actual.getCoefficientOfVariation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
             );
         }
@@ -378,6 +380,7 @@ class ViewServiceTest {
             assertAll("CorporateValue",
                     () -> assertEquals(BigDecimal.valueOf(500.25), actual.getCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(0, 1), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(0, 3), actual.getCoefficientOfVariation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(1), actual.getCountYear().orElseThrow())
             );
         }
@@ -407,6 +410,7 @@ class ViewServiceTest {
             assertAll("CorporateValue",
                     () -> assertEquals(BigDecimal.valueOf(459.14), actual.getCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(41.115), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(90, 3), actual.getCoefficientOfVariation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
             );
         }

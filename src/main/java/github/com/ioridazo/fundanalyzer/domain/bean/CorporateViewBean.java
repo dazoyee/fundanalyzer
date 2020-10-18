@@ -32,6 +32,9 @@ public class CorporateViewBean {
     // 標準偏差
     private final BigDecimal standardDeviation;
 
+    // 変動係数
+    private final BigDecimal coefficientOfVariation;
+
     // 提出日株価
     private final BigDecimal stockPriceOfSubmitDate;
 
