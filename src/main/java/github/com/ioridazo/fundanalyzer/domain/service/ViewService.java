@@ -15,6 +15,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
+import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 @Service
 public class ViewService {
 
+    private final SlackProxy slackProxy;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
@@ -49,6 +51,7 @@ public class ViewService {
     private final EdinetListViewDao edinetListViewDao;
 
     public ViewService(
+            final SlackProxy slackProxy,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
@@ -56,6 +59,7 @@ public class ViewService {
             final StockPriceDao stockPriceDao,
             final CorporateViewDao corporateViewDao,
             final EdinetListViewDao edinetListViewDao) {
+        this.slackProxy = slackProxy;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
@@ -154,6 +158,7 @@ public class ViewService {
                         corporateViewDao.insert(corporateViewBean);
                     }
                 });
+        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete");
         log.info("表示アップデートが正常に終了しました。");
     }
 
@@ -270,6 +275,28 @@ public class ViewService {
     }
 
     /**
+     * 処理結果をSlackに通知する
+     *
+     * @param submitDate 対象提出日
+     */
+    public void notice(final LocalDate submitDate) {
+        final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
+        groupBySubmitDate(documentList).forEach(el -> {
+            if (el.getCountTarget().equals(el.getCountScraped()) &&
+                    el.getCountTarget().equals(el.getCountAnalyzed())) {
+                // info message
+                slackProxy.sendMessage(
+                        "g.c.i.f.domain.service.ViewService.processing.notice.info",
+                        el.getSubmitDate(), el.getCountTarget());
+            } else {
+                // warn message
+                slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
+                        el.getSubmitDate(), el.getCountTarget(), el.getCountNotScraped());
+            }
+        });
+    }
+
+    /**
      * 処理状況を表示するためのリストを取得する
      *
      * @return 処理状況リスト
@@ -302,16 +329,7 @@ public class ViewService {
     public void updateEdinetListView(final String documentTypeCode) {
         final var beanAllList = edinetListViewDao.selectAll();
         final var documentList = documentDao.selectByDocumentTypeCode(documentTypeCode);
-        documentList.stream()
-                // 提出日ごとに件数をカウントする
-                .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
-                // map -> stream
-                .entrySet()
-                .stream().map(localDateLongEntry -> counter(localDateLongEntry.getKey(),
-                localDateLongEntry.getValue(),
-                documentList,
-                companyAllTargeted()
-        ))
+        groupBySubmitDate(documentList)
                 .forEach(edinetListViewBean -> {
                     final var match = beanAllList.stream()
                             .map(EdinetListViewBean::getSubmitDate)
@@ -323,6 +341,19 @@ public class ViewService {
                     }
                 });
         log.info("処理状況アップデートが正常に終了しました。");
+    }
+
+    private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
+        return documentList.stream()
+                // 提出日ごとに件数をカウントする
+                .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
+                // map -> stream
+                .entrySet()
+                .stream().map(localDateLongEntry -> counter(localDateLongEntry.getKey(),
+                        localDateLongEntry.getValue(),
+                        documentList,
+                        companyAllTargeted()
+                )).collect(Collectors.toList());
     }
 
     private EdinetListViewBean counter(

@@ -14,6 +14,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.when;
 
 class ViewServiceTest {
 
+    private SlackProxy slackProxy;
     private IndustryDao industryDao;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
@@ -52,6 +55,7 @@ class ViewServiceTest {
 
     @BeforeEach
     void before() {
+        slackProxy = Mockito.mock(SlackProxy.class);
         industryDao = Mockito.mock(IndustryDao.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
@@ -61,6 +65,7 @@ class ViewServiceTest {
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
 
         service = Mockito.spy(new ViewService(
+                slackProxy,
                 industryDao,
                 companyDao,
                 documentDao,
@@ -447,13 +452,55 @@ class ViewServiceTest {
     }
 
     @Nested
+    class notice {
+
+        @DisplayName("notice : slack通知処理されることを確認する")
+        @Test
+        void notice_ok() {
+            var documentTypeCode = "120";
+            var submitDate = LocalDate.parse("2020-11-01");
+            var document1 = Document.builder()
+                    .edinetCode("ec")
+                    .documentTypeCode("120")
+                    .submitDate(LocalDate.parse("2020-11-01"))
+                    .scrapedNumberOfShares("0")
+                    .scrapedBs("0")
+                    .scrapedPl("0")
+                    .removed("0")
+                    .build();
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(List.of(document1));
+            when(companyDao.selectAll()).thenReturn(List.of(company));
+            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+
+            assertDoesNotThrow(() -> service.notice(submitDate));
+
+            verify(slackProxy, times(1)).sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info", submitDate, 0L);
+            verify(slackProxy, times(0)).sendMessage(eq("g.c.i.f.domain.service.ViewService.processing.notice.warn"), any());
+        }
+    }
+
+    @Nested
     class edinetListView {
 
         @DisplayName("updateEdinetList : 処理状況の表示ができることを確認する")
         @Test
         void updateEdinetList_ok() {
             var documentTypeCode = "120";
-            final var document1 = Document.builder()
+            var document1 = Document.builder()
                     .edinetCode("edinetCode")
                     .documentTypeCode("120")
                     .submitDate(LocalDate.parse("2020-10-10"))
@@ -462,7 +509,7 @@ class ViewServiceTest {
                     .scrapedPl("0")
                     .removed("0")
                     .build();
-            final var document2 = Document.builder()
+            var document2 = Document.builder()
                     .edinetCode("ec")
                     .documentTypeCode("120")
                     .submitDate(LocalDate.parse("2020-10-11"))

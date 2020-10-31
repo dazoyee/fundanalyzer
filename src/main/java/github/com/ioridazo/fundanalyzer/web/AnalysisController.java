@@ -67,6 +67,7 @@ public class AnalysisController {
                     documentService.document(date.toString(), "120");
                     analysisService.analyze(date);
                     stockService.importStockPrice(date);
+                    viewService.notice(date);
                 });
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
@@ -234,6 +235,7 @@ public class AnalysisController {
         documentService.document(date, "120");
         analysisService.analyze(LocalDate.parse(date));
         stockService.importStockPrice(LocalDate.parse(date));
+//        viewService.notice(LocalDate.parse(date));
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
 
