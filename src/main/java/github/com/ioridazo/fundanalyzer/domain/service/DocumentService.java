@@ -58,8 +58,8 @@ public class DocumentService {
     private final DocumentDao documentDao;
 
     public DocumentService(
-            @Value("${settings.file.path.company}") final String pathCompany,
-            @Value("${settings.file.path.decode}") final String pathDecode,
+            @Value("${app.settings.file.path.company}") final String pathCompany,
+            @Value("${app.settings.file.path.decode}") final String pathDecode,
             final EdinetProxy proxy,
             final CsvCommander csvCommander,
             final ScrapingLogic scrapingLogic,

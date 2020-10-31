@@ -12,7 +12,7 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate(
             final RestTemplateBuilder builder,
-            @Value("${edinet.api}") final String rootUri
+            @Value("${app.api.edinet}") final String rootUri
     ) {
         return builder
                 .rootUri(rootUri)
