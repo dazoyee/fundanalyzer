@@ -26,8 +26,11 @@ public class CorporateViewBean {
     // 提出日
     private final LocalDate submitDate;
 
-    // 企業価値
-    private final BigDecimal corporateValue;
+    // 最新企業価値
+    private final BigDecimal latestCorporateValue;
+
+    // 平均企業価値
+    private final BigDecimal averageCorporateValue;
 
     // 標準偏差
     private final BigDecimal standardDeviation;
@@ -35,8 +38,8 @@ public class CorporateViewBean {
     // 変動係数
     private final BigDecimal coefficientOfVariation;
 
-    // 提出日株価
-    private final BigDecimal stockPriceOfSubmitDate;
+    // 提出日株価平均
+    private final BigDecimal averageStockPrice;
 
     // 株価取得日
     private final LocalDate importDate;

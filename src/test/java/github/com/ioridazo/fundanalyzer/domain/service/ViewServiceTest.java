@@ -102,7 +102,7 @@ class ViewServiceTest {
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
             doReturn(Optional.of(submitDate)).when(service).latestSubmitDate(company);
             doReturn(ViewService.CorporateValue.of(
-                    BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(0.1), BigDecimal.valueOf(3)
+                    BigDecimal.valueOf(2100), BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(0.1), BigDecimal.valueOf(3)
             )).when(service).corporateValue(company);
             doReturn(ViewService.StockPriceValue.of(
                     BigDecimal.valueOf(900), LocalDate.parse("2020-10-11"), BigDecimal.valueOf(1000))
@@ -117,6 +117,7 @@ class ViewServiceTest {
                     "code",
                     "会社名",
                     LocalDate.parse("2019-10-11"),
+                    BigDecimal.valueOf(2100),
                     BigDecimal.valueOf(2000),
                     BigDecimal.valueOf(10),
                     BigDecimal.valueOf(0.1),
@@ -196,15 +197,16 @@ class ViewServiceTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(1100), null);
-            var analysisResult2 = new AnalysisResult(2, "code", null, BigDecimal.valueOf(900), null);
+            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null);
+            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 
             var actual = service.corporateValue(company);
 
             assertAll("CorporateValue",
-                    () -> assertEquals(BigDecimal.valueOf(100000, 2), actual.getCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(110000, 2), actual.getLatestCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(100000, 2), actual.getAverageCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(100.0), actual.getStandardDeviation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(100, 3), actual.getCoefficientOfVariation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
@@ -232,7 +234,8 @@ class ViewServiceTest {
             var actual = service.corporateValue(company);
 
             assertAll("CorporateValue",
-                    () -> assertNull(actual.getCorporateValue().orElse(null)),
+                    () -> assertNull(actual.getLatestCorporateValue().orElse(null)),
+                    () -> assertNull(actual.getAverageCorporateValue().orElse(null)),
                     () -> assertNull(actual.getStandardDeviation().orElse(null)),
                     () -> assertNull(actual.getCountYear().orElse(null))
             );
@@ -254,11 +257,49 @@ class ViewServiceTest {
                     null
             );
             var submitDate = LocalDate.parse("2020-10-08");
-            var stockPriceOfSubmitDate = new StockPrice(
+            var stockPrice1 = new StockPrice(
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-07"),
+                    (double) 700,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var stockPrice2 = new StockPrice(
                     null,
                     null,
                     LocalDate.parse("2020-10-08"),
-                    (double) 1000,
+                    (double) 800,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var stockPrice3 = new StockPrice(
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-09"),
+                    (double) 900,
                     null,
                     null,
                     null,
@@ -276,8 +317,8 @@ class ViewServiceTest {
             var latestStockPrice = new StockPrice(
                     null,
                     null,
-                    LocalDate.parse("2020-10-09"),
-                    (double) 1001,
+                    LocalDate.parse("2020-10-10"),
+                    (double) 1000,
                     null,
                     null,
                     null,
@@ -293,14 +334,14 @@ class ViewServiceTest {
                     null
             );
 
-            when(stockPriceDao.selectByCode("code")).thenReturn(List.of(stockPriceOfSubmitDate, latestStockPrice));
+            when(stockPriceDao.selectByCode("code")).thenReturn(List.of(stockPrice1, stockPrice2, stockPrice3, latestStockPrice));
 
             var actual = service.stockPrice(company, submitDate);
 
             assertAll("StockPriceValue",
-                    () -> assertEquals(BigDecimal.valueOf(1000.0), actual.getStockPriceOfSubmitDate().orElseThrow()),
-                    () -> assertEquals(LocalDate.parse("2020-10-09"), actual.getImportDate().orElseThrow()),
-                    () -> assertEquals(BigDecimal.valueOf(1001.0), actual.getLatestStockPrice().orElseThrow())
+                    () -> assertEquals(BigDecimal.valueOf(75000, 2), actual.getAverageStockPrice().orElseThrow()),
+                    () -> assertEquals(LocalDate.parse("2020-10-10"), actual.getImportDate().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(1000.0), actual.getLatestStockPrice().orElseThrow())
             );
         }
 
@@ -327,7 +368,7 @@ class ViewServiceTest {
             var actual = service.stockPrice(company, submitDate);
 
             assertAll("StockPriceValue",
-                    () -> assertNull(actual.getStockPriceOfSubmitDate().orElse(null)),
+                    () -> assertNull(actual.getAverageStockPrice().orElse(null)),
                     () -> assertNull(actual.getImportDate().orElse(null)),
                     () -> assertNull(actual.getLatestStockPrice().orElse(null))
             );
@@ -383,7 +424,8 @@ class ViewServiceTest {
             var actual = service.corporateValue(company);
 
             assertAll("CorporateValue",
-                    () -> assertEquals(BigDecimal.valueOf(500.25), actual.getCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(500.25), actual.getLatestCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(500.25), actual.getAverageCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(0, 1), actual.getStandardDeviation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(0, 3), actual.getCoefficientOfVariation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(1), actual.getCountYear().orElseThrow())
@@ -405,15 +447,16 @@ class ViewServiceTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(500.250515), null);
-            var analysisResult2 = new AnalysisResult(2, "code", null, BigDecimal.valueOf(418.02101), null);
+            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), null);
+            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 
             var actual = service.corporateValue(company);
 
             assertAll("CorporateValue",
-                    () -> assertEquals(BigDecimal.valueOf(459.14), actual.getCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(500.25), actual.getLatestCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(459.14), actual.getAverageCorporateValue().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(41.115), actual.getStandardDeviation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(90, 3), actual.getCoefficientOfVariation().orElseThrow()),
                     () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
