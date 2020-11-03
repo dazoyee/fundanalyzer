@@ -1,8 +1,8 @@
 spring:
   profiles:
     # マージ前にテスト確認！！！
-    active: dev
-#      active: prod
+#    active: dev
+      active: prod
   application:
     name: fundanalyzer
 
