@@ -4,6 +4,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.core.env.Environment;
@@ -29,9 +30,12 @@ class SlackProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new SlackProxy(
-                String.format("http://localhost:%s/test-slack", server.getPort()),
+                String.format("http://localhost:%s", server.getPort()),
                 environment
         ));
+        proxy.parameterT = "t";
+        proxy.parameterB = "b";
+        proxy.parameterX = "x";
 
         Mockito.clearInvocations(proxy);
         Mockito.reset(proxy);
@@ -40,6 +44,25 @@ class SlackProxyTest {
     @AfterEach
     void after() throws IOException {
         server.shutdown();
+    }
+
+    @Disabled("テスト送信のため")
+    @Test
+    void sendMessage_tester() {
+        var propertyPath = "property.path";
+
+        this.proxy = new SlackProxy(
+                "https://hooks.slack.com",
+                environment
+        );
+        proxy.parameterT = "TKN2V6NQ4";
+        proxy.parameterB = "B01DFHHPE07";
+        proxy.parameterX = "";
+
+        server.enqueue(new MockResponse());
+        doReturn("*tester*").when(environment).getProperty(propertyPath);
+
+        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
     }
 
     @Test
@@ -53,7 +76,7 @@ class SlackProxyTest {
 
         var recordedRequest = server.takeRequest();
         assertAll("request",
-                () -> assertEquals("/test-slack", recordedRequest.getPath()),
+                () -> assertEquals("/services/t/b/x", recordedRequest.getPath()),
                 () -> assertEquals("POST", recordedRequest.getMethod()),
                 () -> assertEquals(MediaType.APPLICATION_JSON_VALUE, recordedRequest.getHeader("Content-Type")),
                 () -> assertEquals("{\"text\": \"*message*\"}", recordedRequest.getBody().readUtf8())
@@ -74,7 +97,7 @@ class SlackProxyTest {
 
         var recordedRequest = server.takeRequest();
         assertAll("request",
-                () -> assertEquals("/test-slack", recordedRequest.getPath()),
+                () -> assertEquals("/services/t/b/x", recordedRequest.getPath()),
                 () -> assertEquals("POST", recordedRequest.getMethod()),
                 () -> assertEquals(MediaType.APPLICATION_JSON_VALUE, recordedRequest.getHeader("Content-Type")),
                 () -> assertEquals("{\"text\": \"nowLocalDataTime\t*message, arguments1, arguments2*\"}", recordedRequest.getBody().readUtf8())
