@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -40,7 +41,7 @@ public class StockService {
         this.stockPriceDao = stockPriceDao;
     }
 
-    public void importStockPrice(final LocalDate date) {
+    public CompletableFuture<Void> importStockPrice(final LocalDate date) {
         documentDao.selectByTypeAndSubmitDate("120", date).stream()
                 .map(Document::getEdinetCode)
                 .map(this::convertToCompanyCode)
@@ -69,6 +70,7 @@ public class StockService {
                     }
                 });
         log.info("最新の株価を正常に取り込みました。\t対象書類提出日:{}", date);
+        return null;
     }
 
     @Transactional

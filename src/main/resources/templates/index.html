@@ -8,6 +8,9 @@
 </head>
 <body>
 <h1>会社一覧</h1>
+<form method="get" th:action="@{/fundanalyzer/v1/update/view}">
+    <button type="submit" class="btn">update view</button>
+</form>
 <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
     <input type="date" name="fromDate"/> ～
     <input type="date" name="toDate"/>

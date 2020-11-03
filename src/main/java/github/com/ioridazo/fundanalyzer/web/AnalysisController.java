@@ -64,11 +64,25 @@ public class AnalysisController {
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(date -> {
-                    documentService.document(date.toString(), "120");
-                    analysisService.analyze(date);
-                    stockService.importStockPrice(date);
-                    viewService.notice(date);
+                    // execute実行
+                    documentService.execute(date.toString(), "120")
+                            // execute完了後、analyze実行
+                            .thenAcceptAsync(unused -> analysisService.analyze(date))
+                            // analyze完了後、importStockPrice実行
+                            .thenAcceptAsync(unused -> stockService.importStockPrice(date))
+                            // importStockPrice完了後、notice実行
+                            .thenAcceptAsync(unused -> viewService.notice(date));
                 });
+        return "redirect:/fundanalyzer/v1/index";
+    }
+
+    /**
+     * 表示をアップデートする
+     *
+     * @return Index
+     */
+    @PostMapping("fundanalyzer/v1/update/view")
+    public String updateView() {
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
@@ -204,8 +218,8 @@ public class AnalysisController {
     @GetMapping("/scrape/{date}")
     public String devDocument(@PathVariable String date, final Model model) {
         documentService.company();
-        documentService.document(date, "120");
-        viewService.updateCorporateView();
+        documentService.execute(date, "120")
+                .thenRunAsync(viewService::updateCorporateView);
 
         model.addAttribute("companies", viewService.corporateView());
         return "index";
@@ -222,8 +236,8 @@ public class AnalysisController {
     @GetMapping("/view/company/{year}")
     public String viewCompany(@PathVariable String year, final Model model) {
         documentService.company();
-        documentService.document("2020-05-22", "120");
-        viewService.updateCorporateView();
+        documentService.execute("2020-05-22", "120")
+                .thenRunAsync(viewService::updateCorporateView);
 
         model.addAttribute("companies", viewService.corporateView());
         return "index";
@@ -232,12 +246,20 @@ public class AnalysisController {
     @GetMapping("/scrape/analysis/{date}")
     public String scrapeAndAnalyze(@PathVariable String date, final Model model) {
         documentService.company();
-        documentService.document(date, "120");
-        analysisService.analyze(LocalDate.parse(date));
-        stockService.importStockPrice(LocalDate.parse(date));
-//        viewService.notice(LocalDate.parse(date));
-        viewService.updateCorporateView();
-        viewService.updateEdinetListView("120");
+
+        // execute実行
+        documentService.execute(date, "120")
+                // execute完了後、analyze実行
+                .thenRunAsync(() -> analysisService.analyze(LocalDate.parse(date)))
+                // analyze完了後、importStockPrice実行
+                .thenRunAsync(() -> stockService.importStockPrice(LocalDate.parse(date)))
+                // importStockPrice完了後、notice実行
+                .thenRunAsync(() -> viewService.notice(LocalDate.parse(date)))
+                // notice完了後、update実行
+                .thenRunAsync(() -> {
+                    viewService.updateCorporateView();
+                    viewService.updateEdinetListView("120");
+                });
 
         model.addAttribute("companies", viewService.corporateView());
         return "index";

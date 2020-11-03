@@ -35,6 +35,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -158,7 +159,7 @@ public class ViewService {
                         corporateViewDao.insert(corporateViewBean);
                     }
                 });
-        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete");
+        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
         log.info("表示アップデートが正常に終了しました。");
     }
 
@@ -279,7 +280,7 @@ public class ViewService {
      *
      * @param submitDate 対象提出日
      */
-    public void notice(final LocalDate submitDate) {
+    public CompletableFuture<Void> notice(final LocalDate submitDate) {
         final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
         groupBySubmitDate(documentList).forEach(el -> {
             if (el.getCountTarget().equals(el.getCountScraped()) &&
@@ -290,10 +291,12 @@ public class ViewService {
                         el.getSubmitDate(), el.getCountTarget());
             } else {
                 // warn message
-                slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
+                slackProxy.sendMessage(
+                        "g.c.i.f.domain.service.ViewService.processing.notice.warn",
                         el.getSubmitDate(), el.getCountTarget(), el.getCountNotScraped());
             }
         });
+        return null;
     }
 
     /**
@@ -340,6 +343,7 @@ public class ViewService {
                         edinetListViewDao.insert(edinetListViewBean);
                     }
                 });
+        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
         log.info("処理状況アップデートが正常に終了しました。");
     }
 
