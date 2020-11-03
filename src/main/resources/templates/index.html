@@ -8,6 +8,9 @@
 </head>
 <body>
 <h1>会社一覧</h1>
+<form method="get" th:action="@{/fundanalyzer/v1/update/view}">
+    <button type="submit" class="btn">update view</button>
+</form>
 <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
     <input type="date" name="fromDate"/> ～
     <input type="date" name="toDate"/>
@@ -39,13 +42,14 @@
         <th>コード</th>
         <th>会社名</th>
         <th>提出日</th>
-        <th>企業価値</th>
+        <th>最新企業価値</th>
+        <th>平均企業価値</th>
         <th>標準偏差</th>
-        <th>提出日株価</th>
+        <th>変動係数</th>
+        <th>提出日株価平均</th>
         <th>株価取得日</th>
         <th>最新株価</th>
-        <th>割安値</th>
-        <th class="warning">割安比率</th>
+        <th>割安比率</th>
         <th>対象年数</th>
     </tr>
     </thead>
@@ -54,12 +58,13 @@
         <td th:text="${company.code}">証券コード</td>
         <td th:text="${company.name}">会社名</td>
         <td th:text="${company.submitDate}">提出日</td>
-        <td th:text="${company.corporateValue}">企業価値</td>
+        <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+        <td th:text="${company.averageCorporateValue}">平均企業価値</td>
         <td th:text="${company.standardDeviation}">標準偏差</td>
-        <td th:text="${company.stockPriceOfSubmitDate}">提出日株価</td>
+        <td th:text="${company.coefficientOfVariation}">変動係数</td>
+        <td th:text="${company.averageStockPrice}">提出日株価平均</td>
         <td th:text="${company.importDate}">株価取得日</td>
         <td th:text="${company.latestStockPrice}">最新株価</td>
-        <td th:text="${company.discountValue}">割安値</td>
         <td th:text="${company.discountRate}">割安比率</td>
         <td th:text="${company.countYear}">対象年数</td>
     </tr>

@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,8 +60,8 @@ public class DocumentService {
     private final DocumentDao documentDao;
 
     public DocumentService(
-            @Value("${settings.file.path.company}") final String pathCompany,
-            @Value("${settings.file.path.decode}") final String pathDecode,
+            @Value("${app.settings.file.path.company}") final String pathCompany,
+            @Value("${app.settings.file.path.decode}") final String pathDecode,
             final EdinetProxy proxy,
             final CsvCommander csvCommander,
             final ScrapingLogic scrapingLogic,
@@ -160,7 +162,8 @@ public class DocumentService {
      * @param date             書類取得対象日（提出日）
      * @param documentTypeCode 書類種別コード
      */
-    public void document(final String date, final String documentTypeCode) {
+    @Async
+    public CompletableFuture<Void> execute(final String date, final String documentTypeCode) {
         // 書類リストをデータベースに登録する
         edinetList(LocalDate.parse(date));
 
@@ -212,6 +215,7 @@ public class DocumentService {
 
             log.info("{}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
         }
+        return null;
     }
 
     /**

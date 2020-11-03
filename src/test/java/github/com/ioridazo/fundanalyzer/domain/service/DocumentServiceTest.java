@@ -16,7 +16,6 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.scraping.ScrapingLogic;
-import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
@@ -236,11 +235,11 @@ class DocumentServiceTest {
     }
 
     @Nested
-    class document {
+    class execute {
 
-        @DisplayName("document: 一連処理が正常に処理されることを確認する")
+        @DisplayName("execute: 一連処理が正常に処理されることを確認する")
         @Test
-        void document_ok() {
+        void execute_ok() {
             var date = "2020-09-19";
             var documentTypeCode = "120";
 
@@ -301,7 +300,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.document(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
 
             verify(service, times(1)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(1))
@@ -312,9 +311,9 @@ class DocumentServiceTest {
                     .scrape(eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES), eq("documentId1"), eq(LocalDate.parse(date)), eq(null));
         }
 
-        @DisplayName("document: 対象が存在しないときの処理を確認する")
+        @DisplayName("execute: 対象が存在しないときの処理を確認する")
         @Test
-        void document_isEmpty() {
+        void execute_isEmpty() {
             var date = "2020-09-19";
             var documentTypeCode = "120";
 
@@ -346,7 +345,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.document(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
 
             verify(service, times(0)).store(any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
@@ -354,9 +353,9 @@ class DocumentServiceTest {
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
         }
 
-        @DisplayName("document: 処理ステータスが完了しているときの処理を確認する")
+        @DisplayName("execute: 処理ステータスが完了しているときの処理を確認する")
         @Test
-        void document_status_done() {
+        void execute_status_done() {
             var date = "2020-09-19";
             var documentTypeCode = "120";
 
@@ -389,7 +388,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.document(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
 
             verify(service, times(0)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(0))
@@ -400,9 +399,9 @@ class DocumentServiceTest {
                     .scrape(eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES), eq("documentId1"), eq(LocalDate.parse(date)), eq(null));
         }
 
-        @DisplayName("document: 処理ステータスがエラーのときに除外フラグONにすることを確認する")
+        @DisplayName("execute: 処理ステータスがエラーのときに除外フラグONにすることを確認する")
         @Test
-        void document_status_error() {
+        void execute_status_error() {
             var date = "2020-09-19";
             var documentTypeCode = "120";
             var updatedAt = LocalDateTime.of(2020, 9, 19, 17, 39);
@@ -437,7 +436,7 @@ class DocumentServiceTest {
             )));
             when(service.nowLocalDateTime()).thenReturn(updatedAt);
 
-            assertDoesNotThrow(() -> service.document(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
 
             verify(service, times(0)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(0))

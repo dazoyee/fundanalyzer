@@ -1,5 +1,5 @@
 -- 業種
-CREATE TABLE IF NOT EXISTS industry(
+create TABLE IF NOT EXISTS industry(
   id INT AUTO_INCREMENT,
   name VARCHAR(100) UNIQUE NOT NULL COMMENT '業種名',
   created_at DATETIME NOT NULL COMMENT '登録日',
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS industry(
 );
 
 -- 企業
-CREATE TABLE IF NOT EXISTS company(
+create TABLE IF NOT EXISTS company(
   code CHAR(5) UNIQUE COMMENT '企業コード',
   company_name VARCHAR(100) NOT NULL COMMENT '企業名',
   industry_id INT(10) NOT NULL COMMENT '業種ID' REFERENCES industry(id),
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS company(
 );
 
 -- スクレイピングキーワード
-CREATE TABLE IF NOT EXISTS scraping_keyword(
+create TABLE IF NOT EXISTS scraping_keyword(
   id INT AUTO_INCREMENT,
   financial_statement_id VARCHAR(10) NOT NULL COMMENT '財務諸表ID',
   keyword VARCHAR(256) UNIQUE NOT NULL COMMENT 'キーワード',
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS scraping_keyword(
 );
 
 -- 貸借対照表
-CREATE TABLE IF NOT EXISTS bs_subject(
+create TABLE IF NOT EXISTS bs_subject(
   id INT AUTO_INCREMENT,
   outline_subject_id VARCHAR(10) COMMENT '大科目ID',
   detail_subject_id VARCHAR(10) COMMENT '小科目ID',
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS bs_subject(
 );
 
 -- 損益計算書
-CREATE TABLE IF NOT EXISTS pl_subject(
+create TABLE IF NOT EXISTS pl_subject(
   id INT AUTO_INCREMENT,
   outline_subject_id VARCHAR(10) COMMENT '大科目ID',
   detail_subject_id VARCHAR(10) COMMENT '小科目ID',
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS pl_subject(
 */
 
 -- EDINETに提出された書類
-CREATE TABLE IF NOT EXISTS edinet_document(
+create TABLE IF NOT EXISTS edinet_document(
   id INT AUTO_INCREMENT,
   doc_id CHAR(8) NOT NULL COMMENT '書類ID',
   edinet_code CHAR(6) COMMENT '提出者EDINETコード',
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS edinet_document(
 );
 
 -- 書類ステータス
-CREATE TABLE IF NOT EXISTS document(
+create TABLE IF NOT EXISTS document(
   id INT AUTO_INCREMENT,
   document_id CHAR(8) NOT NULL COMMENT '書類ID',
   document_type_code CHAR(3) COMMENT '書類種別コード',
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS document(
 );
 
 -- 財務諸表
-CREATE TABLE IF NOT EXISTS financial_statement(
+create TABLE IF NOT EXISTS financial_statement(
   id INT AUTO_INCREMENT,
   company_code CHAR(5) COMMENT '企業コード',
   edinet_code CHAR(6) NOT NULL COMMENT 'EDINETコード' REFERENCES company(edinet_code),
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS financial_statement(
 );
 
 -- 企業価値
-CREATE TABLE IF NOT EXISTS analysis_result(
+create TABLE IF NOT EXISTS analysis_result(
   id INT AUTO_INCREMENT,
   company_code CHAR(5) NOT NULL COMMENT '企業コード',
   period DATE NOT NULL COMMENT '期間',
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS analysis_result(
 );
 
 -- 株価
-CREATE TABLE IF NOT EXISTS stock_price(
+create TABLE IF NOT EXISTS stock_price(
   id INT AUTO_INCREMENT,
   company_code CHAR(5) NOT NULL COMMENT '企業コード',
   target_date DATE NOT NULL COMMENT '対象日付',
@@ -168,4 +168,42 @@ CREATE TABLE IF NOT EXISTS stock_price(
   created_at DATETIME NOT NULL COMMENT '登録日',
   PRIMARY KEY(id),
   UNIQUE KEY(company_code, target_date, source_of)
+);
+
+-- 企業一覧
+create TABLE IF NOT EXISTS corporate_view(
+  code CHAR(4) UNIQUE COMMENT '企業コード',
+  name VARCHAR(100) NOT NULL COMMENT '企業名',
+  submit_date DATE COMMENT '提出日',
+  latest_corporate_value FLOAT COMMENT '最新企業価値',
+  average_corporate_value FLOAT COMMENT '平均企業価値',
+  standard_deviation FLOAT COMMENT '標準偏差',
+  coefficient_of_variation FLOAT COMMENT '変動係数',
+  average_stock_price FLOAT COMMENT '提出日株価平均',
+  import_date DATE COMMENT '株価取得日',
+  latest_stock_price FLOAT COMMENT '最新株価',
+  discount_value FLOAT COMMENT '割安値',
+  discount_rate FLOAT COMMENT '割安度',
+  count_year INT COMMENT '対象年カウント',
+  created_at DATETIME NOT NULL COMMENT '登録日',
+  updated_at DATETIME NOT NULL COMMENT '更新日',
+  PRIMARY KEY(code),
+  UNIQUE KEY(code)
+);
+
+-- EDINET処理一覧
+create TABLE IF NOT EXISTS edinet_list_view(
+  submit_date DATE NOT NULL COMMENT '提出日',
+  count_all INT NOT NULL COMMENT '総件数',
+  count_target INT NOT NULL COMMENT '処理対象件数',
+  count_scraped INT NOT NULL COMMENT '処理済件数',
+  count_analyzed INT NOT NULL COMMENT '分析済件数',
+  cant_scraped_code VARCHAR(100) COMMENT '未分析コード',
+  not_analyzed_code VARCHAR(100) COMMENT '処理確認コード',
+  count_not_scraped INT NOT NULL COMMENT '未処理件数',
+  count_not_target INT NOT NULL COMMENT '対象外件数',
+  created_at DATETIME NOT NULL COMMENT '登録日',
+  updated_at DATETIME NOT NULL COMMENT '更新日',
+  PRIMARY KEY(submit_date),
+  UNIQUE KEY(submit_date)
 );
