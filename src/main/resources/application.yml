@@ -2,7 +2,7 @@ spring:
   profiles:
     # マージ前にテスト確認！！！
 #    active: dev
-      active: prod
+        active: prod
   application:
     name: fundanalyzer
 
@@ -26,4 +26,9 @@ app:
 
   api:
     edinet: https://disclosure.edinet-fsa.go.jp
-    slack: https://hooks.slack.com/services/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
+    slack:
+      base-uri: https://hooks.slack.com
+      parameter:
+        t: TKN2V6NQ4
+        b: B01DFHHPE07
+        x: x
