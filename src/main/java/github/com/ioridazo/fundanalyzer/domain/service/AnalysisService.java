@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -90,7 +91,7 @@ public class AnalysisService {
      *
      * @param submitDate 提出日
      */
-    public void analyze(final LocalDate submitDate) {
+    public CompletableFuture<Void> analyze(final LocalDate submitDate) {
         final var companyAll = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");
         final var insurance = industryDao.selectByName("保険業");
@@ -112,6 +113,7 @@ public class AnalysisService {
                 .forEach(document -> analyze(document.getDocumentId()));
 
         log.info("すべての企業分析が正常に終了しました。\t対象提出日:{}", submitDate);
+        return null;
     }
 
     /**

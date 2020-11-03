@@ -58,8 +58,8 @@ public class ScrapingLogic {
     private final ScrapingKeywordDao scrapingKeywordDao;
 
     public ScrapingLogic(
-            @Value("${settings.file.path.edinet}") final String pathEdinet,
-            @Value("${settings.file.path.decode}") final String pathDecode,
+            @Value("${app.settings.file.path.edinet}") final String pathEdinet,
+            @Value("${app.settings.file.path.decode}") final String pathDecode,
             final EdinetProxy proxy,
             final FileOperator fileOperator,
             final HtmlScraping htmlScraping,

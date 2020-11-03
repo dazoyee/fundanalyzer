@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     public String SqlForeignKeyException(final Exception e, final Model model) {
         model.addAttribute("error", "マスタに登録されていないEDINETコードが存在していたため、登録できませんでした。");
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 }

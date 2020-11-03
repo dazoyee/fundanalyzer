@@ -33,14 +33,14 @@ public class AnalysisController {
 
     @GetMapping("fundanalyzer/v1/index")
     public String index(final Model model) {
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
     @GetMapping("fundanalyzer/v1/edinet/list")
     public String edinetList(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 
@@ -48,7 +48,7 @@ public class AnalysisController {
     public String company(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
@@ -64,10 +64,27 @@ public class AnalysisController {
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(date -> {
-                    documentService.document(date.toString(), "120");
-                    analysisService.analyze(date);
-                    stockService.importStockPrice(date);
+                    // execute実行
+                    documentService.execute(date.toString(), "120")
+                            // execute完了後、analyze実行
+                            .thenAcceptAsync(unused -> analysisService.analyze(date))
+                            // analyze完了後、importStockPrice実行
+                            .thenAcceptAsync(unused -> stockService.importStockPrice(date))
+                            // importStockPrice完了後、notice実行
+                            .thenAcceptAsync(unused -> viewService.notice(date));
                 });
+        return "redirect:/fundanalyzer/v1/index";
+    }
+
+    /**
+     * 表示をアップデートする
+     *
+     * @return Index
+     */
+    @PostMapping("fundanalyzer/v1/update/view")
+    public String updateView() {
+        viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -81,6 +98,8 @@ public class AnalysisController {
     public String scrapeByDate(final String date) {
         documentService.scrape(LocalDate.parse(date));
         analysisService.analyze(LocalDate.parse(date));
+        viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -94,6 +113,8 @@ public class AnalysisController {
     public String scrapeById(final String documentId) {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
+        viewService.updateCorporateView();
+        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -109,6 +130,7 @@ public class AnalysisController {
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(stockService::importStockPrice);
+        viewService.updateCorporateView();
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -119,7 +141,7 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
     public String sortedDiscountRate(final Model model) {
-        model.addAttribute("companies", viewService.sortedCompanyByDiscountRate());
+        model.addAttribute("companies", viewService.sortByDiscountRate());
         return "index";
     }
 
@@ -130,7 +152,7 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index/all")
     public String indexAll(final Model model) {
-        model.addAttribute("companies", viewService.viewCompanyAll());
+        model.addAttribute("companies", viewService.corporateViewAll());
         return "index";
     }
 
@@ -156,7 +178,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/edinet/list/all")
     public String edinetListAll(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListAll("120"));
+        model.addAttribute("edinetList", viewService.edinetListViewAll());
         return "edinet";
     }
 
@@ -172,7 +194,7 @@ public class AnalysisController {
 
         model.addAttribute("message", "更新しました");
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 
@@ -181,7 +203,7 @@ public class AnalysisController {
     @GetMapping("/edinet/list")
     public String devEdinetList(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
+        model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
     }
 
@@ -189,36 +211,17 @@ public class AnalysisController {
     public String devCompany(final Model model) {
         documentService.company();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
-    }
-
-    @GetMapping("/edinet/list/{date}")
-    public String documentList(@PathVariable String date, final Model model) {
-        documentService.company();
-        documentService.edinetList(LocalDate.parse(date));
-
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
-        return "edinet";
-    }
-
-    @GetMapping("/edinet/list/{fromDate}/{toDate}")
-    public String document(@PathVariable String fromDate, @PathVariable String toDate, final Model model) {
-        documentService.company();
-        documentService.edinetList(fromDate, toDate);
-
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetList("120"));
-        return "edinet";
     }
 
     @GetMapping("/scrape/{date}")
     public String devDocument(@PathVariable String date, final Model model) {
         documentService.company();
-        documentService.document(date, "120");
+        documentService.execute(date, "120")
+                .thenRunAsync(viewService::updateCorporateView);
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
@@ -226,27 +229,39 @@ public class AnalysisController {
     public String devResetStatus(final Model model) {
         documentService.resetForRetry();
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
     @GetMapping("/view/company/{year}")
     public String viewCompany(@PathVariable String year, final Model model) {
         documentService.company();
-        documentService.document("2020-05-22", "120");
+        documentService.execute("2020-05-22", "120")
+                .thenRunAsync(viewService::updateCorporateView);
 
-        model.addAttribute("companies", viewService.viewCompany());
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
     @GetMapping("/scrape/analysis/{date}")
     public String scrapeAndAnalyze(@PathVariable String date, final Model model) {
         documentService.company();
-        documentService.document(date, "120");
-        analysisService.analyze(LocalDate.parse(date));
-        stockService.importStockPrice(LocalDate.parse(date));
 
-        model.addAttribute("companies", viewService.viewCompany());
+        // execute実行
+        documentService.execute(date, "120")
+                // execute完了後、analyze実行
+                .thenRunAsync(() -> analysisService.analyze(LocalDate.parse(date)))
+                // analyze完了後、importStockPrice実行
+                .thenRunAsync(() -> stockService.importStockPrice(LocalDate.parse(date)))
+                // importStockPrice完了後、notice実行
+                .thenRunAsync(() -> viewService.notice(LocalDate.parse(date)))
+                // notice完了後、update実行
+                .thenRunAsync(() -> {
+                    viewService.updateCorporateView();
+                    viewService.updateEdinetListView("120");
+                });
+
+        model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 }

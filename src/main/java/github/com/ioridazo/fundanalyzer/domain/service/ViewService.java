@@ -1,7 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.domain.bean.CompanyViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
@@ -13,11 +15,15 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
+import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -29,28 +35,43 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ViewService {
 
+    private final SlackProxy slackProxy;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
     private final StockPriceDao stockPriceDao;
+    private final CorporateViewDao corporateViewDao;
+    private final EdinetListViewDao edinetListViewDao;
 
     public ViewService(
+            final SlackProxy slackProxy,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
             final AnalysisResultDao analysisResultDao,
-            final StockPriceDao stockPriceDao) {
+            final StockPriceDao stockPriceDao,
+            final CorporateViewDao corporateViewDao,
+            final EdinetListViewDao edinetListViewDao) {
+        this.slackProxy = slackProxy;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
         this.stockPriceDao = stockPriceDao;
+        this.corporateViewDao = corporateViewDao;
+        this.edinetListViewDao = edinetListViewDao;
+    }
+
+    LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
     }
 
     /**
@@ -58,8 +79,8 @@ public class ViewService {
      *
      * @return 会社一覧
      */
-    public List<CompanyViewBean> viewCompany() {
-        return sortedCompanyList(getCompanyViewBean().stream()
+    public List<CorporateViewBean> corporateView() {
+        return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
                 // 100%以上を表示
@@ -72,8 +93,8 @@ public class ViewService {
      *
      * @return 会社一覧
      */
-    public List<CompanyViewBean> viewCompanyAll() {
-        return sortedCompanyList(getCompanyViewBean());
+    public List<CorporateViewBean> corporateViewAll() {
+        return sortedCompanyList(getCorporateViewBeanList());
     }
 
     /**
@@ -81,40 +102,66 @@ public class ViewService {
      *
      * @return ソート後のリスト
      */
-    public List<CompanyViewBean> sortedCompanyByDiscountRate() {
-        return getCompanyViewBean().stream()
+    public List<CorporateViewBean> sortByDiscountRate() {
+        return getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
                 // 100%以上を表示
                 .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
-                .sorted(Comparator.comparing(CompanyViewBean::getDiscountRate).reversed())
+                .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
 
-    private List<CompanyViewBean> getCompanyViewBean() {
-        return companyAllTargeted().stream()
+    private List<CorporateViewBean> getCorporateViewBeanList() {
+        return corporateViewDao.selectAll().stream()
+                // 提出日が存在したら表示する
+                .filter(corporateViewBean -> corporateViewBean.getSubmitDate() != null)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 非同期で表示するリストをアップデートする
+     */
+    @Async
+    @Transactional
+    public void updateCorporateView() {
+        final var beanAllList = corporateViewDao.selectAll();
+        companyAllTargeted().stream()
                 .map(company -> {
                     final var submitDate = latestSubmitDate(company);
                     final var corporateValue = corporateValue(company);
                     final var stockPrice = submitDate.map(sd -> stockPrice(company, sd)).orElse(StockPriceValue.of());
-                    final var discountValue = discountValue(corporateValue.getCorporateValue().orElse(null), stockPrice.getLatestStockPrice().orElse(null));
-                    return new CompanyViewBean(
-                            company.getCode().orElseThrow(),
+                    final var discountValue = discountValue(corporateValue.getAverageCorporateValue().orElse(null), stockPrice.getLatestStockPrice().orElse(null));
+                    return new CorporateViewBean(
+                            company.getCode().orElseThrow().substring(0, 4),
                             company.getCompanyName(),
                             submitDate.orElse(null),
-                            corporateValue.getCorporateValue().orElse(null),
+                            corporateValue.getLatestCorporateValue().orElse(null),
+                            corporateValue.getAverageCorporateValue().orElse(null),
                             corporateValue.getStandardDeviation().orElse(null),
-                            stockPrice.getStockPriceOfSubmitDate().orElse(null),
+                            corporateValue.getCoefficientOfVariation().orElse(null),
+                            stockPrice.getAverageStockPrice().orElse(null),
                             stockPrice.getImportDate().orElse(null),
                             stockPrice.getLatestStockPrice().orElse(null),
                             discountValue.getFirst().orElse(null),
                             discountValue.getSecond().orElse(null),
-                            corporateValue.getCountYear().orElse(null)
+                            corporateValue.getCountYear().orElse(null),
+                            nowLocalDateTime(),
+                            nowLocalDateTime()
                     );
                 })
-                // 提出日が存在したら表示する
-                .filter(companyViewBean -> companyViewBean.getSubmitDate() != null)
-                .collect(Collectors.toList());
+                .forEach(corporateViewBean -> {
+                    final var match = beanAllList.stream()
+                            .map(CorporateViewBean::getCode)
+                            .anyMatch(corporateViewBean.getCode()::equals);
+                    if (match) {
+                        corporateViewDao.update(corporateViewBean);
+                    } else {
+                        corporateViewDao.insert(corporateViewBean);
+                    }
+                });
+        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        log.info("表示アップデートが正常に終了しました。");
     }
 
     /**
@@ -137,19 +184,28 @@ public class ViewService {
      * @return <li>平均の企業価値</li><li>標準偏差</li><li>対象年数</li>
      */
     CorporateValue corporateValue(final Company company) {
-        final var corporateValueList = analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow()).stream()
-                .map(AnalysisResult::getCorporateValue)
-                .collect(Collectors.toList());
+        final var corporateValueList = analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow());
 
         if (!corporateValueList.isEmpty()) {
-            // 平均値
+            // 最新企業価値
+            final var latest = corporateValueList.stream()
+                    // latest
+                    .max(Comparator.comparing(AnalysisResult::getPeriod))
+                    // corporate value
+                    .map(AnalysisResult::getCorporateValue)
+                    // scale
+                    .map(bigDecimal -> bigDecimal.setScale(2, RoundingMode.HALF_UP))
+                    .orElse(null);
+            // 平均企業価値
             final var average = corporateValueList.stream()
+                    .map(AnalysisResult::getCorporateValue)
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
                     .divide(BigDecimal.valueOf(corporateValueList.size()), 2, RoundingMode.HALF_UP);
             // 標準偏差
             final var standardDeviation = corporateValueList.stream()
+                    .map(AnalysisResult::getCorporateValue)
                     // (value - average) ^2
                     .map(value -> value.subtract(average).pow(2))
                     // sum
@@ -158,7 +214,9 @@ public class ViewService {
                     .divide(BigDecimal.valueOf(corporateValueList.size()), 3, RoundingMode.HALF_UP)
                     // sqrt
                     .sqrt(new MathContext(5, RoundingMode.HALF_UP));
-            return CorporateValue.of(average, standardDeviation, BigDecimal.valueOf(corporateValueList.size()));
+            // 変動係数
+            final var coefficientOfVariation = standardDeviation.divide(average, 3, RoundingMode.HALF_UP);
+            return CorporateValue.of(latest, average, standardDeviation, coefficientOfVariation, BigDecimal.valueOf(corporateValueList.size()));
         } else {
             return CorporateValue.of();
         }
@@ -173,24 +231,36 @@ public class ViewService {
      */
     StockPriceValue stockPrice(final Company company, final LocalDate submitDate) {
         final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
-        return StockPriceValue.of(
-                // stockPriceOfSubmitDate
-                stockPriceList.stream()
-                        .filter(sp -> submitDate.equals(sp.getTargetDate()))
-                        .map(StockPrice::getStockPrice)
-                        .map(Optional::get)
-                        .findAny()
-                        .map(BigDecimal::valueOf).orElse(null),
-                // importDate
-                stockPriceList.stream()
-                        .max(Comparator.comparing(StockPrice::getTargetDate))
-                        .map(StockPrice::getTargetDate).orElse(null),
-                // latestStockPrice
-                stockPriceList.stream()
-                        .max(Comparator.comparing(StockPrice::getTargetDate))
-                        .flatMap(StockPrice::getStockPrice)
-                        .map(BigDecimal::valueOf).orElse(null)
-        );
+        // importDate
+        final var importDate = stockPriceList.stream()
+                .max(Comparator.comparing(StockPrice::getTargetDate))
+                .map(StockPrice::getTargetDate).orElse(null);
+        // latestStockPrice
+        final var latestStockPrice = stockPriceList.stream()
+                .max(Comparator.comparing(StockPrice::getTargetDate))
+                .flatMap(StockPrice::getStockPrice)
+                .map(BigDecimal::valueOf).orElse(null);
+
+        // stock price for one month
+        final var monthList = stockPriceList.stream()
+                .filter(sp -> submitDate.minusMonths(1).isBefore(sp.getTargetDate()) && submitDate.plusDays(1).isAfter(sp.getTargetDate()))
+                .map(StockPrice::getStockPrice)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+        if (monthList.isEmpty()) {
+            return StockPriceValue.of(null, importDate, latestStockPrice);
+        } else {
+            // averageStockPrice
+            final var averageStockPrice = monthList.stream()
+                    .map(BigDecimal::valueOf)
+                    // sum
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    // average
+                    .divide(BigDecimal.valueOf(monthList.size()), 2, RoundingMode.HALF_UP);
+
+            return StockPriceValue.of(averageStockPrice, importDate, latestStockPrice);
+        }
     }
 
     /**
@@ -228,13 +298,36 @@ public class ViewService {
     }
 
     /**
+     * 処理結果をSlackに通知する
+     *
+     * @param submitDate 対象提出日
+     */
+    public CompletableFuture<Void> notice(final LocalDate submitDate) {
+        final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
+        groupBySubmitDate(documentList).forEach(el -> {
+            if (el.getCountTarget().equals(el.getCountScraped()) &&
+                    el.getCountTarget().equals(el.getCountAnalyzed())) {
+                // info message
+                slackProxy.sendMessage(
+                        "g.c.i.f.domain.service.ViewService.processing.notice.info",
+                        el.getSubmitDate(), el.getCountTarget());
+            } else {
+                // warn message
+                slackProxy.sendMessage(
+                        "g.c.i.f.domain.service.ViewService.processing.notice.warn",
+                        el.getSubmitDate(), el.getCountTarget(), el.getCountNotScraped());
+            }
+        });
+        return null;
+    }
+
+    /**
      * 処理状況を表示するためのリストを取得する
      *
-     * @param documentTypeCode 書類種別コード
      * @return 処理状況リスト
      */
-    public List<EdinetListViewBean> edinetList(final String documentTypeCode) {
-        final var viewBeanList = getEdinetList(documentTypeCode);
+    public List<EdinetListViewBean> edinetListview() {
+        final var viewBeanList = edinetListViewDao.selectAll();
         viewBeanList.removeIf(
                 el -> el.getCountTarget().equals(el.getCountScraped()) &&
                         el.getCountTarget().equals(el.getCountAnalyzed())
@@ -245,15 +338,38 @@ public class ViewService {
     /**
      * すべての処理状況を表示するためのリストを取得する
      *
-     * @param documentTypeCode 書類種別コード
      * @return 処理状況リスト
      */
-    public List<EdinetListViewBean> edinetListAll(final String documentTypeCode) {
-        return sortedEdinetList(getEdinetList(documentTypeCode));
+    public List<EdinetListViewBean> edinetListViewAll() {
+        return sortedEdinetList(edinetListViewDao.selectAll());
     }
 
-    private List<EdinetListViewBean> getEdinetList(final String documentTypeCode) {
+    /**
+     * 非同期で表示する処理状況リストをアップデートする
+     *
+     * @param documentTypeCode 書類種別コード
+     */
+    @Async
+    @Transactional
+    public void updateEdinetListView(final String documentTypeCode) {
+        final var beanAllList = edinetListViewDao.selectAll();
         final var documentList = documentDao.selectByDocumentTypeCode(documentTypeCode);
+        groupBySubmitDate(documentList)
+                .forEach(edinetListViewBean -> {
+                    final var match = beanAllList.stream()
+                            .map(EdinetListViewBean::getSubmitDate)
+                            .anyMatch(edinetListViewBean.getSubmitDate()::equals);
+                    if (match) {
+                        edinetListViewDao.update(edinetListViewBean);
+                    } else {
+                        edinetListViewDao.insert(edinetListViewBean);
+                    }
+                });
+        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
+        log.info("処理状況アップデートが正常に終了しました。");
+    }
+
+    private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
         return documentList.stream()
                 // 提出日ごとに件数をカウントする
                 .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
@@ -263,8 +379,7 @@ public class ViewService {
                         localDateLongEntry.getValue(),
                         documentList,
                         companyAllTargeted()
-                ))
-                .collect(Collectors.toList());
+                )).collect(Collectors.toList());
     }
 
     private EdinetListViewBean counter(
@@ -368,7 +483,10 @@ public class ViewService {
                         ).count(),
 
                 // 対象外件数
-                countAll - targetList.size()
+                countAll - targetList.size(),
+
+                nowLocalDateTime(),
+                nowLocalDateTime()
         );
     }
 
@@ -385,11 +503,11 @@ public class ViewService {
                 .collect(Collectors.toList());
     }
 
-    private List<CompanyViewBean> sortedCompanyList(final List<CompanyViewBean> viewBeanList) {
+    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
         return viewBeanList.stream()
                 .sorted(Comparator
-                        .comparing(CompanyViewBean::getSubmitDate).reversed()
-                        .thenComparing(CompanyViewBean::getCode))
+                        .comparing(CorporateViewBean::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -403,10 +521,14 @@ public class ViewService {
     @NoArgsConstructor
     @Data
     static class CorporateValue {
-        // 企業価値
-        private BigDecimal corporateValue;
+        // 最新企業価値
+        private BigDecimal latestCorporateValue;
+        // 平均企業価値
+        private BigDecimal averageCorporateValue;
         // 標準偏差
         private BigDecimal standardDeviation;
+        // 変動係数
+        private BigDecimal coefficientOfVariation;
         // 対象年カウント
         private BigDecimal countYear;
 
@@ -415,18 +537,28 @@ public class ViewService {
         }
 
         public static CorporateValue of(
-                final BigDecimal corporateValue,
+                final BigDecimal latestCorporateValue,
+                final BigDecimal averageCorporateValue,
                 final BigDecimal standardDeviation,
+                final BigDecimal coefficientOfVariation,
                 final BigDecimal countYear) {
-            return new CorporateValue(corporateValue, standardDeviation, countYear);
+            return new CorporateValue(latestCorporateValue, averageCorporateValue, standardDeviation, coefficientOfVariation, countYear);
         }
 
-        public Optional<BigDecimal> getCorporateValue() {
-            return Optional.ofNullable(corporateValue);
+        public Optional<BigDecimal> getLatestCorporateValue() {
+            return Optional.ofNullable(latestCorporateValue);
+        }
+
+        public Optional<BigDecimal> getAverageCorporateValue() {
+            return Optional.ofNullable(averageCorporateValue);
         }
 
         public Optional<BigDecimal> getStandardDeviation() {
             return Optional.ofNullable(standardDeviation);
+        }
+
+        public Optional<BigDecimal> getCoefficientOfVariation() {
+            return Optional.ofNullable(coefficientOfVariation);
         }
 
         public Optional<BigDecimal> getCountYear() {
@@ -438,8 +570,8 @@ public class ViewService {
     @NoArgsConstructor
     @Data
     static class StockPriceValue {
-        // 提出日株価
-        private BigDecimal stockPriceOfSubmitDate;
+        // 提出日株価平均
+        private BigDecimal averageStockPrice;
         // 株価取得日
         private LocalDate importDate;
         // 最新株価
@@ -456,8 +588,8 @@ public class ViewService {
             return new StockPriceValue(stockPriceOfSubmitDate, importDate, latestStockPrice);
         }
 
-        public Optional<BigDecimal> getStockPriceOfSubmitDate() {
-            return Optional.ofNullable(stockPriceOfSubmitDate);
+        public Optional<BigDecimal> getAverageStockPrice() {
+            return Optional.ofNullable(averageStockPrice);
         }
 
         public Optional<LocalDate> getImportDate() {

@@ -16,12 +16,14 @@ logging:
       jdbc:
         UtilLoggingJdbcLogger: WARN
 
-edinet:
-  api: https://disclosure.edinet-fsa.go.jp
+app:
+  settings:
+    file:
+      path:
+        company: C:/${spring.application.name}/company/EdinetcodeDlInfo.csv
+        edinet: C:/${spring.application.name}/edinet
+        decode: C:/${spring.application.name}/decode
 
-settings:
-  file:
-    path:
-      company: C:/${spring.application.name}/company/EdinetcodeDlInfo.csv
-      edinet: C:/${spring.application.name}/edinet
-      decode: C:/${spring.application.name}/decode
+  api:
+    edinet: https://disclosure.edinet-fsa.go.jp
+    slack: https://hooks.slack.com/services/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
