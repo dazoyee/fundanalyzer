@@ -8,6 +8,18 @@
 </head>
 <body>
 <h1>会社一覧</h1>
+<p th:if="${error}" class="alert alert-danger" role="alert">
+    <th:block th:each="error: ${error}"><!-- 改行コードでsplitしてループ -->
+        <th:block th:text="${error}"/>
+        <br/>
+    </th:block>
+</p>
+<p th:if="${message}" class="alert alert-info" role="alert">
+    <th:block th:each="message: ${message}"><!-- 改行コードでsplitしてループ -->
+        <th:block th:text="${message}"/>
+        <br/>
+    </th:block>
+</p>
 <form method="post" th:action="@{/fundanalyzer/v1/update/view}">
     <button type="submit" class="btn">update view</button>
 </form>
