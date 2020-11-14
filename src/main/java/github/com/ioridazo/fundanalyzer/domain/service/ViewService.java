@@ -246,6 +246,8 @@ public class ViewService {
                 analysisResultDao.selectByCompanyCode(code),
                 brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
                 stockPriceDao.selectByCode(code).stream()
+                        .map(StockPrice::ofBrandDetail)
+                        .distinct()
                         .sorted(Comparator.comparing(StockPrice::getTargetDate).reversed())
                         .collect(Collectors.toList())
         );

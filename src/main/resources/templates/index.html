@@ -69,7 +69,7 @@
         </thead>
         <tbody>
         <tr th:each="company : ${companies}">
-            <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}">証券コード</a></td>
+            <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}" target="_blank">証券コード</a></td>
             <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v1/corporate/'+${company.code}}">会社名</a></td>
             <td th:text="${company.submitDate}">提出日</td>
             <td th:text="${company.latestCorporateValue}">最新企業価値</td>

@@ -82,4 +82,26 @@ public class StockPrice {
     public Optional<String> getShareholderBenefit() {
         return Optional.ofNullable(shareholderBenefit);
     }
+
+    public static StockPrice ofBrandDetail(final StockPrice stockPrice){
+        return new StockPrice(
+                null,
+                null,
+                stockPrice.getTargetDate(),
+                stockPrice.getStockPrice(),
+                stockPrice.getOpeningPrice(),
+                stockPrice.getHighPrice(),
+                stockPrice.getLowPrice(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
 }

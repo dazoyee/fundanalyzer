@@ -38,6 +38,7 @@
                     <th>EDINETコード</th>
                     <th>資本金</th>
                     <th>決算日</th>
+                    <th>みんかぶ</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -48,6 +49,7 @@
                     <td th:text="${corporate.edinetCode}">EDINETコード</td>
                     <td th:text="${corporate.capitalStock}">資本金</td>
                     <td th:text="${corporate.settlementDate}">決算日</td>
+                    <td><a th:href="'https://minkabu.jp/stock/'+${corporateView.code}" target="_blank">みんかぶURL</a></td>
                 </tr>
                 </tbody>
                 <thead>
