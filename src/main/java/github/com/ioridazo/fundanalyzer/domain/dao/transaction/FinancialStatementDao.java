@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
@@ -14,6 +13,9 @@ import java.util.Optional;
 @ConfigAutowireable
 @Dao
 public interface FinancialStatementDao {
+
+    @Select
+    List<FinancialStatement> selectByCode(final String companyCode);
 
     @Select
     Optional<FinancialStatement> selectByUniqueKey(
