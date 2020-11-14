@@ -1,10 +1,12 @@
 package github.com.ioridazo.fundanalyzer.slack;
 
+import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.core.env.Environment;
@@ -30,6 +32,7 @@ class SlackProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new SlackProxy(
+                new AppConfig().restTemplate(),
                 String.format("http://localhost:%s", server.getPort()),
                 environment
         ));
@@ -52,6 +55,7 @@ class SlackProxyTest {
         var propertyPath = "property.path";
 
         this.proxy = new SlackProxy(
+                new AppConfig().restTemplate(),
                 "https://hooks.slack.com",
                 environment
         );
@@ -65,6 +69,7 @@ class SlackProxyTest {
         assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
     }
 
+    @DisplayName("sendMessage : Slackにメッセージをそのまま通知する")
     @Test
     void sendMessage_no_parameter() throws InterruptedException {
         var propertyPath = "property.path";
@@ -83,6 +88,7 @@ class SlackProxyTest {
         );
     }
 
+    @DisplayName("sendMessage : Slackにメッセージをパラメータ付け加えて通知する")
     @Test
     void sendMessage_arguments() throws InterruptedException {
         var propertyPath = "property.path";
