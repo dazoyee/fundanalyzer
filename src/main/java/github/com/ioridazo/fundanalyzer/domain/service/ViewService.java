@@ -12,6 +12,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
@@ -244,7 +245,9 @@ public class ViewService {
                 corporateViewDao.selectByCode(code.substring(0, 4)),
                 analysisResultDao.selectByCompanyCode(code),
                 brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
-                stockPriceDao.selectByCode(code)
+                stockPriceDao.selectByCode(code).stream()
+                        .sorted(Comparator.comparing(StockPrice::getTargetDate).reversed())
+                        .collect(Collectors.toList())
         );
     }
 

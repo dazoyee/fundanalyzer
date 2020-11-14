@@ -144,6 +144,18 @@ public class AnalysisController {
     }
 
     /**
+     * 企業の株価を取得する
+     *
+     * @param code 会社コード
+     * @return BrandDetail
+     */
+    @PostMapping("fundanalyzer/v1/import/stock/code")
+    public String importStocks(final String code) {
+        stockService.importStockPrice(code);
+        return "redirect:/fundanalyzer/v1/corporate/" + code.substring(0, 4);
+    }
+
+    /**
      * 割安比率でソートする
      *
      * @return Index
