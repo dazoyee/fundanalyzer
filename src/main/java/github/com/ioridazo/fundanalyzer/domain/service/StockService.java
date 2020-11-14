@@ -41,38 +41,61 @@ public class StockService {
         this.stockPriceDao = stockPriceDao;
     }
 
-    public CompletableFuture<Void> importStockPrice(final LocalDate date) {
-        documentDao.selectByTypeAndSubmitDate("120", date).stream()
+    LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
+    /**
+     * 指定日付に提出された企業の株価を取得する
+     *
+     * @param submitDate 提出日
+     * @return null
+     */
+    public CompletableFuture<Void> importStockPrice(final LocalDate submitDate) {
+        documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
                 .map(Document::getEdinetCode)
                 .map(this::convertToCompanyCode)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .parallel()
-                .forEach(code -> {
-                    try {
-                        final var nikkei = htmlScraping.nikkei(code);
-                        final var kabuoji3List = htmlScraping.kabuoji3(code);
-                        final var stockPriceList = stockPriceDao.selectByCode(code);
-
-                        // 日経
-                        if (isNotInserted(nikkei.getTargetDate(), stockPriceList)) {
-                            insertStockPrice(code, nikkei);
-                        }
-
-                        // kabuoji3
-                        kabuoji3List.forEach(kabuoji3 -> {
-                            if (isNotInserted(kabuoji3.getTargetDate(), stockPriceList)) {
-                                insertStockPrice(code, kabuoji3);
-                            }
-                        });
-                    } catch (FundanalyzerRuntimeException e) {
-                        log.info("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code);
-                    }
-                });
-        log.info("最新の株価を正常に取り込みました。\t対象書類提出日:{}", date);
+                .forEach(this::importStockPrice);
+        log.info("最新の株価を正常に取り込みました。\t対象書類提出日:{}", submitDate);
         return null;
     }
 
+    /**
+     * 指定企業の株価を取得する
+     *
+     * @param code 会社コード
+     */
+    public void importStockPrice(final String code) {
+        try {
+            final var nikkei = htmlScraping.nikkei(code);
+            final var kabuoji3List = htmlScraping.kabuoji3(code);
+            final var stockPriceList = stockPriceDao.selectByCode(code);
+
+            // 日経
+            if (isNotInserted(nikkei.getTargetDate(), stockPriceList)) {
+                insertStockPrice(code, nikkei);
+            }
+
+            // kabuoji3
+            kabuoji3List.forEach(kabuoji3 -> {
+                if (isNotInserted(kabuoji3.getTargetDate(), stockPriceList)) {
+                    insertStockPrice(code, kabuoji3);
+                }
+            });
+        } catch (FundanalyzerRuntimeException e) {
+            log.info("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code);
+        }
+    }
+
+    /**
+     * nikkeiから取得したデータをデータベースに登録する
+     *
+     * @param code   会社コード
+     * @param nikkei データ
+     */
     @Transactional
     private void insertStockPrice(final String code, final NikkeiResultBean nikkei) {
         stockPriceDao.insert(new StockPrice(
@@ -92,10 +115,16 @@ public class StockService {
                 parse(nikkei.getDividendYield()),
                 nikkei.getShareholderBenefit().replace("株主優待 ", ""),
                 "1",
-                LocalDateTime.now()
+                nowLocalDateTime()
         ));
     }
 
+    /**
+     * kabuoji3から取得したデータをデータベースに登録する
+     *
+     * @param code     会社コード
+     * @param kabuoji3 データ
+     */
     @Transactional
     private void insertStockPrice(final String code, final Kabuoji3ResultBean kabuoji3) {
         stockPriceDao.insert(new StockPrice(
@@ -115,10 +144,17 @@ public class StockService {
                 null,
                 null,
                 "2",
-                LocalDateTime.now()
+                nowLocalDateTime()
         ));
     }
 
+    /**
+     * 株価がデータベースに登録されているかを確認する
+     *
+     * @param targetDateAsString 対象日
+     * @param stockPriceList     データベースリスト
+     * @return bool
+     */
     private boolean isNotInserted(final String targetDateAsString, final List<StockPrice> stockPriceList) {
         final LocalDate targetDate;
         if (targetDateAsString.contains("/")) {

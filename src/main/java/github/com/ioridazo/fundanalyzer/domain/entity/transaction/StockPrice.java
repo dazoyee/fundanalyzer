@@ -55,7 +55,31 @@ public class StockPrice {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
-    public Optional<Double> getStockPrice() {
-        return Optional.ofNullable(stockPrice);
+    public Optional<String> getPer() {
+        return Optional.ofNullable(per);
+    }
+
+    public Optional<String> getPbr() {
+        return Optional.ofNullable(pbr);
+    }
+
+    public Optional<String> getRoe() {
+        return Optional.ofNullable(roe);
+    }
+
+    public Optional<String> getNumberOfShares() {
+        return Optional.ofNullable(numberOfShares);
+    }
+
+    public Optional<String> getMarketCapitalization() {
+        return Optional.ofNullable(marketCapitalization);
+    }
+
+    public Optional<String> getDividendYield() {
+        return Optional.ofNullable(dividendYield);
+    }
+
+    public Optional<String> getShareholderBenefit() {
+        return Optional.ofNullable(shareholderBenefit);
     }
 }

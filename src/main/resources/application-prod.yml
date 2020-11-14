@@ -13,3 +13,12 @@ spring:
 doma:
   dialect: mysql
   naming: snake-upper-case
+
+app:
+  api:
+    slack:
+      base-uri: https://hooks.slack.com
+      parameter:
+        t: TKN2V6NQ4
+        b: B01DFHHPE07
+        x: x

@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
@@ -32,16 +33,29 @@ public class AnalysisController {
     }
 
     @GetMapping("fundanalyzer/v1/index")
-    public String index(final Model model) {
+    public String index(@RequestParam(name = "message", required = false) final String message, final Model model) {
+        model.addAttribute("message", message);
         model.addAttribute("companies", viewService.corporateView());
         return "index";
     }
 
     @GetMapping("fundanalyzer/v1/edinet/list")
-    public String edinetList(final Model model) {
+    public String edinetList(@RequestParam(name = "message", required = false) final String message, final Model model) {
+        model.addAttribute("message", message);
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetListview());
         return "edinet";
+    }
+
+    @GetMapping("fundanalyzer/v1/corporate/{code}")
+    public String brandDetail(@PathVariable final String code, final Model model) {
+        final var brandDetail = viewService.brandDetailView(code + "0");
+        model.addAttribute("corporate", brandDetail.getCorporate());
+        model.addAttribute("corporateView", brandDetail.getCorporateView());
+        model.addAttribute("analysisResults", brandDetail.getAnalysisResultList());
+        model.addAttribute("financialStatements", brandDetail.getFinancialStatement());
+        model.addAttribute("stockPrices", brandDetail.getStockPriceList());
+        return "corporate";
     }
 
     @GetMapping("fundanalyzer/v1/company")
@@ -98,8 +112,6 @@ public class AnalysisController {
     public String scrapeByDate(final String date) {
         documentService.scrape(LocalDate.parse(date));
         analysisService.analyze(LocalDate.parse(date));
-        viewService.updateCorporateView();
-        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -113,8 +125,6 @@ public class AnalysisController {
     public String scrapeById(final String documentId) {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
-        viewService.updateCorporateView();
-        viewService.updateEdinetListView("120");
         return "redirect:/fundanalyzer/v1/index";
     }
 
@@ -130,8 +140,19 @@ public class AnalysisController {
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(stockService::importStockPrice);
-        viewService.updateCorporateView();
         return "redirect:/fundanalyzer/v1/index";
+    }
+
+    /**
+     * 企業の株価を取得する
+     *
+     * @param code 会社コード
+     * @return BrandDetail
+     */
+    @PostMapping("fundanalyzer/v1/import/stock/code")
+    public String importStocks(final String code) {
+        stockService.importStockPrice(code);
+        return "redirect:/fundanalyzer/v1/corporate/" + code.substring(0, 4);
     }
 
     /**
@@ -191,11 +212,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/reset/status")
     public String resetStatus(final Model model) {
         documentService.resetForRetry();
-
-        model.addAttribute("message", "更新しました");
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListview());
-        return "edinet";
+        return "redirect:/fundanalyzer/v1/edinet/list?message=updated";
     }
 
     // -------------------------------------------------------
@@ -262,6 +279,6 @@ public class AnalysisController {
                 });
 
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return "redirect:/fundanalyzer/v1/index?message=updating";
     }
 }
