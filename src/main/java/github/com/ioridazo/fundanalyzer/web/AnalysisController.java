@@ -47,6 +47,17 @@ public class AnalysisController {
         return "edinet";
     }
 
+    @GetMapping("fundanalyzer/v1/corporate/{code}")
+    public String brandDetail(@PathVariable final String code, final Model model) {
+        final var brandDetail = viewService.brandDetailView(code + "0");
+        model.addAttribute("corporate", brandDetail.getCorporate());
+        model.addAttribute("corporateView", brandDetail.getCorporateView());
+        model.addAttribute("analysisResults", brandDetail.getAnalysisResultList());
+        model.addAttribute("financialStatements", brandDetail.getFinancialStatement());
+        model.addAttribute("stockPrices", brandDetail.getStockPriceList());
+        return "corporate";
+    }
+
     @GetMapping("fundanalyzer/v1/company")
     public String company(final Model model) {
         documentService.company();

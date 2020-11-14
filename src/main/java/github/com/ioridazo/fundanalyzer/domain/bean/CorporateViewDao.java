@@ -16,6 +16,9 @@ public interface CorporateViewDao {
     @Select
     List<CorporateViewBean> selectAll();
 
+    @Select
+    CorporateViewBean selectByCode(final String code);
+
     @Insert
     Result<CorporateViewBean> insert(final CorporateViewBean corporateViewBean);
 

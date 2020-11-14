@@ -152,15 +152,14 @@ public class CorporateViewLogic {
         // latestStockPrice
         final var latestStockPrice = stockPriceList.stream()
                 .max(Comparator.comparing(StockPrice::getTargetDate))
-                .flatMap(StockPrice::getStockPrice)
+                .map(StockPrice::getStockPrice)
                 .map(BigDecimal::valueOf).orElse(null);
 
         // stock price for one month
         final var monthList = stockPriceList.stream()
                 .filter(sp -> submitDate.minusMonths(1).isBefore(sp.getTargetDate()) && submitDate.plusDays(1).isAfter(sp.getTargetDate()))
                 .map(StockPrice::getStockPrice)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (monthList.isEmpty()) {
             return StockPriceValue.of(null, importDate, latestStockPrice);

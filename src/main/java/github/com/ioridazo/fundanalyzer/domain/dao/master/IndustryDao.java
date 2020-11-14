@@ -17,6 +17,9 @@ public interface IndustryDao {
     List<Industry> selectAll();
 
     @Select
+    Industry selectById(final Integer id);
+
+    @Select
     Industry selectByName(final String name);
 
     @Insert(include = {"name", "createdAt"})

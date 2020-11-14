@@ -1,15 +1,22 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailCorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
 import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
@@ -24,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,9 +45,12 @@ class ViewServiceTest {
     private SlackProxy slackProxy;
     private CorporateViewLogic corporateViewLogic;
     private EdinetListViewLogic edinetListViewLogic;
+    private BrandDetailCorporateViewLogic brandDetailCompanyViewLogic;
     private IndustryDao industryDao;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
+    private AnalysisResultDao analysisResultDao;
+    private StockPriceDao stockPriceDao;
     private CorporateViewDao corporateViewDao;
     private EdinetListViewDao edinetListViewDao;
 
@@ -50,9 +61,12 @@ class ViewServiceTest {
         slackProxy = Mockito.mock(SlackProxy.class);
         corporateViewLogic = Mockito.mock(CorporateViewLogic.class);
         edinetListViewLogic = Mockito.mock(EdinetListViewLogic.class);
+        brandDetailCompanyViewLogic = Mockito.mock(BrandDetailCorporateViewLogic.class);
         industryDao = Mockito.mock(IndustryDao.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
+        analysisResultDao = Mockito.mock(AnalysisResultDao.class);
+        stockPriceDao = Mockito.mock(StockPriceDao.class);
         corporateViewDao = Mockito.mock(CorporateViewDao.class);
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
 
@@ -60,9 +74,12 @@ class ViewServiceTest {
                 slackProxy,
                 corporateViewLogic,
                 edinetListViewLogic,
+                brandDetailCompanyViewLogic,
                 industryDao,
                 companyDao,
                 documentDao,
+                analysisResultDao,
+                stockPriceDao,
                 corporateViewDao,
                 edinetListViewDao
         ));
@@ -169,7 +186,7 @@ class ViewServiceTest {
         void notice_ok() {
             var documentTypeCode = "120";
             var submitDate = LocalDate.parse("2020-11-01");
-            var document1 = Document.builder()
+            var documentList = List.of(Document.builder()
                     .edinetCode("ec")
                     .documentTypeCode("120")
                     .submitDate(LocalDate.parse("2020-11-01"))
@@ -177,7 +194,8 @@ class ViewServiceTest {
                     .scrapedBs("0")
                     .scrapedPl("0")
                     .removed("0")
-                    .build();
+                    .build()
+            );
             var company = new Company(
                     "code",
                     "会社名",
@@ -191,10 +209,24 @@ class ViewServiceTest {
                     null
             );
 
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(List.of(document1));
+            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+            when(edinetListViewLogic.counter(LocalDate.parse("2020-11-01"), 1L, documentList, List.of(company)))
+                    .thenReturn(new EdinetListViewBean(
+                            LocalDate.parse("2020-11-01"),
+                            null,
+                            0L,
+                            0L,
+                            0L,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ));
 
             assertDoesNotThrow(() -> service.notice(submitDate));
 
@@ -310,6 +342,121 @@ class ViewServiceTest {
                     createdAt,
                     createdAt
             ));
+        }
+    }
+
+    @Nested
+    class brandDetailView {
+
+        @DisplayName("brandDetailView : 企業ごとの銘柄詳細情報を取得する")
+        @Test
+        void brandDetailView_ok() {
+            var code = "00000";
+
+            when(brandDetailCompanyViewLogic.brandDetailCompanyViewOf(code)).thenReturn(new BrandDetailCorporateViewBean(
+                    "code",
+                    "name",
+                    "industry",
+                    "edinetCode",
+                    10000,
+                    "settlementDate",
+                    "per",
+                    "pbr",
+                    "roe",
+                    "numberOfShares",
+                    "marketCapitalization",
+                    "dividendYield",
+                    "shareholderBenefit"
+            ));
+            when(corporateViewDao.selectByCode(code.substring(0, 4))).thenReturn(new CorporateViewBean(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    BigDecimal.valueOf(1),
+                    null,
+                    null,
+                    null
+            ));
+            when(analysisResultDao.selectByCompanyCode(code)).thenReturn(List.of(new AnalysisResult(
+                    null,
+                    null,
+                    null,
+                    BigDecimal.valueOf(100),
+                    null
+            )));
+            when(brandDetailCompanyViewLogic.brandDetailFinancialStatement(code)).thenReturn(List.of(new BrandDetailViewBean.BrandDetailFinancialStatement(
+                    LocalDate.parse("2019-01-01"),
+                    LocalDate.parse("2019-12-31"),
+                    null,
+                    List.of(new BrandDetailViewBean.BrandDetailFinancialStatement.BrandDetailFinancialStatementValue(
+                            "subject1",
+                            4000L
+                    ))
+            )));
+            when(stockPriceDao.selectByCode(code)).thenReturn(List.of(new StockPrice(
+                    null,
+                    null,
+                    null,
+                    100.0,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )));
+
+            var actual = service.brandDetailView(code);
+
+            assertAll("BrandDetailViewBean",
+                    () -> assertAll("corporate",
+                            () -> assertEquals("code", actual.getCorporate().getCode()),
+                            () -> assertEquals("name", actual.getCorporate().getName()),
+                            () -> assertEquals("industry", actual.getCorporate().getIndustry()),
+                            () -> assertEquals("edinetCode", actual.getCorporate().getEdinetCode()),
+                            () -> assertEquals(10000, actual.getCorporate().getCapitalStock()),
+                            () -> assertEquals("settlementDate", actual.getCorporate().getSettlementDate()),
+                            () -> assertEquals("per", actual.getCorporate().getPer()),
+                            () -> assertEquals("pbr", actual.getCorporate().getPbr()),
+                            () -> assertEquals("roe", actual.getCorporate().getRoe()),
+                            () -> assertEquals("numberOfShares", actual.getCorporate().getNumberOfShares()),
+                            () -> assertEquals("marketCapitalization", actual.getCorporate().getMarketCapitalization()),
+                            () -> assertEquals("dividendYield", actual.getCorporate().getDividendYield()),
+                            () -> assertEquals("shareholderBenefit", actual.getCorporate().getShareholderBenefit())
+                    ),
+                    () -> assertAll("corporateView",
+                            () -> assertEquals(BigDecimal.valueOf(1), actual.getCorporateView().getDiscountRate())
+                    ),
+                    () -> assertAll("analysisResultList",
+                            () -> assertEquals(BigDecimal.valueOf(100), actual.getAnalysisResultList().get(0).getCorporateValue())
+                    ),
+                    () -> assertAll("financialStatement",
+                            () -> assertEquals("2019-01-01", actual.getFinancialStatement().get(0).getPeriodStart().toString()),
+                            () -> assertEquals("2019-12-31", actual.getFinancialStatement().get(0).getPeriodEnd().toString()),
+                            () -> assertAll("pl",
+                                    () -> assertEquals("subject1", actual.getFinancialStatement().get(0).getPl().get(0).getSubject()),
+                                    () -> assertEquals(4000L, actual.getFinancialStatement().get(0).getPl().get(0).getValue())
+                            )
+                    ),
+                    () -> assertAll("stockPriceList",
+                            () -> assertEquals(100.0, actual.getStockPriceList().get(0).getStockPrice())
+                    )
+            );
         }
     }
 }

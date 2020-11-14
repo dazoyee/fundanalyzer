@@ -1,14 +1,18 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
 import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
@@ -33,26 +37,36 @@ public class ViewService {
     private final SlackProxy slackProxy;
     private final CorporateViewLogic corporateViewLogic;
     private final EdinetListViewLogic edinetListViewLogic;
+    private final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
+    private final AnalysisResultDao analysisResultDao;
+    private final StockPriceDao stockPriceDao;
     private final CorporateViewDao corporateViewDao;
     private final EdinetListViewDao edinetListViewDao;
 
     public ViewService(
             final SlackProxy slackProxy,
             final CorporateViewLogic corporateViewLogic,
-            final EdinetListViewLogic edinetListViewLogic, final IndustryDao industryDao,
+            final EdinetListViewLogic edinetListViewLogic,
+            final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic,
+            final IndustryDao industryDao,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
+            final AnalysisResultDao analysisResultDao,
+            final StockPriceDao stockPriceDao,
             final CorporateViewDao corporateViewDao,
             final EdinetListViewDao edinetListViewDao) {
         this.slackProxy = slackProxy;
         this.corporateViewLogic = corporateViewLogic;
         this.edinetListViewLogic = edinetListViewLogic;
+        this.brandDetailCorporateViewLogic = brandDetailCorporateViewLogic;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
+        this.analysisResultDao = analysisResultDao;
+        this.stockPriceDao = stockPriceDao;
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
     }
@@ -214,6 +228,24 @@ public class ViewService {
                 });
         slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
         log.info("処理状況アップデートが正常に終了しました。");
+    }
+
+    // ----------
+
+    /**
+     * 企業ごとの銘柄詳細情報を取得する
+     *
+     * @param code 会社コード
+     * @return 銘柄詳細情報
+     */
+    public BrandDetailViewBean brandDetailView(final String code) {
+        return new BrandDetailViewBean(
+                brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
+                corporateViewDao.selectByCode(code.substring(0, 4)),
+                analysisResultDao.selectByCompanyCode(code),
+                brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
+                stockPriceDao.selectByCode(code)
+        );
     }
 
     // ----------
