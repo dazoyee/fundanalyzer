@@ -16,13 +16,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class HtmlScrapingTest {
+class XbrlScrapingTest {
 
-    private HtmlScraping htmlScraping;
+    private XbrlScraping xbrlScraping;
 
     @BeforeEach
     void setUp() {
-        htmlScraping = Mockito.spy(HtmlScraping.class);
+        xbrlScraping = Mockito.spy(XbrlScraping.class);
     }
 
     @Nested
@@ -42,7 +42,7 @@ class HtmlScrapingTest {
 
             var expected = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/find-file/ok/EXAMPLE/XBRL/PublicDoc/000000_honbun.htm");
 
-            var actual = htmlScraping.findFile(filePath, scrapingKeyword);
+            var actual = xbrlScraping.findFile(filePath, scrapingKeyword);
 
             //noinspection OptionalGetWithoutIsPresent
             assertEquals(expected.getPath(), actual.get().getPath());
@@ -60,7 +60,7 @@ class HtmlScrapingTest {
             );
             var filePath = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/find-file/target_file_has_not_keyword/EXAMPLE/XBRL/PublicDoc");
 
-            var actual = htmlScraping.findFile(filePath, scrapingKeyword);
+            var actual = xbrlScraping.findFile(filePath, scrapingKeyword);
 
             assertNull(actual.orElse(null));
         }
@@ -77,7 +77,7 @@ class HtmlScrapingTest {
             );
             var filePath = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/find-file/fundanalyzer_file_exception/EXAMPLE/XBRL/PublicDoc");
 
-            assertThrows(FundanalyzerFileException.class, () -> htmlScraping.findFile(filePath, scrapingKeyword));
+            assertThrows(FundanalyzerFileException.class, () -> xbrlScraping.findFile(filePath, scrapingKeyword));
         }
     }
 
@@ -90,7 +90,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-financial-statement/jsoup_main.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = htmlScraping.scrapeFinancialStatement(file, keyword);
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
 
             assertAll("FinancialTableResultBean",
                     () -> assertAll(
@@ -127,7 +127,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-financial-statement/jsoup_no_main.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = htmlScraping.scrapeFinancialStatement(file, keyword);
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
 
             assertAll("FinancialTableResultBean",
                     () -> assertAll(
@@ -164,7 +164,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-financial-statement/jsoup_main2.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = htmlScraping.scrapeFinancialStatement(file, keyword);
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
 
             assertAll("FinancialTableResultBean",
                     () -> assertAll(
@@ -201,7 +201,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-financial-statement/jsoup_unit_thousands.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = htmlScraping.unit(file, keyword);
+            var actual = xbrlScraping.unit(file, keyword);
 
             assertEquals(Unit.THOUSANDS_OF_YEN, actual);
         }
@@ -212,7 +212,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-financial-statement/jsoup_unit_millions.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = htmlScraping.unit(file, keyword);
+            var actual = xbrlScraping.unit(file, keyword);
 
             assertEquals(Unit.MILLIONS_OF_YEN, actual);
         }
@@ -223,7 +223,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-financial-statement/jsoup_unit_failure.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = assertThrows(FundanalyzerFileException.class, () -> htmlScraping.unit(file, keyword));
+            var actual = assertThrows(FundanalyzerFileException.class, () -> xbrlScraping.unit(file, keyword));
 
             System.out.println(actual.getMessage());
         }
@@ -238,7 +238,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-number-of-shares/jsoup_ok.htm");
             var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
 
-            var actual = htmlScraping.scrapeNumberOfShares(file, keyword);
+            var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
 
             assertEquals("15,560,000", actual);
         }
@@ -249,7 +249,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-number-of-shares/jsoup_failure_table.htm");
             var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
 
-            var actual = assertThrows(FundanalyzerFileException.class, () -> htmlScraping.scrapeNumberOfShares(file, keyword));
+            var actual = assertThrows(FundanalyzerFileException.class, () -> xbrlScraping.scrapeNumberOfShares(file, keyword));
 
             System.out.println(actual.getMessage());
         }
@@ -260,7 +260,7 @@ class HtmlScrapingTest {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/scrape-number-of-shares/jsoup_failure_keyword.htm");
             var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
 
-            var actual = assertThrows(FundanalyzerFileException.class, () -> htmlScraping.scrapeNumberOfShares(file, keyword));
+            var actual = assertThrows(FundanalyzerFileException.class, () -> xbrlScraping.scrapeNumberOfShares(file, keyword));
 
             System.out.println(actual.getMessage());
         }
