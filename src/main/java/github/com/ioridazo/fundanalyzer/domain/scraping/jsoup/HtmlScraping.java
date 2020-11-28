@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.scraping.jsoup;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.NumberOfSharesResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -21,120 +21,169 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Component
 public class HtmlScraping {
 
-    public HtmlScraping() {
-    }
+    private static final String FISCAL_YEAR_END_NUMBER = "事業年度末現在発行数";
+    private static final String TOTAL = "計";
 
-    public Optional<File> findFile(final File filePath, final String keyword)
-            throws FundanalyzerFileException, FundanalyzerRuntimeException {
-        List<File> filePathList = new ArrayList<>();
+    /**
+     * 対象のフォルダ配下にあるファイルからキーワードに合致するものを返却する
+     *
+     * @param filePath        フォルダパス
+     * @param scrapingKeyword キーワード
+     * @return キーワードに合致するファイル
+     */
+    public Optional<File> findFile(final File filePath, final ScrapingKeyword scrapingKeyword) {
+        // 対象のディレクトリから"honbun"ファイルを取得
+        final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()
+                .filter(File::isFile)
+                .map(file -> new File(filePath, file.getName()))
+                // キーワードが存在するものを見つける
+                .filter(filePathName -> elementsByKeyMatch(filePathName, KeyMatch.of("name", scrapingKeyword.getKeyword())).hasText())
+                .collect(Collectors.toList());
 
-        try {
-            // 対象のディレクトリから"honbun"ファイルを取得
-            getFilesByTitleKeywordContaining("honbun", filePath).forEach(file -> {
-                if (file.isFile()) {
-                    final var filePathName = new File(filePath + "/" + file.getName());
-                    if (elementsByKeyMatch(filePathName, new keyMatch("name", keyword)).hasText()) {
-                        // キーワードが存在したらファイルリストに加える
-                        filePathList.add(filePathName);
-                    }
-                }
-            });
-        } catch (Throwable t) {
-            log.error("想定外のエラーが発生しました。", t);
-            throw new FundanalyzerFileException(t);
-        }
-
-        if (filePathList.size() > 1) {
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", keyword, file));
+        if (filePathList.size() == 1) {
+            // ファイルが一つ見つかったとき
+            return filePathList.stream().findFirst();
+        } else if (filePathList.isEmpty()) {
+            // ファイルがみつからなかったとき
+            log.info("次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{}\tキーワード:{}",
+                    scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword());
+            return Optional.empty();
+        } else {
+            // ファイルが複数見つかったとき
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", scrapingKeyword.getKeyword(), file));
             throw new FundanalyzerFileException("ファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
-        }
-        return filePathList.stream().findAny();
-    }
 
-    public List<FinancialTableResultBean> scrapeFinancialStatement(
-            final File file, final String keyWord) throws FundanalyzerFileException {
-        try {
-            var resultBeanList = new ArrayList<FinancialTableResultBean>();
-
-            Unit unit;
-            if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                    .select("table")
-                    .stream()
-                    .map(Element::text)
-                    .anyMatch(s -> s.contains(Unit.THOUSANDS_OF_YEN.getName()))) {
-                unit = Unit.THOUSANDS_OF_YEN;
-            } else if (elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                    .select("table")
-                    .stream()
-                    .map(Element::text)
-                    .anyMatch(s -> s.contains(Unit.MILLIONS_OF_YEN.getName()))) {
-                unit = Unit.MILLIONS_OF_YEN;
-            } else {
-                throw new FundanalyzerRuntimeException("財務諸表の金額単位を識別できませんでした。");
-            }
-
-            // ファイルをスクレイピング
-            for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                    .select("table")
-                    .select("tr")) {
-                var tdList = new ArrayList<String>();
-                tr.select("td").forEach(td -> {
-                    if (!td.text().equals(" "))
-                        tdList.add(td.text());
-                });
-//                System.out.println(tdList);
-                // TODO 取得前に年度の確認
-                // 各要素をbeanに詰める
-                if (tdList.size() == 2) {
-                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), null, tdList.get(1), unit));
-                } else if (tdList.size() == 3) {
-                    resultBeanList.add(new FinancialTableResultBean(tdList.get(0), tdList.get(1), tdList.get(2), unit));
-                }
-            }
-
-            return resultBeanList;
-        } catch (Throwable t) {
-            log.error("想定外のエラーが発生しました。", t);
-            throw new FundanalyzerFileException(t);
         }
     }
 
-    public String findNumberOfShares(final File file, final String keyWord) throws FundanalyzerFileException {
-        try {
-            var resultBeanList = new ArrayList<NumberOfSharesResultBean>();
+    /**
+     * ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする
+     *
+     * @param targetFile 対象ファイル
+     * @param keyWord    キーワード
+     * @return スクレイピングした結果のリスト
+     */
+    public List<FinancialTableResultBean> scrapeFinancialStatement(final File targetFile, final String keyWord) {
+        final var unit = unit(targetFile, keyWord);
 
-            // ファイルをスクレイピング
-            for (Element tr : elementsByKeyMatch(file, new keyMatch("name", keyWord))
-                    .select("table")
-                    .select("tr")) {
-                var tdList = new ArrayList<String>();
-                tr.select("td").forEach(td -> tdList.add(td.text()));
-//                System.out.println(tdList);
-                // 各要素をbeanに詰める
-                if (tdList.size() == 5) {
-                    resultBeanList.add(new NumberOfSharesResultBean(
-                            tdList.get(0), tdList.get(1), tdList.get(2), tdList.get(3), tdList.get(4)));
-                } else {
-                    log.info("株式総数取得のためのテーブル形式に合致しなかったため、取得範囲対象外の項目として処理を進めます。");
-                }
-            }
-            // FIXME 当てずっぽうで値を取得しているので、正しく取得するか、バリデーションチェックを行う
-            return resultBeanList.stream()
-                    .map(NumberOfSharesResultBean::getFiscalYearEndNumber)
-                    .collect(Collectors.toList())
-                    .get(resultBeanList.size() - 1);
-        } catch (Throwable t) {
-            log.error("想定外のエラーが発生しました。", t);
-            throw new FundanalyzerFileException(t);
+        final var scrapingList = elementsByKeyMatch(targetFile, KeyMatch.of("name", keyWord))
+                .select(Tag.TABLE.getName())
+                .select(Tag.TR.getName()).stream()
+                // tdの要素をリストにする
+                .map(tr -> tr.select(Tag.TD.getName()).stream()
+                        .map(Element::text)
+                        // tdの中から" "（空）を取り除く
+                        .filter(tdText -> !tdText.equals(" "))
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
+
+        // 年度の順序を確認する
+        final var isMain = Optional.of(true)
+                .map(aBoolean -> {
+                    try {
+                        return scrapingList.get(1).get(0).contains("前") || scrapingList.get(1).get(1).contains("当");
+                    } catch (IndexOutOfBoundsException e) {
+                        return true;
+                    }
+                })
+                .get();
+
+        return scrapingList.stream()
+                .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit, isMain))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ファイルから財務諸表の金額単位をスクレイピングする
+     *
+     * @param file    対象ファイル
+     * @param keyWord キーワード
+     * @return 単位（金額）
+     */
+    Unit unit(final File file, final String keyWord) {
+        if (elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
+                .select(Tag.TABLE.getName())
+                .stream()
+                .map(Element::text)
+                .anyMatch(s -> s.contains(Unit.THOUSANDS_OF_YEN.getName()))) {
+            return Unit.THOUSANDS_OF_YEN;
+        } else if (elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
+                .select(Tag.TABLE.getName())
+                .stream()
+                .map(Element::text)
+                .anyMatch(s -> s.contains(Unit.MILLIONS_OF_YEN.getName()))) {
+            return Unit.MILLIONS_OF_YEN;
+        } else {
+            throw new FundanalyzerFileException("財務諸表の金額単位を識別できませんでした。");
+        }
+    }
+
+    /**
+     * ファイルから株式総数を取得し、その値をスクレイピングする
+     *
+     * @param file    対象のファイル
+     * @param keyWord キーワード
+     * @return 株式総数
+     */
+    public String scrapeNumberOfShares(final File file, final String keyWord) {
+        final var scrapingList = elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
+                .select(Tag.TABLE.getName())
+                .select(Tag.TR.getName()).stream()
+                // tdの要素をリストにする
+                .map(tr -> tr.select(Tag.TD.getName()).stream()
+                        .map(Element::text)
+                        .collect(Collectors.toList())
+                )
+                .collect(Collectors.toList());
+
+        if (scrapingList.isEmpty()) {
+            throw new FundanalyzerFileException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
+        }
+
+        try {
+            // "事業年度末現在発行数"を含む項目を探す
+            final var key1 = scrapingList.stream()
+                    // 対象行の取得
+                    .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(FISCAL_YEAR_END_NUMBER)))
+                    .findFirst().orElseThrow().stream()
+                    // 対象行から"事業年度末現在発行数"を含むカラムを取得
+                    .filter(td -> td.contains(FISCAL_YEAR_END_NUMBER))
+                    .findFirst()
+                    .orElseThrow();
+
+            // "事業年度末現在発行数"を含む項目の列数
+            final var indexOfKey1 = scrapingList.stream()
+                    .filter(tdList -> tdList.stream().anyMatch(key1::equals))
+                    .findFirst().orElseThrow()
+                    .indexOf(key1);
+
+            // "計"を含む項目を探す
+            final var key2 = scrapingList.stream()
+                    // 対象行の取得
+                    .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(TOTAL)))
+                    .findFirst().orElseThrow().stream()
+                    // 対象行から"計"を含むカラムを取得
+                    .filter(td -> td.contains(TOTAL))
+                    .findFirst().orElseThrow();
+
+            // "計"を含む項目の列数
+            final var indexOfKey2 = scrapingList.indexOf(scrapingList.stream()
+                    .filter(strings -> strings.stream().anyMatch(key2::equals))
+                    .findFirst().orElseThrow());
+
+            return scrapingList.get(indexOfKey2).get(indexOfKey1);
+        } catch (NoSuchElementException e) {
+            throw new FundanalyzerFileException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
         }
     }
 
@@ -219,19 +268,13 @@ public class HtmlScraping {
         }
     }
 
-    List<File> getFilesByTitleKeywordContaining(final String keyword, final File filePath) {
-        return Stream.of(Objects.requireNonNull(filePath.listFiles(), filePath.getPath()))
-                .filter(file -> file.getName().contains(keyword))
-                .collect(Collectors.toList());
-    }
-
-    Elements elementsByKeyMatch(final File file, final keyMatch keyMatch) {
+    Elements elementsByKeyMatch(final File file, final KeyMatch keyMatch) {
         try {
             return Jsoup.parse(file, "UTF-8")
                     .getElementsByAttributeValue(keyMatch.getKey(), keyMatch.getMatch());
         } catch (IOException e) {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
-            throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
+            throw new FundanalyzerFileException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
         }
     }
 
@@ -242,6 +285,22 @@ public class HtmlScraping {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
         }
+    }
+
+    /**
+     * 対象のフォルダからキーワードを含むファイルを見つける
+     *
+     * @param keyword    キーワード
+     * @param targetFile 対象のフォルダ
+     * @return キーワードを含むファイルのリスト
+     */
+    @SuppressWarnings("SameParameterValue")
+    private List<File> findFilesByTitleKeywordContaining(final String keyword, final File targetFile) {
+        final var targetFileList = List.of(Objects.requireNonNullElse(targetFile.listFiles(), File.listRoots()));
+
+        return targetFileList.stream()
+                .filter(file -> file.getName().contains(keyword))
+                .collect(Collectors.toList());
     }
 
     private Map<String, Integer> readThOrder(final Elements elements) {
@@ -264,8 +323,8 @@ public class HtmlScraping {
         }
     }
 
-    @Value
-    static class keyMatch {
+    @Value(staticConstructor = "of")
+    static class KeyMatch {
         String key;
         String match;
     }

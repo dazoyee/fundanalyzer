@@ -335,7 +335,7 @@ class ScrapingLogicTest {
                     new File(pathDecode + "/" + date.getYear() + "/" + date.getMonth() + "/" + date + "/" + documentId + "/XBRL/PublicDoc"),
                     fs
             );
-            when(htmlScraping.findNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).thenReturn("100");
+            when(htmlScraping.scrapeNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword())).thenReturn("100");
             doNothing().when(scrapingLogic).insertFinancialStatement(
                     eq(company),
                     eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES),
@@ -552,9 +552,9 @@ class ScrapingLogicTest {
             );
 
             when(scrapingKeywordDao.selectByFinancialStatementId(fs.toValue())).thenReturn(List.of(scrapingKeyword));
-            when(htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword())).thenReturn(Optional.of(new File("actual")));
+            when(htmlScraping.findFile(targetFile, scrapingKeyword)).thenReturn(Optional.of(new File("actual")));
 
-            final var actual = scrapingLogic.findTargetFile(targetFile, fs);
+            var actual = scrapingLogic.findTargetFile(targetFile, fs);
 
             assertEquals(new File("actual"), actual.getFirst());
             assertEquals(scrapingKeyword, actual.getSecond());
@@ -574,7 +574,7 @@ class ScrapingLogicTest {
             );
 
             when(scrapingKeywordDao.selectByFinancialStatementId(fs.toValue())).thenReturn(List.of(scrapingKeyword));
-            when(htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword())).thenReturn(Optional.empty());
+            when(htmlScraping.findFile(targetFile, scrapingKeyword)).thenThrow(FundanalyzerFileException.class);
 
             assertThrows(FundanalyzerFileException.class, () -> scrapingLogic.findTargetFile(targetFile, fs));
         }
@@ -613,12 +613,7 @@ class ScrapingLogicTest {
             var edinetDocument = new EdinetDocument();
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
-            final var resultBean = new FinancialTableResultBean(
-                    "科目",
-                    null,
-                    "1",
-                    Unit.MILLIONS_OF_YEN
-            );
+            var resultBean = FinancialTableResultBean.of("科目", null, "1", Unit.MILLIONS_OF_YEN);
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
             when(htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword()))
@@ -674,12 +669,7 @@ class ScrapingLogicTest {
             var edinetDocument = new EdinetDocument();
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
-            final var resultBean = new FinancialTableResultBean(
-                    "一致しない科目",
-                    null,
-                    "1",
-                    Unit.MILLIONS_OF_YEN
-            );
+            var resultBean = FinancialTableResultBean.of("一致しない科目", null, "1", Unit.MILLIONS_OF_YEN);
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
 
@@ -829,7 +819,7 @@ class ScrapingLogicTest {
             );
             var edinetDocument = new EdinetDocument();
             var totalCurrentLiabilities = new BsSubject("1", null, null, null);
-            final var fsTotalCurrentLiabilities = new FinancialStatement(
+            var fsTotalCurrentLiabilities = new FinancialStatement(
                     null,
                     null,
                     null,
@@ -841,7 +831,7 @@ class ScrapingLogicTest {
                     null
             );
             var totalLiabilities = new BsSubject("2", null, null, null);
-            final var fsTotalLiabilities = new FinancialStatement(
+            var fsTotalLiabilities = new FinancialStatement(
                     null,
                     null,
                     null,
@@ -894,7 +884,7 @@ class ScrapingLogicTest {
             );
             var edinetDocument = new EdinetDocument();
             var totalCurrentLiabilities = new BsSubject("1", null, null, null);
-            final var fsTotalCurrentLiabilities = new FinancialStatement(
+            var fsTotalCurrentLiabilities = new FinancialStatement(
                     null,
                     null,
                     null,
@@ -906,7 +896,7 @@ class ScrapingLogicTest {
                     null
             );
             var totalLiabilities = new BsSubject("2", null, null, null);
-            final var fsTotalLiabilities = new FinancialStatement(
+            var fsTotalLiabilities = new FinancialStatement(
                     null,
                     null,
                     null,

@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -183,7 +182,7 @@ public class ScrapingLogic {
                     }
                 } else if (FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.equals(fs)) {
                     // 株式総数
-                    final var value = htmlScraping.findNumberOfShares(
+                    final var value = htmlScraping.scrapeNumberOfShares(
                             targetFile.getFirst(),
                             targetFile.getSecond().getKeyword()
                     );
@@ -279,30 +278,21 @@ public class ScrapingLogic {
      * @return 対象ファイルとスクレイピングキーワード
      * @throws FundanalyzerFileException 見つからなかったとき
      */
-    Pair<File, ScrapingKeyword> findTargetFile(
-            final File targetFile,
-            final FinancialStatementEnum fs) throws FundanalyzerFileException {
+    Pair<File, ScrapingKeyword> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
 
         log.info("\"{}\" のスクレイピング処理を開始します。", fs.getName());
 
         for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
-            try {
-                final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
+            final var findFile = htmlScraping.findFile(targetFile, scrapingKeyword);
 
+            if (findFile.isPresent()) {
                 log.info("対象ファイルの存在を正常に確認できました。\t財務諸表名:{}\tキーワード:{}",
-                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
-                );
-
-                return Pair.of(file, scrapingKeyword);
-
-            } catch (NoSuchElementException ignored) {
-                log.info("次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{}\tキーワード:{}",
-                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
-                );
+                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword());
+                return Pair.of(findFile.get(), scrapingKeyword);
             }
         }
-        throw new FundanalyzerFileException();
+        throw new FundanalyzerFileException("対象のファイルの探索に失敗しました。");
     }
 
     /**
@@ -316,7 +306,6 @@ public class ScrapingLogic {
      * @param detailList      科目リスト
      * @param edinetDocument  EDINETドキュメント
      * @param <T>             財務諸表の型
-     * @throws FundanalyzerFileException スクレイピング処理にエラーが発生したとき
      */
     <T extends Detail> void insertFinancialStatement(
             final File targetFile,
@@ -324,7 +313,7 @@ public class ScrapingLogic {
             final FinancialStatementEnum fs,
             final Company company,
             final List<T> detailList,
-            final EdinetDocument edinetDocument) throws FundanalyzerFileException {
+            final EdinetDocument edinetDocument) {
         final var resultBeans = htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
 
         resultBeans.forEach(resultBean -> detailList.stream()
