@@ -21,6 +21,7 @@ import java.util.Objects;
 @PropertySource(value = "classpath:/slack-message.properties", encoding = "UTF-8")
 public class SlackProxy {
 
+    private final RestTemplate restTemplate;
     private final String baseUri;
     private final Environment environment;
     @Value("${app.api.slack.parameter.t}")
@@ -31,8 +32,10 @@ public class SlackProxy {
     String parameterX;
 
     public SlackProxy(
+            final RestTemplate restTemplate,
             @Value("${app.api.slack.base-uri}") final String baseUri,
             final Environment environment) {
+        this.restTemplate = restTemplate;
         this.baseUri = baseUri;
         this.environment = environment;
     }
@@ -66,16 +69,11 @@ public class SlackProxy {
         final var url = UriComponentsBuilder.fromUriString(baseUri)
                 .path("services/{t}/{b}/{x}")
                 .buildAndExpand(Map.of("t", parameterT, "b", parameterB, "x", parameterX)).toUri();
-        restTemplate().exchange(
+        restTemplate.exchange(
                 RequestEntity.post(url)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body("{\"text\": \"" + message + "\"}"),
                 String.class
         );
-    }
-
-    // FIXME
-    private RestTemplate restTemplate() {
-        return new RestTemplate();
     }
 }

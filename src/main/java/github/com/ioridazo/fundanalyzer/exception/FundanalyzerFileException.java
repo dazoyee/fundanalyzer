@@ -1,8 +1,6 @@
 package github.com.ioridazo.fundanalyzer.exception;
 
-import java.io.IOException;
-
-public class FundanalyzerFileException extends IOException {
+public class FundanalyzerFileException extends RuntimeException {
 
     public FundanalyzerFileException() {
     }

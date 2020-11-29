@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
-import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.HtmlScraping;
+import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -25,17 +25,17 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class StockService {
 
-    private final HtmlScraping htmlScraping;
+    private final StockScraping stockScraping;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
     private final StockPriceDao stockPriceDao;
 
     public StockService(
-            final HtmlScraping htmlScraping,
+            final StockScraping stockScraping,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
             final StockPriceDao stockPriceDao) {
-        this.htmlScraping = htmlScraping;
+        this.stockScraping = stockScraping;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.stockPriceDao = stockPriceDao;
@@ -70,8 +70,8 @@ public class StockService {
      */
     public void importStockPrice(final String code) {
         try {
-            final var nikkei = htmlScraping.nikkei(code);
-            final var kabuoji3List = htmlScraping.kabuoji3(code);
+            final var nikkei = stockScraping.nikkei(code);
+            final var kabuoji3List = stockScraping.kabuoji3(code);
             final var stockPriceList = stockPriceDao.selectByCode(code);
 
             // 日経

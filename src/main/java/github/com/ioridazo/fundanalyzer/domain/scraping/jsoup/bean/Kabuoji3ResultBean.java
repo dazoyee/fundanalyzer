@@ -23,7 +23,7 @@ public class Kabuoji3ResultBean {
 
     private final String closingPriceAdjustment;
 
-    public static Kabuoji3ResultBean of(final Map<String, Integer> thOrder, final List<String> tdList) {
+    public static Kabuoji3ResultBean ofJsoup(final Map<String, Integer> thOrder, final List<String> tdList) {
         return new Kabuoji3ResultBean(
                 tdList.get(thOrder.get("日付")),
                 tdList.get(thOrder.get("始値")),

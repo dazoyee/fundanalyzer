@@ -17,7 +17,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import github.com.ioridazo.fundanalyzer.domain.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.HtmlScraping;
+import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -49,7 +48,7 @@ public class ScrapingLogic {
     private final String pathDecode;
     private final EdinetProxy proxy;
     private final FileOperator fileOperator;
-    private final HtmlScraping htmlScraping;
+    private final XbrlScraping xbrlScraping;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
     private final EdinetDocumentDao edinetDocumentDao;
@@ -62,7 +61,7 @@ public class ScrapingLogic {
             @Value("${app.settings.file.path.decode}") final String pathDecode,
             final EdinetProxy proxy,
             final FileOperator fileOperator,
-            final HtmlScraping htmlScraping,
+            final XbrlScraping xbrlScraping,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
             final EdinetDocumentDao edinetDocumentDao,
@@ -73,7 +72,7 @@ public class ScrapingLogic {
         this.pathDecode = pathDecode;
         this.proxy = proxy;
         this.fileOperator = fileOperator;
-        this.htmlScraping = htmlScraping;
+        this.xbrlScraping = xbrlScraping;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.edinetDocumentDao = edinetDocumentDao;
@@ -183,7 +182,7 @@ public class ScrapingLogic {
                     }
                 } else if (FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.equals(fs)) {
                     // 株式総数
-                    final var value = htmlScraping.findNumberOfShares(
+                    final var value = xbrlScraping.scrapeNumberOfShares(
                             targetFile.getFirst(),
                             targetFile.getSecond().getKeyword()
                     );
@@ -279,30 +278,21 @@ public class ScrapingLogic {
      * @return 対象ファイルとスクレイピングキーワード
      * @throws FundanalyzerFileException 見つからなかったとき
      */
-    Pair<File, ScrapingKeyword> findTargetFile(
-            final File targetFile,
-            final FinancialStatementEnum fs) throws FundanalyzerFileException {
+    Pair<File, ScrapingKeyword> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
 
         log.info("\"{}\" のスクレイピング処理を開始します。", fs.getName());
 
         for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
-            try {
-                final var file = htmlScraping.findFile(targetFile, scrapingKeyword.getKeyword()).orElseThrow();
+            final var findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);
 
+            if (findFile.isPresent()) {
                 log.info("対象ファイルの存在を正常に確認できました。\t財務諸表名:{}\tキーワード:{}",
-                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
-                );
-
-                return Pair.of(file, scrapingKeyword);
-
-            } catch (NoSuchElementException ignored) {
-                log.info("次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{}\tキーワード:{}",
-                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword()
-                );
+                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword());
+                return Pair.of(findFile.get(), scrapingKeyword);
             }
         }
-        throw new FundanalyzerFileException();
+        throw new FundanalyzerFileException("対象のファイルの探索に失敗しました。");
     }
 
     /**
@@ -316,7 +306,6 @@ public class ScrapingLogic {
      * @param detailList      科目リスト
      * @param edinetDocument  EDINETドキュメント
      * @param <T>             財務諸表の型
-     * @throws FundanalyzerFileException スクレイピング処理にエラーが発生したとき
      */
     <T extends Detail> void insertFinancialStatement(
             final File targetFile,
@@ -324,8 +313,8 @@ public class ScrapingLogic {
             final FinancialStatementEnum fs,
             final Company company,
             final List<T> detailList,
-            final EdinetDocument edinetDocument) throws FundanalyzerFileException {
-        final var resultBeans = htmlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
+            final EdinetDocument edinetDocument) {
+        final var resultBeans = xbrlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
 
         resultBeans.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
@@ -418,27 +407,26 @@ public class ScrapingLogic {
                 .map(Optional::get)
                 .findAny();
 
-        if (totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent()) {
-            if (totalCurrentLiabilities.get().equals(totalLiabilities.get())) {
-                insertFinancialStatement(
-                        company,
-                        FinancialStatementEnum.BALANCE_SHEET,
-                        bsSubjectDao.selectByUniqueKey(
-                                BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
-                                BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
-                        ).getId(),
-                        edinetDocument,
-                        0L
-                );
+        if ((totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent()) &&
+                (totalCurrentLiabilities.get().equals(totalLiabilities.get()))) {
+            insertFinancialStatement(
+                    company,
+                    FinancialStatementEnum.BALANCE_SHEET,
+                    bsSubjectDao.selectByUniqueKey(
+                            BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
+                            BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
+                    ).getId(),
+                    edinetDocument,
+                    0L
+            );
 
-                log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
-                                "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
-                        company.getCode().orElseThrow(),
-                        edinetDocument.getDocId(),
-                        totalCurrentLiabilities.get(),
-                        totalLiabilities.get()
-                );
-            }
+            log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
+                            "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
+                    company.getCode().orElseThrow(),
+                    edinetDocument.getDocId(),
+                    totalCurrentLiabilities.get(),
+                    totalLiabilities.get()
+            );
         }
     }
 

@@ -5,17 +5,21 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParamet
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestOperations;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
@@ -24,16 +28,27 @@ import java.util.Map;
 @Component
 public class EdinetProxy {
 
-    final private RestOperations restOperations;
+    private final RestTemplate restTemplate;
+    private final String baseUri;
 
-    public EdinetProxy(final RestOperations restOperations) {
-        this.restOperations = restOperations;
+    public EdinetProxy(
+            final RestTemplate restTemplate,
+            @Value("${app.api.edinet}") final String baseUri) {
+        this.restTemplate = restTemplate;
+        this.baseUri = baseUri;
     }
 
+    /**
+     * EDINETの書類一覧API<br/>
+     * 「メタデータのみ」または「提出書類一覧及びメタデータ」を取得することができる
+     *
+     * @param parameter パラメータ
+     * @return EdinetResponse
+     */
     public EdinetResponse list(final ListRequestParameter parameter) {
         try {
-            return restOperations.getForObject(
-                    "/api/v1/documents.json?date={date}&type={type}",
+            return restTemplate.getForObject(
+                    baseUri + "/api/v1/documents.json?date={date}&type={type}",
                     EdinetResponse.class,
                     Map.of("date", parameter.getDate(), "type", parameter.getType().toValue())
             );
@@ -64,26 +79,23 @@ public class EdinetProxy {
         }
     }
 
+    /**
+     * 書類取得API
+     *
+     * @param storagePath 保存先
+     * @param parameter   パラメータ
+     */
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
-        if (!storagePath.exists()) //noinspection ResultOfMethodCallIgnored
-            storagePath.mkdirs();
+        makeDirectory(storagePath);
 
         try {
-            restOperations.execute(
-                    "/api/v1/documents/{docId}?type={type}",
+            restTemplate.execute(
+                    baseUri + "/api/v1/documents/{docId}?type={type}",
                     HttpMethod.GET,
                     request -> request
                             .getHeaders()
                             .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
-                    response -> {
-                        try {
-                            Files.copy(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip"));
-                        } catch (final FileAlreadyExistsException e) {
-                            log.error("重複ファイル：\"{}\"", e.getFile());
-                            throw e;
-                        }
-                        return null;
-                    },
+                    response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
             );
         } catch (final RestClientResponseException e) {
@@ -116,5 +128,35 @@ public class EdinetProxy {
                         "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
             }
         }
+    }
+
+    /**
+     * ファイルの保存先が存在しなかったら作成する
+     *
+     * @param storagePath 保存先
+     */
+    void makeDirectory(final File storagePath) {
+        if (!storagePath.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            storagePath.mkdirs();
+        }
+    }
+
+    /**
+     * ダウンロードしたファイルを保存する
+     *
+     * @param file ダウンロードしたファイル
+     * @param path 保存先
+     * @return null
+     * @throws IOException エラー発生時
+     */
+    Object copyFile(final InputStream file, final Path path) throws IOException {
+        try {
+            Files.copy(file, path);
+        } catch (final FileAlreadyExistsException e) {
+            log.error("重複ファイル：\"{}\"", e.getFile());
+            throw e;
+        }
+        return null;
     }
 }

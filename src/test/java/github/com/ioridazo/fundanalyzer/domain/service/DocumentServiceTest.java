@@ -21,7 +21,6 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParamet
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
-import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Results;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -475,7 +474,7 @@ class DocumentServiceTest {
             var date = LocalDate.parse("2020-09-19");
             var edinetDocument = new EdinetDocument();
             edinetDocument.setDocId("already");
-            var resultSet = new ResultSet();
+            var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
             var metadata = new Metadata();
             metadata.setResultset(resultSet);
@@ -526,7 +525,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_nothing() {
             var date = LocalDate.parse("2020-09-19");
-            var resultSet = new ResultSet();
+            var resultSet = new Metadata.ResultSet();
             resultSet.setCount("0");
             var metadata = new Metadata();
             metadata.setResultset(resultSet);
@@ -546,7 +545,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_insertCompanyForSqlForeignKey() {
             var date = LocalDate.parse("2020-09-19");
-            var resultSet = new ResultSet();
+            var resultSet = new Metadata.ResultSet();
             resultSet.setCount("1");
             var metadata = new Metadata();
             metadata.setResultset(resultSet);
@@ -576,7 +575,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_UniqueConstraintException() {
             var date = LocalDate.parse("2020-09-19");
-            var resultSet = new ResultSet();
+            var resultSet = new Metadata.ResultSet();
             resultSet.setCount("1");
             var metadata = new Metadata();
             metadata.setResultset(resultSet);

@@ -31,4 +31,24 @@ public class Metadata {
     // メッセージ
     @JsonProperty("message")
     private String message;
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Parameter {
+        // ファイル日付
+        @JsonProperty("date")
+        private String date;
+
+        // 取得情報
+        @JsonProperty("type")
+        private String type;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ResultSet {
+        // 件数
+        @JsonProperty("count")
+        private String count;
+    }
 }
