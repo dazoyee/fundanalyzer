@@ -21,7 +21,6 @@ import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListRequestParamet
 import github.com.ioridazo.fundanalyzer.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.edinet.entity.response.Metadata;
-import github.com.ioridazo.fundanalyzer.edinet.entity.response.ResultSet;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -251,7 +250,7 @@ public class DocumentService {
                         .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
                         .map(EdinetResponse::getMetadata)
                         .map(Metadata::getResultset)
-                        .map(ResultSet::getCount)
+                        .map(Metadata.ResultSet::getCount)
                         .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
                         .anyMatch(c -> !"0".equals(c))
                 )

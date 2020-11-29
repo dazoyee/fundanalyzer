@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
-import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.HtmlScraping;
+import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 class StockServiceTest {
 
-    private HtmlScraping htmlScraping;
+    private StockScraping stockScraping;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
     private StockPriceDao stockPriceDao;
@@ -38,13 +38,13 @@ class StockServiceTest {
 
     @BeforeEach
     void setUp() {
-        htmlScraping = Mockito.mock(HtmlScraping.class);
+        stockScraping = Mockito.mock(StockScraping.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
         stockPriceDao = Mockito.mock(StockPriceDao.class);
 
         service = Mockito.spy(new StockService(
-                htmlScraping,
+                stockScraping,
                 companyDao,
                 documentDao,
                 stockPriceDao
@@ -87,7 +87,7 @@ class StockServiceTest {
             var code = "code";
             var createdAt = LocalDateTime.of(2020, 11, 14, 18, 21);
 
-            when(htmlScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
+            when(stockScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
                     "1000",
                     "2020/11/1",
                     "1000",
@@ -102,7 +102,7 @@ class StockServiceTest {
                     "1%",
                     "優待券"
             ));
-            when(htmlScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
+            when(stockScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
                     "2020-11-01",
                     "1000",
                     "1000",
@@ -143,7 +143,7 @@ class StockServiceTest {
             var code = "code";
             var createdAt = LocalDateTime.of(2020, 11, 14, 18, 21);
 
-            when(htmlScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
+            when(stockScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
                     "1000",
                     "2020/11/1",
                     "1000",
@@ -158,7 +158,7 @@ class StockServiceTest {
                     "1%",
                     "優待券"
             ));
-            when(htmlScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
+            when(stockScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
                     "2020-11-14",
                     "1000",
                     "1000",
@@ -236,7 +236,7 @@ class StockServiceTest {
             var code = "code";
             var createdAt = LocalDateTime.of(2020, 11, 14, 18, 21);
 
-            when(htmlScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
+            when(stockScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
                     "1000",
                     "2020/11/1",
                     "1000",
@@ -251,7 +251,7 @@ class StockServiceTest {
                     "1%",
                     "優待券"
             ));
-            when(htmlScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
+            when(stockScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
                     "2020-11-14",
                     "1000",
                     "1000",
@@ -349,7 +349,7 @@ class StockServiceTest {
         void importStockPrice_FundanalyzerRuntimeException() {
             var code = "code";
 
-            when(htmlScraping.nikkei(code)).thenThrow(FundanalyzerRuntimeException.class);
+            when(stockScraping.nikkei(code)).thenThrow(FundanalyzerRuntimeException.class);
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
         }

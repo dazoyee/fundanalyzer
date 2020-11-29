@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,12 +14,8 @@ import java.util.concurrent.Executor;
 public class AppConfig {
 
     @Bean
-    public RestTemplate restTemplate(
-            final RestTemplateBuilder builder,
-            @Value("${app.api.edinet}") final String rootUri) {
-        return builder
-                .rootUri(rootUri)
-                .build();
+    public RestTemplate restTemplate() {
+        return new RestTemplateBuilder().build();
     }
 
     @Bean

@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
@@ -81,8 +82,22 @@ public class ViewService {
         return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
-                // 100%以上を表示
+                // 割安度が100%以上を表示
                 .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+                // 標準偏差が外れ値となっていたら除外
+                .filter(cvb -> cvb.getStandardDeviation().compareTo(BigDecimal.valueOf(10000)) < 0)
+                // 最新企業価値がマイナスの場合は除外
+                .filter(cvb -> cvb.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
+                // 変動係数
+                .filter(cvb -> {
+                    // 変動係数が0.6以下であること
+                    if (cvb.getCoefficientOfVariation().compareTo(BigDecimal.valueOf(0.6)) < 1) {
+                        return true;
+                    } else {
+                        // 変動係数が0.6以上でも最新企業価値が高ければOK
+                        return cvb.getLatestCorporateValue().compareTo(cvb.getAverageCorporateValue()) > -1;
+                    }
+                })
                 .collect(Collectors.toList()));
     }
 
@@ -243,9 +258,13 @@ public class ViewService {
         return new BrandDetailViewBean(
                 brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
                 corporateViewDao.selectByCode(code.substring(0, 4)),
-                analysisResultDao.selectByCompanyCode(code),
+                analysisResultDao.selectByCompanyCode(code).stream()
+                        .sorted(Comparator.comparing(AnalysisResult::getPeriod).reversed())
+                        .collect(Collectors.toList()),
                 brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
                 stockPriceDao.selectByCode(code).stream()
+                        .map(StockPrice::ofBrandDetail)
+                        .distinct()
                         .sorted(Comparator.comparing(StockPrice::getTargetDate).reversed())
                         .collect(Collectors.toList())
         );
