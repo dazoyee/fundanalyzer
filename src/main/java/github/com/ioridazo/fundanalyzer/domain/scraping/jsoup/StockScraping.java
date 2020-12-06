@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.scraping.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
@@ -28,23 +29,15 @@ public class StockScraping {
      * @return 株価情報
      */
     public NikkeiResultBean nikkei(final String code) {
-        final var url = UriComponentsBuilder
-                .newInstance()
-                .scheme("https").host("www.nikkei.com")
-                .path("/nkd/company/")
-                .queryParam("scode", code.substring(0, 4))
-                .toUriString();
-        try {
-            final var document = jsoup(url);
-            return NikkeiResultBean.ofJsoup(document);
-        } catch (SocketTimeoutException e) {
-            log.info("日経との通信でタイムアウトエラーが発生しました。\t企業コード:{}\tURL:{}", code, url);
-            throw new FundanalyzerRuntimeException();
-        } catch (IOException | RuntimeException e) {
-            log.warn("株価の過程でエラーが発生しました。次のURLを確認してください。" +
-                    "\t企業コード:{}\tURL:{}\tmessage:{}", code, url, e.getMessage(), e);
-            throw new FundanalyzerRuntimeException();
-        }
+        return NikkeiResultBean.ofJsoup(jsoup(
+                "日経",
+                code,
+                UriComponentsBuilder
+                        .newInstance()
+                        .scheme("https").host("www.nikkei.com")
+                        .path("/nkd/company/")
+                        .queryParam("scode", code.substring(0, 4))
+                        .toUriString()));
     }
 
     /**
@@ -61,36 +54,56 @@ public class StockScraping {
                 .buildAndExpand(code.substring(0, 4))
                 .toUriString();
 
-        try {
-            final var document = jsoup(url);
-            final var thOrder = readThOrder(document);
+        final var document = jsoup("kabuoji3", code, url);
+        final var thOrder = readThOrder(document);
 
-            return document.select(".table_wrap table").select("tr").stream()
-                    .map(tr -> tr.select("td").stream()
-                            .map(Element::text)
-                            .collect(Collectors.toList()))
-                    .filter(tdList -> tdList.size() == 7)
-                    .map(tdList -> Kabuoji3ResultBean.ofJsoup(thOrder, tdList))
-                    .collect(Collectors.toList());
+        return document.select(".table_wrap table").select("tr").stream()
+                .map(tr -> tr.select("td").stream()
+                        .map(Element::text)
+                        .collect(Collectors.toList()))
+                .filter(tdList -> tdList.size() == 7)
+                .map(tdList -> Kabuoji3ResultBean.ofJsoup(thOrder, tdList))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * みんかぶの会社コードによる株価情報予想を取得する
+     *
+     * @param code 会社コード
+     * @return 株価情報予想
+     */
+    public MinkabuResultBean minkabu(final String code) {
+        return MinkabuResultBean.ofJsoup(jsoup(
+                "みんかぶ",
+                code,
+                UriComponentsBuilder
+                        .newInstance()
+                        .scheme("https").host("minkabu.jp")
+                        .path("/stock/{code}")
+                        .buildAndExpand(code.substring(0, 4))
+                        .toUriString()
+        ));
+    }
+
+    /**
+     * 対象URLのスクレイピングを実行する
+     *
+     * @param targetName 対象サイト名
+     * @param code       会社コード
+     * @param url        対象URL
+     * @return スクレイピング結果
+     */
+    Document jsoup(final String targetName, final String code, final String url) {
+        try {
+            return Jsoup.connect(url).get();
         } catch (SocketTimeoutException e) {
-            log.info("kabuoji3との通信でタイムアウトエラーが発生しました。\t企業コード:{}\tURL:{}", code, url);
+            log.info("{}との通信でタイムアウトエラーが発生しました。\t企業コード:{}\tURL:{}", targetName, code, url);
             throw new FundanalyzerRuntimeException();
         } catch (IOException | RuntimeException e) {
             log.warn("株価の過程でエラーが発生しました。次のURLを確認してください。" +
                     "\t企業コード:{}\tURL:{}\tmessage:{}", code, url, e.getMessage(), e);
             throw new FundanalyzerRuntimeException();
         }
-    }
-
-    /**
-     * 対象URLのスクレイピングを実行する
-     *
-     * @param url 対象URL
-     * @return スクレイピング結果
-     * @throws IOException 想定外エラー
-     */
-    Document jsoup(final String url) throws IOException {
-        return Jsoup.connect(url).get();
     }
 
     /**

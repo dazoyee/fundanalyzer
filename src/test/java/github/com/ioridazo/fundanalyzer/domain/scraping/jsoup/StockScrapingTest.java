@@ -1,25 +1,22 @@
 package github.com.ioridazo.fundanalyzer.domain.scraping.jsoup;
 
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 class StockScrapingTest {
@@ -71,7 +68,7 @@ class StockScrapingTest {
 
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/nikkei/nikkei.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any());
+            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
 
             var actual = stockScraping.nikkei(code);
 
@@ -90,42 +87,6 @@ class StockScrapingTest {
                     () -> assertEquals("株式益回り（予想）（解説） N/A", actual.getDividendYield()),
                     () -> assertEquals("株主優待 ギフト券 レジャー 招待券", actual.getShareholderBenefit())
             );
-        }
-
-        @DisplayName("nikkei : 日経の株価情報を取得するときにタイムアウトエラーが発生したときの挙動を確認する")
-        @Test
-        void nikkei_SocketTimeoutException() throws IOException {
-            var code = "9999";
-
-            doThrow(SocketTimeoutException.class).when(stockScraping).jsoup(any());
-
-            var actual = assertThrows(FundanalyzerRuntimeException.class, () -> stockScraping.nikkei(code));
-
-            System.out.println(actual.getMessage());
-        }
-
-        @DisplayName("nikkei : 日経の株価情報を取得するときにIO系エラーが発生したときの挙動を確認する")
-        @Test
-        void nikkei_IOException() throws IOException {
-            var code = "9999";
-
-            doThrow(IOException.class).when(stockScraping).jsoup(any());
-
-            var actual = assertThrows(FundanalyzerRuntimeException.class, () -> stockScraping.nikkei(code));
-
-            System.out.println(actual.getMessage());
-        }
-
-        @DisplayName("nikkei : 日経の株価情報を取得するときに想定外エラーが発生したときの挙動を確認する")
-        @Test
-        void nikkei_RuntimeException() throws IOException {
-            var code = "9999";
-
-            doThrow(RuntimeException.class).when(stockScraping).jsoup(any());
-
-            var actual = assertThrows(FundanalyzerRuntimeException.class, () -> stockScraping.nikkei(code));
-
-            System.out.println(actual.getMessage());
         }
     }
 
@@ -152,7 +113,7 @@ class StockScrapingTest {
 
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/kabuoji3/kabuoji3.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any());
+            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
 
             var actual = stockScraping.kabuoji3(code);
 
@@ -187,41 +148,83 @@ class StockScrapingTest {
             );
             assertEquals(300, actual.size());
         }
+    }
 
-        @DisplayName("kabuoji3 : kabuoji3の株価情報を取得するときにタイムアウトエラーが発生したときの挙動を確認する")
-        @Test
-        void kabuoji3_SocketTimeoutException() throws IOException {
-            var code = "9999";
+    @Nested
+    class minkabu {
 
-            doThrow(SocketTimeoutException.class).when(stockScraping).jsoup(any());
+        @DisplayName("minkabu : 実際にみんかぶの会社コードによる株価情報予想を取得する")
+//        @Test
+        void minkabu_test() {
+            var code = "9434";
 
-            var actual = assertThrows(FundanalyzerRuntimeException.class, () -> stockScraping.kabuoji3(code));
+            var actual = stockScraping.minkabu(code);
 
-            System.out.println(actual.getMessage());
+            assertAll("MinkabuResultBean",
+                    () -> assertNotNull(actual.getStockPrice()),
+                    () -> assertNotNull(actual.getTargetDate()),
+                    () -> assertNotNull(actual.getExpectedStockPrice().getGoals()),
+                    () -> assertNotNull(actual.getExpectedStockPrice().getTheoretical()),
+                    () -> assertNotNull(actual.getExpectedStockPrice().getIndividualInvestors()),
+                    () -> assertNotNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
+            );
+
+            System.out.println(actual);
         }
 
-        @DisplayName("kabuoji3 : kabuoji3の株価情報を取得するときにIO系エラーが発生したときの挙動を確認する")
+        @DisplayName("minkabu : みんかぶの会社コードによる株価情報予想を取得する")
         @Test
-        void kabuoji3_IOException() throws IOException {
+        void minkabu_ok() throws IOException {
             var code = "9999";
 
-            doThrow(IOException.class).when(stockScraping).jsoup(any());
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/minkabu/minkabu.html");
 
-            var actual = assertThrows(FundanalyzerRuntimeException.class, () -> stockScraping.kabuoji3(code));
+            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
 
-            System.out.println(actual.getMessage());
+            var actual = stockScraping.minkabu(code);
+
+            assertAll("MinkabuResultBean",
+                    () -> assertEquals("408. 0 円", actual.getStockPrice()),
+                    () -> assertEquals("11/27", actual.getTargetDate()),
+                    () -> assertEquals("636", actual.getExpectedStockPrice().getGoals()),
+                    () -> assertEquals("638", actual.getExpectedStockPrice().getTheoretical()),
+                    () -> assertEquals("649", actual.getExpectedStockPrice().getIndividualInvestors()),
+                    () -> assertEquals("630", actual.getExpectedStockPrice().getSecuritiesAnalyst())
+            );
         }
 
-        @DisplayName("kabuoji3 : kabuoji3の株価情報を取得するときに想定外エラーが発生したときの挙動を確認する")
+        @DisplayName("minkabu : [検証]みんかぶの会社コードによる株価情報予想を取得する")
         @Test
-        void kabuoji3_RuntimeException() throws IOException {
-            var code = "9999";
+        void minkabu_verify() throws IOException {
+            var code = "9903";
 
-            doThrow(RuntimeException.class).when(stockScraping).jsoup(any());
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/scraping/jsoup/minkabu/minkabu_9903.html");
 
-            var actual = assertThrows(FundanalyzerRuntimeException.class, () -> stockScraping.kabuoji3(code));
+            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
 
-            System.out.println(actual.getMessage());
+            var actual = stockScraping.minkabu(code);
+
+            assertAll("MinkabuResultBean",
+                    () -> assertEquals("3,180. 0 円", actual.getStockPrice()),
+                    () -> assertEquals("12/04", actual.getTargetDate()),
+                    () -> assertEquals("2,575", actual.getExpectedStockPrice().getGoals()),
+                    () -> assertEquals("3,013", actual.getExpectedStockPrice().getTheoretical()),
+                    () -> assertEquals("1,918", actual.getExpectedStockPrice().getIndividualInvestors()),
+                    () -> assertEquals("", actual.getExpectedStockPrice().getSecuritiesAnalyst())
+            );
+        }
+
+        // @Test
+        void minkabu_url() throws IOException {
+            var code = "9903";
+            final var url = UriComponentsBuilder
+                    .newInstance()
+                    .scheme("https").host("minkabu.jp")
+                    .path("/stock/{code}")
+                    .buildAndExpand(code.substring(0, 4))
+                    .toUriString();
+
+            System.out.println(Jsoup.connect(url).get());
         }
     }
 }

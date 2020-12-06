@@ -170,6 +170,20 @@ create TABLE IF NOT EXISTS stock_price(
   UNIQUE KEY(company_code, target_date, source_of)
 );
 
+create TABLE IF NOT EXISTS minkabu(
+  id INT AUTO_INCREMENT,
+  company_code CHAR(5) NOT NULL COMMENT '企業コード',
+  target_date DATE NOT NULL COMMENT '対象日付',
+  stock_price FLOAT COMMENT '現在株価',
+  goals_stock FLOAT COMMENT '予想株価',
+  theoretical_stock FLOAT COMMENT '理論株価',
+  individual_investors_stock FLOAT COMMENT '個人投資家の予想株価',
+  securities_analyst_stock FLOAT COMMENT '証券アナリストの予想株価',
+  created_at DATETIME NOT NULL COMMENT '登録日',
+  PRIMARY KEY(id),
+  UNIQUE KEY(company_code, target_date)
+);
+
 -- 企業一覧
 create TABLE IF NOT EXISTS corporate_view(
   code CHAR(4) UNIQUE COMMENT '企業コード',
