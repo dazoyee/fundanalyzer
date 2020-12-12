@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -96,7 +97,7 @@ public class StockService {
             // みんかぶ
             if (isNotInsertedMinkabu(minkabu.getTargetDate(), minkabuList)) {
                 final var m = Minkabu.ofMinkabuResultBean(code, minkabu, nowLocalDateTime());
-                if (m.getGoalsStock().isNaN()) {
+                if (Objects.isNull(m.getGoalsStock())) {
                     log.warn("みんかぶからスクレイピングした目標株価が存在していません。スクレイピング処理の詳細を確認してください。" +
                             "\t会社コード:{}\t対象日付:{}", code, m.getTargetDate());
                 }

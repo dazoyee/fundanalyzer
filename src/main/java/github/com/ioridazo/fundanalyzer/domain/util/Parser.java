@@ -2,10 +2,13 @@ package github.com.ioridazo.fundanalyzer.domain.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.MessageFormat;
 import java.util.Optional;
 
 @Slf4j
 public class Parser {
+
+    private static final String MESSAGE = "株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{0}";
 
     private Parser() {
     }
@@ -38,7 +41,7 @@ public class Parser {
                                 return Integer.valueOf(v);
                             }
                         } catch (NumberFormatException e2) {
-                            log.warn("株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", v);
+                            log.warn(MessageFormat.format(MESSAGE, v));
                             return null;
                         }
                     });
@@ -69,7 +72,7 @@ public class Parser {
                                 return Double.valueOf(v);
                             }
                         } catch (NumberFormatException e2) {
-                            log.warn("株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", v);
+                            log.warn(MessageFormat.format(MESSAGE, v));
                             return null;
                         }
                     });
@@ -96,13 +99,13 @@ public class Parser {
                     .map(v -> v.replace(",", ""))
                     .map(v -> {
                         try {
-                            if (v.equals("--")) {
+                            if (v.equals("--") || v.equals("---")) {
                                 return null;
                             } else {
                                 return Double.valueOf(v);
                             }
                         } catch (NumberFormatException e2) {
-                            log.warn("株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", v);
+                            log.warn(MessageFormat.format(MESSAGE, v));
                             return null;
                         }
                     });
