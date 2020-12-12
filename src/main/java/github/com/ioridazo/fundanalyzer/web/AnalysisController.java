@@ -16,6 +16,13 @@ import java.time.LocalDate;
 @Controller
 public class AnalysisController {
 
+    private static final String INDEX = "index";
+    private static final String REDIRECT_INDEX = "redirect:/fundanalyzer/v1/index";
+    private static final String EDINET = "edinet";
+    private static final String REDIRECT_EDINET = "redirect:/fundanalyzer/v1/edinet/list";
+    private static final String CORPORATE = "corporate";
+    private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
+
     private final DocumentService documentService;
     private final AnalysisService analysisService;
     private final StockService stockService;
@@ -36,7 +43,7 @@ public class AnalysisController {
     public String index(@RequestParam(name = "message", required = false) final String message, final Model model) {
         model.addAttribute("message", message);
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return INDEX;
     }
 
     @GetMapping("fundanalyzer/v1/edinet/list")
@@ -44,7 +51,7 @@ public class AnalysisController {
         model.addAttribute("message", message);
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetListview());
-        return "edinet";
+        return EDINET;
     }
 
     @GetMapping("fundanalyzer/v1/corporate/{code}")
@@ -54,8 +61,9 @@ public class AnalysisController {
         model.addAttribute("corporateView", brandDetail.getCorporateView());
         model.addAttribute("analysisResults", brandDetail.getAnalysisResultList());
         model.addAttribute("financialStatements", brandDetail.getFinancialStatement());
+        model.addAttribute("forecastStocks", brandDetail.getMinkabuList());
         model.addAttribute("stockPrices", brandDetail.getStockPriceList());
-        return "corporate";
+        return CORPORATE;
     }
 
     @GetMapping("fundanalyzer/v1/company")
@@ -63,7 +71,7 @@ public class AnalysisController {
         documentService.company();
 
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return INDEX;
     }
 
     /**
@@ -87,7 +95,7 @@ public class AnalysisController {
                             // importStockPrice完了後、notice実行
                             .thenAcceptAsync(unused -> viewService.notice(date));
                 });
-        return "redirect:/fundanalyzer/v1/index";
+        return REDIRECT_INDEX;
     }
 
     /**
@@ -99,7 +107,7 @@ public class AnalysisController {
     public String updateView() {
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
-        return "redirect:/fundanalyzer/v1/index";
+        return REDIRECT_INDEX;
     }
 
     /**
@@ -112,7 +120,7 @@ public class AnalysisController {
     public String scrapeByDate(final String date) {
         documentService.scrape(LocalDate.parse(date));
         analysisService.analyze(LocalDate.parse(date));
-        return "redirect:/fundanalyzer/v1/index";
+        return REDIRECT_INDEX;
     }
 
     /**
@@ -125,7 +133,7 @@ public class AnalysisController {
     public String scrapeById(final String documentId) {
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
-        return "redirect:/fundanalyzer/v1/index";
+        return REDIRECT_INDEX;
     }
 
     /**
@@ -140,7 +148,7 @@ public class AnalysisController {
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(stockService::importStockPrice);
-        return "redirect:/fundanalyzer/v1/index";
+        return REDIRECT_INDEX;
     }
 
     /**
@@ -152,7 +160,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/import/stock/code")
     public String importStocks(final String code) {
         stockService.importStockPrice(code);
-        return "redirect:/fundanalyzer/v1/corporate/" + code.substring(0, 4);
+        return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
     }
 
     /**
@@ -163,7 +171,7 @@ public class AnalysisController {
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
     public String sortedDiscountRate(final Model model) {
         model.addAttribute("companies", viewService.sortByDiscountRate());
-        return "index";
+        return INDEX;
     }
 
     /**
@@ -174,7 +182,7 @@ public class AnalysisController {
     @GetMapping("fundanalyzer/v1/index/all")
     public String indexAll(final Model model) {
         model.addAttribute("companies", viewService.corporateViewAll());
-        return "index";
+        return INDEX;
     }
 
     /**
@@ -187,7 +195,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/edinet/list")
     public String edinet(final String fromDate, final String toDate) {
         documentService.edinetList(fromDate, toDate);
-        return "redirect:/fundanalyzer/v1/edinet/list";
+        return REDIRECT_EDINET;
     }
 
     /**
@@ -200,7 +208,7 @@ public class AnalysisController {
     public String edinetListAll(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetListViewAll());
-        return "edinet";
+        return EDINET;
     }
 
     /**
@@ -212,7 +220,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/reset/status")
     public String resetStatus(final Model model) {
         documentService.resetForRetry();
-        return "redirect:/fundanalyzer/v1/edinet/list?message=updated";
+        return REDIRECT_EDINET + "?message=updated";
     }
 
     // -------------------------------------------------------
@@ -221,7 +229,7 @@ public class AnalysisController {
     public String devEdinetList(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetListview());
-        return "edinet";
+        return EDINET;
     }
 
     @GetMapping("/company")
@@ -229,7 +237,7 @@ public class AnalysisController {
         documentService.company();
 
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return INDEX;
     }
 
     @GetMapping("/scrape/{date}")
@@ -239,7 +247,7 @@ public class AnalysisController {
                 .thenRunAsync(viewService::updateCorporateView);
 
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return INDEX;
     }
 
     @GetMapping("/reset/status")
@@ -247,7 +255,7 @@ public class AnalysisController {
         documentService.resetForRetry();
 
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return INDEX;
     }
 
     @GetMapping("/view/company/{year}")
@@ -257,7 +265,7 @@ public class AnalysisController {
                 .thenRunAsync(viewService::updateCorporateView);
 
         model.addAttribute("companies", viewService.corporateView());
-        return "index";
+        return INDEX;
     }
 
     @GetMapping("/scrape/analysis/{date}")
@@ -279,6 +287,6 @@ public class AnalysisController {
                 });
 
         model.addAttribute("companies", viewService.corporateView());
-        return "redirect:/fundanalyzer/v1/index?message=updating";
+        return REDIRECT_INDEX + "?message=updating";
     }
 }

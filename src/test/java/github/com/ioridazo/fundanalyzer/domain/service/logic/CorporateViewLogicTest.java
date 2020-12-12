@@ -2,10 +2,12 @@ package github.com.ioridazo.fundanalyzer.domain.service.logic;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +35,7 @@ class CorporateViewLogicTest {
     private DocumentDao documentDao;
     private AnalysisResultDao analysisResultDao;
     private StockPriceDao stockPriceDao;
+    private MinkabuDao minkabuDao;
 
     private CorporateViewLogic logic;
 
@@ -41,11 +44,13 @@ class CorporateViewLogicTest {
         documentDao = Mockito.mock(DocumentDao.class);
         analysisResultDao = Mockito.mock(AnalysisResultDao.class);
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        minkabuDao = Mockito.mock(MinkabuDao.class);
 
         logic = Mockito.spy(new CorporateViewLogic(
                 documentDao,
                 analysisResultDao,
-                stockPriceDao
+                stockPriceDao,
+                minkabuDao
         ));
     }
 
@@ -76,6 +81,7 @@ class CorporateViewLogicTest {
         ).when(logic).stockPrice(company, submitDate);
         doReturn(Pair.of(Optional.of(BigDecimal.valueOf(1000)), Optional.of(BigDecimal.valueOf(200))))
                 .when(logic).discountValue(any(), any());
+        doReturn(Optional.of(BigDecimal.valueOf(2000))).when(logic).forecastStock(company);
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
         var actual = logic.corporateViewOf(company);
@@ -94,6 +100,7 @@ class CorporateViewLogicTest {
                 () -> assertEquals(BigDecimal.valueOf(1000), actual.getDiscountValue()),
                 () -> assertEquals(BigDecimal.valueOf(200), actual.getDiscountRate()),
                 () -> assertEquals(BigDecimal.valueOf(3), actual.getCountYear()),
+                () -> assertEquals(BigDecimal.valueOf(2000), actual.getForecastStock()),
                 () -> assertEquals(LocalDateTime.of(2020, 11, 8, 18, 15), actual.getCreatedAt()),
                 () -> assertEquals(LocalDateTime.of(2020, 11, 8, 18, 15), actual.getUpdatedAt())
         );
@@ -438,6 +445,78 @@ class CorporateViewLogicTest {
 
             assertNull(actual.getFirst().orElse(null));
             assertNull(actual.getSecond().orElse(null));
+        }
+    }
+
+    @Nested
+    class forecastStock {
+
+        @DisplayName("forecastStock : 最新のみんかぶ株価予想を取得する")
+        @Test
+        void forecastStock_ok() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(minkabuDao.selectByCode("code")).thenReturn(List.of(
+                    new Minkabu(
+                            null,
+                            "code",
+                            LocalDate.parse("2020-12-12"),
+                            null,
+                            2000.0,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Minkabu(
+                            null,
+                            "code",
+                            LocalDate.parse("2020-10-12"),
+                            null,
+                            1500.0,
+                            null,
+                            null,
+                            null,
+                            null
+                    )));
+
+            var actual = logic.forecastStock(company);
+
+            assertEquals(BigDecimal.valueOf(2000), actual.orElseThrow());
+        }
+
+        @DisplayName("forecastStock : みんかぶ株価予想が存在しないときはnullを返却する")
+        @Test
+        void forecastStock_null() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(minkabuDao.selectByCode("code")).thenReturn(List.of());
+
+            var actual = logic.forecastStock(company);
+
+            assertNull(actual.orElse(null));
         }
     }
 }

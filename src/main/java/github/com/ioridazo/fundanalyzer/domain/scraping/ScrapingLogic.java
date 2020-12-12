@@ -124,7 +124,7 @@ public class ScrapingLogic {
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
-                    "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId);
+                    "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
             documentDao.update(Document.builder()
                     .documentId(docId)
                     .downloaded(DocumentStatus.ERROR.toValue())
@@ -133,7 +133,7 @@ public class ScrapingLogic {
             );
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
-                    "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId);
+                    "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
             documentDao.update(Document.builder()
                     .documentId(docId)
                     .decoded(DocumentStatus.ERROR.toValue())
@@ -223,7 +223,7 @@ public class ScrapingLogic {
                         company.getCode().orElseThrow(),
                         company.getEdinetCode(),
                         fs.getName(),
-                        targetDirectory.getPath()
+                        targetDirectory.getPath(), e
                 );
             }
         } else {

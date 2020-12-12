@@ -56,6 +56,9 @@ public class CorporateViewBean {
     // 対象年カウント
     private final BigDecimal countYear;
 
+    // みんかぶ株価予想
+    private final BigDecimal forecastStock;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 

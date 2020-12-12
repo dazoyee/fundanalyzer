@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @Component
 public class XbrlScraping {
 
-    private static final String FISCAL_YEAR_END_NUMBER = "事業年度末現在発行数";
     private static final String TOTAL = "計";
 
     /**
@@ -148,10 +147,10 @@ public class XbrlScraping {
             // "事業年度末現在発行数"を含む項目を探す
             final var key1 = scrapingList.stream()
                     // 対象行の取得
-                    .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(FISCAL_YEAR_END_NUMBER)))
+                    .filter(tdList -> tdList.stream().anyMatch(this::isFiscalYearEndNumber))
                     .findFirst().orElseThrow().stream()
                     // 対象行から"事業年度末現在発行数"を含むカラムを取得
-                    .filter(td -> td.contains(FISCAL_YEAR_END_NUMBER))
+                    .filter(this::isFiscalYearEndNumber)
                     .findFirst()
                     .orElseThrow();
 
@@ -179,6 +178,11 @@ public class XbrlScraping {
         } catch (NoSuchElementException e) {
             throw new FundanalyzerFileException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
         }
+    }
+
+    private boolean isFiscalYearEndNumber(final String td) {
+        return td.contains("事業") && td.contains("年度") && td.contains("末")
+                && td.contains("現在") && td.contains("発行") && td.contains("数");
     }
 
     Elements elementsByKeyMatch(final File file, final KeyMatch keyMatch) {

@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
@@ -51,6 +52,7 @@ class ViewServiceTest {
     private DocumentDao documentDao;
     private AnalysisResultDao analysisResultDao;
     private StockPriceDao stockPriceDao;
+    private MinkabuDao minkabuDao;
     private CorporateViewDao corporateViewDao;
     private EdinetListViewDao edinetListViewDao;
 
@@ -67,6 +69,7 @@ class ViewServiceTest {
         documentDao = Mockito.mock(DocumentDao.class);
         analysisResultDao = Mockito.mock(AnalysisResultDao.class);
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        minkabuDao = Mockito.mock(MinkabuDao.class);
         corporateViewDao = Mockito.mock(CorporateViewDao.class);
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
 
@@ -80,6 +83,7 @@ class ViewServiceTest {
                 documentDao,
                 analysisResultDao,
                 stockPriceDao,
+                minkabuDao,
                 corporateViewDao,
                 edinetListViewDao
         ));
@@ -122,6 +126,7 @@ class ViewServiceTest {
                     BigDecimal.valueOf(1000),
                     BigDecimal.valueOf(200),
                     BigDecimal.valueOf(3),
+                    BigDecimal.valueOf(2000),
                     createdAt,
                     createdAt
             ));
@@ -142,6 +147,7 @@ class ViewServiceTest {
                     BigDecimal.valueOf(1000),
                     BigDecimal.valueOf(200),
                     BigDecimal.valueOf(3),
+                    BigDecimal.valueOf(2000),
                     createdAt,
                     createdAt
             ));
@@ -381,6 +387,7 @@ class ViewServiceTest {
                     null,
                     null,
                     BigDecimal.valueOf(1),
+                    null,
                     null,
                     null,
                     null
