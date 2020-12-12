@@ -2,12 +2,15 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +21,7 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.MonthDay;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -33,6 +37,7 @@ class StockServiceTest {
     private CompanyDao companyDao;
     private DocumentDao documentDao;
     private StockPriceDao stockPriceDao;
+    private MinkabuDao minkabuDao;
 
     private StockService service;
 
@@ -42,12 +47,14 @@ class StockServiceTest {
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        minkabuDao = Mockito.mock(MinkabuDao.class);
 
         service = Mockito.spy(new StockService(
                 stockScraping,
                 companyDao,
                 documentDao,
-                stockPriceDao
+                stockPriceDao,
+                minkabuDao
         ));
     }
 
@@ -102,16 +109,9 @@ class StockServiceTest {
                     "1%",
                     "優待券"
             ));
-            when(stockScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
-                    "2020-11-01",
-                    "1000",
-                    "1000",
-                    "1000",
-                    "1000",
-                    "1000",
-                    "1000"
-            )));
+            when(stockScraping.kabuoji3(code)).thenReturn(List.of(generateKabuoji3ResultBean()));
             when(stockPriceDao.selectByCode(code)).thenReturn(List.of());
+            when(stockScraping.minkabu(code)).thenReturn(generateMinkabuResultBean());
             doReturn(createdAt).when(service).nowLocalDateTime();
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
@@ -143,21 +143,7 @@ class StockServiceTest {
             var code = "code";
             var createdAt = LocalDateTime.of(2020, 11, 14, 18, 21);
 
-            when(stockScraping.nikkei(code)).thenReturn(new NikkeiResultBean(
-                    "1000",
-                    "2020/11/1",
-                    "1000",
-                    "1000",
-                    "1000",
-                    "1000",
-                    "10",
-                    "10",
-                    "10",
-                    "1000株",
-                    "1000",
-                    "1%",
-                    "優待券"
-            ));
+            when(stockScraping.nikkei(code)).thenReturn(generateNikkeiResultBean());
             when(stockScraping.kabuoji3(code)).thenReturn(List.of(new Kabuoji3ResultBean(
                     "2020-11-14",
                     "1000",
@@ -186,6 +172,7 @@ class StockServiceTest {
                     "1",
                     createdAt
             )));
+            when(stockScraping.minkabu(code)).thenReturn(generateMinkabuResultBean());
             doReturn(createdAt).when(service).nowLocalDateTime();
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
@@ -226,6 +213,41 @@ class StockServiceTest {
                     null,
                     null,
                     "2",
+                    createdAt
+            ));
+        }
+
+        @DisplayName("importStockPrice : 指定企業の株価予想をみんかぶから取得する")
+        @Test
+        void importStockPrice_ok_code_minkabu_insert() {
+            var code = "code";
+            var createdAt = LocalDateTime.of(2020, 11, 14, 18, 21);
+
+            when(stockScraping.nikkei(code)).thenReturn(generateNikkeiResultBean());
+            when(stockScraping.kabuoji3(code)).thenReturn(List.of(generateKabuoji3ResultBean()));
+            when(stockScraping.minkabu(code)).thenReturn(new MinkabuResultBean(
+                    "408. 0 円",
+                    "11/27",
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            "636",
+                            "638",
+                            "649",
+                            "630"
+                    )
+            ));
+            doReturn(createdAt).when(service).nowLocalDateTime();
+
+            assertDoesNotThrow(() -> service.importStockPrice(code));
+
+            verify(minkabuDao, times(1)).insert(new Minkabu(
+                    null,
+                    "code",
+                    MonthDay.parse("--11-27").atYear(LocalDate.now().getYear()),
+                    408.0,
+                    636.0,
+                    638.0,
+                    649.0,
+                    630.0,
                     createdAt
             ));
         }
@@ -300,6 +322,16 @@ class StockServiceTest {
                             createdAt
                     )
             ));
+            when(stockScraping.minkabu(code)).thenReturn(new MinkabuResultBean(
+                    "408. 0 円",
+                    "11/27",
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            "636",
+                            "638",
+                            "649",
+                            "630"
+                    )
+            ));
             doReturn(createdAt).when(service).nowLocalDateTime();
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
@@ -352,6 +384,49 @@ class StockServiceTest {
             when(stockScraping.nikkei(code)).thenThrow(FundanalyzerRuntimeException.class);
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
+        }
+
+        private NikkeiResultBean generateNikkeiResultBean() {
+            return new NikkeiResultBean(
+                    "1000",
+                    "2020/11/1",
+                    "1000",
+                    "1000",
+                    "1000",
+                    "1000",
+                    "10",
+                    "10",
+                    "10",
+                    "1000株",
+                    "1000",
+                    "1%",
+                    "優待券"
+            );
+        }
+
+        private Kabuoji3ResultBean generateKabuoji3ResultBean() {
+            return new Kabuoji3ResultBean(
+                    "2020-11-01",
+                    "1000",
+                    "1000",
+                    "1000",
+                    "1000",
+                    "1000",
+                    "1000"
+            );
+        }
+
+        private MinkabuResultBean generateMinkabuResultBean() {
+            return new MinkabuResultBean(
+                    "408. 0 円",
+                    "11/27",
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            "636",
+                            "638",
+                            "649",
+                            "630"
+                    )
+            );
         }
     }
 }

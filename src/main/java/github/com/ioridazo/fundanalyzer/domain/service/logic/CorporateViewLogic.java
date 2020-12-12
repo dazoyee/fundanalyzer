@@ -3,10 +3,12 @@ package github.com.ioridazo.fundanalyzer.domain.service.logic;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,14 +34,17 @@ public class CorporateViewLogic {
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
     private final StockPriceDao stockPriceDao;
+    private final MinkabuDao minkabuDao;
 
     public CorporateViewLogic(
             final DocumentDao documentDao,
             final AnalysisResultDao analysisResultDao,
-            final StockPriceDao stockPriceDao) {
+            final StockPriceDao stockPriceDao,
+            final MinkabuDao minkabuDao) {
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
         this.stockPriceDao = stockPriceDao;
+        this.minkabuDao = minkabuDao;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -73,6 +78,7 @@ public class CorporateViewLogic {
                 discountValue.getFirst().orElse(null),
                 discountValue.getSecond().orElse(null),
                 corporateValue.getCountYear().orElse(null),
+                forecastStock(company).orElse(null),
                 nowLocalDateTime(),
                 nowLocalDateTime()
         );
@@ -195,6 +201,19 @@ public class CorporateViewLogic {
         } catch (NullPointerException e) {
             return Pair.of(Optional.empty(), Optional.empty());
         }
+    }
+
+    /**
+     * 最新のみんかぶ株価予想を取得する
+     *
+     * @param company 会社情報
+     * @return 最新の株価予想
+     */
+    Optional<BigDecimal> forecastStock(final Company company) {
+        return minkabuDao.selectByCode(company.getCode().orElseThrow()).stream()
+                .max(Comparator.comparing(Minkabu::getTargetDate))
+                .map(Minkabu::getGoalsStock)
+                .map(BigDecimal::new);
     }
 
     @AllArgsConstructor

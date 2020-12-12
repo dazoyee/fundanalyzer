@@ -118,6 +118,17 @@
                     <td th:text="${corporateView.countYear}">対象年数</td>
                 </tr>
                 </tbody>
+                <thead>
+                <tr>
+                    <th>株価予想</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td th:text="${corporateView.forecastStock}">みんかぶ株価予想</td>
+                </tr>
+                </tbody>
+
             </table>
         </div>
     </div>
@@ -183,6 +194,28 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <h3>株価予想</h3>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>対象日付</th>
+                    <th>目標株価</th>
+                    <th>理論株価</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="minkabu : ${forecastStocks}">
+                    <td th:text="${minkabu.targetDate}">対象日付</td>
+                    <td th:text="${minkabu.goalsStock}">目標株価</td>
+                    <td th:text="${minkabu.theoreticalStock}">理論株価</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
