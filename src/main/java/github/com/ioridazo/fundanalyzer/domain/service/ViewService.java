@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -45,6 +47,7 @@ public class ViewService {
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
     private final StockPriceDao stockPriceDao;
+    private final MinkabuDao minkabuDao;
     private final CorporateViewDao corporateViewDao;
     private final EdinetListViewDao edinetListViewDao;
 
@@ -58,6 +61,7 @@ public class ViewService {
             final DocumentDao documentDao,
             final AnalysisResultDao analysisResultDao,
             final StockPriceDao stockPriceDao,
+            final MinkabuDao minkabuDao,
             final CorporateViewDao corporateViewDao,
             final EdinetListViewDao edinetListViewDao) {
         this.slackProxy = slackProxy;
@@ -69,6 +73,7 @@ public class ViewService {
         this.documentDao = documentDao;
         this.analysisResultDao = analysisResultDao;
         this.stockPriceDao = stockPriceDao;
+        this.minkabuDao = minkabuDao;
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
     }
@@ -82,8 +87,8 @@ public class ViewService {
         return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
-                // 割安度が100%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+                // 割安度が120%以上を表示
+                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(120)) > 0)
                 // 標準偏差が外れ値となっていたら除外
                 .filter(cvb -> cvb.getStandardDeviation().compareTo(BigDecimal.valueOf(10000)) < 0)
                 // 最新企業価値がマイナスの場合は除外
@@ -96,6 +101,14 @@ public class ViewService {
                     } else {
                         // 変動係数が0.6以上でも最新企業価値が高ければOK
                         return cvb.getLatestCorporateValue().compareTo(cvb.getAverageCorporateValue()) > -1;
+                    }
+                })
+                .filter(cvb -> {
+                    if (Objects.nonNull(cvb.getForecastStock())) {
+                        // 株価予想が存在する場合、最新株価より高ければOK
+                        return cvb.getLatestStockPrice().compareTo(cvb.getForecastStock()) < 0;
+                    } else {
+                        return true;
                     }
                 })
                 .collect(Collectors.toList()));
@@ -266,7 +279,8 @@ public class ViewService {
                         .map(StockPrice::ofBrandDetail)
                         .distinct()
                         .sorted(Comparator.comparing(StockPrice::getTargetDate).reversed())
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                minkabuDao.selectByCode(code)
         );
     }
 

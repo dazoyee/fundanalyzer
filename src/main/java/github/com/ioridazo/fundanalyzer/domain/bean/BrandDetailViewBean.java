@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.bean;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import lombok.Value;
 
@@ -20,6 +21,8 @@ public class BrandDetailViewBean {
     private final List<BrandDetailFinancialStatement> financialStatement;
 
     private final List<StockPrice> stockPriceList;
+
+    private final List<Minkabu> minkabuList;
 
     @Value
     public static class BrandDetailFinancialStatement {

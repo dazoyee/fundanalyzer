@@ -199,6 +199,7 @@ create TABLE IF NOT EXISTS corporate_view(
   discount_value FLOAT COMMENT '割安値',
   discount_rate FLOAT COMMENT '割安度',
   count_year INT COMMENT '対象年カウント',
+  forecast_stock FLOAT COMMENT '株価予想',
   created_at DATETIME NOT NULL COMMENT '登録日',
   updated_at DATETIME NOT NULL COMMENT '更新日',
   PRIMARY KEY(code),
