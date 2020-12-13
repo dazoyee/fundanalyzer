@@ -223,6 +223,17 @@ public class AnalysisController {
         return REDIRECT_EDINET + "?message=updated";
     }
 
+    /**
+     * EDINETリストをアップデートする
+     *
+     * @return EdinetList
+     */
+    @PostMapping("fundanalyzer/v1/update/edinet/list")
+    public String updateEdinetList(final String date) {
+        viewService.updateEdinetListView("120", LocalDate.parse(date));
+        return REDIRECT_EDINET;
+    }
+
     // -------------------------------------------------------
 
     @GetMapping("/edinet/list")

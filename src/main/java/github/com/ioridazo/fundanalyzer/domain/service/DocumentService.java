@@ -365,6 +365,8 @@ public class DocumentService {
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                 .filter(Document::getNotRemoved)
                 .forEach(d -> {
+                    if (DocumentStatus.NOT_YET.toValue().equals(d.getDownloaded()))
+                        store(d.getDocumentId(), d.getSubmitDate());
                     if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs()))
                         scrapeBs(d.getDocumentId(), targetDate);
                     if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl()))

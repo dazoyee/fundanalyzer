@@ -269,6 +269,19 @@ public class ViewService {
         log.info("処理状況アップデートが正常に終了しました。");
     }
 
+    /**
+     * 対象提出日の処理状況をアップデートする
+     *
+     * @param documentTypeCode 書類種別コード
+     * @param submitDate       対象提出日
+     */
+    @Transactional
+    public void updateEdinetListView(final String documentTypeCode, final LocalDate submitDate) {
+        final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate);
+        groupBySubmitDate(documentList).forEach(edinetListViewDao::update);
+        log.info("処理状況アップデートが正常に終了しました。対象提出日:{}", submitDate);
+    }
+
     // ----------
 
     /**

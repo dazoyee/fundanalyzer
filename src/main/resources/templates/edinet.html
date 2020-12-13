@@ -24,6 +24,10 @@
     </p>
     <label>会社リスト更新日：</label>
     <p th:text="${companyUpdated}"></p>
+    <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/list}">
+        <input type="date" name="date"/>
+        <button type="submit" class="btn">更新する</button>
+    </form>
     <form method="post" th:action="@{/fundanalyzer/v1/edinet/list}">
         <input type="date" name="fromDate"/> ～
         <input type="date" name="toDate"/>
