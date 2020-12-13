@@ -99,7 +99,7 @@ public class StockService {
                 final var m = Minkabu.ofMinkabuResultBean(code, minkabu, nowLocalDateTime());
                 if (Objects.isNull(m.getGoalsStock())) {
                     log.warn("みんかぶからスクレイピングした目標株価が存在していません。スクレイピング処理の詳細を確認してください。" +
-                            "\t会社コード:{}\t対象日付:{}", code, m.getTargetDate());
+                            "\t会社コード:{}\t対象日付:{}\tURL:{}", code, m.getTargetDate(), "https://minkabu.jp/stock/" + code.substring(0, 4));
                 }
                 minkabuDao.insert(m);
             }

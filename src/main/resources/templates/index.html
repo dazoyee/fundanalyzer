@@ -25,30 +25,62 @@
     <form method="post" th:action="@{/fundanalyzer/v1/update/view}">
         <button type="submit" class="btn">update view</button>
     </form>
-    <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
-        <input type="date" name="fromDate"/> ～
-        <input type="date" name="toDate"/>
-        <button type="submit" class="btn">取得/分析する</button>
-    </form>
-    <form method="post" th:action="@{/fundanalyzer/v1/scrape/date}">
-        <input type="date" name="date"/>
-        <button type="submit" class="btn">分析する</button>
-    </form>
-    <form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
-        <input type="text" name="documentId" placeholder="書類ID"/>
-        <button type="submit" class="btn">分析する</button>
-    </form>
-    <form method="post" th:action="@{/fundanalyzer/v1/import/stock/date}">
-        <input type="date" name="fromDate"/> ～
-        <input type="date" name="toDate"/>
-        <button type="submit" class="btn">取得する（株価）</button>
-    </form>
-    <form method="get" th:action="@{/fundanalyzer/v1/index/sort/discount-rate}">
-        <button type="submit" class="btn">割安比率ソート</button>
-    </form>
-    <form method="get" th:action="@{/fundanalyzer/v1/index/all}">
-        <button type="submit" class="btn">ALL</button>
-    </form>
+    <div class="row">
+        <div class="col-lg-12">
+            財務諸表の取得と分析をする :
+            <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
+                <input type="date" name="fromDate"/> ～
+                <input type="date" name="toDate"/>
+                <button type="submit" class="btn">取得/分析する</button>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            提出日から分析する :
+            <form method="post" th:action="@{/fundanalyzer/v1/scrape/date}">
+                <input type="date" name="date"/>
+                <button type="submit" class="btn">分析する</button>
+            </form>
+        </div>
+        <div class="col-lg-6">
+            書類IDから分析する :
+            <form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
+                <input type="text" name="documentId" placeholder="書類ID"/>
+                <button type="submit" class="btn">分析する</button>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            提出日ごとに最新株価を取得する
+            <form method="post" th:action="@{/fundanalyzer/v1/import/stock/date}">
+                <input type="date" name="fromDate"/> ～
+                <input type="date" name="toDate"/>
+                <button type="submit" class="btn">取得する（株価）</button>
+            </form>
+        </div>
+    </div>
+    <div class="border-top">
+        <br/>
+        <div class="row">
+            <div class="col-lg-2">
+                <form method="get" th:action="@{/fundanalyzer/v1/index/sort/discount-rate}">
+                    <button type="submit" class="btn">割安比率ソート</button>
+                </form>
+            </div>
+            <div class="col-lg-1">
+                <form method="get" th:action="@{/fundanalyzer/v1/index}">
+                    <button type="submit" class="btn">通常</button>
+                </form>
+            </div>
+            <div class="col-lg-1">
+                <form method="get" th:action="@{/fundanalyzer/v1/index/all}">
+                    <button type="submit" class="btn">ALL</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <table class="table table-bordered">
         <thead>

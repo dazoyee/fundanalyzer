@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -103,15 +104,28 @@ public class ViewService {
                         return cvb.getLatestCorporateValue().compareTo(cvb.getAverageCorporateValue()) > -1;
                     }
                 })
+                // 予想株価
                 .filter(cvb -> {
                     if (Objects.nonNull(cvb.getForecastStock())) {
                         // 株価予想が存在する場合、最新株価より高ければOK
-                        return cvb.getLatestStockPrice().compareTo(cvb.getForecastStock()) < 0;
+                        return isHigher(cvb.getForecastStock(), cvb.getLatestStockPrice());
                     } else {
                         return true;
                     }
                 })
                 .collect(Collectors.toList()));
+    }
+
+    /**
+     * 予想株価が最新株価より高い and 予想株価と最新株価の差が100以上 であること
+     *
+     * @param forecast 予想株価
+     * @param latest   最新株価
+     * @return bool
+     */
+    private boolean isHigher(final BigDecimal forecast, final BigDecimal latest) {
+        return (forecast.divide(latest, 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0) &&
+                (forecast.subtract(latest).compareTo(BigDecimal.valueOf(100)) > 0);
     }
 
     /**
@@ -129,11 +143,7 @@ public class ViewService {
      * @return ソート後のリスト
      */
     public List<CorporateViewBean> sortByDiscountRate() {
-        return getCorporateViewBeanList().stream()
-                // not null
-                .filter(cvb -> cvb.getDiscountRate() != null)
-                // 100%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+        return corporateView().stream()
                 .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }

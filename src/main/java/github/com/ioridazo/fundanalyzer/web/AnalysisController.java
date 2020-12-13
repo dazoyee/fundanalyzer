@@ -107,7 +107,7 @@ public class AnalysisController {
     public String updateView() {
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
-        return REDIRECT_INDEX;
+        return REDIRECT_INDEX + "?message=updating";
     }
 
     /**
@@ -204,7 +204,7 @@ public class AnalysisController {
      * @param model model
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v1/edinet/list/all")
+    @GetMapping("fundanalyzer/v1/edinet/list/all")
     public String edinetListAll(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetListViewAll());
