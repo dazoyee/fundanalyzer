@@ -23,6 +23,7 @@ public class AnalysisController {
     private static final String CORPORATE = "corporate";
     private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
     private static final String EDINET_DETAIL = "edinet-detail";
+    private static final String REDIRECT_EDINET_DETAIL = "redirect:/fundanalyzer/v1/edinet/list/detail";
 
     private final DocumentService documentService;
     private final AnalysisService analysisService;
@@ -239,6 +240,19 @@ public class AnalysisController {
     public String updateEdinetList(final String date) {
         viewService.updateEdinetListView("120", LocalDate.parse(date));
         return REDIRECT_EDINET;
+    }
+
+    /**
+     * 対象書類IDを処理対象外にする
+     *
+     * @param submitDate 対象提出日
+     * @param documentId 書類ID
+     * @return EdinetDetail
+     */
+    @PostMapping("fundanalyzer/v1/remove/document")
+    public String removeDocument(final String submitDate, final String documentId) {
+        documentService.removeDocument(documentId);
+        return REDIRECT_EDINET_DETAIL + "?submitDate=" + submitDate;
     }
 
     // -------------------------------------------------------

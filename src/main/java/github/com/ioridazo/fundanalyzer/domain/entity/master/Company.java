@@ -53,6 +53,21 @@ public class Company {
         return Optional.ofNullable(code);
     }
 
+    public static Company ofNull(){
+        return new Company(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
     public static Company of(
             final List<Industry> industryList,
             final EdinetCsvResultBean resultBean,

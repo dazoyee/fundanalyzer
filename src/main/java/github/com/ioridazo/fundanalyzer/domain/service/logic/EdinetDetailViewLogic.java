@@ -74,6 +74,7 @@ public class EdinetDetailViewLogic {
                 // 提出日に関連する未処理ドキュメントのリスト
                 cantScrapedList.stream()
                         .map(document -> new EdinetDetailViewBean.DocumentDetail(
+                                companyDao.selectByEdinetCode(document.getEdinetCode()).orElse(Company.ofNull()),
                                 document,
                                 valuesForAnalysis(document)
                         )).collect(Collectors.toList())

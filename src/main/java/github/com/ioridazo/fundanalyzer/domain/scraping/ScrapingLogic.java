@@ -458,6 +458,7 @@ public class ScrapingLogic {
                             .replace("*1", "").replace("*2", "")
                             .replace("株", "")
                             .replace("－", "0").replace("―", "0")
+                            .replace("-", "0")
                             .replace(" ", "").replace(" ", "")
                             .replace(",", "")
                             .replace("△", "-")

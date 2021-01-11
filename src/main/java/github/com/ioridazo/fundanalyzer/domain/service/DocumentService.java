@@ -384,6 +384,7 @@ public class DocumentService {
      */
     public void scrape(final String documentId) {
         final var targetDate = documentDao.selectByDocumentId(documentId).getSubmitDate();
+        store(documentId, targetDate);
         scrapeBs(documentId, targetDate);
         scrapePl(documentId, targetDate);
         scrapeNs(documentId, targetDate);
@@ -427,6 +428,22 @@ public class DocumentService {
                     );
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
+    }
+
+    /**
+     * 指定書類IDを処理対象から除外する
+     *
+     * @param documentId 書類ID
+     */
+    @Transactional
+    public void removeDocument(final String documentId) {
+        documentDao.update(Document.builder()
+                .documentId(documentId)
+                .removed(Flag.ON.toValue())
+                .updatedAt(nowLocalDateTime())
+                .build()
+        );
+        log.info("次のドキュメントを処理対象外にしました。\t書類ID:{}", documentId);
     }
 
     private void insertCompanyForSqlForeignKey(final String edinetCode, final String companyName) {
