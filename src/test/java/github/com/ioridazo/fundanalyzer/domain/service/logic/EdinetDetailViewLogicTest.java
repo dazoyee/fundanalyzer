@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 class EdinetDetailViewLogicTest {
@@ -52,7 +54,7 @@ class EdinetDetailViewLogicTest {
         void edinetDetailView_ok() {
             var documentTypeCode = "120";
             var submitDate = LocalDate.parse("2020-12-14");
-            final var company = new Company(
+            var company = new Company(
                     "code",
                     "会社名",
                     1,
@@ -66,7 +68,7 @@ class EdinetDetailViewLogicTest {
             );
             var companyAllTargeted = List.of(company);
             var period = LocalDate.parse("2020-12-31");
-            final var document = Document.builder()
+            var document = Document.builder()
                     .documentId("documentId")
                     .edinetCode("edinetCode")
                     .period(period)
@@ -112,6 +114,75 @@ class EdinetDetailViewLogicTest {
                             () -> assertEquals(4000L, actual.getDocumentDetailList().get(0).getValues().getTotalFixedLiabilities()),
                             () -> assertEquals(5000L, actual.getDocumentDetailList().get(0).getValues().getOperatingProfit()),
                             () -> assertEquals(6000L, actual.getDocumentDetailList().get(0).getValues().getNumberOfShares())
+                    )
+            );
+        }
+
+        @DisplayName("edinetDetailView : スクレイピング処理に失敗しているときはnullで返すようにする")
+        @Test
+        void edinetDetailView_value_is_null() {
+            var documentTypeCode = "120";
+            var submitDate = LocalDate.parse("2020-12-14");
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var companyAllTargeted = List.of(company);
+            var period = LocalDate.parse("2020-12-31");
+            var document = Document.builder()
+                    .documentId("documentId")
+                    .edinetCode("edinetCode")
+                    .period(period)
+                    .scrapedBs("9")
+                    .scrapedPl("1")
+                    .scrapedNumberOfShares("1")
+                    .removed("0")
+                    .build();
+            var documentList = List.of(document);
+            var edinetListViewBean = new EdinetListViewBean(
+                    LocalDate.parse("2020-12-14"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
+            when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
+            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
+            when(analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
+            when(analysisService.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
+            when(analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
+            when(analysisService.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
+            when(analysisService.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenThrow(FundanalyzerCalculateException.class);
+            when(analysisService.nsValue(company, period)).thenThrow(FundanalyzerCalculateException.class);
+
+            var actual = logic.edinetDetailView(documentTypeCode, submitDate, companyAllTargeted);
+
+            assertAll("EdinetDetailViewBean",
+                    () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),
+                    () -> assertEquals(document, actual.getDocumentDetailList().get(0).getDocument()),
+                    () -> assertAll("ValuesForAnalysis",
+                            () -> assertEquals(1000L, actual.getDocumentDetailList().get(0).getValues().getTotalCurrentAssets()),
+                            () -> assertEquals(2000L, actual.getDocumentDetailList().get(0).getValues().getTotalInvestmentsAndOtherAssets()),
+                            () -> assertEquals(3000L, actual.getDocumentDetailList().get(0).getValues().getTotalCurrentLiabilities()),
+                            () -> assertEquals(4000L, actual.getDocumentDetailList().get(0).getValues().getTotalFixedLiabilities()),
+                            () -> assertNull(actual.getDocumentDetailList().get(0).getValues().getOperatingProfit()),
+                            () -> assertNull(actual.getDocumentDetailList().get(0).getValues().getNumberOfShares())
                     )
             );
         }
