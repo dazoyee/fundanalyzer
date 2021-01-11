@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.bean;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import lombok.Value;
 
@@ -17,6 +18,7 @@ public class EdinetDetailViewBean {
 
     @Value
     public static class DocumentDetail {
+        private Company company;
         private Document document;
         private ValuesForAnalysis values;
     }

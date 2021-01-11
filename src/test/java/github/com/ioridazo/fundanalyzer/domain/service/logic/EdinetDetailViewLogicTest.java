@@ -106,6 +106,7 @@ class EdinetDetailViewLogicTest {
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),
+                    () -> assertEquals(company, actual.getDocumentDetailList().get(0).getCompany()),
                     () -> assertEquals(document, actual.getDocumentDetailList().get(0).getDocument()),
                     () -> assertAll("ValuesForAnalysis",
                             () -> assertEquals(1000L, actual.getDocumentDetailList().get(0).getValues().getTotalCurrentAssets()),

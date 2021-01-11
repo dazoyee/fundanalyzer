@@ -828,4 +828,15 @@ class DocumentServiceTest {
                     .build());
         }
     }
+
+    @Nested
+    class removeDocument {
+
+        @DisplayName("removeDocument : 指定書類IDを処理対象外にする")
+        @Test
+        void removeDocument_ok() {
+            var documentId = "documentId";
+            assertDoesNotThrow(() -> service.removeDocument(documentId));
+        }
+    }
 }
