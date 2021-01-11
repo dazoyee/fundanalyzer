@@ -11,10 +11,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 @Component
@@ -89,12 +91,40 @@ public class EdinetDetailViewLogic {
         final var period = document.getPeriod();
 
         return new EdinetDetailViewBean.ValuesForAnalysis(
-                analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period),
-                analysisService.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period),
-                analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period),
-                analysisService.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period),
-                analysisService.plValues(company, PlEnum.OPERATING_PROFIT, period),
-                analysisService.nsValue(company, period)
+                fsValue(company, BsEnum.TOTAL_CURRENT_ASSETS, period, analysisService::bsValues),
+                fsValue(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period, analysisService::bsValues),
+                fsValue(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period, analysisService::bsValues),
+                fsValue(company, BsEnum.TOTAL_FIXED_LIABILITIES, period, analysisService::bsValues),
+                fsValue(company, PlEnum.OPERATING_PROFIT, period, analysisService::plValues),
+                nsValue(company, period, analysisService::nsValue)
         );
+    }
+
+    private <T> Long fsValue(
+            final Company company,
+            final T t,
+            final LocalDate period,
+            final TriFunction<Company, T, LocalDate, Long> triFunction) {
+        try {
+            return triFunction.apply(company, t, period);
+        } catch (FundanalyzerCalculateException e) {
+            return null;
+        }
+    }
+
+    private Long nsValue(
+            final Company company,
+            final LocalDate period,
+            final BiFunction<Company, LocalDate, Long> biFunction) {
+        try {
+            return biFunction.apply(company, period);
+        } catch (FundanalyzerCalculateException e) {
+            return null;
+        }
+    }
+
+    @FunctionalInterface
+    public interface TriFunction<T, U, V, R> {
+        R apply(T t, U u, V v);
     }
 }

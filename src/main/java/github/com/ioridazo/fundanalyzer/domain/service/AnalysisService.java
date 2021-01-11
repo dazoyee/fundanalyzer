@@ -124,7 +124,7 @@ public class AnalysisService {
      * @return 企業価値
      * @throws FundanalyzerCalculateException 算出に失敗したとき
      */
-    BigDecimal calculate(final String companyCode, final LocalDate period) throws FundanalyzerCalculateException {
+    BigDecimal calculate(final String companyCode, final LocalDate period) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
 
         // 流動資産合計
