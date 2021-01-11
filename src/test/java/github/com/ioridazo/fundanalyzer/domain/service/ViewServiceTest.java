@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailCorporateViewBean
 import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
@@ -19,6 +20,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
+import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
 import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,7 @@ class ViewServiceTest {
     private CorporateViewLogic corporateViewLogic;
     private EdinetListViewLogic edinetListViewLogic;
     private BrandDetailCorporateViewLogic brandDetailCompanyViewLogic;
+    private EdinetDetailViewLogic edinetDetailViewLogic;
     private IndustryDao industryDao;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
@@ -64,6 +67,7 @@ class ViewServiceTest {
         corporateViewLogic = Mockito.mock(CorporateViewLogic.class);
         edinetListViewLogic = Mockito.mock(EdinetListViewLogic.class);
         brandDetailCompanyViewLogic = Mockito.mock(BrandDetailCorporateViewLogic.class);
+        edinetDetailViewLogic = Mockito.mock(EdinetDetailViewLogic.class);
         industryDao = Mockito.mock(IndustryDao.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
@@ -78,6 +82,7 @@ class ViewServiceTest {
                 corporateViewLogic,
                 edinetListViewLogic,
                 brandDetailCompanyViewLogic,
+                edinetDetailViewLogic,
                 industryDao,
                 companyDao,
                 documentDao,
@@ -244,7 +249,7 @@ class ViewServiceTest {
     @Nested
     class edinetListView {
 
-        @DisplayName("updateEdinetList : 処理状況の表示ができることを確認する")
+        @DisplayName("updateEdinetList : 処理状況をアップデートする")
         @Test
         void updateEdinetList_ok() {
             var documentTypeCode = "120";
@@ -345,6 +350,75 @@ class ViewServiceTest {
                     "",
                     1L,
                     0L,
+                    createdAt,
+                    createdAt
+            ));
+        }
+
+        @DisplayName("updateEdinetList : 対象提出日の処理状況をアップデートする")
+        @Test
+        void updateEdinetListView_ok() {
+            var documentTypeCode = "120";
+            var submitDate = LocalDate.parse("2020-12-14");
+            var documentList = List.of(Document.builder()
+                    .edinetCode("edinetCode")
+                    .documentTypeCode("120")
+                    .submitDate(LocalDate.parse("2020-12-14"))
+                    .scrapedNumberOfShares("0")
+                    .scrapedBs("0")
+                    .scrapedPl("0")
+                    .removed("0")
+                    .build()
+            );
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
+
+            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
+            when(companyDao.selectAll()).thenReturn(List.of(company));
+            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+            when(edinetListViewLogic.counter(
+                    LocalDate.parse("2020-12-14"),
+                    1L,
+                    documentList,
+                    List.of(company))).thenReturn(new EdinetListViewBean(
+                    LocalDate.parse("2020-12-14"),
+                    1L,
+                    0L,
+                    0L,
+                    0L,
+                    "",
+                    "",
+                    0L,
+                    1L,
+                    createdAt,
+                    createdAt
+            ));
+
+            assertDoesNotThrow(() -> service.updateEdinetListView(documentTypeCode, submitDate));
+
+            verify(edinetListViewDao, times(1)).update(new EdinetListViewBean(
+                    LocalDate.parse("2020-12-14"),
+                    1L,
+                    0L,
+                    0L,
+                    0L,
+                    "",
+                    "",
+                    0L,
+                    1L,
                     createdAt,
                     createdAt
             ));
@@ -464,6 +538,54 @@ class ViewServiceTest {
                             () -> assertEquals(100.0, actual.getStockPriceList().get(0).getStockPrice())
                     )
             );
+        }
+    }
+
+    @Nested
+    class edinetDetailView {
+
+        @DisplayName("edinetDetailView : 提出日ごとの処理詳細情報を取得する")
+        @Test
+        void edinetDetailView_ok() {
+            var submitDate = LocalDate.parse("2021-01-10");
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var edinetDetailViewBean = new EdinetDetailViewBean(
+                    new EdinetListViewBean(
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    List.of()
+            );
+
+            when(companyDao.selectAll()).thenReturn(List.of(company));
+            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+            when(edinetDetailViewLogic.edinetDetailView("120", submitDate, List.of(company)))
+                    .thenReturn(edinetDetailViewBean);
+
+            var actual = service.edinetDetailView(submitDate);
+
+            assertEquals(edinetDetailViewBean, actual);
         }
     }
 }

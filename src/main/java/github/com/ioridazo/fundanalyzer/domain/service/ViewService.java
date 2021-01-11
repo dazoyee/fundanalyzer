@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
@@ -17,6 +18,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
+import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
 import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +45,7 @@ public class ViewService {
     private final CorporateViewLogic corporateViewLogic;
     private final EdinetListViewLogic edinetListViewLogic;
     private final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic;
+    private final EdinetDetailViewLogic edinetDetailViewLogic;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
@@ -56,6 +60,7 @@ public class ViewService {
             final CorporateViewLogic corporateViewLogic,
             final EdinetListViewLogic edinetListViewLogic,
             final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic,
+            final EdinetDetailViewLogic edinetDetailViewLogic,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
@@ -68,6 +73,7 @@ public class ViewService {
         this.corporateViewLogic = corporateViewLogic;
         this.edinetListViewLogic = edinetListViewLogic;
         this.brandDetailCorporateViewLogic = brandDetailCorporateViewLogic;
+        this.edinetDetailViewLogic = edinetDetailViewLogic;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
@@ -103,15 +109,28 @@ public class ViewService {
                         return cvb.getLatestCorporateValue().compareTo(cvb.getAverageCorporateValue()) > -1;
                     }
                 })
+                // 予想株価
                 .filter(cvb -> {
                     if (Objects.nonNull(cvb.getForecastStock())) {
                         // 株価予想が存在する場合、最新株価より高ければOK
-                        return cvb.getLatestStockPrice().compareTo(cvb.getForecastStock()) < 0;
+                        return isHigher(cvb.getForecastStock(), cvb.getLatestStockPrice());
                     } else {
                         return true;
                     }
                 })
                 .collect(Collectors.toList()));
+    }
+
+    /**
+     * 予想株価が最新株価より高い and 予想株価と最新株価の差が100以上 であること
+     *
+     * @param forecast 予想株価
+     * @param latest   最新株価
+     * @return bool
+     */
+    private boolean isHigher(final BigDecimal forecast, final BigDecimal latest) {
+        return (forecast.divide(latest, 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0) &&
+                (forecast.subtract(latest).compareTo(BigDecimal.valueOf(100)) > 0);
     }
 
     /**
@@ -129,11 +148,7 @@ public class ViewService {
      * @return ソート後のリスト
      */
     public List<CorporateViewBean> sortByDiscountRate() {
-        return getCorporateViewBeanList().stream()
-                // not null
-                .filter(cvb -> cvb.getDiscountRate() != null)
-                // 100%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(100)) > 0)
+        return corporateView().stream()
                 .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
@@ -142,6 +157,14 @@ public class ViewService {
         return corporateViewDao.selectAll().stream()
                 // 提出日が存在したら表示する
                 .filter(corporateViewBean -> corporateViewBean.getSubmitDate() != null)
+                .collect(Collectors.toList());
+    }
+
+    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator
+                        .comparing(CorporateViewBean::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -234,6 +257,12 @@ public class ViewService {
         return sortedEdinetList(edinetListViewDao.selectAll());
     }
 
+    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
+                .collect(Collectors.toList());
+    }
+
     /**
      * 非同期で表示する処理状況リストをアップデートする
      *
@@ -257,6 +286,19 @@ public class ViewService {
                 });
         slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
         log.info("処理状況アップデートが正常に終了しました。");
+    }
+
+    /**
+     * 対象提出日の処理状況をアップデートする
+     *
+     * @param documentTypeCode 書類種別コード
+     * @param submitDate       対象提出日
+     */
+    @Transactional
+    public void updateEdinetListView(final String documentTypeCode, final LocalDate submitDate) {
+        final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate);
+        groupBySubmitDate(documentList).forEach(edinetListViewDao::update);
+        log.info("処理状況アップデートが正常に終了しました。対象提出日:{}", submitDate);
     }
 
     // ----------
@@ -286,6 +328,18 @@ public class ViewService {
 
     // ----------
 
+    /**
+     * 提出日ごとの処理詳細情報を取得する
+     *
+     * @param submitDate 対象提出日
+     * @return スクレイピング処理詳細情報
+     */
+    public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate) {
+        return edinetDetailViewLogic.edinetDetailView("120", submitDate, companyAllTargeted());
+    }
+
+    // ----------
+
     private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
         return documentList.stream()
                 // 提出日ごとに件数をカウントする
@@ -310,20 +364,6 @@ public class ViewService {
                 // 銀行業、保険業は対象外とする
                 .filter(company -> !bank.getId().equals(company.getIndustryId()))
                 .filter(company -> !insurance.getId().equals(company.getIndustryId()))
-                .collect(Collectors.toList());
-    }
-
-    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator
-                        .comparing(CorporateViewBean::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewBean::getCode))
-                .collect(Collectors.toList());
-    }
-
-    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
                 .collect(Collectors.toList());
     }
 }

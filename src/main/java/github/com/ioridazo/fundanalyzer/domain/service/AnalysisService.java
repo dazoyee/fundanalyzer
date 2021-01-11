@@ -158,7 +158,7 @@ public class AnalysisService {
      * @param period  対象年
      * @return 科目の値
      */
-    Long bsValues(final Company company, final BsEnum bsEnum, final LocalDate period) {
+    public Long bsValues(final Company company, final BsEnum bsEnum, final LocalDate period) {
         return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
                 .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
@@ -202,7 +202,7 @@ public class AnalysisService {
      * @param period  対象年
      * @return 科目の値
      */
-    Long plValues(final Company company, final PlEnum plEnum, final LocalDate period) {
+    public Long plValues(final Company company, final PlEnum plEnum, final LocalDate period) {
         return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
                 .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
                 .map(plSubject -> financialStatementDao.selectByUniqueKey(
@@ -245,7 +245,7 @@ public class AnalysisService {
      * @param period  対象年
      * @return 株式総数の値
      */
-    Long nsValue(final Company company, final LocalDate period) {
+    public Long nsValue(final Company company, final LocalDate period) {
         return financialStatementDao.selectByUniqueKey(
                 company.getEdinetCode(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
