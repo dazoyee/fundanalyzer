@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailCorporateViewBean
 import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
@@ -19,6 +20,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
+import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
 import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,7 @@ class ViewServiceTest {
     private CorporateViewLogic corporateViewLogic;
     private EdinetListViewLogic edinetListViewLogic;
     private BrandDetailCorporateViewLogic brandDetailCompanyViewLogic;
+    private EdinetDetailViewLogic edinetDetailViewLogic;
     private IndustryDao industryDao;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
@@ -64,6 +67,7 @@ class ViewServiceTest {
         corporateViewLogic = Mockito.mock(CorporateViewLogic.class);
         edinetListViewLogic = Mockito.mock(EdinetListViewLogic.class);
         brandDetailCompanyViewLogic = Mockito.mock(BrandDetailCorporateViewLogic.class);
+        edinetDetailViewLogic = Mockito.mock(EdinetDetailViewLogic.class);
         industryDao = Mockito.mock(IndustryDao.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
@@ -78,6 +82,7 @@ class ViewServiceTest {
                 corporateViewLogic,
                 edinetListViewLogic,
                 brandDetailCompanyViewLogic,
+                edinetDetailViewLogic,
                 industryDao,
                 companyDao,
                 documentDao,
@@ -533,6 +538,54 @@ class ViewServiceTest {
                             () -> assertEquals(100.0, actual.getStockPriceList().get(0).getStockPrice())
                     )
             );
+        }
+    }
+
+    @Nested
+    class edinetDetailView {
+
+        @DisplayName("edinetDetailView : 提出日ごとの処理詳細情報を取得する")
+        @Test
+        void edinetDetailView_ok() {
+            var submitDate = LocalDate.parse("2021-01-10");
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var edinetDetailViewBean = new EdinetDetailViewBean(
+                    new EdinetListViewBean(
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    List.of()
+            );
+
+            when(companyDao.selectAll()).thenReturn(List.of(company));
+            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+            when(edinetDetailViewLogic.edinetDetailView("120", submitDate, List.of(company)))
+                    .thenReturn(edinetDetailViewBean);
+
+            var actual = service.edinetDetailView(submitDate);
+
+            assertEquals(edinetDetailViewBean, actual);
         }
     }
 }

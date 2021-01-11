@@ -65,7 +65,7 @@
         </thead>
         <tbody>
         <tr th:each="edinet : ${edinetList}">
-            <td th:text="${edinet.submitDate}">提出日</td>
+            <td><a th:text="${edinet.submitDate}" th:href="@{'/fundanalyzer/v1/edinet/list/detail?submitDate='+${edinet.submitDate}}">提出日</a></td>
             <td th:text="${edinet.countAll}">総件数</td>
             <td th:text="${edinet.countTarget}">処理対象件数</td>
             <td th:text="${edinet.countScraped}">処理済件数</td>

@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 import github.com.ioridazo.fundanalyzer.domain.bean.BrandDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.CorporateViewDao;
+import github.com.ioridazo.fundanalyzer.domain.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
@@ -17,6 +18,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
+import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
 import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class ViewService {
     private final CorporateViewLogic corporateViewLogic;
     private final EdinetListViewLogic edinetListViewLogic;
     private final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic;
+    private final EdinetDetailViewLogic edinetDetailViewLogic;
     private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
@@ -57,6 +60,7 @@ public class ViewService {
             final CorporateViewLogic corporateViewLogic,
             final EdinetListViewLogic edinetListViewLogic,
             final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic,
+            final EdinetDetailViewLogic edinetDetailViewLogic,
             final IndustryDao industryDao,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
@@ -69,6 +73,7 @@ public class ViewService {
         this.corporateViewLogic = corporateViewLogic;
         this.edinetListViewLogic = edinetListViewLogic;
         this.brandDetailCorporateViewLogic = brandDetailCorporateViewLogic;
+        this.edinetDetailViewLogic = edinetDetailViewLogic;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
@@ -152,6 +157,14 @@ public class ViewService {
         return corporateViewDao.selectAll().stream()
                 // 提出日が存在したら表示する
                 .filter(corporateViewBean -> corporateViewBean.getSubmitDate() != null)
+                .collect(Collectors.toList());
+    }
+
+    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator
+                        .comparing(CorporateViewBean::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewBean::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -244,6 +257,12 @@ public class ViewService {
         return sortedEdinetList(edinetListViewDao.selectAll());
     }
 
+    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
+        return viewBeanList.stream()
+                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
+                .collect(Collectors.toList());
+    }
+
     /**
      * 非同期で表示する処理状況リストをアップデートする
      *
@@ -309,6 +328,18 @@ public class ViewService {
 
     // ----------
 
+    /**
+     * 提出日ごとの処理詳細情報を取得する
+     *
+     * @param submitDate 対象提出日
+     * @return スクレイピング処理詳細情報
+     */
+    public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate) {
+        return edinetDetailViewLogic.edinetDetailView("120", submitDate, companyAllTargeted());
+    }
+
+    // ----------
+
     private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
         return documentList.stream()
                 // 提出日ごとに件数をカウントする
@@ -333,20 +364,6 @@ public class ViewService {
                 // 銀行業、保険業は対象外とする
                 .filter(company -> !bank.getId().equals(company.getIndustryId()))
                 .filter(company -> !insurance.getId().equals(company.getIndustryId()))
-                .collect(Collectors.toList());
-    }
-
-    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator
-                        .comparing(CorporateViewBean::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewBean::getCode))
-                .collect(Collectors.toList());
-    }
-
-    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
                 .collect(Collectors.toList());
     }
 }

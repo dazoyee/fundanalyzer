@@ -22,6 +22,7 @@ public class AnalysisController {
     private static final String REDIRECT_EDINET = "redirect:/fundanalyzer/v1/edinet/list";
     private static final String CORPORATE = "corporate";
     private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
+    private static final String EDINET_DETAIL = "edinet-detail";
 
     private final DocumentService documentService;
     private final AnalysisService analysisService;
@@ -64,6 +65,12 @@ public class AnalysisController {
         model.addAttribute("forecastStocks", brandDetail.getMinkabuList());
         model.addAttribute("stockPrices", brandDetail.getStockPriceList());
         return CORPORATE;
+    }
+
+    @GetMapping("fundanalyzer/v1/edinet/list/detail")
+    public String edinetListDetail(@RequestParam(name = "submitDate") final String submitDate, final Model model) {
+        model.addAttribute("edinetDetail", viewService.edinetDetailView(LocalDate.parse(submitDate)));
+        return EDINET_DETAIL;
     }
 
     @GetMapping("fundanalyzer/v1/company")
