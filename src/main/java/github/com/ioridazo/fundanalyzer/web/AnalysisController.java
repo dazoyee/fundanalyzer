@@ -22,6 +22,7 @@ public class AnalysisController {
     private static final String REDIRECT_EDINET = "redirect:/fundanalyzer/v1/edinet/list";
     private static final String CORPORATE = "corporate";
     private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
+    private static final String EDINET_DETAIL = "edinet-detail";
 
     private final DocumentService documentService;
     private final AnalysisService analysisService;
@@ -66,6 +67,12 @@ public class AnalysisController {
         return CORPORATE;
     }
 
+    @GetMapping("fundanalyzer/v1/edinet/list/detail")
+    public String edinetListDetail(@RequestParam(name = "submitDate") final String submitDate, final Model model) {
+        model.addAttribute("edinetDetail", viewService.edinetDetailView(LocalDate.parse(submitDate)));
+        return EDINET_DETAIL;
+    }
+
     @GetMapping("fundanalyzer/v1/company")
     public String company(final Model model) {
         documentService.company();
@@ -107,7 +114,7 @@ public class AnalysisController {
     public String updateView() {
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
-        return REDIRECT_INDEX;
+        return REDIRECT_INDEX + "?message=updating";
     }
 
     /**
@@ -204,7 +211,7 @@ public class AnalysisController {
      * @param model model
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v1/edinet/list/all")
+    @GetMapping("fundanalyzer/v1/edinet/list/all")
     public String edinetListAll(final Model model) {
         model.addAttribute("companyUpdated", viewService.companyUpdated());
         model.addAttribute("edinetList", viewService.edinetListViewAll());
@@ -221,6 +228,17 @@ public class AnalysisController {
     public String resetStatus(final Model model) {
         documentService.resetForRetry();
         return REDIRECT_EDINET + "?message=updated";
+    }
+
+    /**
+     * EDINETリストをアップデートする
+     *
+     * @return EdinetList
+     */
+    @PostMapping("fundanalyzer/v1/update/edinet/list")
+    public String updateEdinetList(final String date) {
+        viewService.updateEdinetListView("120", LocalDate.parse(date));
+        return REDIRECT_EDINET;
     }
 
     // -------------------------------------------------------

@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 import org.seasar.doma.Column;
@@ -65,10 +64,6 @@ public class Document {
 
     private final LocalDateTime updatedAt;
 
-    public boolean getNotRemoved() {
-        return "0".equals(removed);
-    }
-
     public static Document ofUpdated(
             final FinancialStatementEnum fs,
             final String documentId,
@@ -97,7 +92,12 @@ public class Document {
                         .numberOfSharesDocumentPath(path)
                         .updatedAt(updatedAt)
                         .build();
+            default:
+                throw new FundanalyzerRuntimeException();
         }
-        throw new FundanalyzerRuntimeException();
+    }
+
+    public boolean getNotRemoved() {
+        return "0".equals(removed);
     }
 }

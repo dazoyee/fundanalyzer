@@ -1,0 +1,143 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+            rel="stylesheet">
+    <title>EDINETリスト</title>
+</head>
+
+<body>
+<div class="container">
+    <h1>処理詳細</h1>
+    <h2 th:text="${edinetDetail.edinetListView.submitDate}">対象提出日</h2>
+    <p th:if="${error}" class="alert alert-danger" role="alert">
+        <th:block th:each="error: ${error}"><!-- 改行コードでsplitしてループ -->
+            <th:block th:text="${error}"/>
+            <br/>
+        </th:block>
+    </p>
+    <p th:if="${message}" class="alert alert-info" role="alert">
+        <th:block th:each="message: ${message}"><!-- 改行コードでsplitしてループ -->
+            <th:block th:text="${message}"/>
+            <br/>
+        </th:block>
+    </p>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>総件数</th>
+            <th>処理対象件数</th>
+            <th>処理済件数</th>
+            <th>分析済件数</th>
+            <th>未分析コード</th>
+            <th>処理確認コード</th>
+            <th>未処理件数</th>
+            <th>対象外件数</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td th:text="${edinetDetail.edinetListView.countAll}">総件数</td>
+            <td th:text="${edinetDetail.edinetListView.countTarget}">処理対象件数</td>
+            <td th:text="${edinetDetail.edinetListView.countScraped}">処理済件数</td>
+            <td th:text="${edinetDetail.edinetListView.countAnalyzed}">分析済件数</td>
+            <td th:text="${edinetDetail.edinetListView.notAnalyzedCode}">未分析コード</td>
+            <td th:text="${edinetDetail.edinetListView.cantScrapedCode}">処理確認コード</td>
+            <td th:text="${edinetDetail.edinetListView.countNotScraped}">未処理件数</td>
+            <td th:text="${edinetDetail.edinetListView.countNotTarget}">対象外件数</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="border-top border-4" th:each="documentDetail : ${edinetDetail.documentDetailList}">
+        <br/>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>書類ID</th>
+                <th>EDINETコード</th>
+                <th>対象年</th>
+                <th>DL</th>
+                <th>DC</th>
+                <th>NS</th>
+                <th>BS</th>
+                <th>PL</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td th:text="${documentDetail.document.documentId}">書類ID</td>
+                <td th:text="${documentDetail.document.edinetCode}">EDINETコード</td>
+                <td th:text="${documentDetail.document.period}">対象年</td>
+                <td th:text="${documentDetail.document.downloaded}">ダウンロード</td>
+                <td th:text="${documentDetail.document.decoded}">デコード</td>
+                <td th:text="${documentDetail.document.scrapedNumberOfShares}">NS</td>
+                <td th:text="${documentDetail.document.scrapedBs}">BS</td>
+                <td th:text="${documentDetail.document.scrapedPl}">PL</td>
+            </tr>
+            </tbody>
+        </table>
+        <table>
+            <thead>
+            <tr>
+                <th>FS</th>
+                <th>フォルダパス</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>NS</td>
+                <td th:text="${documentDetail.document.numberOfSharesDocumentPath}">NS</td>
+            </tr>
+            <tr>
+                <td>BS</td>
+                <td th:text="${documentDetail.document.bsDocumentPath}">BS</td>
+            </tr>
+            <tr>
+                <td>PL</td>
+                <td th:text="${documentDetail.document.plDocumentPath}">PL</td>
+            </tr>
+            </tbody>
+        </table>
+        <table class="table table-bordered table-sm">
+            <thead>
+            <tr>
+                <th>科目</th>
+                <th>値</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>流動資産合計</td>
+                <td th:text="${documentDetail.values.totalCurrentAssets}">流動資産合計</td>
+            </tr>
+            <tr>
+                <td>投資その他の資産合計</td>
+                <td th:text="${documentDetail.values.totalInvestmentsAndOtherAssets}">投資その他の資産合計</td>
+            </tr>
+            <tr>
+                <td>流動負債合計</td>
+                <td th:text="${documentDetail.values.totalCurrentLiabilities}">流動負債合計</td>
+            </tr>
+            <tr>
+                <td>固定負債合計</td>
+                <td th:text="${documentDetail.values.totalFixedLiabilities}">固定負債合計</td>
+            </tr>
+            <tr>
+                <td>営業利益</td>
+                <td th:text="${documentDetail.values.operatingProfit}">営業利益</td>
+            </tr>
+            <tr>
+                <td>株式総数</td>
+                <td th:text="${documentDetail.values.numberOfShares}">株式総数</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!--<a href="search.html" th:href="@{/search}">Back</a> &lt;!&ndash;/* (6) */&ndash;&gt;-->
+</div>
+</body>
+</html>
