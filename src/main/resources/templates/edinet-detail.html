@@ -23,6 +23,14 @@
             <br/>
         </th:block>
     </p>
+    <div class="row">
+        <div class="col-lg-3">
+            <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/list}">
+                <input type="hidden" th:value="${edinetDetail.edinetListView.submitDate}" name="date"/>
+                <button type="submit" class="btn">更新して前に戻る</button>
+            </form>
+        </div>
+    </div>
 
     <table class="table table-bordered">
         <thead>
