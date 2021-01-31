@@ -22,7 +22,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporat
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
-import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

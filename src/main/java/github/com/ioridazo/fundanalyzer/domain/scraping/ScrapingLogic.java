@@ -19,9 +19,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialState
 import github.com.ioridazo.fundanalyzer.domain.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.bean.Unit;
-import github.com.ioridazo.fundanalyzer.edinet.EdinetProxy;
-import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionRequestParameter;
-import github.com.ioridazo.fundanalyzer.edinet.entity.request.AcquisitionType;
+import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
+import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import lombok.extern.slf4j.Slf4j;

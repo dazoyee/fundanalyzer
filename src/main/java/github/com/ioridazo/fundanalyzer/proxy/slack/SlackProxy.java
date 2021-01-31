@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.slack;
+package github.com.ioridazo.fundanalyzer.proxy.slack;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

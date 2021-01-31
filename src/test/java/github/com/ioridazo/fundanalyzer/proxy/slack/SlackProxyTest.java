@@ -1,6 +1,7 @@
-package github.com.ioridazo.fundanalyzer.slack;
+package github.com.ioridazo.fundanalyzer.proxy.slack;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;

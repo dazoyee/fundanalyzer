@@ -20,7 +20,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.logic.BrandDetailCorporat
 import github.com.ioridazo.fundanalyzer.domain.service.logic.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.service.logic.EdinetListViewLogic;
-import github.com.ioridazo.fundanalyzer.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
