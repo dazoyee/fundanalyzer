@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.domain.csv.CsvCommander;
-import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BsSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
@@ -15,13 +14,14 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
-import github.com.ioridazo.fundanalyzer.domain.scraping.ScrapingLogic;
+import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;

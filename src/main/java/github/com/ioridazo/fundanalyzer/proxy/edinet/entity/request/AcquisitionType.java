@@ -9,8 +9,7 @@ public enum AcquisitionType {
     DEFAULT("1"),
     PDF("2"),
     ALTERNATIVE("3"),
-    ENGLISH("4")
-    ;
+    ENGLISH("4");
 
     private final String code;
 

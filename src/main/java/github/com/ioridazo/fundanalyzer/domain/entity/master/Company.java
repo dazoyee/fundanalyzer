@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
-import github.com.ioridazo.fundanalyzer.domain.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -53,7 +53,7 @@ public class Company {
         return Optional.ofNullable(code);
     }
 
-    public static Company ofNull(){
+    public static Company ofNull() {
         return new Company(
                 null,
                 null,

@@ -7,7 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
-import github.com.ioridazo.fundanalyzer.domain.scraping.jsoup.StockScraping;
+import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.extern.slf4j.Slf4j;
