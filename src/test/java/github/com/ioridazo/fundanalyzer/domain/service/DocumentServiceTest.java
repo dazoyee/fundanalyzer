@@ -1,10 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
-import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BsSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
@@ -12,9 +9,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.logic.company.CompanyLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
@@ -22,6 +19,7 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.proxy.selenium.SeleniumProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -47,11 +45,12 @@ import static org.mockito.Mockito.when;
 class DocumentServiceTest {
 
     private String pathCompany;
+    private String pathCompanyZip;
     private String pathDecode;
-    private EdinetProxy proxy;
-    private CsvCommander csvCommander;
+    private EdinetProxy edinetProxy;
+    private SeleniumProxy seleniumProxy;
+    private CompanyLogic companyLogic;
     private ScrapingLogic scrapingLogic;
-    private IndustryDao industryDao;
     private CompanyDao companyDao;
     private BsSubjectDao bsSubjectDao;
     private PlSubjectDao plSubjectDao;
@@ -63,11 +62,12 @@ class DocumentServiceTest {
     @BeforeEach
     void before() {
         this.pathCompany = "";
+        this.pathCompanyZip = "";
         this.pathDecode = "C:/test/decode";
-        this.proxy = Mockito.mock(EdinetProxy.class);
-        this.csvCommander = Mockito.mock(CsvCommander.class);
+        this.edinetProxy = Mockito.mock(EdinetProxy.class);
+        this.seleniumProxy = Mockito.mock(SeleniumProxy.class);
+        this.companyLogic = Mockito.mock(CompanyLogic.class);
         this.scrapingLogic = Mockito.mock(ScrapingLogic.class);
-        this.industryDao = Mockito.mock(IndustryDao.class);
         this.companyDao = Mockito.mock(CompanyDao.class);
         this.bsSubjectDao = Mockito.mock(BsSubjectDao.class);
         this.plSubjectDao = Mockito.mock(PlSubjectDao.class);
@@ -76,11 +76,12 @@ class DocumentServiceTest {
 
         this.service = Mockito.spy(new DocumentService(
                 pathCompany,
+                pathCompanyZip,
                 pathDecode,
-                proxy,
-                csvCommander,
+                edinetProxy,
+                seleniumProxy,
+                companyLogic,
                 scrapingLogic,
-                industryDao,
                 companyDao,
                 bsSubjectDao,
                 plSubjectDao,
@@ -92,145 +93,6 @@ class DocumentServiceTest {
     @Nested
     class company {
 
-        @DisplayName("company: industryが登録されていなかったら登録されることを確認する")
-        @Test
-        void insert_industry() {
-            var edinetCsvResultBean = new EdinetCsvResultBean();
-            edinetCsvResultBean.setIndustry("まだ登録されていない業種");
-            var createdAt = LocalDateTime.of(2020, 9, 12, 23, 54);
-            var industryAlready = new Industry(1, "既に登録されている業種", createdAt);
-            var industryInserted = new Industry(null, "まだ登録されていない業種", createdAt);
-
-            when(csvCommander.readCsv(any(), any(), eq(EdinetCsvResultBean.class))).thenReturn(List.of(edinetCsvResultBean));
-            when(industryDao.selectAll()).thenReturn(List.of(industryAlready));
-            when(service.nowLocalDateTime()).thenReturn(createdAt);
-            doNothing().when(service).insertCompany(any());
-
-            assertDoesNotThrow(() -> service.company());
-
-            // insertされることを確認する
-            verify(industryDao, times(1)).insert(industryInserted);
-        }
-
-        @DisplayName("company: industryが登録されていたら登録されないことを確認する")
-        @Test
-        void do_not_insert_industry() {
-            var edinetCsvResultBean = new EdinetCsvResultBean();
-            edinetCsvResultBean.setIndustry("既に登録されている業種");
-            var createdAt = LocalDateTime.of(2020, 9, 12, 23, 54);
-            var industryAlready = new Industry(1, "既に登録されている業種", createdAt);
-
-            when(csvCommander.readCsv(any(), any(), eq(EdinetCsvResultBean.class))).thenReturn(List.of(edinetCsvResultBean));
-            when(industryDao.selectAll()).thenReturn(List.of(industryAlready));
-            doNothing().when(service).insertCompany(any());
-
-            assertDoesNotThrow(() -> service.company());
-
-            // insertされないことを確認する
-            verify(industryDao, times(0)).insert(any());
-        }
-
-        @DisplayName("company: companyが登録されていなかったら登録されることを確認する")
-        @Test
-        void insert_company() {
-            var edinetCsvResultBean = new EdinetCsvResultBean();
-            edinetCsvResultBean.setSecuritiesCode("code");
-            edinetCsvResultBean.setSubmitterName("まだ登録されていない会社");
-            edinetCsvResultBean.setIndustry("industry");
-            edinetCsvResultBean.setEdinetCode("edinetCodeInserted");
-            edinetCsvResultBean.setListCategories("上場");
-            edinetCsvResultBean.setConsolidated("有");
-            edinetCsvResultBean.setCapitalStock(1);
-            edinetCsvResultBean.setSettlementDate("date");
-            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
-            var industryAlready = new Industry(1, "industry", createdAt);
-            var companyAlready = new Company(
-                    "code",
-                    "既に登録されている会社",
-                    1,
-                    "edinetCodeAlready",
-                    "1",
-                    "1",
-                    1,
-                    "date",
-                    null,
-                    null
-            );
-            var companyInserted = new Company(
-                    "code",
-                    "まだ登録されていない会社",
-                    1,
-                    "edinetCodeInserted",
-                    "1",
-                    "1",
-                    1,
-                    "date",
-                    createdAt,
-                    createdAt
-            );
-
-            when(csvCommander.readCsv(any(), any(), eq(EdinetCsvResultBean.class))).thenReturn(List.of(edinetCsvResultBean));
-            when(companyDao.selectAll()).thenReturn(List.of(companyAlready));
-            when(industryDao.selectAll()).thenReturn(List.of(industryAlready));
-            when(service.nowLocalDateTime()).thenReturn(createdAt);
-            doNothing().when(service).insertIndustry(any());
-
-            assertDoesNotThrow(() -> service.company());
-
-            // insertされることを確認する
-            verify(companyDao, times(1)).insert(companyInserted);
-            verify(companyDao, times(0)).update(any());
-        }
-
-        @DisplayName("company: companyが登録されていたら登録されないことを確認する")
-        @Test
-        void do_not_insert_company() {
-            var edinetCsvResultBean = new EdinetCsvResultBean();
-            edinetCsvResultBean.setSecuritiesCode("code");
-            edinetCsvResultBean.setSubmitterName("既に登録されている会社");
-            edinetCsvResultBean.setIndustry("industry");
-            edinetCsvResultBean.setEdinetCode("edinetCodeAlready");
-            edinetCsvResultBean.setListCategories("上場");
-            edinetCsvResultBean.setConsolidated("有");
-            edinetCsvResultBean.setCapitalStock(1);
-            edinetCsvResultBean.setSettlementDate("date");
-            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
-            var industryAlready = new Industry(1, "industry", createdAt);
-            var companyAlready = new Company(
-                    "code",
-                    "既に登録されている会社",
-                    1,
-                    "edinetCodeAlready",
-                    null,
-                    null,
-                    null,
-                    "date",
-                    null,
-                    null
-            );
-            when(csvCommander.readCsv(any(), any(), eq(EdinetCsvResultBean.class))).thenReturn(List.of(edinetCsvResultBean));
-            when(companyDao.selectAll()).thenReturn(List.of(companyAlready));
-            when(industryDao.selectAll()).thenReturn(List.of(industryAlready));
-            when(service.nowLocalDateTime()).thenReturn(createdAt);
-            doNothing().when(service).insertIndustry(any());
-
-            assertDoesNotThrow(() -> service.company());
-
-            // updateされることを確認する
-            verify(companyDao, times(1)).update(new Company(
-                    "code",
-                    "既に登録されている会社",
-                    1,
-                    "edinetCodeAlready",
-                    "1",
-                    "1",
-                    1,
-                    "date",
-                    createdAt,
-                    createdAt
-            ));
-            verify(companyDao, times(0)).insert(any());
-        }
     }
 
     @Nested
@@ -490,8 +352,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of(edinetDocument));
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new Company(
                     null,
                     null,
@@ -533,7 +395,7 @@ class DocumentServiceTest {
             edinetResponse.setMetadata(metadata);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of(new EdinetDocument()));
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
 
             assertDoesNotThrow(() -> service.edinetList(date));
 
@@ -560,8 +422,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.empty());
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
@@ -589,8 +451,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(proxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(edinetDocumentDao.insert(any())).thenThrow(UniqueConstraintException.class);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new Company(
                     null,

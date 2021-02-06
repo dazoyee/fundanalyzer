@@ -1,9 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BsSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
@@ -11,9 +9,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.logic.company.CompanyLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
@@ -22,6 +20,7 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestP
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
+import github.com.ioridazo.fundanalyzer.proxy.selenium.SeleniumProxy;
 import lombok.extern.slf4j.Slf4j;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,11 +45,12 @@ import java.util.stream.Stream;
 public class DocumentService {
 
     private final String pathCompany;
+    private final String pathCompanyZip;
     private final String pathDecode;
-    private final EdinetProxy proxy;
-    private final CsvCommander csvCommander;
+    private final EdinetProxy edinetProxy;
+    private final SeleniumProxy seleniumProxy;
+    private final CompanyLogic companyLogic;
     private final ScrapingLogic scrapingLogic;
-    private final IndustryDao industryDao;
     private final CompanyDao companyDao;
     private final BsSubjectDao bsSubjectDao;
     private final PlSubjectDao plSubjectDao;
@@ -59,12 +58,13 @@ public class DocumentService {
     private final DocumentDao documentDao;
 
     public DocumentService(
-            @Value("${app.settings.file.path.company}") final String pathCompany,
+            @Value("${app.settings.file.path.company.company}") final String pathCompany,
+            @Value("${app.settings.file.path.company.zip}") final String pathCompanyZip,
             @Value("${app.settings.file.path.decode}") final String pathDecode,
-            final EdinetProxy proxy,
-            final CsvCommander csvCommander,
+            final EdinetProxy edinetProxy,
+            final SeleniumProxy seleniumProxy,
+            final CompanyLogic companyLogic,
             final ScrapingLogic scrapingLogic,
-            final IndustryDao industryDao,
             final CompanyDao companyDao,
             final BsSubjectDao bsSubjectDao,
             final PlSubjectDao plSubjectDao,
@@ -72,11 +72,12 @@ public class DocumentService {
             final DocumentDao documentDao
     ) {
         this.pathCompany = pathCompany;
+        this.pathCompanyZip = pathCompanyZip;
         this.pathDecode = pathDecode;
-        this.proxy = proxy;
-        this.csvCommander = csvCommander;
+        this.edinetProxy = edinetProxy;
+        this.seleniumProxy = seleniumProxy;
+        this.companyLogic = companyLogic;
         this.scrapingLogic = scrapingLogic;
-        this.industryDao = industryDao;
         this.companyDao = companyDao;
         this.bsSubjectDao = bsSubjectDao;
         this.plSubjectDao = plSubjectDao;
@@ -92,62 +93,20 @@ public class DocumentService {
      * CSVから読み取って業種と会社情報をDBに登録する
      */
     public void company() {
-        // CSV読み取り
-        final var resultBeanList = csvCommander.readCsv(
-                new File(pathCompany),
-                Charset.forName("windows-31j"),
-                EdinetCsvResultBean.class
-        );
+        // ファイルダウンロード
+        final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
+        final String fileName = seleniumProxy.edinetCodeList(inputFilePath);
+
+        // ファイル読み取り
+        final List<EdinetCsvResultBean> resultBeanList = companyLogic.readFile(fileName, inputFilePath, pathCompany);
 
         // Industryの登録
-        insertIndustry(resultBeanList);
+        companyLogic.insertIndustry(resultBeanList);
 
         // Companyの登録
-        insertCompany(resultBeanList);
+        companyLogic.upsertCompany(resultBeanList);
 
         log.info("CSVファイルから会社情報の登録が完了しました。");
-    }
-
-    /**
-     * 業種をDBに登録する
-     *
-     * @param resultBeanList CSV読み取り結果
-     */
-    @Transactional
-    void insertIndustry(final List<EdinetCsvResultBean> resultBeanList) {
-        final var dbIndustryList = industryDao.selectAll().stream()
-                .map(Industry::getName)
-                .collect(Collectors.toList());
-
-        resultBeanList.stream()
-                .map(EdinetCsvResultBean::getIndustry)
-                .distinct()
-                .forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
-                        .filter(industryName -> dbIndustryList.stream().noneMatch(industryName::equals))
-                        .forEach(industryName -> industryDao.insert(new Industry(null, industryName, nowLocalDateTime())))
-                );
-    }
-
-    /**
-     * 会社をDBに登録する
-     *
-     * @param resultBeanList CSV読み取り結果
-     */
-    @Transactional
-    void insertCompany(final List<EdinetCsvResultBean> resultBeanList) {
-        final var companyList = companyDao.selectAll();
-        final var industryList = industryDao.selectAll();
-        resultBeanList.forEach(resultBean -> {
-                    final var match = companyList.stream()
-                            .map(Company::getEdinetCode)
-                            .anyMatch(resultBean.getEdinetCode()::equals);
-                    if (match) {
-                        companyDao.update(Company.of(industryList, resultBean, nowLocalDateTime()));
-                    } else {
-                        companyDao.insert(Company.of(industryList, resultBean, nowLocalDateTime()));
-                    }
-                }
-        );
     }
 
     /**
@@ -247,7 +206,7 @@ public class DocumentService {
                 .filter(dateString -> Stream.of(dateString)
                         .peek(d -> log.debug("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
                         // EDINETに提出書類の問い合わせ
-                        .map(d -> proxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                        .map(d -> edinetProxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
                         .map(EdinetResponse::getMetadata)
                         .map(Metadata::getResultset)
                         .map(Metadata.ResultSet::getCount)
@@ -256,7 +215,7 @@ public class DocumentService {
                 )
                 // 書類が0件ではないときは書類リストを取得する
                 .peek(dateString -> log.debug("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
-                .map(dateString -> proxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
+                .map(dateString -> edinetProxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
                 .peek(er -> log.debug("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
                 .forEach(resultsList -> resultsList.forEach(results -> Stream.of(results)
