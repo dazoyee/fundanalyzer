@@ -48,14 +48,6 @@ public class AnalysisController {
         return INDEX;
     }
 
-    @GetMapping("fundanalyzer/v1/company")
-    public String company(final Model model) {
-        documentService.company();
-
-        model.addAttribute("companies", viewService.corporateView());
-        return INDEX;
-    }
-
     /**
      * 指定提出日の書類をメインの一連処理をする
      *

@@ -29,3 +29,7 @@ app:
   api:
     edinet: https://disclosure.edinet-fsa.go.jp
     selenium: http://localhost:9001
+
+  scheduler:
+    cron:
+      company: 0 0 12 * * *

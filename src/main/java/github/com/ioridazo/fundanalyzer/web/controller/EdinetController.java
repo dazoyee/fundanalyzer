@@ -42,6 +42,18 @@ public class EdinetController {
     }
 
     /**
+     * 会社情報を更新する
+     *
+     * @param model model
+     * @return EdinetList
+     */
+    @GetMapping("fundanalyzer/v1/company")
+    public String company(final Model model) {
+        documentService.downloadCompanyInfo();
+        return REDIRECT_EDINET + "?message=Company is updated!";
+    }
+
+    /**
      * EDINETから提出書類一覧を取得する
      *
      * @param fromDate 提出日

@@ -90,15 +90,31 @@ public class DocumentService {
     }
 
     /**
-     * CSVから読み取って業種と会社情報をDBに登録する
+     * Seleniumで会社情報一覧を取得し、業種と会社情報をDBに登録する
      */
-    public void company() {
+    public void downloadCompanyInfo() {
         // ファイルダウンロード
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
         final String fileName = seleniumProxy.edinetCodeList(inputFilePath);
 
         // ファイル読み取り
         final List<EdinetCsvResultBean> resultBeanList = companyLogic.readFile(fileName, inputFilePath, pathCompany);
+
+        // Industryの登録
+        companyLogic.insertIndustry(resultBeanList);
+
+        // Companyの登録
+        companyLogic.upsertCompany(resultBeanList);
+
+        log.info("CSVファイルから会社情報の登録が完了しました。");
+    }
+
+    /**
+     * 格納されている会社情報一覧を取得し、業種と会社情報をDBに登録する
+     */
+    public void readCompanyInfo() {
+        // ファイル読み取り
+        final List<EdinetCsvResultBean> resultBeanList = companyLogic.readFile(pathCompany);
 
         // Industryの登録
         companyLogic.insertIndustry(resultBeanList);

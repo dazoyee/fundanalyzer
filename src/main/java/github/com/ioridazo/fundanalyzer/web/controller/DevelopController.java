@@ -41,7 +41,7 @@ public class DevelopController {
 
     @GetMapping("/company")
     public String devCompany(final Model model) {
-        documentService.company();
+        documentService.readCompanyInfo();
 
         model.addAttribute("companies", viewService.corporateView());
         return "index";
@@ -49,7 +49,7 @@ public class DevelopController {
 
     @GetMapping("/scrape/{date}")
     public String devDocument(@PathVariable String date, final Model model) {
-        documentService.company();
+        documentService.readCompanyInfo();
         documentService.execute(date, "120")
                 .thenRunAsync(viewService::updateCorporateView);
 
@@ -67,7 +67,7 @@ public class DevelopController {
 
     @GetMapping("/view/company/{year}")
     public String viewCompany(@PathVariable String year, final Model model) {
-        documentService.company();
+        documentService.readCompanyInfo();
         documentService.execute("2020-05-22", "120")
                 .thenRunAsync(viewService::updateCorporateView);
 
@@ -77,7 +77,7 @@ public class DevelopController {
 
     @GetMapping("/scrape/analysis/{date}")
     public String scrapeAndAnalyze(@PathVariable String date, final Model model) {
-        documentService.company();
+        documentService.readCompanyInfo();
 
         // execute実行
         documentService.execute(date, "120")
