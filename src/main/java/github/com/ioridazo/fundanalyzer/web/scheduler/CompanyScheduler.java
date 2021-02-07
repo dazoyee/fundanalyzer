@@ -23,6 +23,12 @@ public class CompanyScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.company}", zone = "Asia/Tokyo")
     public void company() {
-        documentService.downloadCompanyInfo();
+        try {
+            log.info("[スケジューラ]会社情報更新処理を開始します。");
+            documentService.downloadCompanyInfo();
+        } catch (Throwable t) {
+            // Slack通知
+            throw t;
+        }
     }
 }

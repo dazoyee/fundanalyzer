@@ -11,6 +11,8 @@ import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScrapin
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.extern.slf4j.Slf4j;
+import org.seasar.doma.jdbc.UniqueConstraintException;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,7 +92,16 @@ public class StockService {
             // kabuoji3
             kabuoji3List.forEach(kabuoji3 -> {
                 if (isNotInsertedStockPrice(kabuoji3.getTargetDate(), stockPriceList)) {
-                    stockPriceDao.insert(StockPrice.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
+                    try {
+                        stockPriceDao.insert(StockPrice.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
+                    } catch (NestedRuntimeException e) {
+                        if (e.contains(UniqueConstraintException.class)) {
+                            log.info("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                                    "\t企業コード:{}\t対象日:{}", code, kabuoji3.getTargetDate());
+                        } else {
+                            throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+                        }
+                    }
                 }
             });
 
@@ -105,7 +116,7 @@ public class StockService {
             }
 
         } catch (FundanalyzerRuntimeException e) {
-            log.info("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code);
+            log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code);
         }
     }
 

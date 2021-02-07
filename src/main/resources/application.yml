@@ -33,3 +33,4 @@ app:
   scheduler:
     cron:
       company: 0 0 12 * * *
+      stock: 0 0 13 * * *

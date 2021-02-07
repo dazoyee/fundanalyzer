@@ -31,6 +31,9 @@ public interface DocumentDao {
     @Select
     List<Document> selectByTypeAndPeriod(final String documentTypeCode, final String yearOfPeriod);
 
+    @Select
+    List<Document> selectByDayOfSubmitDate(final String day);
+
     @Insert(excludeNull = true)
     Result<Document> insert(final Document document);
 
