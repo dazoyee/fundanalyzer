@@ -24,6 +24,9 @@
     </p>
     <label>会社リスト更新日：</label>
     <p th:text="${companyUpdated}"></p>
+    <form method="get" th:action="@{/fundanalyzer/v1/company}">
+        <button type="submit" class="btn">会社情報更新</button>
+    </form>
     <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/list}">
         <input type="date" name="date"/>
         <button type="submit" class="btn">更新する</button>
@@ -65,7 +68,8 @@
         </thead>
         <tbody>
         <tr th:each="edinet : ${edinetList}">
-            <td><a th:text="${edinet.submitDate}" th:href="@{'/fundanalyzer/v1/edinet/list/detail?submitDate='+${edinet.submitDate}}">提出日</a></td>
+            <td><a th:text="${edinet.submitDate}"
+                   th:href="@{'/fundanalyzer/v1/edinet/list/detail?submitDate='+${edinet.submitDate}}">提出日</a></td>
             <td th:text="${edinet.countAll}">総件数</td>
             <td th:text="${edinet.countTarget}">処理対象件数</td>
             <td th:text="${edinet.countScraped}">処理済件数</td>
