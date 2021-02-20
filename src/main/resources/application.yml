@@ -33,4 +33,6 @@ app:
   scheduler:
     cron:
       company: 0 0 12 * * *
-      stock: 0 0 13 * * *
+      stock: 0 30 12 * * *
+      analysis: 0 0 14 * * *
+      update-view: 0 0 21 * * *
