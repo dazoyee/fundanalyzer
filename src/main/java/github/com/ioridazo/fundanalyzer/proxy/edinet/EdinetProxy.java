@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientExceptio
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 
-@Slf4j
+@Log4j2
 @Component
 public class EdinetProxy {
 

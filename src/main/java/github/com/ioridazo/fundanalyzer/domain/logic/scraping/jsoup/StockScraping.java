@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Minkabu
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
+@Log4j2
 @Component
 public class StockScraping {
 

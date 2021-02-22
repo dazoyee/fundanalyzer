@@ -24,7 +24,7 @@ import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@Slf4j
+@Log4j2
 @Component
 public class ScrapingLogic {
 

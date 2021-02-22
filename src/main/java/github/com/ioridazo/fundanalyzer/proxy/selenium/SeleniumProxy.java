@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.proxy.selenium;
 
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -10,7 +10,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
-@Slf4j
+@Log4j2
 @Component
 public class SeleniumProxy {
 

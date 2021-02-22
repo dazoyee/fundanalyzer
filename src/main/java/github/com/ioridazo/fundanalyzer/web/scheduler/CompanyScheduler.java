@@ -1,12 +1,12 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+@Log4j2
 @Component
 @Profile({"prod"})
 public class CompanyScheduler {

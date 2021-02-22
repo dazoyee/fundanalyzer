@@ -21,7 +21,7 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.proxy.selenium.SeleniumProxy;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
@@ -40,7 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
+@Log4j2
 @Service
 public class DocumentService {
 

@@ -6,14 +6,14 @@ import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
-@Slf4j
+@Log4j2
 @Component
 @Profile({"prod"})
 public class AnalysisScheduler {
@@ -37,7 +37,7 @@ public class AnalysisScheduler {
         this.documentDao = documentDao;
     }
 
-    public LocalDate nowLocalDate(){
+    public LocalDate nowLocalDate() {
         return LocalDate.now();
     }
 
@@ -45,7 +45,7 @@ public class AnalysisScheduler {
      * 財務分析スケジューラ
      */
     @Scheduled(cron = "${app.scheduler.cron.analysis}", zone = "Asia/Tokyo")
-    public void analysisScheduler(){
+    public void analysisScheduler() {
         try {
             documentDao.selectByDocumentTypeCode("120").stream()
                     .map(Document::getSubmitDate)
@@ -66,7 +66,7 @@ public class AnalysisScheduler {
                                 // importStockPrice完了後、notice実行
                                 .thenAcceptAsync(unused -> viewService.notice(date));
                     });
-        }catch (Throwable t){
+        } catch (Throwable t) {
             // Slack通知
             throw t;
         }
@@ -76,11 +76,11 @@ public class AnalysisScheduler {
      * 画面更新スケジューラ
      */
     @Scheduled(cron = "${app.scheduler.cron.update-view}", zone = "Asia/Tokyo")
-    public void updateViewScheduler(){
+    public void updateViewScheduler() {
         try {
             viewService.updateCorporateView();
             viewService.updateEdinetListView("120");
-        }catch (Throwable t){
+        } catch (Throwable t) {
             // Slack通知
             throw t;
         }
