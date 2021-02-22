@@ -16,6 +16,30 @@ logging:
       jdbc:
         UtilLoggingJdbcLogger: WARN
 
+management:
+  info:
+    git:
+      enabled: true
+      mode: full
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      base-path: /actuator
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 400ms
+    tags:
+      application: ${spring.application.name}
+
 app:
   settings:
     file:

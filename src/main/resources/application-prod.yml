@@ -12,7 +12,12 @@ spring:
 
 doma:
   dialect: mysql
-  naming: snake-upper-case
+  naming: snake_upper_case
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}-main
 
 app:
   api:
