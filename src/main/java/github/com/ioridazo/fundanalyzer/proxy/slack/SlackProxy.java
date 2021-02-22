@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.proxy.slack;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
@@ -16,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Objects;
 
-@Log4j2
 @Component
 @PropertySource(value = "classpath:/slack-message.properties", encoding = "UTF-8")
 public class SlackProxy {
