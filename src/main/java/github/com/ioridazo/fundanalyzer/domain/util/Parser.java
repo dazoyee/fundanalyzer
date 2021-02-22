@@ -1,11 +1,11 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
 import java.text.MessageFormat;
 import java.util.Optional;
 
-@Slf4j
+@Log4j2
 public class Parser {
 
     private static final String MESSAGE = "株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{0}";

@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.file;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -13,7 +13,7 @@ import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-@Slf4j
+@Log4j2
 @Component
 public class FileOperator {
 
