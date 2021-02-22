@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Objects;
 
-@Slf4j
+@Log4j2
 @Component
 @PropertySource(value = "classpath:/slack-message.properties", encoding = "UTF-8")
 public class SlackProxy {

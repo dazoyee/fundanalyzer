@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Slf4j
+@Log4j2
 @Component
 public class XbrlScraping {
 

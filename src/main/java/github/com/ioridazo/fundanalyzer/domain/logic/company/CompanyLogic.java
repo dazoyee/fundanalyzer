@@ -8,7 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
+@Log4j2
 @Component
 public class CompanyLogic {
 
