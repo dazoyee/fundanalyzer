@@ -17,6 +17,9 @@ doma:
   dialect: h2
   naming: snake_upper_case
 
+logging:
+  config: classpath:log4j2-spring-dev.xml
+
 management:
   metrics:
     tags:
