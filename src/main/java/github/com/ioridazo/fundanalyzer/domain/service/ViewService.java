@@ -10,6 +10,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.EdinetDetailViewLogic;
@@ -22,12 +25,14 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBea
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -198,6 +203,7 @@ public class ViewService {
      *
      * @return 最新更新日
      */
+    @NewSpan("ViewService.companyUpdated")
     public String companyUpdated() {
         return companyDao.selectAll().stream()
                 .map(Company::getUpdatedAt)
@@ -239,6 +245,7 @@ public class ViewService {
      *
      * @return 処理状況リスト
      */
+    @NewSpan("ViewService.edinetListview")
     public List<EdinetListViewBean> edinetListview() {
         final var viewBeanList = edinetListViewDao.selectAll();
         viewBeanList.removeIf(
@@ -253,6 +260,7 @@ public class ViewService {
      *
      * @return 処理状況リスト
      */
+    @NewSpan("ViewService.edinetListViewAll")
     public List<EdinetListViewBean> edinetListViewAll() {
         return sortedEdinetList(edinetListViewDao.selectAll());
     }
@@ -294,11 +302,17 @@ public class ViewService {
      * @param documentTypeCode 書類種別コード
      * @param submitDate       対象提出日
      */
+    @NewSpan("ViewService.updateEdinetListView")
     @Transactional
     public void updateEdinetListView(final String documentTypeCode, final LocalDate submitDate) {
         final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate);
         groupBySubmitDate(documentList).forEach(edinetListViewDao::update);
-        log.info("処理状況アップデートが正常に終了しました。対象提出日:{}", submitDate);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", submitDate),
+                Category.VIEW,
+                Process.UPDATE
+        );
     }
 
     // ----------

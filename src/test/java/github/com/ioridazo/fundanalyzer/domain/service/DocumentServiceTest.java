@@ -13,6 +13,8 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.CompanyLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
@@ -93,6 +95,18 @@ class DocumentServiceTest {
     @Nested
     class company {
 
+        @DisplayName("downloadCompanyInfo : Seleniumで会社情報一覧を取得し、業種と会社情報をDBに登録する")
+        @Test
+        void downloadCompanyInfo_ok() {
+            assertDoesNotThrow(() -> service.downloadCompanyInfo());
+        }
+
+        @DisplayName("downloadCompanyInfo : Selenium処理中にエラーが発生したときの挙動を確認する")
+        @Test
+        void downloadCompanyInfo_exception() {
+            when(seleniumProxy.edinetCodeList(any())).thenThrow(FundanalyzerRestClientException.class);
+            assertThrows(FundanalyzerRuntimeException.class, () -> service.downloadCompanyInfo());
+        }
     }
 
     @Nested

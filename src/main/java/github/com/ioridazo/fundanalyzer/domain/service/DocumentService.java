@@ -11,19 +11,23 @@ import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.CompanyLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.proxy.selenium.SeleniumProxy;
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -31,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -92,21 +97,27 @@ public class DocumentService {
     /**
      * Seleniumで会社情報一覧を取得し、業種と会社情報をDBに登録する
      */
+    @NewSpan("DocumentService.downloadCompanyInfo")
     public void downloadCompanyInfo() {
-        // ファイルダウンロード
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
-        final String fileName = seleniumProxy.edinetCodeList(inputFilePath);
+        try {
+            // ファイルダウンロード
+            final String fileName = seleniumProxy.edinetCodeList(inputFilePath);
 
-        // ファイル読み取り
-        final List<EdinetCsvResultBean> resultBeanList = companyLogic.readFile(fileName, inputFilePath, pathCompany);
+            // ファイル読み取り
+            final List<EdinetCsvResultBean> resultBeanList = companyLogic.readFile(fileName, inputFilePath, pathCompany);
 
-        // Industryの登録
-        companyLogic.insertIndustry(resultBeanList);
+            // Industryの登録
+            companyLogic.insertIndustry(resultBeanList);
 
-        // Companyの登録
-        companyLogic.upsertCompany(resultBeanList);
+            // Companyの登録
+            companyLogic.upsertCompany(resultBeanList);
 
-        log.info("CSVファイルから会社情報の登録が完了しました。");
+            FundanalyzerLogClient.logService("CSVファイルから会社情報の登録が完了しました。", Category.DOCUMENT, Process.COMPANY);
+        } catch (Throwable t) {
+            log.error("Selenium経由での会社情報更新処理が異常終了しました。内容を確認してください。", t);
+            throw new FundanalyzerRuntimeException(t);
+        }
     }
 
     /**
@@ -198,6 +209,7 @@ public class DocumentService {
      * @param startDate ここ日から
      * @param endDate   ここ日まで
      */
+    @NewSpan("DocumentService.edinetList")
     public void edinetList(final String startDate, final String endDate) {
         final var dateList = LocalDate.parse(startDate)
                 .datesUntil(LocalDate.parse(endDate).plusDays(1))
@@ -220,19 +232,13 @@ public class DocumentService {
 
         Stream.of(date.toString())
                 .filter(dateString -> Stream.of(dateString)
-                        .peek(d -> log.debug("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{}", d))
                         // EDINETに提出書類の問い合わせ
                         .map(d -> edinetProxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
-                        .map(EdinetResponse::getMetadata)
-                        .map(Metadata::getResultset)
-                        .map(Metadata.ResultSet::getCount)
-                        .peek(c -> log.info("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{}\t対象ファイル件数:{}", dateString, c))
+                        .map(edinetResponse -> edinetResponse.getMetadata().getResultset().getCount())
                         .anyMatch(c -> !"0".equals(c))
                 )
                 // 書類が0件ではないときは書類リストを取得する
-                .peek(dateString -> log.debug("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{}", dateString))
                 .map(dateString -> edinetProxy.list(new ListRequestParameter(dateString, ListType.GET_LIST)))
-                .peek(er -> log.debug("書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。"))
                 .map(EdinetResponse::getResults)
                 .forEach(resultsList -> resultsList.forEach(results -> Stream.of(results)
                         .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
@@ -283,12 +289,16 @@ public class DocumentService {
                                     log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
                                     throw new FundanalyzerSqlForeignKeyException(e);
                                 } else {
-                                    log.error("想定外のエラーが発生しました。", e);
-                                    throw new RuntimeException(e);
+                                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
                                 }
                             }
                         })));
-        log.info("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{}", date);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}", date),
+                Category.DOCUMENT,
+                Process.EDINET
+        );
     }
 
     /**

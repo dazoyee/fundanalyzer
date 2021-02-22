@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.concurrent.Executor;
 
 @EnableAsync
@@ -15,7 +16,10 @@ public class AppConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplateBuilder().build();
+        return new RestTemplateBuilder()
+                .setConnectTimeout(Duration.ofMillis(15000))
+                .setReadTimeout(Duration.ofMillis(300000))
+                .build();
     }
 
     @Bean
