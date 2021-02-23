@@ -132,11 +132,11 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/import/stock/date")
     public String importStocks(final String fromDate, final String toDate) {
-        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.SCRAPING);
+        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(stockService::importStockPrice);
-        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.SCRAPING);
+        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_INDEX;
     }
 

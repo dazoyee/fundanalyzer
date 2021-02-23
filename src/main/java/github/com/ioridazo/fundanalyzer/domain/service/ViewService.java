@@ -340,6 +340,7 @@ public class ViewService {
      * @param code 会社コード
      * @return 銘柄詳細情報
      */
+    @NewSpan("ViewService.brandDetailView")
     public BrandDetailViewBean brandDetailView(final String code) {
         return new BrandDetailViewBean(
                 brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),

@@ -7,6 +7,7 @@ public enum Process {
     DOWNLOAD("download"),
     DECODE("decode"),
     ANALYSIS("analysis"),
+    IMPORT("import"),
     UPDATE("update"),
     SORT("sort"),
     ;

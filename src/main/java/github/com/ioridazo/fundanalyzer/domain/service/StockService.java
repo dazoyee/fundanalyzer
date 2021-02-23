@@ -76,7 +76,7 @@ public class StockService {
         FundanalyzerLogClient.logService(
                 MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}", submitDate),
                 Category.STOCK,
-                Process.SCRAPING
+                Process.IMPORT
         );
         return null;
     }
@@ -86,6 +86,7 @@ public class StockService {
      *
      * @param code 会社コード
      */
+    @NewSpan("StockService.importStockPrice")
     @Transactional
     public void importStockPrice(final String code) {
         try {

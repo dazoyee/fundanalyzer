@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import org.springframework.stereotype.Controller;
@@ -33,6 +36,7 @@ public class BrandDetailController {
      */
     @GetMapping("fundanalyzer/v1/corporate/{code}")
     public String brandDetail(@PathVariable final String code, final Model model) {
+        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
         final var brandDetail = viewService.brandDetailView(code + "0");
         model.addAttribute("corporate", brandDetail.getCorporate());
         model.addAttribute("corporateView", brandDetail.getCorporateView());
@@ -40,6 +44,7 @@ public class BrandDetailController {
         model.addAttribute("financialStatements", brandDetail.getFinancialStatement());
         model.addAttribute("forecastStocks", brandDetail.getMinkabuList());
         model.addAttribute("stockPrices", brandDetail.getStockPriceList());
+        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
         return CORPORATE;
     }
 
@@ -51,7 +56,9 @@ public class BrandDetailController {
      */
     @PostMapping("fundanalyzer/v1/import/stock/code")
     public String importStocks(final String code) {
+        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
         stockService.importStockPrice(code);
+        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
     }
 }
