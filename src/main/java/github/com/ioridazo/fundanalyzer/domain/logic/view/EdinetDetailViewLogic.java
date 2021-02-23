@@ -12,6 +12,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -46,6 +47,7 @@ public class EdinetDetailViewLogic {
      * @param companyAllTargeted 処理対象となるすべての会社
      * @return 象提出日の未処理書類情報
      */
+    @NewSpan("EdinetDetailViewLogic.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(
             final String documentTypeCode,
             final LocalDate submitDate,

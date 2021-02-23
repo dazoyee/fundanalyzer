@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import org.springframework.stereotype.Controller;
@@ -35,7 +38,9 @@ public class EdinetDetailController {
      */
     @GetMapping("fundanalyzer/v1/edinet/list/detail")
     public String edinetListDetail(@RequestParam(name = "submitDate") final String submitDate, final Model model) {
+        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
         model.addAttribute("edinetDetail", viewService.edinetDetailView(LocalDate.parse(submitDate)));
+        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
         return EDINET_DETAIL;
     }
 
@@ -48,7 +53,9 @@ public class EdinetDetailController {
      */
     @PostMapping("fundanalyzer/v1/remove/document")
     public String removeDocument(final String submitDate, final String documentId) {
+        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
         documentService.removeDocument(documentId);
+        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET_DETAIL + "?submitDate=" + submitDate;
     }
 }

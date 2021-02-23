@@ -366,6 +366,7 @@ public class ViewService {
      * @param submitDate 対象提出日
      * @return スクレイピング処理詳細情報
      */
+    @NewSpan("ViewService.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate) {
         return edinetDetailViewLogic.edinetDetailView("120", submitDate, companyAllTargeted());
     }

@@ -442,6 +442,7 @@ public class DocumentService {
      *
      * @param documentId 書類ID
      */
+    @NewSpan("DocumentService.removeDocument")
     @Transactional
     public void removeDocument(final String documentId) {
         documentDao.update(Document.builder()
@@ -450,7 +451,12 @@ public class DocumentService {
                 .updatedAt(nowLocalDateTime())
                 .build()
         );
-        log.info("次のドキュメントを処理対象外にしました。\t書類ID:{}", documentId);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", documentId),
+                Category.DOCUMENT,
+                Process.UPDATE
+        );
     }
 
     private void insertCompanyForSqlForeignKey(final String edinetCode, final String companyName) {
