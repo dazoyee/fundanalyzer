@@ -16,6 +16,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
@@ -27,6 +30,7 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionT
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
@@ -34,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -91,10 +96,9 @@ public class ScrapingLogic {
      * @param docId      書類ID
      * @param targetDate 提出日
      */
+    @NewSpan("ScrapingLogic.download")
     public void download(final String docId, final LocalDate targetDate) {
         try {
-            log.info("書類のダウンロードおよびzipファイルの解凍処理を実行します。\t書類管理番号:{}", docId);
-
             // ファイル取得
             proxy.acquisition(
                     makeTargetPath(pathEdinet, targetDate),
@@ -113,8 +117,6 @@ public class ScrapingLogic {
                     makeTargetPath(pathEdinet, targetDate, docId),
                     makeTargetPath(pathDecode, targetDate, docId)
             );
-
-            log.info("書類のダウンロードおよびzipファイルの解凍処理が正常に実行されました。");
 
             documentDao.update(Document.builder()
                     .documentId(docId)
@@ -152,6 +154,7 @@ public class ScrapingLogic {
      * @param detailList 財務諸表科目リスト
      * @param <T>        財務諸表の型
      */
+    @NewSpan("ScrapingLogic.scrape")
     public <T extends Detail> void scrape(
             final FinancialStatementEnum fs,
             final String documentId,
@@ -195,11 +198,14 @@ public class ScrapingLogic {
                     );
                 }
 
-                log.info("次のスクレイピング情報を正常に登録しました。\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイル名:{}",
-                        company.getCode().orElseThrow(),
-                        company.getEdinetCode(),
-                        fs.getName(),
-                        targetFile.getFirst().getPath()
+                FundanalyzerLogClient.logLogic(
+                        MessageFormat.format("次のスクレイピング情報を正常に登録しました。\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
+                                company.getCode().orElseThrow(),
+                                company.getEdinetCode(),
+                                fs.getName(),
+                                targetFile.getFirst().getPath()),
+                        Category.DOCUMENT,
+                        Process.SCRAPING
                 );
 
                 documentDao.update(Document.ofUpdated(

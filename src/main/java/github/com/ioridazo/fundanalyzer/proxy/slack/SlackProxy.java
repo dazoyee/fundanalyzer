@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.proxy.slack;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -47,6 +48,7 @@ public class SlackProxy {
      *
      * @param propertyPath プロパティパス
      */
+    @NewSpan("SlackProxy.sendMessage")
     public void sendMessage(final String propertyPath) {
         final var message = Objects.requireNonNullElse(environment.getProperty(propertyPath), "message error");
         execute(message);
@@ -58,6 +60,7 @@ public class SlackProxy {
      * @param propertyPath プロパティパス
      * @param arguments    パラメータ
      */
+    @NewSpan("SlackProxy.sendMessage")
     public void sendMessage(final String propertyPath, final Object... arguments) {
         final var templateMessage = Objects.requireNonNullElse(environment.getProperty(propertyPath), "message error");
         execute(nowLocalDataTime() + "\t" + MessageFormat.format(templateMessage, arguments));

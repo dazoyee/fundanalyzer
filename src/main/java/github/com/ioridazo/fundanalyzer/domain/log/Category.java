@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.log;
 public enum Category {
     VIEW("view"),
     DOCUMENT("document"),
-    ANALYSIS("analysis"),
+    STOCK("stock"),
     ;
 
     private final String value;

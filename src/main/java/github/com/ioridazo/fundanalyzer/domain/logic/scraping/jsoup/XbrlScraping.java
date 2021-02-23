@@ -10,6 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -65,6 +66,7 @@ public class XbrlScraping {
      * @param keyWord    キーワード
      * @return スクレイピングした結果のリスト
      */
+    @NewSpan("XbrlScraping.scrapeFinancialStatement")
     public List<FinancialTableResultBean> scrapeFinancialStatement(final File targetFile, final String keyWord) {
         final var unit = unit(targetFile, keyWord);
 
@@ -128,6 +130,7 @@ public class XbrlScraping {
      * @param keyWord キーワード
      * @return 株式総数
      */
+    @NewSpan("XbrlScraping.scrapeNumberOfShares")
     public String scrapeNumberOfShares(final File file, final String keyWord) {
         final var scrapingList = elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())

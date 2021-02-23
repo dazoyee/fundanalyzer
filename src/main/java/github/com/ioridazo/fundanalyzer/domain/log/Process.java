@@ -3,7 +3,13 @@ package github.com.ioridazo.fundanalyzer.domain.log;
 public enum Process {
     EDINET("edinet"),
     COMPANY("company"),
-    UPDATE("update");
+    SCRAPING("scraping"),
+    DOWNLOAD("download"),
+    DECODE("decode"),
+    ANALYSIS("analysis"),
+    UPDATE("update"),
+    SORT("sort"),
+    ;
 
     private final String value;
 

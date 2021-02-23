@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
@@ -43,8 +46,10 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index")
     public String index(@RequestParam(name = "message", required = false) final String message, final Model model) {
+        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
         model.addAttribute("message", message);
         model.addAttribute("companies", viewService.corporateView());
+        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
         return INDEX;
     }
 
@@ -57,6 +62,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String documentAnalysis(final String fromDate, final String toDate) {
+        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(date -> {
@@ -69,6 +75,7 @@ public class AnalysisController {
                             // importStockPrice完了後、notice実行
                             .thenAcceptAsync(unused -> viewService.notice(date));
                 });
+        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
 
@@ -79,8 +86,10 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/update/view")
     public String updateView() {
+        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.UPDATE);
         viewService.updateCorporateView();
         viewService.updateEdinetListView("120");
+        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.UPDATE);
         return REDIRECT_INDEX + "?message=updating";
     }
 
@@ -92,8 +101,10 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
+        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         documentService.scrape(LocalDate.parse(date));
         analysisService.analyze(LocalDate.parse(date));
+        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
 
@@ -105,8 +116,10 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/scrape/id")
     public String scrapeById(final String documentId) {
+        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         documentService.scrape(documentId);
         analysisService.analyze(documentId);
+        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
 
@@ -119,9 +132,11 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/import/stock/date")
     public String importStocks(final String fromDate, final String toDate) {
+        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.SCRAPING);
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(stockService::importStockPrice);
+        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.SCRAPING);
         return REDIRECT_INDEX;
     }
 
@@ -133,7 +148,9 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
     public String sortedDiscountRate(final Model model) {
+        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
         model.addAttribute("companies", viewService.sortByDiscountRate());
+        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
         return INDEX;
     }
 
@@ -144,7 +161,9 @@ public class AnalysisController {
      */
     @GetMapping("fundanalyzer/v1/index/all")
     public String indexAll(final Model model) {
+        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
         model.addAttribute("companies", viewService.corporateViewAll());
+        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
         return INDEX;
     }
 }

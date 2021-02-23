@@ -122,10 +122,16 @@ public class EdinetProxy {
      * @param storagePath 保存先
      * @param parameter   パラメータ
      */
+    @NewSpan("EdinetProxy.acquisition")
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
-
         try {
+            FundanalyzerLogClient.logProxy(
+                    MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{}", parameter.getDocId()),
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
+            );
+
             restTemplate.execute(
                     baseUri + "/api/v1/documents/{docId}?type={type}",
                     HttpMethod.GET,
@@ -134,6 +140,12 @@ public class EdinetProxy {
                             .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
                     response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
+            );
+
+            FundanalyzerLogClient.logProxy(
+                    "書類のダウンロードが正常に実行されました。",
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
             );
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +

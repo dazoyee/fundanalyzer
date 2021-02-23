@@ -62,7 +62,7 @@ public class FundanalyzerLogClient {
      * @param process  処理内容
      */
     public static void logProxy(final String message, final Category category, final Process process) {
-        log.info(message(category, process, Function.LOGIC, message));
+        log.info(message(category, process, Function.PROXY, message));
     }
 
     private static Map<String, Object> message(
@@ -124,6 +124,7 @@ public class FundanalyzerLogClient {
         CONTROLLER("controller"),
         SERVICE("service"),
         LOGIC("logic"),
+        PROXY("proxy"),
         ;
 
         private final String value;

@@ -17,13 +17,18 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -68,6 +73,7 @@ public class AnalysisService {
      *
      * @param documentId 書類ID
      */
+    @NewSpan("AnalysisService.analyze")
     @Transactional
     public void analyze(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
@@ -91,6 +97,7 @@ public class AnalysisService {
      *
      * @param submitDate 提出日
      */
+    @NewSpan("AnalysisService.analyze")
     public CompletableFuture<Void> analyze(final LocalDate submitDate) {
         final var companyAll = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");
@@ -112,7 +119,11 @@ public class AnalysisService {
                 )
                 .forEach(document -> analyze(document.getDocumentId()));
 
-        log.info("すべての企業分析が正常に終了しました。\t対象提出日:{}", submitDate);
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("すべての企業分析が正常に終了しました。\t対象提出日:{0}", submitDate),
+                Category.DOCUMENT,
+                Process.ANALYSIS
+        );
         return null;
     }
 

@@ -94,6 +94,7 @@ public class ViewService {
      *
      * @return 会社一覧
      */
+    @NewSpan("ViewService.corporateView")
     public List<CorporateViewBean> corporateView() {
         return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
@@ -143,6 +144,7 @@ public class ViewService {
      *
      * @return 会社一覧
      */
+    @NewSpan("ViewService.corporateViewAll")
     public List<CorporateViewBean> corporateViewAll() {
         return sortedCompanyList(getCorporateViewBeanList());
     }
@@ -152,6 +154,7 @@ public class ViewService {
      *
      * @return ソート後のリスト
      */
+    @NewSpan("ViewService.sortByDiscountRate")
     public List<CorporateViewBean> sortByDiscountRate() {
         return corporateView().stream()
                 .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
@@ -176,6 +179,7 @@ public class ViewService {
     /**
      * 非同期で表示するリストをアップデートする
      */
+    @NewSpan("ViewService.updateCorporateView")
     @Async
     @Transactional
     public void updateCorporateView() {
@@ -193,7 +197,12 @@ public class ViewService {
                     }
                 });
         slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
-        log.info("表示アップデートが正常に終了しました。");
+
+        FundanalyzerLogClient.logService(
+                "表示アップデートが正常に終了しました。",
+                Category.VIEW,
+                Process.UPDATE
+        );
     }
 
     // ----------
@@ -219,6 +228,7 @@ public class ViewService {
      *
      * @param submitDate 対象提出日
      */
+    @NewSpan("ViewService.notice")
     public CompletableFuture<Void> notice(final LocalDate submitDate) {
         final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
         groupBySubmitDate(documentList).forEach(el -> {
@@ -276,6 +286,7 @@ public class ViewService {
      *
      * @param documentTypeCode 書類種別コード
      */
+    @NewSpan("ViewService.updateEdinetListView")
     @Async
     @Transactional
     public void updateEdinetListView(final String documentTypeCode) {
@@ -292,8 +303,14 @@ public class ViewService {
                         edinetListViewDao.insert(edinetListViewBean);
                     }
                 });
+
         slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
-        log.info("処理状況アップデートが正常に終了しました。");
+
+        FundanalyzerLogClient.logService(
+                "処理状況アップデートが正常に終了しました。",
+                Category.VIEW,
+                Process.UPDATE
+        );
     }
 
     /**

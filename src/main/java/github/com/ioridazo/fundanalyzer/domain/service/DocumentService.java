@@ -147,6 +147,7 @@ public class DocumentService {
      * @param date             書類取得対象日（提出日）
      * @param documentTypeCode 書類種別コード
      */
+    @NewSpan("DocumentService.execute")
     @Async
     public CompletableFuture<Void> execute(final String date, final String documentTypeCode) {
         // 書類リストをデータベースに登録する
@@ -160,7 +161,11 @@ public class DocumentService {
                 .collect(Collectors.toList());
 
         if (documentList.isEmpty()) {
-            log.info("{}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{}", date, documentTypeCode);
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, documentTypeCode),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
         } else {
             documentList.parallelStream().forEach(document -> {
                 // 書類取得
@@ -198,7 +203,11 @@ public class DocumentService {
                 }
             });
 
-            log.info("{}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{}", date, documentTypeCode);
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}", date, documentTypeCode),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
         }
         return null;
     }
@@ -307,6 +316,7 @@ public class DocumentService {
      * @param docId      書類管理番号
      * @param targetDate 書類取得対象日（提出日）
      */
+    @NewSpan("DocumentService.store")
     public void store(final String docId, final LocalDate targetDate) {
         // 既にファイルが存在しているか確認する
         if (fileListAlready(targetDate).stream()
@@ -345,6 +355,7 @@ public class DocumentService {
      *
      * @param targetDate 書類取得対象日（提出日）
      */
+    @NewSpan("DocumentService.scrape")
     public void scrape(final LocalDate targetDate) {
         documentDao.selectByTypeAndSubmitDate("120", targetDate).stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
@@ -359,7 +370,12 @@ public class DocumentService {
                     if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares()))
                         scrapeNs(d.getDocumentId(), targetDate);
                 });
-        log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t対象日:{}", targetDate);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t対象日:{0}", targetDate),
+                Category.DOCUMENT,
+                Process.SCRAPING
+        );
     }
 
     /**
@@ -367,13 +383,19 @@ public class DocumentService {
      *
      * @param documentId 書類ID
      */
+    @NewSpan("DocumentService.scrape")
     public void scrape(final String documentId) {
         final var targetDate = documentDao.selectByDocumentId(documentId).getSubmitDate();
         store(documentId, targetDate);
         scrapeBs(documentId, targetDate);
         scrapePl(documentId, targetDate);
         scrapeNs(documentId, targetDate);
-        log.info("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{}", documentId);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{}", documentId),
+                Category.DOCUMENT,
+                Process.SCRAPING
+        );
     }
 
     /**
