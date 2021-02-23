@@ -34,6 +34,7 @@ public class XbrlScraping {
      * @param scrapingKeyword キーワード
      * @return キーワードに合致するファイル
      */
+    @NewSpan("XbrlScraping.findFile")
     public Optional<File> findFile(final File filePath, final ScrapingKeyword scrapingKeyword) {
         // 対象のディレクトリから"honbun"ファイルを取得
         final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()

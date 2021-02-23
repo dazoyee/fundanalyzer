@@ -13,7 +13,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Log4j2
 @Component
 public class CorporateViewLogic {
 
@@ -57,6 +56,7 @@ public class CorporateViewLogic {
      * @param company 会社
      * @return CorporateViewBean
      */
+    @NewSpan("CorporateViewLogic.corporateViewOf")
     public CorporateViewBean corporateViewOf(final Company company) {
         final var submitDate = latestSubmitDate(company);
         final var corporateValue = corporateValue(company);

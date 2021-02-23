@@ -127,7 +127,7 @@ public class EdinetProxy {
         makeDirectory(storagePath);
         try {
             FundanalyzerLogClient.logProxy(
-                    MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{}", parameter.getDocId()),
+                    MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             );

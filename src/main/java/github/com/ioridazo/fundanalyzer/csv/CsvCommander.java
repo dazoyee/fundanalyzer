@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.csv;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -14,6 +15,7 @@ import java.util.List;
 @Component
 public class CsvCommander {
 
+    @NewSpan("CsvCommander.readCsv")
     public <T> List<T> readCsv(final File file, final Charset charset, final Class<? extends T> beanClass) {
         if (!file.exists()) {
             //noinspection ResultOfMethodCallIgnored

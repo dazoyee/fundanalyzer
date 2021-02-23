@@ -123,6 +123,7 @@ public class DocumentService {
     /**
      * 格納されている会社情報一覧を取得し、業種と会社情報をDBに登録する
      */
+    @NewSpan("DocumentService.readCompanyInfo")
     public void readCompanyInfo() {
         // ファイル読み取り
         final List<EdinetCsvResultBean> resultBeanList = companyLogic.readFile(pathCompany);
@@ -133,7 +134,7 @@ public class DocumentService {
         // Companyの登録
         companyLogic.upsertCompany(resultBeanList);
 
-        log.info("CSVファイルから会社情報の登録が完了しました。");
+        FundanalyzerLogClient.logService("CSVファイルから会社情報の登録が完了しました。", Category.DOCUMENT, Process.COMPANY);
     }
 
     /**
@@ -233,6 +234,7 @@ public class DocumentService {
      *
      * @param date この日
      */
+    @NewSpan("DocumentService.edinetList.date")
     @Transactional
     public void edinetList(final LocalDate date) {
         final var docIdList = edinetDocumentDao.selectAll().stream()
@@ -392,7 +394,7 @@ public class DocumentService {
         scrapeNs(documentId, targetDate);
 
         FundanalyzerLogClient.logService(
-                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{}", documentId),
+                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{0}", documentId),
                 Category.DOCUMENT,
                 Process.SCRAPING
         );

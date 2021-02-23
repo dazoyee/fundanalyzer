@@ -73,7 +73,7 @@ public class AnalysisService {
      *
      * @param documentId 書類ID
      */
-    @NewSpan("AnalysisService.analyze")
+    @NewSpan("AnalysisService.analyze.documentId")
     @Transactional
     public void analyze(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
@@ -97,7 +97,7 @@ public class AnalysisService {
      *
      * @param submitDate 提出日
      */
-    @NewSpan("AnalysisService.analyze")
+    @NewSpan("AnalysisService.analyze.submitDate")
     public CompletableFuture<Void> analyze(final LocalDate submitDate) {
         final var companyAll = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");

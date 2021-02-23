@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -35,6 +36,7 @@ public class EdinetListViewLogic {
      * @param companyAllTargeted 処理対象となるすべての会社
      * @return EdinetListViewBean
      */
+    @NewSpan("EdinetListViewLogic.counter")
     public EdinetListViewBean counter(
             final LocalDate submitDate,
             final Long countAll,

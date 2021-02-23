@@ -79,6 +79,7 @@ public class CompanyLogic {
      * @param filePath CSVファイルパス
      * @return CSV読み取り結果
      */
+    @NewSpan("CompanyLogic.readFile")
     public List<EdinetCsvResultBean> readFile(final String filePath) {
         return csvCommander.readCsv(
                 Arrays.stream(Objects.requireNonNull(new File(filePath).listFiles())).findFirst().orElseThrow(),

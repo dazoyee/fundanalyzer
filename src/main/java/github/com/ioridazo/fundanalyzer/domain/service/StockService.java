@@ -63,7 +63,7 @@ public class StockService {
      * @param submitDate 提出日
      * @return null
      */
-    @NewSpan("StockService.importStockPrice")
+    @NewSpan("StockService.importStockPrice.submitDate")
     public CompletableFuture<Void> importStockPrice(final LocalDate submitDate) {
         documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
                 .map(Document::getEdinetCode)
@@ -86,7 +86,7 @@ public class StockService {
      *
      * @param code 会社コード
      */
-    @NewSpan("StockService.importStockPrice")
+    @NewSpan("StockService.importStockPrice.code")
     @Transactional
     public void importStockPrice(final String code) {
         try {
