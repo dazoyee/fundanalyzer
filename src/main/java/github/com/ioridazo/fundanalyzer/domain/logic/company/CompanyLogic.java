@@ -58,7 +58,7 @@ public class CompanyLogic {
     @NewSpan("CompanyLogic.readFile")
     public List<EdinetCsvResultBean> readFile(
             final String fileName, final String fileInputPath, final String fileOutputPath) {
-        final File inputFile = new File(fileInputPath + "/" + fileName.replace(".zip", ""));
+        final File inputFile = new File(String.format("%s/%s", fileInputPath, fileName.replace(".zip", "")));
         final File outputFile = new File(fileOutputPath);
 
         try {

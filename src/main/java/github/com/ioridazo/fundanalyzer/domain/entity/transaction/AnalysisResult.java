@@ -30,4 +30,18 @@ public class AnalysisResult {
 
     @Column(updatable = false)
     private final LocalDateTime createdAt;
+
+    public static AnalysisResult of(
+            final String companyCode,
+            final LocalDate period,
+            final BigDecimal corporateValue,
+            final LocalDateTime createdAt) {
+        return new AnalysisResult(
+                null,
+                companyCode,
+                period,
+                corporateValue,
+                createdAt
+        );
+    }
 }

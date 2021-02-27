@@ -102,21 +102,21 @@ public class EdinetListViewLogic {
 
                 // 処理中企業コード
                 targetList.stream()
+                        .map(Document::getEdinetCode)
                         // filter no all done
-                        .filter(d -> documentList.stream()
-                                .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
+                        .filter(edinetCode -> documentList.stream()
+                                .filter(document -> edinetCode.equals(document.getEdinetCode()))
                                 .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs()) &&
                                         DocumentStatus.DONE.toValue().equals(document.getScrapedPl()) &&
                                         DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
                         )
                         // filter no all notYet
-                        .filter(d -> documentList.stream()
-                                .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
+                        .filter(edinetCode -> documentList.stream()
+                                .filter(document -> edinetCode.equals(document.getEdinetCode()))
                                 .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()) &&
                                         DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()) &&
                                         DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
                         )
-                        .map(Document::getEdinetCode)
                         .collect(Collectors.joining("\n")),
 
                 // 未処理件数

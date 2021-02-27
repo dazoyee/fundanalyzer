@@ -6,6 +6,7 @@ import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public interface FinancialStatementDao {
             final String financialStatementId,
             final String dayOfYear);
 
+    @Transactional
     @Insert
     Result<FinancialStatement> insert(final FinancialStatement financialStatement);
 }

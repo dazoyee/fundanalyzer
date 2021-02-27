@@ -34,7 +34,6 @@ import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -345,7 +344,6 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      * @param value          値
      */
-    @Transactional
     void insertFinancialStatement(
             final Company company,
             final FinancialStatementEnum fs,
@@ -353,8 +351,7 @@ public class ScrapingLogic {
             final EdinetDocument edinetDocument,
             final Long value) {
         try {
-            financialStatementDao.insert(new FinancialStatement(
-                    null,
+            financialStatementDao.insert(FinancialStatement.of(
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
                     fs.toValue(),
@@ -480,16 +477,14 @@ public class ScrapingLogic {
     }
 
     private File makeTargetPath(final String prePath, final LocalDate targetDate) {
-        return new File(prePath + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate);
+        return new File(String.format("%s/%d/%s/%s", prePath, targetDate.getYear(), targetDate.getMonth(), targetDate));
     }
 
     private File makeTargetPath(final String prePath, final LocalDate targetDate, final String docId) {
-        return new File(prePath + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate
-                + "/" + docId);
+        return new File(String.format("%s/%d/%s/%s/%s", prePath, targetDate.getYear(), targetDate.getMonth(), targetDate, docId));
     }
 
     private File makeDocumentPath(final String prePath, final LocalDate targetDate, final String docId) {
-        return new File(prePath + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate
-                + "/" + docId + "/XBRL/PublicDoc");
+        return new File(String.format("%s/%d/%s/%s/%s/XBRL/PublicDoc", prePath, targetDate.getYear(), targetDate.getMonth(), targetDate, docId));
     }
 }
