@@ -286,14 +286,26 @@ public class ScrapingLogic {
     Pair<File, ScrapingKeyword> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
 
-        log.info("\"{}\" のスクレイピング処理を開始します。", fs.getName());
+        FundanalyzerLogClient.logLogic(
+                MessageFormat.format("[{0}] のスクレイピング処理を開始します。\tパス:{1}",
+                        fs.getName(),
+                        targetFile.getPath()),
+                Category.DOCUMENT,
+                Process.SCRAPING
+        );
 
         for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
             final var findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);
 
             if (findFile.isPresent()) {
-                log.info("対象ファイルの存在を正常に確認できました。\t財務諸表名:{}\tキーワード:{}",
-                        scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword());
+                FundanalyzerLogClient.logLogic(
+                        MessageFormat.format("[{0}]の対象ファイルを正常に確認できました。\tキーワード:{1}",
+                                scrapingKeyword.getRemarks(),
+                                scrapingKeyword.getKeyword()),
+                        Category.DOCUMENT,
+                        Process.SCRAPING
+                );
+
                 return Pair.of(findFile.get(), scrapingKeyword);
             }
         }
@@ -363,7 +375,7 @@ public class ScrapingLogic {
             ));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
                                 "\t企業コード:{}\t財務諸表名:{}\t科目ID:{}\t対象年:{}",
                         company.getCode().orElse(null),
                         fs.getName(),
@@ -423,12 +435,17 @@ public class ScrapingLogic {
                     0L
             );
 
-            log.info("\"貸借対照表\" の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
-                            "\t企業コード:{}\t書類ID:{}\t流動負債合計:{}\t負債合計:{}",
-                    company.getCode().orElseThrow(),
-                    edinetDocument.getDocId(),
-                    totalCurrentLiabilities.get(),
-                    totalLiabilities.get()
+            FundanalyzerLogClient.logLogic(
+                    MessageFormat.format(
+                            "[貸借対照表] の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
+                                    "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
+                            company.getCode().orElseThrow(),
+                            edinetDocument.getDocId(),
+                            totalCurrentLiabilities.get(),
+                            totalLiabilities.get()
+                    ),
+                    Category.DOCUMENT,
+                    Process.SCRAPING
             );
         }
     }

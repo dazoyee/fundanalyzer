@@ -12,7 +12,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScrapin
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -381,7 +381,7 @@ class StockServiceTest {
         void importStockPrice_FundanalyzerRuntimeException() {
             var code = "code";
 
-            when(stockScraping.nikkei(code)).thenThrow(FundanalyzerRuntimeException.class);
+            when(stockScraping.nikkei(code)).thenThrow(FundanalyzerScrapingException.class);
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
         }

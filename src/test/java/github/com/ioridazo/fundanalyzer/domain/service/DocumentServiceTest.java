@@ -641,9 +641,24 @@ class DocumentServiceTest {
                     eq(null));
         }
 
+        @DisplayName("scrape: 対象日付に対して処理対象が存在しないときはなにもしない")
+        @Test
+        void scrape_submitDate_nothing() {
+            var submitDate = LocalDate.parse("2020-09-22");
+
+            when(documentDao.selectByTypeAndSubmitDate(eq("120"), eq(submitDate)))
+                    .thenReturn(List.of());
+
+            assertDoesNotThrow(() -> service.scrape(submitDate));
+
+            verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
+            verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
+            verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
+        }
+
         @DisplayName("scrape: 対象documentIdに対して処理することを確認する")
         @Test
-        void scrape_documentId() {
+        void scrape_documentId_ok() {
             var documentId = "id";
             var documentTargeted = Document.builder()
                     .documentId(documentId)
@@ -656,6 +671,7 @@ class DocumentServiceTest {
 
             assertDoesNotThrow(() -> service.scrape(documentId));
 
+            verify(scrapingLogic, times(1)).download(documentId, LocalDate.parse("2020-09-22"));
             verify(scrapingLogic, times(1)).scrape(
                     eq(FinancialStatementEnum.BALANCE_SHEET),
                     eq("id"),
@@ -671,6 +687,35 @@ class DocumentServiceTest {
                     eq("id"),
                     eq(LocalDate.parse("2020-09-22")),
                     eq(null));
+        }
+
+        @DisplayName("scrape: 対象documentIdが処理済みのときはなにもしない")
+        @Test
+        void scrape_documentId_nothing() {
+            var documentId = "id";
+            var documentTargeted = Document.builder()
+                    .documentId(documentId)
+                    .edinetCode("target")
+                    .submitDate(LocalDate.parse("2020-09-22"))
+                    .downloaded(DocumentStatus.DONE.toValue())
+                    .decoded(DocumentStatus.DONE.toValue())
+                    .scrapedBs(DocumentStatus.DONE.toValue())
+                    .scrapedPl(DocumentStatus.DONE.toValue())
+                    .scrapedNumberOfShares(DocumentStatus.DONE.toValue())
+                    .removed("0")
+                    .build();
+
+            when(documentDao.selectByDocumentId("id")).thenReturn(documentTargeted);
+
+            assertDoesNotThrow(() -> service.scrape(documentId));
+
+            verify(scrapingLogic, times(0)).download(any(), any());
+            verify(scrapingLogic, times(0)).scrape(
+                    eq(FinancialStatementEnum.BALANCE_SHEET), any(), any(), any());
+            verify(scrapingLogic, times(0)).scrape(
+                    eq(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT), any(), any(), any());
+            verify(scrapingLogic, times(0)).scrape(
+                    eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES), any(), any(), any());
         }
     }
 

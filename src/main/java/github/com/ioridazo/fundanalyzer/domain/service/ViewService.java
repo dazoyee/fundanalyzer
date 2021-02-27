@@ -25,7 +25,6 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBea
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -43,7 +42,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-@Log4j2
 @Service
 public class ViewService {
 

@@ -18,6 +18,7 @@ doma:
   naming: snake_upper_case
 
 logging:
+  level: debug
   config: classpath:log4j2-spring-dev.xml
 
 management:

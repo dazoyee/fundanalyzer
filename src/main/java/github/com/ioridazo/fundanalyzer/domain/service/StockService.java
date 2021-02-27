@@ -13,6 +13,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -65,16 +67,21 @@ public class StockService {
      */
     @NewSpan("StockService.importStockPrice.submitDate")
     public CompletableFuture<Void> importStockPrice(final LocalDate submitDate) {
-        documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
+        // 対象となる会社コード一覧を取得する
+        final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
                 .map(Document::getEdinetCode)
                 .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .parallel()
-                .forEach(this::importStockPrice);
+                .collect(Collectors.toList());
+
+        // 並列で株価取得処理を実施する
+        targetCompanyList.parallelStream().forEach(this::importStockPrice);
 
         FundanalyzerLogClient.logService(
-                MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}", submitDate),
+                MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
+                        submitDate,
+                        targetCompanyList.size()),
                 Category.STOCK,
                 Process.IMPORT
         );
@@ -108,7 +115,7 @@ public class StockService {
                         stockPriceDao.insert(StockPrice.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
                     } catch (NestedRuntimeException e) {
                         if (e.contains(UniqueConstraintException.class)) {
-                            log.info("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                            log.debug("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
                                     "\t企業コード:{}\t対象日:{}", code, kabuoji3.getTargetDate());
                         } else {
                             throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
@@ -121,14 +128,22 @@ public class StockService {
             if (isNotInsertedMinkabu(minkabu.getTargetDate(), minkabuList)) {
                 final var m = Minkabu.ofMinkabuResultBean(code, minkabu, nowLocalDateTime());
                 if (Objects.isNull(m.getGoalsStock())) {
-                    log.warn("みんかぶからスクレイピングした目標株価が存在していません。スクレイピング処理の詳細を確認してください。" +
-                            "\t会社コード:{}\t対象日付:{}\tURL:{}", code, m.getTargetDate(), "https://minkabu.jp/stock/" + code.substring(0, 4));
+                    FundanalyzerLogClient.logService(
+                            MessageFormat.format(
+                                    "みんかぶからスクレイピングした目標株価が存在していませんでした。詳細は次を参考に確認してください。" +
+                                            "\t会社コード:{0}\t対象日付:{1}\tURL:{2}",
+                                    code,
+                                    m.getTargetDate(),
+                                    "https://minkabu.jp/stock/" + code.substring(0, 4)),
+                            Category.STOCK,
+                            Process.IMPORT
+                    );
                 }
                 minkabuDao.insert(m);
             }
 
-        } catch (FundanalyzerRuntimeException e) {
-            log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code);
+        } catch (FundanalyzerScrapingException e) {
+            log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code, e);
         }
     }
 
