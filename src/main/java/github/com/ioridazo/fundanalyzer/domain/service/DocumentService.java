@@ -201,7 +201,14 @@ public class DocumentService {
                             .updatedAt(nowLocalDateTime())
                             .build()
                     );
-                    log.info("処理ステータスがすべて \"9（ERROR）\" となったため、除外フラグをONにしました。\t書類ID:{}", document);
+                    FundanalyzerLogClient.logService(
+                            MessageFormat.format(
+                                    "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}"
+                                    , document
+                            ),
+                            Category.DOCUMENT,
+                            Process.EDINET
+                    );
                 }
             });
 
@@ -267,7 +274,7 @@ public class DocumentService {
             edinetDocumentDao.insert(EdinetDocument.of(results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
                                 "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
                         "edinet_document",
                         results.getDocId(),
@@ -297,7 +304,7 @@ public class DocumentService {
             );
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.info("一意制約違反のため、データベースへの登録をスキップします。" +
+                log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
                                 "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
                         "document",
                         results.getDocId(),

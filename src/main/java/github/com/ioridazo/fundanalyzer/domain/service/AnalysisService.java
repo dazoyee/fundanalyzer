@@ -10,7 +10,6 @@ import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-@Log4j2
 @Service
 public class AnalysisService {
 
