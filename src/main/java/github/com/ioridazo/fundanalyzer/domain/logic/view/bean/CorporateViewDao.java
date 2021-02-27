@@ -7,6 +7,7 @@ import org.seasar.doma.Update;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @ConfigAutowireable
@@ -18,6 +19,9 @@ public interface CorporateViewDao {
 
     @Select
     CorporateViewBean selectByCode(final String code);
+
+    @Select
+    List<CorporateViewBean> selectBySubmitDate(final LocalDate submitDate);
 
     @Insert
     Result<CorporateViewBean> insert(final CorporateViewBean corporateViewBean);

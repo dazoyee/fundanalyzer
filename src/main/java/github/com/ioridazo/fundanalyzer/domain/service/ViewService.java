@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -202,6 +202,42 @@ public class ViewService {
 
         FundanalyzerLogClient.logService(
                 "表示アップデートが正常に終了しました。",
+                Category.VIEW,
+                Process.UPDATE
+        );
+    }
+
+    /**
+     * 対象提出日の表示するリストをアップデートする
+     *
+     * @param submitDate 対象提出日
+     */
+    @NewSpan("ViewService.updateCorporateView.submitDate")
+    @Transactional
+    public void updateCorporateView(final LocalDate submitDate) {
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
+        final var beanAllList = corporateViewDao.selectAll();
+
+        documentList.stream()
+                .map(Document::getEdinetCode)
+                .map(companyDao::selectByEdinetCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(company -> company.getCode().isPresent())
+                .map(corporateViewLogic::corporateViewOf)
+                .forEach(corporateViewBean -> {
+                    final var match = beanAllList.stream()
+                            .map(CorporateViewBean::getCode)
+                            .anyMatch(corporateViewBean.getCode()::equals);
+                    if (match) {
+                        corporateViewDao.update(corporateViewBean);
+                    } else {
+                        corporateViewDao.insert(corporateViewBean);
+                    }
+                });
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", submitDate),
                 Category.VIEW,
                 Process.UPDATE
         );
