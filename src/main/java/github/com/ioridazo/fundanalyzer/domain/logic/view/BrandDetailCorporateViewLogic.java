@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailCorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailViewBean;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -46,6 +47,7 @@ public class BrandDetailCorporateViewLogic {
      * @param code 会社コード
      * @return 銘柄詳細に表示する企業情報
      */
+    @NewSpan("BrandDetailCorporateViewLogic.brandDetailCompanyViewOf")
     public BrandDetailCorporateViewBean brandDetailCompanyViewOf(final String code) {
         final var company = companyDao.selectByCode(code).orElseThrow();
         final var industry = industryDao.selectById(company.getIndustryId()).getName();
@@ -60,6 +62,7 @@ public class BrandDetailCorporateViewLogic {
      * @param code 会社コード
      * @return 銘柄詳細に表示する財務諸表
      */
+    @NewSpan("BrandDetailCorporateViewLogic.brandDetailFinancialStatement")
     public List<BrandDetailViewBean.BrandDetailFinancialStatement> brandDetailFinancialStatement(final String code) {
         final var financialStatementList = financialStatementDao.selectByCode(code);
         return financialStatementList.stream()

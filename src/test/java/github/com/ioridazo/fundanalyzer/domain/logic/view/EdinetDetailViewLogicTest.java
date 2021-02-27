@@ -6,9 +6,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
-import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,22 +27,22 @@ import static org.mockito.Mockito.when;
 
 class EdinetDetailViewLogicTest {
 
+    private AnalysisLogic analysisLogic;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
     private EdinetListViewDao edinetListViewDao;
-    private AnalysisService analysisService;
 
     private EdinetDetailViewLogic logic;
 
     @BeforeEach
     void setUp() {
+        analysisLogic = Mockito.mock(AnalysisLogic.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
-        analysisService = Mockito.mock(AnalysisService.class);
 
         logic = new EdinetDetailViewLogic(
-                companyDao, documentDao, edinetListViewDao, analysisService
+                analysisLogic, companyDao, documentDao, edinetListViewDao
         );
     }
 
@@ -66,7 +66,7 @@ class EdinetDetailViewLogicTest {
                     null,
                     null
             );
-            var companyAllTargeted = List.of(company);
+            var allTargetCompanies = List.of(company);
             var period = LocalDate.parse("2020-12-31");
             var document = Document.builder()
                     .documentId("documentId")
@@ -95,14 +95,14 @@ class EdinetDetailViewLogicTest {
             when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
             when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
-            when(analysisService.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
-            when(analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
-            when(analysisService.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
-            when(analysisService.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenReturn(5000L);
-            when(analysisService.nsValue(company, period)).thenReturn(6000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
+            when(analysisLogic.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenReturn(5000L);
+            when(analysisLogic.nsValue(company, period)).thenReturn(6000L);
 
-            var actual = logic.edinetDetailView(documentTypeCode, submitDate, companyAllTargeted);
+            var actual = logic.edinetDetailView(documentTypeCode, submitDate, allTargetCompanies);
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),
@@ -136,7 +136,7 @@ class EdinetDetailViewLogicTest {
                     null,
                     null
             );
-            var companyAllTargeted = List.of(company);
+            var allTargetCompanies = List.of(company);
             var period = LocalDate.parse("2020-12-31");
             var document = Document.builder()
                     .documentId("documentId")
@@ -165,14 +165,14 @@ class EdinetDetailViewLogicTest {
             when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
             when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
-            when(analysisService.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
-            when(analysisService.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
-            when(analysisService.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
-            when(analysisService.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenThrow(FundanalyzerCalculateException.class);
-            when(analysisService.nsValue(company, period)).thenThrow(FundanalyzerCalculateException.class);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
+            when(analysisLogic.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
+            when(analysisLogic.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenThrow(FundanalyzerCalculateException.class);
+            when(analysisLogic.nsValue(company, period)).thenThrow(FundanalyzerCalculateException.class);
 
-            var actual = logic.edinetDetailView(documentTypeCode, submitDate, companyAllTargeted);
+            var actual = logic.edinetDetailView(documentTypeCode, submitDate, allTargetCompanies);
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),

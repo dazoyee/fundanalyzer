@@ -1,11 +1,16 @@
 package github.com.ioridazo.fundanalyzer.proxy.edinet;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,8 +26,10 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 @Log4j2
 @Component
@@ -45,13 +52,43 @@ public class EdinetProxy {
      * @param parameter パラメータ
      * @return EdinetResponse
      */
+    @NewSpan("EdinetProxy.list")
     public EdinetResponse list(final ListRequestParameter parameter) {
         try {
-            return restTemplate.getForObject(
+            String message;
+            if (ListType.DEFAULT.equals(parameter.getType())) {
+                message = MessageFormat.format("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate());
+            } else {
+                message = MessageFormat.format("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate());
+            }
+            FundanalyzerLogClient.logProxy(
+                    message,
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+
+            final EdinetResponse edinetResponse = restTemplate.getForObject(
                     baseUri + "/api/v1/documents.json?date={date}&type={type}",
                     EdinetResponse.class,
                     Map.of("date", parameter.getDate(), "type", parameter.getType().toValue())
             );
+
+            if (ListType.DEFAULT.equals(parameter.getType())) {
+                message = MessageFormat.format("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
+                        parameter.getDate(),
+                        Optional.ofNullable(edinetResponse)
+                                .map(er -> er.getMetadata().getResultset().getCount())
+                                .orElse("0"));
+            } else {
+                message = "書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。";
+            }
+            FundanalyzerLogClient.logProxy(
+                    message,
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+
+            return edinetResponse;
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
                             "\tHTTPステータスコード:{}" +
@@ -85,10 +122,16 @@ public class EdinetProxy {
      * @param storagePath 保存先
      * @param parameter   パラメータ
      */
+    @NewSpan("EdinetProxy.acquisition")
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
-
         try {
+            FundanalyzerLogClient.logProxy(
+                    MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
+            );
+
             restTemplate.execute(
                     baseUri + "/api/v1/documents/{docId}?type={type}",
                     HttpMethod.GET,
@@ -97,6 +140,12 @@ public class EdinetProxy {
                             .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
                     response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
+            );
+
+            FundanalyzerLogClient.logProxy(
+                    "書類のダウンロードが正常に実行されました。",
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
             );
         } catch (final RestClientResponseException e) {
             log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +

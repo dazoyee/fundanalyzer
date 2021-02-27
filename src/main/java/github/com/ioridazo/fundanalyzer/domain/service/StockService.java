@@ -7,15 +7,20 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
@@ -58,6 +63,7 @@ public class StockService {
      * @param submitDate 提出日
      * @return null
      */
+    @NewSpan("StockService.importStockPrice.submitDate")
     public CompletableFuture<Void> importStockPrice(final LocalDate submitDate) {
         documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
                 .map(Document::getEdinetCode)
@@ -66,7 +72,12 @@ public class StockService {
                 .map(Optional::get)
                 .parallel()
                 .forEach(this::importStockPrice);
-        log.info("最新の株価を正常に取り込みました。\t対象書類提出日:{}", submitDate);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}", submitDate),
+                Category.STOCK,
+                Process.IMPORT
+        );
         return null;
     }
 
@@ -75,6 +86,7 @@ public class StockService {
      *
      * @param code 会社コード
      */
+    @NewSpan("StockService.importStockPrice.code")
     @Transactional
     public void importStockPrice(final String code) {
         try {

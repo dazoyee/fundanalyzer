@@ -7,6 +7,7 @@ import org.seasar.doma.Select;
 import org.seasar.doma.Update;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +35,7 @@ public interface DocumentDao {
     @Select
     List<Document> selectByDayOfSubmitDate(final String day);
 
+    @Transactional
     @Insert(excludeNull = true)
     Result<Document> insert(final Document document);
 

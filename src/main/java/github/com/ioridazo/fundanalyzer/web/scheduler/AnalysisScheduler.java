@@ -2,18 +2,19 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
-@Log4j2
 @Component
 @Profile({"prod"})
 public class AnalysisScheduler {
@@ -46,6 +47,8 @@ public class AnalysisScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.analysis}", zone = "Asia/Tokyo")
     public void analysisScheduler() {
+        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.ANALYSIS);
+
         try {
             documentDao.selectByDocumentTypeCode("120").stream()
                     .map(Document::getSubmitDate)
@@ -66,6 +69,8 @@ public class AnalysisScheduler {
                                 // importStockPrice完了後、notice実行
                                 .thenAcceptAsync(unused -> viewService.notice(date));
                     });
+
+            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.ANALYSIS);
         } catch (Throwable t) {
             // Slack通知
             throw t;
@@ -77,9 +82,13 @@ public class AnalysisScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.update-view}", zone = "Asia/Tokyo")
     public void updateViewScheduler() {
+        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.UPDATE);
+
         try {
             viewService.updateCorporateView();
             viewService.updateEdinetListView("120");
+
+            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.UPDATE);
         } catch (Throwable t) {
             // Slack通知
             throw t;

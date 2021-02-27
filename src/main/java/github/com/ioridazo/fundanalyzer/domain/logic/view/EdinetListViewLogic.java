@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -32,18 +33,19 @@ public class EdinetListViewLogic {
      * @param submitDate         提出日
      * @param countAll           提出日における総数
      * @param documentList       ドキュメントステータスリスト
-     * @param companyAllTargeted 処理対象となるすべての会社
+     * @param allTargetCompanies 処理対象となるすべての会社
      * @return EdinetListViewBean
      */
+    @NewSpan("EdinetListViewLogic.counter")
     public EdinetListViewBean counter(
             final LocalDate submitDate,
             final Long countAll,
             final List<Document> documentList,
-            final List<Company> companyAllTargeted) {
+            final List<Company> allTargetCompanies) {
         // 処理対象件数
         final var targetList = documentList.stream()
                 // filter companyCode is present
-                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
                 // filter submitDate
                 .filter(document -> submitDate.equals(document.getSubmitDate()))
                 // filter removed
@@ -79,7 +81,7 @@ public class EdinetListViewLogic {
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 // companyCode
-                                Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).orElseThrow(),
+                                Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
                                 // period
                                 d.getPeriod()
                                 ).isPresent()
@@ -90,7 +92,7 @@ public class EdinetListViewLogic {
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 // companyCode
-                                Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).orElseThrow(),
+                                Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
                                 // period
                                 d.getPeriod()
                                 ).isEmpty()
@@ -100,21 +102,21 @@ public class EdinetListViewLogic {
 
                 // 処理中企業コード
                 targetList.stream()
+                        .map(Document::getEdinetCode)
                         // filter no all done
-                        .filter(d -> documentList.stream()
-                                .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
+                        .filter(edinetCode -> documentList.stream()
+                                .filter(document -> edinetCode.equals(document.getEdinetCode()))
                                 .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs()) &&
                                         DocumentStatus.DONE.toValue().equals(document.getScrapedPl()) &&
                                         DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
                         )
                         // filter no all notYet
-                        .filter(d -> documentList.stream()
-                                .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
+                        .filter(edinetCode -> documentList.stream()
+                                .filter(document -> edinetCode.equals(document.getEdinetCode()))
                                 .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()) &&
                                         DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()) &&
                                         DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
                         )
-                        .map(Document::getEdinetCode)
                         .collect(Collectors.joining("\n")),
 
                 // 未処理件数

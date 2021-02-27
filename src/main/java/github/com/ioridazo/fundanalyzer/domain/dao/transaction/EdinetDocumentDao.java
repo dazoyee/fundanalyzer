@@ -6,6 +6,7 @@ import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public interface EdinetDocumentDao {
     @Select
     EdinetDocument selectByDocId(final String docId);
 
+    @Transactional
     @Insert
     Result<EdinetDocument> insert(final EdinetDocument edinetDocument);
 }

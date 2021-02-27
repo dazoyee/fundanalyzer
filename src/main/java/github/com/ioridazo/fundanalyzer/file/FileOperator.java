@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.file;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.MessageFormat;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -21,6 +25,12 @@ public class FileOperator {
     }
 
     public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
+        FundanalyzerLogClient.logLogic(
+                MessageFormat.format("zipファイルの解凍処理を実行します。\tパス:{0}", fileInputPath.getPath()),
+                Category.DOCUMENT,
+                Process.DECODE
+        );
+
         byte[] buffer = new byte[1024];
 
         FileInputStream fis = new FileInputStream(fileInputPath + ".zip");
@@ -50,5 +60,11 @@ public class FileOperator {
         }
         zis.closeEntry();
         zis.close();
+
+        FundanalyzerLogClient.logLogic(
+                MessageFormat.format("zipファイルの解凍処理が正常に実行されました。\tパス:{0}", fileOutputPath.getPath()),
+                Category.DOCUMENT,
+                Process.DECODE
+        );
     }
 }

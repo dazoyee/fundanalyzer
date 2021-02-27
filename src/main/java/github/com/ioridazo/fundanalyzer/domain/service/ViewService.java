@@ -10,6 +10,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.BrandDetailCorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.EdinetDetailViewLogic;
@@ -20,14 +23,17 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -89,6 +95,7 @@ public class ViewService {
      *
      * @return 会社一覧
      */
+    @NewSpan("ViewService.corporateView")
     public List<CorporateViewBean> corporateView() {
         return sortedCompanyList(getCorporateViewBeanList().stream()
                 // not null
@@ -138,6 +145,7 @@ public class ViewService {
      *
      * @return 会社一覧
      */
+    @NewSpan("ViewService.corporateViewAll")
     public List<CorporateViewBean> corporateViewAll() {
         return sortedCompanyList(getCorporateViewBeanList());
     }
@@ -147,6 +155,7 @@ public class ViewService {
      *
      * @return ソート後のリスト
      */
+    @NewSpan("ViewService.sortByDiscountRate")
     public List<CorporateViewBean> sortByDiscountRate() {
         return corporateView().stream()
                 .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
@@ -171,11 +180,15 @@ public class ViewService {
     /**
      * 非同期で表示するリストをアップデートする
      */
+    @NewSpan("ViewService.updateCorporateView")
     @Async
     @Transactional
     public void updateCorporateView() {
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
         final var beanAllList = corporateViewDao.selectAll();
-        companyAllTargeted().stream()
+        allTargetCompanies.stream()
                 .map(corporateViewLogic::corporateViewOf)
                 .forEach(corporateViewBean -> {
                     final var match = beanAllList.stream()
@@ -188,7 +201,12 @@ public class ViewService {
                     }
                 });
         slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
-        log.info("表示アップデートが正常に終了しました。");
+
+        FundanalyzerLogClient.logService(
+                "表示アップデートが正常に終了しました。",
+                Category.VIEW,
+                Process.UPDATE
+        );
     }
 
     // ----------
@@ -198,6 +216,7 @@ public class ViewService {
      *
      * @return 最新更新日
      */
+    @NewSpan("ViewService.companyUpdated")
     public String companyUpdated() {
         return companyDao.selectAll().stream()
                 .map(Company::getUpdatedAt)
@@ -213,6 +232,7 @@ public class ViewService {
      *
      * @param submitDate 対象提出日
      */
+    @NewSpan("ViewService.notice")
     public CompletableFuture<Void> notice(final LocalDate submitDate) {
         final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
         groupBySubmitDate(documentList).forEach(el -> {
@@ -239,6 +259,7 @@ public class ViewService {
      *
      * @return 処理状況リスト
      */
+    @NewSpan("ViewService.edinetListview")
     public List<EdinetListViewBean> edinetListview() {
         final var viewBeanList = edinetListViewDao.selectAll();
         viewBeanList.removeIf(
@@ -253,6 +274,7 @@ public class ViewService {
      *
      * @return 処理状況リスト
      */
+    @NewSpan("ViewService.edinetListViewAll")
     public List<EdinetListViewBean> edinetListViewAll() {
         return sortedEdinetList(edinetListViewDao.selectAll());
     }
@@ -268,6 +290,7 @@ public class ViewService {
      *
      * @param documentTypeCode 書類種別コード
      */
+    @NewSpan("ViewService.updateEdinetListView")
     @Async
     @Transactional
     public void updateEdinetListView(final String documentTypeCode) {
@@ -284,8 +307,14 @@ public class ViewService {
                         edinetListViewDao.insert(edinetListViewBean);
                     }
                 });
+
         slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
-        log.info("処理状況アップデートが正常に終了しました。");
+
+        FundanalyzerLogClient.logService(
+                "処理状況アップデートが正常に終了しました。",
+                Category.VIEW,
+                Process.UPDATE
+        );
     }
 
     /**
@@ -294,11 +323,17 @@ public class ViewService {
      * @param documentTypeCode 書類種別コード
      * @param submitDate       対象提出日
      */
+    @NewSpan("ViewService.updateEdinetListView")
     @Transactional
     public void updateEdinetListView(final String documentTypeCode, final LocalDate submitDate) {
         final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate);
         groupBySubmitDate(documentList).forEach(edinetListViewDao::update);
-        log.info("処理状況アップデートが正常に終了しました。対象提出日:{}", submitDate);
+
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", submitDate),
+                Category.VIEW,
+                Process.UPDATE
+        );
     }
 
     // ----------
@@ -309,6 +344,7 @@ public class ViewService {
      * @param code 会社コード
      * @return 銘柄詳細情報
      */
+    @NewSpan("ViewService.brandDetailView")
     public BrandDetailViewBean brandDetailView(final String code) {
         return new BrandDetailViewBean(
                 brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
@@ -334,13 +370,21 @@ public class ViewService {
      * @param submitDate 対象提出日
      * @return スクレイピング処理詳細情報
      */
+    @NewSpan("ViewService.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate) {
-        return edinetDetailViewLogic.edinetDetailView("120", submitDate, companyAllTargeted());
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
+        return edinetDetailViewLogic.edinetDetailView("120", submitDate, allTargetCompanies);
     }
 
     // ----------
 
     private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
+
         return documentList.stream()
                 // 提出日ごとに件数をカウントする
                 .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
@@ -350,20 +394,7 @@ public class ViewService {
                         submitDateCountAllEntry.getKey(),
                         submitDateCountAllEntry.getValue(),
                         documentList,
-                        companyAllTargeted()
+                        allTargetCompanies
                 )).collect(Collectors.toList());
-    }
-
-    private List<Company> companyAllTargeted() {
-        final var companyList = companyDao.selectAll();
-        final var bank = industryDao.selectByName("銀行業");
-        final var insurance = industryDao.selectByName("保険業");
-
-        return companyList.stream()
-                .filter(company -> company.getCode().isPresent())
-                // 銀行業、保険業は対象外とする
-                .filter(company -> !bank.getId().equals(company.getIndustryId()))
-                .filter(company -> !insurance.getId().equals(company.getIndustryId()))
-                .collect(Collectors.toList());
     }
 }
