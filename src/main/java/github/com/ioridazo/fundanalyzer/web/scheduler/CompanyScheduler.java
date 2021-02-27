@@ -1,12 +1,13 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Log4j2
 @Component
 @Profile({"prod"})
 public class CompanyScheduler {
@@ -23,9 +24,12 @@ public class CompanyScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.company}", zone = "Asia/Tokyo")
     public void company() {
+        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.COMPANY);
+
         try {
-            log.info("[スケジューラ]会社情報更新処理を開始します。");
             documentService.downloadCompanyInfo();
+
+            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.COMPANY);
         } catch (Throwable t) {
             // Slack通知
             throw t;

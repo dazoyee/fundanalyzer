@@ -7,11 +7,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
-import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -22,20 +23,20 @@ import java.util.stream.Collectors;
 @Component
 public class EdinetDetailViewLogic {
 
+    private final AnalysisLogic analysisLogic;
     private final CompanyDao companyDao;
     private final DocumentDao documentDao;
     private final EdinetListViewDao edinetListViewDao;
-    private final AnalysisService analysisService;
 
     public EdinetDetailViewLogic(
+            final AnalysisLogic analysisLogic,
             final CompanyDao companyDao,
             final DocumentDao documentDao,
-            final EdinetListViewDao edinetListViewDao,
-            final AnalysisService analysisService) {
+            final EdinetListViewDao edinetListViewDao) {
+        this.analysisLogic = analysisLogic;
         this.companyDao = companyDao;
         this.documentDao = documentDao;
         this.edinetListViewDao = edinetListViewDao;
-        this.analysisService = analysisService;
     }
 
     /**
@@ -43,17 +44,18 @@ public class EdinetDetailViewLogic {
      *
      * @param documentTypeCode   書類種別コード
      * @param submitDate         対象提出日
-     * @param companyAllTargeted 処理対象となるすべての会社
+     * @param allTargetCompanies 処理対象となるすべての会社
      * @return 象提出日の未処理書類情報
      */
+    @NewSpan("EdinetDetailViewLogic.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(
             final String documentTypeCode,
             final LocalDate submitDate,
-            final List<Company> companyAllTargeted) {
+            final List<Company> allTargetCompanies) {
 
         final var cantScrapedList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate).stream()
                 // filter companyCode is present
-                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
                 // filter removed
                 .filter(Document::getNotRemoved)
                 .filter(d -> {
@@ -92,12 +94,12 @@ public class EdinetDetailViewLogic {
         final var period = document.getPeriod();
 
         return new EdinetDetailViewBean.ValuesForAnalysis(
-                fsValue(company, BsEnum.TOTAL_CURRENT_ASSETS, period, analysisService::bsValues),
-                fsValue(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period, analysisService::bsValues),
-                fsValue(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period, analysisService::bsValues),
-                fsValue(company, BsEnum.TOTAL_FIXED_LIABILITIES, period, analysisService::bsValues),
-                fsValue(company, PlEnum.OPERATING_PROFIT, period, analysisService::plValues),
-                nsValue(company, period, analysisService::nsValue)
+                fsValue(company, BsEnum.TOTAL_CURRENT_ASSETS, period, analysisLogic::bsValues),
+                fsValue(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period, analysisLogic::bsValues),
+                fsValue(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period, analysisLogic::bsValues),
+                fsValue(company, BsEnum.TOTAL_FIXED_LIABILITIES, period, analysisLogic::bsValues),
+                fsValue(company, PlEnum.OPERATING_PROFIT, period, analysisLogic::plValues),
+                nsValue(company, period, analysisLogic::nsValue)
         );
     }
 

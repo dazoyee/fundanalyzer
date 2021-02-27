@@ -4,12 +4,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -33,6 +33,7 @@ public class XbrlScraping {
      * @param scrapingKeyword キーワード
      * @return キーワードに合致するファイル
      */
+    @NewSpan("XbrlScraping.findFile")
     public Optional<File> findFile(final File filePath, final ScrapingKeyword scrapingKeyword) {
         // 対象のディレクトリから"honbun"ファイルを取得
         final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()
@@ -65,6 +66,7 @@ public class XbrlScraping {
      * @param keyWord    キーワード
      * @return スクレイピングした結果のリスト
      */
+    @NewSpan("XbrlScraping.scrapeFinancialStatement")
     public List<FinancialTableResultBean> scrapeFinancialStatement(final File targetFile, final String keyWord) {
         final var unit = unit(targetFile, keyWord);
 
@@ -128,6 +130,7 @@ public class XbrlScraping {
      * @param keyWord キーワード
      * @return 株式総数
      */
+    @NewSpan("XbrlScraping.scrapeNumberOfShares")
     public String scrapeNumberOfShares(final File file, final String keyWord) {
         final var scrapingList = elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())
@@ -192,15 +195,6 @@ public class XbrlScraping {
         } catch (IOException e) {
             log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
             throw new FundanalyzerFileException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
-        }
-    }
-
-    Elements elementsContainingText(final File file, final String keyword) {
-        try {
-            return Jsoup.parse(file, "UTF-8").getElementsContainingText(keyword);
-        } catch (IOException e) {
-            log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
-            throw new FundanalyzerRuntimeException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
         }
     }
 

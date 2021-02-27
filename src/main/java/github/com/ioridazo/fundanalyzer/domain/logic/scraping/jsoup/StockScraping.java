@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -28,6 +29,7 @@ public class StockScraping {
      * @param code 会社コード
      * @return 株価情報
      */
+    @NewSpan("StockScraping.nikkei")
     public NikkeiResultBean nikkei(final String code) {
         return NikkeiResultBean.ofJsoup(jsoup(
                 "日経",
@@ -46,6 +48,7 @@ public class StockScraping {
      * @param code 会社コード
      * @return 株価情報
      */
+    @NewSpan("StockScraping.kabuoji3")
     public List<Kabuoji3ResultBean> kabuoji3(final String code) {
         final var url = UriComponentsBuilder
                 .newInstance()
@@ -72,6 +75,7 @@ public class StockScraping {
      * @param code 会社コード
      * @return 株価情報予想
      */
+    @NewSpan("StockScraping.minkabu")
     public MinkabuResultBean minkabu(final String code) {
         return MinkabuResultBean.ofJsoup(jsoup(
                 "みんかぶ",

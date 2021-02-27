@@ -1,14 +1,19 @@
 package github.com.ioridazo.fundanalyzer.proxy.selenium;
 
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.text.MessageFormat;
 
 @Log4j2
 @Component
@@ -30,6 +35,7 @@ public class SeleniumProxy {
      * @param inputFilePath 保存先パス
      * @return ダウンロードファイル名
      */
+    @NewSpan("SeleniumProxy.edinetCodeList")
     public String edinetCodeList(final String inputFilePath) {
         try {
             final URI uri = UriComponentsBuilder
@@ -37,9 +43,21 @@ public class SeleniumProxy {
                     .path("/selenium/v1/edinetcode")
                     .queryParam("path", inputFilePath.replace("/", "\\"))
                     .build().toUri();
-            log.info("Seleniumの通信を開始します。\tURL:{}", uri);
+
+            FundanalyzerLogClient.logProxy(
+                    MessageFormat.format("Seleniumの通信を開始します。\tURL:{0}", uri),
+                    Category.DOCUMENT,
+                    Process.COMPANY
+            );
+
             final String fileName = restTemplate.getForObject(uri, String.class);
-            log.info("Seleniumの通信を正常終了します。\tURL:{}", uri);
+
+            FundanalyzerLogClient.logProxy(
+                    MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", uri),
+                    Category.DOCUMENT,
+                    Process.COMPANY
+            );
+
             return fileName;
         } catch (RestClientException e) {
             throw new FundanalyzerRestClientException(

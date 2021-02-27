@@ -50,7 +50,7 @@ class EdinetListViewLogicTest {
                         .removed("0")
                         .build()
         );
-        var companyAllTargeted = List.of(new Company(
+        var allTargetCompanies = List.of(new Company(
                 "code",
                 "会社名",
                 1,
@@ -66,7 +66,7 @@ class EdinetListViewLogicTest {
 
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
-        var actual = logic.counter(submitDate, countAll, documentList, companyAllTargeted);
+        var actual = logic.counter(submitDate, countAll, documentList, allTargetCompanies);
 
         assertAll("EdinetListViewBean",
                 () -> assertEquals(LocalDate.parse("2020-11-08"), actual.getSubmitDate(), "submitDate"),

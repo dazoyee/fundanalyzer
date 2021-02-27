@@ -39,6 +39,28 @@ public class FinancialStatement {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
+    public static FinancialStatement of(
+            final String companyCode,
+            final String edinetCode,
+            final String financialStatementId,
+            final String subjectId,
+            final LocalDate periodStart,
+            final LocalDate periodEnd,
+            final Long value,
+            final LocalDateTime createdAt) {
+        return new FinancialStatement(
+                null,
+                companyCode,
+                edinetCode,
+                financialStatementId,
+                subjectId,
+                periodStart,
+                periodEnd,
+                value,
+                createdAt
+        );
+    }
+
     public Optional<String> getCompanyCode() {
         return Optional.ofNullable(companyCode);
     }

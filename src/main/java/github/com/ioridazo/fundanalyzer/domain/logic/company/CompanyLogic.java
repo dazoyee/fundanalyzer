@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResul
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,9 +55,10 @@ public class CompanyLogic {
      * @param fileOutputPath CSVファイルパス
      * @return CSV読み取り結果
      */
+    @NewSpan("CompanyLogic.readFile")
     public List<EdinetCsvResultBean> readFile(
             final String fileName, final String fileInputPath, final String fileOutputPath) {
-        final File inputFile = new File(fileInputPath + "/" + fileName.replace(".zip", ""));
+        final File inputFile = new File(String.format("%s/%s", fileInputPath, fileName.replace(".zip", "")));
         final File outputFile = new File(fileOutputPath);
 
         try {
@@ -77,6 +79,7 @@ public class CompanyLogic {
      * @param filePath CSVファイルパス
      * @return CSV読み取り結果
      */
+    @NewSpan("CompanyLogic.readFile")
     public List<EdinetCsvResultBean> readFile(final String filePath) {
         return csvCommander.readCsv(
                 Arrays.stream(Objects.requireNonNull(new File(filePath).listFiles())).findFirst().orElseThrow(),
@@ -90,6 +93,7 @@ public class CompanyLogic {
      *
      * @param resultBeanList CSV読み取り結果
      */
+    @NewSpan("CompanyLogic.insertIndustry")
     @Transactional
     public void insertIndustry(final List<EdinetCsvResultBean> resultBeanList) {
         final var dbIndustryList = industryDao.selectAll().stream()
@@ -110,6 +114,7 @@ public class CompanyLogic {
      *
      * @param resultBeanList CSV読み取り結果
      */
+    @NewSpan("CompanyLogic.upsertCompany")
     @Transactional
     public void upsertCompany(final List<EdinetCsvResultBean> resultBeanList) {
         final var companyList = companyDao.selectAll();

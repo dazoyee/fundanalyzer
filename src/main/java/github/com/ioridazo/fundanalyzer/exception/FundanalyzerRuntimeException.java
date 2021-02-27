@@ -9,6 +9,10 @@ public class FundanalyzerRuntimeException extends RuntimeException {
         super(message);
     }
 
+    public FundanalyzerRuntimeException(final Throwable cause) {
+        super(cause);
+    }
+
     public FundanalyzerRuntimeException(final String message, final Throwable throwable) {
         super(message, throwable);
     }
