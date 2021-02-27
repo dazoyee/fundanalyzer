@@ -33,7 +33,7 @@ public class EdinetListViewLogic {
      * @param submitDate         提出日
      * @param countAll           提出日における総数
      * @param documentList       ドキュメントステータスリスト
-     * @param companyAllTargeted 処理対象となるすべての会社
+     * @param allTargetCompanies 処理対象となるすべての会社
      * @return EdinetListViewBean
      */
     @NewSpan("EdinetListViewLogic.counter")
@@ -41,11 +41,11 @@ public class EdinetListViewLogic {
             final LocalDate submitDate,
             final Long countAll,
             final List<Document> documentList,
-            final List<Company> companyAllTargeted) {
+            final List<Company> allTargetCompanies) {
         // 処理対象件数
         final var targetList = documentList.stream()
                 // filter companyCode is present
-                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
                 // filter submitDate
                 .filter(document -> submitDate.equals(document.getSubmitDate()))
                 // filter removed
@@ -81,7 +81,7 @@ public class EdinetListViewLogic {
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 // companyCode
-                                Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).orElseThrow(),
+                                Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
                                 // period
                                 d.getPeriod()
                                 ).isPresent()
@@ -92,7 +92,7 @@ public class EdinetListViewLogic {
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 // companyCode
-                                Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).orElseThrow(),
+                                Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
                                 // period
                                 d.getPeriod()
                                 ).isEmpty()

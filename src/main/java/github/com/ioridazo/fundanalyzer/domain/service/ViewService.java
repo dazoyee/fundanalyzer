@@ -23,6 +23,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -183,8 +184,11 @@ public class ViewService {
     @Async
     @Transactional
     public void updateCorporateView() {
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
         final var beanAllList = corporateViewDao.selectAll();
-        companyAllTargeted().stream()
+        allTargetCompanies.stream()
                 .map(corporateViewLogic::corporateViewOf)
                 .forEach(corporateViewBean -> {
                     final var match = beanAllList.stream()
@@ -368,12 +372,19 @@ public class ViewService {
      */
     @NewSpan("ViewService.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate) {
-        return edinetDetailViewLogic.edinetDetailView("120", submitDate, companyAllTargeted());
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
+        return edinetDetailViewLogic.edinetDetailView("120", submitDate, allTargetCompanies);
     }
 
     // ----------
 
     private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
+
         return documentList.stream()
                 // 提出日ごとに件数をカウントする
                 .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
@@ -383,20 +394,7 @@ public class ViewService {
                         submitDateCountAllEntry.getKey(),
                         submitDateCountAllEntry.getValue(),
                         documentList,
-                        companyAllTargeted()
+                        allTargetCompanies
                 )).collect(Collectors.toList());
-    }
-
-    private List<Company> companyAllTargeted() {
-        final var companyList = companyDao.selectAll();
-        final var bank = industryDao.selectByName("銀行業");
-        final var insurance = industryDao.selectByName("保険業");
-
-        return companyList.stream()
-                .filter(company -> company.getCode().isPresent())
-                // 銀行業、保険業は対象外とする
-                .filter(company -> !bank.getId().equals(company.getIndustryId()))
-                .filter(company -> !insurance.getId().equals(company.getIndustryId()))
-                .collect(Collectors.toList());
     }
 }

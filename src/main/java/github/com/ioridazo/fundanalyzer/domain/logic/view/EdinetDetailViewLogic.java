@@ -44,18 +44,18 @@ public class EdinetDetailViewLogic {
      *
      * @param documentTypeCode   書類種別コード
      * @param submitDate         対象提出日
-     * @param companyAllTargeted 処理対象となるすべての会社
+     * @param allTargetCompanies 処理対象となるすべての会社
      * @return 象提出日の未処理書類情報
      */
     @NewSpan("EdinetDetailViewLogic.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(
             final String documentTypeCode,
             final LocalDate submitDate,
-            final List<Company> companyAllTargeted) {
+            final List<Company> allTargetCompanies) {
 
         final var cantScrapedList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate).stream()
                 // filter companyCode is present
-                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), companyAllTargeted).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
                 // filter removed
                 .filter(Document::getNotRemoved)
                 .filter(d -> {
