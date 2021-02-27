@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -66,22 +67,31 @@ public class AnalysisService {
         final var bank = industryDao.selectByName("銀行業");
         final var insurance = industryDao.selectByName("保険業");
 
-        documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
-                // target company code
-                .filter(document -> Target.containsEdinetCode(
-                        document.getEdinetCode(), companyAll, List.of(bank, insurance)))
-                // only not analyze
-                .filter(document -> analysisResultDao.selectByUniqueKey(
-                        Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(), document.getPeriod()
-                        ).isEmpty()
-                )
-                .forEach(document -> analysisLogic.analyze(document.getDocumentId()));
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
+        if (documentList.isEmpty()) {
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("次の企業はデータベースに存在しませんでした。\t対象提出日:{0}", submitDate),
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            );
+        } else {
+            documentList.stream()
+                    // target company code
+                    .filter(document -> Target.containsEdinetCode(
+                            document.getEdinetCode(), companyAll, List.of(bank, insurance)))
+                    // only not analyze
+                    .filter(document -> analysisResultDao.selectByUniqueKey(
+                            Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(), document.getPeriod()
+                            ).isEmpty()
+                    )
+                    .forEach(document -> analysisLogic.analyze(document.getDocumentId()));
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("すべての企業分析が正常に終了しました。\t対象提出日:{0}", submitDate),
-                Category.DOCUMENT,
-                Process.ANALYSIS
-        );
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("次の企業に対して分析を正常に終了しました。\t対象提出日:{0}", submitDate),
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            );
+        }
         return null;
     }
 }

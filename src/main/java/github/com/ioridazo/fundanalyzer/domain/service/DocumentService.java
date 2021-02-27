@@ -366,27 +366,36 @@ public class DocumentService {
      *
      * @param targetDate 書類取得対象日（提出日）
      */
-    @NewSpan("DocumentService.scrape")
+    @NewSpan("DocumentService.scrape.targetDate")
     public void scrape(final LocalDate targetDate) {
-        documentDao.selectByTypeAndSubmitDate("120", targetDate).stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
-                .filter(Document::getNotRemoved)
-                .forEach(d -> {
-                    if (DocumentStatus.NOT_YET.toValue().equals(d.getDownloaded()))
-                        store(d.getDocumentId(), d.getSubmitDate());
-                    if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs()))
-                        scrapeBs(d.getDocumentId(), targetDate);
-                    if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl()))
-                        scrapePl(d.getDocumentId(), targetDate);
-                    if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares()))
-                        scrapeNs(d.getDocumentId(), targetDate);
-                });
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", targetDate);
+        if (documentList.isEmpty()) {
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("次のドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}", targetDate),
+                    Category.DOCUMENT,
+                    Process.SCRAPING
+            );
+        } else {
+            documentList.stream()
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
+                    .filter(Document::getNotRemoved)
+                    .forEach(d -> {
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getDownloaded()))
+                            store(d.getDocumentId(), d.getSubmitDate());
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs()))
+                            scrapeBs(d.getDocumentId(), targetDate);
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl()))
+                            scrapePl(d.getDocumentId(), targetDate);
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares()))
+                            scrapeNs(d.getDocumentId(), targetDate);
+                    });
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t対象日:{0}", targetDate),
-                Category.DOCUMENT,
-                Process.SCRAPING
-        );
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に終了しました。\t対象提出日:{0}", targetDate),
+                    Category.DOCUMENT,
+                    Process.SCRAPING
+            );
+        }
     }
 
     /**
@@ -394,16 +403,21 @@ public class DocumentService {
      *
      * @param documentId 書類ID
      */
-    @NewSpan("DocumentService.scrape")
+    @NewSpan("DocumentService.scrape.documentId")
     public void scrape(final String documentId) {
-        final var targetDate = documentDao.selectByDocumentId(documentId).getSubmitDate();
-        store(documentId, targetDate);
-        scrapeBs(documentId, targetDate);
-        scrapePl(documentId, targetDate);
-        scrapeNs(documentId, targetDate);
+        final var document = documentDao.selectByDocumentId(documentId);
+
+        if (!DocumentStatus.DONE.toValue().equals(document.getDownloaded()))
+            store(documentId, document.getSubmitDate());
+        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
+            scrapeBs(documentId, document.getSubmitDate());
+        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
+            scrapePl(documentId, document.getSubmitDate());
+        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares()))
+            scrapeNs(documentId, document.getSubmitDate());
 
         FundanalyzerLogClient.logService(
-                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に完了しました。\t書類ID:{0}", documentId),
+                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}", documentId),
                 Category.DOCUMENT,
                 Process.SCRAPING
         );
