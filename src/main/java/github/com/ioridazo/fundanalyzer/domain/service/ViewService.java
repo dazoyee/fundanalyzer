@@ -24,6 +24,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewB
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
@@ -40,6 +41,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -181,7 +183,7 @@ public class ViewService {
     @NewSpan("ViewService.updateCorporateView")
     @Async
     @Transactional
-    public void updateCorporateView() {
+    public CompletableFuture<Void> updateCorporateView() {
         final List<Company> allTargetCompanies = Target.allCompanies(
                 companyDao.selectAll(),
                 List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
@@ -205,6 +207,7 @@ public class ViewService {
                 Category.VIEW,
                 Process.UPDATE
         );
+        return null;
     }
 
     /**
@@ -267,23 +270,34 @@ public class ViewService {
      * @param submitDate 対象提出日
      */
     @NewSpan("ViewService.notice")
-    public CompletableFuture<Void> notice(final LocalDate submitDate) {
-        final var documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
-        groupBySubmitDate(documentList).forEach(el -> {
-            if (el.getCountTarget().equals(el.getCountScraped()) &&
-                    el.getCountTarget().equals(el.getCountAnalyzed())) {
+    public void notice(final LocalDate submitDate) {
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
+        final List<EdinetListViewBean> edinetListViewBeanList = groupBySubmitDate(documentList);
+
+        if (edinetListViewBeanList.size() == 1) {
+            final EdinetListViewBean elv = edinetListViewBeanList.get(0);
+            if (elv.getCountTarget().equals(elv.getCountScraped()) &&
+                    elv.getCountTarget().equals(elv.getCountAnalyzed())) {
                 // info message
-                slackProxy.sendMessage(
-                        "g.c.i.f.domain.service.ViewService.processing.notice.info",
-                        el.getSubmitDate(), el.getCountTarget());
+                slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
+                        elv.getSubmitDate(), elv.getCountTarget());
             } else {
                 // warn message
-                slackProxy.sendMessage(
-                        "g.c.i.f.domain.service.ViewService.processing.notice.warn",
-                        el.getSubmitDate(), el.getCountTarget(), el.getCountNotScraped());
+                slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
+                        elv.getSubmitDate(), elv.getCountTarget(), elv.getCountNotScraped());
             }
-        });
-        return null;
+        } else {
+            throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。");
+        }
+
+        corporateViewDao.selectBySubmitDate(submitDate).stream()
+                // 割安度が120%以上を表示
+                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(120)) > 0)
+                .forEach(cvb -> {
+                    // 優良銘柄を通知する
+                    slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
+                            cvb.getCode(), cvb.getName(), cvb.getDiscountRate());
+                });
     }
 
     // ----------
@@ -327,7 +341,7 @@ public class ViewService {
     @NewSpan("ViewService.updateEdinetListView")
     @Async
     @Transactional
-    public void updateEdinetListView(final String documentTypeCode) {
+    public CompletableFuture<Void> updateEdinetListView(final String documentTypeCode) {
         final var beanAllList = edinetListViewDao.selectAll();
         final var documentList = documentDao.selectByDocumentTypeCode(documentTypeCode);
         groupBySubmitDate(documentList)
@@ -349,6 +363,7 @@ public class ViewService {
                 Category.VIEW,
                 Process.UPDATE
         );
+        return null;
     }
 
     /**
