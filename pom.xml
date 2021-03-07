@@ -10,7 +10,7 @@
     </parent>
     <groupId>github.com.ioridazo</groupId>
     <artifactId>fundanalyzer</artifactId>
-    <version>1.3.10</version>
+    <version>1.3.11-SNAPSHOT</version>
     <name>fundanalyzer</name>
     <description>Analyzing stocks from financial statements</description>
 
