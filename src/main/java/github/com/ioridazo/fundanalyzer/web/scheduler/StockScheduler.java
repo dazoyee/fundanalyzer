@@ -6,6 +6,8 @@ import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,12 +21,15 @@ import java.util.stream.Collectors;
 public class StockScheduler {
 
     private final StockService stockService;
+    private final SlackProxy slackProxy;
     private final DocumentDao documentDao;
 
     public StockScheduler(
             final StockService stockService,
+            final SlackProxy slackProxy,
             final DocumentDao documentDao) {
         this.stockService = stockService;
+        this.slackProxy = slackProxy;
         this.documentDao = documentDao;
     }
 
@@ -48,10 +53,12 @@ public class StockScheduler {
 
             targetList.forEach(stockService::importStockPrice);
 
+            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.IMPORT);
         } catch (Throwable t) {
             // slack通知
-            throw t;
+            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }
 }

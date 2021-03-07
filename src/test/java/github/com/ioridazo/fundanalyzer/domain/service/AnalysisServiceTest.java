@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -119,6 +120,60 @@ class AnalysisServiceTest {
             assertDoesNotThrow(() -> service.analyze(submitDate));
 
             verify(analysisLogic, times(1)).analyze(docId);
+        }
+
+        @DisplayName("analyze : 処理対象が存在しないときはなにもしない")
+        @Test
+        void analyze_submitDate_nothing() {
+            var submitDate = LocalDate.parse("2020-10-04");
+            var code = "code";
+            var companyAll = List.of(
+                    new Company(
+                            null,
+                            null,
+                            1,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Company(
+                            "not null",
+                            null,
+                            2,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Company(
+                            code,
+                            "ターゲット",
+                            3,
+                            "edinetCode",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+
+            when(companyDao.selectAll()).thenReturn(companyAll);
+            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(1, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
+            when(documentDao.selectByTypeAndSubmitDate("120", submitDate)).thenReturn(List.of());
+
+            assertDoesNotThrow(() -> service.analyze(submitDate));
+
+            verify(analysisLogic, times(0)).analyze(any());
         }
     }
 }

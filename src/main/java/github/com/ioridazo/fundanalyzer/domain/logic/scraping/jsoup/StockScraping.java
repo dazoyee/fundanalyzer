@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
@@ -102,11 +102,11 @@ public class StockScraping {
             return Jsoup.connect(url).get();
         } catch (SocketTimeoutException e) {
             log.info("{}との通信でタイムアウトエラーが発生しました。\t企業コード:{}\tURL:{}", targetName, code, url);
-            throw new FundanalyzerRuntimeException();
+            throw new FundanalyzerScrapingException(e);
         } catch (IOException | RuntimeException e) {
             log.warn("株価の過程でエラーが発生しました。次のURLを確認してください。" +
                     "\t企業コード:{}\tURL:{}\tmessage:{}", code, url, e.getMessage(), e);
-            throw new FundanalyzerRuntimeException();
+            throw new FundanalyzerScrapingException(e);
         }
     }
 
@@ -133,9 +133,9 @@ public class StockScraping {
                     "出来高", thList.indexOf("出来高"),
                     "終値調整", thList.indexOf("終値調整")
             );
-        } catch (RuntimeException t) {
+        } catch (Throwable t) {
             log.warn("kabuoji3の表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList.toString());
-            throw new FundanalyzerRuntimeException();
+            throw new FundanalyzerScrapingException(t);
         }
     }
 

@@ -16,14 +16,21 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.extern.log4j.Log4j2;
+import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -77,7 +84,21 @@ public class AnalysisLogic {
                     nowLocalDateTime()
             ));
         } catch (FundanalyzerCalculateException ignored) {
-            log.info("エラー発生により、企業価値を算出できませんでした。\t証券コード:{}", companyCode);
+            FundanalyzerLogClient.logLogic(
+                    MessageFormat.format("エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}", companyCode),
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            );
+        } catch (NestedRuntimeException e) {
+            if (e.contains(UniqueConstraintException.class)) {
+                log.debug("一意制約違反のため、データベースへの登録をスキップします。\tテーブル名:{}\t会社コード:{}\t期間:{}",
+                        "analysis_result",
+                        companyCode,
+                        document.getPeriod()
+                );
+            } else {
+                throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+            }
         }
     }
 

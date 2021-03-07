@@ -4,6 +4,7 @@ public enum Category {
     VIEW("view"),
     DOCUMENT("document"),
     STOCK("stock"),
+    SLACK("slack"),
     SCHEDULER("scheduler"),
     ;
 

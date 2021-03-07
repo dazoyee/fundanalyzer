@@ -9,6 +9,7 @@ public enum Process {
     ANALYSIS("analysis"),
     IMPORT("import"),
     UPDATE("update"),
+    NOTICE("notice"),
     SORT("sort"),
     ;
 
