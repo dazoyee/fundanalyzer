@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.proxy.slack;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -17,6 +20,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
 class SlackProxyTest {
@@ -108,5 +112,27 @@ class SlackProxyTest {
                 () -> assertEquals(MediaType.APPLICATION_JSON_VALUE, recordedRequest.getHeader("Content-Type")),
                 () -> assertEquals("{\"text\": \"nowLocalDataTime\t*message, arguments1, arguments2*\"}", recordedRequest.getBody().readUtf8())
         );
+    }
+
+    @DisplayName("sendMessage : Slackにメッセージをパラメータ付け加えて通知する")
+    @ParameterizedTest
+    @ValueSource(ints = {400, 404, 500, 503})
+    void sendMessage_exception(int httpStatus) throws InterruptedException {
+        var propertyPath = "property.path";
+
+        server.enqueue(new MockResponse().setResponseCode(httpStatus));
+        doReturn("*message*").when(environment).getProperty(propertyPath);
+
+        var actual = assertThrows(FundanalyzerRestClientException.class, () -> proxy.sendMessage(propertyPath));
+
+        var recordedRequest = server.takeRequest();
+        assertAll("request",
+                () -> assertEquals("/services/t/b/x", recordedRequest.getPath()),
+                () -> assertEquals("POST", recordedRequest.getMethod()),
+                () -> assertEquals(MediaType.APPLICATION_JSON_VALUE, recordedRequest.getHeader("Content-Type")),
+                () -> assertEquals("{\"text\": \"*message*\"}", recordedRequest.getBody().readUtf8())
+        );
+
+        System.out.println(actual.getMessage());
     }
 }

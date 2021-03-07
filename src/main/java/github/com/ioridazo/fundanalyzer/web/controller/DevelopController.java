@@ -47,34 +47,6 @@ public class DevelopController {
         return "index";
     }
 
-    @GetMapping("/scrape/{date}")
-    public String devDocument(@PathVariable String date, final Model model) {
-        documentService.readCompanyInfo();
-        documentService.execute(date, "120")
-                .thenRunAsync(viewService::updateCorporateView);
-
-        model.addAttribute("companies", viewService.corporateView());
-        return "index";
-    }
-
-    @GetMapping("/reset/status")
-    public String devResetStatus(final Model model) {
-        documentService.resetForRetry();
-
-        model.addAttribute("companies", viewService.corporateView());
-        return "index";
-    }
-
-    @GetMapping("/view/company/{year}")
-    public String viewCompany(@PathVariable String year, final Model model) {
-        documentService.readCompanyInfo();
-        documentService.execute("2020-05-22", "120")
-                .thenRunAsync(viewService::updateCorporateView);
-
-        model.addAttribute("companies", viewService.corporateView());
-        return "index";
-    }
-
     @GetMapping("/scrape/analysis/{date}")
     public String scrapeAndAnalyze(@PathVariable String date, final Model model) {
         documentService.readCompanyInfo();
@@ -82,16 +54,15 @@ public class DevelopController {
         // execute実行
         documentService.execute(date, "120")
                 // execute完了後、analyze実行
-                .thenRunAsync(() -> analysisService.analyze(LocalDate.parse(date)))
+                .thenAcceptAsync(unused -> analysisService.analyze(LocalDate.parse(date)))
                 // analyze完了後、importStockPrice実行
-                .thenRunAsync(() -> stockService.importStockPrice(LocalDate.parse(date)))
-                // importStockPrice完了後、notice実行
-                .thenRunAsync(() -> viewService.notice(LocalDate.parse(date)))
-                // notice完了後、update実行
-                .thenRunAsync(() -> {
-                    viewService.updateCorporateView();
-                    viewService.updateEdinetListView("120");
-                });
+                .thenAcceptAsync(unused -> stockService.importStockPrice(LocalDate.parse(date)))
+                // importStockPrice完了後、updateCorporateView実行
+                .thenAcceptAsync(unused -> viewService.updateCorporateView(LocalDate.parse(date)))
+                // updateCorporateView完了後、updateEdinetListView実行
+                .thenAcceptAsync(unused -> viewService.updateEdinetListView("120", LocalDate.parse(date)))
+                // updateEdinetListView完了後、notice実行
+                .thenAcceptAsync(unused -> viewService.notice(LocalDate.parse(date)));
 
         model.addAttribute("companies", viewService.corporateView());
         return "redirect:/fundanalyzer/v1/index" + "?message=updating";

@@ -72,7 +72,11 @@ public class AnalysisController {
                             .thenAcceptAsync(unused -> analysisService.analyze(date))
                             // analyze完了後、importStockPrice実行
                             .thenAcceptAsync(unused -> stockService.importStockPrice(date))
-                            // importStockPrice完了後、notice実行
+                            // importStockPrice完了後、updateCorporateView実行
+                            .thenAcceptAsync(unused -> viewService.updateCorporateView(date))
+                            // updateCorporateView完了後、updateEdinetListView実行
+                            .thenAcceptAsync(unused -> viewService.updateEdinetListView("120", date))
+                            // updateEdinetListView完了後、notice実行
                             .thenAcceptAsync(unused -> viewService.notice(date));
                 });
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);

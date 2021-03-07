@@ -1,6 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
+import github.com.ioridazo.fundanalyzer.domain.log.Category;
+import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -48,8 +52,13 @@ public class XbrlScraping {
             return filePathList.stream().findFirst();
         } else if (filePathList.isEmpty()) {
             // ファイルがみつからなかったとき
-            log.info("次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{}\tキーワード:{}",
-                    scrapingKeyword.getRemarks(), scrapingKeyword.getKeyword());
+            FundanalyzerLogClient.logLogic(MessageFormat.format(
+                    "次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{0}\tキーワード:{1}",
+                    scrapingKeyword.getRemarks(),
+                    scrapingKeyword.getKeyword()),
+                    Category.DOCUMENT,
+                    Process.SCRAPING
+            );
             return Optional.empty();
         } else {
             // ファイルが複数見つかったとき

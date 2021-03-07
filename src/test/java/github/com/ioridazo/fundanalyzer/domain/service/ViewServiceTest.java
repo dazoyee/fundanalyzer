@@ -1,12 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailCorporateViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewDao;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
@@ -22,6 +15,13 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.BrandDetailCorporateVi
 import github.com.ioridazo.fundanalyzer.domain.logic.view.CorporateViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.EdinetDetailViewLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.EdinetListViewLogic;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailCorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailViewBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewDao;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -137,6 +138,72 @@ class ViewServiceTest {
             ));
 
             assertDoesNotThrow(() -> service.updateCorporateView());
+
+            verify(corporateViewDao, times(1)).insert(new CorporateViewBean(
+                    "code",
+                    "会社名",
+                    LocalDate.parse("2019-10-11"),
+                    BigDecimal.valueOf(2100),
+                    BigDecimal.valueOf(2000),
+                    BigDecimal.valueOf(10),
+                    BigDecimal.valueOf(0.1),
+                    BigDecimal.valueOf(900),
+                    LocalDate.parse("2020-10-11"),
+                    BigDecimal.valueOf(1000),
+                    BigDecimal.valueOf(1000),
+                    BigDecimal.valueOf(200),
+                    BigDecimal.valueOf(3),
+                    BigDecimal.valueOf(2000),
+                    createdAt,
+                    createdAt
+            ));
+        }
+
+        @DisplayName("updateCorporateView : 対象提出日に対して表示リストに格納する処理を確認する")
+        @Test
+        void updateCorporateView_submitDate_ok() {
+            var submitDate = LocalDate.parse("2021-02-27");
+            var edinetCode = "edinetCode";
+            var documentList = List.of(Document.builder()
+                    .edinetCode(edinetCode)
+                    .submitDate(submitDate)
+                    .build());
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    edinetCode,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
+
+            when(documentDao.selectByTypeAndSubmitDate("120", submitDate)).thenReturn(documentList);
+            when(companyDao.selectByEdinetCode(edinetCode)).thenReturn(Optional.of(company));
+            when(corporateViewLogic.corporateViewOf(company)).thenReturn(new CorporateViewBean(
+                    "code",
+                    "会社名",
+                    LocalDate.parse("2019-10-11"),
+                    BigDecimal.valueOf(2100),
+                    BigDecimal.valueOf(2000),
+                    BigDecimal.valueOf(10),
+                    BigDecimal.valueOf(0.1),
+                    BigDecimal.valueOf(900),
+                    LocalDate.parse("2020-10-11"),
+                    BigDecimal.valueOf(1000),
+                    BigDecimal.valueOf(1000),
+                    BigDecimal.valueOf(200),
+                    BigDecimal.valueOf(3),
+                    BigDecimal.valueOf(2000),
+                    createdAt,
+                    createdAt
+            ));
+
+            assertDoesNotThrow(() -> service.updateCorporateView(submitDate));
 
             verify(corporateViewDao, times(1)).insert(new CorporateViewBean(
                     "code",
