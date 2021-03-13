@@ -1,0 +1,30 @@
+server.port: 8890
+
+logging.level: info
+
+app:
+  settings:
+    file:
+      path:
+        company:
+          company: C:/${spring.application.name}/company
+          zip: C:/${spring.application.name}/company/zip
+        edinet: C:/${spring.application.name}/edinet
+        decode: C:/${spring.application.name}/decode
+
+  api:
+    edinet: https://disclosure.edinet-fsa.go.jp
+    selenium: http://localhost:9001
+    slack:
+      base-uri: https://hooks.slack.com
+      parameter:
+        t: TKN2V6NQ4
+        b: B01DFHHPE07
+        x: x # 任意の値を設定
+
+  scheduler:
+    cron:
+      company: 0 0 12 * * *
+      stock: 0 30 12 * * *
+      analysis: 0 0 14 * * *
+      update-view: 0 0 21 * * *
