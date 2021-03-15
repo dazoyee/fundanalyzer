@@ -9,7 +9,7 @@ public class FundanalyzerCalculateException extends RuntimeException {
         super(message);
     }
 
-    public FundanalyzerCalculateException(Throwable cause) {
+    public FundanalyzerCalculateException(final Throwable cause) {
         super(cause);
     }
 

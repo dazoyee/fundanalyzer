@@ -40,6 +40,9 @@ import java.util.Optional;
 @Component
 public class AnalysisLogic {
 
+    private static final int WEIGHTING_BUSINESS_VALUE = 10;
+    private static final double AVERAGE_CURRENT_RATIO = 1.2;
+
     private final CompanyDao companyDao;
     private final BsSubjectDao bsSubjectDao;
     private final PlSubjectDao plSubjectDao;
@@ -128,8 +131,8 @@ public class AnalysisLogic {
 
         return BigDecimal.valueOf(
                 (
-                        operatingProfit * 10
-                                + totalCurrentAssets - (totalCurrentLiabilities * 1.2) + totalInvestmentsAndOtherAssets
+                        operatingProfit * WEIGHTING_BUSINESS_VALUE
+                                + totalCurrentAssets - (totalCurrentLiabilities * AVERAGE_CURRENT_RATIO) + totalInvestmentsAndOtherAssets
                                 - totalFixedLiabilities
                 )
                         / numberOfShares

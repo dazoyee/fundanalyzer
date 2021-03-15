@@ -17,28 +17,28 @@ import java.util.List;
 public interface DocumentDao {
 
     @Select
-    Document selectByDocumentId(final String documentId);
+    Document selectByDocumentId(String documentId);
 
     // 検索結果が1件以上存在することを保証する
     @Select(ensureResult = true)
-    Document selectDocumentIdBy(final String edinetCode, final String documentTypeCode, final String yearOfPeriod);
+    Document selectDocumentIdBy(String edinetCode, String documentTypeCode, String yearOfPeriod);
 
     @Select
-    List<Document> selectByDocumentTypeCode(final String documentTypeCode);
+    List<Document> selectByDocumentTypeCode(String documentTypeCode);
 
     @Select
-    List<Document> selectByTypeAndSubmitDate(final String documentTypeCode, final LocalDate submitDate);
+    List<Document> selectByTypeAndSubmitDate(String documentTypeCode, LocalDate submitDate);
 
     @Select
-    List<Document> selectByTypeAndPeriod(final String documentTypeCode, final String yearOfPeriod);
+    List<Document> selectByTypeAndPeriod(String documentTypeCode, String yearOfPeriod);
 
     @Select
-    List<Document> selectByDayOfSubmitDate(final String day);
+    List<Document> selectByDayOfSubmitDate(String day);
 
     @Transactional
     @Insert(excludeNull = true)
-    Result<Document> insert(final Document document);
+    Result<Document> insert(Document document);
 
     @Update(excludeNull = true)
-    Result<Document> update(final Document document);
+    Result<Document> update(Document document);
 }

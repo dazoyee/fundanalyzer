@@ -1,8 +1,7 @@
 spring:
   profiles:
-    # マージ前にテスト確認！！！
-#    active: dev
-    active: prod
+    # dev | prod
+    active: dev
   application:
     name: fundanalyzer
 
@@ -53,6 +52,19 @@ management:
       application: ${spring.application.name}
 
 app:
+  config:
+    rest-template:
+      connect-timeout: 15000
+      read-timeout: 300000
+    executor:
+      core-pool-size: 50
+      queue-capacity: 50
+      max-pool-size: 500
+    view:
+      discount-rate: 120  # 以上を表示
+      outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
+      coefficient-of-variation: 0.6  # 以下を表示
+
   settings:
     file:
       path:

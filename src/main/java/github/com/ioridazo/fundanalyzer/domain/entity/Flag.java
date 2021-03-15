@@ -7,7 +7,7 @@ public enum Flag {
 
     private final String flag;
 
-    Flag(String flag) {
+    Flag(final String flag) {
         this.flag = flag;
     }
 

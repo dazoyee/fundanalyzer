@@ -15,13 +15,13 @@ public enum Unit {
 
     private final int value;
 
-    Unit(String name, int value) {
+    Unit(final String name, final int value) {
         this.name = name;
         this.value = value;
     }
 
     @JsonCreator
-    public static Unit fromName(String name) {
+    public static Unit fromName(final String name) {
         return Arrays.stream(values())
                 .filter(v -> v.name.equals(name))
                 .findFirst()
@@ -37,9 +37,4 @@ public enum Unit {
     public int getValue() {
         return this.value;
     }
-
-//    @Override
-//    public String toString() {
-//        return String.format("Unit[code = %s]", this.code);
-//    }
 }

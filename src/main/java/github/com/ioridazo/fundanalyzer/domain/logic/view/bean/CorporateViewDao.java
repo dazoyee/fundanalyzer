@@ -18,14 +18,14 @@ public interface CorporateViewDao {
     List<CorporateViewBean> selectAll();
 
     @Select
-    CorporateViewBean selectByCode(final String code);
+    CorporateViewBean selectByCode(String code);
 
     @Select
-    List<CorporateViewBean> selectBySubmitDate(final LocalDate submitDate);
+    List<CorporateViewBean> selectBySubmitDate(LocalDate submitDate);
 
     @Insert
-    Result<CorporateViewBean> insert(final CorporateViewBean corporateViewBean);
+    Result<CorporateViewBean> insert(CorporateViewBean corporateViewBean);
 
     @Update
-    Result<CorporateViewBean> update(final CorporateViewBean corporateViewBean);
+    Result<CorporateViewBean> update(CorporateViewBean corporateViewBean);
 }

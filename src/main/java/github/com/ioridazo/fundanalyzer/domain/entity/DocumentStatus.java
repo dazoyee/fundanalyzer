@@ -17,13 +17,13 @@ public enum DocumentStatus {
 
     private final String name;
 
-    DocumentStatus(String code, String name) {
+    DocumentStatus(final String code, final String name) {
         this.code = code;
         this.name = name;
     }
 
     @JsonCreator
-    public static DocumentStatus fromValue(String code) {
+    public static DocumentStatus fromValue(final String code) {
         return Arrays.stream(values())
                 .filter(v -> v.code.equals(code))
                 .findFirst()

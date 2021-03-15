@@ -6,7 +6,7 @@ import org.seasar.doma.Table;
 
 @Entity(immutable = true)
 @Table(name = "bs_subject")
-public class BsSubject extends Detail {
+public final class BsSubject extends Detail {
 
     @Id
     private final String id;
@@ -18,10 +18,10 @@ public class BsSubject extends Detail {
     private final String name;
 
     public BsSubject(
-            String id,
-            String outlineSubjectId,
-            String detailSubjectId,
-            String name) {
+            final String id,
+            final String outlineSubjectId,
+            final String detailSubjectId,
+            final String name) {
         this.id = id;
         this.outlineSubjectId = outlineSubjectId;
         this.detailSubjectId = detailSubjectId;

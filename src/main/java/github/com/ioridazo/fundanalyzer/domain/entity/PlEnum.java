@@ -41,13 +41,13 @@ public enum PlEnum {
     private final String detailSubjectId;
     private final String subject;
 
-    PlEnum(String outlineSubjectId, String detailSubjectId, String subject) {
+    PlEnum(final String outlineSubjectId, final String detailSubjectId, final String subject) {
         this.outlineSubjectId = outlineSubjectId;
         this.detailSubjectId = detailSubjectId;
         this.subject = subject;
     }
 
-    public static PlEnum fromValue(String subject) {
+    public static PlEnum fromValue(final String subject) {
         return Arrays.stream(values())
                 .filter(v -> v.subject.equals(subject))
                 .findFirst()

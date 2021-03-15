@@ -148,6 +148,7 @@ public class AnalysisController {
     /**
      * 割安比率でソートする
      *
+     * @param model model
      * @return Index
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
@@ -161,6 +162,7 @@ public class AnalysisController {
     /**
      * すべての企業情報を表示する
      *
+     * @param model model
      * @return Index
      */
     @GetMapping("fundanalyzer/v1/index/all")

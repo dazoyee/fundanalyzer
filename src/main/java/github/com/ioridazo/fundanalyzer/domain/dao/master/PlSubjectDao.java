@@ -15,11 +15,11 @@ public interface PlSubjectDao {
     List<PlSubject> selectAll();
 
     @Select
-    PlSubject selectById(final String id);
+    PlSubject selectById(String id);
 
     @Select
-    PlSubject selectByUniqueKey(final String outlineSubjectId, final String detailSubjectId);
+    PlSubject selectByUniqueKey(String outlineSubjectId, String detailSubjectId);
 
     @Select
-    List<PlSubject> selectByOutlineSubjectId(final String outlineSubjectId);
+    List<PlSubject> selectByOutlineSubjectId(String outlineSubjectId);
 }

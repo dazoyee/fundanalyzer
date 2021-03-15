@@ -148,6 +148,7 @@ public class DocumentService {
      *
      * @param date             書類取得対象日（提出日）
      * @param documentTypeCode 書類種別コード
+     * @return Void
      */
     @NewSpan("DocumentService.execute")
     @Async
@@ -380,14 +381,18 @@ public class DocumentService {
                     .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                     .filter(Document::getNotRemoved)
                     .forEach(d -> {
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getDownloaded()))
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getDownloaded())) {
                             store(d.getDocumentId(), d.getSubmitDate());
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs()))
+                        }
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) {
                             scrapeBs(d.getDocumentId(), targetDate);
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl()))
+                        }
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) {
                             scrapePl(d.getDocumentId(), targetDate);
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares()))
+                        }
+                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) {
                             scrapeNs(d.getDocumentId(), targetDate);
+                        }
                     });
 
             FundanalyzerLogClient.logService(
@@ -407,14 +412,18 @@ public class DocumentService {
     public void scrape(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
 
-        if (!DocumentStatus.DONE.toValue().equals(document.getDownloaded()))
+        if (!DocumentStatus.DONE.toValue().equals(document.getDownloaded())) {
             store(documentId, document.getSubmitDate());
-        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
+        }
+        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedBs())) {
             scrapeBs(documentId, document.getSubmitDate());
-        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
+        }
+        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedPl())) {
             scrapePl(documentId, document.getSubmitDate());
-        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares()))
+        }
+        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())) {
             scrapeNs(documentId, document.getSubmitDate());
+        }
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}", documentId),

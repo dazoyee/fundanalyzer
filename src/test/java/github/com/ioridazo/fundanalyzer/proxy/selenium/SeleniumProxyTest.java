@@ -27,7 +27,7 @@ class SeleniumProxyTest {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new SeleniumProxy(new AppConfig().restTemplate(),
+        this.proxy = Mockito.spy(new SeleniumProxy(new AppConfig().restTemplate(1, 1),
                 String.format("http://localhost:%s", server.getPort())
         ));
 

@@ -13,12 +13,12 @@ public enum AcquisitionType {
 
     private final String code;
 
-    AcquisitionType(String code) {
+    AcquisitionType(final String code) {
         this.code = code;
     }
 
     @JsonCreator
-    public static AcquisitionType fromValue(String code) {
+    public static AcquisitionType fromValue(final String code) {
         return Arrays.stream(values())
                 .filter(v -> v.code.equals(code))
                 .findFirst()
