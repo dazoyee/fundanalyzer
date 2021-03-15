@@ -2,13 +2,13 @@ package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
 public abstract class Detail {
 
-    String id;
+    private String id;
 
-    String outlineSubjectId;
+    private String outlineSubjectId;
 
-    String detailSubjectId;
+    private String detailSubjectId;
 
-    String name;
+    private String name;
 
     public abstract String getId();
 

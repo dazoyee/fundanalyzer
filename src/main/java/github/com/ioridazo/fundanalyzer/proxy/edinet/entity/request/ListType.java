@@ -11,12 +11,12 @@ public enum ListType {
 
     private final String code;
 
-    ListType(String code) {
+    ListType(final String code) {
         this.code = code;
     }
 
     @JsonCreator
-    public static ListType fromValue(String code) {
+    public static ListType fromValue(final String code) {
         return Arrays.stream(values())
                 .filter(v -> v.code.equals(code))
                 .findFirst()

@@ -12,5 +12,5 @@ import java.util.List;
 public interface ScrapingKeywordDao {
 
     @Select
-    List<ScrapingKeyword> selectByFinancialStatementId(final String financialStatementId);
+    List<ScrapingKeyword> selectByFinancialStatementId(String financialStatementId);
 }

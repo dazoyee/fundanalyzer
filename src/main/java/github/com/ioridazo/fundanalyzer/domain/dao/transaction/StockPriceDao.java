@@ -14,8 +14,8 @@ import java.util.List;
 public interface StockPriceDao {
 
     @Select
-    List<StockPrice> selectByCode(final String code);
+    List<StockPrice> selectByCode(String code);
 
     @Insert
-    Result<StockPrice> insert(final StockPrice stockPrice);
+    Result<StockPrice> insert(StockPrice stockPrice);
 }

@@ -7,7 +7,7 @@ public class FundanalyzerNoSuchPlElementException extends NoSuchElementException
     public FundanalyzerNoSuchPlElementException() {
     }
 
-    public FundanalyzerNoSuchPlElementException(String s) {
+    public FundanalyzerNoSuchPlElementException(final String s) {
         super(s);
     }
 }

@@ -11,12 +11,12 @@ public enum CfEnum {
 
     private final String subject;
 
-    CfEnum(String subject) {
+    CfEnum(final String subject) {
         this.subject = subject;
     }
 
     @JsonCreator
-    public static CfEnum fromValue(String subject) {
+    public static CfEnum fromValue(final String subject) {
         return Arrays.stream(values())
                 .filter(v -> v.subject.equals(subject))
                 .findFirst()

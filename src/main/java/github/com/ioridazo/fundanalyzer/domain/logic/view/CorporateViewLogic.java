@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 @Component
 public class CorporateViewLogic {
 
+    private static final int SECOND_DECIMAL_PLACE = 2;
+    private static final int THIRD_DECIMAL_PLACE = 3;
+
     private final DocumentDao documentDao;
     private final AnalysisResultDao analysisResultDao;
     private final StockPriceDao stockPriceDao;
@@ -114,7 +117,7 @@ public class CorporateViewLogic {
                     // corporate value
                     .map(AnalysisResult::getCorporateValue)
                     // scale
-                    .map(bigDecimal -> bigDecimal.setScale(2, RoundingMode.HALF_UP))
+                    .map(bigDecimal -> bigDecimal.setScale(SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP))
                     .orElse(null);
             // 平均企業価値
             final var average = corporateValueList.stream()
@@ -122,7 +125,7 @@ public class CorporateViewLogic {
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
-                    .divide(BigDecimal.valueOf(corporateValueList.size()), 2, RoundingMode.HALF_UP);
+                    .divide(BigDecimal.valueOf(corporateValueList.size()), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP);
             // 標準偏差
             final var standardDeviation = corporateValueList.stream()
                     .map(AnalysisResult::getCorporateValue)
@@ -131,11 +134,11 @@ public class CorporateViewLogic {
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
-                    .divide(BigDecimal.valueOf(corporateValueList.size()), 3, RoundingMode.HALF_UP)
+                    .divide(BigDecimal.valueOf(corporateValueList.size()), THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)
                     // sqrt
                     .sqrt(new MathContext(5, RoundingMode.HALF_UP));
             // 変動係数
-            final var coefficientOfVariation = standardDeviation.divide(average, 3, RoundingMode.HALF_UP);
+            final var coefficientOfVariation = standardDeviation.divide(average, THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP);
             return CorporateValue.of(latest, average, standardDeviation, coefficientOfVariation, BigDecimal.valueOf(corporateValueList.size()));
         } else {
             return CorporateValue.of();
@@ -176,7 +179,7 @@ public class CorporateViewLogic {
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
-                    .divide(BigDecimal.valueOf(monthList.size()), 2, RoundingMode.HALF_UP);
+                    .divide(BigDecimal.valueOf(monthList.size()), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP);
 
             return StockPriceValue.of(averageStockPrice, importDate, latestStockPrice);
         }

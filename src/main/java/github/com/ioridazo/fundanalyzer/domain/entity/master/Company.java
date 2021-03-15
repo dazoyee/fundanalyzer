@@ -86,6 +86,8 @@ public class Company {
         );
     }
 
+    private static final int OTHER_INDUSTRY_ID = 40;
+
     public static Company ofSqlForeignKey(
             final String edinetCode,
             final String companyName,
@@ -93,7 +95,7 @@ public class Company {
         return new Company(
                 null,
                 companyName,
-                40,
+                OTHER_INDUSTRY_ID,
                 edinetCode,
                 null,
                 null,

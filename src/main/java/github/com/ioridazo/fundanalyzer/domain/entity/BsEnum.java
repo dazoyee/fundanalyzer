@@ -96,7 +96,7 @@ public enum BsEnum {
         this.subject = subject;
     }
 
-    public static BsEnum fromValue(String subject) {
+    public static BsEnum fromValue(final String subject) {
         return Arrays.stream(values())
                 .filter(v -> v.subject.equals(subject))
                 .findFirst()

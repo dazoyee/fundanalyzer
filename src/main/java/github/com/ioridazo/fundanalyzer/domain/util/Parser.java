@@ -6,7 +6,7 @@ import java.text.MessageFormat;
 import java.util.Optional;
 
 @Log4j2
-public class Parser {
+public final class Parser {
 
     private static final String MESSAGE = "株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{0}";
 

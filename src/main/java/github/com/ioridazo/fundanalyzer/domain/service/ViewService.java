@@ -26,6 +26,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,13 @@ import java.util.stream.Collectors;
 
 @Service
 public class ViewService {
+
+    @Value("${app.config.view.discount-rate}")
+    BigDecimal configDiscountRate;
+    @Value("${app.config.view.outlier-of-standard-deviation}")
+    BigDecimal configOutlierOfStandardDeviation;
+    @Value("${app.config.view.coefficient-of-variation}")
+    BigDecimal configCoefficientOfVariation;
 
     private final SlackProxy slackProxy;
     private final CorporateViewLogic corporateViewLogic;
@@ -101,15 +109,15 @@ public class ViewService {
                 // not null
                 .filter(cvb -> cvb.getDiscountRate() != null)
                 // 割安度が120%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(BigDecimal.valueOf(120)) > 0)
+                .filter(cvb -> cvb.getDiscountRate().compareTo(configDiscountRate) > 0)
                 // 標準偏差が外れ値となっていたら除外
-                .filter(cvb -> cvb.getStandardDeviation().compareTo(BigDecimal.valueOf(10000)) < 0)
+                .filter(cvb -> cvb.getStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
                 // 最新企業価値がマイナスの場合は除外
                 .filter(cvb -> cvb.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
                 // 変動係数
                 .filter(cvb -> {
                     // 変動係数が0.6以下であること
-                    if (cvb.getCoefficientOfVariation().compareTo(BigDecimal.valueOf(0.6)) < 1) {
+                    if (cvb.getCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
                         return true;
                     } else {
                         // 変動係数が0.6以上でも最新企業価値が高ければOK
@@ -136,8 +144,8 @@ public class ViewService {
      * @return bool
      */
     private boolean isHigher(final BigDecimal forecast, final BigDecimal latest) {
-        return (forecast.divide(latest, 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0) &&
-                (forecast.subtract(latest).compareTo(BigDecimal.valueOf(100)) > 0);
+        return (forecast.divide(latest, 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
+                && (forecast.subtract(latest).compareTo(BigDecimal.valueOf(100)) > 0);
     }
 
     /**
@@ -179,6 +187,8 @@ public class ViewService {
 
     /**
      * 非同期で表示するリストをアップデートする
+     *
+     * @return Void
      */
     @NewSpan("ViewService.updateCorporateView")
     @Async
@@ -276,8 +286,8 @@ public class ViewService {
 
         if (edinetListViewBeanList.size() == 1) {
             final EdinetListViewBean elv = edinetListViewBeanList.get(0);
-            if (elv.getCountTarget().equals(elv.getCountScraped()) &&
-                    elv.getCountTarget().equals(elv.getCountAnalyzed())) {
+            if (elv.getCountTarget().equals(elv.getCountScraped())
+                    && elv.getCountTarget().equals(elv.getCountAnalyzed())) {
                 // info message
                 slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
                         elv.getSubmitDate(), elv.getCountTarget());
@@ -311,8 +321,8 @@ public class ViewService {
     public List<EdinetListViewBean> edinetListview() {
         final var viewBeanList = edinetListViewDao.selectAll();
         viewBeanList.removeIf(
-                el -> el.getCountTarget().equals(el.getCountScraped()) &&
-                        el.getCountTarget().equals(el.getCountAnalyzed())
+                el -> el.getCountTarget().equals(el.getCountScraped())
+                        && el.getCountTarget().equals(el.getCountAnalyzed())
         );
         return sortedEdinetList(viewBeanList);
     }
@@ -337,6 +347,7 @@ public class ViewService {
      * 非同期で表示する処理状況リストをアップデートする
      *
      * @param documentTypeCode 書類種別コード
+     * @return Void
      */
     @NewSpan("ViewService.updateEdinetListView")
     @Async

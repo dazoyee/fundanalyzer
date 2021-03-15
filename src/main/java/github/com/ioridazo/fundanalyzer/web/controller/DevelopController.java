@@ -48,7 +48,7 @@ public class DevelopController {
     }
 
     @GetMapping("/scrape/analysis/{date}")
-    public String scrapeAndAnalyze(@PathVariable String date, final Model model) {
+    public String scrapeAndAnalyze(@PathVariable final String date, final Model model) {
         documentService.readCompanyInfo();
 
         // execute実行
