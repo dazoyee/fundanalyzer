@@ -107,6 +107,7 @@ public class EdinetController {
     /**
      * EDINETリストをアップデートする
      *
+     * @param date 提出日
      * @return EdinetList
      */
     @PostMapping("fundanalyzer/v1/update/edinet/list")

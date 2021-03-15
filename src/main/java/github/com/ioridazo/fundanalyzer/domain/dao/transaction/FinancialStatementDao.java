@@ -16,22 +16,22 @@ import java.util.Optional;
 public interface FinancialStatementDao {
 
     @Select
-    List<FinancialStatement> selectByCode(final String companyCode);
+    List<FinancialStatement> selectByCode(String companyCode);
 
     @Select
     Optional<FinancialStatement> selectByUniqueKey(
-            final String edinetCode,
-            final String financialStatementId,
-            final String subjectId,
-            final String dayOfYear);
+            String edinetCode,
+            String financialStatementId,
+            String subjectId,
+            String dayOfYear);
 
     @Select
     List<FinancialStatement> selectByEdinetCodeAndFsAndYear(
-            final String edinetCode,
-            final String financialStatementId,
-            final String dayOfYear);
+            String edinetCode,
+            String financialStatementId,
+            String dayOfYear);
 
     @Transactional
     @Insert
-    Result<FinancialStatement> insert(final FinancialStatement financialStatement);
+    Result<FinancialStatement> insert(FinancialStatement financialStatement);
 }

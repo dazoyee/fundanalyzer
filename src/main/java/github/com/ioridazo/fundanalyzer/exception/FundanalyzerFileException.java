@@ -13,7 +13,7 @@ public class FundanalyzerFileException extends RuntimeException {
         super(message, throwable);
     }
 
-    public FundanalyzerFileException(Throwable cause) {
+    public FundanalyzerFileException(final Throwable cause) {
         super(cause);
     }
 }

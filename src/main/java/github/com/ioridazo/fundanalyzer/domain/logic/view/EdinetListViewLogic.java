@@ -106,16 +106,16 @@ public class EdinetListViewLogic {
                         // filter no all done
                         .filter(edinetCode -> documentList.stream()
                                 .filter(document -> edinetCode.equals(document.getEdinetCode()))
-                                .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs()) &&
-                                        DocumentStatus.DONE.toValue().equals(document.getScrapedPl()) &&
-                                        DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
+                                .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs())
+                                        && DocumentStatus.DONE.toValue().equals(document.getScrapedPl())
+                                        && DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
                         )
                         // filter no all notYet
                         .filter(edinetCode -> documentList.stream()
                                 .filter(document -> edinetCode.equals(document.getEdinetCode()))
-                                .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()) &&
-                                        DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()) &&
-                                        DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
+                                .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())
+                                        && DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())
+                                        && DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
                         )
                         .collect(Collectors.joining("\n")),
 

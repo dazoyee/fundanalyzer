@@ -95,13 +95,14 @@ public class FundanalyzerLogClient {
         );
     }
 
+    @SuppressWarnings("RedundantModifiersValueLombok")
     @Value
     static class LogObject {
-        Activity activity;
-        Category category;
-        Process process;
-        Function function;
-        String message;
+        private final Activity activity;
+        private final Category category;
+        private final Process process;
+        private final Function function;
+        private final String message;
     }
 
     private enum Activity {

@@ -167,8 +167,8 @@ public class ScrapingLogic {
         if (beforeCheck(company, fs, edinetDocument)) {
             try {
                 final var targetFile = findTargetFile(targetDirectory, fs);
-                if (FinancialStatementEnum.BALANCE_SHEET.equals(fs) ||
-                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
+                if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)
+                        || FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
                     // 貸借対照表、損益計算書
                     insertFinancialStatement(
                             targetFile.getFirst(),
@@ -267,12 +267,14 @@ public class ScrapingLogic {
 
         if (fsList.isEmpty()) {
             return true;
-        } else return fsList.stream()
-                .map(FinancialStatement::getPeriodEnd)
-                .distinct()
-                .map(LocalDate::getYear)
-                .map(String::valueOf)
-                .noneMatch(targetYear::equals);
+        } else {
+            return fsList.stream()
+                    .map(FinancialStatement::getPeriodEnd)
+                    .distinct()
+                    .map(LocalDate::getYear)
+                    .map(String::valueOf)
+                    .noneMatch(targetYear::equals);
+        }
     }
 
     /**

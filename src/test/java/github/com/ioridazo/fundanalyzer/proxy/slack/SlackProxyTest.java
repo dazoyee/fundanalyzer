@@ -36,7 +36,7 @@ class SlackProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new SlackProxy(
-                new AppConfig().restTemplate(),
+                new AppConfig().restTemplate(1, 1),
                 String.format("http://localhost:%s", server.getPort()),
                 environment
         ));
@@ -59,7 +59,7 @@ class SlackProxyTest {
         var propertyPath = "property.path";
 
         this.proxy = new SlackProxy(
-                new AppConfig().restTemplate(),
+                new AppConfig().restTemplate(1, 1),
                 "https://hooks.slack.com",
                 environment
         );

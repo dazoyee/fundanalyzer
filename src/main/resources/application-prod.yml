@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=JST
+    url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=Asia/Tokyo
     username: fundanalyzer
     password: fundanalyzer
     driverClassName: com.mysql.jdbc.Driver

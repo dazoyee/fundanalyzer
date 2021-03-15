@@ -16,13 +16,13 @@ public enum ListCategories {
 
     private final String name;
 
-    ListCategories(String code, String name) {
+    ListCategories(final String code, final String name) {
         this.code = code;
         this.name = name;
     }
 
     @JsonCreator
-    public static ListCategories fromName(String name) {
+    public static ListCategories fromName(final String name) {
         return Arrays.stream(values())
                 .filter(v -> v.name.equals(name))
                 .findFirst()

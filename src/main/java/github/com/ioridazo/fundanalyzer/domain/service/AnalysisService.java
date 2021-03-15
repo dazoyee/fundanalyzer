@@ -29,11 +29,11 @@ public class AnalysisService {
     private final AnalysisResultDao analysisResultDao;
 
     public AnalysisService(
-            AnalysisLogic analysisLogic,
-            IndustryDao industryDao,
-            CompanyDao companyDao,
-            DocumentDao documentDao,
-            AnalysisResultDao analysisResultDao) {
+            final AnalysisLogic analysisLogic,
+            final IndustryDao industryDao,
+            final CompanyDao companyDao,
+            final DocumentDao documentDao,
+            final AnalysisResultDao analysisResultDao) {
         this.analysisLogic = analysisLogic;
         this.industryDao = industryDao;
         this.companyDao = companyDao;
@@ -60,6 +60,7 @@ public class AnalysisService {
      * 対象書類の分析結果をデータベースに登録する
      *
      * @param submitDate 提出日
+     * @return Void
      */
     @NewSpan("AnalysisService.analyze.submitDate")
     public CompletableFuture<Void> analyze(final LocalDate submitDate) {

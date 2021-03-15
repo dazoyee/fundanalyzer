@@ -223,9 +223,10 @@ public class XbrlScraping {
                 .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("RedundantModifiersValueLombok")
     @Value(staticConstructor = "of")
     static class KeyMatch {
-        String key;
-        String match;
+        private final String key;
+        private final String match;
     }
 }

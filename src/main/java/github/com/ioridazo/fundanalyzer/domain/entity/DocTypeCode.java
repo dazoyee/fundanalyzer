@@ -32,13 +32,13 @@ public enum DocTypeCode {
 
     private final String name;
 
-    DocTypeCode(String code, String name) {
+    DocTypeCode(final String code, final String name) {
         this.code = code;
         this.name = name;
     }
 
     @JsonCreator
-    public static DocTypeCode fromValue(String code) {
+    public static DocTypeCode fromValue(final String code) {
         return Arrays.stream(values())
                 .filter(v -> v.code.equals(code))
                 .findFirst()

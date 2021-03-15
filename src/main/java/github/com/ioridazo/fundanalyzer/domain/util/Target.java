@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Target {
+public final class Target {
 
     private Target() {
     }

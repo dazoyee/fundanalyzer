@@ -18,11 +18,11 @@ public interface EdinetListViewDao {
     List<EdinetListViewBean> selectAll();
 
     @Select
-    EdinetListViewBean selectBySubmitDate(final LocalDate submitDate);
+    EdinetListViewBean selectBySubmitDate(LocalDate submitDate);
 
     @Insert
-    Result<EdinetListViewBean> insert(final EdinetListViewBean edinetListViewBean);
+    Result<EdinetListViewBean> insert(EdinetListViewBean edinetListViewBean);
 
     @Update
-    Result<EdinetListViewBean> update(final EdinetListViewBean edinetListViewBean);
+    Result<EdinetListViewBean> update(EdinetListViewBean edinetListViewBean);
 }

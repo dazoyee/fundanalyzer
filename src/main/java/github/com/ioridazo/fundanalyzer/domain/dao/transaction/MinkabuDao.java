@@ -14,8 +14,8 @@ import java.util.List;
 public interface MinkabuDao {
 
     @Select
-    List<Minkabu> selectByCode(final String code);
+    List<Minkabu> selectByCode(String code);
 
     @Insert
-    Result<Minkabu> insert(final Minkabu minkabu);
+    Result<Minkabu> insert(Minkabu minkabu);
 }

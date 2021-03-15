@@ -9,7 +9,7 @@ public class FundanalyzerSqlForeignKeyException extends RuntimeException {
         super(message);
     }
 
-    public FundanalyzerSqlForeignKeyException(Throwable cause) {
+    public FundanalyzerSqlForeignKeyException(final Throwable cause) {
         super(cause);
     }
 

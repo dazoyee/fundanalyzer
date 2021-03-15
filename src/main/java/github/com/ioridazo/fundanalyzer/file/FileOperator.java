@@ -21,7 +21,7 @@ import java.util.zip.ZipInputStream;
 @Component
 public class FileOperator {
 
-    public FileOperator() {
+    FileOperator() {
     }
 
     public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
@@ -37,12 +37,13 @@ public class FileOperator {
         BufferedInputStream bis = new BufferedInputStream(fis);
         ZipInputStream zis = new ZipInputStream(bis, Charset.forName("MS932"));
 
-        if (!fileOutputPath.exists()) //noinspection ResultOfMethodCallIgnored
+        if (!fileOutputPath.exists()) {
             fileOutputPath.mkdir();
+        }
 
         ZipEntry zipEntry = zis.getNextEntry();
         while (zipEntry != null) {
-            File newFile = new File(fileOutputPath + "/" + File.separator + zipEntry.getName());
+            File newFile = new File(String.format("%s/%s%s", fileOutputPath, File.separator, zipEntry.getName()));
 
             //noinspection ResultOfMethodCallIgnored
             new File(newFile.getParent()).mkdirs();

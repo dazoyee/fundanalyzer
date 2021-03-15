@@ -16,10 +16,10 @@ public class MinkabuResultBean {
 
     @Value
     public static class ExpectedStockPrice {
-        String goals;
-        String theoretical;
-        String individualInvestors;
-        String securitiesAnalyst;
+        private final String goals;
+        private final String theoretical;
+        private final String individualInvestors;
+        private final String securitiesAnalyst;
     }
 
     public static MinkabuResultBean ofJsoup(final Document document) {

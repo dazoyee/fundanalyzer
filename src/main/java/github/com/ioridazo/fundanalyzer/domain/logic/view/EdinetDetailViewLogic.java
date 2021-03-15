@@ -65,8 +65,10 @@ public class EdinetDetailViewLogic {
                     } else if (!DocumentStatus.DONE.toValue().equals(d.getScrapedPl())) {
                         // filter scrapedPl is not done
                         return true;
+                    } else {
                         // filter scrapedNumberOfShares is not done
-                    } else return !DocumentStatus.DONE.toValue().equals(d.getScrapedNumberOfShares());
+                        return !DocumentStatus.DONE.toValue().equals(d.getScrapedNumberOfShares());
+                    }
                 })
                 .collect(Collectors.toList());
 

@@ -2,10 +2,11 @@ package github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request;
 
 import lombok.Value;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 public class AcquisitionRequestParameter {
 
-    String docId;
+    private final String docId;
 
-    AcquisitionType type;
+    private final AcquisitionType type;
 }

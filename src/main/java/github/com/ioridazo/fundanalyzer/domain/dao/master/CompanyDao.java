@@ -19,14 +19,14 @@ public interface CompanyDao {
     List<Company> selectAll();
 
     @Select
-    Optional<Company> selectByEdinetCode(final String edinetCode);
+    Optional<Company> selectByEdinetCode(String edinetCode);
 
     @Select
-    Optional<Company> selectByCode(final String code);
+    Optional<Company> selectByCode(String code);
 
     @Insert
-    Result<Company> insert(final Company company);
+    Result<Company> insert(Company company);
 
     @Update
-    Result<Company> update(final Company company);
+    Result<Company> update(Company company);
 }

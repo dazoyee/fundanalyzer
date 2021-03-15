@@ -16,13 +16,13 @@ public enum Consolidated {
 
     private final String name;
 
-    Consolidated(String code, String name) {
+    Consolidated(final String code, final String name) {
         this.code = code;
         this.name = name;
     }
 
     @JsonCreator
-    public static Consolidated fromName(String name) {
+    public static Consolidated fromName(final String name) {
         return Arrays.stream(values())
                 .filter(v -> v.name.equals(name))
                 .findFirst()

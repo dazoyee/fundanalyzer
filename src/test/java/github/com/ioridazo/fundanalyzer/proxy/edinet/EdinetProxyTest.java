@@ -40,7 +40,7 @@ class EdinetProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new EdinetProxy(
-                new AppConfig().restTemplate(),
+                new AppConfig().restTemplate(1, 1),
                 String.format("http://localhost:%s", server.getPort())
         ));
 

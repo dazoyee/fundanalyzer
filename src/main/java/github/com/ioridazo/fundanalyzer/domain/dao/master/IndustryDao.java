@@ -17,11 +17,11 @@ public interface IndustryDao {
     List<Industry> selectAll();
 
     @Select
-    Industry selectById(final Integer id);
+    Industry selectById(Integer id);
 
     @Select
-    Industry selectByName(final String name);
+    Industry selectByName(String name);
 
     @Insert(include = {"name", "createdAt"})
-    Result<Industry> insert(final Industry industry);
+    Result<Industry> insert(Industry industry);
 }

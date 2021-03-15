@@ -7,7 +7,7 @@ public class FundanalyzerNoSuchBsElementException extends NoSuchElementException
     public FundanalyzerNoSuchBsElementException() {
     }
 
-    public FundanalyzerNoSuchBsElementException(String s) {
+    public FundanalyzerNoSuchBsElementException(final String s) {
         super(s);
     }
 }

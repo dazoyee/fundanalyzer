@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import java.util.List;
 import java.util.Optional;
 
-public class Converter {
+public final class Converter {
 
     private Converter() {
     }
