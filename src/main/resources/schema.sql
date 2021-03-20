@@ -122,18 +122,20 @@ create TABLE IF NOT EXISTS document(
 );
 
 -- 財務諸表
-create TABLE IF NOT EXISTS financial_statement(
-  id INT AUTO_INCREMENT,
-  company_code CHAR(5) COMMENT '企業コード',
-  edinet_code CHAR(6) NOT NULL COMMENT 'EDINETコード' REFERENCES company(edinet_code),
-  financial_statement_id VARCHAR(10) NOT NULL COMMENT '財務諸表ID',
-  subject_id VARCHAR(10) NOT NULL COMMENT '科目ID',
-  period_start DATE NOT NULL COMMENT '開始日',
-  period_end DATE NOT NULL COMMENT '終了日',
-  value BIGINT COMMENT '値',
-  created_at DATETIME NOT NULL COMMENT '登録日',
-  PRIMARY KEY(id),
-  UNIQUE KEY(edinet_code, financial_statement_id, subject_id, period_end)
+create TABLE IF NOT EXISTS financial_statement
+(
+    id                     INT AUTO_INCREMENT,
+    company_code           CHAR(5) COMMENT '企業コード',
+    edinet_code            CHAR(6)     NOT NULL COMMENT 'EDINETコード' REFERENCES company (edinet_code),
+    financial_statement_id VARCHAR(10) NOT NULL COMMENT '財務諸表ID',
+    subject_id             VARCHAR(10) NOT NULL COMMENT '科目ID',
+    period_start           DATE        NOT NULL COMMENT '開始日',
+    period_end             DATE        NOT NULL COMMENT '終了日',
+    value                  BIGINT COMMENT '値',
+    document_type_code     CHAR(3) COMMENT '書類種別コード',
+    created_at             DATETIME    NOT NULL COMMENT '登録日',
+    PRIMARY KEY (id),
+    UNIQUE KEY (edinet_code, financial_statement_id, subject_id, period_end)
 );
 
 -- 企業価値

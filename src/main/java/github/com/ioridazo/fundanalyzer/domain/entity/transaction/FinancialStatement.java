@@ -36,6 +36,8 @@ public class FinancialStatement {
 
     private final Long value;
 
+    private final String documentTypeCode;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -47,6 +49,7 @@ public class FinancialStatement {
             final LocalDate periodStart,
             final LocalDate periodEnd,
             final Long value,
+            final String documentTypeCode,
             final LocalDateTime createdAt) {
         return new FinancialStatement(
                 null,
@@ -57,6 +60,7 @@ public class FinancialStatement {
                 periodStart,
                 periodEnd,
                 value,
+                documentTypeCode,
                 createdAt
         );
     }

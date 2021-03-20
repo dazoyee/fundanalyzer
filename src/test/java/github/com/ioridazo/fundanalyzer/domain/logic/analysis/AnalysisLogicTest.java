@@ -218,6 +218,7 @@ class AnalysisLogicTest {
                     null,
                     null,
                     expected,
+                    null,
                     null
             );
 
@@ -309,6 +310,7 @@ class AnalysisLogicTest {
                     null,
                     null,
                     expected,
+                    null,
                     null
             );
 
@@ -398,6 +400,7 @@ class AnalysisLogicTest {
                     null,
                     null,
                     expected,
+                    null,
                     null
             );
 

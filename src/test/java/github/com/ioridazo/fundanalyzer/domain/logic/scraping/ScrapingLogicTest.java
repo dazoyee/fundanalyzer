@@ -15,16 +15,15 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -494,6 +493,7 @@ class ScrapingLogicTest {
                     null,
                     LocalDate.parse("2019-09-30"),
                     null,
+                    null,
                     null
             );
 
@@ -529,6 +529,7 @@ class ScrapingLogicTest {
                     null,
                     null,
                     LocalDate.parse("2020-03-30"),
+                    null,
                     null,
                     null
             );
@@ -612,6 +613,7 @@ class ScrapingLogicTest {
                     "科目"
             ));
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
             var resultBean = FinancialTableResultBean.of("科目", null, "1", Unit.MILLIONS_OF_YEN);
@@ -632,6 +634,7 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-01-01"),
                     LocalDate.parse("2020-12-31"),
                     1000000L,
+                    "120",
                     createdAt
             ));
         }
@@ -668,6 +671,7 @@ class ScrapingLogicTest {
                     "科目"
             ));
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
             var resultBean = FinancialTableResultBean.of("一致しない科目", null, "1", Unit.MILLIONS_OF_YEN);
@@ -689,6 +693,7 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-01-01"),
                     LocalDate.parse("2020-12-31"),
                     1000000L,
+                    "120",
                     createdAt
             ));
         }
@@ -711,6 +716,7 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
             var value = 1000L;
@@ -730,6 +736,7 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-01-01"),
                     LocalDate.parse("2020-12-31"),
                     1000L,
+                    "120",
                     createdAt
             ));
         }
@@ -753,6 +760,7 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
             var value = 1000L;
@@ -772,6 +780,7 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-01-01"),
                     LocalDate.parse("2020-12-31"),
                     1000L,
+                    "120",
                     createdAt
             ));
         }
@@ -829,6 +838,7 @@ class ScrapingLogicTest {
                     null,
                     null,
                     1000L,
+                    null,
                     null
             );
             var totalLiabilities = new BsSubject("2", null, null, null);
@@ -841,6 +851,7 @@ class ScrapingLogicTest {
                     null,
                     null,
                     1000L,
+                    null,
                     null
             );
 
@@ -894,6 +905,7 @@ class ScrapingLogicTest {
                     null,
                     null,
                     2000L,
+                    null,
                     null
             );
             var totalLiabilities = new BsSubject("2", null, null, null);
@@ -906,6 +918,7 @@ class ScrapingLogicTest {
                     null,
                     null,
                     3000L,
+                    null,
                     null
             );
 
