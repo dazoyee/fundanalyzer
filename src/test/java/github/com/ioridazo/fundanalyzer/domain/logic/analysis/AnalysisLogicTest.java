@@ -83,7 +83,7 @@ class AnalysisLogicTest {
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
-                    .period(period)
+                    .documentPeriod(period)
                     .build();
             var company = new Company(
                     code,
@@ -129,7 +129,7 @@ class AnalysisLogicTest {
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
-                    .period(period)
+                    .documentPeriod(period)
                     .build();
             var company = new Company(
                     code,
@@ -176,7 +176,7 @@ class AnalysisLogicTest {
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
-                    .period(period)
+                    .documentPeriod(period)
                     .build();
             var companyCode = "code";
             var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;

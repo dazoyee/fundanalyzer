@@ -116,7 +116,7 @@ public class EdinetDetailViewLogic {
                     t,
                     AnalysisLogic.FsValueParameter.of(
                             company,
-                            document.getPeriod(),
+                            document.getDocumentPeriod(),
                             DocTypeCode.fromValue(document.getDocumentTypeCode()),
                             document.getSubmitDate()
                     )
@@ -134,7 +134,7 @@ public class EdinetDetailViewLogic {
             return toLongFunction.applyAsLong(
                     AnalysisLogic.FsValueParameter.of(
                             company,
-                            document.getPeriod(),
+                            document.getDocumentPeriod(),
                             DocTypeCode.fromValue(document.getDocumentTypeCode()),
                             document.getSubmitDate()
                     )

@@ -34,7 +34,7 @@ public class Document {
     private final String edinetCode;
 
     @Column(updatable = false)
-    private final LocalDate period;
+    private final LocalDate documentPeriod;
 
     @Column(updatable = false)
     private final LocalDate submitDate;
@@ -71,7 +71,7 @@ public class Document {
                 .documentId(results.getDocId())
                 .documentTypeCode(results.getDocTypeCode())
                 .edinetCode(results.getEdinetCode().orElse(null))
-                .period(results.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1) : null)
+                .documentPeriod(results.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1) : null)
                 .submitDate(submitDate)
                 .createdAt(nowLocalDateTime)
                 .updatedAt(nowLocalDateTime)

@@ -83,7 +83,7 @@ public class AnalysisLogic {
         try {
             analysisResultDao.insert(AnalysisResult.of(
                     companyCode,
-                    document.getPeriod(),
+                    document.getDocumentPeriod(),
                     calculate(companyCode, document),
                     DocTypeCode.fromValue(document.getDocumentTypeCode()),
                     document.getSubmitDate(),
@@ -101,7 +101,7 @@ public class AnalysisLogic {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。\tテーブル名:{}\t会社コード:{}\t期間:{}",
                         "analysis_result",
                         companyCode,
-                        document.getPeriod()
+                        document.getDocumentPeriod()
                 );
             } else {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
@@ -119,7 +119,7 @@ public class AnalysisLogic {
     BigDecimal calculate(final String companyCode, final Document document) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
         final FsValueParameter parameter = FsValueParameter.of(
-                company, document.getPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
+                company, document.getDocumentPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
 
         // 流動資産合計
         final long totalCurrentAssets = bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);

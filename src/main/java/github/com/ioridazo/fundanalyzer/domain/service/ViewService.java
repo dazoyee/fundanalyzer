@@ -410,7 +410,7 @@ public class ViewService {
                 brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
                 corporateViewDao.selectByCode(code.substring(0, 4)),
                 analysisResultDao.selectByCompanyCode(code).stream()
-                        .sorted(Comparator.comparing(AnalysisResult::getPeriod).reversed())
+                        .sorted(Comparator.comparing(AnalysisResult::getDocumentPeriod).reversed())
                         .collect(Collectors.toList()),
                 brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
                 stockPriceDao.selectByCode(code).stream()

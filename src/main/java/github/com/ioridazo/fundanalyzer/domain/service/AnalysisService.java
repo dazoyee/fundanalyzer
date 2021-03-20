@@ -83,7 +83,7 @@ public class AnalysisService {
                     // only not analyze
                     .filter(document -> analysisResultDao.selectByUniqueKey(
                             Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(),
-                            document.getPeriod(),
+                            document.getDocumentPeriod(),
                             document.getDocumentTypeCode(),
                             submitDate
                             ).isEmpty()

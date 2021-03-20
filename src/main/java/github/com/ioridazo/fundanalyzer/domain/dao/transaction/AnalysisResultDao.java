@@ -18,7 +18,7 @@ public interface AnalysisResultDao {
     @Select
     Optional<AnalysisResult> selectByUniqueKey(
             String companyCode,
-            LocalDate period,
+            LocalDate documentPeriod,
             String documentTypeCode,
             LocalDate submitDate);
 
@@ -26,7 +26,7 @@ public interface AnalysisResultDao {
     List<AnalysisResult> selectByCompanyCode(String code);
 
     @Select
-    List<AnalysisResult> selectByPeriod(LocalDate period);
+    List<AnalysisResult> selectByPeriod(LocalDate documentPeriod);
 
     @Insert
     Result<AnalysisResult> insert(AnalysisResult analysisResult);

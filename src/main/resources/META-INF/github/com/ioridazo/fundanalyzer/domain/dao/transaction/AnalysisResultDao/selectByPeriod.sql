@@ -1,3 +1,3 @@
-select * from analysis_result
-where
-  period = /* period */'2020-01-01'
+select *
+from analysis_result
+where document_period = /* documentPeriod */'2020-01-01'

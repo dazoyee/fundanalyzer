@@ -113,7 +113,7 @@ public class CorporateViewLogic {
             // 最新企業価値
             final var latest = corporateValueList.stream()
                     // latest
-                    .max(Comparator.comparing(AnalysisResult::getPeriod))
+                    .max(Comparator.comparing(AnalysisResult::getDocumentPeriod))
                     // corporate value
                     .map(AnalysisResult::getCorporateValue)
                     // scale

@@ -109,7 +109,7 @@ class AnalysisServiceTest {
             var targetDocument = Document.builder()
                     .documentId(docId)
                     .edinetCode("edinetCode")
-                    .period(period)
+                    .documentPeriod(period)
                     .build();
 
             when(companyDao.selectAll()).thenReturn(companyAll);

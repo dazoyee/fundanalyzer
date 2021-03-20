@@ -101,7 +101,7 @@ create TABLE IF NOT EXISTS document
     document_id                    CHAR(8)  NOT NULL COMMENT '書類ID',
     document_type_code             CHAR(3) COMMENT '書類種別コード',
     edinet_code                    CHAR(6) COMMENT 'EDINETコード' REFERENCES company (edinet_code),
-    period DATE COMMENT '対象期間',
+    document_period                DATE COMMENT '対象期間',
     submit_date                    DATE     NOT NULL COMMENT '提出日',
     downloaded                     CHAR(1)  NOT NULL DEFAULT '0' COMMENT 'ダウンロードステータス' CHECK (downloaded IN ('0', '1', '9')),
     decoded                        CHAR(1)  NOT NULL DEFAULT '0' COMMENT 'ファイル解凍ステータス' CHECK (decoded IN ('0', '1', '9')),
@@ -144,14 +144,14 @@ create TABLE IF NOT EXISTS analysis_result
 (
     id                 INT AUTO_INCREMENT,
     company_code       CHAR(5)  NOT NULL COMMENT '企業コード',
-    period DATE NOT NULL COMMENT '期間',
+    document_period    DATE     NOT NULL COMMENT '期間',
     corporate_value    FLOAT    NOT NULL COMMENT '企業価値',
     document_type_code CHAR(3)  NOT NULL COMMENT '書類種別コード',
     submit_date        DATE     NOT NULL COMMENT '提出日',
     document_id        CHAR(8)  NOT NULL COMMENT '書類ID' REFERENCES document (document_id),
     created_at         DATETIME NOT NULL COMMENT '登録日',
     PRIMARY KEY (id),
-    UNIQUE KEY (company_code, period, document_type_code, submit_date)
+    UNIQUE KEY (company_code, document_period, document_type_code, submit_date)
 );
 
 -- 株価

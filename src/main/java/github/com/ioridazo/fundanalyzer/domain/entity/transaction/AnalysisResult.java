@@ -25,7 +25,7 @@ public class AnalysisResult {
 
     private final String companyCode;
 
-    private final LocalDate period;
+    private final LocalDate documentPeriod;
 
     private final BigDecimal corporateValue;
 
