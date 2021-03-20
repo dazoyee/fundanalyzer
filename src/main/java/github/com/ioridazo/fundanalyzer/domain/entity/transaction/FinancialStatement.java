@@ -39,6 +39,10 @@ public class FinancialStatement {
 
     private final String documentTypeCode;
 
+    private final LocalDate submitDate;
+
+    private final String documentId;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -51,6 +55,8 @@ public class FinancialStatement {
             final LocalDate periodEnd,
             final Long value,
             final DocTypeCode docTypeCode,
+            final LocalDate submitDate,
+            final String documentId,
             final LocalDateTime createdAt) {
         return new FinancialStatement(
                 null,
@@ -62,6 +68,8 @@ public class FinancialStatement {
                 periodEnd,
                 value,
                 docTypeCode.toValue(),
+                submitDate,
+                documentId,
                 createdAt
         );
     }

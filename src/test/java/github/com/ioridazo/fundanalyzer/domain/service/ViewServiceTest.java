@@ -539,6 +539,8 @@ class ViewServiceTest {
                     null,
                     BigDecimal.valueOf(100),
                     null,
+                    null,
+                    null,
                     null
             )));
             when(brandDetailCompanyViewLogic.brandDetailFinancialStatement(code)).thenReturn(List.of(new BrandDetailViewBean.BrandDetailFinancialStatement(

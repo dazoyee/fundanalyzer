@@ -82,7 +82,8 @@ public class EdinetListViewLogic {
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
                                 d.getPeriod(),
-                                d.getDocumentTypeCode()
+                                d.getDocumentTypeCode(),
+                                d.getSubmitDate()
                                 ).isPresent()
                         ).count(),
 
@@ -92,7 +93,8 @@ public class EdinetListViewLogic {
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
                                 d.getPeriod(),
-                                d.getDocumentTypeCode()
+                                d.getDocumentTypeCode(),
+                                d.getSubmitDate()
                                 ).isEmpty()
                         )
                         .map(Document::getEdinetCode)

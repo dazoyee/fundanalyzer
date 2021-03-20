@@ -31,6 +31,10 @@ public class AnalysisResult {
 
     private final String documentTypeCode;
 
+    private final LocalDate submitDate;
+
+    private final String documentId;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -39,6 +43,8 @@ public class AnalysisResult {
             final LocalDate period,
             final BigDecimal corporateValue,
             final DocTypeCode docTypeCode,
+            final LocalDate submitDate,
+            final String documentId,
             final LocalDateTime createdAt) {
         return new AnalysisResult(
                 null,
@@ -46,6 +52,8 @@ public class AnalysisResult {
                 period,
                 corporateValue,
                 docTypeCode.toValue(),
+                submitDate,
+                documentId,
                 createdAt
         );
     }

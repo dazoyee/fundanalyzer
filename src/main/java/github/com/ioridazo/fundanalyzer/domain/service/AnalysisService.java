@@ -84,7 +84,8 @@ public class AnalysisService {
                     .filter(document -> analysisResultDao.selectByUniqueKey(
                             Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(),
                             document.getPeriod(),
-                            document.getDocumentTypeCode()
+                            document.getDocumentTypeCode(),
+                            submitDate
                             ).isEmpty()
                     )
                     .forEach(document -> analysisLogic.analyze(document.getDocumentId()));

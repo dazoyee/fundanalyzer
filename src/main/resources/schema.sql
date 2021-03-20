@@ -131,10 +131,12 @@ create TABLE IF NOT EXISTS financial_statement
     period_start           DATE        NOT NULL COMMENT '開始日',
     period_end             DATE        NOT NULL COMMENT '終了日',
     value                  BIGINT COMMENT '値',
-    document_type_code     CHAR(3) COMMENT '書類種別コード',
+    document_type_code     CHAR(3)     NOT NULL COMMENT '書類種別コード',
+    submit_date            DATE        NOT NULL COMMENT '提出日',
+    document_id            CHAR(8)     NOT NULL COMMENT '書類ID' REFERENCES document (document_id),
     created_at             DATETIME    NOT NULL COMMENT '登録日',
     PRIMARY KEY (id),
-    UNIQUE KEY (edinet_code, financial_statement_id, subject_id, period_end, document_type_code)
+    UNIQUE KEY (edinet_code, financial_statement_id, subject_id, period_end, document_type_code, submit_date)
 );
 
 -- 企業価値
@@ -144,10 +146,12 @@ create TABLE IF NOT EXISTS analysis_result
     company_code       CHAR(5)  NOT NULL COMMENT '企業コード',
     period DATE NOT NULL COMMENT '期間',
     corporate_value    FLOAT    NOT NULL COMMENT '企業価値',
-    document_type_code CHAR(3) COMMENT '書類種別コード',
+    document_type_code CHAR(3)  NOT NULL COMMENT '書類種別コード',
+    submit_date        DATE     NOT NULL COMMENT '提出日',
+    document_id        CHAR(8)  NOT NULL COMMENT '書類ID' REFERENCES document (document_id),
     created_at         DATETIME NOT NULL COMMENT '登録日',
     PRIMARY KEY (id),
-    UNIQUE KEY (company_code, period, document_type_code)
+    UNIQUE KEY (company_code, period, document_type_code, submit_date)
 );
 
 -- 株価

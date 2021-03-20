@@ -84,8 +84,10 @@ public class AnalysisLogic {
             analysisResultDao.insert(AnalysisResult.of(
                     companyCode,
                     document.getPeriod(),
-                    calculate(companyCode, document.getPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode())),
+                    calculate(companyCode, document),
                     DocTypeCode.fromValue(document.getDocumentTypeCode()),
+                    document.getSubmitDate(),
+                    documentId,
                     nowLocalDateTime()
             ));
         } catch (FundanalyzerCalculateException ignored) {
@@ -111,13 +113,13 @@ public class AnalysisLogic {
      * 企業価値を算出する
      *
      * @param companyCode 企業コード
-     * @param period      対象年
+     * @param document    ドキュメント
      * @return 企業価値
-     * @throws FundanalyzerCalculateException 算出に失敗したとき
      */
-    BigDecimal calculate(final String companyCode, final LocalDate period, final DocTypeCode docTypeCode) {
+    BigDecimal calculate(final String companyCode, final Document document) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
-        final FsValueParameter parameter = FsValueParameter.of(company, period, docTypeCode);
+        final FsValueParameter parameter = FsValueParameter.of(
+                company, document.getPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
 
         // 流動資産合計
         final long totalCurrentAssets = bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);
@@ -158,7 +160,8 @@ public class AnalysisLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
-                        parameter.getDocTypeCode().toValue()
+                        parameter.getDocTypeCode().toValue(),
+                        parameter.getSubmitDate()
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -167,7 +170,7 @@ public class AnalysisLogic {
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
                             Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
-                            "120",
+                            parameter.getDocTypeCode().toValue(),
                             String.valueOf(parameter.getPeriod().getYear())
                     ).getDocumentId();
 
@@ -200,7 +203,8 @@ public class AnalysisLogic {
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         plSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
-                        parameter.getDocTypeCode().toValue()
+                        parameter.getDocTypeCode().toValue(),
+                        parameter.getSubmitDate()
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -209,7 +213,7 @@ public class AnalysisLogic {
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
                             Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
-                            "120",
+                            parameter.getDocTypeCode().toValue(),
                             String.valueOf(parameter.getPeriod().getYear())
                     ).getDocumentId();
 
@@ -239,12 +243,13 @@ public class AnalysisLogic {
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
                 String.valueOf(parameter.getPeriod().getYear()),
-                parameter.getDocTypeCode().toValue()
+                parameter.getDocTypeCode().toValue(),
+                parameter.getSubmitDate()
         ).flatMap(FinancialStatement::getValue)
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
                             Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
-                            "120",
+                            parameter.getDocTypeCode().toValue(),
                             String.valueOf(parameter.getPeriod().getYear())
                     ).getDocumentId();
 
@@ -267,5 +272,6 @@ public class AnalysisLogic {
         private final Company company;
         private final LocalDate period;
         private final DocTypeCode docTypeCode;
+        private final LocalDate submitDate;
     }
 }

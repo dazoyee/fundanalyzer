@@ -165,6 +165,10 @@ public class EdinetDocument {
         return Optional.ofNullable(periodEnd);
     }
 
+    public String getSubmitDateTime() {
+        return submitDateTime;
+    }
+
     // for test
     public void setDocTypeCode(final String docTypeCode) {
         this.docTypeCode = docTypeCode;
@@ -176,5 +180,9 @@ public class EdinetDocument {
 
     public void setPeriodEnd(final String periodEnd) {
         this.periodEnd = periodEnd;
+    }
+
+    public void setSubmitDateTime(final String submitDateTime) {
+        this.submitDateTime = submitDateTime;
     }
 }

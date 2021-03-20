@@ -117,7 +117,8 @@ public class EdinetDetailViewLogic {
                     AnalysisLogic.FsValueParameter.of(
                             company,
                             document.getPeriod(),
-                            DocTypeCode.fromValue(document.getDocumentTypeCode())
+                            DocTypeCode.fromValue(document.getDocumentTypeCode()),
+                            document.getSubmitDate()
                     )
             );
         } catch (FundanalyzerCalculateException e) {
@@ -134,7 +135,8 @@ public class EdinetDetailViewLogic {
                     AnalysisLogic.FsValueParameter.of(
                             company,
                             document.getPeriod(),
-                            DocTypeCode.fromValue(document.getDocumentTypeCode())
+                            DocTypeCode.fromValue(document.getDocumentTypeCode()),
+                            document.getSubmitDate()
                     )
             );
         } catch (FundanalyzerCalculateException e) {

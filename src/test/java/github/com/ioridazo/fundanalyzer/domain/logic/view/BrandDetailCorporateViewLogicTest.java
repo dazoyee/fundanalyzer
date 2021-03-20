@@ -131,6 +131,8 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2020-12-31"),
                         1000L,
                         "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 ),
                 new FinancialStatement(
@@ -143,6 +145,8 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2020-12-31"),
                         2000L,
                         "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 ),
                 new FinancialStatement(
@@ -155,6 +159,8 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2020-12-31"),
                         3000L,
                         "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 ),
                 new FinancialStatement(
@@ -167,6 +173,8 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2019-12-31"),
                         4000L,
                         "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 )
         ));

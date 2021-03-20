@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -499,6 +500,8 @@ class ScrapingLogicTest {
                     LocalDate.parse("2019-09-30"),
                     null,
                     null,
+                    null,
+                    null,
                     null
             );
 
@@ -534,6 +537,8 @@ class ScrapingLogicTest {
                     null,
                     null,
                     LocalDate.parse("2020-03-30"),
+                    null,
+                    null,
                     null,
                     null,
                     null
@@ -618,9 +623,11 @@ class ScrapingLogicTest {
                     "科目"
             ));
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
             var resultBean = FinancialTableResultBean.of("科目", null, "1", Unit.MILLIONS_OF_YEN);
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -640,6 +647,8 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-12-31"),
                     1000000L,
                     "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId",
                     createdAt
             ));
         }
@@ -676,9 +685,11 @@ class ScrapingLogicTest {
                     "科目"
             ));
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
             var resultBean = FinancialTableResultBean.of("一致しない科目", null, "1", Unit.MILLIONS_OF_YEN);
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -699,6 +710,8 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-12-31"),
                     1000000L,
                     "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId",
                     createdAt
             ));
         }
@@ -721,9 +734,11 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
             var value = 1000L;
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -742,6 +757,8 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-12-31"),
                     1000L,
                     "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId",
                     createdAt
             ));
         }
@@ -764,9 +781,11 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
             var value = 1000L;
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -785,6 +804,8 @@ class ScrapingLogicTest {
                     LocalDate.parse("2020-12-31"),
                     1000L,
                     "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId",
                     createdAt
             ));
         }
@@ -834,6 +855,9 @@ class ScrapingLogicTest {
             var edinetDocument = new EdinetDocument();
             var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             edinetDocument.setDocTypeCode(annualSecuritiesReport.toValue());
+            var submitDateTime = "2021-03-20 23:00";
+            edinetDocument.setSubmitDateTime(submitDateTime);
+            var submitDate = LocalDate.parse(submitDateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             var totalCurrentLiabilities = new BsSubject("1", null, null, null);
             var fsTotalCurrentLiabilities = new FinancialStatement(
                     null,
@@ -844,6 +868,8 @@ class ScrapingLogicTest {
                     null,
                     null,
                     1000L,
+                    null,
+                    null,
                     null,
                     null
             );
@@ -858,6 +884,8 @@ class ScrapingLogicTest {
                     null,
                     1000L,
                     null,
+                    null,
+                    null,
                     null
             );
 
@@ -868,7 +896,8 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalCurrentLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    annualSecuritiesReport.toValue()
+                    annualSecuritiesReport.toValue(),
+                    submitDate
             )).thenReturn(Optional.of(fsTotalCurrentLiabilities));
             when(bsSubjectDao.selectByOutlineSubjectId(BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()))
                     .thenReturn(List.of(totalLiabilities));
@@ -877,7 +906,8 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    annualSecuritiesReport.toValue()
+                    annualSecuritiesReport.toValue(),
+                    submitDate
             )).thenReturn(Optional.of(fsTotalLiabilities));
             doNothing().when(scrapingLogic).insertFinancialStatement(eq(company), any(), any(), eq(edinetDocument), eq(0L));
             when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));
@@ -905,6 +935,9 @@ class ScrapingLogicTest {
             var edinetDocument = new EdinetDocument();
             var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             edinetDocument.setDocTypeCode(annualSecuritiesReport.toValue());
+            var submitDateTime = "2021-03-20 23:00";
+            edinetDocument.setSubmitDateTime(submitDateTime);
+            var submitDate = LocalDate.parse(submitDateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
             var totalCurrentLiabilities = new BsSubject("1", null, null, null);
             var fsTotalCurrentLiabilities = new FinancialStatement(
                     null,
@@ -915,6 +948,8 @@ class ScrapingLogicTest {
                     null,
                     null,
                     2000L,
+                    null,
+                    null,
                     null,
                     null
             );
@@ -929,6 +964,8 @@ class ScrapingLogicTest {
                     null,
                     3000L,
                     null,
+                    null,
+                    null,
                     null
             );
 
@@ -939,7 +976,8 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalCurrentLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    annualSecuritiesReport.toValue()
+                    annualSecuritiesReport.toValue(),
+                    submitDate
             )).thenReturn(Optional.of(fsTotalCurrentLiabilities));
             when(bsSubjectDao.selectByOutlineSubjectId(BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()))
                     .thenReturn(List.of(totalLiabilities));
@@ -948,7 +986,8 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    annualSecuritiesReport.toValue()
+                    annualSecuritiesReport.toValue(),
+                    submitDate
             )).thenReturn(Optional.of(fsTotalLiabilities));
             when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));
 

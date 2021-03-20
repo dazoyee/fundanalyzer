@@ -177,8 +177,8 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null);
-            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null);
+            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
+            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 
@@ -236,7 +236,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(500.250515), "120", null);
+            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(500.250515), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1));
 
@@ -266,8 +266,8 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), "120", null);
-            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), "120", null);
+            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), "120", null, null, null);
+            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 

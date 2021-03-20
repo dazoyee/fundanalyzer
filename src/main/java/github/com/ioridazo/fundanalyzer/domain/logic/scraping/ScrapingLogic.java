@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -350,6 +351,8 @@ public class ScrapingLogic {
                     LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
                     value,
                     DocTypeCode.fromValue(edinetDocument.getDocTypeCode()),
+                    LocalDateTime.parse(edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
+                    edinetDocument.getDocId(),
                     nowLocalDateTime()
             ));
         } catch (NestedRuntimeException e) {
@@ -376,6 +379,8 @@ public class ScrapingLogic {
      */
     void checkBs(final Company company, final EdinetDocument edinetDocument) {
         final DocTypeCode docTypeCode = DocTypeCode.fromValue(edinetDocument.getDocTypeCode());
+        final LocalDate submitDate = LocalDateTime.parse(
+                edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
 
         final var totalCurrentLiabilities = bsSubjectDao.selectByOutlineSubjectId(
                 BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId()).stream()
@@ -384,7 +389,8 @@ public class ScrapingLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                        docTypeCode.toValue()
+                        docTypeCode.toValue(),
+                        submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -398,7 +404,8 @@ public class ScrapingLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                        docTypeCode.toValue()
+                        docTypeCode.toValue(),
+                        submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)

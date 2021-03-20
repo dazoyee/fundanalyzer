@@ -71,9 +71,10 @@ class EdinetDetailViewLogicTest {
             var period = LocalDate.parse("2020-12-31");
             var document = Document.builder()
                     .documentId("documentId")
-                    .edinetCode("edinetCode")
                     .documentTypeCode(annualSecuritiesReport.toValue())
+                    .edinetCode("edinetCode")
                     .period(period)
+                    .submitDate(submitDate)
                     .scrapedBs("9")
                     .scrapedPl("1")
                     .scrapedNumberOfShares("1")
@@ -93,7 +94,7 @@ class EdinetDetailViewLogicTest {
                     null,
                     null
             );
-            var parameter = AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport);
+            var parameter = AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport, submitDate);
 
             when(documentDao.selectByTypeAndSubmitDate(annualSecuritiesReport.toValue(), submitDate)).thenReturn(documentList);
             when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
@@ -143,9 +144,10 @@ class EdinetDetailViewLogicTest {
             var period = LocalDate.parse("2020-12-31");
             var document = Document.builder()
                     .documentId("documentId")
-                    .edinetCode("edinetCode")
                     .documentTypeCode(annualSecuritiesReport.toValue())
-                    .period(period)
+                    .edinetCode("edinetCode")
+                    .period(period).
+                            submitDate(submitDate)
                     .scrapedBs("9")
                     .scrapedPl("1")
                     .scrapedNumberOfShares("1")
@@ -165,7 +167,7 @@ class EdinetDetailViewLogicTest {
                     null,
                     null
             );
-            var parameter = AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport);
+            var parameter = AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport, submitDate);
 
             when(documentDao.selectByTypeAndSubmitDate(annualSecuritiesReport.toValue(), submitDate)).thenReturn(documentList);
             when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
