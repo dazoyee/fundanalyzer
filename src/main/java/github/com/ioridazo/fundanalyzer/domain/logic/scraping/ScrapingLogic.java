@@ -9,7 +9,6 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatemen
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
@@ -104,12 +103,7 @@ public class ScrapingLogic {
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
 
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.DONE.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateDownloadToDone(docId, nowLocalDateTime()));
 
             // ファイル解凍
             fileOperator.decodeZipFile(
@@ -117,30 +111,16 @@ public class ScrapingLogic {
                     makeTargetPath(pathDecode, targetDate, docId)
             );
 
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .decoded(DocumentStatus.DONE.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build());
+            documentDao.update(Document.ofUpdateDecodeToDone(docId, nowLocalDateTime()));
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
                     "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.ERROR.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateDownloadToError(docId, nowLocalDateTime()));
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
                     "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .decoded(DocumentStatus.ERROR.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateDecodeToError(docId, nowLocalDateTime()));
         }
     }
 
@@ -207,7 +187,7 @@ public class ScrapingLogic {
                         Process.SCRAPING
                 );
 
-                documentDao.update(Document.ofUpdated(
+                documentDao.update(Document.ofUpdateSwitchFs(
                         fs,
                         documentId,
                         DocumentStatus.DONE,
@@ -216,7 +196,7 @@ public class ScrapingLogic {
                 ));
 
             } catch (FundanalyzerFileException e) {
-                documentDao.update(Document.ofUpdated(
+                documentDao.update(Document.ofUpdateSwitchFs(
                         fs,
                         documentId,
                         DocumentStatus.ERROR,
@@ -232,12 +212,7 @@ public class ScrapingLogic {
                 );
             }
         } else {
-            documentDao.update(Document.builder()
-                    .documentId(documentId)
-                    .removed(Flag.ON.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
             log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
                             "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
                     company.getCode().orElseThrow(),

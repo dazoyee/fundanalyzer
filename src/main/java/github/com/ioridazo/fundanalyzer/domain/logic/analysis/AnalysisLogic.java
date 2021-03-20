@@ -7,7 +7,6 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
@@ -167,12 +166,9 @@ public class AnalysisLogic {
                             "120",
                             String.valueOf(period.getYear())
                     ).getDocumentId();
-                    documentDao.update(Document.builder()
-                            .documentId(docId)
-                            .scrapedBs(DocumentStatus.HALF_WAY.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+
+                    documentDao.update(Document.ofUpdateBsToHalfWay(docId, nowLocalDateTime()));
+
                     log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
                             company.getCode().orElseThrow(),
@@ -212,12 +208,9 @@ public class AnalysisLogic {
                             "120",
                             String.valueOf(period.getYear())
                     ).getDocumentId();
-                    documentDao.update(Document.builder()
-                            .documentId(docId)
-                            .scrapedPl(DocumentStatus.HALF_WAY.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+
+                    documentDao.update(Document.ofUpdatePlToHalfWay(docId, nowLocalDateTime()));
+
                     log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
                             company.getCode().orElseThrow(),
@@ -250,12 +243,9 @@ public class AnalysisLogic {
                             "120",
                             String.valueOf(period.getYear())
                     ).getDocumentId();
-                    documentDao.update(Document.builder()
-                            .documentId(docId)
-                            .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+
+                    documentDao.update(Document.ofUpdateNumberOfSharesToHalfWay(docId, nowLocalDateTime()));
+
                     log.warn("  株式総数の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
                             company.getCode().orElseThrow(),

@@ -2,7 +2,9 @@ package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
 import lombok.Builder;
 import lombok.Value;
 import org.seasar.doma.Column;
@@ -64,7 +66,108 @@ public class Document {
 
     private final LocalDateTime updatedAt;
 
-    public static Document ofUpdated(
+    public static Document of(final LocalDate submitDate, final Results results, final LocalDateTime nowLocalDateTime) {
+        return Document.builder()
+                .documentId(results.getDocId())
+                .documentTypeCode(results.getDocTypeCode())
+                .edinetCode(results.getEdinetCode().orElse(null))
+                .period(results.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1) : null)
+                .submitDate(submitDate)
+                .createdAt(nowLocalDateTime)
+                .updatedAt(nowLocalDateTime)
+                .build();
+    }
+
+    public static Document ofUpdateStoreToDone(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .downloaded(DocumentStatus.DONE.toValue())
+                .decoded(DocumentStatus.DONE.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateDownloadToDone(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .downloaded(DocumentStatus.DONE.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateDownloadToError(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .downloaded(DocumentStatus.ERROR.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateDecodeToDone(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .decoded(DocumentStatus.DONE.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateDecodeToError(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .decoded(DocumentStatus.ERROR.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateBsToNotYet(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .scrapedBs(DocumentStatus.NOT_YET.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateBsToHalfWay(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .scrapedBs(DocumentStatus.HALF_WAY.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdatePlToNotYet(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .scrapedPl(DocumentStatus.NOT_YET.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdatePlToHalfWay(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .scrapedPl(DocumentStatus.HALF_WAY.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateNumberOfSharesToHalfWay(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateRemoved(final String documentId, final LocalDateTime updatedAt) {
+        return Document.builder()
+                .documentId(documentId)
+                .removed(Flag.ON.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static Document ofUpdateSwitchFs(
             final FinancialStatementEnum fs,
             final String documentId,
             final DocumentStatus status,

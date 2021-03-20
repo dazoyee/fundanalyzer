@@ -293,16 +293,7 @@ public class DocumentService {
                 }
             });
 
-            documentDao.insert(Document.builder()
-                    .documentId(results.getDocId())
-                    .documentTypeCode(results.getDocTypeCode())
-                    .edinetCode(results.getEdinetCode().orElse(null))
-                    .period(results.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1) : null)
-                    .submitDate(date)
-                    .createdAt(nowLocalDateTime())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.insert(Document.of(date, results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -333,13 +324,7 @@ public class DocumentService {
         // 既にファイルが存在しているか確認する
         if (fileListAlready(targetDate).stream()
                 .anyMatch(docIdList -> docIdList.stream().anyMatch(docId::equals))) {
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.DONE.toValue())
-                    .decoded(DocumentStatus.DONE.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateStoreToDone(docId, nowLocalDateTime()));
         } else {
             // ファイル取得
             scrapingLogic.download(docId, targetDate);
@@ -445,12 +430,7 @@ public class DocumentService {
                 .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
-                    documentDao.update(Document.builder()
-                            .documentId(documentId)
-                            .scrapedBs(DocumentStatus.NOT_YET.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+                    documentDao.update(Document.ofUpdateBsToNotYet(documentId, nowLocalDateTime()));
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
                 });
 
@@ -461,12 +441,7 @@ public class DocumentService {
                 .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
-                    documentDao.update(Document.builder()
-                            .documentId(documentId)
-                            .scrapedPl(DocumentStatus.NOT_YET.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+                    documentDao.update(Document.ofUpdatePlToNotYet(documentId, nowLocalDateTime()));
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
     }
@@ -479,12 +454,7 @@ public class DocumentService {
     @NewSpan("DocumentService.removeDocument")
     @Transactional
     public void removeDocument(final String documentId) {
-        documentDao.update(Document.builder()
-                .documentId(documentId)
-                .removed(Flag.ON.toValue())
-                .updatedAt(nowLocalDateTime())
-                .build()
-        );
+        documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", documentId),

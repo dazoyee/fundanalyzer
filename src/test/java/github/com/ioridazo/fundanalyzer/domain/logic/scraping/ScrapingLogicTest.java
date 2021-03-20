@@ -235,7 +235,7 @@ class ScrapingLogicTest {
                     eq(edinetDocument)
             );
             verify(scrapingLogic, times(1)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdated(
+            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -296,7 +296,7 @@ class ScrapingLogicTest {
                     eq(edinetDocument)
             );
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdated(
+            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -356,7 +356,7 @@ class ScrapingLogicTest {
                     any()
             );
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdated(
+            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -433,7 +433,7 @@ class ScrapingLogicTest {
             verify(scrapingLogic, times(0))
                     .insertFinancialStatement(any(), any(), any(), any(), any(), any());
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdated(
+            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.ERROR,
