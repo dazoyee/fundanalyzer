@@ -349,7 +349,7 @@ public class ScrapingLogic {
                     LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
                     LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
                     value,
-                    edinetDocument.getDocTypeCode(),
+                    DocTypeCode.fromValue(edinetDocument.getDocTypeCode()),
                     nowLocalDateTime()
             ));
         } catch (NestedRuntimeException e) {

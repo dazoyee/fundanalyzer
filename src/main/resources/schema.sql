@@ -140,13 +140,14 @@ create TABLE IF NOT EXISTS financial_statement
 -- 企業価値
 create TABLE IF NOT EXISTS analysis_result
 (
-    id              INT AUTO_INCREMENT,
-    company_code    CHAR(5)  NOT NULL COMMENT '企業コード',
+    id                 INT AUTO_INCREMENT,
+    company_code       CHAR(5)  NOT NULL COMMENT '企業コード',
     period DATE NOT NULL COMMENT '期間',
-    corporate_value FLOAT    NOT NULL COMMENT '企業価値',
-    created_at      DATETIME NOT NULL COMMENT '登録日',
+    corporate_value    FLOAT    NOT NULL COMMENT '企業価値',
+    document_type_code CHAR(3) COMMENT '書類種別コード',
+    created_at         DATETIME NOT NULL COMMENT '登録日',
     PRIMARY KEY (id),
-    UNIQUE KEY (company_code, period)
+    UNIQUE KEY (company_code, period, document_type_code)
 );
 
 -- 株価
@@ -173,6 +174,7 @@ create TABLE IF NOT EXISTS stock_price
     UNIQUE KEY (company_code, target_date, source_of)
 );
 
+-- みんかぶ
 create TABLE IF NOT EXISTS minkabu
 (
     id                         INT AUTO_INCREMENT,

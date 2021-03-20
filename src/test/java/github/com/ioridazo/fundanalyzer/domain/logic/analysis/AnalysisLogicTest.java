@@ -109,6 +109,7 @@ class AnalysisLogicTest {
                     code,
                     period,
                     BigDecimal.valueOf(1),
+                    "120",
                     createdAt
             ));
         }
@@ -150,6 +151,7 @@ class AnalysisLogicTest {
                     code,
                     period,
                     BigDecimal.valueOf(1),
+                    "120",
                     createdAt
             ));
         }

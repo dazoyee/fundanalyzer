@@ -85,6 +85,7 @@ public class AnalysisLogic {
                     companyCode,
                     document.getPeriod(),
                     calculate(companyCode, document.getPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode())),
+                    DocTypeCode.fromValue(document.getDocumentTypeCode()),
                     nowLocalDateTime()
             ));
         } catch (FundanalyzerCalculateException ignored) {

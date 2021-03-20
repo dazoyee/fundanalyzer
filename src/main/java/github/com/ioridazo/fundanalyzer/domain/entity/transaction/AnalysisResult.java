@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -28,6 +29,8 @@ public class AnalysisResult {
 
     private final BigDecimal corporateValue;
 
+    private final String documentTypeCode;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -35,12 +38,14 @@ public class AnalysisResult {
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
+            final DocTypeCode docTypeCode,
             final LocalDateTime createdAt) {
         return new AnalysisResult(
                 null,
                 companyCode,
                 period,
                 corporateValue,
+                docTypeCode.toValue(),
                 createdAt
         );
     }

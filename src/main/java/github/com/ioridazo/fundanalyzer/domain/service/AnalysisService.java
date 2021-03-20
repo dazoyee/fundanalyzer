@@ -82,7 +82,9 @@ public class AnalysisService {
                             document.getEdinetCode(), companyAll, List.of(bank, insurance)))
                     // only not analyze
                     .filter(document -> analysisResultDao.selectByUniqueKey(
-                            Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(), document.getPeriod()
+                            Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(),
+                            document.getPeriod(),
+                            document.getDocumentTypeCode()
                             ).isEmpty()
                     )
                     .forEach(document -> analysisLogic.analyze(document.getDocumentId()));
