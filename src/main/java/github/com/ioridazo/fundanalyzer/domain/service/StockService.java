@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +52,10 @@ public class StockService {
         this.documentDao = documentDao;
         this.stockPriceDao = stockPriceDao;
         this.minkabuDao = minkabuDao;
+    }
+
+    LocalDate nowLocalDate() {
+        return LocalDate.now();
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -125,8 +128,12 @@ public class StockService {
             });
 
             // みんかぶ
-            if (isNotInsertedMinkabu(minkabu.getTargetDate(), minkabuList)) {
-                final var m = Minkabu.ofMinkabuResultBean(code, minkabu, nowLocalDateTime());
+            final boolean match = minkabuList.stream()
+                    .map(Minkabu::getTargetDate)
+                    .noneMatch(targetDate -> nowLocalDate().equals(targetDate));
+
+            if (match) {
+                final var m = Minkabu.ofMinkabuResultBean(code, nowLocalDate(), minkabu, nowLocalDateTime());
                 if (Objects.isNull(m.getGoalsStock())) {
                     FundanalyzerLogClient.logService(
                             MessageFormat.format(
@@ -163,13 +170,6 @@ public class StockService {
         }
         return stockPriceList.stream()
                 .map(StockPrice::getTargetDate)
-                .noneMatch(targetDate::equals);
-    }
-
-    private boolean isNotInsertedMinkabu(final String targetDateAsString, final List<Minkabu> minkabuList) {
-        final var targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear());
-        return minkabuList.stream()
-                .map(Minkabu::getTargetDate)
                 .noneMatch(targetDate::equals);
     }
 }

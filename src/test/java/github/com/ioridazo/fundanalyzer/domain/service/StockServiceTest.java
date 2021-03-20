@@ -21,7 +21,6 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.MonthDay;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -221,13 +220,13 @@ class StockServiceTest {
         @Test
         void importStockPrice_ok_code_minkabu_insert() {
             var code = "code";
+            var targetDate = LocalDate.of(2020, 11, 27);
             var createdAt = LocalDateTime.of(2020, 11, 14, 18, 21);
 
             when(stockScraping.nikkei(code)).thenReturn(generateNikkeiResultBean());
             when(stockScraping.kabuoji3(code)).thenReturn(List.of(generateKabuoji3ResultBean()));
             when(stockScraping.minkabu(code)).thenReturn(new MinkabuResultBean(
                     "408. 0 円",
-                    "11/27",
                     new MinkabuResultBean.ExpectedStockPrice(
                             "636",
                             "638",
@@ -235,6 +234,7 @@ class StockServiceTest {
                             "630"
                     )
             ));
+            doReturn(targetDate).when(service).nowLocalDate();
             doReturn(createdAt).when(service).nowLocalDateTime();
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
@@ -242,7 +242,7 @@ class StockServiceTest {
             verify(minkabuDao, times(1)).insert(new Minkabu(
                     null,
                     "code",
-                    MonthDay.parse("--11-27").atYear(LocalDate.now().getYear()),
+                    targetDate,
                     408.0,
                     636.0,
                     638.0,
@@ -324,7 +324,6 @@ class StockServiceTest {
             ));
             when(stockScraping.minkabu(code)).thenReturn(new MinkabuResultBean(
                     "408. 0 円",
-                    "11/27",
                     new MinkabuResultBean.ExpectedStockPrice(
                             "636",
                             "638",
@@ -419,7 +418,6 @@ class StockServiceTest {
         private MinkabuResultBean generateMinkabuResultBean() {
             return new MinkabuResultBean(
                     "408. 0 円",
-                    "11/27",
                     new MinkabuResultBean.ExpectedStockPrice(
                             "636",
                             "638",

@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup;
 
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScraping;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -163,7 +162,6 @@ class StockScrapingTest {
 
             assertAll("MinkabuResultBean",
                     () -> assertNotNull(actual.getStockPrice()),
-                    () -> assertNotNull(actual.getTargetDate()),
                     () -> assertNotNull(actual.getExpectedStockPrice().getGoals()),
                     () -> assertNotNull(actual.getExpectedStockPrice().getTheoretical()),
                     () -> assertNotNull(actual.getExpectedStockPrice().getIndividualInvestors()),
@@ -186,7 +184,6 @@ class StockScrapingTest {
 
             assertAll("MinkabuResultBean",
                     () -> assertEquals("408. 0 円", actual.getStockPrice()),
-                    () -> assertEquals("11/27", actual.getTargetDate()),
                     () -> assertEquals("636", actual.getExpectedStockPrice().getGoals()),
                     () -> assertEquals("638", actual.getExpectedStockPrice().getTheoretical()),
                     () -> assertEquals("649", actual.getExpectedStockPrice().getIndividualInvestors()),
@@ -207,7 +204,6 @@ class StockScrapingTest {
 
             assertAll("MinkabuResultBean",
                     () -> assertEquals("3,180. 0 円", actual.getStockPrice()),
-                    () -> assertEquals("12/04", actual.getTargetDate()),
                     () -> assertEquals("2,575", actual.getExpectedStockPrice().getGoals()),
                     () -> assertEquals("3,013", actual.getExpectedStockPrice().getTheoretical()),
                     () -> assertEquals("1,918", actual.getExpectedStockPrice().getIndividualInvestors()),

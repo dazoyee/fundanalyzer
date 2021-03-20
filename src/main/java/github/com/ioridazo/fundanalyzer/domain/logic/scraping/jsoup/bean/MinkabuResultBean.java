@@ -10,8 +10,6 @@ public class MinkabuResultBean {
 
     private final String stockPrice;
 
-    private final String targetDate;
-
     private final ExpectedStockPrice expectedStockPrice;
 
     @Value
@@ -25,8 +23,6 @@ public class MinkabuResultBean {
     public static MinkabuResultBean ofJsoup(final Document document) {
         return new MinkabuResultBean(
                 document.select("div.stock_price").text(),
-                document.select("div.md_stockBoard_stockTable").select("span.fsm").text()
-                        .replace("(", "").replace(")", ""),
                 new ExpectedStockPrice(
                         document.select("div.ly_content_wrapper").stream()
                                 .filter(element -> "目標株価".equals(element.select("div.md_index").select("h2").text()))
