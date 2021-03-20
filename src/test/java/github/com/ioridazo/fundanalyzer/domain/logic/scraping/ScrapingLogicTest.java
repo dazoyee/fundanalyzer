@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
@@ -25,7 +26,6 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -188,6 +188,7 @@ class ScrapingLogicTest {
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             var company = new Company(
                     "code",
                     null,
@@ -250,6 +251,7 @@ class ScrapingLogicTest {
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             var company = new Company(
                     "code",
                     null,
@@ -311,6 +313,7 @@ class ScrapingLogicTest {
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             var company = new Company(
                     "code",
                     null,
@@ -371,6 +374,7 @@ class ScrapingLogicTest {
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodEnd("2020-09-30");
             var company = new Company(
                     "code",
@@ -404,6 +408,7 @@ class ScrapingLogicTest {
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
             var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocTypeCode("120");
             var company = new Company(
                     "code",
                     null,
@@ -741,9 +746,8 @@ class ScrapingLogicTest {
             ));
         }
 
-        @Disabled("catchできない")
         @DisplayName("insertFinancialStatement : 一意制約違反のときはDB登録しないことを確認する")
-        @Test
+//        @Test
         void insertFinancialStatement_UniqueConstraintException() {
             var company = new Company(
                     "code",
@@ -828,6 +832,8 @@ class ScrapingLogicTest {
                     null
             );
             var edinetDocument = new EdinetDocument();
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
+            edinetDocument.setDocTypeCode(annualSecuritiesReport.toValue());
             var totalCurrentLiabilities = new BsSubject("1", null, null, null);
             var fsTotalCurrentLiabilities = new FinancialStatement(
                     null,
@@ -861,7 +867,8 @@ class ScrapingLogicTest {
                     edinetDocument.getEdinetCode().orElse(null),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalCurrentLiabilities.getId(),
-                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(fsTotalCurrentLiabilities));
             when(bsSubjectDao.selectByOutlineSubjectId(BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()))
                     .thenReturn(List.of(totalLiabilities));
@@ -869,7 +876,8 @@ class ScrapingLogicTest {
                     edinetDocument.getEdinetCode().orElse(null),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalLiabilities.getId(),
-                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(fsTotalLiabilities));
             doNothing().when(scrapingLogic).insertFinancialStatement(eq(company), any(), any(), eq(edinetDocument), eq(0L));
             when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));
@@ -895,6 +903,8 @@ class ScrapingLogicTest {
                     null
             );
             var edinetDocument = new EdinetDocument();
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
+            edinetDocument.setDocTypeCode(annualSecuritiesReport.toValue());
             var totalCurrentLiabilities = new BsSubject("1", null, null, null);
             var fsTotalCurrentLiabilities = new FinancialStatement(
                     null,
@@ -928,7 +938,8 @@ class ScrapingLogicTest {
                     edinetDocument.getEdinetCode().orElse(null),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalCurrentLiabilities.getId(),
-                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(fsTotalCurrentLiabilities));
             when(bsSubjectDao.selectByOutlineSubjectId(BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()))
                     .thenReturn(List.of(totalLiabilities));
@@ -936,7 +947,8 @@ class ScrapingLogicTest {
                     edinetDocument.getEdinetCode().orElse(null),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalLiabilities.getId(),
-                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                    edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(fsTotalLiabilities));
             when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));
 

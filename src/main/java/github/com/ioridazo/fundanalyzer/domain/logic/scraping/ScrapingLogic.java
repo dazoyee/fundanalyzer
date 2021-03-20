@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -374,13 +375,16 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      */
     void checkBs(final Company company, final EdinetDocument edinetDocument) {
+        final DocTypeCode docTypeCode = DocTypeCode.fromValue(edinetDocument.getDocTypeCode());
+
         final var totalCurrentLiabilities = bsSubjectDao.selectByOutlineSubjectId(
                 BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId()).stream()
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
                         edinetDocument.getEdinetCode().orElse(null),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                        docTypeCode.toValue()
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -393,7 +397,8 @@ public class ScrapingLogic {
                         edinetDocument.getEdinetCode().orElse(null),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                        docTypeCode.toValue()
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)

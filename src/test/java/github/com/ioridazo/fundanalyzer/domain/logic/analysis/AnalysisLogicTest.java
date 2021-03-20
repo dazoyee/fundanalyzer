@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
@@ -79,6 +80,7 @@ class AnalysisLogicTest {
             var code = "code";
             var document = Document.builder()
                     .edinetCode("edinetCode")
+                    .documentTypeCode("120")
                     .period(period)
                     .build();
             var company = new Company(
@@ -97,7 +99,7 @@ class AnalysisLogicTest {
 
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
             when(companyDao.selectAll()).thenReturn(List.of(company));
-            doReturn(BigDecimal.valueOf(1)).when(logic).calculate("code", period);
+            doReturn(BigDecimal.valueOf(1)).when(logic).calculate("code", period, DocTypeCode.ANNUAL_SECURITIES_REPORT);
             when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
             assertDoesNotThrow(() -> logic.analyze(documentId));
@@ -119,6 +121,7 @@ class AnalysisLogicTest {
             var code = "code";
             var document = Document.builder()
                     .edinetCode("edinetCode")
+                    .documentTypeCode("120")
                     .period(period)
                     .build();
             var company = new Company(
@@ -137,7 +140,7 @@ class AnalysisLogicTest {
 
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
             when(companyDao.selectAll()).thenReturn(List.of(company));
-            doThrow(FundanalyzerCalculateException.class).when(logic).calculate("code", period);
+            doThrow(FundanalyzerCalculateException.class).when(logic).calculate("code", period, DocTypeCode.ANNUAL_SECURITIES_REPORT);
             when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
             assertDoesNotThrow(() -> logic.analyze(documentId));
@@ -160,6 +163,7 @@ class AnalysisLogicTest {
         void calculate_ok() {
             var companyCode = "code";
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var company = new Company(
                     null,
                     null,
@@ -172,18 +176,19 @@ class AnalysisLogicTest {
                     null,
                     null
             );
+            var parameter = AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport);
 
             when(companyDao.selectByCode(companyCode)).thenReturn(Optional.of(company));
-            doReturn(1000L).when(logic).bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period);
-            doReturn(1000L).when(logic).bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period);
-            doReturn(1000L).when(logic).bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period);
-            doReturn(1000L).when(logic).bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period);
-            doReturn(10000L).when(logic).plValues(company, PlEnum.OPERATING_PROFIT, period);
-            doReturn(1000L).when(logic).nsValue(company, period);
+            doReturn(1000L).when(logic).bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);
+            doReturn(1000L).when(logic).bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter);
+            doReturn(1000L).when(logic).bsValue(BsEnum.TOTAL_CURRENT_LIABILITIES, parameter);
+            doReturn(1000L).when(logic).bsValue(BsEnum.TOTAL_FIXED_LIABILITIES, parameter);
+            doReturn(10000L).when(logic).plValue(PlEnum.OPERATING_PROFIT, parameter);
+            doReturn(1000L).when(logic).nsValue(parameter);
 
             var expected = BigDecimal.valueOf((10000L * 10 + 1000 - (1000 * 1.2) + 1000 - 1000) / 1000);
 
-            assertEquals(expected, logic.calculate(companyCode, period));
+            assertEquals(expected, logic.calculate(companyCode, period, annualSecuritiesReport));
         }
     }
 
@@ -207,6 +212,7 @@ class AnalysisLogicTest {
             );
             var bsEnum = BsEnum.TOTAL_CURRENT_ASSETS;
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var bsSubject = new BsSubject("1", "1", "1", "流動資産合計");
             var expected = 1000L;
             var financialStatement = new FinancialStatement(
@@ -228,10 +234,11 @@ class AnalysisLogicTest {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     bsSubject.getId(),
-                    String.valueOf(period.getYear())
+                    String.valueOf(period.getYear()),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(financialStatement));
 
-            assertEquals(expected, logic.bsValues(company, bsEnum, period));
+            assertEquals(expected, logic.bsValue(bsEnum, AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport)));
         }
 
         @DisplayName("bsValues : 貸借対照表の値の取得に失敗したときの処理を確認する")
@@ -251,6 +258,7 @@ class AnalysisLogicTest {
             );
             var bsEnum = BsEnum.TOTAL_CURRENT_ASSETS;
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var bsSubject = new BsSubject("1", "1", "1", "流動資産合計");
             var documentId = "docId";
             var document = Document.builder().documentId(documentId).bsDocumentPath("bsDocumentPath").build();
@@ -262,7 +270,8 @@ class AnalysisLogicTest {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     bsSubject.getId(),
-                    String.valueOf(period.getYear())
+                    String.valueOf(period.getYear()),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.empty());
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(documentDao.selectDocumentIdBy(
@@ -273,7 +282,7 @@ class AnalysisLogicTest {
             when(logic.nowLocalDateTime()).thenReturn(updated);
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
 
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.bsValues(company, bsEnum, period));
+            assertThrows(FundanalyzerCalculateException.class, () -> logic.bsValue(bsEnum, AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport)));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId(documentId)
@@ -299,6 +308,7 @@ class AnalysisLogicTest {
             );
             var plEnum = PlEnum.OPERATING_PROFIT;
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var plSubject = new PlSubject("1", "1", "1", "流動資産合計");
             var expected = 1000L;
             var financialStatement = new FinancialStatement(
@@ -320,10 +330,11 @@ class AnalysisLogicTest {
                     company.getEdinetCode(),
                     FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                     plSubject.getId(),
-                    String.valueOf(period.getYear())
+                    String.valueOf(period.getYear()),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(financialStatement));
 
-            assertEquals(expected, logic.plValues(company, plEnum, period));
+            assertEquals(expected, logic.plValue(plEnum, AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport)));
         }
 
         @DisplayName("plValues : 損益計算書の値の取得に失敗したときの処理を確認する")
@@ -343,6 +354,7 @@ class AnalysisLogicTest {
             );
             var plEnum = PlEnum.OPERATING_PROFIT;
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var plSubject = new PlSubject("1", "1", "1", "流動資産合計");
             var documentId = "docId";
             var document = Document.builder().documentId(documentId).plDocumentPath("plDocumentPath").build();
@@ -354,7 +366,8 @@ class AnalysisLogicTest {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     plSubject.getId(),
-                    String.valueOf(period.getYear())
+                    String.valueOf(period.getYear()),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.empty());
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(documentDao.selectDocumentIdBy(
@@ -365,7 +378,7 @@ class AnalysisLogicTest {
             when(logic.nowLocalDateTime()).thenReturn(updated);
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
 
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.plValues(company, plEnum, period));
+            assertThrows(FundanalyzerCalculateException.class, () -> logic.plValue(plEnum, AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport)));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId(documentId)
@@ -390,6 +403,7 @@ class AnalysisLogicTest {
                     null
             );
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var expected = 1000L;
             var financialStatement = new FinancialStatement(
                     1,
@@ -408,10 +422,11 @@ class AnalysisLogicTest {
                     company.getEdinetCode(),
                     FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                     "0",
-                    String.valueOf(period.getYear())
+                    String.valueOf(period.getYear()),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.of(financialStatement));
 
-            assertEquals(expected, logic.nsValue(company, period));
+            assertEquals(expected, logic.nsValue(AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport)));
         }
 
         @DisplayName("nsValue : 株式総数の値の取得に失敗したときの処理を確認する")
@@ -430,6 +445,7 @@ class AnalysisLogicTest {
                     null
             );
             var period = LocalDate.parse("2020-10-10");
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var documentId = "docId";
             var document = Document.builder().documentId(documentId).numberOfSharesDocumentPath("numberOfSharesDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
@@ -438,7 +454,8 @@ class AnalysisLogicTest {
                     company.getEdinetCode(),
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     "0",
-                    String.valueOf(period.getYear())
+                    String.valueOf(period.getYear()),
+                    annualSecuritiesReport.toValue()
             )).thenReturn(Optional.empty());
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(documentDao.selectDocumentIdBy(
@@ -449,7 +466,7 @@ class AnalysisLogicTest {
             when(logic.nowLocalDateTime()).thenReturn(updated);
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
 
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.nsValue(company, period));
+            assertThrows(FundanalyzerCalculateException.class, () -> logic.nsValue(AnalysisLogic.FsValueParameter.of(company, period, annualSecuritiesReport)));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId(documentId)

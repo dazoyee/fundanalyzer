@@ -54,7 +54,7 @@ class SlackProxyTest {
     }
 
     @Disabled("テスト送信のため")
-    @Test
+//    @Test
     void sendMessage_tester() {
         var propertyPath = "property.path";
 

@@ -23,7 +23,8 @@ public interface FinancialStatementDao {
             String edinetCode,
             String financialStatementId,
             String subjectId,
-            String dayOfYear);
+            String dayOfYear,
+            String documentTypeCode);
 
     @Select
     List<FinancialStatement> selectByEdinetCodeAndFsAndYear(

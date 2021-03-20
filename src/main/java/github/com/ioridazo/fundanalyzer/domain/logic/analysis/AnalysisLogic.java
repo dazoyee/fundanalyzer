@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
@@ -21,6 +22,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import lombok.Value;
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -82,7 +84,7 @@ public class AnalysisLogic {
             analysisResultDao.insert(AnalysisResult.of(
                     companyCode,
                     document.getPeriod(),
-                    calculate(companyCode, document.getPeriod()),
+                    calculate(companyCode, document.getPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode())),
                     nowLocalDateTime()
             ));
         } catch (FundanalyzerCalculateException ignored) {
@@ -112,21 +114,22 @@ public class AnalysisLogic {
      * @return 企業価値
      * @throws FundanalyzerCalculateException 算出に失敗したとき
      */
-    BigDecimal calculate(final String companyCode, final LocalDate period) {
+    BigDecimal calculate(final String companyCode, final LocalDate period, final DocTypeCode docTypeCode) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
+        final FsValueParameter parameter = FsValueParameter.of(company, period, docTypeCode);
 
         // 流動資産合計
-        final var totalCurrentAssets = bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period);
+        final long totalCurrentAssets = bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);
         // 投資その他の資産合計
-        final var totalInvestmentsAndOtherAssets = bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period);
+        final long totalInvestmentsAndOtherAssets = bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter);
         // 流動負債合計
-        final var totalCurrentLiabilities = bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period);
+        final long totalCurrentLiabilities = bsValue(BsEnum.TOTAL_CURRENT_LIABILITIES, parameter);
         // 固定負債合計
-        final var totalFixedLiabilities = bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period);
+        final long totalFixedLiabilities = bsValue(BsEnum.TOTAL_FIXED_LIABILITIES, parameter);
         // 営業利益
-        final var operatingProfit = plValues(company, PlEnum.OPERATING_PROFIT, period);
+        final long operatingProfit = plValue(PlEnum.OPERATING_PROFIT, parameter);
         // 株式総数
-        final var numberOfShares = nsValue(company, period);
+        final long numberOfShares = nsValue(parameter);
 
         return BigDecimal.valueOf(
                 (
@@ -141,20 +144,20 @@ public class AnalysisLogic {
     /**
      * 貸借対照表の値を取得する
      *
-     * @param company 会社情報
-     * @param bsEnum  貸借対照表の対象科目
-     * @param period  対象年
+     * @param bsEnum    貸借対照表の対象科目
+     * @param parameter FsValueParameter.class
      * @return 科目の値
      */
-    @NewSpan("AnalysisLogic.bsValues")
-    public Long bsValues(final Company company, final BsEnum bsEnum, final LocalDate period) {
+    @NewSpan("AnalysisLogic.bsValue")
+    public Long bsValue(final BsEnum bsEnum, final FsValueParameter parameter) {
         return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
                 .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
-                        company.getEdinetCode(),
+                        parameter.getCompany().getEdinetCode(),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        String.valueOf(period.getYear())
+                        String.valueOf(parameter.getPeriod().getYear()),
+                        parameter.getDocTypeCode().toValue()
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -162,18 +165,18 @@ public class AnalysisLogic {
                 .findAny()
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
-                            Converter.toEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
+                            Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                             "120",
-                            String.valueOf(period.getYear())
+                            String.valueOf(parameter.getPeriod().getYear())
                     ).getDocumentId();
 
                     documentDao.update(Document.ofUpdateBsToHalfWay(docId, nowLocalDateTime()));
 
                     log.warn("貸借対照表の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
-                            company.getCode().orElseThrow(),
+                            parameter.getCompany().getCode().orElseThrow(),
                             bsEnum.getSubject(),
-                            period,
+                            parameter.getPeriod(),
                             documentDao.selectByDocumentId(docId).getBsDocumentPath()
                     );
                     throw new FundanalyzerCalculateException();
@@ -183,20 +186,20 @@ public class AnalysisLogic {
     /**
      * 損益計算書の値を取得する
      *
-     * @param company 会社情報
-     * @param plEnum  損益計算書の対象科目
-     * @param period  対象年
-     * @return 科目の値
+     * @param plEnum    損益計算書の対象科目
+     * @param parameter FsValueParameter.class
+     * @ 科目の値
      */
-    @NewSpan("AnalysisLogic.plValues")
-    public Long plValues(final Company company, final PlEnum plEnum, final LocalDate period) {
+    @NewSpan("AnalysisLogic.plValue")
+    public Long plValue(final PlEnum plEnum, final FsValueParameter parameter) {
         return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
                 .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
                 .map(plSubject -> financialStatementDao.selectByUniqueKey(
-                        company.getEdinetCode(),
+                        parameter.getCompany().getEdinetCode(),
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         plSubject.getId(),
-                        String.valueOf(period.getYear())
+                        String.valueOf(parameter.getPeriod().getYear()),
+                        parameter.getDocTypeCode().toValue()
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -204,18 +207,18 @@ public class AnalysisLogic {
                 .findAny()
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
-                            Converter.toEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
+                            Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                             "120",
-                            String.valueOf(period.getYear())
+                            String.valueOf(parameter.getPeriod().getYear())
                     ).getDocumentId();
 
                     documentDao.update(Document.ofUpdatePlToHalfWay(docId, nowLocalDateTime()));
 
                     log.warn("損益計算書の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
-                            company.getCode().orElseThrow(),
+                            parameter.getCompany().getCode().orElseThrow(),
                             plEnum.getSubject(),
-                            period,
+                            parameter.getPeriod(),
                             documentDao.selectByDocumentId(docId).getPlDocumentPath()
                     );
                     throw new FundanalyzerCalculateException();
@@ -225,35 +228,43 @@ public class AnalysisLogic {
     /**
      * 株式総数の値を取得する
      *
-     * @param company 会社情報
-     * @param period  対象年
+     * @param parameter FsValueParameter.class
      * @return 株式総数の値
      */
     @NewSpan("AnalysisLogic.nsValue")
-    public Long nsValue(final Company company, final LocalDate period) {
+    public Long nsValue(final FsValueParameter parameter) {
         return financialStatementDao.selectByUniqueKey(
-                company.getEdinetCode(),
+                parameter.getCompany().getEdinetCode(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
-                String.valueOf(period.getYear())
+                String.valueOf(parameter.getPeriod().getYear()),
+                parameter.getDocTypeCode().toValue()
         ).flatMap(FinancialStatement::getValue)
                 .orElseThrow(() -> {
                     final var docId = documentDao.selectDocumentIdBy(
-                            Converter.toEdinetCode(company.getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
+                            Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                             "120",
-                            String.valueOf(period.getYear())
+                            String.valueOf(parameter.getPeriod().getYear())
                     ).getDocumentId();
 
                     documentDao.update(Document.ofUpdateNumberOfSharesToHalfWay(docId, nowLocalDateTime()));
 
                     log.warn("  株式総数の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
-                            company.getCode().orElseThrow(),
+                            parameter.getCompany().getCode().orElseThrow(),
                             "株式総数",
-                            period,
+                            parameter.getPeriod(),
                             documentDao.selectByDocumentId(docId).getNumberOfSharesDocumentPath()
                     );
                     throw new FundanalyzerCalculateException();
                 });
+    }
+
+    @SuppressWarnings("RedundantModifiersValueLombok")
+    @Value(staticConstructor = "of")
+    public static class FsValueParameter {
+        private final Company company;
+        private final LocalDate period;
+        private final DocTypeCode docTypeCode;
     }
 }
