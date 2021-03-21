@@ -2,7 +2,10 @@ package github.com.ioridazo.fundanalyzer.domain.util;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,4 +50,27 @@ public final class Target {
                 .contains(edinetCode);
     }
 
+    /**
+     * 処理対象とする分析結果を抽出する
+     * <p/>
+     * documentPeriodが重複するときに、最新提出日を採用する
+     *
+     * @param analysisResultList 分析結果リスト
+     * @return 処理対象の分析結果一覧
+     */
+    public static List<AnalysisResult> distinctAnalysisResults(final List<AnalysisResult> analysisResultList) {
+        final List<LocalDate> periodList = analysisResultList.stream()
+                .map(AnalysisResult::getDocumentPeriod)
+                .distinct()
+                .collect(Collectors.toList());
+
+        return periodList.stream()
+                .map(period -> analysisResultList.stream()
+                        // match period
+                        .filter(analysisResult -> period.equals(analysisResult.getDocumentPeriod()))
+                        // latest submit date
+                        .max(Comparator.comparing(AnalysisResult::getSubmitDate))
+                        .orElseThrow())
+                .collect(Collectors.toList());
+    }
 }

@@ -146,20 +146,20 @@ public class ScrapingLogic {
         final var targetDirectory = makeDocumentPath(pathDecode, date, documentId);
 
         // 財務諸表登録年（period_endの年）が重複していないか確認する
-        if (beforeCheck(company, fs, edinetDocument)) {
-            try {
-                final var targetFile = findTargetFile(targetDirectory, fs);
-                if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)
-                        || FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
-                    // 貸借対照表、損益計算書
-                    insertFinancialStatement(
-                            targetFile.getFirst(),
-                            targetFile.getSecond(),
-                            fs,
-                            company,
-                            detailList,
-                            edinetDocument
-                    );
+//        if (beforeCheck(company, fs, edinetDocument)) {
+        try {
+            final var targetFile = findTargetFile(targetDirectory, fs);
+            if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)
+                    || FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
+                // 貸借対照表、損益計算書
+                insertFinancialStatement(
+                        targetFile.getFirst(),
+                        targetFile.getSecond(),
+                        fs,
+                        company,
+                        detailList,
+                        edinetDocument
+                );
 
                     if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)) {
                         checkBs(company, edinetDocument);
@@ -197,34 +197,34 @@ public class ScrapingLogic {
                         nowLocalDateTime()
                 ));
 
-            } catch (FundanalyzerFileException e) {
-                documentDao.update(Document.ofUpdateSwitchFs(
-                        fs,
-                        documentId,
-                        DocumentStatus.ERROR,
-                        null,
-                        nowLocalDateTime()
-                ));
-                log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                                "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
-                        company.getCode().orElseThrow(),
-                        company.getEdinetCode(),
-                        fs.getName(),
-                        targetDirectory.getPath(), e
-                );
-            }
-        } else {
-            documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
-            log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
-                            "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
+        } catch (FundanalyzerFileException e) {
+            documentDao.update(Document.ofUpdateSwitchFs(
+                    fs,
+                    documentId,
+                    DocumentStatus.ERROR,
+                    null,
+                    nowLocalDateTime()
+            ));
+            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
                     company.getCode().orElseThrow(),
                     company.getEdinetCode(),
-                    company.getCompanyName(),
                     fs.getName(),
-                    documentId,
-                    edinetDocument.getPeriodEnd().orElseThrow()
+                    targetDirectory.getPath(), e
             );
         }
+//        } else {
+//            documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
+//            log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
+//                            "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
+//                    company.getCode().orElseThrow(),
+//                    company.getEdinetCode(),
+//                    company.getCompanyName(),
+//                    fs.getName(),
+//                    documentId,
+//                    edinetDocument.getPeriodEnd().orElseThrow()
+//            );
+//        }
     }
 
     /**
@@ -235,6 +235,7 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      * @return boolean
      */
+    // TODO 削除
     boolean beforeCheck(
             final Company company,
             final FinancialStatementEnum fs,

@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
@@ -536,16 +537,17 @@ class ViewServiceTest {
             when(analysisResultDao.selectByCompanyCode(code)).thenReturn(List.of(new AnalysisResult(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2019-01-01"),
                     BigDecimal.valueOf(100),
-                    null,
-                    null,
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2019-02-01"),
                     null,
                     null
             )));
             when(brandDetailCompanyViewLogic.brandDetailFinancialStatement(code)).thenReturn(List.of(new BrandDetailViewBean.BrandDetailFinancialStatement(
                     LocalDate.parse("2019-01-01"),
                     LocalDate.parse("2019-12-31"),
+                    "documentTypeName",
                     null,
                     List.of(new BrandDetailViewBean.BrandDetailFinancialStatement.BrandDetailFinancialStatementValue(
                             "subject1",
@@ -599,6 +601,7 @@ class ViewServiceTest {
                     () -> assertAll("financialStatement",
                             () -> assertEquals("2019-01-01", actual.getFinancialStatement().get(0).getPeriodStart().toString()),
                             () -> assertEquals("2019-12-31", actual.getFinancialStatement().get(0).getPeriodEnd().toString()),
+                            () -> assertEquals("documentTypeName", actual.getFinancialStatement().get(0).getDocumentTypeName()),
                             () -> assertAll("pl",
                                     () -> assertEquals("subject1", actual.getFinancialStatement().get(0).getPl().get(0).getSubject()),
                                     () -> assertEquals(4000L, actual.getFinancialStatement().get(0).getPl().get(0).getValue())

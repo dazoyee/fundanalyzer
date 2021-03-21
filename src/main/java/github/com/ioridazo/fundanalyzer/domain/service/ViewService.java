@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -409,7 +410,7 @@ public class ViewService {
         return new BrandDetailViewBean(
                 brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
                 corporateViewDao.selectByCode(code.substring(0, 4)),
-                analysisResultDao.selectByCompanyCode(code).stream()
+                Target.distinctAnalysisResults(analysisResultDao.selectByCompanyCode(code)).stream()
                         .sorted(Comparator.comparing(AnalysisResult::getDocumentPeriod).reversed())
                         .collect(Collectors.toList()),
                 brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
@@ -418,7 +419,9 @@ public class ViewService {
                         .distinct()
                         .sorted(Comparator.comparing(StockPrice::getTargetDate).reversed())
                         .collect(Collectors.toList()),
-                minkabuDao.selectByCode(code)
+                minkabuDao.selectByCode(code).stream()
+                        .sorted(Comparator.comparing(Minkabu::getTargetDate).reversed())
+                        .collect(Collectors.toList())
         );
     }
 

@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -107,7 +109,8 @@ public class CorporateViewLogic {
      * @return <li>平均の企業価値</li><li>標準偏差</li><li>対象年数</li>
      */
     CorporateValue corporateValue(final Company company) {
-        final var corporateValueList = analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow());
+        final List<AnalysisResult> corporateValueList = Target.distinctAnalysisResults(
+                analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow()));
 
         if (!corporateValueList.isEmpty()) {
             // 最新企業価値

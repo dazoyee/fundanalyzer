@@ -6,13 +6,17 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailCorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailViewBean;
+import lombok.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,36 +70,57 @@ public class BrandDetailCorporateViewLogic {
     public List<BrandDetailViewBean.BrandDetailFinancialStatement> brandDetailFinancialStatement(final String code) {
         final var financialStatementList = financialStatementDao.selectByCode(code);
         return financialStatementList.stream()
-                .map(FinancialStatement::getPeriodStart)
+                .map(fs -> FsEntry.of(fs.getPeriodStart(), DocTypeCode.fromValue(fs.getDocumentTypeCode()), fs.getSubmitDate()))
                 .distinct()
-                .map(periodStart -> {
+                .map(fsEntry -> {
                     final var targetList = financialStatementList.stream()
-                            .filter(fi -> periodStart.equals(fi.getPeriodStart()))
+                            .filter(fs -> fsEntry.getPeriodStart().equals(fs.getPeriodStart())
+                                    && fsEntry.getSubmitDate().equals(fs.getSubmitDate()))
                             .collect(Collectors.toList());
                     return new BrandDetailViewBean.BrandDetailFinancialStatement(
                             // periodStart
-                            periodStart,
+                            fsEntry.getPeriodStart(),
                             // periodEnd
                             targetList.stream()
                                     .map(FinancialStatement::getPeriodEnd)
                                     .findAny()
                                     .orElseThrow(),
+                            // documentTypeName
+                            fsEntry.getDocTypeCode().getName(),
                             // bs(List)
                             targetList.stream()
-                                    .filter(fi -> FinancialStatementEnum.BALANCE_SHEET.toValue().equals(fi.getFinancialStatementId()))
-                                    .map(fi -> new BrandDetailViewBean.BrandDetailFinancialStatement.BrandDetailFinancialStatementValue(
-                                            bsSubjectDao.selectById(fi.getSubjectId()).getName(), fi.getValue().orElse(null)
+                                    .filter(fs -> FinancialStatementEnum.BALANCE_SHEET.toValue().equals(fs.getFinancialStatementId()))
+                                    .map(fs -> fsValue(
+                                            bsSubjectDao.selectById(fs.getSubjectId()).getName(),
+                                            fs.getValue().orElse(null)
                                     )).collect(Collectors.toList()),
                             // pl(List)
                             targetList.stream()
-                                    .filter(fi -> FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue().equals(fi.getFinancialStatementId()))
-                                    .map(fi -> new BrandDetailViewBean
-                                            .BrandDetailFinancialStatement
-                                            .BrandDetailFinancialStatementValue(
-                                            plSubjectDao.selectById(fi.getSubjectId()).getName(),
-                                            fi.getValue().orElse(null)
+                                    .filter(fs -> FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue().equals(fs.getFinancialStatementId()))
+                                    .map(fs -> fsValue(
+                                            plSubjectDao.selectById(fs.getSubjectId()).getName(),
+                                            fs.getValue().orElse(null)
                                     )).collect(Collectors.toList())
                     );
-                }).collect(Collectors.toList());
+                })
+                .sorted(Comparator.comparing(BrandDetailViewBean.BrandDetailFinancialStatement::getPeriodEnd).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private BrandDetailViewBean.BrandDetailFinancialStatement.BrandDetailFinancialStatementValue fsValue(
+            final String subject,
+            final Long value) {
+        return new BrandDetailViewBean.BrandDetailFinancialStatement.BrandDetailFinancialStatementValue(
+                subject,
+                value
+        );
+    }
+
+    @SuppressWarnings("RedundantModifiersValueLombok")
+    @Value(staticConstructor = "of")
+    static class FsEntry {
+        private final LocalDate periodStart;
+        private final DocTypeCode docTypeCode;
+        private final LocalDate submitDate;
     }
 }
