@@ -241,6 +241,7 @@ public class ViewService {
                 .map(companyDao::selectByEdinetCode)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                .distinct()
                 .filter(company -> company.getCode().isPresent())
                 .map(company -> corporateViewLogic.corporateViewOf(company, docTypeCodes))
                 .forEach(corporateViewBean -> {

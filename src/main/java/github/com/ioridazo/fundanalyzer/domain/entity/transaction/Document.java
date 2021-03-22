@@ -66,12 +66,16 @@ public class Document {
 
     private final LocalDateTime updatedAt;
 
-    public static Document of(final LocalDate submitDate, final Results results, final LocalDateTime nowLocalDateTime) {
+    public static Document of(
+            final LocalDate submitDate,
+            final LocalDate documentPeriod,
+            final Results results,
+            final LocalDateTime nowLocalDateTime) {
         return Document.builder()
                 .documentId(results.getDocId())
                 .documentTypeCode(results.getDocTypeCode())
                 .edinetCode(results.getEdinetCode().orElse(null))
-                .documentPeriod(results.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1) : null)
+                .documentPeriod(documentPeriod)
                 .submitDate(submitDate)
                 .createdAt(nowLocalDateTime)
                 .updatedAt(nowLocalDateTime)

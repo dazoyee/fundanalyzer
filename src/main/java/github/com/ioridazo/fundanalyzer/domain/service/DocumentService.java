@@ -42,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -300,7 +301,7 @@ public class DocumentService {
                 }
             });
 
-            documentDao.insert(Document.of(date, results, nowLocalDateTime()));
+            documentDao.insert(Document.of(date, parseDocumentPeriod(results), results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -506,6 +507,27 @@ public class DocumentService {
                 targetDate,
                 null
         );
+    }
+
+    private LocalDate parseDocumentPeriod(final Results results) {
+        if (Objects.nonNull(results.getPeriodEnd())) {
+            // period end is present
+            return LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1);
+        } else {
+            if (Objects.nonNull(results.getParentDocID())) {
+                final Document document = documentDao.selectByDocumentId(results.getParentDocID());
+                if (Objects.nonNull(document)) {
+                    // parent document is present
+                    return document.getDocumentPeriod();
+                } else {
+                    // parent document is null
+                    return LocalDate.EPOCH;
+                }
+            } else {
+                // period end is null
+                return LocalDate.EPOCH;
+            }
+        }
     }
 
     private File makeTargetPath(final String prePath, final LocalDate targetDate) {

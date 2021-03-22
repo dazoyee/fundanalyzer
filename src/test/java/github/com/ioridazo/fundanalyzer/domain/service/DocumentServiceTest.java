@@ -486,6 +486,117 @@ class DocumentServiceTest {
                     .updatedAt(createdAt)
                     .build());
         }
+
+        @DisplayName("edinetList : periodEndが存在するときはパースしてdocumentPeriodを生成する")
+        @Test
+        void edinetList_documentPeriod_present() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId");
+            resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setPeriodEnd("2020-12-31");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(LocalDate.parse("2020-01-01"))
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
+
+        @DisplayName("edinetList : period_endが存在しないときは親書類からdocument_periodを生成する")
+        @Test
+        void edinetList_documentPeriod_null_parentDocument_present() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId2");
+            resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setParentDocID("docId");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(documentDao.selectByDocumentId("docId")).thenReturn(Document.builder().documentPeriod(LocalDate.parse("2020-01-01")).build());
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId2")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(LocalDate.parse("2020-01-01"))
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
+
+        @DisplayName("edinetList : period_endも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
+        @Test
+        void edinetList_documentPeriod_null_parentDocument_null() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId");
+            resultsInserted.setEdinetCode("edinetCode");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(LocalDate.EPOCH)
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
     }
 
     @Nested

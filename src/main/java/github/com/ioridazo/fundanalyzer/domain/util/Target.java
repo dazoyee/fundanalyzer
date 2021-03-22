@@ -62,6 +62,8 @@ public final class Target {
     public static List<AnalysisResult> distinctAnalysisResults(final List<AnalysisResult> analysisResultList) {
         final List<LocalDate> periodList = analysisResultList.stream()
                 .map(AnalysisResult::getDocumentPeriod)
+                // null のときはEPOCHとなるため、除外する
+                .filter(period -> !LocalDate.EPOCH.isEqual(period))
                 .distinct()
                 .collect(Collectors.toList());
 

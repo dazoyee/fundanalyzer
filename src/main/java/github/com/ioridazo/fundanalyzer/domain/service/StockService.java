@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -76,6 +77,7 @@ public class StockService {
                 .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                .distinct()
                 .collect(Collectors.toList());
 
         // 並列で株価取得処理を実施する
@@ -144,7 +146,6 @@ public class StockService {
                 }
                 minkabuDao.insert(m);
             }
-
         } catch (FundanalyzerScrapingException e) {
             log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code, e);
         }
@@ -170,9 +171,20 @@ public class StockService {
     }
 
     private boolean isNotInsertedMinkabu(final String targetDateAsString, final List<Minkabu> minkabuList) {
-        final var targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear());
         return minkabuList.stream()
                 .map(Minkabu::getTargetDate)
-                .noneMatch(targetDate::equals);
+                .noneMatch(mTargetDate -> {
+                    LocalDate targetDate;
+                    try {
+                        targetDate = MonthDay.parse(
+                                targetDateAsString,
+                                DateTimeFormatter.ofPattern("MM/dd")
+                        ).atYear(LocalDate.now().getYear());
+                        return mTargetDate.equals(targetDate);
+                    } catch (DateTimeParseException e) {
+                        log.warn("みんかぶの取得対象日時のパースに失敗しました。本日の日付にて処理を継続します。\t{}", targetDateAsString, e);
+                        return mTargetDate.equals(LocalDate.now());
+                    }
+                });
     }
 }

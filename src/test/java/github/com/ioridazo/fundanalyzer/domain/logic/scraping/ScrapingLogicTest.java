@@ -742,7 +742,6 @@ class ScrapingLogicTest {
             var value = 1000L;
             var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
 
-
             when(scrapingLogic.nowLocalDateTime()).thenReturn(createdAt);
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
@@ -835,6 +834,146 @@ class ScrapingLogicTest {
             when(financialStatementDao.insert(any())).thenThrow(RuntimeException.class);
 
             assertThrows(RuntimeException.class, () -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
+        }
+
+        @DisplayName("insertFinancialStatement : periodが存在するときはパースしてparseを生成する")
+        @Test
+        void insertFinancialStatement_parsePeriod_period_present() {
+            var company = new Company(
+                    "code",
+                    null,
+                    null,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var fs = FinancialStatementEnum.BALANCE_SHEET;
+            var dId = "0";
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId");
+            edinetDocument.setDocTypeCode("120");
+            edinetDocument.setPeriodStart("2020-01-01");
+            edinetDocument.setPeriodEnd("2020-12-31");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
+            var value = 1000L;
+            var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
+
+            when(scrapingLogic.nowLocalDateTime()).thenReturn(createdAt);
+
+            assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
+
+            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+                    null,
+                    company.getCode().orElse(null),
+                    company.getEdinetCode(),
+                    fs.toValue(),
+                    "0",
+                    LocalDate.parse("2020-01-01"),
+                    LocalDate.parse("2020-12-31"),
+                    1000L,
+                    "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId",
+                    createdAt
+            ));
+        }
+
+        @DisplayName("insertFinancialStatement : periodが存在しないときは親書類からparseを生成する")
+        @Test
+        void insertFinancialStatement_parsePeriod_period_null_edinetDocument_present() {
+            var company = new Company(
+                    "code",
+                    null,
+                    null,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var fs = FinancialStatementEnum.BALANCE_SHEET;
+            var dId = "0";
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId1");
+            edinetDocument.setDocTypeCode("120");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
+            edinetDocument.setParentDocId("docId");
+            var parentEdinetDocument = new EdinetDocument();
+            parentEdinetDocument.setPeriodStart("2020-01-01");
+            parentEdinetDocument.setPeriodEnd("2020-12-31");
+            var value = 1000L;
+            var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
+
+            when(scrapingLogic.nowLocalDateTime()).thenReturn(createdAt);
+            when(edinetDocumentDao.selectByDocId("docId")).thenReturn(parentEdinetDocument);
+
+            assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
+
+            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+                    null,
+                    company.getCode().orElse(null),
+                    company.getEdinetCode(),
+                    fs.toValue(),
+                    "0",
+                    LocalDate.parse("2020-01-01"),
+                    LocalDate.parse("2020-12-31"),
+                    1000L,
+                    "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId1",
+                    createdAt
+            ));
+        }
+
+        @DisplayName("insertFinancialStatement : periodも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
+        @Test
+        void insertFinancialStatement_parsePeriod_period_null_edinetDocument_null() {
+            var company = new Company(
+                    "code",
+                    null,
+                    null,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var fs = FinancialStatementEnum.BALANCE_SHEET;
+            var dId = "0";
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("docId1");
+            edinetDocument.setDocTypeCode("120");
+            edinetDocument.setSubmitDateTime("2021-03-20 20:22");
+            var value = 1000L;
+            var createdAt = LocalDateTime.of(2020, 9, 26, 12, 18);
+
+            when(scrapingLogic.nowLocalDateTime()).thenReturn(createdAt);
+
+            assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
+
+            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+                    null,
+                    company.getCode().orElse(null),
+                    company.getEdinetCode(),
+                    fs.toValue(),
+                    "0",
+                    LocalDate.EPOCH,
+                    LocalDate.EPOCH,
+                    1000L,
+                    "120",
+                    LocalDate.parse("2021-03-20"),
+                    "docId1",
+                    createdAt
+            ));
+
         }
 
         @DisplayName("checkBs : 既に登録した流動負債合計と負債合計の金額が一致していたら、固定負債合計に0としてDBに登録することを確認する")

@@ -27,6 +27,7 @@ import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
@@ -342,14 +343,15 @@ public class ScrapingLogic {
             final String dId,
             final EdinetDocument edinetDocument,
             final Long value) {
+        final Period period = parsePeriod(edinetDocument);
         try {
             financialStatementDao.insert(FinancialStatement.of(
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
                     fs.toValue(),
                     dId,
-                    LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
-                    LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
+                    period.getPeriodStart(),
+                    period.getPeriodEnd(),
                     value,
                     DocTypeCode.fromValue(edinetDocument.getDocTypeCode()),
                     LocalDateTime.parse(edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
@@ -441,6 +443,46 @@ public class ScrapingLogic {
         }
     }
 
+    private Period parsePeriod(final EdinetDocument edinetDocument) {
+        final Period period = new Period();
+
+        // periodStart
+        if (edinetDocument.getPeriodStart().isPresent()) {
+            // period start is present
+            period.setPeriodStart(LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()));
+        } else if (Objects.nonNull(edinetDocument.getParentDocId())) {
+            final EdinetDocument parentEdinetDocument = edinetDocumentDao.selectByDocId(edinetDocument.getParentDocId());
+            if (Objects.nonNull(parentEdinetDocument)) {
+                // parent edinet document is present
+                period.setPeriodStart(LocalDate.parse(parentEdinetDocument.getPeriodStart().orElseThrow()));
+            } else {
+                // parent edinet document is null
+                period.setPeriodStart(LocalDate.EPOCH);
+            }
+        } else {
+            period.setPeriodStart(LocalDate.EPOCH);
+        }
+
+        // periodEnd
+        if (edinetDocument.getPeriodEnd().isPresent()) {
+            // period end is present
+            period.setPeriodEnd(LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()));
+        } else if (Objects.nonNull(edinetDocument.getParentDocId())) {
+            final EdinetDocument parentEdinetDocument = edinetDocumentDao.selectByDocId(edinetDocument.getParentDocId());
+            if (Objects.nonNull(parentEdinetDocument)) {
+                // parent edinet document is present
+                period.setPeriodEnd(LocalDate.parse(parentEdinetDocument.getPeriodEnd().orElseThrow()));
+            } else {
+                // parent edinet document is null
+                period.setPeriodEnd(LocalDate.EPOCH);
+            }
+        } else {
+            period.setPeriodEnd(LocalDate.EPOCH);
+        }
+
+        return period;
+    }
+
     private Optional<Long> parseValue(final String value) {
         try {
             return Optional.of(value)
@@ -494,5 +536,11 @@ public class ScrapingLogic {
 
     private File makeDocumentPath(final String prePath, final LocalDate targetDate, final String docId) {
         return new File(String.format("%s/%d/%s/%s/%s/XBRL/PublicDoc", prePath, targetDate.getYear(), targetDate.getMonth(), targetDate, docId));
+    }
+
+    @Data
+    static class Period {
+        private LocalDate periodStart;
+        private LocalDate periodEnd;
     }
 }

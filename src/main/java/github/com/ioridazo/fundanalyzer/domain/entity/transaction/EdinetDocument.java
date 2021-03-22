@@ -169,6 +169,10 @@ public class EdinetDocument {
         return submitDateTime;
     }
 
+    public String getParentDocId() {
+        return parentDocId;
+    }
+
     // for test
     public void setDocTypeCode(final String docTypeCode) {
         this.docTypeCode = docTypeCode;
@@ -184,5 +188,9 @@ public class EdinetDocument {
 
     public void setSubmitDateTime(final String submitDateTime) {
         this.submitDateTime = submitDateTime;
+    }
+
+    public void setParentDocId(final String parentDocId) {
+        this.parentDocId = parentDocId;
     }
 }
