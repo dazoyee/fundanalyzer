@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
@@ -146,18 +147,20 @@ public class DocumentService {
      * ↓
      * scrape（スクレイピング）
      *
-     * @param date             書類取得対象日（提出日）
-     * @param documentTypeCode 書類種別コード
+     * @param date         書類取得対象日（提出日）
+     * @param docTypeCodes 書類種別コード
      * @return Void
      */
     @NewSpan("DocumentService.execute")
     @Async
-    public CompletableFuture<Void> execute(final String date, final String documentTypeCode) {
+    public CompletableFuture<Void> execute(final String date, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+
         // 書類リストをデータベースに登録する
         edinetList(LocalDate.parse(date));
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date))
+        final var documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, LocalDate.parse(date))
                 .stream()
                 .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                 .filter(Document::getNotRemoved)
@@ -165,7 +168,7 @@ public class DocumentService {
 
         if (documentList.isEmpty()) {
             FundanalyzerLogClient.logService(
-                    MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, documentTypeCode),
+                    MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, docTypeCode),
                     Category.DOCUMENT,
                     Process.EDINET
             );
@@ -204,8 +207,8 @@ public class DocumentService {
                     );
                     FundanalyzerLogClient.logService(
                             MessageFormat.format(
-                                    "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}"
-                                    , document
+                                    "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
+                                    document
                             ),
                             Category.DOCUMENT,
                             Process.EDINET
@@ -214,7 +217,11 @@ public class DocumentService {
             });
 
             FundanalyzerLogClient.logService(
-                    MessageFormat.format("{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}", date, documentTypeCode),
+                    MessageFormat.format(
+                            "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
+                            date,
+                            String.join(",", docTypeCode)
+                    ),
                     Category.DOCUMENT,
                     Process.EDINET
             );
@@ -350,11 +357,13 @@ public class DocumentService {
      * 書類取得対象日（提出日）に紐づくドキュメントのステータスを確認して、<br/>
      * 財務諸表のスクレイピング処理を行う
      *
-     * @param targetDate 書類取得対象日（提出日）
+     * @param targetDate   書類取得対象日（提出日）
+     * @param docTypeCodes 書類種別コード
      */
     @NewSpan("DocumentService.scrape.targetDate")
-    public void scrape(final LocalDate targetDate) {
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", targetDate);
+    public void scrape(final LocalDate targetDate, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, targetDate);
         if (documentList.isEmpty()) {
             FundanalyzerLogClient.logService(
                     MessageFormat.format("次のドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}", targetDate),
@@ -420,9 +429,12 @@ public class DocumentService {
     /**
      * 貸借対照表と損益計算書の処理ステータスが処理中（5）またはエラー（9）の
      * ドキュメントをステータス初期化する
+     *
+     * @param docTypeCodes 書類種別コード
      */
-    public void resetForRetry() {
-        final var documentList = documentDao.selectByDocumentTypeCode("120");
+    public void resetForRetry(final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByDocumentTypeCode(docTypeCode);
         // 貸借対照表
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))

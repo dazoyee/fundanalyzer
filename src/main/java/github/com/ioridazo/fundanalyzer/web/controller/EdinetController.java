@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -113,7 +114,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/update/edinet/list")
     public String updateEdinetList(final String date) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
-        viewService.updateEdinetListView("120", LocalDate.parse(date));
+        viewService.updateEdinetListView(LocalDate.parse(date), Target.annualSecuritiesReport());
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET;
     }

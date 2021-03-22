@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -18,6 +19,7 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 public class AnalysisService {
@@ -59,16 +61,18 @@ public class AnalysisService {
     /**
      * 対象書類の分析結果をデータベースに登録する
      *
-     * @param submitDate 提出日
+     * @param submitDate   提出日
+     * @param docTypeCodes 書類種別コード
      * @return Void
      */
     @NewSpan("AnalysisService.analyze.submitDate")
-    public CompletableFuture<Void> analyze(final LocalDate submitDate) {
+    public CompletableFuture<Void> analyze(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
         final var companyAll = companyDao.selectAll();
         final var bank = industryDao.selectByName("銀行業");
         final var insurance = industryDao.selectByName("保険業");
 
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", submitDate);
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
         if (documentList.isEmpty()) {
             FundanalyzerLogClient.logService(
                     MessageFormat.format("次の企業はデータベースに存在しませんでした。\t対象提出日:{0}", submitDate),

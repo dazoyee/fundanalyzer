@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -52,17 +53,17 @@ public class DevelopController {
         documentService.readCompanyInfo();
 
         // execute実行
-        documentService.execute(date, "120")
+        documentService.execute(date, Target.annualSecuritiesReport())
                 // execute完了後、analyze実行
-                .thenAcceptAsync(unused -> analysisService.analyze(LocalDate.parse(date)))
+                .thenAcceptAsync(unused -> analysisService.analyze(LocalDate.parse(date), Target.annualSecuritiesReport()))
                 // analyze完了後、importStockPrice実行
-                .thenAcceptAsync(unused -> stockService.importStockPrice(LocalDate.parse(date)))
+                .thenAcceptAsync(unused -> stockService.importStockPrice(LocalDate.parse(date), Target.annualSecuritiesReport()))
                 // importStockPrice完了後、updateCorporateView実行
-                .thenAcceptAsync(unused -> viewService.updateCorporateView(LocalDate.parse(date)))
+                .thenAcceptAsync(unused -> viewService.updateCorporateView(LocalDate.parse(date), Target.annualSecuritiesReport()))
                 // updateCorporateView完了後、updateEdinetListView実行
-                .thenAcceptAsync(unused -> viewService.updateEdinetListView("120", LocalDate.parse(date)))
+                .thenAcceptAsync(unused -> viewService.updateEdinetListView(LocalDate.parse(date), Target.annualSecuritiesReport()))
                 // updateEdinetListView完了後、notice実行
-                .thenAcceptAsync(unused -> viewService.notice(LocalDate.parse(date)));
+                .thenAcceptAsync(unused -> viewService.notice(LocalDate.parse(date), Target.annualSecuritiesReport()));
 
         model.addAttribute("companies", viewService.corporateView());
         return "redirect:/fundanalyzer/v1/index" + "?message=updating";

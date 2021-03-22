@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
@@ -72,5 +73,14 @@ public final class Target {
                         .max(Comparator.comparing(AnalysisResult::getSubmitDate))
                         .orElseThrow())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 有価証券報告書
+     *
+     * @return 書類種別コード
+     */
+    public static List<DocTypeCode> annualSecuritiesReport() {
+        return List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
     }
 }

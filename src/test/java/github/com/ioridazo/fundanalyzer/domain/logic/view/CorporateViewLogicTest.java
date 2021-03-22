@@ -70,10 +70,11 @@ class CorporateViewLogicTest {
                 null,
                 null
         );
+        var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
         var submitDate = LocalDate.parse("2019-10-11");
         var createdAt = LocalDateTime.of(2020, 11, 8, 18, 15);
 
-        doReturn(Optional.of(submitDate)).when(logic).latestSubmitDate(company);
+        doReturn(Optional.of(submitDate)).when(logic).latestSubmitDate(company, docTypeCodes);
         doReturn(CorporateViewLogic.CorporateValue.of(
                 BigDecimal.valueOf(2100), BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(0.1), BigDecimal.valueOf(3)
         )).when(logic).corporateValue(company);
@@ -85,7 +86,7 @@ class CorporateViewLogicTest {
         doReturn(Optional.of(BigDecimal.valueOf(2000))).when(logic).forecastStock(company);
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
-        var actual = logic.corporateViewOf(company);
+        var actual = logic.corporateViewOf(company, docTypeCodes);
 
         assertAll("CorporateViewBean",
                 () -> assertEquals("code", actual.getCode()),
@@ -124,14 +125,15 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var document = Document.builder()
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2020-10-11"))
                     .build();
 
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(document));
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(document));
 
-            assertEquals(LocalDate.parse("2020-10-11"), logic.latestSubmitDate(company).orElseThrow());
+            assertEquals(LocalDate.parse("2020-10-11"), logic.latestSubmitDate(company, docTypeCodes).orElseThrow());
         }
 
         @DisplayName("latestSubmitDate : 対象の書類が存在しないときの処理を確認する")
@@ -149,14 +151,15 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var document = Document.builder()
                     .edinetCode("edinetCode2")
                     .submitDate(LocalDate.parse("2020-10-11"))
                     .build();
 
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(document));
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(document));
 
-            assertNull(logic.latestSubmitDate(company).orElse(null));
+            assertNull(logic.latestSubmitDate(company, docTypeCodes).orElse(null));
         }
     }
 

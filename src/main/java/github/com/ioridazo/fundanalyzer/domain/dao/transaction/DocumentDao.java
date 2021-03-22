@@ -24,10 +24,10 @@ public interface DocumentDao {
     Document selectDocumentIdBy(String edinetCode, String documentTypeCode, String yearOfPeriod);
 
     @Select
-    List<Document> selectByDocumentTypeCode(String documentTypeCode);
+    List<Document> selectByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select
-    List<Document> selectByTypeAndSubmitDate(String documentTypeCode, LocalDate submitDate);
+    List<Document> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
 
     @Select
     List<Document> selectByTypeAndPeriod(String documentTypeCode, String yearOfPeriod);

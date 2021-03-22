@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -9,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.springframework.context.annotation.Profile;
@@ -57,8 +59,11 @@ public class AnalysisScheduler {
     public void analysisScheduler() {
         FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.ANALYSIS);
 
+        final List<DocTypeCode> docTypeCodes = Target.annualSecuritiesReport();
+
         try {
-            final List<LocalDate> submitDateList = documentDao.selectByDocumentTypeCode("120").stream()
+            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+            final List<LocalDate> submitDateList = documentDao.selectByDocumentTypeCode(docTypeCode).stream()
                     .map(Document::getSubmitDate)
                     // データベースの最新提出日を取得
                     .max(LocalDate::compareTo)
@@ -71,17 +76,17 @@ public class AnalysisScheduler {
 
             submitDateList.forEach(date -> {
                 // execute実行
-                documentService.execute(date.toString(), "120")
+                documentService.execute(date.toString(), docTypeCodes)
                         // execute完了後、analyze実行
-                        .thenAcceptAsync(unused -> analysisService.analyze(date))
+                        .thenAcceptAsync(unused -> analysisService.analyze(date, docTypeCodes))
                         // analyze完了後、importStockPrice実行
-                        .thenAcceptAsync(unused -> stockService.importStockPrice(date))
+                        .thenAcceptAsync(unused -> stockService.importStockPrice(date, docTypeCodes))
                         // importStockPrice完了後、updateCorporateView実行
-                        .thenAcceptAsync(unused -> viewService.updateCorporateView(date))
+                        .thenAcceptAsync(unused -> viewService.updateCorporateView(date, docTypeCodes))
                         // updateCorporateView完了後、updateEdinetListView実行
-                        .thenAcceptAsync(unused -> viewService.updateEdinetListView("120", date))
+                        .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, docTypeCodes))
                         // updateEdinetListView完了後、notice実行
-                        .thenAcceptAsync(unused -> viewService.notice(date));
+                        .thenAcceptAsync(unused -> viewService.notice(date, docTypeCodes));
             });
 
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.ANALYSIS);
@@ -102,8 +107,8 @@ public class AnalysisScheduler {
         try {
             // アップデート処理が正常終了したらログ出力する
             CompletableFuture.allOf(
-                    viewService.updateCorporateView(),
-                    viewService.updateEdinetListView("120")
+                    viewService.updateCorporateView(Target.annualSecuritiesReport()),
+                    viewService.updateEdinetListView(Target.annualSecuritiesReport())
             ).thenRun(() -> FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.UPDATE));
         } catch (Throwable t) {
             // Slack通知
