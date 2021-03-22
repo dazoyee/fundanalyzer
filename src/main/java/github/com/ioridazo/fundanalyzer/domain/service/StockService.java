@@ -70,27 +70,32 @@ public class StockService {
      */
     @NewSpan("StockService.importStockPrice.submitDate")
     public CompletableFuture<Void> importStockPrice(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
-        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
-        // 対象となる会社コード一覧を取得する
-        final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
-                .map(Document::getEdinetCode)
-                .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .distinct()
-                .collect(Collectors.toList());
+        try {
+            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+            // 対象となる会社コード一覧を取得する
+            final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
+                    .map(Document::getEdinetCode)
+                    .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .distinct()
+                    .collect(Collectors.toList());
 
-        // 並列で株価取得処理を実施する
-        targetCompanyList.parallelStream().forEach(this::importStockPrice);
+            // 並列で株価取得処理を実施する
+            targetCompanyList.parallelStream().forEach(this::importStockPrice);
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
-                        submitDate,
-                        targetCompanyList.size()),
-                Category.STOCK,
-                Process.IMPORT
-        );
-        return null;
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
+                            submitDate,
+                            targetCompanyList.size()),
+                    Category.STOCK,
+                    Process.IMPORT
+            );
+            return null;
+        } catch (Throwable t) {
+            FundanalyzerLogClient.logError(t);
+            throw new FundanalyzerRuntimeException(t);
+        }
     }
 
     /**

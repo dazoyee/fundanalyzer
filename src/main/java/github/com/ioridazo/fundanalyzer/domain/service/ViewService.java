@@ -197,30 +197,35 @@ public class ViewService {
     @Async
     @Transactional
     public CompletableFuture<Void> updateCorporateView(final List<DocTypeCode> docTypeCodes) {
-        final List<Company> allTargetCompanies = Target.allCompanies(
-                companyDao.selectAll(),
-                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
-        final var beanAllList = corporateViewDao.selectAll();
-        allTargetCompanies.stream()
-                .map(company -> corporateViewLogic.corporateViewOf(company, docTypeCodes))
-                .forEach(corporateViewBean -> {
-                    final var match = beanAllList.stream()
-                            .map(CorporateViewBean::getCode)
-                            .anyMatch(corporateViewBean.getCode()::equals);
-                    if (match) {
-                        corporateViewDao.update(corporateViewBean);
-                    } else {
-                        corporateViewDao.insert(corporateViewBean);
-                    }
-                });
-        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        try {
+            final List<Company> allTargetCompanies = Target.allCompanies(
+                    companyDao.selectAll(),
+                    List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
+            final var beanAllList = corporateViewDao.selectAll();
+            allTargetCompanies.stream()
+                    .map(company -> corporateViewLogic.corporateViewOf(company, docTypeCodes))
+                    .forEach(corporateViewBean -> {
+                        final var match = beanAllList.stream()
+                                .map(CorporateViewBean::getCode)
+                                .anyMatch(corporateViewBean.getCode()::equals);
+                        if (match) {
+                            corporateViewDao.update(corporateViewBean);
+                        } else {
+                            corporateViewDao.insert(corporateViewBean);
+                        }
+                    });
+            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
 
-        FundanalyzerLogClient.logService(
-                "表示アップデートが正常に終了しました。",
-                Category.VIEW,
-                Process.UPDATE
-        );
-        return null;
+            FundanalyzerLogClient.logService(
+                    "表示アップデートが正常に終了しました。",
+                    Category.VIEW,
+                    Process.UPDATE
+            );
+            return null;
+        } catch (Throwable t) {
+            FundanalyzerLogClient.logError(t);
+            throw new FundanalyzerRuntimeException(t);
+        }
     }
 
     /**
@@ -361,29 +366,34 @@ public class ViewService {
     @Async
     @Transactional
     public CompletableFuture<Void> updateEdinetListView(final List<DocTypeCode> docTypeCodes) {
-        final var beanAllList = edinetListViewDao.selectAll();
-        final var documentList = documentDao.selectByDocumentTypeCode(
-                docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList()));
-        groupBySubmitDate(documentList)
-                .forEach(edinetListViewBean -> {
-                    final var match = beanAllList.stream()
-                            .map(EdinetListViewBean::getSubmitDate)
-                            .anyMatch(edinetListViewBean.getSubmitDate()::equals);
-                    if (match) {
-                        edinetListViewDao.update(edinetListViewBean);
-                    } else {
-                        edinetListViewDao.insert(edinetListViewBean);
-                    }
-                });
+        try {
+            final var beanAllList = edinetListViewDao.selectAll();
+            final var documentList = documentDao.selectByDocumentTypeCode(
+                    docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList()));
+            groupBySubmitDate(documentList)
+                    .forEach(edinetListViewBean -> {
+                        final var match = beanAllList.stream()
+                                .map(EdinetListViewBean::getSubmitDate)
+                                .anyMatch(edinetListViewBean.getSubmitDate()::equals);
+                        if (match) {
+                            edinetListViewDao.update(edinetListViewBean);
+                        } else {
+                            edinetListViewDao.insert(edinetListViewBean);
+                        }
+                    });
 
-        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
+            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
 
-        FundanalyzerLogClient.logService(
-                "処理状況アップデートが正常に終了しました。",
-                Category.VIEW,
-                Process.UPDATE
-        );
-        return null;
+            FundanalyzerLogClient.logService(
+                    "処理状況アップデートが正常に終了しました。",
+                    Category.VIEW,
+                    Process.UPDATE
+            );
+            return null;
+        } catch (Throwable t) {
+            FundanalyzerLogClient.logError(t);
+            throw new FundanalyzerRuntimeException(t);
+        }
     }
 
     /**

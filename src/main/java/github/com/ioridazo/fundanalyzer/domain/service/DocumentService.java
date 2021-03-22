@@ -155,79 +155,84 @@ public class DocumentService {
     @NewSpan("DocumentService.execute")
     @Async
     public CompletableFuture<Void> execute(final String date, final List<DocTypeCode> docTypeCodes) {
-        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        try {
+            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
 
-        // 書類リストをデータベースに登録する
-        edinetList(LocalDate.parse(date));
+            // 書類リストをデータベースに登録する
+            edinetList(LocalDate.parse(date));
 
-        // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, LocalDate.parse(date))
-                .stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
-                .filter(Document::getNotRemoved)
-                .collect(Collectors.toList());
+            // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
+            final var documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, LocalDate.parse(date))
+                    .stream()
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
+                    .filter(Document::getNotRemoved)
+                    .collect(Collectors.toList());
 
-        if (documentList.isEmpty()) {
-            FundanalyzerLogClient.logService(
-                    MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, docTypeCode),
-                    Category.DOCUMENT,
-                    Process.EDINET
-            );
-        } else {
-            documentList.parallelStream().forEach(document -> {
-                // 書類取得
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
-                    store(document.getDocumentId(), LocalDate.parse(date));
-                }
+            if (documentList.isEmpty()) {
+                FundanalyzerLogClient.logService(
+                        MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, docTypeCode),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                );
+            } else {
+                documentList.parallelStream().forEach(document -> {
+                    // 書類取得
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
+                        store(document.getDocumentId(), LocalDate.parse(date));
+                    }
 
-                // スクレイピング
-                // 貸借対照表
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
-                    scrapeBs(document.getDocumentId(), LocalDate.parse(date));
-                }
-                // 損益計算書
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
-                    scrapePl(document.getDocumentId(), LocalDate.parse(date));
-                }
-                // 株式総数
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
-                    scrapeNs(document.getDocumentId(), LocalDate.parse(date));
-                }
+                    // スクレイピング
+                    // 貸借対照表
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
+                        scrapeBs(document.getDocumentId(), LocalDate.parse(date));
+                    }
+                    // 損益計算書
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
+                        scrapePl(document.getDocumentId(), LocalDate.parse(date));
+                    }
+                    // 株式総数
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
+                        scrapeNs(document.getDocumentId(), LocalDate.parse(date));
+                    }
 
-                // 除外フラグON
-                if (List.of(
-                        document.getScrapedBs(),
-                        document.getScrapedPl(),
-                        document.getScrapedNumberOfShares()
-                ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
-                    documentDao.update(Document.builder()
-                            .documentId(document.getDocumentId())
-                            .removed(Flag.ON.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
-                    FundanalyzerLogClient.logService(
-                            MessageFormat.format(
-                                    "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
-                                    document
-                            ),
-                            Category.DOCUMENT,
-                            Process.EDINET
-                    );
-                }
-            });
+                    // 除外フラグON
+                    if (List.of(
+                            document.getScrapedBs(),
+                            document.getScrapedPl(),
+                            document.getScrapedNumberOfShares()
+                    ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
+                        documentDao.update(Document.builder()
+                                .documentId(document.getDocumentId())
+                                .removed(Flag.ON.toValue())
+                                .updatedAt(nowLocalDateTime())
+                                .build()
+                        );
+                        FundanalyzerLogClient.logService(
+                                MessageFormat.format(
+                                        "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
+                                        document
+                                ),
+                                Category.DOCUMENT,
+                                Process.EDINET
+                        );
+                    }
+                });
 
-            FundanalyzerLogClient.logService(
-                    MessageFormat.format(
-                            "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
-                            date,
-                            String.join(",", docTypeCode)
-                    ),
-                    Category.DOCUMENT,
-                    Process.EDINET
-            );
+                FundanalyzerLogClient.logService(
+                        MessageFormat.format(
+                                "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
+                                date,
+                                String.join(",", docTypeCode)
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                );
+            }
+            return null;
+        } catch (Throwable t) {
+            FundanalyzerLogClient.logError(t);
+            throw new FundanalyzerRuntimeException(t);
         }
-        return null;
     }
 
     /**

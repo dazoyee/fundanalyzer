@@ -65,6 +65,22 @@ public class FundanalyzerLogClient {
         log.info(message(category, process, Function.PROXY, message));
     }
 
+    /**
+     * 想定外のエラーログ
+     *
+     * @param t throwable
+     */
+    public static void logError(final Throwable t) {
+        log.error(Map.of(
+                "fundanalyzer", Map.of(
+                        "category", Category.ERROR.getValue()
+                ),
+                "message", "想定外のエラーが発生しました。詳細を確認してください。\t" + t.getMessage()
+                ),
+                t
+        );
+    }
+
     private static Map<String, Object> message(
             final Activity activity,
             final Category category,
