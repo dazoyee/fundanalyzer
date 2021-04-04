@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
-@Timeout(5)
+@Timeout(10)
 class SlackProxyTest {
 
     private static MockWebServer server;
@@ -38,7 +38,7 @@ class SlackProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new SlackProxy(
-                new AppConfig().restTemplate(1, 1),
+                new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort()),
                 environment
         ));
@@ -83,7 +83,8 @@ class SlackProxyTest {
         server.enqueue(new MockResponse());
         doReturn("*message*").when(environment).getProperty(propertyPath);
 
-        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
+        proxy.sendMessage(propertyPath);
+//        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
 
         var recordedRequest = server.takeRequest();
         assertAll("request",

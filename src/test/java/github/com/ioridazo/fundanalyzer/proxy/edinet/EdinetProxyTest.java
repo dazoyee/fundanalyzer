@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-@Timeout(5)
+@Timeout(10)
 class EdinetProxyTest {
 
     private static MockWebServer server;
@@ -42,7 +42,7 @@ class EdinetProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new EdinetProxy(
-                new AppConfig().restTemplate(1, 1),
+                new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort())
         ));
 
