@@ -6,6 +6,7 @@ public enum Category {
     STOCK("stock"),
     SLACK("slack"),
     SCHEDULER("scheduler"),
+    ERROR("error"),
     ;
 
     private final String value;

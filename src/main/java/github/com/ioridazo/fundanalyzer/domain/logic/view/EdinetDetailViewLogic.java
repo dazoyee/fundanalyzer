@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.logic.view;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,18 +44,18 @@ public class EdinetDetailViewLogic {
     /**
      * 対象提出日の未処理書類リストを取得する
      *
-     * @param documentTypeCode   書類種別コード
      * @param submitDate         対象提出日
+     * @param docTypeCodes       書類種別コード
      * @param allTargetCompanies 処理対象となるすべての会社
      * @return 象提出日の未処理書類情報
      */
     @NewSpan("EdinetDetailViewLogic.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(
-            final String documentTypeCode,
             final LocalDate submitDate,
+            final List<DocTypeCode> docTypeCodes,
             final List<Company> allTargetCompanies) {
-
-        final var cantScrapedList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate).stream()
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final var cantScrapedList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
                 // filter companyCode is present
                 .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
                 // filter removed
@@ -93,25 +95,32 @@ public class EdinetDetailViewLogic {
      */
     private EdinetDetailViewBean.ValuesForAnalysis valuesForAnalysis(final Document document) {
         final var company = companyDao.selectByEdinetCode(document.getEdinetCode()).orElseThrow();
-        final var period = document.getPeriod();
 
         return new EdinetDetailViewBean.ValuesForAnalysis(
-                fsValue(company, BsEnum.TOTAL_CURRENT_ASSETS, period, analysisLogic::bsValues),
-                fsValue(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period, analysisLogic::bsValues),
-                fsValue(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period, analysisLogic::bsValues),
-                fsValue(company, BsEnum.TOTAL_FIXED_LIABILITIES, period, analysisLogic::bsValues),
-                fsValue(company, PlEnum.OPERATING_PROFIT, period, analysisLogic::plValues),
-                nsValue(company, period, analysisLogic::nsValue)
+                fsValue(company, BsEnum.TOTAL_CURRENT_ASSETS, document, analysisLogic::bsValue),
+                fsValue(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, document, analysisLogic::bsValue),
+                fsValue(company, BsEnum.TOTAL_CURRENT_LIABILITIES, document, analysisLogic::bsValue),
+                fsValue(company, BsEnum.TOTAL_FIXED_LIABILITIES, document, analysisLogic::bsValue),
+                fsValue(company, PlEnum.OPERATING_PROFIT, document, analysisLogic::plValue),
+                nsValue(company, document, analysisLogic::nsValue)
         );
     }
 
     private <T> Long fsValue(
             final Company company,
             final T t,
-            final LocalDate period,
-            final TriFunction<Company, T, LocalDate, Long> triFunction) {
+            final Document document,
+            final BiFunction<T, AnalysisLogic.FsValueParameter, Long> biFunction) {
         try {
-            return triFunction.apply(company, t, period);
+            return biFunction.apply(
+                    t,
+                    AnalysisLogic.FsValueParameter.of(
+                            company,
+                            document.getDocumentPeriod(),
+                            DocTypeCode.fromValue(document.getDocumentTypeCode()),
+                            document.getSubmitDate()
+                    )
+            );
         } catch (FundanalyzerCalculateException e) {
             return null;
         }
@@ -119,17 +128,19 @@ public class EdinetDetailViewLogic {
 
     private Long nsValue(
             final Company company,
-            final LocalDate period,
-            final BiFunction<Company, LocalDate, Long> biFunction) {
+            final Document document,
+            final ToLongFunction<AnalysisLogic.FsValueParameter> toLongFunction) {
         try {
-            return biFunction.apply(company, period);
+            return toLongFunction.applyAsLong(
+                    AnalysisLogic.FsValueParameter.of(
+                            company,
+                            document.getDocumentPeriod(),
+                            DocTypeCode.fromValue(document.getDocumentTypeCode()),
+                            document.getSubmitDate()
+                    )
+            );
         } catch (FundanalyzerCalculateException e) {
             return null;
         }
-    }
-
-    @FunctionalInterface
-    public interface TriFunction<T, U, V, R> {
-        R apply(T t, U u, V v);
     }
 }

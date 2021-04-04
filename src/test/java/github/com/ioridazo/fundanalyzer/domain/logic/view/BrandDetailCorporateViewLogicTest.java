@@ -130,6 +130,9 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2020-01-01"),
                         LocalDate.parse("2020-12-31"),
                         1000L,
+                        "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 ),
                 new FinancialStatement(
@@ -141,6 +144,9 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2020-01-01"),
                         LocalDate.parse("2020-12-31"),
                         2000L,
+                        "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 ),
                 new FinancialStatement(
@@ -152,6 +158,9 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2020-01-01"),
                         LocalDate.parse("2020-12-31"),
                         3000L,
+                        "120",
+                        LocalDate.parse("2021-03-20"),
+                        null,
                         null
                 ),
                 new FinancialStatement(
@@ -163,6 +172,23 @@ class BrandDetailCorporateViewLogicTest {
                         LocalDate.parse("2019-01-01"),
                         LocalDate.parse("2019-12-31"),
                         4000L,
+                        "120",
+                        LocalDate.parse("2020-03-20"),
+                        null,
+                        null
+                ),
+                new FinancialStatement(
+                        5,
+                        "9999",
+                        null,
+                        FinancialStatementEnum.BALANCE_SHEET.toValue(),
+                        "1",
+                        LocalDate.parse("2020-01-01"),
+                        LocalDate.parse("2020-12-31"),
+                        1500L,
+                        "130",
+                        LocalDate.parse("2021-04-20"),
+                        null,
                         null
                 )
         ));
@@ -176,6 +202,7 @@ class BrandDetailCorporateViewLogicTest {
                 () -> assertAll("BrandDetailFinancialStatement",
                         () -> assertEquals("2020-01-01", actual.get(0).getPeriodStart().toString()),
                         () -> assertEquals("2020-12-31", actual.get(0).getPeriodEnd().toString()),
+                        () -> assertEquals("有価証券報告書", actual.get(0).getDocumentTypeName()),
                         () -> assertAll("bs",
                                 () -> assertEquals("subject1", actual.get(0).getBs().get(0).getSubject()),
                                 () -> assertEquals(1000L, actual.get(0).getBs().get(0).getValue()),
@@ -188,11 +215,21 @@ class BrandDetailCorporateViewLogicTest {
                         )
                 ),
                 () -> assertAll("BrandDetailFinancialStatement",
-                        () -> assertEquals("2019-01-01", actual.get(1).getPeriodStart().toString()),
-                        () -> assertEquals("2019-12-31", actual.get(1).getPeriodEnd().toString()),
+                        () -> assertEquals("2020-01-01", actual.get(1).getPeriodStart().toString()),
+                        () -> assertEquals("2020-12-31", actual.get(1).getPeriodEnd().toString()),
+                        () -> assertEquals("訂正有価証券報告書", actual.get(1).getDocumentTypeName()),
                         () -> assertAll("pl",
-                                () -> assertEquals("subject1", actual.get(1).getPl().get(0).getSubject()),
-                                () -> assertEquals(4000L, actual.get(1).getPl().get(0).getValue())
+                                () -> assertEquals("subject1", actual.get(1).getBs().get(0).getSubject()),
+                                () -> assertEquals(1500L, actual.get(1).getBs().get(0).getValue())
+                        )
+                ),
+                () -> assertAll("BrandDetailFinancialStatement",
+                        () -> assertEquals("2019-01-01", actual.get(2).getPeriodStart().toString()),
+                        () -> assertEquals("2019-12-31", actual.get(2).getPeriodEnd().toString()),
+                        () -> assertEquals("有価証券報告書", actual.get(2).getDocumentTypeName()),
+                        () -> assertAll("bs",
+                                () -> assertEquals("subject1", actual.get(2).getPl().get(0).getSubject()),
+                                () -> assertEquals(4000L, actual.get(2).getPl().get(0).getValue())
                         )
                 )
         );

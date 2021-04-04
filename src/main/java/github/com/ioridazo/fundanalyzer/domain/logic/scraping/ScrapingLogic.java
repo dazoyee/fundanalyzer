@@ -7,9 +7,9 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
@@ -27,6 +27,7 @@ import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -104,12 +106,7 @@ public class ScrapingLogic {
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
 
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.DONE.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateDownloadToDone(docId, nowLocalDateTime()));
 
             // ファイル解凍
             fileOperator.decodeZipFile(
@@ -117,30 +114,16 @@ public class ScrapingLogic {
                     makeTargetPath(pathDecode, targetDate, docId)
             );
 
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .decoded(DocumentStatus.DONE.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build());
+            documentDao.update(Document.ofUpdateDecodeToDone(docId, nowLocalDateTime()));
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
                     "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.ERROR.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateDownloadToError(docId, nowLocalDateTime()));
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
                     "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .decoded(DocumentStatus.ERROR.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateDecodeToError(docId, nowLocalDateTime()));
         }
     }
 
@@ -164,20 +147,20 @@ public class ScrapingLogic {
         final var targetDirectory = makeDocumentPath(pathDecode, date, documentId);
 
         // 財務諸表登録年（period_endの年）が重複していないか確認する
-        if (beforeCheck(company, fs, edinetDocument)) {
-            try {
-                final var targetFile = findTargetFile(targetDirectory, fs);
-                if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)
-                        || FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
-                    // 貸借対照表、損益計算書
-                    insertFinancialStatement(
-                            targetFile.getFirst(),
-                            targetFile.getSecond(),
-                            fs,
-                            company,
-                            detailList,
-                            edinetDocument
-                    );
+//        if (beforeCheck(company, fs, edinetDocument)) {
+        try {
+            final var targetFile = findTargetFile(targetDirectory, fs);
+            if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)
+                    || FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)) {
+                // 貸借対照表、損益計算書
+                insertFinancialStatement(
+                        targetFile.getFirst(),
+                        targetFile.getSecond(),
+                        fs,
+                        company,
+                        detailList,
+                        edinetDocument
+                );
 
                     if (FinancialStatementEnum.BALANCE_SHEET.equals(fs)) {
                         checkBs(company, edinetDocument);
@@ -207,7 +190,7 @@ public class ScrapingLogic {
                         Process.SCRAPING
                 );
 
-                documentDao.update(Document.ofUpdated(
+                documentDao.update(Document.ofUpdateSwitchFs(
                         fs,
                         documentId,
                         DocumentStatus.DONE,
@@ -215,39 +198,34 @@ public class ScrapingLogic {
                         nowLocalDateTime()
                 ));
 
-            } catch (FundanalyzerFileException e) {
-                documentDao.update(Document.ofUpdated(
-                        fs,
-                        documentId,
-                        DocumentStatus.ERROR,
-                        null,
-                        nowLocalDateTime()
-                ));
-                log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                                "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
-                        company.getCode().orElseThrow(),
-                        company.getEdinetCode(),
-                        fs.getName(),
-                        targetDirectory.getPath(), e
-                );
-            }
-        } else {
-            documentDao.update(Document.builder()
-                    .documentId(documentId)
-                    .removed(Flag.ON.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
-            log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
-                            "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
+        } catch (FundanalyzerFileException e) {
+            documentDao.update(Document.ofUpdateSwitchFs(
+                    fs,
+                    documentId,
+                    DocumentStatus.ERROR,
+                    null,
+                    nowLocalDateTime()
+            ));
+            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
                     company.getCode().orElseThrow(),
                     company.getEdinetCode(),
-                    company.getCompanyName(),
                     fs.getName(),
-                    documentId,
-                    edinetDocument.getPeriodEnd().orElseThrow()
+                    targetDirectory.getPath(), e
             );
         }
+//        } else {
+//            documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
+//            log.warn("対象年が重複しており一意制約違反を避けるため、スクレイピング処理を実施せずに後続処理を続けます。" +
+//                            "\t企業コード:{}\tEDINETコード:{}\t会社名:{}\t財務諸表名:{}\t書類ID:{}\tperiodEnd:{}",
+//                    company.getCode().orElseThrow(),
+//                    company.getEdinetCode(),
+//                    company.getCompanyName(),
+//                    fs.getName(),
+//                    documentId,
+//                    edinetDocument.getPeriodEnd().orElseThrow()
+//            );
+//        }
     }
 
     /**
@@ -258,6 +236,7 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      * @return boolean
      */
+    // TODO 削除
     boolean beforeCheck(
             final Company company,
             final FinancialStatementEnum fs,
@@ -364,15 +343,19 @@ public class ScrapingLogic {
             final String dId,
             final EdinetDocument edinetDocument,
             final Long value) {
+        final Period period = parsePeriod(edinetDocument);
         try {
             financialStatementDao.insert(FinancialStatement.of(
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
                     fs.toValue(),
                     dId,
-                    LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()),
-                    LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()),
+                    period.getPeriodStart(),
+                    period.getPeriodEnd(),
                     value,
+                    DocTypeCode.fromValue(edinetDocument.getDocTypeCode()),
+                    LocalDateTime.parse(edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
+                    edinetDocument.getDocId(),
                     nowLocalDateTime()
             ));
         } catch (NestedRuntimeException e) {
@@ -398,13 +381,19 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      */
     void checkBs(final Company company, final EdinetDocument edinetDocument) {
+        final DocTypeCode docTypeCode = DocTypeCode.fromValue(edinetDocument.getDocTypeCode());
+        final LocalDate submitDate = LocalDateTime.parse(
+                edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
+
         final var totalCurrentLiabilities = bsSubjectDao.selectByOutlineSubjectId(
                 BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId()).stream()
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
                         edinetDocument.getEdinetCode().orElse(null),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                        docTypeCode.toValue(),
+                        submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -417,7 +406,9 @@ public class ScrapingLogic {
                         edinetDocument.getEdinetCode().orElse(null),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null)
+                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                        docTypeCode.toValue(),
+                        submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
                 .filter(Optional::isPresent)
@@ -450,6 +441,46 @@ public class ScrapingLogic {
                     Process.SCRAPING
             );
         }
+    }
+
+    private Period parsePeriod(final EdinetDocument edinetDocument) {
+        final Period period = new Period();
+
+        // periodStart
+        if (edinetDocument.getPeriodStart().isPresent()) {
+            // period start is present
+            period.setPeriodStart(LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()));
+        } else if (Objects.nonNull(edinetDocument.getParentDocId())) {
+            final EdinetDocument parentEdinetDocument = edinetDocumentDao.selectByDocId(edinetDocument.getParentDocId());
+            if (Objects.nonNull(parentEdinetDocument)) {
+                // parent edinet document is present
+                period.setPeriodStart(LocalDate.parse(parentEdinetDocument.getPeriodStart().orElseThrow()));
+            } else {
+                // parent edinet document is null
+                period.setPeriodStart(LocalDate.EPOCH);
+            }
+        } else {
+            period.setPeriodStart(LocalDate.EPOCH);
+        }
+
+        // periodEnd
+        if (edinetDocument.getPeriodEnd().isPresent()) {
+            // period end is present
+            period.setPeriodEnd(LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()));
+        } else if (Objects.nonNull(edinetDocument.getParentDocId())) {
+            final EdinetDocument parentEdinetDocument = edinetDocumentDao.selectByDocId(edinetDocument.getParentDocId());
+            if (Objects.nonNull(parentEdinetDocument)) {
+                // parent edinet document is present
+                period.setPeriodEnd(LocalDate.parse(parentEdinetDocument.getPeriodEnd().orElseThrow()));
+            } else {
+                // parent edinet document is null
+                period.setPeriodEnd(LocalDate.EPOCH);
+            }
+        } else {
+            period.setPeriodEnd(LocalDate.EPOCH);
+        }
+
+        return period;
     }
 
     private Optional<Long> parseValue(final String value) {
@@ -505,5 +536,11 @@ public class ScrapingLogic {
 
     private File makeDocumentPath(final String prePath, final LocalDate targetDate, final String docId) {
         return new File(String.format("%s/%d/%s/%s/%s/XBRL/PublicDoc", prePath, targetDate.getYear(), targetDate.getMonth(), targetDate, docId));
+    }
+
+    @Data
+    static class Period {
+        private LocalDate periodStart;
+        private LocalDate periodEnd;
     }
 }

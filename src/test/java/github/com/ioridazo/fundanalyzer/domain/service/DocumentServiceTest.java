@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
@@ -46,16 +47,10 @@ import static org.mockito.Mockito.when;
 
 class DocumentServiceTest {
 
-    private String pathCompany;
-    private String pathCompanyZip;
-    private String pathDecode;
     private EdinetProxy edinetProxy;
     private SeleniumProxy seleniumProxy;
-    private CompanyLogic companyLogic;
     private ScrapingLogic scrapingLogic;
     private CompanyDao companyDao;
-    private BsSubjectDao bsSubjectDao;
-    private PlSubjectDao plSubjectDao;
     private EdinetDocumentDao edinetDocumentDao;
     private DocumentDao documentDao;
 
@@ -63,30 +58,24 @@ class DocumentServiceTest {
 
     @BeforeEach
     void before() {
-        this.pathCompany = "";
-        this.pathCompanyZip = "";
-        this.pathDecode = "C:/test/decode";
         this.edinetProxy = Mockito.mock(EdinetProxy.class);
         this.seleniumProxy = Mockito.mock(SeleniumProxy.class);
-        this.companyLogic = Mockito.mock(CompanyLogic.class);
         this.scrapingLogic = Mockito.mock(ScrapingLogic.class);
         this.companyDao = Mockito.mock(CompanyDao.class);
-        this.bsSubjectDao = Mockito.mock(BsSubjectDao.class);
-        this.plSubjectDao = Mockito.mock(PlSubjectDao.class);
         this.edinetDocumentDao = Mockito.mock(EdinetDocumentDao.class);
         this.documentDao = Mockito.mock(DocumentDao.class);
 
         this.service = Mockito.spy(new DocumentService(
-                pathCompany,
-                pathCompanyZip,
-                pathDecode,
+                "",
+                "",
+                "C:/test/decode",
                 edinetProxy,
                 seleniumProxy,
-                companyLogic,
+                Mockito.mock(CompanyLogic.class),
                 scrapingLogic,
                 companyDao,
-                bsSubjectDao,
-                plSubjectDao,
+                Mockito.mock(BsSubjectDao.class),
+                Mockito.mock(PlSubjectDao.class),
                 edinetDocumentDao,
                 documentDao
         ));
@@ -116,10 +105,10 @@ class DocumentServiceTest {
         @Test
         void execute_ok() {
             var date = "2020-09-19";
-            var documentTypeCode = "120";
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
                             Document.builder()
                                     .id(1)
@@ -175,7 +164,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(1)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(1))
@@ -190,10 +179,10 @@ class DocumentServiceTest {
         @Test
         void execute_isEmpty() {
             var date = "2020-09-19";
-            var documentTypeCode = "120";
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(Document.builder()
                             .id(1)
                             .documentId("documentId1")
@@ -220,7 +209,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(0)).store(any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
@@ -232,10 +221,10 @@ class DocumentServiceTest {
         @Test
         void execute_status_done() {
             var date = "2020-09-19";
-            var documentTypeCode = "120";
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
                             Document.builder()
                                     .id(1)
@@ -263,7 +252,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(0)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(0))
@@ -278,11 +267,11 @@ class DocumentServiceTest {
         @Test
         void execute_status_error() {
             var date = "2020-09-19";
-            var documentTypeCode = "120";
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var updatedAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
                             Document.builder()
                                     .id(1)
@@ -311,7 +300,7 @@ class DocumentServiceTest {
             )));
             when(service.nowLocalDateTime()).thenReturn(updatedAt);
 
-            assertDoesNotThrow(() -> service.execute(date, documentTypeCode));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(0)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(0))
@@ -390,7 +379,7 @@ class DocumentServiceTest {
                     .documentId(resultsInserted.getDocId())
                     .documentTypeCode(resultsInserted.getDocTypeCode())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
-                    .period(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
+                    .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
@@ -448,7 +437,7 @@ class DocumentServiceTest {
 
         @Disabled("catchできない")
         @DisplayName("edinetList: エラー発生したときの処理を確認する")
-        @Test
+//        @Test
         void edinetList_UniqueConstraintException() {
             var date = LocalDate.parse("2020-09-19");
             var resultSet = new Metadata.ResultSet();
@@ -491,11 +480,122 @@ class DocumentServiceTest {
                     .documentId(resultsInserted.getDocId())
                     .documentTypeCode(resultsInserted.getDocTypeCode())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
-                    .period(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
+                    .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
                     .build());
+        }
+
+        @DisplayName("edinetList : periodEndが存在するときはパースしてdocumentPeriodを生成する")
+        @Test
+        void edinetList_documentPeriod_present() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId");
+            resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setPeriodEnd("2020-12-31");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(LocalDate.parse("2020-01-01"))
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
+
+        @DisplayName("edinetList : period_endが存在しないときは親書類からdocument_periodを生成する")
+        @Test
+        void edinetList_documentPeriod_null_parentDocument_present() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId2");
+            resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setParentDocID("docId");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(documentDao.selectByDocumentId("docId")).thenReturn(Document.builder().documentPeriod(LocalDate.parse("2020-01-01")).build());
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId2")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(LocalDate.parse("2020-01-01"))
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
+
+        @DisplayName("edinetList : period_endも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
+        @Test
+        void edinetList_documentPeriod_null_parentDocument_null() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId");
+            resultsInserted.setEdinetCode("edinetCode");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(LocalDate.EPOCH)
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
         }
     }
 
@@ -544,6 +644,7 @@ class DocumentServiceTest {
         @Test
         void scrape_submitDate_not_yet() {
             var submitDate = LocalDate.parse("2020-09-22");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var documentTargeted = Document.builder()
                     .documentId("id")
                     .edinetCode("target")
@@ -560,7 +661,7 @@ class DocumentServiceTest {
                     .removed("1")
                     .build();
 
-            when(documentDao.selectByTypeAndSubmitDate(eq("120"), eq(submitDate)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of(documentTargeted, documentNotTargeted, documentRemoved));
             when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new Company(
                     "code",
@@ -575,7 +676,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.scrape(submitDate));
+            assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
             verify(scrapingLogic, times(1)).scrape(
                     eq(FinancialStatementEnum.BALANCE_SHEET),
@@ -598,6 +699,7 @@ class DocumentServiceTest {
         @Test
         void scrape_submitDate_done() {
             var submitDate = LocalDate.parse("2020-09-22");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var documentTargeted = Document.builder()
                     .documentId("id")
                     .edinetCode("target")
@@ -607,7 +709,7 @@ class DocumentServiceTest {
                     .removed("0")
                     .build();
 
-            when(documentDao.selectByTypeAndSubmitDate(eq("120"), eq(submitDate)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of(documentTargeted));
             when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new Company(
                     "code",
@@ -622,7 +724,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.scrape(submitDate));
+            assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
             verify(scrapingLogic, times(0)).scrape(
                     eq(FinancialStatementEnum.BALANCE_SHEET),
@@ -645,11 +747,12 @@ class DocumentServiceTest {
         @Test
         void scrape_submitDate_nothing() {
             var submitDate = LocalDate.parse("2020-09-22");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
-            when(documentDao.selectByTypeAndSubmitDate(eq("120"), eq(submitDate)))
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of());
 
-            assertDoesNotThrow(() -> service.scrape(submitDate));
+            assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
@@ -724,9 +827,10 @@ class DocumentServiceTest {
 
         @Test
         void resetForRetry_ok() {
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var updatedAt = LocalDateTime.of(2020, 9, 22, 13, 9);
 
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(Document.builder()
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(Document.builder()
                     .documentId("id")
                     .scrapedBs("9")
                     .scrapedPl("9")
@@ -735,7 +839,7 @@ class DocumentServiceTest {
                     .build()));
             when(service.nowLocalDateTime()).thenReturn(updatedAt);
 
-            assertDoesNotThrow(() -> service.resetForRetry());
+            assertDoesNotThrow(() -> service.resetForRetry(docTypeCodes));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId("id")

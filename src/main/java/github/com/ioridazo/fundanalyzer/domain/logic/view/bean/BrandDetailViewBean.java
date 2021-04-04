@@ -28,6 +28,7 @@ public class BrandDetailViewBean {
     public static class BrandDetailFinancialStatement {
         private final LocalDate periodStart;
         private final LocalDate periodEnd;
+        private final String documentTypeName;
         private final List<BrandDetailFinancialStatementValue> bs;
         private final List<BrandDetailFinancialStatementValue> pl;
 

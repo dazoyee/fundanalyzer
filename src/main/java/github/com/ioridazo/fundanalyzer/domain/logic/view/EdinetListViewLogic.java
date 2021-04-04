@@ -80,10 +80,10 @@ public class EdinetListViewLogic {
                 scrapedList.stream()
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
-                                // companyCode
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
-                                // period
-                                d.getPeriod()
+                                d.getDocumentPeriod(),
+                                d.getDocumentTypeCode(),
+                                d.getSubmitDate()
                                 ).isPresent()
                         ).count(),
 
@@ -91,10 +91,10 @@ public class EdinetListViewLogic {
                 scrapedList.stream()
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
-                                // companyCode
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
-                                // period
-                                d.getPeriod()
+                                d.getDocumentPeriod(),
+                                d.getDocumentTypeCode(),
+                                d.getSubmitDate()
                                 ).isEmpty()
                         )
                         .map(Document::getEdinetCode)

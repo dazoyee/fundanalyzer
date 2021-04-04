@@ -8,6 +8,7 @@ import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +24,9 @@ public interface FinancialStatementDao {
             String edinetCode,
             String financialStatementId,
             String subjectId,
-            String dayOfYear);
+            String dayOfYear,
+            String documentTypeCode,
+            LocalDate submitDate);
 
     @Select
     List<FinancialStatement> selectByEdinetCodeAndFsAndYear(

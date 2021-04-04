@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -43,10 +44,16 @@ public class Minkabu {
     private final LocalDateTime createdAt;
 
     public static Minkabu ofMinkabuResultBean(final String code, final MinkabuResultBean minkabu, final LocalDateTime createdAt) {
+        LocalDate targetDate;
+        try {
+            targetDate = MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear());
+        } catch (DateTimeParseException e) {
+            targetDate = LocalDate.now();
+        }
         return new Minkabu(
                 null,
                 code,
-                MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear()),
+                targetDate,
                 Parser.parseDoubleMinkabu(minkabu.getStockPrice()).orElse(null),
                 Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getGoals()).orElse(null),
                 Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getTheoretical()).orElse(null),

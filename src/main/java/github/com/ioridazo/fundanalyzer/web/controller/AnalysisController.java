@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -7,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Controller
 public class AnalysisController {
@@ -63,21 +66,24 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String documentAnalysis(final String fromDate, final String toDate) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
+
+        final List<DocTypeCode> docTypeCodes = Target.annualSecuritiesReport();
+
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(date -> {
                     // execute実行
-                    documentService.execute(date.toString(), "120")
+                    documentService.execute(date.toString(), docTypeCodes)
                             // execute完了後、analyze実行
-                            .thenAcceptAsync(unused -> analysisService.analyze(date))
+                            .thenAcceptAsync(unused -> analysisService.analyze(date, docTypeCodes))
                             // analyze完了後、importStockPrice実行
-                            .thenAcceptAsync(unused -> stockService.importStockPrice(date))
+                            .thenAcceptAsync(unused -> stockService.importStockPrice(date, docTypeCodes))
                             // importStockPrice完了後、updateCorporateView実行
-                            .thenAcceptAsync(unused -> viewService.updateCorporateView(date))
+                            .thenAcceptAsync(unused -> viewService.updateCorporateView(date, docTypeCodes))
                             // updateCorporateView完了後、updateEdinetListView実行
-                            .thenAcceptAsync(unused -> viewService.updateEdinetListView("120", date))
+                            .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, docTypeCodes))
                             // updateEdinetListView完了後、notice実行
-                            .thenAcceptAsync(unused -> viewService.notice(date));
+                            .thenAcceptAsync(unused -> viewService.notice(date, docTypeCodes));
                 });
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
@@ -91,8 +97,8 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/update/view")
     public String updateView() {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.UPDATE);
-        viewService.updateCorporateView();
-        viewService.updateEdinetListView("120");
+        viewService.updateCorporateView(Target.annualSecuritiesReport());
+        viewService.updateEdinetListView(Target.annualSecuritiesReport());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.UPDATE);
         return REDIRECT_INDEX + "?message=updating";
     }
@@ -106,8 +112,8 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
-        documentService.scrape(LocalDate.parse(date));
-        analysisService.analyze(LocalDate.parse(date));
+        documentService.scrape(LocalDate.parse(date), Target.annualSecuritiesReport());
+        analysisService.analyze(LocalDate.parse(date), Target.annualSecuritiesReport());
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
@@ -139,7 +145,7 @@ public class AnalysisController {
         FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
-                .forEach(stockService::importStockPrice);
+                .forEach(submitDate -> stockService.importStockPrice(submitDate, Target.annualSecuritiesReport()));
         FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_INDEX;
     }

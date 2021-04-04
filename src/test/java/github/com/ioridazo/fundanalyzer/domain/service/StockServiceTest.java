@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
@@ -65,8 +66,9 @@ class StockServiceTest {
         @Test
         void importStockPrice_ok_submitDate() {
             final var submitDate = LocalDate.parse("2020-11-14");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
-            when(documentDao.selectByTypeAndSubmitDate("120", submitDate)).thenReturn(List.of(
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(
                     Document.builder()
                             .edinetCode("edinetCode")
                             .build()
@@ -85,7 +87,7 @@ class StockServiceTest {
             )));
             doNothing().when(service).importStockPrice("code");
 
-            assertDoesNotThrow(() -> service.importStockPrice(submitDate));
+            assertDoesNotThrow(() -> service.importStockPrice(submitDate, docTypeCodes));
         }
 
         @DisplayName("importStockPrice : 指定企業の株価をnikkeiから取得する")

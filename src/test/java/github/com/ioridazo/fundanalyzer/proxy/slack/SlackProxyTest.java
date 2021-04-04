@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
+@Timeout(5)
 class SlackProxyTest {
 
     private static MockWebServer server;
@@ -54,7 +56,7 @@ class SlackProxyTest {
     }
 
     @Disabled("テスト送信のため")
-    @Test
+//    @Test
     void sendMessage_tester() {
         var propertyPath = "property.path";
 

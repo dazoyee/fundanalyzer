@@ -16,13 +16,17 @@ import java.util.Optional;
 public interface AnalysisResultDao {
 
     @Select
-    Optional<AnalysisResult> selectByUniqueKey(String companyCode, LocalDate period);
+    Optional<AnalysisResult> selectByUniqueKey(
+            String companyCode,
+            LocalDate documentPeriod,
+            String documentTypeCode,
+            LocalDate submitDate);
 
     @Select
     List<AnalysisResult> selectByCompanyCode(String code);
 
     @Select
-    List<AnalysisResult> selectByPeriod(LocalDate period);
+    List<AnalysisResult> selectByPeriod(LocalDate documentPeriod);
 
     @Insert
     Result<AnalysisResult> insert(AnalysisResult analysisResult);

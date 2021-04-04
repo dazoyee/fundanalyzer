@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.springframework.context.annotation.Profile;
@@ -51,7 +52,7 @@ public class StockScheduler {
                     .distinct()
                     .collect(Collectors.toList());
 
-            targetList.forEach(stockService::importStockPrice);
+            targetList.forEach(submitDate -> stockService.importStockPrice(submitDate, Target.annualSecuritiesReport()));
 
             slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.IMPORT);

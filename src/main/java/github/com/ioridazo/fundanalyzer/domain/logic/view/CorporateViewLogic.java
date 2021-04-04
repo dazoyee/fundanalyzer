@@ -4,12 +4,14 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,16 +59,18 @@ public class CorporateViewLogic {
     /**
      * 企業価値等を画面表示するためのBean生成
      *
-     * @param company 会社
+     * @param company      会社
+     * @param docTypeCodes 書類種別コード
      * @return CorporateViewBean
      */
     @NewSpan("CorporateViewLogic.corporateViewOf")
-    public CorporateViewBean corporateViewOf(final Company company) {
-        final var submitDate = latestSubmitDate(company);
+    public CorporateViewBean corporateViewOf(final Company company, final List<DocTypeCode> docTypeCodes) {
+        final var submitDate = latestSubmitDate(company, docTypeCodes);
         final var corporateValue = corporateValue(company);
         final var stockPrice = submitDate.map(sd -> stockPrice(company, sd)).orElse(StockPriceValue.of());
         final var discountValue = discountValue(
-                corporateValue.getAverageCorporateValue().orElse(null), stockPrice.getLatestStockPrice().orElse(null));
+                corporateValue.getAverageCorporateValue().orElse(null),
+                stockPrice.getLatestStockPrice().orElse(null));
 
         return new CorporateViewBean(
                 company.getCode().orElseThrow().substring(0, 4),
@@ -90,11 +95,13 @@ public class CorporateViewLogic {
     /**
      * 直近の財務諸表提出日を取得する
      *
-     * @param company 会社情報
+     * @param company      会社情報
+     * @param docTypeCodes 書類種別コード
      * @return 提出日
      */
-    Optional<LocalDate> latestSubmitDate(final Company company) {
-        return documentDao.selectByDocumentTypeCode("120").stream()
+    Optional<LocalDate> latestSubmitDate(final Company company, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        return documentDao.selectByDocumentTypeCode(docTypeCode).stream()
                 .filter(d -> company.getEdinetCode().equals(d.getEdinetCode()))
                 .max(Comparator.comparing(Document::getSubmitDate))
                 .map(Document::getSubmitDate);
@@ -107,13 +114,14 @@ public class CorporateViewLogic {
      * @return <li>平均の企業価値</li><li>標準偏差</li><li>対象年数</li>
      */
     CorporateValue corporateValue(final Company company) {
-        final var corporateValueList = analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow());
+        final List<AnalysisResult> corporateValueList = Target.distinctAnalysisResults(
+                analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow()));
 
         if (!corporateValueList.isEmpty()) {
             // 最新企業価値
             final var latest = corporateValueList.stream()
                     // latest
-                    .max(Comparator.comparing(AnalysisResult::getPeriod))
+                    .max(Comparator.comparing(AnalysisResult::getDocumentPeriod))
                     // corporate value
                     .map(AnalysisResult::getCorporateValue)
                     // scale

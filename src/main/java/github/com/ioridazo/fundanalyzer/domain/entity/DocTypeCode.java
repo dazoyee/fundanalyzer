@@ -50,6 +50,10 @@ public enum DocTypeCode {
         return this.code;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public String toString() {
         return String.format("DocTypeCode[code = %s]", this.code);
