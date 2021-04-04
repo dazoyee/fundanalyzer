@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Timeout(5)
+@Timeout(10)
 class SeleniumProxyTest {
 
     private static MockWebServer server;
@@ -29,7 +29,7 @@ class SeleniumProxyTest {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new SeleniumProxy(new AppConfig().restTemplate(1, 1),
+        this.proxy = Mockito.spy(new SeleniumProxy(new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort())
         ));
 
