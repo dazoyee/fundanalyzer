@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.logic.view;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -52,8 +53,8 @@ class EdinetDetailViewLogicTest {
         @DisplayName("edinetDetailView : 対象提出日の未処理書類リストを取得する")
         @Test
         void edinetDetailView_ok() {
-            var documentTypeCode = "120";
             var submitDate = LocalDate.parse("2020-12-14");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var company = new Company(
                     "code",
                     "会社名",
@@ -70,8 +71,10 @@ class EdinetDetailViewLogicTest {
             var period = LocalDate.parse("2020-12-31");
             var document = Document.builder()
                     .documentId("documentId")
+                    .documentTypeCode(DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue())
                     .edinetCode("edinetCode")
-                    .period(period)
+                    .documentPeriod(period)
+                    .submitDate(submitDate)
                     .scrapedBs("9")
                     .scrapedPl("1")
                     .scrapedNumberOfShares("1")
@@ -91,18 +94,19 @@ class EdinetDetailViewLogicTest {
                     null,
                     null
             );
+            var parameter = AnalysisLogic.FsValueParameter.of(company, period, DocTypeCode.ANNUAL_SECURITIES_REPORT, submitDate);
 
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
             when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
-            when(analysisLogic.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenReturn(5000L);
-            when(analysisLogic.nsValue(company, period)).thenReturn(6000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter)).thenReturn(1000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter)).thenReturn(2000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_LIABILITIES, parameter)).thenReturn(3000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_FIXED_LIABILITIES, parameter)).thenReturn(4000L);
+            when(analysisLogic.plValue(PlEnum.OPERATING_PROFIT, parameter)).thenReturn(5000L);
+            when(analysisLogic.nsValue(parameter)).thenReturn(6000L);
 
-            var actual = logic.edinetDetailView(documentTypeCode, submitDate, allTargetCompanies);
+            var actual = logic.edinetDetailView(submitDate, docTypeCodes, allTargetCompanies);
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),
@@ -122,8 +126,8 @@ class EdinetDetailViewLogicTest {
         @DisplayName("edinetDetailView : スクレイピング処理に失敗しているときはnullで返すようにする")
         @Test
         void edinetDetailView_value_is_null() {
-            var documentTypeCode = "120";
             var submitDate = LocalDate.parse("2020-12-14");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var company = new Company(
                     "code",
                     "会社名",
@@ -140,8 +144,10 @@ class EdinetDetailViewLogicTest {
             var period = LocalDate.parse("2020-12-31");
             var document = Document.builder()
                     .documentId("documentId")
+                    .documentTypeCode(DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue())
                     .edinetCode("edinetCode")
-                    .period(period)
+                    .documentPeriod(period)
+                    .submitDate(submitDate)
                     .scrapedBs("9")
                     .scrapedPl("1")
                     .scrapedNumberOfShares("1")
@@ -161,18 +167,19 @@ class EdinetDetailViewLogicTest {
                     null,
                     null
             );
+            var parameter = AnalysisLogic.FsValueParameter.of(company, period, DocTypeCode.ANNUAL_SECURITIES_REPORT, submitDate);
 
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
             when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_ASSETS, period)).thenReturn(1000L);
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, period)).thenReturn(2000L);
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_CURRENT_LIABILITIES, period)).thenReturn(3000L);
-            when(analysisLogic.bsValues(company, BsEnum.TOTAL_FIXED_LIABILITIES, period)).thenReturn(4000L);
-            when(analysisLogic.plValues(company, PlEnum.OPERATING_PROFIT, period)).thenThrow(FundanalyzerCalculateException.class);
-            when(analysisLogic.nsValue(company, period)).thenThrow(FundanalyzerCalculateException.class);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter)).thenReturn(1000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter)).thenReturn(2000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_LIABILITIES, parameter)).thenReturn(3000L);
+            when(analysisLogic.bsValue(BsEnum.TOTAL_FIXED_LIABILITIES, parameter)).thenReturn(4000L);
+            when(analysisLogic.plValue(PlEnum.OPERATING_PROFIT, parameter)).thenThrow(FundanalyzerCalculateException.class);
+            when(analysisLogic.nsValue(parameter)).thenThrow(FundanalyzerCalculateException.class);
 
-            var actual = logic.edinetDetailView(documentTypeCode, submitDate, allTargetCompanies);
+            var actual = logic.edinetDetailView(submitDate, docTypeCodes, allTargetCompanies);
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),

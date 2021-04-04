@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
@@ -58,7 +59,9 @@ class AnalysisSchedulerTest {
         @DisplayName("analysisScheduler : データベースにある最新提出日から昨日までの財務分析を実施する")
         @Test
         void analysisScheduler_ok() {
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+
+            when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
                     Document.builder()
                             .submitDate(LocalDate.parse("2021-02-04"))
                             .build(),
@@ -71,16 +74,18 @@ class AnalysisSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
 
-            verify(documentService, times(0)).execute("2021-02-05", "120");
-            verify(documentService, times(1)).execute("2021-02-06", "120");
-            verify(documentService, times(1)).execute("2021-02-07", "120");
-            verify(documentService, times(0)).execute("2021-02-08", "120");
+            verify(documentService, times(0)).execute("2021-02-05", docTypeCodes);
+            verify(documentService, times(1)).execute("2021-02-06", docTypeCodes);
+            verify(documentService, times(1)).execute("2021-02-07", docTypeCodes);
+            verify(documentService, times(0)).execute("2021-02-08", docTypeCodes);
         }
 
         @DisplayName("analysisScheduler : データベースにある最新提出日が昨日の場合はなにも実施しない")
         @Test
         void analysisScheduler_nothing() {
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+
+            when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
                     Document.builder()
                             .submitDate(LocalDate.parse("2021-02-07"))
                             .build()
@@ -90,14 +95,14 @@ class AnalysisSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
 
-            verify(documentService, times(0)).execute("2021-02-07", "120");
-            verify(documentService, times(0)).execute("2021-02-08", "120");
+            verify(documentService, times(0)).execute("2021-02-07", docTypeCodes);
+            verify(documentService, times(0)).execute("2021-02-08", docTypeCodes);
         }
 
         @DisplayName("analysisScheduler : 想定外のエラーが発生したときはSlack通知する")
         @Test
         void analysisScheduler_throwable() {
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(
+            when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
                     Document.builder()
                             .submitDate(LocalDate.parse("2021-02-06"))
                             .build()
@@ -118,15 +123,17 @@ class AnalysisSchedulerTest {
         @DisplayName("updateViewScheduler : 表示をアップデートする")
         @Test
         void updateViewScheduler_ok() {
-            when(viewService.updateCorporateView()).thenReturn(new CompletableFuture<>());
-            when(viewService.updateEdinetListView("120")).thenReturn(new CompletableFuture<>());
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+            when(viewService.updateCorporateView(docTypeCodes)).thenReturn(new CompletableFuture<>());
+            when(viewService.updateEdinetListView(docTypeCodes)).thenReturn(new CompletableFuture<>());
             assertDoesNotThrow(() -> scheduler.updateViewScheduler());
         }
 
         @DisplayName("updateViewScheduler : 想定外のエラーが発生したときはSlack通知する")
         @Test
         void updateViewScheduler_throwable() {
-            when(viewService.updateCorporateView()).thenThrow(FundanalyzerRuntimeException.class);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+            when(viewService.updateCorporateView(docTypeCodes)).thenThrow(FundanalyzerRuntimeException.class);
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.updateViewScheduler());
             verify(slackProxy, times(1)).sendMessage(any(), any());
         }

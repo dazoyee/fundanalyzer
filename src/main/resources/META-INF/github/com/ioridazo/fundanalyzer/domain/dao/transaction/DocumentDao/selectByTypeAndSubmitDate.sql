@@ -1,5 +1,4 @@
-select * from document
-where
-  document_type_code = /* documentTypeCode */'120'
-and
-  submit_date = /* submitDate */'yyyy-MM-dd'
+select *
+from document
+where document_type_code in /* documentTypeCode */('120', '130')
+  and submit_date = /* submitDate */'yyyy-MM-dd'

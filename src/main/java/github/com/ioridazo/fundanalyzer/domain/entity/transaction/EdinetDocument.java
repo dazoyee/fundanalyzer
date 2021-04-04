@@ -153,6 +153,10 @@ public class EdinetDocument {
         return Optional.ofNullable(edinetCode);
     }
 
+    public String getDocTypeCode() {
+        return docTypeCode;
+    }
+
     public Optional<String> getPeriodStart() {
         return Optional.ofNullable(periodStart);
     }
@@ -161,12 +165,32 @@ public class EdinetDocument {
         return Optional.ofNullable(periodEnd);
     }
 
+    public String getSubmitDateTime() {
+        return submitDateTime;
+    }
+
+    public String getParentDocId() {
+        return parentDocId;
+    }
+
     // for test
+    public void setDocTypeCode(final String docTypeCode) {
+        this.docTypeCode = docTypeCode;
+    }
+
     public void setPeriodStart(final String periodStart) {
         this.periodStart = periodStart;
     }
 
     public void setPeriodEnd(final String periodEnd) {
         this.periodEnd = periodEnd;
+    }
+
+    public void setSubmitDateTime(final String submitDateTime) {
+        this.submitDateTime = submitDateTime;
+    }
+
+    public void setParentDocId(final String parentDocId) {
+        this.parentDocId = parentDocId;
     }
 }

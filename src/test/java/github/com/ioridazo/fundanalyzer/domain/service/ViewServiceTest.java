@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
@@ -101,6 +102,7 @@ class ViewServiceTest {
         @DisplayName("updateCorporateView : 表示リストに格納する処理を確認する")
         @Test
         void updateCorporateView_ok() {
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var company = new Company(
                     "code",
                     "会社名",
@@ -118,7 +120,8 @@ class ViewServiceTest {
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
-            when(corporateViewLogic.corporateViewOf(company)).thenReturn(new CorporateViewBean(
+            when(corporateViewDao.selectAll()).thenReturn(List.of());
+            when(corporateViewLogic.corporateViewOf(company, docTypeCodes)).thenReturn(new CorporateViewBean(
                     "code",
                     "会社名",
                     LocalDate.parse("2019-10-11"),
@@ -137,7 +140,7 @@ class ViewServiceTest {
                     createdAt
             ));
 
-            assertDoesNotThrow(() -> service.updateCorporateView());
+            assertDoesNotThrow(() -> service.updateCorporateView(docTypeCodes));
 
             verify(corporateViewDao, times(1)).insert(new CorporateViewBean(
                     "code",
@@ -163,6 +166,7 @@ class ViewServiceTest {
         @Test
         void updateCorporateView_submitDate_ok() {
             var submitDate = LocalDate.parse("2021-02-27");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var edinetCode = "edinetCode";
             var documentList = List.of(Document.builder()
                     .edinetCode(edinetCode)
@@ -182,9 +186,10 @@ class ViewServiceTest {
             );
             var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
-            when(documentDao.selectByTypeAndSubmitDate("120", submitDate)).thenReturn(documentList);
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
             when(companyDao.selectByEdinetCode(edinetCode)).thenReturn(Optional.of(company));
-            when(corporateViewLogic.corporateViewOf(company)).thenReturn(new CorporateViewBean(
+            when(corporateViewDao.selectAll()).thenReturn(List.of());
+            when(corporateViewLogic.corporateViewOf(company, docTypeCodes)).thenReturn(new CorporateViewBean(
                     "code",
                     "会社名",
                     LocalDate.parse("2019-10-11"),
@@ -203,7 +208,7 @@ class ViewServiceTest {
                     createdAt
             ));
 
-            assertDoesNotThrow(() -> service.updateCorporateView(submitDate));
+            assertDoesNotThrow(() -> service.updateCorporateView(submitDate, docTypeCodes));
 
             verify(corporateViewDao, times(1)).insert(new CorporateViewBean(
                     "code",
@@ -262,8 +267,8 @@ class ViewServiceTest {
         @DisplayName("notice : slack通知処理されることを確認する")
         @Test
         void notice_ok() {
-            var documentTypeCode = "120";
             var submitDate = LocalDate.parse("2020-11-01");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var documentList = List.of(Document.builder()
                     .edinetCode("ec")
                     .documentTypeCode("120")
@@ -287,7 +292,7 @@ class ViewServiceTest {
                     null
             );
 
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
@@ -306,7 +311,7 @@ class ViewServiceTest {
                             null
                     ));
 
-            assertDoesNotThrow(() -> service.notice(submitDate));
+            assertDoesNotThrow(() -> service.notice(submitDate, docTypeCodes));
 
             verify(slackProxy, times(1)).sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info", submitDate, 0L);
             verify(slackProxy, times(0)).sendMessage(eq("g.c.i.f.domain.service.ViewService.processing.notice.warn"), any());
@@ -319,7 +324,7 @@ class ViewServiceTest {
         @DisplayName("updateEdinetList : 処理状況をアップデートする")
         @Test
         void updateEdinetList_ok() {
-            var documentTypeCode = "120";
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var documentList = List.of(Document.builder()
                             .edinetCode("edinetCode")
                             .documentTypeCode("120")
@@ -353,7 +358,7 @@ class ViewServiceTest {
             );
             var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
-            when(documentDao.selectByDocumentTypeCode(documentTypeCode)).thenReturn(documentList);
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(documentList);
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
@@ -392,7 +397,7 @@ class ViewServiceTest {
                     createdAt
             ));
 
-            assertDoesNotThrow(() -> service.updateEdinetListView("120"));
+            assertDoesNotThrow(() -> service.updateEdinetListView(docTypeCodes));
 
             verify(edinetListViewDao, times(1)).insert(new EdinetListViewBean(
                     LocalDate.parse("2020-10-11"),
@@ -425,8 +430,8 @@ class ViewServiceTest {
         @DisplayName("updateEdinetList : 対象提出日の処理状況をアップデートする")
         @Test
         void updateEdinetListView_ok() {
-            var documentTypeCode = "120";
             var submitDate = LocalDate.parse("2020-12-14");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var documentList = List.of(Document.builder()
                     .edinetCode("edinetCode")
                     .documentTypeCode("120")
@@ -452,7 +457,7 @@ class ViewServiceTest {
 
             var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
-            when(documentDao.selectByTypeAndSubmitDate(documentTypeCode, submitDate)).thenReturn(documentList);
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
@@ -474,7 +479,7 @@ class ViewServiceTest {
                     createdAt
             ));
 
-            assertDoesNotThrow(() -> service.updateEdinetListView(documentTypeCode, submitDate));
+            assertDoesNotThrow(() -> service.updateEdinetListView(submitDate, docTypeCodes));
 
             verify(edinetListViewDao, times(1)).update(new EdinetListViewBean(
                     LocalDate.parse("2020-12-14"),
@@ -536,13 +541,17 @@ class ViewServiceTest {
             when(analysisResultDao.selectByCompanyCode(code)).thenReturn(List.of(new AnalysisResult(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2019-01-01"),
                     BigDecimal.valueOf(100),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2019-02-01"),
+                    null,
                     null
             )));
             when(brandDetailCompanyViewLogic.brandDetailFinancialStatement(code)).thenReturn(List.of(new BrandDetailViewBean.BrandDetailFinancialStatement(
                     LocalDate.parse("2019-01-01"),
                     LocalDate.parse("2019-12-31"),
+                    "documentTypeName",
                     null,
                     List.of(new BrandDetailViewBean.BrandDetailFinancialStatement.BrandDetailFinancialStatementValue(
                             "subject1",
@@ -596,6 +605,7 @@ class ViewServiceTest {
                     () -> assertAll("financialStatement",
                             () -> assertEquals("2019-01-01", actual.getFinancialStatement().get(0).getPeriodStart().toString()),
                             () -> assertEquals("2019-12-31", actual.getFinancialStatement().get(0).getPeriodEnd().toString()),
+                            () -> assertEquals("documentTypeName", actual.getFinancialStatement().get(0).getDocumentTypeName()),
                             () -> assertAll("pl",
                                     () -> assertEquals("subject1", actual.getFinancialStatement().get(0).getPl().get(0).getSubject()),
                                     () -> assertEquals(4000L, actual.getFinancialStatement().get(0).getPl().get(0).getValue())
@@ -615,6 +625,7 @@ class ViewServiceTest {
         @Test
         void edinetDetailView_ok() {
             var submitDate = LocalDate.parse("2021-01-10");
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var company = new Company(
                     "code",
                     "会社名",
@@ -647,10 +658,10 @@ class ViewServiceTest {
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
-            when(edinetDetailViewLogic.edinetDetailView("120", submitDate, List.of(company)))
+            when(edinetDetailViewLogic.edinetDetailView(submitDate, docTypeCodes, List.of(company)))
                     .thenReturn(edinetDetailViewBean);
 
-            var actual = service.edinetDetailView(submitDate);
+            var actual = service.edinetDetailView(submitDate, docTypeCodes);
 
             assertEquals(edinetDetailViewBean, actual);
         }

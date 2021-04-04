@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
@@ -26,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,30 +64,38 @@ public class StockService {
     /**
      * 指定日付に提出された企業の株価を取得する
      *
-     * @param submitDate 提出日
+     * @param submitDate   提出日
+     * @param docTypeCodes 書類種別コード
      * @return null
      */
     @NewSpan("StockService.importStockPrice.submitDate")
-    public CompletableFuture<Void> importStockPrice(final LocalDate submitDate) {
-        // 対象となる会社コード一覧を取得する
-        final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate("120", submitDate).stream()
-                .map(Document::getEdinetCode)
-                .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+    public CompletableFuture<Void> importStockPrice(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
+        try {
+            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+            // 対象となる会社コード一覧を取得する
+            final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
+                    .map(Document::getEdinetCode)
+                    .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .distinct()
+                    .collect(Collectors.toList());
 
-        // 並列で株価取得処理を実施する
-        targetCompanyList.parallelStream().forEach(this::importStockPrice);
+            // 並列で株価取得処理を実施する
+            targetCompanyList.parallelStream().forEach(this::importStockPrice);
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
-                        submitDate,
-                        targetCompanyList.size()),
-                Category.STOCK,
-                Process.IMPORT
-        );
-        return null;
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
+                            submitDate,
+                            targetCompanyList.size()),
+                    Category.STOCK,
+                    Process.IMPORT
+            );
+            return null;
+        } catch (Throwable t) {
+            FundanalyzerLogClient.logError(t);
+            throw new FundanalyzerRuntimeException(t);
+        }
     }
 
     /**
@@ -141,7 +151,6 @@ public class StockService {
                 }
                 minkabuDao.insert(m);
             }
-
         } catch (FundanalyzerScrapingException e) {
             log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", code, e);
         }
@@ -167,9 +176,20 @@ public class StockService {
     }
 
     private boolean isNotInsertedMinkabu(final String targetDateAsString, final List<Minkabu> minkabuList) {
-        final var targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear());
         return minkabuList.stream()
                 .map(Minkabu::getTargetDate)
-                .noneMatch(targetDate::equals);
+                .noneMatch(mTargetDate -> {
+                    LocalDate targetDate;
+                    try {
+                        targetDate = MonthDay.parse(
+                                targetDateAsString,
+                                DateTimeFormatter.ofPattern("MM/dd")
+                        ).atYear(LocalDate.now().getYear());
+                        return mTargetDate.equals(targetDate);
+                    } catch (DateTimeParseException e) {
+                        log.warn("みんかぶの取得対象日時のパースに失敗しました。本日の日付にて処理を継続します。\t{}", targetDateAsString, e);
+                        return mTargetDate.equals(LocalDate.now());
+                    }
+                });
     }
 }

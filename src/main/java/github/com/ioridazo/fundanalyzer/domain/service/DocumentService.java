@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
@@ -41,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -146,80 +148,91 @@ public class DocumentService {
      * ↓
      * scrape（スクレイピング）
      *
-     * @param date             書類取得対象日（提出日）
-     * @param documentTypeCode 書類種別コード
+     * @param date         書類取得対象日（提出日）
+     * @param docTypeCodes 書類種別コード
      * @return Void
      */
     @NewSpan("DocumentService.execute")
     @Async
-    public CompletableFuture<Void> execute(final String date, final String documentTypeCode) {
-        // 書類リストをデータベースに登録する
-        edinetList(LocalDate.parse(date));
+    public CompletableFuture<Void> execute(final String date, final List<DocTypeCode> docTypeCodes) {
+        try {
+            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
 
-        // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentList = documentDao.selectByTypeAndSubmitDate(documentTypeCode, LocalDate.parse(date))
-                .stream()
-                .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
-                .filter(Document::getNotRemoved)
-                .collect(Collectors.toList());
+            // 書類リストをデータベースに登録する
+            edinetList(LocalDate.parse(date));
 
-        if (documentList.isEmpty()) {
-            FundanalyzerLogClient.logService(
-                    MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, documentTypeCode),
-                    Category.DOCUMENT,
-                    Process.EDINET
-            );
-        } else {
-            documentList.parallelStream().forEach(document -> {
-                // 書類取得
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
-                    store(document.getDocumentId(), LocalDate.parse(date));
-                }
+            // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
+            final var documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, LocalDate.parse(date))
+                    .stream()
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
+                    .filter(Document::getNotRemoved)
+                    .collect(Collectors.toList());
 
-                // スクレイピング
-                // 貸借対照表
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
-                    scrapeBs(document.getDocumentId(), LocalDate.parse(date));
-                }
-                // 損益計算書
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
-                    scrapePl(document.getDocumentId(), LocalDate.parse(date));
-                }
-                // 株式総数
-                if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
-                    scrapeNs(document.getDocumentId(), LocalDate.parse(date));
-                }
+            if (documentList.isEmpty()) {
+                FundanalyzerLogClient.logService(
+                        MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, docTypeCode),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                );
+            } else {
+                documentList.parallelStream().forEach(document -> {
+                    // 書類取得
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
+                        store(document.getDocumentId(), LocalDate.parse(date));
+                    }
 
-                // 除外フラグON
-                if (List.of(
-                        document.getScrapedBs(),
-                        document.getScrapedPl(),
-                        document.getScrapedNumberOfShares()
-                ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
-                    documentDao.update(Document.builder()
-                            .documentId(document.getDocumentId())
-                            .removed(Flag.ON.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
-                    FundanalyzerLogClient.logService(
-                            MessageFormat.format(
-                                    "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}"
-                                    , document
-                            ),
-                            Category.DOCUMENT,
-                            Process.EDINET
-                    );
-                }
-            });
+                    // スクレイピング
+                    // 貸借対照表
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
+                        scrapeBs(document.getDocumentId(), LocalDate.parse(date));
+                    }
+                    // 損益計算書
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
+                        scrapePl(document.getDocumentId(), LocalDate.parse(date));
+                    }
+                    // 株式総数
+                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
+                        scrapeNs(document.getDocumentId(), LocalDate.parse(date));
+                    }
 
-            FundanalyzerLogClient.logService(
-                    MessageFormat.format("{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}", date, documentTypeCode),
-                    Category.DOCUMENT,
-                    Process.EDINET
-            );
+                    // 除外フラグON
+                    if (List.of(
+                            document.getScrapedBs(),
+                            document.getScrapedPl(),
+                            document.getScrapedNumberOfShares()
+                    ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
+                        documentDao.update(Document.builder()
+                                .documentId(document.getDocumentId())
+                                .removed(Flag.ON.toValue())
+                                .updatedAt(nowLocalDateTime())
+                                .build()
+                        );
+                        FundanalyzerLogClient.logService(
+                                MessageFormat.format(
+                                        "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
+                                        document
+                                ),
+                                Category.DOCUMENT,
+                                Process.EDINET
+                        );
+                    }
+                });
+
+                FundanalyzerLogClient.logService(
+                        MessageFormat.format(
+                                "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
+                                date,
+                                String.join(",", docTypeCode)
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                );
+            }
+            return null;
+        } catch (Throwable t) {
+            FundanalyzerLogClient.logError(t);
+            throw new FundanalyzerRuntimeException(t);
         }
-        return null;
     }
 
     /**
@@ -293,16 +306,7 @@ public class DocumentService {
                 }
             });
 
-            documentDao.insert(Document.builder()
-                    .documentId(results.getDocId())
-                    .documentTypeCode(results.getDocTypeCode())
-                    .edinetCode(results.getEdinetCode().orElse(null))
-                    .period(results.getPeriodEnd() != null ? LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1) : null)
-                    .submitDate(date)
-                    .createdAt(nowLocalDateTime())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.insert(Document.of(date, parseDocumentPeriod(results), results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -333,13 +337,7 @@ public class DocumentService {
         // 既にファイルが存在しているか確認する
         if (fileListAlready(targetDate).stream()
                 .anyMatch(docIdList -> docIdList.stream().anyMatch(docId::equals))) {
-            documentDao.update(Document.builder()
-                    .documentId(docId)
-                    .downloaded(DocumentStatus.DONE.toValue())
-                    .decoded(DocumentStatus.DONE.toValue())
-                    .updatedAt(nowLocalDateTime())
-                    .build()
-            );
+            documentDao.update(Document.ofUpdateStoreToDone(docId, nowLocalDateTime()));
         } else {
             // ファイル取得
             scrapingLogic.download(docId, targetDate);
@@ -365,11 +363,13 @@ public class DocumentService {
      * 書類取得対象日（提出日）に紐づくドキュメントのステータスを確認して、<br/>
      * 財務諸表のスクレイピング処理を行う
      *
-     * @param targetDate 書類取得対象日（提出日）
+     * @param targetDate   書類取得対象日（提出日）
+     * @param docTypeCodes 書類種別コード
      */
     @NewSpan("DocumentService.scrape.targetDate")
-    public void scrape(final LocalDate targetDate) {
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate("120", targetDate);
+    public void scrape(final LocalDate targetDate, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, targetDate);
         if (documentList.isEmpty()) {
             FundanalyzerLogClient.logService(
                     MessageFormat.format("次のドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}", targetDate),
@@ -435,9 +435,12 @@ public class DocumentService {
     /**
      * 貸借対照表と損益計算書の処理ステータスが処理中（5）またはエラー（9）の
      * ドキュメントをステータス初期化する
+     *
+     * @param docTypeCodes 書類種別コード
      */
-    public void resetForRetry() {
-        final var documentList = documentDao.selectByDocumentTypeCode("120");
+    public void resetForRetry(final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByDocumentTypeCode(docTypeCode);
         // 貸借対照表
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
@@ -445,12 +448,7 @@ public class DocumentService {
                 .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
-                    documentDao.update(Document.builder()
-                            .documentId(documentId)
-                            .scrapedBs(DocumentStatus.NOT_YET.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+                    documentDao.update(Document.ofUpdateBsToNotYet(documentId, nowLocalDateTime()));
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
                 });
 
@@ -461,12 +459,7 @@ public class DocumentService {
                 .filter(Document::getNotRemoved)
                 .map(Document::getDocumentId)
                 .forEach(documentId -> {
-                    documentDao.update(Document.builder()
-                            .documentId(documentId)
-                            .scrapedPl(DocumentStatus.NOT_YET.toValue())
-                            .updatedAt(nowLocalDateTime())
-                            .build()
-                    );
+                    documentDao.update(Document.ofUpdatePlToNotYet(documentId, nowLocalDateTime()));
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
     }
@@ -479,12 +472,7 @@ public class DocumentService {
     @NewSpan("DocumentService.removeDocument")
     @Transactional
     public void removeDocument(final String documentId) {
-        documentDao.update(Document.builder()
-                .documentId(documentId)
-                .removed(Flag.ON.toValue())
-                .updatedAt(nowLocalDateTime())
-                .build()
-        );
+        documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", documentId),
@@ -524,6 +512,27 @@ public class DocumentService {
                 targetDate,
                 null
         );
+    }
+
+    private LocalDate parseDocumentPeriod(final Results results) {
+        if (Objects.nonNull(results.getPeriodEnd())) {
+            // period end is present
+            return LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1);
+        } else {
+            if (Objects.nonNull(results.getParentDocID())) {
+                final Document document = documentDao.selectByDocumentId(results.getParentDocID());
+                if (Objects.nonNull(document)) {
+                    // parent document is present
+                    return document.getDocumentPeriod();
+                } else {
+                    // parent document is null
+                    return LocalDate.EPOCH;
+                }
+            } else {
+                // period end is null
+                return LocalDate.EPOCH;
+            }
+        }
     }
 
     private File makeTargetPath(final String prePath, final LocalDate targetDate) {

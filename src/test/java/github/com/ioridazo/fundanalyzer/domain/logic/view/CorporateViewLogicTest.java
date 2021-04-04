@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -69,10 +70,11 @@ class CorporateViewLogicTest {
                 null,
                 null
         );
+        var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
         var submitDate = LocalDate.parse("2019-10-11");
         var createdAt = LocalDateTime.of(2020, 11, 8, 18, 15);
 
-        doReturn(Optional.of(submitDate)).when(logic).latestSubmitDate(company);
+        doReturn(Optional.of(submitDate)).when(logic).latestSubmitDate(company, docTypeCodes);
         doReturn(CorporateViewLogic.CorporateValue.of(
                 BigDecimal.valueOf(2100), BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(0.1), BigDecimal.valueOf(3)
         )).when(logic).corporateValue(company);
@@ -84,7 +86,7 @@ class CorporateViewLogicTest {
         doReturn(Optional.of(BigDecimal.valueOf(2000))).when(logic).forecastStock(company);
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
-        var actual = logic.corporateViewOf(company);
+        var actual = logic.corporateViewOf(company, docTypeCodes);
 
         assertAll("CorporateViewBean",
                 () -> assertEquals("code", actual.getCode()),
@@ -123,14 +125,15 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var document = Document.builder()
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2020-10-11"))
                     .build();
 
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(document));
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(document));
 
-            assertEquals(LocalDate.parse("2020-10-11"), logic.latestSubmitDate(company).orElseThrow());
+            assertEquals(LocalDate.parse("2020-10-11"), logic.latestSubmitDate(company, docTypeCodes).orElseThrow());
         }
 
         @DisplayName("latestSubmitDate : 対象の書類が存在しないときの処理を確認する")
@@ -148,14 +151,15 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var document = Document.builder()
                     .edinetCode("edinetCode2")
                     .submitDate(LocalDate.parse("2020-10-11"))
                     .build();
 
-            when(documentDao.selectByDocumentTypeCode("120")).thenReturn(List.of(document));
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(document));
 
-            assertNull(logic.latestSubmitDate(company).orElse(null));
+            assertNull(logic.latestSubmitDate(company, docTypeCodes).orElse(null));
         }
     }
 
@@ -177,8 +181,8 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null);
-            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null);
+            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
+            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 
@@ -236,7 +240,16 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", null, BigDecimal.valueOf(500.250515), null);
+            var analysisResult1 = new AnalysisResult(
+                    1,
+                    "code",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(500.250515),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2020-09-30"),
+                    null,
+                    null
+            );
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1));
 
@@ -266,10 +279,171 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), null);
-            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), null);
+            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), "120", null, null, null);
+            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
+
+            var actual = logic.corporateValue(company);
+
+            assertAll("CorporateValue",
+                    () -> assertEquals(BigDecimal.valueOf(500.25), actual.getLatestCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(459.14), actual.getAverageCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(41.115), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(90, 3), actual.getCoefficientOfVariation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
+            );
+        }
+
+        @DisplayName("corporateValue : 最新企業価値が複数存在するときに訂正版を取得する")
+        @Test
+        void corporateValue_latest_multiple() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var analysisResult1 = new AnalysisResult(
+                    1,
+                    "code",
+                    LocalDate.parse("2021-03-31"),
+                    BigDecimal.valueOf(1100),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2021-05-01"),
+                    null,
+                    null
+            );
+            var analysisResult2 = new AnalysisResult(
+                    2,
+                    "code",
+                    LocalDate.parse("2021-03-31"),
+                    BigDecimal.valueOf(900),
+                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2021-06-01"),
+                    null,
+                    null
+            );
+
+            when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
+
+            var actual = logic.corporateValue(company);
+
+            assertEquals(BigDecimal.valueOf(90000, 2), actual.getLatestCorporateValue().orElseThrow());
+        }
+
+        @DisplayName("corporateValue : 企業価値が重複して存在するときに訂正版を基に算出する")
+        @Test
+        void corporateValue_average_multiple() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var analysisResult1 = new AnalysisResult(
+                    1,
+                    "code",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(1000),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2020-09-30"),
+                    null,
+                    null
+            );
+            var analysisResult2 = new AnalysisResult(
+                    2,
+                    "code",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(1100),
+                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2020-11-30"),
+                    null,
+                    null
+            );
+            var analysisResult3 = new AnalysisResult(
+                    3,
+                    "code",
+                    LocalDate.parse("2019-06-30"),
+                    BigDecimal.valueOf(900),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2019-09-30"),
+                    null,
+                    null
+            );
+
+            when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2, analysisResult3));
+
+            var actual = logic.corporateValue(company);
+
+            assertAll("CorporateValue",
+                    () -> assertEquals(BigDecimal.valueOf(110000, 2), actual.getLatestCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(100000, 2), actual.getAverageCorporateValue().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(100.0), actual.getStandardDeviation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(100, 3), actual.getCoefficientOfVariation().orElseThrow()),
+                    () -> assertEquals(BigDecimal.valueOf(2), actual.getCountYear().orElseThrow())
+            );
+        }
+
+        @DisplayName("corporateValue : 企業価値が重複して存在するときに訂正版を基に算出する")
+        @Test
+        void corporateValue_sd_multiple() {
+            var company = new Company(
+                    "code",
+                    "会社名",
+                    1,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var analysisResult1 = new AnalysisResult(
+                    1,
+                    "code",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(1500.250515),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2020-09-30"),
+                    null,
+                    null
+            );
+            var analysisResult2 = new AnalysisResult(
+                    2,
+                    "code",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(500.250515),
+                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2020-11-30"),
+                    null,
+                    null
+            );
+            var analysisResult3 = new AnalysisResult(
+                    3,
+                    "code",
+                    LocalDate.parse("2019-06-30"),
+                    BigDecimal.valueOf(418.02101),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    LocalDate.parse("2019-09-30"),
+                    null,
+                    null
+            );
+
+            when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2, analysisResult3));
 
             var actual = logic.corporateValue(company);
 

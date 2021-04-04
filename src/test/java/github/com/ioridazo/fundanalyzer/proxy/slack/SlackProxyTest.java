@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
+@Timeout(10)
 class SlackProxyTest {
 
     private static MockWebServer server;
@@ -36,7 +38,7 @@ class SlackProxyTest {
         server.start();
 
         this.proxy = Mockito.spy(new SlackProxy(
-                new AppConfig().restTemplate(1, 1),
+                new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort()),
                 environment
         ));
@@ -54,7 +56,7 @@ class SlackProxyTest {
     }
 
     @Disabled("テスト送信のため")
-    @Test
+//    @Test
     void sendMessage_tester() {
         var propertyPath = "property.path";
 
@@ -81,7 +83,8 @@ class SlackProxyTest {
         server.enqueue(new MockResponse());
         doReturn("*message*").when(environment).getProperty(propertyPath);
 
-        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
+        proxy.sendMessage(propertyPath);
+//        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
 
         var recordedRequest = server.takeRequest();
         assertAll("request",
