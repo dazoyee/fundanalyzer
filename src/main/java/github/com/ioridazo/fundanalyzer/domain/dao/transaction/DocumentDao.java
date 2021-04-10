@@ -21,7 +21,7 @@ public interface DocumentDao {
 
     // 検索結果が1件以上存在することを保証する
     @Select(ensureResult = true)
-    Document selectDocumentIdBy(String edinetCode, String documentTypeCode, String yearOfPeriod);
+    Document selectDocumentBy(String edinetCode, String documentTypeCode, LocalDate submitDate, String yearOfPeriod);
 
     @Select
     List<Document> selectByDocumentTypeCode(List<String> documentTypeCode);
