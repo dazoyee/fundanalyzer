@@ -177,30 +177,34 @@ public class DocumentService {
             } else {
                 documentList.parallelStream().forEach(document -> {
                     // 書類取得
-                    if (DocumentStatus.NOT_YET.toValue().equals(document.getDownloaded())) {
+                    if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getDownloaded()))) {
                         store(document.getDocumentId(), LocalDate.parse(date));
                     }
 
-                    // スクレイピング
-                    // 貸借対照表
-                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())) {
-                        scrapeBs(document.getDocumentId(), LocalDate.parse(date));
-                    }
-                    // 損益計算書
-                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())) {
-                        scrapePl(document.getDocumentId(), LocalDate.parse(date));
-                    }
-                    // 株式総数
-                    if (DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())) {
-                        scrapeNs(document.getDocumentId(), LocalDate.parse(date));
+                    final Document decodedDocument = documentDao.selectByDocumentId(document.getDocumentId());
+                    if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getDecoded()))) {
+                        // スクレイピング
+                        // 貸借対照表
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedBs()))) {
+                            scrapeBs(document.getDocumentId(), LocalDate.parse(date));
+                        }
+                        // 損益計算書
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedPl()))) {
+                            scrapePl(document.getDocumentId(), LocalDate.parse(date));
+                        }
+                        // 株式総数
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedNumberOfShares()))) {
+                            scrapeNs(document.getDocumentId(), LocalDate.parse(date));
+                        }
                     }
 
+                    final Document processedDocument = documentDao.selectByDocumentId(document.getDocumentId());
                     // 除外フラグON
                     if (List.of(
-                            document.getScrapedBs(),
-                            document.getScrapedPl(),
-                            document.getScrapedNumberOfShares()
-                    ).stream().allMatch(status -> DocumentStatus.ERROR.toValue().equals(status))) {
+                            processedDocument.getScrapedBs(),
+                            processedDocument.getScrapedPl(),
+                            processedDocument.getScrapedNumberOfShares()
+                    ).stream().allMatch(status -> DocumentStatus.ERROR.equals(DocumentStatus.fromValue(status)))) {
                         documentDao.update(Document.builder()
                                 .documentId(document.getDocumentId())
                                 .removed(Flag.ON.toValue())
@@ -296,8 +300,11 @@ public class DocumentService {
                         results.getFilerName(),
                         results.getDocTypeCode()
                 );
+            } else {
+                throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }
         }
+
         try {
             // 万が一Companyが登録されていない場合には登録する
             results.getEdinetCode().ifPresent(ed -> {
@@ -306,7 +313,7 @@ public class DocumentService {
                 }
             });
 
-            documentDao.insert(Document.of(date, parseDocumentPeriod(results), results, nowLocalDateTime()));
+            documentDao.insert(Document.of(date, parseDocumentPeriod(results).orElse(null), results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -381,17 +388,21 @@ public class DocumentService {
                     .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                     .filter(Document::getNotRemoved)
                     .forEach(d -> {
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getDownloaded())) {
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(d.getDownloaded()))) {
                             store(d.getDocumentId(), d.getSubmitDate());
                         }
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedBs())) {
-                            scrapeBs(d.getDocumentId(), targetDate);
-                        }
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedPl())) {
-                            scrapePl(d.getDocumentId(), targetDate);
-                        }
-                        if (DocumentStatus.NOT_YET.toValue().equals(d.getScrapedNumberOfShares())) {
-                            scrapeNs(d.getDocumentId(), targetDate);
+
+                        final Document decodedDocument = documentDao.selectByDocumentId(d.getDocumentId());
+                        if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getDecoded()))) {
+                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedBs()))) {
+                                scrapeBs(d.getDocumentId(), targetDate);
+                            }
+                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedPl()))) {
+                                scrapePl(d.getDocumentId(), targetDate);
+                            }
+                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedNumberOfShares()))) {
+                                scrapeNs(d.getDocumentId(), targetDate);
+                            }
                         }
                     });
 
@@ -412,17 +423,21 @@ public class DocumentService {
     public void scrape(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
 
-        if (!DocumentStatus.DONE.toValue().equals(document.getDownloaded())) {
+        if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getDownloaded()))) {
             store(documentId, document.getSubmitDate());
         }
-        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedBs())) {
-            scrapeBs(documentId, document.getSubmitDate());
-        }
-        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedPl())) {
-            scrapePl(documentId, document.getSubmitDate());
-        }
-        if (!DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())) {
-            scrapeNs(documentId, document.getSubmitDate());
+
+        final Document decodedDocument = documentDao.selectByDocumentId(document.getDocumentId());
+        if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getDecoded()))) {
+            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getScrapedBs()))) {
+                scrapeBs(documentId, document.getSubmitDate());
+            }
+            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getScrapedPl()))) {
+                scrapePl(documentId, document.getSubmitDate());
+            }
+            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getScrapedNumberOfShares()))) {
+                scrapeNs(documentId, document.getSubmitDate());
+            }
         }
 
         FundanalyzerLogClient.logService(
@@ -514,24 +529,36 @@ public class DocumentService {
         );
     }
 
-    private LocalDate parseDocumentPeriod(final Results results) {
-        if (Objects.nonNull(results.getPeriodEnd())) {
-            // period end is present
-            return LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1);
-        } else {
-            if (Objects.nonNull(results.getParentDocID())) {
-                final Document document = documentDao.selectByDocumentId(results.getParentDocID());
-                if (Objects.nonNull(document)) {
-                    // parent document is present
-                    return document.getDocumentPeriod();
-                } else {
-                    // parent document is null
-                    return LocalDate.EPOCH;
-                }
+    private Optional<LocalDate> parseDocumentPeriod(final Results results) {
+        final boolean anyMatchDocTypeCode = List.of(
+                DocTypeCode.ANNUAL_SECURITIES_REPORT,
+                DocTypeCode.AMENDED_SECURITIES_REPORT
+        ).stream()
+                .map(DocTypeCode::toValue)
+                .anyMatch(docTypeCode -> results.getDocTypeCode().stream().allMatch(docTypeCode::equals));
+
+        if (anyMatchDocTypeCode) {
+            if (Objects.nonNull(results.getPeriodEnd())) {
+                // period end is present
+                return Optional.of(LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1));
             } else {
-                // period end is null
-                return LocalDate.EPOCH;
+                if (Objects.nonNull(results.getParentDocID())) {
+                    final Document document = documentDao.selectByDocumentId(results.getParentDocID());
+                    if (Objects.nonNull(document)) {
+                        // parent document is present
+                        return Optional.of(document.getDocumentPeriod());
+                    } else {
+                        // parent document is null
+                        return Optional.of(LocalDate.EPOCH);
+                    }
+                } else {
+                    // period end is null
+                    return Optional.of(LocalDate.EPOCH);
+                }
             }
+        } else {
+            // no target
+            return Optional.empty();
         }
     }
 

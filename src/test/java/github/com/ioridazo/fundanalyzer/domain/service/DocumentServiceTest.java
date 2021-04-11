@@ -163,6 +163,93 @@ class DocumentServiceTest {
                     null,
                     null
             )));
+            when(documentDao.selectByDocumentId("documentId1")).thenReturn(
+                    Document.builder()
+                            .id(1)
+                            .documentId("documentId1")
+                            .documentTypeCode("120")
+                            .edinetCode("E00001")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("0")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .removed("0")
+                            .build()
+            ).thenReturn(
+                    Document.builder()
+                            .id(1)
+                            .documentId("documentId1")
+                            .documentTypeCode("120")
+                            .edinetCode("E00001")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("1")
+                            .scrapedBs("1")
+                            .scrapedPl("1")
+                            .removed("0")
+                            .build()
+            );
+            when(documentDao.selectByDocumentId("documentId2")).thenReturn(
+                    Document.builder()
+                            .id(2)
+                            .documentId("documentId2")
+                            .documentTypeCode("120")
+                            .edinetCode("E00002")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("0")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .removed("0")
+                            .build()
+            ).thenReturn(
+                    Document.builder()
+                            .id(2)
+                            .documentId("documentId2")
+                            .documentTypeCode("120")
+                            .edinetCode("E00002")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("1")
+                            .scrapedBs("1")
+                            .scrapedPl("1")
+                            .removed("0")
+                            .build()
+            );
+            when(documentDao.selectByDocumentId("documentId3")).thenReturn(
+                    Document.builder()
+                            .id(3)
+                            .documentId("documentId2")
+                            .documentTypeCode("120")
+                            .edinetCode("E00003")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("0")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .removed("0")
+                            .build()
+            ).thenReturn(
+                    Document.builder()
+                            .id(3)
+                            .documentId("documentId2")
+                            .documentTypeCode("120")
+                            .edinetCode("E00003")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("1")
+                            .scrapedBs("1")
+                            .scrapedPl("1")
+                            .removed("0")
+                            .build()
+            );
 
             assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
@@ -195,7 +282,8 @@ class DocumentServiceTest {
                             .scrapedBs("0")
                             .scrapedPl("0")
                             .removed("0")
-                            .build()));
+                            .build()
+                    ));
             when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
                     null,
                     "対象となる会社",
@@ -215,6 +303,68 @@ class DocumentServiceTest {
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
+        }
+
+        @DisplayName("execute: ZIP解凍に失敗したときはスクレイピング処理しない")
+        @Test
+        void execute_decode_error() {
+            var date = "2020-09-19";
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+
+            doNothing().when(service).edinetList(LocalDate.parse(date));
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
+                    .thenReturn(List.of(
+                            Document.builder()
+                                    .id(1)
+                                    .documentId("documentId1")
+                                    .documentTypeCode("120")
+                                    .edinetCode("E00001")
+                                    .submitDate(LocalDate.parse("2020-09-19"))
+                                    .downloaded("0")
+                                    .decoded("0")
+                                    .scrapedNumberOfShares("0")
+                                    .scrapedBs("0")
+                                    .scrapedPl("0")
+                                    .removed("0")
+                                    .build()
+                    ));
+            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
+                    "0001",
+                    "対象となる会社",
+                    1,
+                    "E00001",
+                    "1",
+                    "1",
+                    1,
+                    "2020-09-19",
+                    null,
+                    null
+            )));
+            when(documentDao.selectByDocumentId("documentId1")).thenReturn(
+                    Document.builder()
+                            .id(1)
+                            .documentId("documentId1")
+                            .documentTypeCode("120")
+                            .edinetCode("E00001")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("9")
+                            .scrapedNumberOfShares("0")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .removed("0")
+                            .build()
+            );
+
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
+
+            verify(service, times(1)).store("documentId1", LocalDate.parse(date));
+            verify(scrapingLogic, times(0))
+                    .scrape(eq(FinancialStatementEnum.BALANCE_SHEET), eq("documentId1"), eq(LocalDate.parse(date)), any());
+            verify(scrapingLogic, times(0))
+                    .scrape(eq(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT), eq("documentId1"), eq(LocalDate.parse(date)), any());
+            verify(scrapingLogic, times(0))
+                    .scrape(eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES), eq("documentId1"), eq(LocalDate.parse(date)), eq(null));
         }
 
         @DisplayName("execute: 処理ステータスが完了しているときの処理を確認する")
@@ -279,11 +429,11 @@ class DocumentServiceTest {
                                     .documentTypeCode("120")
                                     .edinetCode("E00001")
                                     .submitDate(LocalDate.parse("2020-09-19"))
-                                    .downloaded("9")
-                                    .decoded("9")
-                                    .scrapedNumberOfShares("9")
-                                    .scrapedBs("9")
-                                    .scrapedPl("9")
+                                    .downloaded("0")
+                                    .decoded("0")
+                                    .scrapedNumberOfShares("0")
+                                    .scrapedBs("0")
+                                    .scrapedPl("0")
                                     .removed("0")
                                     .build()));
             when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
@@ -299,16 +449,38 @@ class DocumentServiceTest {
                     null
             )));
             when(service.nowLocalDateTime()).thenReturn(updatedAt);
+            when(documentDao.selectByDocumentId("documentId1")).thenReturn(
+                    Document.builder()
+                            .id(1)
+                            .documentId("documentId1")
+                            .documentTypeCode("120")
+                            .edinetCode("E00001")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("0")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .removed("0")
+                            .build()
+            ).thenReturn(
+                    Document.builder()
+                            .id(1)
+                            .documentId("documentId1")
+                            .documentTypeCode("120")
+                            .edinetCode("E00001")
+                            .submitDate(LocalDate.parse("2020-09-19"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedNumberOfShares("9")
+                            .scrapedBs("9")
+                            .scrapedPl("9")
+                            .removed("0")
+                            .build()
+            );
 
             assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
-            verify(service, times(0)).store("documentId1", LocalDate.parse(date));
-            verify(scrapingLogic, times(0))
-                    .scrape(eq(FinancialStatementEnum.BALANCE_SHEET), eq("documentId1"), eq(LocalDate.parse(date)), any());
-            verify(scrapingLogic, times(0))
-                    .scrape(eq(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT), eq("documentId1"), eq(LocalDate.parse(date)), any());
-            verify(scrapingLogic, times(0))
-                    .scrape(eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES), eq("documentId1"), eq(LocalDate.parse(date)), eq(null));
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId("documentId1")
                     .removed(Flag.ON.toValue())
@@ -346,6 +518,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setPeriodEnd("2020-12-31");
             var resultsAlready = new Results();
             resultsAlready.setDocId("already");
@@ -377,7 +550,7 @@ class DocumentServiceTest {
             verify(edinetDocumentDao, times(0)).insert(EdinetDocument.of(resultsAlready, createdAt));
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId(resultsInserted.getDocId())
-                    .documentTypeCode(resultsInserted.getDocTypeCode())
+                    .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
                     .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
@@ -418,6 +591,7 @@ class DocumentServiceTest {
             resultsInserted.setDocId("docId");
             resultsInserted.setFilerName("filerName");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setPeriodEnd("2020-12-31");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
@@ -478,7 +652,7 @@ class DocumentServiceTest {
             verify(edinetDocumentDao, times(0)).insert(EdinetDocument.of(resultsInserted, createdAt));
             verify(documentDao, times(0)).insert(Document.builder()
                     .documentId(resultsInserted.getDocId())
-                    .documentTypeCode(resultsInserted.getDocTypeCode())
+                    .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
                     .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
@@ -500,6 +674,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setPeriodEnd("2020-12-31");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
@@ -515,6 +690,7 @@ class DocumentServiceTest {
 
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId("docId")
+                    .documentTypeCode("120")
                     .edinetCode("edinetCode")
                     .documentPeriod(LocalDate.parse("2020-01-01"))
                     .submitDate(date)
@@ -524,7 +700,7 @@ class DocumentServiceTest {
 
         }
 
-        @DisplayName("edinetList : period_endが存在しないときは親書類からdocument_periodを生成する")
+        @DisplayName("edinetList : periodEndが存在しないときは親書類からdocumentPeriodを生成する")
         @Test
         void edinetList_documentPeriod_null_parentDocument_present() {
             var date = LocalDate.parse("2021-03-22");
@@ -537,6 +713,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId2");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setParentDocID("docId");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
@@ -553,16 +730,16 @@ class DocumentServiceTest {
 
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId("docId2")
+                    .documentTypeCode("120")
                     .edinetCode("edinetCode")
                     .documentPeriod(LocalDate.parse("2020-01-01"))
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
                     .build());
-
         }
 
-        @DisplayName("edinetList : period_endも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
+        @DisplayName("edinetList : periodEndも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
         @Test
         void edinetList_documentPeriod_null_parentDocument_null() {
             var date = LocalDate.parse("2021-03-22");
@@ -575,6 +752,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("130");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
             edinetResponse.setResults(List.of(resultsInserted));
@@ -589,8 +767,47 @@ class DocumentServiceTest {
 
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId("docId")
+                    .documentTypeCode("130")
                     .edinetCode("edinetCode")
                     .documentPeriod(LocalDate.EPOCH)
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
+
+        @DisplayName("edinetList : 対象外の書類種別コードならdocumentPeriodはnullで登録する")
+        @Test
+        void edinetList_documentPeriod_no_target() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId");
+            resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("140");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId")
+                    .documentTypeCode("140")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(null)
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
@@ -645,24 +862,40 @@ class DocumentServiceTest {
         void scrape_submitDate_not_yet() {
             var submitDate = LocalDate.parse("2020-09-22");
             var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
-            var documentTargeted = Document.builder()
-                    .documentId("id")
-                    .edinetCode("target")
-                    .scrapedBs("0")
-                    .scrapedPl("0")
-                    .scrapedNumberOfShares("0")
-                    .removed("0")
-                    .build();
-            var documentNotTargeted = Document.builder()
-                    .edinetCode("noTarget")
-                    .build();
-            var documentRemoved = Document.builder()
-                    .edinetCode("removed")
-                    .removed("1")
-                    .build();
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
-                    .thenReturn(List.of(documentTargeted, documentNotTargeted, documentRemoved));
+                    .thenReturn(List.of(
+                            Document.builder()
+                                    .documentId("id")
+                                    .edinetCode("target")
+                                    .submitDate(LocalDate.parse("2020-09-22"))
+                                    .downloaded("0")
+                                    .decoded("0")
+                                    .scrapedBs("0")
+                                    .scrapedPl("0")
+                                    .scrapedNumberOfShares("0")
+                                    .removed("0")
+                                    .build(),
+                            Document.builder()
+                                    .edinetCode("noTarget")
+                                    .submitDate(LocalDate.parse("2020-09-22"))
+                                    .downloaded("0")
+                                    .decoded("0")
+                                    .scrapedBs("0")
+                                    .scrapedPl("0")
+                                    .scrapedNumberOfShares("0")
+                                    .build(),
+                            Document.builder()
+                                    .edinetCode("removed")
+                                    .submitDate(LocalDate.parse("2020-09-22"))
+                                    .downloaded("0")
+                                    .decoded("0")
+                                    .scrapedBs("0")
+                                    .scrapedPl("0")
+                                    .scrapedNumberOfShares("0")
+                                    .removed("1")
+                                    .build()
+                    ));
             when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new Company(
                     "code",
                     null,
@@ -675,6 +908,18 @@ class DocumentServiceTest {
                     null,
                     null
             )));
+            when(documentDao.selectByDocumentId("id")).thenReturn(
+                    Document.builder()
+                            .documentId("id")
+                            .edinetCode("target")
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .scrapedNumberOfShares("0")
+                            .removed("0")
+                            .build()
+            );
 
             assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
@@ -700,17 +945,21 @@ class DocumentServiceTest {
         void scrape_submitDate_done() {
             var submitDate = LocalDate.parse("2020-09-22");
             var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
-            var documentTargeted = Document.builder()
-                    .documentId("id")
-                    .edinetCode("target")
-                    .scrapedBs("1")
-                    .scrapedPl("1")
-                    .scrapedNumberOfShares("0")
-                    .removed("0")
-                    .build();
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
-                    .thenReturn(List.of(documentTargeted));
+                    .thenReturn(List.of(
+                            Document.builder()
+                                    .documentId("id")
+                                    .edinetCode("target")
+                                    .submitDate(LocalDate.parse("2020-09-22"))
+                                    .downloaded("1")
+                                    .decoded("1")
+                                    .scrapedBs("1")
+                                    .scrapedPl("1")
+                                    .scrapedNumberOfShares("0")
+                                    .removed("0")
+                                    .build()
+                    ));
             when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new Company(
                     "code",
                     null,
@@ -723,6 +972,19 @@ class DocumentServiceTest {
                     null,
                     null
             )));
+            when(documentDao.selectByDocumentId("id")).thenReturn(
+                    Document.builder()
+                            .documentId("id")
+                            .edinetCode("target")
+                            .submitDate(LocalDate.parse("2020-09-22"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedBs("1")
+                            .scrapedPl("1")
+                            .scrapedNumberOfShares("0")
+                            .removed("0")
+                            .build()
+            );
 
             assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
@@ -763,14 +1025,32 @@ class DocumentServiceTest {
         @Test
         void scrape_documentId_ok() {
             var documentId = "id";
-            var documentTargeted = Document.builder()
-                    .documentId(documentId)
-                    .edinetCode("target")
-                    .submitDate(LocalDate.parse("2020-09-22"))
-                    .removed("0")
-                    .build();
 
-            when(documentDao.selectByDocumentId("id")).thenReturn(documentTargeted);
+            when(documentDao.selectByDocumentId("id")).thenReturn(
+                    Document.builder()
+                            .documentId(documentId)
+                            .edinetCode("target")
+                            .submitDate(LocalDate.parse("2020-09-22"))
+                            .downloaded("0")
+                            .decoded("0")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .scrapedNumberOfShares("0")
+                            .removed("0")
+                            .build()
+            ).thenReturn(
+                    Document.builder()
+                            .documentId(documentId)
+                            .edinetCode("target")
+                            .submitDate(LocalDate.parse("2020-09-22"))
+                            .downloaded("1")
+                            .decoded("1")
+                            .scrapedBs("0")
+                            .scrapedPl("0")
+                            .scrapedNumberOfShares("0")
+                            .removed("0")
+                            .build()
+            );
 
             assertDoesNotThrow(() -> service.scrape(documentId));
 

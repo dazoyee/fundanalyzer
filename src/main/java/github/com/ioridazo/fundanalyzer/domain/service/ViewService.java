@@ -204,16 +204,16 @@ public class ViewService {
             final var beanAllList = corporateViewDao.selectAll();
             allTargetCompanies.stream()
                     .map(company -> corporateViewLogic.corporateViewOf(company, docTypeCodes))
-                    .forEach(corporateViewBean -> {
-                        final var match = beanAllList.stream()
-                                .map(CorporateViewBean::getCode)
-                                .anyMatch(corporateViewBean.getCode()::equals);
-                        if (match) {
-                            corporateViewDao.update(corporateViewBean);
-                        } else {
-                            corporateViewDao.insert(corporateViewBean);
-                        }
-                    });
+                    .parallel().forEach(corporateViewBean -> {
+                final var match = beanAllList.stream()
+                        .map(CorporateViewBean::getCode)
+                        .anyMatch(corporateViewBean.getCode()::equals);
+                if (match) {
+                    corporateViewDao.update(corporateViewBean);
+                } else {
+                    corporateViewDao.insert(corporateViewBean);
+                }
+            });
             slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
 
             FundanalyzerLogClient.logService(
@@ -370,7 +370,7 @@ public class ViewService {
             final var beanAllList = edinetListViewDao.selectAll();
             final var documentList = documentDao.selectByDocumentTypeCode(
                     docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList()));
-            groupBySubmitDate(documentList)
+            groupBySubmitDate(documentList).parallelStream()
                     .forEach(edinetListViewBean -> {
                         final var match = beanAllList.stream()
                                 .map(EdinetListViewBean::getSubmitDate)

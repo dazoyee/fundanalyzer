@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -83,9 +84,19 @@ public class AnalysisService {
                 );
             } else {
                 documentList.stream()
+                        // all match status done
+                        .filter(document -> List.of(
+                                document.getScrapedBs(),
+                                document.getScrapedPl(),
+                                document.getScrapedNumberOfShares()
+                                ).stream()
+                                        .map(DocumentStatus::fromValue)
+                                        .allMatch(DocumentStatus.DONE::equals)
+                        )
                         // target company code
                         .filter(document -> Target.containsEdinetCode(
-                                document.getEdinetCode(), companyAll, List.of(bank, insurance)))
+                                document.getEdinetCode(), companyAll, List.of(bank, insurance))
+                        )
                         // only not analyze
                         .filter(document -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(),

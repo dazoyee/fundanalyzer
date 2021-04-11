@@ -282,7 +282,7 @@ class AnalysisLogicTest {
             var submitDate = LocalDate.parse("2021-03-20");
             var bsSubject = new BsSubject("1", "1", "1", "流動資産合計");
             var documentId = "docId";
-            var document = Document.builder().documentId(documentId).bsDocumentPath("bsDocumentPath").build();
+            var document = Document.builder().documentId(documentId).scrapedBs("1").bsDocumentPath("bsDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
 
             when(bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()))
@@ -296,9 +296,10 @@ class AnalysisLogicTest {
                     submitDate
             )).thenReturn(Optional.empty());
             when(companyDao.selectAll()).thenReturn(List.of(company));
-            when(documentDao.selectDocumentIdBy(
+            when(documentDao.selectDocumentBy(
                     "edinetCode",
                     "120",
+                    LocalDate.parse("2021-03-20"),
                     "2020"
             )).thenReturn(document);
             when(logic.nowLocalDateTime()).thenReturn(updated);
@@ -386,7 +387,7 @@ class AnalysisLogicTest {
             var submitDate = LocalDate.parse("2021-03-20");
             var plSubject = new PlSubject("1", "1", "1", "流動資産合計");
             var documentId = "docId";
-            var document = Document.builder().documentId(documentId).plDocumentPath("plDocumentPath").build();
+            var document = Document.builder().documentId(documentId).scrapedPl("1").plDocumentPath("plDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
 
             when(plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()))
@@ -400,9 +401,10 @@ class AnalysisLogicTest {
                     submitDate
             )).thenReturn(Optional.empty());
             when(companyDao.selectAll()).thenReturn(List.of(company));
-            when(documentDao.selectDocumentIdBy(
+            when(documentDao.selectDocumentBy(
                     "edinetCode",
                     "120",
+                    LocalDate.parse("2021-03-20"),
                     "2020"
             )).thenReturn(document);
             when(logic.nowLocalDateTime()).thenReturn(updated);
@@ -484,7 +486,7 @@ class AnalysisLogicTest {
             var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
             var submitDate = LocalDate.parse("2021-03-20");
             var documentId = "docId";
-            var document = Document.builder().documentId(documentId).numberOfSharesDocumentPath("numberOfSharesDocumentPath").build();
+            var document = Document.builder().documentId(documentId).scrapedNumberOfShares("1").numberOfSharesDocumentPath("numberOfSharesDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
 
             when(financialStatementDao.selectByUniqueKey(
@@ -496,9 +498,10 @@ class AnalysisLogicTest {
                     submitDate
             )).thenReturn(Optional.empty());
             when(companyDao.selectAll()).thenReturn(List.of(company));
-            when(documentDao.selectDocumentIdBy(
+            when(documentDao.selectDocumentBy(
                     "edinetCode",
                     "120",
+                    LocalDate.parse("2021-03-20"),
                     "2020"
             )).thenReturn(document);
             when(logic.nowLocalDateTime()).thenReturn(updated);
