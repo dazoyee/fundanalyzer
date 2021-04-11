@@ -206,7 +206,7 @@ class EdinetProxyTest {
                             () -> assertEquals("G00001", actual.getResults().get(0).getFundCode()),
                             () -> assertEquals("030", actual.getResults().get(0).getOrdinanceCode()),
                             () -> assertEquals("04A000", actual.getResults().get(0).getFormCode()),
-                            () -> assertEquals("030", actual.getResults().get(0).getDocTypeCode()),
+                            () -> assertEquals("030", actual.getResults().get(0).getDocTypeCode().orElseThrow()),
                             () -> assertEquals("2019-04-01", actual.getResults().get(0).getPeriodStart()),
                             () -> assertEquals("2020-03-31", actual.getResults().get(0).getPeriodEnd()),
                             () -> assertEquals("2019-04-01 12:34", actual.getResults().get(0).getSubmitDateTime()),

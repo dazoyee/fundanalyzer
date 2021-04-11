@@ -518,6 +518,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setPeriodEnd("2020-12-31");
             var resultsAlready = new Results();
             resultsAlready.setDocId("already");
@@ -549,7 +550,7 @@ class DocumentServiceTest {
             verify(edinetDocumentDao, times(0)).insert(EdinetDocument.of(resultsAlready, createdAt));
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId(resultsInserted.getDocId())
-                    .documentTypeCode(resultsInserted.getDocTypeCode())
+                    .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
                     .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
@@ -590,6 +591,7 @@ class DocumentServiceTest {
             resultsInserted.setDocId("docId");
             resultsInserted.setFilerName("filerName");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setPeriodEnd("2020-12-31");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
@@ -650,7 +652,7 @@ class DocumentServiceTest {
             verify(edinetDocumentDao, times(0)).insert(EdinetDocument.of(resultsInserted, createdAt));
             verify(documentDao, times(0)).insert(Document.builder()
                     .documentId(resultsInserted.getDocId())
-                    .documentTypeCode(resultsInserted.getDocTypeCode())
+                    .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
                     .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
@@ -672,6 +674,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setPeriodEnd("2020-12-31");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
@@ -687,6 +690,7 @@ class DocumentServiceTest {
 
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId("docId")
+                    .documentTypeCode("120")
                     .edinetCode("edinetCode")
                     .documentPeriod(LocalDate.parse("2020-01-01"))
                     .submitDate(date)
@@ -696,7 +700,7 @@ class DocumentServiceTest {
 
         }
 
-        @DisplayName("edinetList : period_endが存在しないときは親書類からdocument_periodを生成する")
+        @DisplayName("edinetList : periodEndが存在しないときは親書類からdocumentPeriodを生成する")
         @Test
         void edinetList_documentPeriod_null_parentDocument_present() {
             var date = LocalDate.parse("2021-03-22");
@@ -709,6 +713,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId2");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("120");
             resultsInserted.setParentDocID("docId");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
@@ -725,16 +730,16 @@ class DocumentServiceTest {
 
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId("docId2")
+                    .documentTypeCode("120")
                     .edinetCode("edinetCode")
                     .documentPeriod(LocalDate.parse("2020-01-01"))
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
                     .build());
-
         }
 
-        @DisplayName("edinetList : period_endも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
+        @DisplayName("edinetList : periodEndも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
         @Test
         void edinetList_documentPeriod_null_parentDocument_null() {
             var date = LocalDate.parse("2021-03-22");
@@ -747,6 +752,7 @@ class DocumentServiceTest {
             var resultsInserted = new Results();
             resultsInserted.setDocId("docId");
             resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("130");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
             edinetResponse.setResults(List.of(resultsInserted));
@@ -761,8 +767,47 @@ class DocumentServiceTest {
 
             verify(documentDao, times(1)).insert(Document.builder()
                     .documentId("docId")
+                    .documentTypeCode("130")
                     .edinetCode("edinetCode")
                     .documentPeriod(LocalDate.EPOCH)
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+
+        }
+
+        @DisplayName("edinetList : 対象外の書類種別コードならdocumentPeriodはnullで登録する")
+        @Test
+        void edinetList_documentPeriod_no_target() {
+            var date = LocalDate.parse("2021-03-22");
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setDocId("already");
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("2");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var resultsInserted = new Results();
+            resultsInserted.setDocId("docId");
+            resultsInserted.setEdinetCode("edinetCode");
+            resultsInserted.setDocTypeCode("140");
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+            edinetResponse.setResults(List.of(resultsInserted));
+            var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
+
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of());
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(service.nowLocalDateTime()).thenReturn(createdAt);
+
+            service.edinetList(date);
+
+            verify(documentDao, times(1)).insert(Document.builder()
+                    .documentId("docId")
+                    .documentTypeCode("140")
+                    .edinetCode("edinetCode")
+                    .documentPeriod(null)
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)

@@ -119,7 +119,7 @@ public class EdinetDocument {
                 results.getFundCode(),
                 results.getOrdinanceCode(),
                 results.getFormCode(),
-                results.getDocTypeCode(),
+                results.getDocTypeCode().orElse(null),
                 results.getPeriodStart(),
                 results.getPeriodEnd(),
                 results.getSubmitDateTime(),

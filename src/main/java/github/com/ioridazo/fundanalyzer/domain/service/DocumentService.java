@@ -300,8 +300,11 @@ public class DocumentService {
                         results.getFilerName(),
                         results.getDocTypeCode()
                 );
+            } else {
+                throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }
         }
+
         try {
             // 万が一Companyが登録されていない場合には登録する
             results.getEdinetCode().ifPresent(ed -> {
@@ -310,7 +313,7 @@ public class DocumentService {
                 }
             });
 
-            documentDao.insert(Document.of(date, parseDocumentPeriod(results), results, nowLocalDateTime()));
+            documentDao.insert(Document.of(date, parseDocumentPeriod(results).orElse(null), results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -526,24 +529,36 @@ public class DocumentService {
         );
     }
 
-    private LocalDate parseDocumentPeriod(final Results results) {
-        if (Objects.nonNull(results.getPeriodEnd())) {
-            // period end is present
-            return LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1);
-        } else {
-            if (Objects.nonNull(results.getParentDocID())) {
-                final Document document = documentDao.selectByDocumentId(results.getParentDocID());
-                if (Objects.nonNull(document)) {
-                    // parent document is present
-                    return document.getDocumentPeriod();
-                } else {
-                    // parent document is null
-                    return LocalDate.EPOCH;
-                }
+    private Optional<LocalDate> parseDocumentPeriod(final Results results) {
+        final boolean anyMatchDocTypeCode = List.of(
+                DocTypeCode.ANNUAL_SECURITIES_REPORT,
+                DocTypeCode.AMENDED_SECURITIES_REPORT
+        ).stream()
+                .map(DocTypeCode::toValue)
+                .anyMatch(docTypeCode -> results.getDocTypeCode().stream().allMatch(docTypeCode::equals));
+
+        if (anyMatchDocTypeCode) {
+            if (Objects.nonNull(results.getPeriodEnd())) {
+                // period end is present
+                return Optional.of(LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1));
             } else {
-                // period end is null
-                return LocalDate.EPOCH;
+                if (Objects.nonNull(results.getParentDocID())) {
+                    final Document document = documentDao.selectByDocumentId(results.getParentDocID());
+                    if (Objects.nonNull(document)) {
+                        // parent document is present
+                        return Optional.of(document.getDocumentPeriod());
+                    } else {
+                        // parent document is null
+                        return Optional.of(LocalDate.EPOCH);
+                    }
+                } else {
+                    // period end is null
+                    return Optional.of(LocalDate.EPOCH);
+                }
             }
+        } else {
+            // no target
+            return Optional.empty();
         }
     }
 

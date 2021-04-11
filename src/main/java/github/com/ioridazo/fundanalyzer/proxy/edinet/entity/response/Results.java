@@ -121,4 +121,8 @@ public class Results {
     public Optional<String> getEdinetCode() {
         return Optional.ofNullable(edinetCode);
     }
+
+    public Optional<String> getDocTypeCode() {
+        return Optional.ofNullable(docTypeCode);
+    }
 }

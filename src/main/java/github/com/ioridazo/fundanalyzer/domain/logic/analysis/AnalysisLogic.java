@@ -299,7 +299,7 @@ public class AnalysisLogic {
 
                 );
             } else {
-                log.error("想定外のエラーが発生しました。");
+                log.error("想定外のエラーが発生しました。", e);
             }
         }
 
