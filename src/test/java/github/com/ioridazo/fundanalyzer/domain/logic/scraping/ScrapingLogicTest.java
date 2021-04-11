@@ -43,9 +43,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -209,7 +207,6 @@ class ScrapingLogicTest {
 
             when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
             when(companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null))).thenReturn(Optional.of(company));
-            doReturn(true).when(scrapingLogic).beforeCheck(eq(company), eq(fs), any());
             doReturn(targetFile).when(scrapingLogic).findTargetFile(
                     new File(pathDecode + "/" + date.getYear() + "/" + date.getMonth() + "/" + date + "/" + documentId + "/XBRL/PublicDoc"),
                     fs
@@ -272,7 +269,6 @@ class ScrapingLogicTest {
 
             when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
             when(companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null))).thenReturn(Optional.of(company));
-            doReturn(true).when(scrapingLogic).beforeCheck(eq(company), eq(fs), any());
             doReturn(targetFile).when(scrapingLogic).findTargetFile(
                     new File(pathDecode + "/" + date.getYear() + "/" + date.getMonth() + "/" + date + "/" + documentId + "/XBRL/PublicDoc"),
                     fs
@@ -334,7 +330,6 @@ class ScrapingLogicTest {
 
             when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
             when(companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null))).thenReturn(Optional.of(company));
-            doReturn(true).when(scrapingLogic).beforeCheck(eq(company), eq(fs), any());
             doReturn(targetFile).when(scrapingLogic).findTargetFile(
                     new File(pathDecode + "/" + date.getYear() + "/" + date.getMonth() + "/" + date + "/" + documentId + "/XBRL/PublicDoc"),
                     fs
@@ -392,7 +387,6 @@ class ScrapingLogicTest {
 
             when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
             when(companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null))).thenReturn(Optional.of(company));
-            doReturn(false).when(scrapingLogic).beforeCheck(eq(company), eq(fs), any());
 
             assertDoesNotThrow(() -> scrapingLogic.scrape(fs, documentId, date, null));
 
@@ -426,7 +420,6 @@ class ScrapingLogicTest {
 
             when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
             when(companyDao.selectByEdinetCode(edinetDocument.getEdinetCode().orElse(null))).thenReturn(Optional.of(company));
-            doReturn(true).when(scrapingLogic).beforeCheck(eq(company), eq(fs), any());
             doThrow(FundanalyzerFileException.class).when(scrapingLogic).findTargetFile(
                     new File(pathDecode + "/" + date.getYear() + "/" + date.getMonth() + "/" + date + "/" + documentId + "/XBRL/PublicDoc"),
                     fs
@@ -445,109 +438,6 @@ class ScrapingLogicTest {
                     null,
                     updated
             ));
-        }
-
-        @DisplayName("beforeCheck : DBに対象のデータがなければtrueとなることを確認する")
-        @Test
-        void beforeCheck_true_isEmpty() {
-            var company = new Company(
-                    "code",
-                    null,
-                    null,
-                    "edinetCode",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var edinetDocument = new EdinetDocument();
-            edinetDocument.setPeriodEnd("2020-09-30");
-
-            when(financialStatementDao.selectByEdinetCodeAndFsAndYear(company.getEdinetCode(), fs.toValue(), "2020"))
-                    .thenReturn(List.of());
-
-            assertTrue(() -> scrapingLogic.beforeCheck(company, fs, edinetDocument));
-        }
-
-        @DisplayName("beforeCheck : 対象年が重複していなければtrueとなることを確認する")
-        @Test
-        void beforeCheck_true_none() {
-            var company = new Company(
-                    "code",
-                    null,
-                    null,
-                    "edinetCode",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var edinetDocument = new EdinetDocument();
-            edinetDocument.setPeriodEnd("2020-09-30");
-            var financialStatement = new FinancialStatement(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    LocalDate.parse("2019-09-30"),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-
-            when(financialStatementDao.selectByEdinetCodeAndFsAndYear(company.getEdinetCode(), fs.toValue(), "2020"))
-                    .thenReturn(List.of(financialStatement));
-
-            assertTrue(() -> scrapingLogic.beforeCheck(company, fs, edinetDocument));
-        }
-
-        @DisplayName("beforeCheck : 対象年が重複していなければtrueとなることを確認する")
-        @Test
-        void beforeCheck_false_none() {
-            var company = new Company(
-                    "code",
-                    null,
-                    null,
-                    "edinetCode",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var edinetDocument = new EdinetDocument();
-            edinetDocument.setPeriodEnd("2020-09-30");
-            var financialStatement = new FinancialStatement(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    LocalDate.parse("2020-03-30"),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-
-            when(financialStatementDao.selectByEdinetCodeAndFsAndYear(company.getEdinetCode(), fs.toValue(), "2020"))
-                    .thenReturn(List.of(financialStatement));
-
-            assertFalse(() -> scrapingLogic.beforeCheck(company, fs, edinetDocument));
         }
 
         @DisplayName("findTargetFile : 対象のファイルとスクレイピングキーワードを見つけることを確認する")

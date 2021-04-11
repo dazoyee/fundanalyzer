@@ -30,7 +30,6 @@ class AnalysisServiceTest {
     private IndustryDao industryDao;
     private CompanyDao companyDao;
     private DocumentDao documentDao;
-    private AnalysisResultDao analysisResultDao;
 
     private AnalysisService service;
 
@@ -40,14 +39,13 @@ class AnalysisServiceTest {
         industryDao = Mockito.mock(IndustryDao.class);
         companyDao = Mockito.mock(CompanyDao.class);
         documentDao = Mockito.mock(DocumentDao.class);
-        analysisResultDao = Mockito.mock(AnalysisResultDao.class);
 
         service = Mockito.spy(new AnalysisService(
                 analysisLogic,
                 industryDao,
                 companyDao,
                 documentDao,
-                analysisResultDao
+                Mockito.mock(AnalysisResultDao.class)
         ));
     }
 
@@ -112,6 +110,9 @@ class AnalysisServiceTest {
                     .documentId(docId)
                     .edinetCode("edinetCode")
                     .documentPeriod(period)
+                    .scrapedBs("1")
+                    .scrapedPl("1")
+                    .scrapedNumberOfShares("1")
                     .build();
 
             when(companyDao.selectAll()).thenReturn(companyAll);
@@ -177,6 +178,71 @@ class AnalysisServiceTest {
             assertDoesNotThrow(() -> service.analyze(submitDate, docTypeCodes));
 
             verify(analysisLogic, times(0)).analyze(any());
+        }
+
+        @DisplayName("analyze : スクレイピング処理ステータスがDONEでないなら処理しない")
+        @Test
+        void analyze_allMatch_status_error() {
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+            var submitDate = LocalDate.parse("2020-10-04");
+            var code = "code";
+            var period = LocalDate.parse("2020-12-31");
+            var docId = "docId";
+            var companyAll = List.of(
+                    new Company(
+                            null,
+                            null,
+                            1,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Company(
+                            "not null",
+                            null,
+                            2,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Company(
+                            code,
+                            "ターゲット",
+                            3,
+                            "edinetCode",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+            var targetDocument = Document.builder()
+                    .documentId(docId)
+                    .edinetCode("edinetCode")
+                    .documentPeriod(period)
+                    .scrapedBs("5")
+                    .scrapedPl("1")
+                    .scrapedNumberOfShares("1")
+                    .build();
+
+            when(companyDao.selectAll()).thenReturn(companyAll);
+            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(1, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
+            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(targetDocument));
+
+            assertDoesNotThrow(() -> service.analyze(submitDate, docTypeCodes));
+
+            verify(analysisLogic, times(0)).analyze(docId);
         }
     }
 }

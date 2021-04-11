@@ -73,7 +73,7 @@ public class Document {
             final LocalDateTime nowLocalDateTime) {
         return Document.builder()
                 .documentId(results.getDocId())
-                .documentTypeCode(results.getDocTypeCode())
+                .documentTypeCode(results.getDocTypeCode().orElse(null))
                 .edinetCode(results.getEdinetCode().orElse(null))
                 .documentPeriod(documentPeriod)
                 .submitDate(submitDate)

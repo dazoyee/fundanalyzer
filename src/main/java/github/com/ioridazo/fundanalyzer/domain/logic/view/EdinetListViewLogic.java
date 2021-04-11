@@ -12,10 +12,13 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
 public class EdinetListViewLogic {
+
+    private static final String MESSAGE_FOR_A_LOT_OF_EDINET_CODE = "A lot of edinet_code.";
 
     private final AnalysisResultDao analysisResultDao;
 
@@ -57,17 +60,17 @@ public class EdinetListViewLogic {
                 // filter scrapedBs is done
                 .filter(d -> documentList.stream()
                         .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
-                        .anyMatch(document -> DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
+                        .anyMatch(document -> DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedBs())))
                 )
                 // filter scrapedPl is done
                 .filter(d -> documentList.stream()
                         .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
-                        .anyMatch(document -> DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
+                        .anyMatch(document -> DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedPl())))
                 )
                 // filter scrapedNumberOfShares is done
                 .filter(d -> documentList.stream()
                         .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
-                        .anyMatch(document -> DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares()))
+                        .anyMatch(document -> DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedNumberOfShares())))
                 ).collect(Collectors.toList());
 
         return new EdinetListViewBean(
@@ -88,7 +91,7 @@ public class EdinetListViewLogic {
                         ).count(),
 
                 // 未分析企業コード
-                scrapedList.stream()
+                Optional.of(scrapedList.stream()
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
@@ -98,43 +101,59 @@ public class EdinetListViewLogic {
                                 ).isEmpty()
                         )
                         .map(Document::getEdinetCode)
-                        .collect(Collectors.joining("\n")),
+                        .collect(Collectors.joining(",")))
+                        .map(notAnalyzedCode -> {
+                            if (notAnalyzedCode.length() > 100) {
+                                return MESSAGE_FOR_A_LOT_OF_EDINET_CODE;
+                            } else {
+                                return notAnalyzedCode;
+                            }
+                        })
+                        .orElse(""),
 
                 // 処理中企業コード
-                targetList.stream()
+                Optional.of(targetList.stream()
                         .map(Document::getEdinetCode)
                         // filter no all done
                         .filter(edinetCode -> documentList.stream()
                                 .filter(document -> edinetCode.equals(document.getEdinetCode()))
-                                .anyMatch(document -> !(DocumentStatus.DONE.toValue().equals(document.getScrapedBs())
-                                        && DocumentStatus.DONE.toValue().equals(document.getScrapedPl())
-                                        && DocumentStatus.DONE.toValue().equals(document.getScrapedNumberOfShares())))
+                                .anyMatch(document -> !(DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedBs()))
+                                        && DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedPl()))
+                                        && DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedNumberOfShares()))))
                         )
                         // filter no all notYet
                         .filter(edinetCode -> documentList.stream()
                                 .filter(document -> edinetCode.equals(document.getEdinetCode()))
-                                .anyMatch(document -> !(DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs())
-                                        && DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl())
-                                        && DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares())))
+                                .anyMatch(document -> !(DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getScrapedBs()))
+                                        && DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getScrapedPl()))
+                                        && DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getScrapedNumberOfShares()))))
                         )
-                        .collect(Collectors.joining("\n")),
+                        .collect(Collectors.joining(",")))
+                        .map(cantScrapedCode -> {
+                            if (cantScrapedCode.length() > 100) {
+                                return MESSAGE_FOR_A_LOT_OF_EDINET_CODE;
+                            } else {
+                                return cantScrapedCode;
+                            }
+                        })
+                        .orElse(""),
 
                 // 未処理件数
                 targetList.stream()
                         // filter scrapedBs is notYet
                         .filter(d -> documentList.stream()
                                 .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
-                                .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
+                                .anyMatch(document -> DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getScrapedBs())))
                         )
                         // filter scrapedPl is notYet
                         .filter(d -> documentList.stream()
                                 .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
-                                .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
+                                .anyMatch(document -> DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getScrapedPl())))
                         )
                         // filter scrapedNumberOfShares is notYet
                         .filter(d -> documentList.stream()
                                 .filter(document -> d.getEdinetCode().equals(document.getEdinetCode()))
-                                .anyMatch(document -> DocumentStatus.NOT_YET.toValue().equals(document.getScrapedNumberOfShares()))
+                                .anyMatch(document -> DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(document.getScrapedNumberOfShares())))
                         ).count(),
 
                 // 対象外件数
