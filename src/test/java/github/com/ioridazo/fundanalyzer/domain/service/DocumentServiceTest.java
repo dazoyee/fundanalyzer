@@ -511,6 +511,7 @@ class DocumentServiceTest {
             var date = LocalDate.parse("2020-09-19");
             var edinetDocument = new EdinetDocument();
             edinetDocument.setDocId("already");
+            var document = Document.builder().documentId("already").build();
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
             var metadata = new Metadata();
@@ -522,12 +523,15 @@ class DocumentServiceTest {
             resultsInserted.setPeriodEnd("2020-12-31");
             var resultsAlready = new Results();
             resultsAlready.setDocId("already");
+            resultsAlready.setDocTypeCode("120");
+            resultsAlready.setPeriodEnd("2020-12-31");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
             edinetResponse.setResults(List.of(resultsInserted, resultsAlready));
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of(edinetDocument));
+            when(documentDao.selectBySubmitDate(date)).thenReturn(List.of(document));
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new Company(
@@ -553,6 +557,15 @@ class DocumentServiceTest {
                     .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
                     .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
+                    .submitDate(date)
+                    .createdAt(createdAt)
+                    .updatedAt(createdAt)
+                    .build());
+            verify(documentDao, times(0)).insert(Document.builder()
+                    .documentId(resultsAlready.getDocId())
+                    .documentTypeCode(resultsAlready.getDocTypeCode().orElseThrow())
+                    .edinetCode(resultsAlready.getEdinetCode().orElse(null))
+                    .documentPeriod(LocalDate.of(Integer.parseInt(resultsAlready.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)

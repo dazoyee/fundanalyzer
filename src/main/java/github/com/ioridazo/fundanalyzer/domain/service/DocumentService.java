@@ -262,10 +262,6 @@ public class DocumentService {
      */
     @NewSpan("DocumentService.edinetList.date")
     public void edinetList(final LocalDate date) {
-        final var docIdList = edinetDocumentDao.selectAll().stream()
-                .map(EdinetDocument::getDocId)
-                .collect(Collectors.toList());
-
         final boolean isPresent = Stream.of(date.toString())
                 // EDINETに提出書類の問い合わせ
                 .map(d -> edinetProxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
@@ -275,19 +271,38 @@ public class DocumentService {
         // 書類が0件ではないときは書類リストを取得してデータベースに登録する
         if (isPresent) {
             final EdinetResponse edinetResponse = edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST));
+
+            // edinet_document
+            final List<String> docIdList = edinetDocumentDao.selectAll().stream()
+                    .map(EdinetDocument::getDocId)
+                    .collect(Collectors.toList());
             edinetResponse.getResults().forEach(results -> Stream.of(results)
                     .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
-                    .forEach(r -> insertDocument(date, r)));
-        }
+                    .forEach(this::insertEdinetDocument));
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}", date),
-                Category.DOCUMENT,
-                Process.EDINET
-        );
+            // document
+            final List<String> documentIdList = documentDao.selectBySubmitDate(date).stream()
+                    .map(Document::getDocumentId)
+                    .collect(Collectors.toList());
+            edinetResponse.getResults().forEach(results -> Stream.of(results)
+                    .filter(r -> documentIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
+                    .forEach(r -> insertDocument(date, r)));
+
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}", date),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+        }else {
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}", date),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+        }
     }
 
-    private void insertDocument(final LocalDate date, final Results results) {
+    private void insertEdinetDocument(final Results results) {
         try {
             edinetDocumentDao.insert(EdinetDocument.of(results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
@@ -304,7 +319,9 @@ public class DocumentService {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }
         }
+    }
 
+    private void insertDocument(final LocalDate date, final Results results) {
         try {
             // 万が一Companyが登録されていない場合には登録する
             results.getEdinetCode().ifPresent(ed -> {
@@ -546,7 +563,7 @@ public class DocumentService {
                     final Document document = documentDao.selectByDocumentId(results.getParentDocID());
                     if (Objects.nonNull(document)) {
                         // parent document is present
-                        return Optional.of(document.getDocumentPeriod());
+                        return Optional.ofNullable(document.getDocumentPeriod());
                     } else {
                         // parent document is null
                         return Optional.of(LocalDate.EPOCH);
