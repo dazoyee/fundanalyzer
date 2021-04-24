@@ -206,6 +206,33 @@ class AnalysisLogicTest {
 
             assertEquals(expected, logic.calculate(companyCode, document));
         }
+
+        @DisplayName("calculate : documentPeriodが存在しないときはエラーにする")
+        @Test
+        void calculate_documentPeriod_is_null() {
+            var document = Document.builder()
+                    .edinetCode("edinetCode")
+                    .submitDate(LocalDate.parse("2021-03-20"))
+                    .documentTypeCode("120")
+                    .build();
+            var companyCode = "code";
+            var company = new Company(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(companyDao.selectByCode(companyCode)).thenReturn(Optional.of(company));
+
+            assertThrows(FundanalyzerCalculateException.class, () -> logic.calculate(companyCode, document));
+        }
     }
 
     @Nested

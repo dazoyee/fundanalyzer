@@ -95,7 +95,7 @@ public class AnalysisLogic {
             ));
         } catch (FundanalyzerCalculateException ignored) {
             FundanalyzerLogClient.logLogic(
-                    MessageFormat.format("エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}", companyCode),
+                    MessageFormat.format("エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}", companyCode, documentId),
                     Category.DOCUMENT,
                     Process.ANALYSIS
             );
@@ -122,7 +122,12 @@ public class AnalysisLogic {
     BigDecimal calculate(final String companyCode, final Document document) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
         final FsValueParameter parameter = FsValueParameter.of(
-                company, document.getDocumentPeriod(), DocumentTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
+                company,
+                Optional.ofNullable(document.getDocumentPeriod())
+                        .orElseThrow(() -> new FundanalyzerCalculateException("対象期間が存在していません。\tdocumentPeriod")),
+                DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
+                document.getSubmitDate()
+        );
 
         // 流動資産合計
         final long totalCurrentAssets = bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);
