@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -63,7 +63,7 @@ class AnalysisServiceTest {
         @DisplayName("analyze : 提出日単位で企業価値を分析することを確認する")
         @Test
         void analyze_submitDate_ok() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var submitDate = LocalDate.parse("2020-10-04");
             var code = "code";
             var period = LocalDate.parse("2020-12-31");
@@ -120,7 +120,7 @@ class AnalysisServiceTest {
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(targetDocument));
 
-            assertDoesNotThrow(() -> service.analyze(submitDate, docTypeCodes));
+            assertDoesNotThrow(() -> service.analyze(submitDate, targetTypes));
 
             verify(analysisLogic, times(1)).analyze(docId);
         }
@@ -128,7 +128,7 @@ class AnalysisServiceTest {
         @DisplayName("analyze : 処理対象が存在しないときはなにもしない")
         @Test
         void analyze_submitDate_nothing() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var submitDate = LocalDate.parse("2020-10-04");
             var code = "code";
             var companyAll = List.of(
@@ -175,7 +175,7 @@ class AnalysisServiceTest {
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of());
 
-            assertDoesNotThrow(() -> service.analyze(submitDate, docTypeCodes));
+            assertDoesNotThrow(() -> service.analyze(submitDate, targetTypes));
 
             verify(analysisLogic, times(0)).analyze(any());
         }
@@ -183,7 +183,7 @@ class AnalysisServiceTest {
         @DisplayName("analyze : スクレイピング処理ステータスがDONEでないなら処理しない")
         @Test
         void analyze_allMatch_status_error() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var submitDate = LocalDate.parse("2020-10-04");
             var code = "code";
             var period = LocalDate.parse("2020-12-31");
@@ -240,7 +240,7 @@ class AnalysisServiceTest {
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(targetDocument));
 
-            assertDoesNotThrow(() -> service.analyze(submitDate, docTypeCodes));
+            assertDoesNotThrow(() -> service.analyze(submitDate, targetTypes));
 
             verify(analysisLogic, times(0)).analyze(docId);
         }

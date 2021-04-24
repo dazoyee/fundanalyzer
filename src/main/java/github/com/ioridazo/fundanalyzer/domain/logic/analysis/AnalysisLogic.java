@@ -7,8 +7,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
@@ -88,7 +88,7 @@ public class AnalysisLogic {
                     companyCode,
                     document.getDocumentPeriod(),
                     calculate(companyCode, document),
-                    DocTypeCode.fromValue(document.getDocumentTypeCode()),
+                    DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
                     document.getSubmitDate(),
                     documentId,
                     nowLocalDateTime()
@@ -122,7 +122,7 @@ public class AnalysisLogic {
     BigDecimal calculate(final String companyCode, final Document document) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
         final FsValueParameter parameter = FsValueParameter.of(
-                company, document.getDocumentPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
+                company, document.getDocumentPeriod(), DocumentTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
 
         // 流動資産合計
         final long totalCurrentAssets = bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);
@@ -163,7 +163,7 @@ public class AnalysisLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
-                        parameter.getDocTypeCode().toValue(),
+                        parameter.getDocumentTypeCode().toValue(),
                         parameter.getSubmitDate()
                         ).flatMap(FinancialStatement::getValue)
                 )
@@ -197,7 +197,7 @@ public class AnalysisLogic {
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         plSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
-                        parameter.getDocTypeCode().toValue(),
+                        parameter.getDocumentTypeCode().toValue(),
                         parameter.getSubmitDate()
                         ).flatMap(FinancialStatement::getValue)
                 )
@@ -228,7 +228,7 @@ public class AnalysisLogic {
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
                 String.valueOf(parameter.getPeriod().getYear()),
-                parameter.getDocTypeCode().toValue(),
+                parameter.getDocumentTypeCode().toValue(),
                 parameter.getSubmitDate()
         )
                 .flatMap(FinancialStatement::getValue)
@@ -260,7 +260,7 @@ public class AnalysisLogic {
         try {
             final Document document = documentDao.selectDocumentBy(
                     Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
-                    parameter.getDocTypeCode().toValue(),
+                    parameter.getDocumentTypeCode().toValue(),
                     parameter.getSubmitDate(),
                     String.valueOf(parameter.getPeriod().getYear())
             );
@@ -293,7 +293,7 @@ public class AnalysisLogic {
                         "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
                                 "\t会社コード:{}\t書類種別コード:{}\t提出日:{}\t対象年:{}",
                         parameter.getCompany().getCode().orElseThrow(),
-                        parameter.getDocTypeCode().toValue(),
+                        parameter.getDocumentTypeCode().toValue(),
                         parameter.getSubmitDate(),
                         String.valueOf(parameter.getPeriod().getYear())
 
@@ -311,7 +311,7 @@ public class AnalysisLogic {
     public static class FsValueParameter {
         private final Company company;
         private final LocalDate period;
-        private final DocTypeCode docTypeCode;
+        private final DocumentTypeCode documentTypeCode;
         private final LocalDate submitDate;
     }
 }

@@ -7,8 +7,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
@@ -311,7 +311,7 @@ public class ScrapingLogic {
                     period.getPeriodStart(),
                     period.getPeriodEnd(),
                     value,
-                    DocTypeCode.fromValue(edinetDocument.getDocTypeCode()),
+                    DocumentTypeCode.fromValue(edinetDocument.getDocTypeCode()),
                     LocalDateTime.parse(edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
                     edinetDocument.getDocId(),
                     nowLocalDateTime()
@@ -339,7 +339,7 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      */
     void checkBs(final Company company, final EdinetDocument edinetDocument) {
-        final DocTypeCode docTypeCode = DocTypeCode.fromValue(edinetDocument.getDocTypeCode());
+        final DocumentTypeCode documentTypeCode = DocumentTypeCode.fromValue(edinetDocument.getDocTypeCode());
         final LocalDate submitDate = LocalDateTime.parse(
                 edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
 
@@ -350,7 +350,7 @@ public class ScrapingLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                        docTypeCode.toValue(),
+                        documentTypeCode.toValue(),
                         submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
@@ -365,7 +365,7 @@ public class ScrapingLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                        docTypeCode.toValue(),
+                        documentTypeCode.toValue(),
                         submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
