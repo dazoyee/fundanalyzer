@@ -21,7 +21,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
@@ -86,14 +86,14 @@ public class AnalysisLogic {
         try {
             analysisResultDao.insert(AnalysisResult.of(
                     companyCode,
-                    document.getDocumentPeriod(),
+                    document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     calculate(companyCode, document),
                     DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
                     document.getSubmitDate(),
                     documentId,
                     nowLocalDateTime()
             ));
-        } catch (FundanalyzerCalculateException ignored) {
+        } catch (FundanalyzerNotExistException ignored) {
             FundanalyzerLogClient.logLogic(
                     MessageFormat.format("エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}", companyCode, documentId),
                     Category.DOCUMENT,
@@ -123,8 +123,8 @@ public class AnalysisLogic {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
         final FsValueParameter parameter = FsValueParameter.of(
                 company,
-                Optional.ofNullable(document.getDocumentPeriod())
-                        .orElseThrow(() -> new FundanalyzerCalculateException("対象期間が存在していません。\tdocumentPeriod")),
+                document.getDocumentPeriod()
+                        .orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                 DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
                 document.getSubmitDate()
         );
@@ -255,9 +255,9 @@ public class AnalysisLogic {
      * @param parameter      FsValueParameter.class
      * @param subjectName    財務諸表の科目名
      * @param updateDocument ドキュメントステータス更新処理
-     * @return FundanalyzerCalculateException
+     * @return FundanalyzerNotExistException
      */
-    private FundanalyzerCalculateException fsValueThrow(
+    private FundanalyzerNotExistException fsValueThrow(
             final String fsName,
             final FsValueParameter parameter,
             final String subjectName,
@@ -308,7 +308,7 @@ public class AnalysisLogic {
             }
         }
 
-        throw new FundanalyzerCalculateException("財務諸表の値を取得することができませんでした。");
+        throw new FundanalyzerNotExistException(fsName, subjectName);
     }
 
     @SuppressWarnings("RedundantModifiersValueLombok")

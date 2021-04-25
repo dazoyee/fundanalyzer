@@ -97,10 +97,12 @@ public class AnalysisService {
                         .filter(document -> Target.containsEdinetCode(
                                 document.getEdinetCode(), companyAll, List.of(bank, insurance))
                         )
+                        // documentPeriod is present
+                        .filter(document -> document.getDocumentPeriod().isPresent())
                         // only not analyze
                         .filter(document -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(),
-                                document.getDocumentPeriod(),
+                                document.getDocumentPeriod().get(),
                                 document.getDocumentTypeCode(),
                                 submitDate
                                 ).isEmpty()

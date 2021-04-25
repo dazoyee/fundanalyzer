@@ -563,7 +563,7 @@ public class DocumentService {
                     final Document document = documentDao.selectByDocumentId(results.getParentDocID());
                     if (Objects.nonNull(document)) {
                         // parent document is present
-                        return Optional.ofNullable(document.getDocumentPeriod());
+                        return document.getDocumentPeriod();
                     } else {
                         // parent document is null
                         return Optional.of(LocalDate.EPOCH);

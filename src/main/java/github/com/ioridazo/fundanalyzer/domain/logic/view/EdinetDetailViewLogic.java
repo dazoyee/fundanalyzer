@@ -12,7 +12,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
@@ -116,12 +116,12 @@ public class EdinetDetailViewLogic {
                     t,
                     AnalysisLogic.FsValueParameter.of(
                             company,
-                            document.getDocumentPeriod(),
+                            document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                             DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
                             document.getSubmitDate()
                     )
             );
-        } catch (FundanalyzerCalculateException e) {
+        } catch (FundanalyzerNotExistException e) {
             return null;
         }
     }
@@ -134,12 +134,12 @@ public class EdinetDetailViewLogic {
             return toLongFunction.applyAsLong(
                     AnalysisLogic.FsValueParameter.of(
                             company,
-                            document.getDocumentPeriod(),
+                            document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                             DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
                             document.getSubmitDate()
                     )
             );
-        } catch (FundanalyzerCalculateException e) {
+        } catch (FundanalyzerNotExistException e) {
             return null;
         }
     }

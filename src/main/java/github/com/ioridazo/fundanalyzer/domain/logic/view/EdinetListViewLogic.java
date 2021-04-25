@@ -81,10 +81,11 @@ public class EdinetListViewLogic {
 
                 // 分析済件数
                 scrapedList.stream()
+                        .filter(document -> document.getDocumentPeriod().isPresent())
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
-                                d.getDocumentPeriod(),
+                                d.getDocumentPeriod().get(),
                                 d.getDocumentTypeCode(),
                                 d.getSubmitDate()
                                 ).isPresent()
@@ -95,7 +96,7 @@ public class EdinetListViewLogic {
                         // filter analysis is done
                         .filter(d -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).orElseThrow(),
-                                d.getDocumentPeriod(),
+                                d.getDocumentPeriod().orElse(null),
                                 d.getDocumentTypeCode(),
                                 d.getSubmitDate()
                                 ).isEmpty()

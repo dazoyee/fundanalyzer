@@ -17,7 +17,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -120,7 +120,7 @@ class AnalysisLogicTest {
 
         @DisplayName("analyze : 分析時にエラーが発生したときの処理を確認する")
         @Test
-        void analyze_FundanalyzerCalculateException() {
+        void analyze_FundanalyzerNotExistException() {
             var documentId = "docId";
             var period = LocalDate.parse("2020-12-31");
             var code = "code";
@@ -147,7 +147,7 @@ class AnalysisLogicTest {
 
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
             when(companyDao.selectAll()).thenReturn(List.of(company));
-            doThrow(FundanalyzerCalculateException.class).when(logic).calculate("code", document);
+            doThrow(FundanalyzerNotExistException.class).when(logic).calculate("code", document);
             when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
             assertDoesNotThrow(() -> logic.analyze(documentId));
@@ -231,7 +231,7 @@ class AnalysisLogicTest {
 
             when(companyDao.selectByCode(companyCode)).thenReturn(Optional.of(company));
 
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.calculate(companyCode, document));
+            assertThrows(FundanalyzerNotExistException.class, () -> logic.calculate(companyCode, document));
         }
     }
 
@@ -290,7 +290,7 @@ class AnalysisLogicTest {
 
         @DisplayName("bsValues : 貸借対照表の値の取得に失敗したときの処理を確認する")
         @Test
-        void bsValues_FundanalyzerCalculateException() {
+        void bsValues_FundanalyzerNotExistException() {
             var company = new Company(
                     "code",
                     null,
@@ -333,7 +333,7 @@ class AnalysisLogicTest {
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
 
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, targetType, submitDate);
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.bsValue(bsEnum, parameter));
+            assertThrows(FundanalyzerNotExistException.class, () -> logic.bsValue(bsEnum, parameter));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId(documentId)
@@ -395,7 +395,7 @@ class AnalysisLogicTest {
 
         @DisplayName("plValues : 損益計算書の値の取得に失敗したときの処理を確認する")
         @Test
-        void plValues_FundanalyzerCalculateException() {
+        void plValues_FundanalyzerNotExistException() {
             var company = new Company(
                     "code",
                     null,
@@ -438,7 +438,7 @@ class AnalysisLogicTest {
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
 
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, targetType, submitDate);
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.plValue(plEnum, parameter));
+            assertThrows(FundanalyzerNotExistException.class, () -> logic.plValue(plEnum, parameter));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId(documentId)
@@ -496,7 +496,7 @@ class AnalysisLogicTest {
 
         @DisplayName("nsValue : 株式総数の値の取得に失敗したときの処理を確認する")
         @Test
-        void nsValue_FundanalyzerCalculateException() {
+        void nsValue_FundanalyzerNotExistException() {
             var company = new Company(
                     "code",
                     null,
@@ -535,7 +535,7 @@ class AnalysisLogicTest {
             when(documentDao.selectByDocumentId(documentId)).thenReturn(document);
 
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, targetType, submitDate);
-            assertThrows(FundanalyzerCalculateException.class, () -> logic.nsValue(parameter));
+            assertThrows(FundanalyzerNotExistException.class, () -> logic.nsValue(parameter));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId(documentId)

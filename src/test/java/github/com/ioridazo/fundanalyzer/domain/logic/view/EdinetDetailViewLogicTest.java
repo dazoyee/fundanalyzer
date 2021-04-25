@@ -10,7 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -176,8 +176,8 @@ class EdinetDetailViewLogicTest {
             when(analysisLogic.bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter)).thenReturn(2000L);
             when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_LIABILITIES, parameter)).thenReturn(3000L);
             when(analysisLogic.bsValue(BsEnum.TOTAL_FIXED_LIABILITIES, parameter)).thenReturn(4000L);
-            when(analysisLogic.plValue(PlEnum.OPERATING_PROFIT, parameter)).thenThrow(FundanalyzerCalculateException.class);
-            when(analysisLogic.nsValue(parameter)).thenThrow(FundanalyzerCalculateException.class);
+            when(analysisLogic.plValue(PlEnum.OPERATING_PROFIT, parameter)).thenThrow(FundanalyzerNotExistException.class);
+            when(analysisLogic.nsValue(parameter)).thenThrow(FundanalyzerNotExistException.class);
 
             var actual = logic.edinetDetailView(submitDate, targetTypes, allTargetCompanies);
 
