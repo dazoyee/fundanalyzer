@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -121,14 +122,18 @@ public class AnalysisController {
     /**
      * 指定書類IDを分析する
      *
-     * @param documentId 書類ID
+     * @param documentId 書類ID（CSVで複数可能）
      * @return Index
      */
     @PostMapping("fundanalyzer/v1/scrape/id")
     public String scrapeById(final String documentId) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
-        documentService.scrape(documentId);
-        analysisService.analyze(documentId);
+        Arrays.stream(documentId.split(","))
+                .filter(dId -> dId.length() == 8)
+                .forEach(dId -> {
+                    documentService.scrape(dId);
+                    analysisService.analyze(dId);
+                });
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
