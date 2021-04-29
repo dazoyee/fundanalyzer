@@ -10,15 +10,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
 @Controller
 public class EdinetController {
 
-    private static final String EDINET = "edinet";
     private static final String REDIRECT_EDINET = "redirect:/fundanalyzer/v1/edinet/list";
+    private static final String REDIRECT_EDINET_DETAIL = "redirect:/fundanalyzer/v1/edinet/list/detail";
 
     private final DocumentService documentService;
     private final ViewService viewService;
@@ -28,23 +27,6 @@ public class EdinetController {
             final ViewService viewService) {
         this.documentService = documentService;
         this.viewService = viewService;
-    }
-
-    /**
-     * EDINETリストを表示する
-     *
-     * @param message message
-     * @param model   model
-     * @return EdinetList
-     */
-    @GetMapping("fundanalyzer/v1/edinet/list")
-    public String edinetList(@RequestParam(name = "message", required = false) final String message, final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
-        model.addAttribute("message", message);
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListview());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
-        return EDINET;
     }
 
     /**
@@ -77,35 +59,6 @@ public class EdinetController {
     }
 
     /**
-     * すべてのEDINETリストを表示する
-     *
-     * @param model model
-     * @return EdinetList
-     */
-    @GetMapping("fundanalyzer/v1/edinet/list/all")
-    public String edinetListAll(final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListViewAll());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
-        return EDINET;
-    }
-
-    /**
-     * 処理ステータスが未完のものを初期化する
-     *
-     * @param model model
-     * @return EdinetList
-     */
-    /*
-    @PostMapping("fundanalyzer/v1/reset/status")
-    public String resetStatus(final Model model) {
-        documentService.resetForRetry();
-        return REDIRECT_EDINET + "?message=updated";
-    }
-     */
-
-    /**
      * EDINETリストをアップデートする
      *
      * @param date 提出日
@@ -117,5 +70,20 @@ public class EdinetController {
         viewService.updateEdinetListView(LocalDate.parse(date), Target.annualSecuritiesReport());
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET;
+    }
+
+    /**
+     * 対象書類IDを処理対象外にする
+     *
+     * @param submitDate 対象提出日
+     * @param documentId 書類ID
+     * @return EdinetDetail
+     */
+    @PostMapping("fundanalyzer/v1/remove/document")
+    public String removeDocument(final String submitDate, final String documentId) {
+        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
+        documentService.removeDocument(documentId);
+        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
+        return REDIRECT_EDINET_DETAIL + "?submitDate=" + submitDate;
     }
 }

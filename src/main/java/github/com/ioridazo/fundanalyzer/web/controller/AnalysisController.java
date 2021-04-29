@@ -10,10 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -22,8 +19,8 @@ import java.util.List;
 @Controller
 public class AnalysisController {
 
-    private static final String INDEX = "index";
     private static final String REDIRECT_INDEX = "redirect:/fundanalyzer/v1/index";
+    private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
 
     private final DocumentService documentService;
     private final AnalysisService analysisService;
@@ -39,22 +36,6 @@ public class AnalysisController {
         this.analysisService = analysisService;
         this.stockService = stockService;
         this.viewService = viewService;
-    }
-
-    /**
-     * 会社一覧を表示する
-     *
-     * @param message message
-     * @param model   model
-     * @return Index
-     */
-    @GetMapping("fundanalyzer/v1/index")
-    public String index(@RequestParam(name = "message", required = false) final String message, final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
-        model.addAttribute("message", message);
-        model.addAttribute("companies", viewService.corporateView());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
-        return INDEX;
     }
 
     /**
@@ -155,32 +136,17 @@ public class AnalysisController {
         return REDIRECT_INDEX;
     }
 
-
     /**
-     * 割安比率でソートする
+     * 企業の株価を取得する
      *
-     * @param model model
-     * @return Index
+     * @param code 会社コード
+     * @return BrandDetail
      */
-    @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
-    public String sortedDiscountRate(final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
-        model.addAttribute("companies", viewService.sortByDiscountRate());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
-        return INDEX;
-    }
-
-    /**
-     * すべての企業情報を表示する
-     *
-     * @param model model
-     * @return Index
-     */
-    @GetMapping("fundanalyzer/v1/index/all")
-    public String indexAll(final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
-        model.addAttribute("companies", viewService.corporateViewAll());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
-        return INDEX;
+    @PostMapping("fundanalyzer/v1/import/stock/code")
+    public String importStocks(final String code) {
+        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
+        stockService.importStockPrice(code);
+        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
+        return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
     }
 }

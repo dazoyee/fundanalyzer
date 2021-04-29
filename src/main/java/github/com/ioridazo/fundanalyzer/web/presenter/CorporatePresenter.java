@@ -1,29 +1,20 @@
-package github.com.ioridazo.fundanalyzer.web.controller;
+package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
-@Controller
-public class BrandDetailController {
+public class CorporatePresenter {
 
     private static final String CORPORATE = "corporate";
-    private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
 
-    private final StockService stockService;
     private final ViewService viewService;
 
-    public BrandDetailController(
-            final StockService stockService,
-            final ViewService viewService) {
-        this.stockService = stockService;
+    public CorporatePresenter(final ViewService viewService) {
         this.viewService = viewService;
     }
 
@@ -46,19 +37,5 @@ public class BrandDetailController {
         model.addAttribute("stockPrices", brandDetail.getStockPriceList());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
         return CORPORATE;
-    }
-
-    /**
-     * 企業の株価を取得する
-     *
-     * @param code 会社コード
-     * @return BrandDetail
-     */
-    @PostMapping("fundanalyzer/v1/import/stock/code")
-    public String importStocks(final String code) {
-        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
-        stockService.importStockPrice(code);
-        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
-        return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
     }
 }
