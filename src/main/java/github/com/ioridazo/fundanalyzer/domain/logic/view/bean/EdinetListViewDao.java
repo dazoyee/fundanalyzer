@@ -9,7 +9,6 @@ import org.seasar.doma.jdbc.Result;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
@@ -19,7 +18,7 @@ public interface EdinetListViewDao {
     List<EdinetListViewBean> selectAll();
 
     @Select
-    Optional<EdinetListViewBean> selectBySubmitDate(LocalDate submitDate);
+    EdinetListViewBean selectBySubmitDate(LocalDate submitDate);
 
     @Insert
     Result<EdinetListViewBean> insert(EdinetListViewBean edinetListViewBean);

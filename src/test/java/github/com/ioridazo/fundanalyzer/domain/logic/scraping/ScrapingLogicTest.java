@@ -7,8 +7,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -882,8 +882,8 @@ class ScrapingLogicTest {
                     null
             );
             var edinetDocument = new EdinetDocument();
-            var targetType = DocumentTypeCode.DTC_120;
-            edinetDocument.setDocTypeCode(targetType.toValue());
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
+            edinetDocument.setDocTypeCode(annualSecuritiesReport.toValue());
             var submitDateTime = "2021-03-20 23:00";
             edinetDocument.setSubmitDateTime(submitDateTime);
             var submitDate = LocalDate.parse(submitDateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
@@ -925,7 +925,7 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalCurrentLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    targetType.toValue(),
+                    annualSecuritiesReport.toValue(),
                     submitDate
             )).thenReturn(Optional.of(fsTotalCurrentLiabilities));
             when(bsSubjectDao.selectByOutlineSubjectId(BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()))
@@ -935,7 +935,7 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    targetType.toValue(),
+                    annualSecuritiesReport.toValue(),
                     submitDate
             )).thenReturn(Optional.of(fsTotalLiabilities));
             doNothing().when(scrapingLogic).insertFinancialStatement(eq(company), any(), any(), eq(edinetDocument), eq(0L));
@@ -962,8 +962,8 @@ class ScrapingLogicTest {
                     null
             );
             var edinetDocument = new EdinetDocument();
-            var targetType = DocumentTypeCode.DTC_120;
-            edinetDocument.setDocTypeCode(targetType.toValue());
+            var annualSecuritiesReport = DocTypeCode.ANNUAL_SECURITIES_REPORT;
+            edinetDocument.setDocTypeCode(annualSecuritiesReport.toValue());
             var submitDateTime = "2021-03-20 23:00";
             edinetDocument.setSubmitDateTime(submitDateTime);
             var submitDate = LocalDate.parse(submitDateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
@@ -1005,7 +1005,7 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalCurrentLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    targetType.toValue(),
+                    annualSecuritiesReport.toValue(),
                     submitDate
             )).thenReturn(Optional.of(fsTotalCurrentLiabilities));
             when(bsSubjectDao.selectByOutlineSubjectId(BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()))
@@ -1015,7 +1015,7 @@ class ScrapingLogicTest {
                     FinancialStatementEnum.BALANCE_SHEET.toValue(),
                     totalLiabilities.getId(),
                     edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                    targetType.toValue(),
+                    annualSecuritiesReport.toValue(),
                     submitDate
             )).thenReturn(Optional.of(fsTotalLiabilities));
             when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));

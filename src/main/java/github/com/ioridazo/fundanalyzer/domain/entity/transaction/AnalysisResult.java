@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -42,7 +42,7 @@ public class AnalysisResult {
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
-            final DocumentTypeCode documentTypeCode,
+            final DocTypeCode docTypeCode,
             final LocalDate submitDate,
             final String documentId,
             final LocalDateTime createdAt) {
@@ -51,7 +51,7 @@ public class AnalysisResult {
                 companyCode,
                 period,
                 corporateValue,
-                documentTypeCode.toValue(),
+                docTypeCode.toValue(),
                 submitDate,
                 documentId,
                 createdAt

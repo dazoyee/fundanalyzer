@@ -31,11 +31,11 @@ public class EdinetListViewBean {
     // 分析済件数
     private final Long countAnalyzed;
 
-    // 未分析ID
-    private final String notAnalyzedId;
+    // 未分析コード
+    private final String notAnalyzedCode;
 
-    // 処理確認ID
-    private final String cantScrapedId;
+    // 処理確認コード
+    private final String cantScrapedCode;
 
     // 未処理件数
     private final Long countNotScraped;
@@ -47,29 +47,4 @@ public class EdinetListViewBean {
     private final LocalDateTime createdAt;
 
     private final LocalDateTime updatedAt;
-
-    public static EdinetListViewBean of(
-            final LocalDate submitDate,
-            final int countAll,
-            final int countTarget,
-            final int countScraped,
-            final int countAnalyzed,
-            final String notAnalyzedCode,
-            final String cantScrapedCode,
-            final int countNotScraped,
-            final LocalDateTime nowLocalDateTime) {
-        return new EdinetListViewBean(
-                submitDate,
-                (long) countAll,
-                (long) countTarget,
-                (long) countScraped,
-                (long) countAnalyzed,
-                notAnalyzedCode,
-                cantScrapedCode,
-                (long) countNotScraped,
-                (long) (countAll - countTarget),
-                nowLocalDateTime,
-                nowLocalDateTime
-        );
-    }
 }

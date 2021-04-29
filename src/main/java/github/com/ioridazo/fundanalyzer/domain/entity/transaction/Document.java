@@ -14,7 +14,6 @@ import org.seasar.doma.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -203,10 +202,6 @@ public class Document {
             default:
                 throw new FundanalyzerRuntimeException();
         }
-    }
-
-    public Optional<LocalDate> getDocumentPeriod() {
-        return Optional.ofNullable(documentPeriod);
     }
 
     public boolean getNotRemoved() {

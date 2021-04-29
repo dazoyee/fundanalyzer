@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -56,8 +56,6 @@ public class ViewService {
     BigDecimal configOutlierOfStandardDeviation;
     @Value("${app.config.view.coefficient-of-variation}")
     BigDecimal configCoefficientOfVariation;
-    @Value("${app.config.view.edinet-list.size}")
-    int edinetListSize;
 
     private final SlackProxy slackProxy;
     private final CorporateViewLogic corporateViewLogic;
@@ -100,10 +98,6 @@ public class ViewService {
         this.minkabuDao = minkabuDao;
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
-    }
-
-    LocalDate nowLocalDate() {
-        return LocalDate.now();
     }
 
     /**
@@ -196,20 +190,20 @@ public class ViewService {
     /**
      * 非同期で表示するリストをアップデートする
      *
-     * @param targetTypes 書類種別コード
+     * @param docTypeCodes 書類種別コード
      * @return Void
      */
     @NewSpan("ViewService.updateCorporateView")
     @Async
     @Transactional
-    public CompletableFuture<Void> updateCorporateView(final List<DocumentTypeCode> targetTypes) {
+    public CompletableFuture<Void> updateCorporateView(final List<DocTypeCode> docTypeCodes) {
         try {
             final List<Company> allTargetCompanies = Target.allCompanies(
                     companyDao.selectAll(),
                     List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
             final var beanAllList = corporateViewDao.selectAll();
             allTargetCompanies.stream()
-                    .map(company -> corporateViewLogic.corporateViewOf(company, targetTypes))
+                    .map(company -> corporateViewLogic.corporateViewOf(company, docTypeCodes))
                     .parallel().forEach(corporateViewBean -> {
                 final var match = beanAllList.stream()
                         .map(CorporateViewBean::getCode)
@@ -237,13 +231,13 @@ public class ViewService {
     /**
      * 対象提出日の表示するリストをアップデートする
      *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
+     * @param submitDate   対象提出日
+     * @param docTypeCodes 書類種別コード
      */
     @NewSpan("ViewService.updateCorporateView.submitDate")
     @Transactional
-    public void updateCorporateView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
+    public void updateCorporateView(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
         final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
         final var beanAllList = corporateViewDao.selectAll();
 
@@ -254,7 +248,7 @@ public class ViewService {
                 .map(Optional::get)
                 .distinct()
                 .filter(company -> company.getCode().isPresent())
-                .map(company -> corporateViewLogic.corporateViewOf(company, targetTypes))
+                .map(company -> corporateViewLogic.corporateViewOf(company, docTypeCodes))
                 .forEach(corporateViewBean -> {
                     final var match = beanAllList.stream()
                             .map(CorporateViewBean::getCode)
@@ -294,22 +288,29 @@ public class ViewService {
     /**
      * 処理結果をSlackに通知する
      *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
+     * @param submitDate   対象提出日
+     * @param docTypeCodes 書類種別コード
      */
     @NewSpan("ViewService.notice")
-    public void notice(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final EdinetListViewBean edinetListViewBean = edinetListViewLogic.counter(submitDate, targetTypes);
+    public void notice(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
+        final List<EdinetListViewBean> edinetListViewBeanList = groupBySubmitDate(documentList);
 
-        if (edinetListViewBean.getCountTarget().equals(edinetListViewBean.getCountScraped())
-                && edinetListViewBean.getCountTarget().equals(edinetListViewBean.getCountAnalyzed())) {
-            // info message
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
-                    edinetListViewBean.getSubmitDate(), edinetListViewBean.getCountTarget());
+        if (edinetListViewBeanList.size() == 1) {
+            final EdinetListViewBean elv = edinetListViewBeanList.get(0);
+            if (elv.getCountTarget().equals(elv.getCountScraped())
+                    && elv.getCountTarget().equals(elv.getCountAnalyzed())) {
+                // info message
+                slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
+                        elv.getSubmitDate(), elv.getCountTarget());
+            } else {
+                // warn message
+                slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
+                        elv.getSubmitDate(), elv.getCountTarget(), elv.getCountNotScraped());
+            }
         } else {
-            // warn message
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
-                    edinetListViewBean.getSubmitDate(), edinetListViewBean.getCountTarget(), edinetListViewBean.getCountNotScraped());
+            throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。");
         }
 
         corporateViewDao.selectBySubmitDate(submitDate).stream()
@@ -358,23 +359,28 @@ public class ViewService {
     /**
      * 非同期で表示する処理状況リストをアップデートする
      *
-     * @param targetTypes 書類種別コード
+     * @param docTypeCodes 書類種別コード
      * @return Void
      */
     @NewSpan("ViewService.updateEdinetListView")
     @Async
     @Transactional
-    public CompletableFuture<Void> updateEdinetListView(final List<DocumentTypeCode> targetTypes) {
+    public CompletableFuture<Void> updateEdinetListView(final List<DocTypeCode> docTypeCodes) {
         try {
-            final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-            final List<LocalDate> allSubmitDate = documentDao.selectByDocumentTypeCode(docTypeCode).stream()
-                    .map(Document::getSubmitDate).collect(Collectors.toList());
-
-            allSubmitDate.stream()
-                    .filter(submitDate -> submitDate.isAfter(nowLocalDate().minusDays(edinetListSize)))
-                    .collect(Collectors.toList())
-                    .parallelStream()
-                    .forEach(submitDate -> updateEdinetListView(submitDate, targetTypes));
+            final var beanAllList = edinetListViewDao.selectAll();
+            final var documentList = documentDao.selectByDocumentTypeCode(
+                    docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList()));
+            groupBySubmitDate(documentList).parallelStream()
+                    .forEach(edinetListViewBean -> {
+                        final var match = beanAllList.stream()
+                                .map(EdinetListViewBean::getSubmitDate)
+                                .anyMatch(edinetListViewBean.getSubmitDate()::equals);
+                        if (match) {
+                            edinetListViewDao.update(edinetListViewBean);
+                        } else {
+                            edinetListViewDao.insert(edinetListViewBean);
+                        }
+                    });
 
             slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
 
@@ -393,19 +399,15 @@ public class ViewService {
     /**
      * 対象提出日の処理状況をアップデートする
      *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
+     * @param submitDate   対象提出日
+     * @param docTypeCodes 書類種別コード
      */
     @NewSpan("ViewService.updateEdinetListView")
     @Transactional
-    public void updateEdinetListView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final EdinetListViewBean edinetListViewBean = edinetListViewLogic.counter(submitDate, targetTypes);
-
-        if (edinetListViewDao.selectBySubmitDate(submitDate).isPresent()) {
-            edinetListViewDao.update(edinetListViewBean);
-        } else {
-            edinetListViewDao.insert(edinetListViewBean);
-        }
+    public void updateEdinetListView(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+        final var documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
+        groupBySubmitDate(documentList).forEach(edinetListViewDao::update);
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", submitDate),
@@ -447,15 +449,35 @@ public class ViewService {
     /**
      * 提出日ごとの処理詳細情報を取得する
      *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
+     * @param submitDate   対象提出日
+     * @param docTypeCodes 書類種別コード
      * @return スクレイピング処理詳細情報
      */
     @NewSpan("ViewService.edinetDetailView")
-    public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
+    public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
         final List<Company> allTargetCompanies = Target.allCompanies(
                 companyDao.selectAll(),
                 List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
-        return edinetDetailViewLogic.edinetDetailView(submitDate, targetTypes, allTargetCompanies);
+        return edinetDetailViewLogic.edinetDetailView(submitDate, docTypeCodes, allTargetCompanies);
+    }
+
+    // ----------
+
+    private List<EdinetListViewBean> groupBySubmitDate(final List<Document> documentList) {
+        final List<Company> allTargetCompanies = Target.allCompanies(
+                companyDao.selectAll(),
+                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
+
+        return documentList.stream()
+                // 提出日ごとに件数をカウントする
+                .collect(Collectors.groupingBy(Document::getSubmitDate, Collectors.counting()))
+                // map -> stream
+                .entrySet()
+                .stream().map(submitDateCountAllEntry -> edinetListViewLogic.counter(
+                        submitDateCountAllEntry.getKey(),
+                        submitDateCountAllEntry.getValue(),
+                        documentList,
+                        allTargetCompanies
+                )).collect(Collectors.toList());
     }
 }

@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
@@ -244,7 +244,7 @@ class TargetTest {
                     null,
                     LocalDate.of(2020, 1, 1),
                     BigDecimal.valueOf(2020),
-                    DocumentTypeCode.DTC_120.toValue(),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
                     LocalDate.of(2020, 2, 1),
                     null,
                     null
@@ -254,7 +254,7 @@ class TargetTest {
                     null,
                     LocalDate.of(2021, 1, 1),
                     BigDecimal.valueOf(2021),
-                    DocumentTypeCode.DTC_120.toValue(),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
                     LocalDate.of(2021, 2, 1),
                     null,
                     null
@@ -277,7 +277,7 @@ class TargetTest {
                     null,
                     LocalDate.of(2021, 1, 1),
                     BigDecimal.valueOf(201),
-                    DocumentTypeCode.DTC_120.toValue(),
+                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
                     LocalDate.of(2021, 2, 1),
                     null,
                     null
@@ -287,7 +287,7 @@ class TargetTest {
                     null,
                     LocalDate.of(2021, 1, 1),
                     BigDecimal.valueOf(301),
-                    DocumentTypeCode.DTC_130.toValue(),
+                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
                     LocalDate.of(2021, 3, 1),
                     null,
                     null
@@ -297,7 +297,7 @@ class TargetTest {
                     null,
                     LocalDate.of(2021, 1, 1),
                     BigDecimal.valueOf(401),
-                    DocumentTypeCode.DTC_130.toValue(),
+                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
                     LocalDate.of(2021, 4, 1),
                     null,
                     null

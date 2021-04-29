@@ -24,9 +24,6 @@ public interface DocumentDao {
     Document selectDocumentBy(String edinetCode, String documentTypeCode, LocalDate submitDate, String yearOfPeriod);
 
     @Select
-    List<Document> selectBySubmitDate(LocalDate submitDate);
-
-    @Select
     List<Document> selectByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select

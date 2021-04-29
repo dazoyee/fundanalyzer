@@ -3,8 +3,8 @@ package github.com.ioridazo.fundanalyzer.domain.logic.view;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -12,7 +12,7 @@ import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
@@ -45,16 +45,16 @@ public class EdinetDetailViewLogic {
      * 対象提出日の未処理書類リストを取得する
      *
      * @param submitDate         対象提出日
-     * @param targetTypes        書類種別コード
+     * @param docTypeCodes       書類種別コード
      * @param allTargetCompanies 処理対象となるすべての会社
      * @return 象提出日の未処理書類情報
      */
     @NewSpan("EdinetDetailViewLogic.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(
             final LocalDate submitDate,
-            final List<DocumentTypeCode> targetTypes,
+            final List<DocTypeCode> docTypeCodes,
             final List<Company> allTargetCompanies) {
-        final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
+        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
         final var cantScrapedList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
                 // filter companyCode is present
                 .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
@@ -76,7 +76,7 @@ public class EdinetDetailViewLogic {
 
         return new EdinetDetailViewBean(
                 // 対象提出日の処理状況
-                edinetListViewDao.selectBySubmitDate(submitDate).orElseThrow(),
+                edinetListViewDao.selectBySubmitDate(submitDate),
                 // 提出日に関連する未処理ドキュメントのリスト
                 cantScrapedList.stream()
                         .map(document -> new EdinetDetailViewBean.DocumentDetail(
@@ -116,12 +116,12 @@ public class EdinetDetailViewLogic {
                     t,
                     AnalysisLogic.FsValueParameter.of(
                             company,
-                            document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                            DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
+                            document.getDocumentPeriod(),
+                            DocTypeCode.fromValue(document.getDocumentTypeCode()),
                             document.getSubmitDate()
                     )
             );
-        } catch (FundanalyzerNotExistException e) {
+        } catch (FundanalyzerCalculateException e) {
             return null;
         }
     }
@@ -134,12 +134,12 @@ public class EdinetDetailViewLogic {
             return toLongFunction.applyAsLong(
                     AnalysisLogic.FsValueParameter.of(
                             company,
-                            document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                            DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
+                            document.getDocumentPeriod(),
+                            DocTypeCode.fromValue(document.getDocumentTypeCode()),
                             document.getSubmitDate()
                     )
             );
-        } catch (FundanalyzerNotExistException e) {
+        } catch (FundanalyzerCalculateException e) {
             return null;
         }
     }

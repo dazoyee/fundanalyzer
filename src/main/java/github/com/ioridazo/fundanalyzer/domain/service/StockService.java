@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
@@ -64,14 +64,14 @@ public class StockService {
     /**
      * 指定日付に提出された企業の株価を取得する
      *
-     * @param submitDate  提出日
-     * @param targetTypes 書類種別コード
+     * @param submitDate   提出日
+     * @param docTypeCodes 書類種別コード
      * @return null
      */
     @NewSpan("StockService.importStockPrice.submitDate")
-    public CompletableFuture<Void> importStockPrice(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
+    public CompletableFuture<Void> importStockPrice(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
         try {
-            final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
+            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
             // 対象となる会社コード一覧を取得する
             final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
                     .map(Document::getEdinetCode)

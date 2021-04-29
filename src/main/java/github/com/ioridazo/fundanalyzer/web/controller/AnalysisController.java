@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -68,23 +67,23 @@ public class AnalysisController {
     public String documentAnalysis(final String fromDate, final String toDate) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
 
-        final List<DocumentTypeCode> targetTypes = Target.annualSecuritiesReport();
+        final List<DocTypeCode> docTypeCodes = Target.annualSecuritiesReport();
 
         LocalDate.parse(fromDate)
                 .datesUntil(LocalDate.parse(toDate).plusDays(1))
                 .forEach(date -> {
                     // execute実行
-                    documentService.execute(date.toString(), targetTypes)
+                    documentService.execute(date.toString(), docTypeCodes)
                             // execute完了後、analyze実行
-                            .thenAcceptAsync(unused -> analysisService.analyze(date, targetTypes))
+                            .thenAcceptAsync(unused -> analysisService.analyze(date, docTypeCodes))
                             // analyze完了後、importStockPrice実行
-                            .thenAcceptAsync(unused -> stockService.importStockPrice(date, targetTypes))
+                            .thenAcceptAsync(unused -> stockService.importStockPrice(date, docTypeCodes))
                             // importStockPrice完了後、updateCorporateView実行
-                            .thenAcceptAsync(unused -> viewService.updateCorporateView(date, targetTypes))
+                            .thenAcceptAsync(unused -> viewService.updateCorporateView(date, docTypeCodes))
                             // updateCorporateView完了後、updateEdinetListView実行
-                            .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, targetTypes))
+                            .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, docTypeCodes))
                             // updateEdinetListView完了後、notice実行
-                            .thenAcceptAsync(unused -> viewService.notice(date, targetTypes));
+                            .thenAcceptAsync(unused -> viewService.notice(date, docTypeCodes));
                 });
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
@@ -122,18 +121,14 @@ public class AnalysisController {
     /**
      * 指定書類IDを分析する
      *
-     * @param documentId 書類ID（CSVで複数可能）
+     * @param documentId 書類ID
      * @return Index
      */
     @PostMapping("fundanalyzer/v1/scrape/id")
     public String scrapeById(final String documentId) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
-        Arrays.stream(documentId.split(","))
-                .filter(dId -> dId.length() == 8)
-                .forEach(dId -> {
-                    documentService.scrape(dId);
-                    analysisService.analyze(dId);
-                });
+        documentService.scrape(documentId);
+        analysisService.analyze(documentId);
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }

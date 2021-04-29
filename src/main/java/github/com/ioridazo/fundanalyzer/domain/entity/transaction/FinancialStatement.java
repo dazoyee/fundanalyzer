@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -54,7 +54,7 @@ public class FinancialStatement {
             final LocalDate periodStart,
             final LocalDate periodEnd,
             final Long value,
-            final DocumentTypeCode documentTypeCode,
+            final DocTypeCode docTypeCode,
             final LocalDate submitDate,
             final String documentId,
             final LocalDateTime createdAt) {
@@ -67,7 +67,7 @@ public class FinancialStatement {
                 periodStart,
                 periodEnd,
                 value,
-                documentTypeCode.toValue(),
+                docTypeCode.toValue(),
                 submitDate,
                 documentId,
                 createdAt

@@ -7,8 +7,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
@@ -204,7 +204,7 @@ public class ScrapingLogic {
                     null,
                     nowLocalDateTime()
             ));
-            log.warn("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+            log.error("スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
                             "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
                     company.getCode().orElseThrow(),
                     company.getEdinetCode(),
@@ -283,8 +283,7 @@ public class ScrapingLogic {
                         detail.getId(),
                         edinetDocument,
                         parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
-                ))
-        );
+                )));
     }
 
     /**
@@ -312,7 +311,7 @@ public class ScrapingLogic {
                     period.getPeriodStart(),
                     period.getPeriodEnd(),
                     value,
-                    DocumentTypeCode.fromValue(edinetDocument.getDocTypeCode()),
+                    DocTypeCode.fromValue(edinetDocument.getDocTypeCode()),
                     LocalDateTime.parse(edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
                     edinetDocument.getDocId(),
                     nowLocalDateTime()
@@ -324,7 +323,7 @@ public class ScrapingLogic {
                         company.getCode().orElse(null),
                         fs.getName(),
                         dId,
-                        edinetDocument.getPeriodEnd().map(pe -> pe.substring(0, 4)).orElse("null")
+                        edinetDocument.getPeriodEnd().orElseThrow().substring(0, 4)
                 );
             } else {
                 throw e;
@@ -340,7 +339,7 @@ public class ScrapingLogic {
      * @param edinetDocument EDINETドキュメント
      */
     void checkBs(final Company company, final EdinetDocument edinetDocument) {
-        final DocumentTypeCode documentTypeCode = DocumentTypeCode.fromValue(edinetDocument.getDocTypeCode());
+        final DocTypeCode docTypeCode = DocTypeCode.fromValue(edinetDocument.getDocTypeCode());
         final LocalDate submitDate = LocalDateTime.parse(
                 edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
 
@@ -351,7 +350,7 @@ public class ScrapingLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                        documentTypeCode.toValue(),
+                        docTypeCode.toValue(),
                         submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )
@@ -366,7 +365,7 @@ public class ScrapingLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
-                        documentTypeCode.toValue(),
+                        docTypeCode.toValue(),
                         submitDate
                         ).flatMap(FinancialStatement::getValue)
                 )

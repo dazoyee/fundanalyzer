@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
@@ -82,7 +82,7 @@ public final class Target {
      *
      * @return 書類種別コード
      */
-    public static List<DocumentTypeCode> annualSecuritiesReport() {
-        return List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
+    public static List<DocTypeCode> annualSecuritiesReport() {
+        return List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
     }
 }

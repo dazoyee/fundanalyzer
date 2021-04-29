@@ -7,8 +7,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
@@ -21,7 +21,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCalculateException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import lombok.Value;
 import lombok.extern.log4j.Log4j2;
@@ -86,16 +86,16 @@ public class AnalysisLogic {
         try {
             analysisResultDao.insert(AnalysisResult.of(
                     companyCode,
-                    document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
+                    document.getDocumentPeriod(),
                     calculate(companyCode, document),
-                    DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
+                    DocTypeCode.fromValue(document.getDocumentTypeCode()),
                     document.getSubmitDate(),
                     documentId,
                     nowLocalDateTime()
             ));
-        } catch (FundanalyzerNotExistException ignored) {
+        } catch (FundanalyzerCalculateException ignored) {
             FundanalyzerLogClient.logLogic(
-                    MessageFormat.format("エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}", companyCode, documentId),
+                    MessageFormat.format("エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}", companyCode),
                     Category.DOCUMENT,
                     Process.ANALYSIS
             );
@@ -122,12 +122,7 @@ public class AnalysisLogic {
     BigDecimal calculate(final String companyCode, final Document document) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
         final FsValueParameter parameter = FsValueParameter.of(
-                company,
-                document.getDocumentPeriod()
-                        .orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
-                document.getSubmitDate()
-        );
+                company, document.getDocumentPeriod(), DocTypeCode.fromValue(document.getDocumentTypeCode()), document.getSubmitDate());
 
         // 流動資産合計
         final long totalCurrentAssets = bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter);
@@ -168,7 +163,7 @@ public class AnalysisLogic {
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
-                        parameter.getDocumentTypeCode().toValue(),
+                        parameter.getDocTypeCode().toValue(),
                         parameter.getSubmitDate()
                         ).flatMap(FinancialStatement::getValue)
                 )
@@ -202,7 +197,7 @@ public class AnalysisLogic {
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         plSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
-                        parameter.getDocumentTypeCode().toValue(),
+                        parameter.getDocTypeCode().toValue(),
                         parameter.getSubmitDate()
                         ).flatMap(FinancialStatement::getValue)
                 )
@@ -233,7 +228,7 @@ public class AnalysisLogic {
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
                 String.valueOf(parameter.getPeriod().getYear()),
-                parameter.getDocumentTypeCode().toValue(),
+                parameter.getDocTypeCode().toValue(),
                 parameter.getSubmitDate()
         )
                 .flatMap(FinancialStatement::getValue)
@@ -255,9 +250,9 @@ public class AnalysisLogic {
      * @param parameter      FsValueParameter.class
      * @param subjectName    財務諸表の科目名
      * @param updateDocument ドキュメントステータス更新処理
-     * @return FundanalyzerNotExistException
+     * @return FundanalyzerCalculateException
      */
-    private FundanalyzerNotExistException fsValueThrow(
+    private FundanalyzerCalculateException fsValueThrow(
             final String fsName,
             final FsValueParameter parameter,
             final String subjectName,
@@ -265,7 +260,7 @@ public class AnalysisLogic {
         try {
             final Document document = documentDao.selectDocumentBy(
                     Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
-                    parameter.getDocumentTypeCode().toValue(),
+                    parameter.getDocTypeCode().toValue(),
                     parameter.getSubmitDate(),
                     String.valueOf(parameter.getPeriod().getYear())
             );
@@ -298,7 +293,7 @@ public class AnalysisLogic {
                         "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
                                 "\t会社コード:{}\t書類種別コード:{}\t提出日:{}\t対象年:{}",
                         parameter.getCompany().getCode().orElseThrow(),
-                        parameter.getDocumentTypeCode().toValue(),
+                        parameter.getDocTypeCode().toValue(),
                         parameter.getSubmitDate(),
                         String.valueOf(parameter.getPeriod().getYear())
 
@@ -308,7 +303,7 @@ public class AnalysisLogic {
             }
         }
 
-        throw new FundanalyzerNotExistException(fsName, subjectName);
+        throw new FundanalyzerCalculateException("財務諸表の値を取得することができませんでした。");
     }
 
     @SuppressWarnings("RedundantModifiersValueLombok")
@@ -316,7 +311,7 @@ public class AnalysisLogic {
     public static class FsValueParameter {
         private final Company company;
         private final LocalDate period;
-        private final DocumentTypeCode documentTypeCode;
+        private final DocTypeCode docTypeCode;
         private final LocalDate submitDate;
     }
 }

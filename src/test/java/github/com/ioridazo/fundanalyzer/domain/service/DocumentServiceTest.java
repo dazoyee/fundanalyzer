@@ -5,8 +5,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -105,7 +105,7 @@ class DocumentServiceTest {
         @Test
         void execute_ok() {
             var date = "2020-09-19";
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
@@ -251,7 +251,7 @@ class DocumentServiceTest {
                             .build()
             );
 
-            assertDoesNotThrow(() -> service.execute(date, targetTypes));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(1)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(1))
@@ -266,7 +266,7 @@ class DocumentServiceTest {
         @Test
         void execute_isEmpty() {
             var date = "2020-09-19";
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
@@ -297,7 +297,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.execute(date, targetTypes));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(0)).store(any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
@@ -309,7 +309,7 @@ class DocumentServiceTest {
         @Test
         void execute_decode_error() {
             var date = "2020-09-19";
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
@@ -356,7 +356,7 @@ class DocumentServiceTest {
                             .build()
             );
 
-            assertDoesNotThrow(() -> service.execute(date, targetTypes));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(1)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(0))
@@ -371,7 +371,7 @@ class DocumentServiceTest {
         @Test
         void execute_status_done() {
             var date = "2020-09-19";
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
@@ -402,7 +402,7 @@ class DocumentServiceTest {
                     null
             )));
 
-            assertDoesNotThrow(() -> service.execute(date, targetTypes));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(service, times(0)).store("documentId1", LocalDate.parse(date));
             verify(scrapingLogic, times(0))
@@ -417,7 +417,7 @@ class DocumentServiceTest {
         @Test
         void execute_status_error() {
             var date = "2020-09-19";
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var updatedAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
@@ -479,7 +479,7 @@ class DocumentServiceTest {
                             .build()
             );
 
-            assertDoesNotThrow(() -> service.execute(date, targetTypes));
+            assertDoesNotThrow(() -> service.execute(date, docTypeCodes));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId("documentId1")
@@ -511,7 +511,6 @@ class DocumentServiceTest {
             var date = LocalDate.parse("2020-09-19");
             var edinetDocument = new EdinetDocument();
             edinetDocument.setDocId("already");
-            var document = Document.builder().documentId("already").build();
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
             var metadata = new Metadata();
@@ -523,15 +522,12 @@ class DocumentServiceTest {
             resultsInserted.setPeriodEnd("2020-12-31");
             var resultsAlready = new Results();
             resultsAlready.setDocId("already");
-            resultsAlready.setDocTypeCode("120");
-            resultsAlready.setPeriodEnd("2020-12-31");
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
             edinetResponse.setResults(List.of(resultsInserted, resultsAlready));
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of(edinetDocument));
-            when(documentDao.selectBySubmitDate(date)).thenReturn(List.of(document));
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new Company(
@@ -557,15 +553,6 @@ class DocumentServiceTest {
                     .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
                     .documentPeriod(LocalDate.of(Integer.parseInt(resultsInserted.getPeriodEnd().substring(0, 4)), 1, 1))
-                    .submitDate(date)
-                    .createdAt(createdAt)
-                    .updatedAt(createdAt)
-                    .build());
-            verify(documentDao, times(0)).insert(Document.builder()
-                    .documentId(resultsAlready.getDocId())
-                    .documentTypeCode(resultsAlready.getDocTypeCode().orElseThrow())
-                    .edinetCode(resultsAlready.getEdinetCode().orElse(null))
-                    .documentPeriod(LocalDate.of(Integer.parseInt(resultsAlready.getPeriodEnd().substring(0, 4)), 1, 1))
                     .submitDate(date)
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
@@ -874,7 +861,7 @@ class DocumentServiceTest {
         @Test
         void scrape_submitDate_not_yet() {
             var submitDate = LocalDate.parse("2020-09-22");
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of(
@@ -934,7 +921,7 @@ class DocumentServiceTest {
                             .build()
             );
 
-            assertDoesNotThrow(() -> service.scrape(submitDate, targetTypes));
+            assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
             verify(scrapingLogic, times(1)).scrape(
                     eq(FinancialStatementEnum.BALANCE_SHEET),
@@ -957,7 +944,7 @@ class DocumentServiceTest {
         @Test
         void scrape_submitDate_done() {
             var submitDate = LocalDate.parse("2020-09-22");
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of(
@@ -999,7 +986,7 @@ class DocumentServiceTest {
                             .build()
             );
 
-            assertDoesNotThrow(() -> service.scrape(submitDate, targetTypes));
+            assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
             verify(scrapingLogic, times(0)).scrape(
                     eq(FinancialStatementEnum.BALANCE_SHEET),
@@ -1022,12 +1009,12 @@ class DocumentServiceTest {
         @Test
         void scrape_submitDate_nothing() {
             var submitDate = LocalDate.parse("2020-09-22");
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of());
 
-            assertDoesNotThrow(() -> service.scrape(submitDate, targetTypes));
+            assertDoesNotThrow(() -> service.scrape(submitDate, docTypeCodes));
 
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
             verify(scrapingLogic, times(0)).scrape(any(), any(), any(), any());
@@ -1120,7 +1107,7 @@ class DocumentServiceTest {
 
         @Test
         void resetForRetry_ok() {
-            var targetTypes = List.of(DocumentTypeCode.DTC_120);
+            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
             var updatedAt = LocalDateTime.of(2020, 9, 22, 13, 9);
 
             when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(Document.builder()
@@ -1132,7 +1119,7 @@ class DocumentServiceTest {
                     .build()));
             when(service.nowLocalDateTime()).thenReturn(updatedAt);
 
-            assertDoesNotThrow(() -> service.resetForRetry(targetTypes));
+            assertDoesNotThrow(() -> service.resetForRetry(docTypeCodes));
 
             verify(documentDao, times(1)).update(Document.builder()
                     .documentId("id")
