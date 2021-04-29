@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -59,13 +59,13 @@ public class CorporateViewLogic {
     /**
      * 企業価値等を画面表示するためのBean生成
      *
-     * @param company      会社
-     * @param docTypeCodes 書類種別コード
+     * @param company     会社
+     * @param targetTypes 書類種別コード
      * @return CorporateViewBean
      */
     @NewSpan("CorporateViewLogic.corporateViewOf")
-    public CorporateViewBean corporateViewOf(final Company company, final List<DocTypeCode> docTypeCodes) {
-        final var submitDate = latestSubmitDate(company, docTypeCodes);
+    public CorporateViewBean corporateViewOf(final Company company, final List<DocumentTypeCode> targetTypes) {
+        final var submitDate = latestSubmitDate(company, targetTypes);
         final var corporateValue = corporateValue(company);
         final var stockPrice = submitDate.map(sd -> stockPrice(company, sd)).orElse(StockPriceValue.of());
         final var discountValue = discountValue(
@@ -95,12 +95,12 @@ public class CorporateViewLogic {
     /**
      * 直近の財務諸表提出日を取得する
      *
-     * @param company      会社情報
-     * @param docTypeCodes 書類種別コード
+     * @param company     会社情報
+     * @param targetTypes 書類種別コード
      * @return 提出日
      */
-    Optional<LocalDate> latestSubmitDate(final Company company, final List<DocTypeCode> docTypeCodes) {
-        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+    Optional<LocalDate> latestSubmitDate(final Company company, final List<DocumentTypeCode> targetTypes) {
+        final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
         return documentDao.selectByDocumentTypeCode(docTypeCode).stream()
                 .filter(d -> company.getEdinetCode().equals(d.getEdinetCode()))
                 .max(Comparator.comparing(Document::getSubmitDate))

@@ -39,8 +39,8 @@
             <th>処理対象件数</th>
             <th>処理済件数</th>
             <th>分析済件数</th>
-            <th>未分析コード</th>
-            <th>処理確認コード</th>
+            <th>未分析ID</th>
+            <th>処理確認ID</th>
             <th>未処理件数</th>
             <th>対象外件数</th>
         </tr>
@@ -51,8 +51,8 @@
             <td th:text="${edinetDetail.edinetListView.countTarget}">処理対象件数</td>
             <td th:text="${edinetDetail.edinetListView.countScraped}">処理済件数</td>
             <td th:text="${edinetDetail.edinetListView.countAnalyzed}">分析済件数</td>
-            <td th:text="${edinetDetail.edinetListView.notAnalyzedCode}">未分析コード</td>
-            <td th:text="${edinetDetail.edinetListView.cantScrapedCode}">処理確認コード</td>
+            <td th:text="${edinetDetail.edinetListView.getNotAnalyzedId}">未分析ID</td>
+            <td th:text="${edinetDetail.edinetListView.getCantScrapedId}">処理確認ID</td>
             <td th:text="${edinetDetail.edinetListView.countNotScraped}">未処理件数</td>
             <td th:text="${edinetDetail.edinetListView.countNotTarget}">対象外件数</td>
         </tr>

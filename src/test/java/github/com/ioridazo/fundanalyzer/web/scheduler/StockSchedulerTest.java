@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -47,7 +47,7 @@ class StockSchedulerTest {
         @DisplayName("stockScheduler : 日が一致する提出日の会社の株価を更新する")
         @Test
         void stockScheduler_ok() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
 
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
             when(documentDao.selectByDayOfSubmitDate("6")).thenReturn(List.of(
@@ -64,8 +64,8 @@ class StockSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
 
-            verify(stockService, times(1)).importStockPrice(LocalDate.parse("2021-01-06"), docTypeCodes);
-            verify(stockService, times(1)).importStockPrice(LocalDate.parse("2021-02-06"), docTypeCodes);
+            verify(stockService, times(1)).importStockPrice(LocalDate.parse("2021-01-06"), targetTypes);
+            verify(stockService, times(1)).importStockPrice(LocalDate.parse("2021-02-06"), targetTypes);
             verify(slackProxy, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 2);
         }
 

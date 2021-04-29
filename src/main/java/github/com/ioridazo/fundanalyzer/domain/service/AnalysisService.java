@@ -4,8 +4,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -63,14 +63,14 @@ public class AnalysisService {
     /**
      * 対象書類の分析結果をデータベースに登録する
      *
-     * @param submitDate   提出日
-     * @param docTypeCodes 書類種別コード
+     * @param submitDate  提出日
+     * @param targetTypes 書類種別コード
      * @return Void
      */
     @NewSpan("AnalysisService.analyze.submitDate")
-    public CompletableFuture<Void> analyze(final LocalDate submitDate, final List<DocTypeCode> docTypeCodes) {
+    public CompletableFuture<Void> analyze(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
         try {
-            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+            final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
             final var companyAll = companyDao.selectAll();
             final var bank = industryDao.selectByName("銀行業");
             final var insurance = industryDao.selectByName("保険業");
@@ -97,10 +97,12 @@ public class AnalysisService {
                         .filter(document -> Target.containsEdinetCode(
                                 document.getEdinetCode(), companyAll, List.of(bank, insurance))
                         )
+                        // documentPeriod is present
+                        .filter(document -> document.getDocumentPeriod().isPresent())
                         // only not analyze
                         .filter(document -> analysisResultDao.selectByUniqueKey(
                                 Converter.toCompanyCode(document.getEdinetCode(), companyAll).orElseThrow(),
-                                document.getDocumentPeriod(),
+                                document.getDocumentPeriod().get(),
                                 document.getDocumentTypeCode(),
                                 submitDate
                                 ).isEmpty()
