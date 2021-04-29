@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
@@ -59,7 +59,7 @@ class AnalysisSchedulerTest {
         @DisplayName("analysisScheduler : データベースにある最新提出日から昨日までの財務分析を実施する")
         @Test
         void analysisScheduler_ok() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
 
             when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
                     Document.builder()
@@ -74,16 +74,16 @@ class AnalysisSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
 
-            verify(documentService, times(0)).execute("2021-02-05", docTypeCodes);
-            verify(documentService, times(1)).execute("2021-02-06", docTypeCodes);
-            verify(documentService, times(1)).execute("2021-02-07", docTypeCodes);
-            verify(documentService, times(0)).execute("2021-02-08", docTypeCodes);
+            verify(documentService, times(0)).execute("2021-02-05", targetTypes);
+            verify(documentService, times(1)).execute("2021-02-06", targetTypes);
+            verify(documentService, times(1)).execute("2021-02-07", targetTypes);
+            verify(documentService, times(0)).execute("2021-02-08", targetTypes);
         }
 
         @DisplayName("analysisScheduler : データベースにある最新提出日が昨日の場合はなにも実施しない")
         @Test
         void analysisScheduler_nothing() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
 
             when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
                     Document.builder()
@@ -95,8 +95,8 @@ class AnalysisSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
 
-            verify(documentService, times(0)).execute("2021-02-07", docTypeCodes);
-            verify(documentService, times(0)).execute("2021-02-08", docTypeCodes);
+            verify(documentService, times(0)).execute("2021-02-07", targetTypes);
+            verify(documentService, times(0)).execute("2021-02-08", targetTypes);
         }
 
         @DisplayName("analysisScheduler : 想定外のエラーが発生したときはSlack通知する")
@@ -123,17 +123,17 @@ class AnalysisSchedulerTest {
         @DisplayName("updateViewScheduler : 表示をアップデートする")
         @Test
         void updateViewScheduler_ok() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
-            when(viewService.updateCorporateView(docTypeCodes)).thenReturn(new CompletableFuture<>());
-            when(viewService.updateEdinetListView(docTypeCodes)).thenReturn(new CompletableFuture<>());
+            var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
+            when(viewService.updateCorporateView(targetTypes)).thenReturn(new CompletableFuture<>());
+            when(viewService.updateEdinetListView(targetTypes)).thenReturn(new CompletableFuture<>());
             assertDoesNotThrow(() -> scheduler.updateViewScheduler());
         }
 
         @DisplayName("updateViewScheduler : 想定外のエラーが発生したときはSlack通知する")
         @Test
         void updateViewScheduler_throwable() {
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT, DocTypeCode.AMENDED_SECURITIES_REPORT);
-            when(viewService.updateCorporateView(docTypeCodes)).thenThrow(FundanalyzerRuntimeException.class);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
+            when(viewService.updateCorporateView(targetTypes)).thenThrow(FundanalyzerRuntimeException.class);
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.updateViewScheduler());
             verify(slackProxy, times(1)).sendMessage(any(), any());
         }

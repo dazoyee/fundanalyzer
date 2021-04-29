@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
@@ -70,11 +70,11 @@ class CorporateViewLogicTest {
                 null,
                 null
         );
-        var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+        var targetTypes = List.of(DocumentTypeCode.DTC_120);
         var submitDate = LocalDate.parse("2019-10-11");
         var createdAt = LocalDateTime.of(2020, 11, 8, 18, 15);
 
-        doReturn(Optional.of(submitDate)).when(logic).latestSubmitDate(company, docTypeCodes);
+        doReturn(Optional.of(submitDate)).when(logic).latestSubmitDate(company, targetTypes);
         doReturn(CorporateViewLogic.CorporateValue.of(
                 BigDecimal.valueOf(2100), BigDecimal.valueOf(2000), BigDecimal.valueOf(10), BigDecimal.valueOf(0.1), BigDecimal.valueOf(3)
         )).when(logic).corporateValue(company);
@@ -86,7 +86,7 @@ class CorporateViewLogicTest {
         doReturn(Optional.of(BigDecimal.valueOf(2000))).when(logic).forecastStock(company);
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
-        var actual = logic.corporateViewOf(company, docTypeCodes);
+        var actual = logic.corporateViewOf(company, targetTypes);
 
         assertAll("CorporateViewBean",
                 () -> assertEquals("code", actual.getCode()),
@@ -125,7 +125,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var document = Document.builder()
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2020-10-11"))
@@ -133,7 +133,7 @@ class CorporateViewLogicTest {
 
             when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(document));
 
-            assertEquals(LocalDate.parse("2020-10-11"), logic.latestSubmitDate(company, docTypeCodes).orElseThrow());
+            assertEquals(LocalDate.parse("2020-10-11"), logic.latestSubmitDate(company, targetTypes).orElseThrow());
         }
 
         @DisplayName("latestSubmitDate : 対象の書類が存在しないときの処理を確認する")
@@ -151,7 +151,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var docTypeCodes = List.of(DocTypeCode.ANNUAL_SECURITIES_REPORT);
+            var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var document = Document.builder()
                     .edinetCode("edinetCode2")
                     .submitDate(LocalDate.parse("2020-10-11"))
@@ -159,7 +159,7 @@ class CorporateViewLogicTest {
 
             when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(document));
 
-            assertNull(logic.latestSubmitDate(company, docTypeCodes).orElse(null));
+            assertNull(logic.latestSubmitDate(company, targetTypes).orElse(null));
         }
     }
 
@@ -245,7 +245,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
-                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_120.toValue(),
                     LocalDate.parse("2020-09-30"),
                     null,
                     null
@@ -315,7 +315,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2021-03-31"),
                     BigDecimal.valueOf(1100),
-                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_120.toValue(),
                     LocalDate.parse("2021-05-01"),
                     null,
                     null
@@ -325,7 +325,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2021-03-31"),
                     BigDecimal.valueOf(900),
-                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_130.toValue(),
                     LocalDate.parse("2021-06-01"),
                     null,
                     null
@@ -358,7 +358,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(1000),
-                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_120.toValue(),
                     LocalDate.parse("2020-09-30"),
                     null,
                     null
@@ -368,7 +368,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(1100),
-                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_130.toValue(),
                     LocalDate.parse("2020-11-30"),
                     null,
                     null
@@ -378,7 +378,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2019-06-30"),
                     BigDecimal.valueOf(900),
-                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_120.toValue(),
                     LocalDate.parse("2019-09-30"),
                     null,
                     null
@@ -417,7 +417,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(1500.250515),
-                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_120.toValue(),
                     LocalDate.parse("2020-09-30"),
                     null,
                     null
@@ -427,7 +427,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
-                    DocTypeCode.AMENDED_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_130.toValue(),
                     LocalDate.parse("2020-11-30"),
                     null,
                     null
@@ -437,7 +437,7 @@ class CorporateViewLogicTest {
                     "code",
                     LocalDate.parse("2019-06-30"),
                     BigDecimal.valueOf(418.02101),
-                    DocTypeCode.ANNUAL_SECURITIES_REPORT.toValue(),
+                    DocumentTypeCode.DTC_120.toValue(),
                     LocalDate.parse("2019-09-30"),
                     null,
                     null
