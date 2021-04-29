@@ -296,7 +296,7 @@ class ViewServiceTest {
             when(companyDao.selectAll()).thenReturn(List.of(company));
             when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
             when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
-            when(edinetListViewLogic.counter(LocalDate.parse("2020-11-01"), 1L, documentList, List.of(company)))
+            when(edinetListViewLogic.counter(LocalDate.parse("2020-11-01"), targetTypes))
                     .thenReturn(new EdinetListViewBean(
                             LocalDate.parse("2020-11-01"),
                             null,
@@ -321,14 +321,14 @@ class ViewServiceTest {
     @Nested
     class edinetListView {
 
-        @DisplayName("updateEdinetList : 処理状況をアップデートする")
+        @DisplayName("updateEdinetListView : 非同期で表示する処理状況リストをアップデートする")
         @Test
-        void updateEdinetList_ok() {
+        void updateEdinetListView_all_ok() {
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var documentList = List.of(Document.builder()
                             .edinetCode("edinetCode")
                             .documentTypeCode("120")
-                            .submitDate(LocalDate.parse("2020-10-10"))
+                            .submitDate(LocalDate.parse("2019-10-10"))
                             .scrapedNumberOfShares("0")
                             .scrapedBs("0")
                             .scrapedPl("0")
@@ -344,128 +344,26 @@ class ViewServiceTest {
                             .removed("0")
                             .build()
             );
-            var company = new Company(
-                    "code",
-                    "会社名",
-                    1,
-                    "edinetCode",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
+            service.edinetListSize = 400;
             when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(documentList);
-            when(companyDao.selectAll()).thenReturn(List.of(company));
-            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
-            when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
-            when(edinetListViewLogic.counter(
-                    LocalDate.parse("2020-10-10"),
-                    1L,
-                    documentList,
-                    List.of(company))).thenReturn(new EdinetListViewBean(
-                    LocalDate.parse("2020-10-10"),
-                    1L,
-                    1L,
-                    0L,
-                    0L,
-                    "",
-                    "",
-                    1L,
-                    0L,
-                    createdAt,
-                    createdAt
-            ));
-            when(edinetListViewLogic.counter(
-                    LocalDate.parse("2020-10-11"),
-                    1L,
-                    documentList,
-                    List.of(company))).thenReturn(new EdinetListViewBean(
-                    LocalDate.parse("2020-10-11"),
-                    1L,
-                    0L,
-                    0L,
-                    0L,
-                    "",
-                    "",
-                    0L,
-                    1L,
-                    createdAt,
-                    createdAt
-            ));
+            when(service.nowLocalDate()).thenReturn(LocalDate.parse("2021-04-29"));
 
             assertDoesNotThrow(() -> service.updateEdinetListView(targetTypes));
 
-            verify(edinetListViewDao, times(1)).insert(new EdinetListViewBean(
-                    LocalDate.parse("2020-10-11"),
-                    1L,
-                    0L,
-                    0L,
-                    0L,
-                    "",
-                    "",
-                    0L,
-                    1L,
-                    createdAt,
-                    createdAt
-            ));
-            verify(edinetListViewDao, times(1)).insert(new EdinetListViewBean(
-                    LocalDate.parse("2020-10-10"),
-                    1L,
-                    1L,
-                    0L,
-                    0L,
-                    "",
-                    "",
-                    1L,
-                    0L,
-                    createdAt,
-                    createdAt
-            ));
+            verify(service, times(1)).updateEdinetListView(LocalDate.parse("2020-10-11"), targetTypes);
+            verify(service, times(0)).updateEdinetListView(LocalDate.parse("2019-10-10"), targetTypes);
+            verify(slackProxy, times(1)).sendMessage(any());
         }
 
-        @DisplayName("updateEdinetList : 対象提出日の処理状況をアップデートする")
+        @DisplayName("updateEdinetListView : 対象提出日の処理状況をアップデートする")
         @Test
-        void updateEdinetListView_ok() {
+        void updateEdinetListView_submitDate_ok() {
             var submitDate = LocalDate.parse("2020-12-14");
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
-            var documentList = List.of(Document.builder()
-                    .edinetCode("edinetCode")
-                    .documentTypeCode("120")
-                    .submitDate(LocalDate.parse("2020-12-14"))
-                    .scrapedNumberOfShares("0")
-                    .scrapedBs("0")
-                    .scrapedPl("0")
-                    .removed("0")
-                    .build()
-            );
-            var company = new Company(
-                    "code",
-                    "会社名",
-                    1,
-                    "edinetCode",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-
             var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
-            when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
-            when(companyDao.selectAll()).thenReturn(List.of(company));
-            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
-            when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
-            when(edinetListViewLogic.counter(
-                    LocalDate.parse("2020-12-14"),
-                    1L,
-                    documentList,
-                    List.of(company))).thenReturn(new EdinetListViewBean(
+            when(edinetListViewLogic.counter(LocalDate.parse("2020-12-14"), targetTypes)).thenReturn(new EdinetListViewBean(
                     LocalDate.parse("2020-12-14"),
                     1L,
                     0L,
@@ -478,6 +376,8 @@ class ViewServiceTest {
                     createdAt,
                     createdAt
             ));
+            when(edinetListViewDao.selectBySubmitDate(submitDate))
+                    .thenReturn(Optional.of(new EdinetListViewBean(null, null, null, null, null, null, null, null, null, null, null)));
 
             assertDoesNotThrow(() -> service.updateEdinetListView(submitDate, targetTypes));
 

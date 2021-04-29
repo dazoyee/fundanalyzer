@@ -76,7 +76,7 @@ public class EdinetDetailViewLogic {
 
         return new EdinetDetailViewBean(
                 // 対象提出日の処理状況
-                edinetListViewDao.selectBySubmitDate(submitDate),
+                edinetListViewDao.selectBySubmitDate(submitDate).orElseThrow(),
                 // 提出日に関連する未処理ドキュメントのリスト
                 cantScrapedList.stream()
                         .map(document -> new EdinetDetailViewBean.DocumentDetail(

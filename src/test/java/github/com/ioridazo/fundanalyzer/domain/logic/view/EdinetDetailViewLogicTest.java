@@ -97,7 +97,7 @@ class EdinetDetailViewLogicTest {
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, DocumentTypeCode.DTC_120, submitDate);
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
-            when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
+            when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(Optional.of(edinetListViewBean));
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter)).thenReturn(1000L);
             when(analysisLogic.bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter)).thenReturn(2000L);
@@ -170,7 +170,7 @@ class EdinetDetailViewLogicTest {
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, DocumentTypeCode.DTC_120, submitDate);
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
-            when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(edinetListViewBean);
+            when(edinetListViewDao.selectBySubmitDate(submitDate)).thenReturn(Optional.of(edinetListViewBean));
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             when(analysisLogic.bsValue(BsEnum.TOTAL_CURRENT_ASSETS, parameter)).thenReturn(1000L);
             when(analysisLogic.bsValue(BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS, parameter)).thenReturn(2000L);
