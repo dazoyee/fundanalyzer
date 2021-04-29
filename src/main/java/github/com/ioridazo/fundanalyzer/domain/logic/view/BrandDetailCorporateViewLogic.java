@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailCorporateViewBean;
@@ -70,7 +70,7 @@ public class BrandDetailCorporateViewLogic {
     public List<BrandDetailViewBean.BrandDetailFinancialStatement> brandDetailFinancialStatement(final String code) {
         final var financialStatementList = financialStatementDao.selectByCode(code);
         return financialStatementList.stream()
-                .map(fs -> FsEntry.of(fs.getPeriodStart(), DocTypeCode.fromValue(fs.getDocumentTypeCode()), fs.getSubmitDate()))
+                .map(fs -> FsEntry.of(fs.getPeriodStart(), DocumentTypeCode.fromValue(fs.getDocumentTypeCode()), fs.getSubmitDate()))
                 .distinct()
                 .map(fsEntry -> {
                     final var targetList = financialStatementList.stream()
@@ -86,7 +86,7 @@ public class BrandDetailCorporateViewLogic {
                                     .findAny()
                                     .orElseThrow(),
                             // documentTypeName
-                            fsEntry.getDocTypeCode().getName(),
+                            fsEntry.getDocumentTypeCode().getName(),
                             // bs(List)
                             targetList.stream()
                                     .filter(fs -> FinancialStatementEnum.BALANCE_SHEET.toValue().equals(fs.getFinancialStatementId()))
@@ -120,7 +120,7 @@ public class BrandDetailCorporateViewLogic {
     @Value(staticConstructor = "of")
     static class FsEntry {
         private final LocalDate periodStart;
-        private final DocTypeCode docTypeCode;
+        private final DocumentTypeCode documentTypeCode;
         private final LocalDate submitDate;
     }
 }

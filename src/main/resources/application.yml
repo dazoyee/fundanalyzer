@@ -64,6 +64,7 @@ app:
       discount-rate: 120  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.6  # 以下を表示
+      edinet-list.size: 400  # 日間を表示
 
   settings:
     file:

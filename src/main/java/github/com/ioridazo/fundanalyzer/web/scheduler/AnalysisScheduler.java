@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -59,10 +59,10 @@ public class AnalysisScheduler {
     public void analysisScheduler() {
         FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.ANALYSIS);
 
-        final List<DocTypeCode> docTypeCodes = Target.annualSecuritiesReport();
+        final List<DocumentTypeCode> targetTypes = Target.annualSecuritiesReport();
 
         try {
-            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+            final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
             final List<LocalDate> submitDateList = documentDao.selectByDocumentTypeCode(docTypeCode).stream()
                     .map(Document::getSubmitDate)
                     // データベースの最新提出日を取得
@@ -76,17 +76,17 @@ public class AnalysisScheduler {
 
             submitDateList.forEach(date -> {
                 // execute実行
-                documentService.execute(date.toString(), docTypeCodes)
+                documentService.execute(date.toString(), targetTypes)
                         // execute完了後、analyze実行
-                        .thenAcceptAsync(unused -> analysisService.analyze(date, docTypeCodes))
+                        .thenAcceptAsync(unused -> analysisService.analyze(date, targetTypes))
                         // analyze完了後、importStockPrice実行
-                        .thenAcceptAsync(unused -> stockService.importStockPrice(date, docTypeCodes))
+                        .thenAcceptAsync(unused -> stockService.importStockPrice(date, targetTypes))
                         // importStockPrice完了後、updateCorporateView実行
-                        .thenAcceptAsync(unused -> viewService.updateCorporateView(date, docTypeCodes))
+                        .thenAcceptAsync(unused -> viewService.updateCorporateView(date, targetTypes))
                         // updateCorporateView完了後、updateEdinetListView実行
-                        .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, docTypeCodes))
+                        .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, targetTypes))
                         // updateEdinetListView完了後、notice実行
-                        .thenAcceptAsync(unused -> viewService.notice(date, docTypeCodes));
+                        .thenAcceptAsync(unused -> viewService.notice(date, targetTypes));
             });
 
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.ANALYSIS);

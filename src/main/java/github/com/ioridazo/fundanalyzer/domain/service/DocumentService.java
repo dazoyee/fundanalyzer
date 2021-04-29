@@ -5,8 +5,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
@@ -148,21 +148,21 @@ public class DocumentService {
      * ↓
      * scrape（スクレイピング）
      *
-     * @param date         書類取得対象日（提出日）
-     * @param docTypeCodes 書類種別コード
+     * @param date        書類取得対象日（提出日）
+     * @param targetTypes 書類種別コード
      * @return Void
      */
     @NewSpan("DocumentService.execute")
     @Async
-    public CompletableFuture<Void> execute(final String date, final List<DocTypeCode> docTypeCodes) {
+    public CompletableFuture<Void> execute(final String date, final List<DocumentTypeCode> targetTypes) {
         try {
-            final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
+            final List<String> targetTypeCodes = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
 
             // 書類リストをデータベースに登録する
             edinetList(LocalDate.parse(date));
 
             // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-            final var documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, LocalDate.parse(date))
+            final var documentList = documentDao.selectByTypeAndSubmitDate(targetTypeCodes, LocalDate.parse(date))
                     .stream()
                     .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
                     .filter(Document::getNotRemoved)
@@ -170,7 +170,7 @@ public class DocumentService {
 
             if (documentList.isEmpty()) {
                 FundanalyzerLogClient.logService(
-                        MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, docTypeCode),
+                        MessageFormat.format("{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}", date, targetTypeCodes),
                         Category.DOCUMENT,
                         Process.EDINET
                 );
@@ -226,7 +226,7 @@ public class DocumentService {
                         MessageFormat.format(
                                 "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
                                 date,
-                                String.join(",", docTypeCode)
+                                String.join(",", targetTypeCodes)
                         ),
                         Category.DOCUMENT,
                         Process.EDINET
@@ -262,10 +262,6 @@ public class DocumentService {
      */
     @NewSpan("DocumentService.edinetList.date")
     public void edinetList(final LocalDate date) {
-        final var docIdList = edinetDocumentDao.selectAll().stream()
-                .map(EdinetDocument::getDocId)
-                .collect(Collectors.toList());
-
         final boolean isPresent = Stream.of(date.toString())
                 // EDINETに提出書類の問い合わせ
                 .map(d -> edinetProxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
@@ -275,19 +271,38 @@ public class DocumentService {
         // 書類が0件ではないときは書類リストを取得してデータベースに登録する
         if (isPresent) {
             final EdinetResponse edinetResponse = edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST));
+
+            // edinet_document
+            final List<String> docIdList = edinetDocumentDao.selectAll().stream()
+                    .map(EdinetDocument::getDocId)
+                    .collect(Collectors.toList());
             edinetResponse.getResults().forEach(results -> Stream.of(results)
                     .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
-                    .forEach(r -> insertDocument(date, r)));
-        }
+                    .forEach(this::insertEdinetDocument));
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}", date),
-                Category.DOCUMENT,
-                Process.EDINET
-        );
+            // document
+            final List<String> documentIdList = documentDao.selectBySubmitDate(date).stream()
+                    .map(Document::getDocumentId)
+                    .collect(Collectors.toList());
+            edinetResponse.getResults().forEach(results -> Stream.of(results)
+                    .filter(r -> documentIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
+                    .forEach(r -> insertDocument(date, r)));
+
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}", date),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+        } else {
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format("データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}", date),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+        }
     }
 
-    private void insertDocument(final LocalDate date, final Results results) {
+    private void insertEdinetDocument(final Results results) {
         try {
             edinetDocumentDao.insert(EdinetDocument.of(results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
@@ -304,7 +319,9 @@ public class DocumentService {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }
         }
+    }
 
+    private void insertDocument(final LocalDate date, final Results results) {
         try {
             // 万が一Companyが登録されていない場合には登録する
             results.getEdinetCode().ifPresent(ed -> {
@@ -370,13 +387,13 @@ public class DocumentService {
      * 書類取得対象日（提出日）に紐づくドキュメントのステータスを確認して、<br/>
      * 財務諸表のスクレイピング処理を行う
      *
-     * @param targetDate   書類取得対象日（提出日）
-     * @param docTypeCodes 書類種別コード
+     * @param targetDate  書類取得対象日（提出日）
+     * @param targetTypes 書類種別コード
      */
     @NewSpan("DocumentService.scrape.targetDate")
-    public void scrape(final LocalDate targetDate, final List<DocTypeCode> docTypeCodes) {
-        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, targetDate);
+    public void scrape(final LocalDate targetDate, final List<DocumentTypeCode> targetTypes) {
+        final List<String> targetTypeCodes = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(targetTypeCodes, targetDate);
         if (documentList.isEmpty()) {
             FundanalyzerLogClient.logService(
                     MessageFormat.format("次のドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}", targetDate),
@@ -451,11 +468,11 @@ public class DocumentService {
      * 貸借対照表と損益計算書の処理ステータスが処理中（5）またはエラー（9）の
      * ドキュメントをステータス初期化する
      *
-     * @param docTypeCodes 書類種別コード
+     * @param targetTypes 書類種別コード
      */
-    public void resetForRetry(final List<DocTypeCode> docTypeCodes) {
-        final List<String> docTypeCode = docTypeCodes.stream().map(DocTypeCode::toValue).collect(Collectors.toList());
-        final List<Document> documentList = documentDao.selectByDocumentTypeCode(docTypeCode);
+    public void resetForRetry(final List<DocumentTypeCode> targetTypes) {
+        final List<String> targetTypeCodes = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
+        final List<Document> documentList = documentDao.selectByDocumentTypeCode(targetTypeCodes);
         // 貸借対照表
         documentList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
@@ -530,14 +547,14 @@ public class DocumentService {
     }
 
     private Optional<LocalDate> parseDocumentPeriod(final Results results) {
-        final boolean anyMatchDocTypeCode = List.of(
-                DocTypeCode.ANNUAL_SECURITIES_REPORT,
-                DocTypeCode.AMENDED_SECURITIES_REPORT
+        final boolean anyMatchTargetTypes = List.of(
+                DocumentTypeCode.DTC_120,
+                DocumentTypeCode.DTC_130
         ).stream()
-                .map(DocTypeCode::toValue)
-                .anyMatch(docTypeCode -> results.getDocTypeCode().stream().allMatch(docTypeCode::equals));
+                .map(DocumentTypeCode::toValue)
+                .anyMatch(documentTypeCode -> results.getDocTypeCode().stream().allMatch(documentTypeCode::equals));
 
-        if (anyMatchDocTypeCode) {
+        if (anyMatchTargetTypes) {
             if (Objects.nonNull(results.getPeriodEnd())) {
                 // period end is present
                 return Optional.of(LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1));
@@ -546,7 +563,7 @@ public class DocumentService {
                     final Document document = documentDao.selectByDocumentId(results.getParentDocID());
                     if (Objects.nonNull(document)) {
                         // parent document is present
-                        return Optional.of(document.getDocumentPeriod());
+                        return document.getDocumentPeriod();
                     } else {
                         // parent document is null
                         return Optional.of(LocalDate.EPOCH);
