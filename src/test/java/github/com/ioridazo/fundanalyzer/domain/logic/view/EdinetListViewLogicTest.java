@@ -5,10 +5,10 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,7 +52,7 @@ class EdinetListViewLogicTest {
         var targetTypeCode = List.of(DocumentTypeCode.DTC_120);
 
         var documentList = List.of(
-                Document.builder()
+                DocumentEntity.builder()
                         .documentId("documentId")
                         .edinetCode("edinetCode")
                         .documentPeriod(LocalDate.parse("2020-01-01"))
@@ -63,7 +63,7 @@ class EdinetListViewLogicTest {
                         .scrapedPl("1")
                         .removed("0")
                         .build(),
-                Document.builder()
+                DocumentEntity.builder()
                         .documentId("docId")
                         .edinetCode("edinetCode")
                         .documentPeriod(LocalDate.parse("2020-01-01"))
@@ -75,7 +75,7 @@ class EdinetListViewLogicTest {
                         .removed("0")
                         .build()
         );
-        var company = new Company(
+        var company = new CompanyEntity(
                 "code",
                 "会社名",
                 1,
@@ -91,11 +91,11 @@ class EdinetListViewLogicTest {
 
         when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(documentList);
         when(companyDao.selectAll()).thenReturn(List.of(company));
-        when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
-        when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+        when(industryDao.selectByName("銀行業")).thenReturn(new IndustryEntity(2, "銀行業", null));
+        when(industryDao.selectByName("保険業")).thenReturn(new IndustryEntity(3, "保険業", null));
         when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
         when(analysisResultDao.selectByUniqueKey("code", LocalDate.parse("2020-01-01"), "120", LocalDate.parse("2020-11-08")))
-                .thenReturn(Optional.of(new AnalysisResult(null, null, null, null, null, null, null, null)));
+                .thenReturn(Optional.of(new AnalysisResultEntity(null, null, null, null, null, null, null, null)));
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
         var actual = logic.counter(submitDate, targetTypeCode);
@@ -121,10 +121,10 @@ class EdinetListViewLogicTest {
         var submitDate = LocalDate.parse("2020-11-08");
         var targetTypeCode = List.of(DocumentTypeCode.DTC_120);
 
-        final Document document = Document.builder()
+        final DocumentEntity documentEntity = DocumentEntity.builder()
                 .documentId("documentId")
                 .build();
-        var company = new Company(
+        var company = new CompanyEntity(
                 "code",
                 "会社名",
                 1,
@@ -138,14 +138,14 @@ class EdinetListViewLogicTest {
         );
         var createdAt = LocalDateTime.of(2020, 10, 17, 18, 15);
 
-        when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(document));
+        when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(documentEntity));
         when(companyDao.selectAll()).thenReturn(List.of(company));
-        when(industryDao.selectByName("銀行業")).thenReturn(new Industry(2, "銀行業", null));
-        when(industryDao.selectByName("保険業")).thenReturn(new Industry(3, "保険業", null));
+        when(industryDao.selectByName("銀行業")).thenReturn(new IndustryEntity(2, "銀行業", null));
+        when(industryDao.selectByName("保険業")).thenReturn(new IndustryEntity(3, "保険業", null));
 
-        doReturn(List.of(document, document)).when(logic).extractTargetList(any(), any());
-        doReturn(Pair.of(List.of(document), List.of(document, document))).when(logic).extractScrapedList(any());
-        doReturn(Pair.of(List.of(document), List.of())).when(logic).extractAnalyzedList(any());
+        doReturn(List.of(documentEntity, documentEntity)).when(logic).extractTargetList(any(), any());
+        doReturn(Pair.of(List.of(documentEntity), List.of(documentEntity, documentEntity))).when(logic).extractScrapedList(any());
+        doReturn(Pair.of(List.of(documentEntity), List.of())).when(logic).extractAnalyzedList(any());
         when(logic.nowLocalDateTime()).thenReturn(createdAt);
 
         var actual = logic.counter(submitDate, targetTypeCode);
@@ -169,12 +169,12 @@ class EdinetListViewLogicTest {
     @Test
     void extractTargetList() {
         var documentList = List.of(
-                Document.builder()
+                DocumentEntity.builder()
                         .edinetCode("edinetCode")
                         .removed("0")
                         .build()
         );
-        var allTargetCompanies = List.of(new Company(
+        var allTargetCompanies = List.of(new CompanyEntity(
                 "code",
                 "会社名",
                 1,
@@ -196,13 +196,13 @@ class EdinetListViewLogicTest {
     @Test
     void extractScrapedList() {
         var targetList = List.of(
-                Document.builder()
+                DocumentEntity.builder()
                         .scrapedNumberOfShares("1")
                         .scrapedBs("1")
                         .scrapedPl("1")
                         .removed("0")
                         .build(),
-                Document.builder()
+                DocumentEntity.builder()
                         .scrapedNumberOfShares("0")
                         .scrapedBs("0")
                         .scrapedPl("0")
@@ -220,7 +220,7 @@ class EdinetListViewLogicTest {
     @Test
     void extractAnalyzedList() {
         var scrapedList = List.of(
-                Document.builder()
+                DocumentEntity.builder()
                         .documentId("documentId")
                         .edinetCode("edinetCode")
                         .documentPeriod(LocalDate.parse("2020-01-01"))
@@ -228,7 +228,7 @@ class EdinetListViewLogicTest {
                         .submitDate(LocalDate.parse("2020-11-08"))
                         .removed("0")
                         .build(),
-                Document.builder()
+                DocumentEntity.builder()
                         .documentId("docId")
                         .edinetCode("edinetCode")
                         .documentPeriod(LocalDate.parse("2021-01-01"))
@@ -239,7 +239,7 @@ class EdinetListViewLogicTest {
         );
 
         when(companyDao.selectByEdinetCode("edinetCode"))
-                .thenReturn(Optional.of(new Company(
+                .thenReturn(Optional.of(new CompanyEntity(
                         "code",
                         "会社名",
                         1,
@@ -252,7 +252,7 @@ class EdinetListViewLogicTest {
                         null
                 )));
         when(analysisResultDao.selectByUniqueKey("code", LocalDate.parse("2020-01-01"), "120", LocalDate.parse("2020-11-08")))
-                .thenReturn(Optional.of(new AnalysisResult(null, null, null, null, null, null, null, null)));
+                .thenReturn(Optional.of(new AnalysisResultEntity(null, null, null, null, null, null, null, null)));
 
 
         var actual = logic.extractAnalyzedList(scrapedList);

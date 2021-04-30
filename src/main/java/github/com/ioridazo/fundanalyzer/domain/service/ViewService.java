@@ -7,11 +7,11 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -204,7 +204,7 @@ public class ViewService {
     @Transactional
     public CompletableFuture<Void> updateCorporateView(final List<DocumentTypeCode> targetTypes) {
         try {
-            final List<Company> allTargetCompanies = Target.allCompanies(
+            final List<CompanyEntity> allTargetCompanies = Target.allCompanies(
                     companyDao.selectAll(),
                     List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
             final var beanAllList = corporateViewDao.selectAll();
@@ -244,11 +244,11 @@ public class ViewService {
     @Transactional
     public void updateCorporateView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
         final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
+        final List<DocumentEntity> documentEntityList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
         final var beanAllList = corporateViewDao.selectAll();
 
-        documentList.stream()
-                .map(Document::getEdinetCode)
+        documentEntityList.stream()
+                .map(DocumentEntity::getEdinetCode)
                 .map(companyDao::selectByEdinetCode)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -283,7 +283,7 @@ public class ViewService {
     @NewSpan("ViewService.companyUpdated")
     public String companyUpdated() {
         return companyDao.selectAll().stream()
-                .map(Company::getUpdatedAt)
+                .map(CompanyEntity::getUpdatedAt)
                 .max(LocalDateTime::compareTo)
                 .map(dateTime -> dateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")))
                 .orElse("null");
@@ -368,7 +368,7 @@ public class ViewService {
         try {
             final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
             final List<LocalDate> allSubmitDate = documentDao.selectByDocumentTypeCode(docTypeCode).stream()
-                    .map(Document::getSubmitDate).collect(Collectors.toList());
+                    .map(DocumentEntity::getSubmitDate).collect(Collectors.toList());
 
             allSubmitDate.stream()
                     .filter(submitDate -> submitDate.isAfter(nowLocalDate().minusDays(edinetListSize)))
@@ -428,16 +428,16 @@ public class ViewService {
                 brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
                 corporateViewDao.selectByCode(code.substring(0, 4)),
                 Target.distinctAnalysisResults(analysisResultDao.selectByCompanyCode(code)).stream()
-                        .sorted(Comparator.comparing(AnalysisResult::getDocumentPeriod).reversed())
+                        .sorted(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod).reversed())
                         .collect(Collectors.toList()),
                 brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
                 stockPriceDao.selectByCode(code).stream()
-                        .map(StockPrice::ofBrandDetail)
+                        .map(StockPriceEntity::ofBrandDetail)
                         .distinct()
-                        .sorted(Comparator.comparing(StockPrice::getTargetDate).reversed())
+                        .sorted(Comparator.comparing(StockPriceEntity::getTargetDate).reversed())
                         .collect(Collectors.toList()),
                 minkabuDao.selectByCode(code).stream()
-                        .sorted(Comparator.comparing(Minkabu::getTargetDate).reversed())
+                        .sorted(Comparator.comparing(MinkabuEntity::getTargetDate).reversed())
                         .collect(Collectors.toList())
         );
     }
@@ -453,7 +453,7 @@ public class ViewService {
      */
     @NewSpan("ViewService.edinetDetailView")
     public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final List<Company> allTargetCompanies = Target.allCompanies(
+        final List<CompanyEntity> allTargetCompanies = Target.allCompanies(
                 companyDao.selectAll(),
                 List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
         return edinetDetailViewLogic.edinetDetailView(submitDate, targetTypes, allTargetCompanies);

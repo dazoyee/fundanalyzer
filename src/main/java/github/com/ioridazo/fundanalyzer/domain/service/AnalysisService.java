@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -75,15 +75,15 @@ public class AnalysisService {
             final var bank = industryDao.selectByName("銀行業");
             final var insurance = industryDao.selectByName("保険業");
 
-            final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
-            if (documentList.isEmpty()) {
+            final List<DocumentEntity> documentEntityList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
+            if (documentEntityList.isEmpty()) {
                 FundanalyzerLogClient.logService(
                         MessageFormat.format("次の企業はデータベースに存在しませんでした。\t対象提出日:{0}", submitDate),
                         Category.DOCUMENT,
                         Process.ANALYSIS
                 );
             } else {
-                documentList.stream()
+                documentEntityList.stream()
                         // all match status done
                         .filter(document -> List.of(
                                 document.getScrapedBs(),

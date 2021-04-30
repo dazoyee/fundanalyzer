@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
 import lombok.Builder;
@@ -17,11 +18,11 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
-@Value
 @Builder
+@Value
 @Entity(immutable = true)
 @Table(name = "document")
-public class Document {
+public class DocumentEntity {
 
     private final Integer id;
 
@@ -67,12 +68,12 @@ public class Document {
 
     private final LocalDateTime updatedAt;
 
-    public static Document of(
+    public static DocumentEntity of(
             final LocalDate submitDate,
             final LocalDate documentPeriod,
             final Results results,
             final LocalDateTime nowLocalDateTime) {
-        return Document.builder()
+        return DocumentEntity.builder()
                 .documentId(results.getDocId())
                 .documentTypeCode(results.getDocTypeCode().orElse(null))
                 .edinetCode(results.getEdinetCode().orElse(null))
@@ -83,96 +84,128 @@ public class Document {
                 .build();
     }
 
-    public static Document ofUpdateStoreToDone(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
-                .documentId(documentId)
+    public static DocumentEntity ofUpdateStoreToDone(final Document document, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
                 .downloaded(DocumentStatus.DONE.toValue())
                 .decoded(DocumentStatus.DONE.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateDownloadToDone(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateDownloadToDone(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .downloaded(DocumentStatus.DONE.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateDownloadToError(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateDownloadToDone(final Document document, final LocalDateTime nowLocalDateTime) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
+                .downloaded(DocumentStatus.DONE.toValue())
+                .updatedAt(nowLocalDateTime)
+                .build();
+    }
+
+    public static DocumentEntity ofUpdateDownloadToError(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .downloaded(DocumentStatus.ERROR.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateDecodeToDone(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateDownloadToError(final Document document, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
+                .downloaded(DocumentStatus.ERROR.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static DocumentEntity ofUpdateDecodeToDone(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .decoded(DocumentStatus.DONE.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateDecodeToError(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateDecodeToDone(final Document document, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
+                .decoded(DocumentStatus.DONE.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static DocumentEntity ofUpdateDecodeToError(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .decoded(DocumentStatus.ERROR.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateBsToNotYet(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateDecodeToError(final Document document, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
+                .decoded(DocumentStatus.ERROR.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static DocumentEntity ofUpdateBsToNotYet(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .scrapedBs(DocumentStatus.NOT_YET.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateBsToHalfWay(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateBsToHalfWay(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .scrapedBs(DocumentStatus.HALF_WAY.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdatePlToNotYet(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdatePlToNotYet(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .scrapedPl(DocumentStatus.NOT_YET.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdatePlToHalfWay(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdatePlToHalfWay(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .scrapedPl(DocumentStatus.HALF_WAY.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateNumberOfSharesToHalfWay(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
+    public static DocumentEntity ofUpdateNumberOfSharesToHalfWay(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
                 .documentId(documentId)
                 .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateRemoved(final String documentId, final LocalDateTime updatedAt) {
-        return Document.builder()
-                .documentId(documentId)
+    public static DocumentEntity ofUpdateRemoved(final Document document, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
                 .removed(Flag.ON.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
 
-    public static Document ofUpdateSwitchFs(
+    public static DocumentEntity ofUpdateSwitchFs(
             final FinancialStatementEnum fs,
             final String documentId,
             final DocumentStatus status,
@@ -180,21 +213,21 @@ public class Document {
             final LocalDateTime updatedAt) {
         switch (fs) {
             case BALANCE_SHEET:
-                return Document.builder()
+                return DocumentEntity.builder()
                         .documentId(documentId)
                         .scrapedBs(status.toValue())
                         .bsDocumentPath(path)
                         .updatedAt(updatedAt)
                         .build();
             case PROFIT_AND_LESS_STATEMENT:
-                return Document.builder()
+                return DocumentEntity.builder()
                         .documentId(documentId)
                         .scrapedPl(status.toValue())
                         .plDocumentPath(path)
                         .updatedAt(updatedAt)
                         .build();
             case TOTAL_NUMBER_OF_SHARES:
-                return Document.builder()
+                return DocumentEntity.builder()
                         .documentId(documentId)
                         .scrapedNumberOfShares(status.toValue())
                         .numberOfSharesDocumentPath(path)
@@ -205,11 +238,31 @@ public class Document {
         }
     }
 
+    public Optional<String> getDocumentTypeCode() {
+        return Optional.ofNullable(documentTypeCode);
+    }
+
+    public Optional<String> getEdinetCode() {
+        return Optional.ofNullable(edinetCode);
+    }
+
     public Optional<LocalDate> getDocumentPeriod() {
         return Optional.ofNullable(documentPeriod);
     }
 
-    public boolean getNotRemoved() {
-        return "0".equals(removed);
+    public Optional<String> getNumberOfSharesDocumentPath() {
+        return Optional.ofNullable(numberOfSharesDocumentPath);
+    }
+
+    public Optional<String> getBsDocumentPath() {
+        return Optional.ofNullable(bsDocumentPath);
+    }
+
+    public Optional<String> getPlDocumentPath() {
+        return Optional.ofNullable(plDocumentPath);
+    }
+
+    public Optional<String> getCfDocumentPath() {
+        return Optional.ofNullable(cfDocumentPath);
     }
 }

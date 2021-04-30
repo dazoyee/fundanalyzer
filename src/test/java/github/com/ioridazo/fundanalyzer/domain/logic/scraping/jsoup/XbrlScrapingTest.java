@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.XbrlScraping;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +31,7 @@ class XbrlScrapingTest {
         @DisplayName("findFile : 対象のフォルダ配下にあるファイルからキーワードに合致するものを返却する")
         @Test
         void findFile_ok() {
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "jpcrp_cor:BalanceSheetTextBlock",
@@ -52,7 +51,7 @@ class XbrlScrapingTest {
         @DisplayName("findFile : 対象のフォルダ配下にあるファイルからキーワードに合致するものがないときはnullを返却する")
         @Test
         void findFile_target_file_has_not_keyword() {
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "jpcrp_cor:BalanceSheetTextBlock",
@@ -69,7 +68,7 @@ class XbrlScrapingTest {
         @DisplayName("findFile : 対象のフォルダ配下にあるファイルからキーワードに合致するものが複数存在するときはエラー発生させる")
         @Test
         void findFile_FundanalyzerFileException() {
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "jpcrp_cor:BalanceSheetTextBlock",

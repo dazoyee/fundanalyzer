@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubjectEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
@@ -12,14 +12,14 @@ import java.util.List;
 public interface BsSubjectDao {
 
     @Select
-    List<BsSubject> selectAll();
+    List<BsSubjectEntity> selectAll();
 
     @Select
-    BsSubject selectById(String id);
+    BsSubjectEntity selectById(String id);
 
     @Select
-    BsSubject selectByUniqueKey(String outlineSubjectId, String detailSubjectId);
+    BsSubjectEntity selectByUniqueKey(String outlineSubjectId, String detailSubjectId);
 
     @Select
-    List<BsSubject> selectByOutlineSubjectId(String outlineSubjectId);
+    List<BsSubjectEntity> selectByOutlineSubjectId(String outlineSubjectId);
 }

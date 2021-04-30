@@ -5,11 +5,11 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
 import lombok.AllArgsConstructor;
@@ -59,22 +59,22 @@ public class CorporateViewLogic {
     /**
      * 企業価値等を画面表示するためのBean生成
      *
-     * @param company     会社
+     * @param companyEntity     会社
      * @param targetTypes 書類種別コード
      * @return CorporateViewBean
      */
     @NewSpan("CorporateViewLogic.corporateViewOf")
-    public CorporateViewBean corporateViewOf(final Company company, final List<DocumentTypeCode> targetTypes) {
-        final var submitDate = latestSubmitDate(company, targetTypes);
-        final var corporateValue = corporateValue(company);
-        final var stockPrice = submitDate.map(sd -> stockPrice(company, sd)).orElse(StockPriceValue.of());
+    public CorporateViewBean corporateViewOf(final CompanyEntity companyEntity, final List<DocumentTypeCode> targetTypes) {
+        final var submitDate = latestSubmitDate(companyEntity, targetTypes);
+        final var corporateValue = corporateValue(companyEntity);
+        final var stockPrice = submitDate.map(sd -> stockPrice(companyEntity, sd)).orElse(StockPriceValue.of());
         final var discountValue = discountValue(
                 corporateValue.getAverageCorporateValue().orElse(null),
                 stockPrice.getLatestStockPrice().orElse(null));
 
         return new CorporateViewBean(
-                company.getCode().orElseThrow().substring(0, 4),
-                company.getCompanyName(),
+                companyEntity.getCode().orElseThrow().substring(0, 4),
+                companyEntity.getCompanyName(),
                 submitDate.orElse(null),
                 corporateValue.getLatestCorporateValue().orElse(null),
                 corporateValue.getAverageCorporateValue().orElse(null),
@@ -86,7 +86,7 @@ public class CorporateViewLogic {
                 discountValue.getFirst().orElse(null),
                 discountValue.getSecond().orElse(null),
                 corporateValue.getCountYear().orElse(null),
-                forecastStock(company).orElse(null),
+                forecastStock(companyEntity).orElse(null),
                 nowLocalDateTime(),
                 nowLocalDateTime()
         );
@@ -95,48 +95,48 @@ public class CorporateViewLogic {
     /**
      * 直近の財務諸表提出日を取得する
      *
-     * @param company     会社情報
+     * @param companyEntity     会社情報
      * @param targetTypes 書類種別コード
      * @return 提出日
      */
-    Optional<LocalDate> latestSubmitDate(final Company company, final List<DocumentTypeCode> targetTypes) {
+    Optional<LocalDate> latestSubmitDate(final CompanyEntity companyEntity, final List<DocumentTypeCode> targetTypes) {
         final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
         return documentDao.selectByDocumentTypeCode(docTypeCode).stream()
-                .filter(d -> company.getEdinetCode().equals(d.getEdinetCode()))
-                .max(Comparator.comparing(Document::getSubmitDate))
-                .map(Document::getSubmitDate);
+                .filter(d -> companyEntity.getEdinetCode().equals(d.getEdinetCode()))
+                .max(Comparator.comparing(DocumentEntity::getSubmitDate))
+                .map(DocumentEntity::getSubmitDate);
     }
 
     /**
      * 企業価値を算出する
      *
-     * @param company 会社情報
+     * @param companyEntity 会社情報
      * @return <li>平均の企業価値</li><li>標準偏差</li><li>対象年数</li>
      */
-    CorporateValue corporateValue(final Company company) {
-        final List<AnalysisResult> corporateValueList = Target.distinctAnalysisResults(
-                analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow()));
+    CorporateValue corporateValue(final CompanyEntity companyEntity) {
+        final List<AnalysisResultEntity> corporateValueList = Target.distinctAnalysisResults(
+                analysisResultDao.selectByCompanyCode(companyEntity.getCode().orElseThrow()));
 
         if (!corporateValueList.isEmpty()) {
             // 最新企業価値
             final var latest = corporateValueList.stream()
                     // latest
-                    .max(Comparator.comparing(AnalysisResult::getDocumentPeriod))
+                    .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod))
                     // corporate value
-                    .map(AnalysisResult::getCorporateValue)
+                    .map(AnalysisResultEntity::getCorporateValue)
                     // scale
                     .map(bigDecimal -> bigDecimal.setScale(SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP))
                     .orElse(null);
             // 平均企業価値
             final var average = corporateValueList.stream()
-                    .map(AnalysisResult::getCorporateValue)
+                    .map(AnalysisResultEntity::getCorporateValue)
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
                     .divide(BigDecimal.valueOf(corporateValueList.size()), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP);
             // 標準偏差
             final var standardDeviation = corporateValueList.stream()
-                    .map(AnalysisResult::getCorporateValue)
+                    .map(AnalysisResultEntity::getCorporateValue)
                     // (value - average) ^2
                     .map(value -> value.subtract(average).pow(2))
                     // sum
@@ -156,26 +156,26 @@ public class CorporateViewLogic {
     /**
      * 株価を取得する
      *
-     * @param company    会社情報
+     * @param companyEntity    会社情報
      * @param submitDate 提出日
      * @return <li>提出日の株価</li><li>最近株価日付</li><li>最新株価</li>
      */
-    StockPriceValue stockPrice(final Company company, final LocalDate submitDate) {
-        final var stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow());
+    StockPriceValue stockPrice(final CompanyEntity companyEntity, final LocalDate submitDate) {
+        final var stockPriceList = stockPriceDao.selectByCode(companyEntity.getCode().orElseThrow());
         // importDate
         final var importDate = stockPriceList.stream()
-                .max(Comparator.comparing(StockPrice::getTargetDate))
-                .map(StockPrice::getTargetDate).orElse(null);
+                .max(Comparator.comparing(StockPriceEntity::getTargetDate))
+                .map(StockPriceEntity::getTargetDate).orElse(null);
         // latestStockPrice
         final var latestStockPrice = stockPriceList.stream()
-                .max(Comparator.comparing(StockPrice::getTargetDate))
-                .map(StockPrice::getStockPrice)
+                .max(Comparator.comparing(StockPriceEntity::getTargetDate))
+                .map(StockPriceEntity::getStockPrice)
                 .map(BigDecimal::valueOf).orElse(null);
 
         // stock price for one month
         final var monthList = stockPriceList.stream()
                 .filter(sp -> submitDate.minusMonths(1).isBefore(sp.getTargetDate()) && submitDate.plusDays(1).isAfter(sp.getTargetDate()))
-                .map(StockPrice::getStockPrice)
+                .map(StockPriceEntity::getStockPrice)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (monthList.isEmpty()) {
@@ -217,13 +217,13 @@ public class CorporateViewLogic {
     /**
      * 最新のみんかぶ株価予想を取得する
      *
-     * @param company 会社情報
+     * @param companyEntity 会社情報
      * @return 最新の株価予想
      */
-    Optional<BigDecimal> forecastStock(final Company company) {
-        return minkabuDao.selectByCode(company.getCode().orElseThrow()).stream()
-                .max(Comparator.comparing(Minkabu::getTargetDate))
-                .map(Minkabu::getGoalsStock)
+    Optional<BigDecimal> forecastStock(final CompanyEntity companyEntity) {
+        return minkabuDao.selectByCode(companyEntity.getCode().orElseThrow()).stream()
+                .max(Comparator.comparing(MinkabuEntity::getTargetDate))
+                .map(MinkabuEntity::getGoalsStock)
                 .map(BigDecimal::new);
     }
 

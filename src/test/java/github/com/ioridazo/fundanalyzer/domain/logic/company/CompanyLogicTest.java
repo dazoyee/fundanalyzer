@@ -3,8 +3,8 @@ package github.com.ioridazo.fundanalyzer.domain.logic.company;
 import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.file.FileOperator;
@@ -90,8 +90,8 @@ class CompanyLogicTest {
             edinetCsvResultBean.setIndustry("まだ登録されていない業種");
             var resultBeanList = List.of(edinetCsvResultBean);
             var createdAt = LocalDateTime.of(2020, 9, 12, 23, 54);
-            var industryAlready = new Industry(1, "既に登録されている業種", createdAt);
-            var industryInserted = new Industry(null, "まだ登録されていない業種", createdAt);
+            var industryAlready = new IndustryEntity(1, "既に登録されている業種", createdAt);
+            var industryInserted = new IndustryEntity(null, "まだ登録されていない業種", createdAt);
 
             when(industryDao.selectAll()).thenReturn(List.of(industryAlready));
             doReturn(createdAt).when(companyLogic).nowLocalDateTime();
@@ -109,7 +109,7 @@ class CompanyLogicTest {
             edinetCsvResultBean.setIndustry("既に登録されている業種");
             var resultBeanList = List.of(edinetCsvResultBean);
             var createdAt = LocalDateTime.of(2020, 9, 12, 23, 54);
-            var industryAlready = new Industry(1, "既に登録されている業種", createdAt);
+            var industryAlready = new IndustryEntity(1, "既に登録されている業種", createdAt);
 
             when(industryDao.selectAll()).thenReturn(List.of(industryAlready));
             doReturn(createdAt).when(companyLogic).nowLocalDateTime();
@@ -138,8 +138,8 @@ class CompanyLogicTest {
             edinetCsvResultBean.setSettlementDate("date");
             var resultBeanList = List.of(edinetCsvResultBean);
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
-            var industryAlready = new Industry(1, "industry", createdAt);
-            var companyAlready = new Company(
+            var industryAlready = new IndustryEntity(1, "industry", createdAt);
+            var companyAlready = new CompanyEntity(
                     "code",
                     "既に登録されている会社",
                     1,
@@ -151,7 +151,7 @@ class CompanyLogicTest {
                     null,
                     null
             );
-            var companyInserted = new Company(
+            var companyInserted = new CompanyEntity(
                     "code",
                     "まだ登録されていない会社",
                     1,
@@ -190,8 +190,8 @@ class CompanyLogicTest {
             edinetCsvResultBean.setSettlementDate("date");
             var resultBeanList = List.of(edinetCsvResultBean);
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
-            var industryAlready = new Industry(1, "industry", createdAt);
-            var companyAlready = new Company(
+            var industryAlready = new IndustryEntity(1, "industry", createdAt);
+            var companyAlready = new CompanyEntity(
                     "code",
                     "既に登録されている会社",
                     1,
@@ -210,7 +210,7 @@ class CompanyLogicTest {
             assertDoesNotThrow(() -> companyLogic.upsertCompany(resultBeanList));
 
             // updateされることを確認する
-            verify(companyDao, times(1)).update(new Company(
+            verify(companyDao, times(1)).update(new CompanyEntity(
                     "code",
                     "既に登録されている会社",
                     1,

@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocumentEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
@@ -15,12 +15,12 @@ import java.util.List;
 public interface EdinetDocumentDao {
 
     @Select
-    List<EdinetDocument> selectAll();
+    List<EdinetDocumentEntity> selectAll();
 
     @Select
-    EdinetDocument selectByDocId(String docId);
+    EdinetDocumentEntity selectByDocId(String docId);
 
     @Transactional
     @Insert
-    Result<EdinetDocument> insert(EdinetDocument edinetDocument);
+    Result<EdinetDocumentEntity> insert(EdinetDocumentEntity edinetDocumentEntity);
 }

@@ -10,12 +10,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -106,7 +106,7 @@ public class ScrapingLogic {
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
 
-            documentDao.update(Document.ofUpdateDownloadToDone(docId, nowLocalDateTime()));
+            documentDao.update(DocumentEntity.ofUpdateDownloadToDone(docId, nowLocalDateTime()));
 
             // ファイル解凍
             fileOperator.decodeZipFile(
@@ -114,16 +114,16 @@ public class ScrapingLogic {
                     makeTargetPath(pathDecode, targetDate, docId)
             );
 
-            documentDao.update(Document.ofUpdateDecodeToDone(docId, nowLocalDateTime()));
+            documentDao.update(DocumentEntity.ofUpdateDecodeToDone(docId, nowLocalDateTime()));
 
         } catch (FundanalyzerRestClientException e) {
             log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
                     "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
-            documentDao.update(Document.ofUpdateDownloadToError(docId, nowLocalDateTime()));
+            documentDao.update(DocumentEntity.ofUpdateDownloadToError(docId, nowLocalDateTime()));
         } catch (IOException e) {
             log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
                     "\t処理対象日:{}\t書類管理番号:{}", targetDate, docId, e);
-            documentDao.update(Document.ofUpdateDecodeToError(docId, nowLocalDateTime()));
+            documentDao.update(DocumentEntity.ofUpdateDecodeToError(docId, nowLocalDateTime()));
         }
     }
 
@@ -188,7 +188,7 @@ public class ScrapingLogic {
                     Process.SCRAPING
             );
 
-            documentDao.update(Document.ofUpdateSwitchFs(
+            documentDao.update(DocumentEntity.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -197,7 +197,7 @@ public class ScrapingLogic {
             ));
 
         } catch (FundanalyzerFileException e) {
-            documentDao.update(Document.ofUpdateSwitchFs(
+            documentDao.update(DocumentEntity.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.ERROR,
@@ -222,7 +222,7 @@ public class ScrapingLogic {
      * @return 対象ファイルとスクレイピングキーワード
      * @throws FundanalyzerFileException 見つからなかったとき
      */
-    Pair<File, ScrapingKeyword> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
+    Pair<File, ScrapingKeywordEntity> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
         final var scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
 
         FundanalyzerLogClient.logLogic(
@@ -233,19 +233,19 @@ public class ScrapingLogic {
                 Process.SCRAPING
         );
 
-        for (ScrapingKeyword scrapingKeyword : scrapingKeywordList) {
-            final var findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);
+        for (ScrapingKeywordEntity scrapingKeywordEntity : scrapingKeywordList) {
+            final var findFile = xbrlScraping.findFile(targetFile, scrapingKeywordEntity);
 
             if (findFile.isPresent()) {
                 FundanalyzerLogClient.logLogic(
                         MessageFormat.format("[{0}]の対象ファイルを正常に確認できました。\tキーワード:{1}",
-                                scrapingKeyword.getRemarks(),
-                                scrapingKeyword.getKeyword()),
+                                scrapingKeywordEntity.getRemarks(),
+                                scrapingKeywordEntity.getKeyword()),
                         Category.DOCUMENT,
                         Process.SCRAPING
                 );
 
-                return Pair.of(findFile.get(), scrapingKeyword);
+                return Pair.of(findFile.get(), scrapingKeywordEntity);
             }
         }
         throw new FundanalyzerFileException("キーワードに合致するファイルが存在しませんでした。");
@@ -256,21 +256,21 @@ public class ScrapingLogic {
      * その結果とマスタの科目が一致したときにDBに登録する
      *
      * @param targetFile      対象ファイル
-     * @param scrapingKeyword スクレイピングキーワード
+     * @param scrapingKeywordEntity スクレイピングキーワード
      * @param fs              財務諸表
-     * @param company         会社
+     * @param companyEntity         会社
      * @param detailList      科目リスト
-     * @param edinetDocument  EDINETドキュメント
+     * @param edinetDocumentEntity  EDINETドキュメント
      * @param <T>             財務諸表の型
      */
     <T extends Detail> void insertFinancialStatement(
             final File targetFile,
-            final ScrapingKeyword scrapingKeyword,
+            final ScrapingKeywordEntity scrapingKeywordEntity,
             final FinancialStatementEnum fs,
-            final Company company,
+            final CompanyEntity companyEntity,
             final List<T> detailList,
-            final EdinetDocument edinetDocument) {
-        final var resultBeans = xbrlScraping.scrapeFinancialStatement(targetFile, scrapingKeyword.getKeyword());
+            final EdinetDocumentEntity edinetDocumentEntity) {
+        final var resultBeans = xbrlScraping.scrapeFinancialStatement(targetFile, scrapingKeywordEntity.getKeyword());
 
         resultBeans.forEach(resultBean -> detailList.stream()
                 // スクレイピング結果とマスタから一致するものをフィルターにかける
@@ -278,10 +278,10 @@ public class ScrapingLogic {
                 .findAny()
                 // 一致するものが存在したら下記
                 .ifPresent(detail -> insertFinancialStatement(
-                        company,
+                        companyEntity,
                         fs,
                         detail.getId(),
-                        edinetDocument,
+                        edinetDocumentEntity,
                         parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
                 ))
         );
@@ -290,41 +290,41 @@ public class ScrapingLogic {
     /**
      * DBに財務諸表の科目とその値を登録する
      *
-     * @param company        会社
+     * @param companyEntity        会社
      * @param fs             財務諸表
      * @param dId            科目ID
-     * @param edinetDocument EDINETドキュメント
+     * @param edinetDocumentEntity EDINETドキュメント
      * @param value          値
      */
     void insertFinancialStatement(
-            final Company company,
+            final CompanyEntity companyEntity,
             final FinancialStatementEnum fs,
             final String dId,
-            final EdinetDocument edinetDocument,
+            final EdinetDocumentEntity edinetDocumentEntity,
             final Long value) {
-        final Period period = parsePeriod(edinetDocument);
+        final Period period = parsePeriod(edinetDocumentEntity);
         try {
-            financialStatementDao.insert(FinancialStatement.of(
-                    company.getCode().orElse(null),
-                    company.getEdinetCode(),
+            financialStatementDao.insert(FinancialStatementEntity.of(
+                    companyEntity.getCode().orElse(null),
+                    companyEntity.getEdinetCode(),
                     fs.toValue(),
                     dId,
                     period.getPeriodStart(),
                     period.getPeriodEnd(),
                     value,
-                    DocumentTypeCode.fromValue(edinetDocument.getDocTypeCode()),
-                    LocalDateTime.parse(edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
-                    edinetDocument.getDocId(),
+                    DocumentTypeCode.fromValue(edinetDocumentEntity.getDocTypeCode()),
+                    LocalDateTime.parse(edinetDocumentEntity.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate(),
+                    edinetDocumentEntity.getDocId(),
                     nowLocalDateTime()
             ));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
                                 "\t企業コード:{}\t財務諸表名:{}\t科目ID:{}\t対象年:{}",
-                        company.getCode().orElse(null),
+                        companyEntity.getCode().orElse(null),
                         fs.getName(),
                         dId,
-                        edinetDocument.getPeriodEnd().map(pe -> pe.substring(0, 4)).orElse("null")
+                        edinetDocumentEntity.getPeriodEnd().map(pe -> pe.substring(0, 4)).orElse("null")
                 );
             } else {
                 throw e;
@@ -336,24 +336,24 @@ public class ScrapingLogic {
      * 貸借対照表の流動負債合計と負債合計の値が一致したときに<br/>
      * 流動負債合計の値を0としてDBに登録する
      *
-     * @param company        会社
-     * @param edinetDocument EDINETドキュメント
+     * @param companyEntity        会社
+     * @param edinetDocumentEntity EDINETドキュメント
      */
-    void checkBs(final Company company, final EdinetDocument edinetDocument) {
-        final DocumentTypeCode documentTypeCode = DocumentTypeCode.fromValue(edinetDocument.getDocTypeCode());
+    void checkBs(final CompanyEntity companyEntity, final EdinetDocumentEntity edinetDocumentEntity) {
+        final DocumentTypeCode documentTypeCode = DocumentTypeCode.fromValue(edinetDocumentEntity.getDocTypeCode());
         final LocalDate submitDate = LocalDateTime.parse(
-                edinetDocument.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
+                edinetDocumentEntity.getSubmitDateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
 
         final var totalCurrentLiabilities = bsSubjectDao.selectByOutlineSubjectId(
                 BsEnum.TOTAL_CURRENT_LIABILITIES.getOutlineSubjectId()).stream()
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
-                        edinetDocument.getEdinetCode().orElse(null),
+                        edinetDocumentEntity.getEdinetCode().orElse(null),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                        edinetDocumentEntity.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
                         documentTypeCode.toValue(),
                         submitDate
-                        ).flatMap(FinancialStatement::getValue)
+                        ).flatMap(FinancialStatementEntity::getValue)
                 )
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -362,13 +362,13 @@ public class ScrapingLogic {
         final var totalLiabilities = bsSubjectDao.selectByOutlineSubjectId(
                 BsEnum.TOTAL_LIABILITIES.getOutlineSubjectId()).stream()
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
-                        edinetDocument.getEdinetCode().orElse(null),
+                        edinetDocumentEntity.getEdinetCode().orElse(null),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
-                        edinetDocument.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
+                        edinetDocumentEntity.getPeriodEnd().map(d -> d.substring(0, 4)).orElse(null),
                         documentTypeCode.toValue(),
                         submitDate
-                        ).flatMap(FinancialStatement::getValue)
+                        ).flatMap(FinancialStatementEntity::getValue)
                 )
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -377,13 +377,13 @@ public class ScrapingLogic {
         if ((totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent()) &&
                 (totalCurrentLiabilities.get().equals(totalLiabilities.get()))) {
             insertFinancialStatement(
-                    company,
+                    companyEntity,
                     FinancialStatementEnum.BALANCE_SHEET,
                     bsSubjectDao.selectByUniqueKey(
                             BsEnum.TOTAL_FIXED_LIABILITIES.getOutlineSubjectId(),
                             BsEnum.TOTAL_FIXED_LIABILITIES.getDetailSubjectId()
                     ).getId(),
-                    edinetDocument,
+                    edinetDocumentEntity,
                     0L
             );
 
@@ -391,8 +391,8 @@ public class ScrapingLogic {
                     MessageFormat.format(
                             "[貸借対照表] の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
                                     "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
-                            company.getCode().orElseThrow(),
-                            edinetDocument.getDocId(),
+                            companyEntity.getCode().orElseThrow(),
+                            edinetDocumentEntity.getDocId(),
                             totalCurrentLiabilities.get(),
                             totalLiabilities.get()
                     ),
@@ -402,18 +402,18 @@ public class ScrapingLogic {
         }
     }
 
-    private Period parsePeriod(final EdinetDocument edinetDocument) {
+    private Period parsePeriod(final EdinetDocumentEntity edinetDocumentEntity) {
         final Period period = new Period();
 
         // periodStart
-        if (edinetDocument.getPeriodStart().isPresent()) {
+        if (edinetDocumentEntity.getPeriodStart().isPresent()) {
             // period start is present
-            period.setPeriodStart(LocalDate.parse(edinetDocument.getPeriodStart().orElseThrow()));
-        } else if (Objects.nonNull(edinetDocument.getParentDocId())) {
-            final EdinetDocument parentEdinetDocument = edinetDocumentDao.selectByDocId(edinetDocument.getParentDocId());
-            if (Objects.nonNull(parentEdinetDocument)) {
+            period.setPeriodStart(LocalDate.parse(edinetDocumentEntity.getPeriodStart().orElseThrow()));
+        } else if (Objects.nonNull(edinetDocumentEntity.getParentDocId())) {
+            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId());
+            if (Objects.nonNull(parentEdinetDocumentEntity)) {
                 // parent edinet document is present
-                period.setPeriodStart(LocalDate.parse(parentEdinetDocument.getPeriodStart().orElseThrow()));
+                period.setPeriodStart(LocalDate.parse(parentEdinetDocumentEntity.getPeriodStart().orElseThrow()));
             } else {
                 // parent edinet document is null
                 period.setPeriodStart(LocalDate.EPOCH);
@@ -423,14 +423,14 @@ public class ScrapingLogic {
         }
 
         // periodEnd
-        if (edinetDocument.getPeriodEnd().isPresent()) {
+        if (edinetDocumentEntity.getPeriodEnd().isPresent()) {
             // period end is present
-            period.setPeriodEnd(LocalDate.parse(edinetDocument.getPeriodEnd().orElseThrow()));
-        } else if (Objects.nonNull(edinetDocument.getParentDocId())) {
-            final EdinetDocument parentEdinetDocument = edinetDocumentDao.selectByDocId(edinetDocument.getParentDocId());
-            if (Objects.nonNull(parentEdinetDocument)) {
+            period.setPeriodEnd(LocalDate.parse(edinetDocumentEntity.getPeriodEnd().orElseThrow()));
+        } else if (Objects.nonNull(edinetDocumentEntity.getParentDocId())) {
+            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId());
+            if (Objects.nonNull(parentEdinetDocumentEntity)) {
                 // parent edinet document is present
-                period.setPeriodEnd(LocalDate.parse(parentEdinetDocument.getPeriodEnd().orElseThrow()));
+                period.setPeriodEnd(LocalDate.parse(parentEdinetDocumentEntity.getPeriodEnd().orElseThrow()));
             } else {
                 // parent edinet document is null
                 period.setPeriodEnd(LocalDate.EPOCH);

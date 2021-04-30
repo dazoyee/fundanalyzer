@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Value
 @Entity(immutable = true)
 @Table(name = "analysis_result")
-public class AnalysisResult {
+public class AnalysisResultEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class AnalysisResult {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
-    public static AnalysisResult of(
+    public static AnalysisResultEntity of(
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
@@ -46,7 +46,7 @@ public class AnalysisResult {
             final LocalDate submitDate,
             final String documentId,
             final LocalDateTime createdAt) {
-        return new AnalysisResult(
+        return new AnalysisResultEntity(
                 null,
                 companyCode,
                 period,

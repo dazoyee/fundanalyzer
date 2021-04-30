@@ -5,8 +5,8 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 @Entity(immutable = true)
-@Table(name = "pl_subject")
-public final class PlSubject extends Detail {
+@Table(name = "bs_subject")
+public final class BsSubjectEntity extends Detail {
 
     @Id
     private final String id;
@@ -17,7 +17,7 @@ public final class PlSubject extends Detail {
 
     private final String name;
 
-    public PlSubject(
+    public BsSubjectEntity(
             final String id,
             final String outlineSubjectId,
             final String detailSubjectId,

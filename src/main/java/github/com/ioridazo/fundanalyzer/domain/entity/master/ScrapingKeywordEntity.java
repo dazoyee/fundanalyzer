@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Value
 @Entity(immutable = true)
 @Table(name = "scraping_keyword")
-public class ScrapingKeyword {
+public class ScrapingKeywordEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

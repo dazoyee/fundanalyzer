@@ -8,7 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatemen
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailCorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailViewBean;
 import lombok.Value;
@@ -82,7 +82,7 @@ public class BrandDetailCorporateViewLogic {
                             fsEntry.getPeriodStart(),
                             // periodEnd
                             targetList.stream()
-                                    .map(FinancialStatement::getPeriodEnd)
+                                    .map(FinancialStatementEntity::getPeriodEnd)
                                     .findAny()
                                     .orElseThrow(),
                             // documentTypeName

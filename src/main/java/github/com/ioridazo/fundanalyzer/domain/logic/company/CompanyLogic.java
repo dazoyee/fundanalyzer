@@ -3,8 +3,8 @@ package github.com.ioridazo.fundanalyzer.domain.logic.company;
 import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.file.FileOperator;
@@ -97,7 +97,7 @@ public class CompanyLogic {
     @Transactional
     public void insertIndustry(final List<EdinetCsvResultBean> resultBeanList) {
         final var dbIndustryList = industryDao.selectAll().stream()
-                .map(Industry::getName)
+                .map(IndustryEntity::getName)
                 .collect(Collectors.toList());
 
         resultBeanList.stream()
@@ -105,7 +105,7 @@ public class CompanyLogic {
                 .distinct()
                 .forEach(resultBeanIndustry -> Stream.of(resultBeanIndustry)
                         .filter(industryName -> dbIndustryList.stream().noneMatch(industryName::equals))
-                        .forEach(industryName -> industryDao.insert(new Industry(null, industryName, nowLocalDateTime())))
+                        .forEach(industryName -> industryDao.insert(new IndustryEntity(null, industryName, nowLocalDateTime())))
                 );
     }
 
@@ -121,12 +121,12 @@ public class CompanyLogic {
         final var industryList = industryDao.selectAll();
         resultBeanList.forEach(resultBean -> {
                     final var match = companyList.stream()
-                            .map(Company::getEdinetCode)
+                            .map(CompanyEntity::getEdinetCode)
                             .anyMatch(resultBean.getEdinetCode()::equals);
                     if (match) {
-                        companyDao.update(Company.of(industryList, resultBean, nowLocalDateTime()));
+                        companyDao.update(CompanyEntity.of(industryList, resultBean, nowLocalDateTime()));
                     } else {
-                        companyDao.insert(Company.of(industryList, resultBean, nowLocalDateTime()));
+                        companyDao.insert(CompanyEntity.of(industryList, resultBean, nowLocalDateTime()));
                     }
                 }
         );

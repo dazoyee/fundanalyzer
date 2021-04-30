@@ -5,9 +5,9 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -74,7 +74,7 @@ public class StockService {
             final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
             // 対象となる会社コード一覧を取得する
             final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
-                    .map(Document::getEdinetCode)
+                    .map(DocumentEntity::getEdinetCode)
                     .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
@@ -115,14 +115,14 @@ public class StockService {
 
             // 日経
             if (isNotInsertedStockPrice(nikkei.getTargetDate(), stockPriceList)) {
-                stockPriceDao.insert(StockPrice.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
+                stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
             }
 
             // kabuoji3
             kabuoji3List.forEach(kabuoji3 -> {
                 if (isNotInsertedStockPrice(kabuoji3.getTargetDate(), stockPriceList)) {
                     try {
-                        stockPriceDao.insert(StockPrice.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
+                        stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
                     } catch (NestedRuntimeException e) {
                         if (e.contains(UniqueConstraintException.class)) {
                             log.debug("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
@@ -136,7 +136,7 @@ public class StockService {
 
             // みんかぶ
             if (isNotInsertedMinkabu(minkabu.getTargetDate(), minkabuList)) {
-                final var m = Minkabu.ofMinkabuResultBean(code, minkabu, nowLocalDateTime());
+                final var m = MinkabuEntity.ofMinkabuResultBean(code, minkabu, nowLocalDateTime());
                 if (Objects.isNull(m.getGoalsStock())) {
                     FundanalyzerLogClient.logService(
                             MessageFormat.format(
@@ -160,24 +160,24 @@ public class StockService {
      * 株価がデータベースに登録されているかを確認する
      *
      * @param targetDateAsString 対象日
-     * @param stockPriceList     データベースリスト
+     * @param stockPriceEntityList     データベースリスト
      * @return bool
      */
-    private boolean isNotInsertedStockPrice(final String targetDateAsString, final List<StockPrice> stockPriceList) {
+    private boolean isNotInsertedStockPrice(final String targetDateAsString, final List<StockPriceEntity> stockPriceEntityList) {
         final LocalDate targetDate;
         if (targetDateAsString.contains("/")) {
             targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
         } else {
             targetDate = LocalDate.parse(targetDateAsString);
         }
-        return stockPriceList.stream()
-                .map(StockPrice::getTargetDate)
+        return stockPriceEntityList.stream()
+                .map(StockPriceEntity::getTargetDate)
                 .noneMatch(targetDate::equals);
     }
 
-    private boolean isNotInsertedMinkabu(final String targetDateAsString, final List<Minkabu> minkabuList) {
-        return minkabuList.stream()
-                .map(Minkabu::getTargetDate)
+    private boolean isNotInsertedMinkabu(final String targetDateAsString, final List<MinkabuEntity> minkabuEntityList) {
+        return minkabuEntityList.stream()
+                .map(MinkabuEntity::getTargetDate)
                 .noneMatch(mTargetDate -> {
                     LocalDate targetDate;
                     try {

@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
@@ -14,8 +14,8 @@ import java.util.List;
 public interface MinkabuDao {
 
     @Select
-    List<Minkabu> selectByCode(String code);
+    List<MinkabuEntity> selectByCode(String code);
 
     @Insert
-    Result<Minkabu> insert(Minkabu minkabu);
+    Result<MinkabuEntity> insert(MinkabuEntity minkabuEntity);
 }

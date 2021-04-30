@@ -11,12 +11,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -78,14 +78,14 @@ class AnalysisLogicTest {
             var documentId = "docId";
             var period = LocalDate.parse("2020-12-31");
             var code = "code";
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .documentId(documentId)
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
                     .documentPeriod(period)
                     .build();
-            var company = new Company(
+            var company = new CompanyEntity(
                     code,
                     null,
                     null,
@@ -106,7 +106,7 @@ class AnalysisLogicTest {
 
             assertDoesNotThrow(() -> logic.analyze(documentId));
 
-            verify(analysisResultDao, times(1)).insert(new AnalysisResult(
+            verify(analysisResultDao, times(1)).insert(new AnalysisResultEntity(
                     null,
                     code,
                     period,
@@ -124,14 +124,14 @@ class AnalysisLogicTest {
             var documentId = "docId";
             var period = LocalDate.parse("2020-12-31");
             var code = "code";
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .documentId(documentId)
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
                     .documentPeriod(period)
                     .build();
-            var company = new Company(
+            var company = new CompanyEntity(
                     code,
                     null,
                     null,
@@ -152,7 +152,7 @@ class AnalysisLogicTest {
 
             assertDoesNotThrow(() -> logic.analyze(documentId));
 
-            verify(analysisResultDao, times(0)).insert(new AnalysisResult(
+            verify(analysisResultDao, times(0)).insert(new AnalysisResultEntity(
                     null,
                     code,
                     period,
@@ -172,7 +172,7 @@ class AnalysisLogicTest {
         @Test
         void calculate_ok() {
             var period = LocalDate.parse("2020-10-10");
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
@@ -180,7 +180,7 @@ class AnalysisLogicTest {
                     .build();
             var companyCode = "code";
             var targetType = DocumentTypeCode.DTC_120;
-            var company = new Company(
+            var company = new CompanyEntity(
                     null,
                     null,
                     null,
@@ -210,13 +210,13 @@ class AnalysisLogicTest {
         @DisplayName("calculate : documentPeriodが存在しないときはエラーにする")
         @Test
         void calculate_documentPeriod_is_null() {
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2021-03-20"))
                     .documentTypeCode("120")
                     .build();
             var companyCode = "code";
-            var company = new Company(
+            var company = new CompanyEntity(
                     null,
                     null,
                     null,
@@ -241,7 +241,7 @@ class AnalysisLogicTest {
         @DisplayName("bsValue : 貸借対照表の値を正常に取得することを確認する")
         @Test
         void bsValue_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     null,
                     null,
                     null,
@@ -257,9 +257,9 @@ class AnalysisLogicTest {
             var period = LocalDate.parse("2020-10-10");
             var targetType = DocumentTypeCode.DTC_120;
             var submitDate = LocalDate.parse("2021-03-20");
-            var bsSubject = new BsSubject("1", "1", "1", "流動資産合計");
+            var bsSubject = new BsSubjectEntity("1", "1", "1", "流動資産合計");
             var expected = 1000L;
-            var financialStatement = new FinancialStatement(
+            var financialStatement = new FinancialStatementEntity(
                     1,
                     null,
                     null,
@@ -291,7 +291,7 @@ class AnalysisLogicTest {
         @DisplayName("bsValues : 貸借対照表の値の取得に失敗したときの処理を確認する")
         @Test
         void bsValues_FundanalyzerNotExistException() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -307,9 +307,9 @@ class AnalysisLogicTest {
             var period = LocalDate.parse("2020-10-10");
             var targetType = DocumentTypeCode.DTC_120;
             var submitDate = LocalDate.parse("2021-03-20");
-            var bsSubject = new BsSubject("1", "1", "1", "流動資産合計");
+            var bsSubject = new BsSubjectEntity("1", "1", "1", "流動資産合計");
             var documentId = "docId";
-            var document = Document.builder().documentId(documentId).scrapedBs("1").bsDocumentPath("bsDocumentPath").build();
+            var document = DocumentEntity.builder().documentId(documentId).scrapedBs("1").bsDocumentPath("bsDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
 
             when(bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()))
@@ -335,7 +335,7 @@ class AnalysisLogicTest {
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, targetType, submitDate);
             assertThrows(FundanalyzerNotExistException.class, () -> logic.bsValue(bsEnum, parameter));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(documentId)
                     .scrapedBs(DocumentStatus.HALF_WAY.toValue())
                     .updatedAt(updated)
@@ -345,7 +345,7 @@ class AnalysisLogicTest {
         @DisplayName("plValues : 損益計算書の値を正常に取得することを確認する")
         @Test
         void plValues_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     null,
                     null,
                     null,
@@ -361,9 +361,9 @@ class AnalysisLogicTest {
             var period = LocalDate.parse("2020-10-10");
             var targetType = DocumentTypeCode.DTC_120;
             var submitDate = LocalDate.parse("2021-03-20");
-            var plSubject = new PlSubject("1", "1", "1", "流動資産合計");
+            var plSubject = new PlSubjectEntity("1", "1", "1", "流動資産合計");
             var expected = 1000L;
-            var financialStatement = new FinancialStatement(
+            var financialStatement = new FinancialStatementEntity(
                     1,
                     null,
                     null,
@@ -396,7 +396,7 @@ class AnalysisLogicTest {
         @DisplayName("plValues : 損益計算書の値の取得に失敗したときの処理を確認する")
         @Test
         void plValues_FundanalyzerNotExistException() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -412,9 +412,9 @@ class AnalysisLogicTest {
             var period = LocalDate.parse("2020-10-10");
             var targetType = DocumentTypeCode.DTC_120;
             var submitDate = LocalDate.parse("2021-03-20");
-            var plSubject = new PlSubject("1", "1", "1", "流動資産合計");
+            var plSubject = new PlSubjectEntity("1", "1", "1", "流動資産合計");
             var documentId = "docId";
-            var document = Document.builder().documentId(documentId).scrapedPl("1").plDocumentPath("plDocumentPath").build();
+            var document = DocumentEntity.builder().documentId(documentId).scrapedPl("1").plDocumentPath("plDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
 
             when(plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()))
@@ -440,7 +440,7 @@ class AnalysisLogicTest {
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, targetType, submitDate);
             assertThrows(FundanalyzerNotExistException.class, () -> logic.plValue(plEnum, parameter));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(documentId)
                     .scrapedPl(DocumentStatus.HALF_WAY.toValue())
                     .updatedAt(updated)
@@ -450,7 +450,7 @@ class AnalysisLogicTest {
         @DisplayName("nsValue : 株式総数の値を正常に取得することを確認する")
         @Test
         void nsValue_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     null,
                     null,
                     null,
@@ -466,7 +466,7 @@ class AnalysisLogicTest {
             var targetType = DocumentTypeCode.DTC_120;
             var submitDate = LocalDate.parse("2021-03-20");
             var expected = 1000L;
-            var financialStatement = new FinancialStatement(
+            var financialStatement = new FinancialStatementEntity(
                     1,
                     null,
                     null,
@@ -497,7 +497,7 @@ class AnalysisLogicTest {
         @DisplayName("nsValue : 株式総数の値の取得に失敗したときの処理を確認する")
         @Test
         void nsValue_FundanalyzerNotExistException() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -513,7 +513,7 @@ class AnalysisLogicTest {
             var targetType = DocumentTypeCode.DTC_120;
             var submitDate = LocalDate.parse("2021-03-20");
             var documentId = "docId";
-            var document = Document.builder().documentId(documentId).scrapedNumberOfShares("1").numberOfSharesDocumentPath("numberOfSharesDocumentPath").build();
+            var document = DocumentEntity.builder().documentId(documentId).scrapedNumberOfShares("1").numberOfSharesDocumentPath("numberOfSharesDocumentPath").build();
             var updated = LocalDateTime.of(2020, 10, 10, 14, 32);
 
             when(financialStatementDao.selectByUniqueKey(
@@ -537,7 +537,7 @@ class AnalysisLogicTest {
             var parameter = AnalysisLogic.FsValueParameter.of(company, period, targetType, submitDate);
             assertThrows(FundanalyzerNotExistException.class, () -> logic.nsValue(parameter));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(documentId)
                     .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
                     .updatedAt(updated)

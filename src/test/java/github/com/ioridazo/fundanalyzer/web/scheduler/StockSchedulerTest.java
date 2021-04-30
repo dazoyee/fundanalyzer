@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
@@ -51,13 +51,13 @@ class StockSchedulerTest {
 
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
             when(documentDao.selectByDayOfSubmitDate("6")).thenReturn(List.of(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-01-06"))
                             .build(),
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-06"))
                             .build(),
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-06"))
                             .build()
             ));
@@ -74,7 +74,7 @@ class StockSchedulerTest {
         void stockScheduler_throwable() {
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
             when(documentDao.selectByDayOfSubmitDate("6")).thenReturn(List.of(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-06"))
                             .build()
             ));

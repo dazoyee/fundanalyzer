@@ -6,9 +6,9 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Converter;
 import github.com.ioridazo.fundanalyzer.domain.util.Target;
@@ -56,30 +56,30 @@ public class EdinetListViewLogic {
     @NewSpan("EdinetListViewLogic.counter")
     public EdinetListViewBean counter(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
         final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
-        final List<Company> allTargetCompanies = Target.allCompanies(
+        final List<DocumentEntity> documentEntityList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
+        final List<CompanyEntity> allTargetCompanies = Target.allCompanies(
                 companyDao.selectAll(),
                 List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
 
         // 処理対象書類
-        final List<Document> targetList = extractTargetList(documentList, allTargetCompanies);
+        final List<DocumentEntity> targetList = extractTargetList(documentEntityList, allTargetCompanies);
         // 処理済書類
-        final List<Document> scrapedList = extractScrapedList(targetList).getFirst();
+        final List<DocumentEntity> scrapedList = extractScrapedList(targetList).getFirst();
         // 未処理書類
-        final List<Document> notScrapedList = extractScrapedList(targetList).getSecond();
+        final List<DocumentEntity> notScrapedList = extractScrapedList(targetList).getSecond();
         // 分析済書類
-        final List<Document> analyzedList = extractAnalyzedList(scrapedList).getFirst();
+        final List<DocumentEntity> analyzedList = extractAnalyzedList(scrapedList).getFirst();
         // 未分析書類
-        final List<Document> notAnalyzedList = extractAnalyzedList(scrapedList).getSecond();
+        final List<DocumentEntity> notAnalyzedList = extractAnalyzedList(scrapedList).getSecond();
 
         return EdinetListViewBean.of(
                 submitDate,
-                documentList.size(),
+                documentEntityList.size(),
                 targetList.size(),
                 scrapedList.size(),
                 analyzedList.size(),
-                notAnalyzedList.stream().map(Document::getDocumentId).collect(Collectors.joining(",<br>")),
-                notScrapedList.stream().map(Document::getDocumentId).collect(Collectors.joining(",<br>")),
+                notAnalyzedList.stream().map(DocumentEntity::getDocumentId).collect(Collectors.joining(",<br>")),
+                notScrapedList.stream().map(DocumentEntity::getDocumentId).collect(Collectors.joining(",<br>")),
                 notScrapedList.size(),
                 nowLocalDateTime()
         );
@@ -88,16 +88,16 @@ public class EdinetListViewLogic {
     /**
      * 処理対象書類リストを抽出する
      *
-     * @param documentList       総書類リスト
+     * @param documentEntityList       総書類リスト
      * @param allTargetCompanies 処理対象となるすべての会社
      * @return 処理対象書類リスト
      */
-    List<Document> extractTargetList(final List<Document> documentList, final List<Company> allTargetCompanies) {
-        return documentList.stream()
+    List<DocumentEntity> extractTargetList(final List<DocumentEntity> documentEntityList, final List<CompanyEntity> allTargetCompanies) {
+        return documentEntityList.stream()
                 // filter companyCode is present
                 .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
                 // filter removed
-                .filter(Document::getNotRemoved)
+                .filter(DocumentEntity::getNotRemoved)
                 .collect(Collectors.toList());
     }
 
@@ -107,9 +107,9 @@ public class EdinetListViewLogic {
      * @param targetList 処理対象書類リスト
      * @return 処理済書類リスト, 未処理書類リスト
      */
-    Pair<List<Document>, List<Document>> extractScrapedList(final List<Document> targetList) {
-        final List<Document> scrapedList = new ArrayList<>();
-        final List<Document> notScrapedList = new ArrayList<>();
+    Pair<List<DocumentEntity>, List<DocumentEntity>> extractScrapedList(final List<DocumentEntity> targetList) {
+        final List<DocumentEntity> scrapedList = new ArrayList<>();
+        final List<DocumentEntity> notScrapedList = new ArrayList<>();
 
         targetList.forEach(document -> {
             final boolean isStatusDone = DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedBs()))
@@ -132,17 +132,17 @@ public class EdinetListViewLogic {
      * @param scrapedList 処理済書類リスト
      * @return 分析済書類リスト, 未分析書類リスト
      */
-    Pair<List<Document>, List<Document>> extractAnalyzedList(final List<Document> scrapedList) {
-        final List<Document> analyzedList = new ArrayList<>();
-        final List<Document> notAnalyzedList = new ArrayList<>();
+    Pair<List<DocumentEntity>, List<DocumentEntity>> extractAnalyzedList(final List<DocumentEntity> scrapedList) {
+        final List<DocumentEntity> analyzedList = new ArrayList<>();
+        final List<DocumentEntity> notAnalyzedList = new ArrayList<>();
 
         scrapedList.forEach(document -> {
-            final Optional<Company> company = companyDao.selectByEdinetCode(document.getEdinetCode());
+            final Optional<CompanyEntity> company = companyDao.selectByEdinetCode(document.getEdinetCode());
 
             // document period is present && company code is present
-            if (document.getDocumentPeriod().isPresent() && company.flatMap(Company::getCode).isPresent()) {
-                final Optional<AnalysisResult> analysisResult = analysisResultDao.selectByUniqueKey(
-                        company.flatMap(Company::getCode).get(),
+            if (document.getDocumentPeriod().isPresent() && company.flatMap(CompanyEntity::getCode).isPresent()) {
+                final Optional<AnalysisResultEntity> analysisResult = analysisResultDao.selectByUniqueKey(
+                        company.flatMap(CompanyEntity::getCode).get(),
                         document.getDocumentPeriod().get(),
                         document.getDocumentTypeCode(),
                         document.getSubmitDate()

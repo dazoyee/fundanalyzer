@@ -21,7 +21,7 @@ import java.util.Optional;
 @EqualsAndHashCode
 @Entity(immutable = true)
 @Table(name = "edinet_document")
-public class EdinetDocument {
+public class EdinetDocumentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -108,8 +108,8 @@ public class EdinetDocument {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    public static EdinetDocument of(final Results results, final LocalDateTime createdAt) {
-        return new EdinetDocument(
+    public static EdinetDocumentEntity of(final Results results, final LocalDateTime createdAt) {
+        return new EdinetDocumentEntity(
                 null,
                 results.getDocId(),
                 results.getEdinetCode().orElse(null),

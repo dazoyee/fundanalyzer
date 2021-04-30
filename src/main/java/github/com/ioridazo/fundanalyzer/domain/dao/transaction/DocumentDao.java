@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
@@ -17,31 +17,31 @@ import java.util.List;
 public interface DocumentDao {
 
     @Select
-    Document selectByDocumentId(String documentId);
+    DocumentEntity selectByDocumentId(String documentId);
 
     // 検索結果が1件以上存在することを保証する
     @Select(ensureResult = true)
-    Document selectDocumentBy(String edinetCode, String documentTypeCode, LocalDate submitDate, String yearOfPeriod);
+    DocumentEntity selectDocumentBy(String edinetCode, String documentTypeCode, LocalDate submitDate, String yearOfPeriod);
 
     @Select
-    List<Document> selectBySubmitDate(LocalDate submitDate);
+    List<DocumentEntity> selectBySubmitDate(LocalDate submitDate);
 
     @Select
-    List<Document> selectByDocumentTypeCode(List<String> documentTypeCode);
+    List<DocumentEntity> selectByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select
-    List<Document> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
+    List<DocumentEntity> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
 
     @Select
-    List<Document> selectByTypeAndPeriod(String documentTypeCode, String yearOfPeriod);
+    List<DocumentEntity> selectByTypeAndPeriod(String documentTypeCode, String yearOfPeriod);
 
     @Select
-    List<Document> selectByDayOfSubmitDate(String day);
+    List<DocumentEntity> selectByDayOfSubmitDate(String day);
 
     @Transactional
     @Insert(excludeNull = true)
-    Result<Document> insert(Document document);
+    Result<DocumentEntity> insert(DocumentEntity documentEntity);
 
     @Update(excludeNull = true)
-    Result<Document> update(Document document);
+    Result<DocumentEntity> update(DocumentEntity documentEntity);
 }

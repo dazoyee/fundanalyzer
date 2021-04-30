@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
@@ -16,17 +16,17 @@ import java.util.Optional;
 public interface CompanyDao {
 
     @Select
-    List<Company> selectAll();
+    List<CompanyEntity> selectAll();
 
     @Select
-    Optional<Company> selectByEdinetCode(String edinetCode);
+    Optional<CompanyEntity> selectByEdinetCode(String edinetCode);
 
     @Select
-    Optional<Company> selectByCode(String code);
+    Optional<CompanyEntity> selectByCode(String code);
 
     @Insert
-    Result<Company> insert(Company company);
+    Result<CompanyEntity> insert(CompanyEntity companyEntity);
 
     @Update
-    Result<Company> update(Company company);
+    Result<CompanyEntity> update(CompanyEntity companyEntity);
 }

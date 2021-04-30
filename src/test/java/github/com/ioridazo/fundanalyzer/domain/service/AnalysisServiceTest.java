@@ -5,9 +5,9 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -69,7 +69,7 @@ class AnalysisServiceTest {
             var period = LocalDate.parse("2020-12-31");
             var docId = "docId";
             var companyAll = List.of(
-                    new Company(
+                    new CompanyEntity(
                             null,
                             null,
                             1,
@@ -81,7 +81,7 @@ class AnalysisServiceTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "not null",
                             null,
                             2,
@@ -93,7 +93,7 @@ class AnalysisServiceTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             code,
                             "ターゲット",
                             3,
@@ -106,7 +106,7 @@ class AnalysisServiceTest {
                             null
                     )
             );
-            var targetDocument = Document.builder()
+            var targetDocument = DocumentEntity.builder()
                     .documentId(docId)
                     .edinetCode("edinetCode")
                     .documentPeriod(period)
@@ -116,8 +116,8 @@ class AnalysisServiceTest {
                     .build();
 
             when(companyDao.selectAll()).thenReturn(companyAll);
-            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(1, "銀行業", null));
-            when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
+            when(industryDao.selectByName("銀行業")).thenReturn(new IndustryEntity(1, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new IndustryEntity(2, "保険業", null));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(targetDocument));
 
             assertDoesNotThrow(() -> service.analyze(submitDate, targetTypes));
@@ -132,7 +132,7 @@ class AnalysisServiceTest {
             var submitDate = LocalDate.parse("2020-10-04");
             var code = "code";
             var companyAll = List.of(
-                    new Company(
+                    new CompanyEntity(
                             null,
                             null,
                             1,
@@ -144,7 +144,7 @@ class AnalysisServiceTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "not null",
                             null,
                             2,
@@ -156,7 +156,7 @@ class AnalysisServiceTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             code,
                             "ターゲット",
                             3,
@@ -171,8 +171,8 @@ class AnalysisServiceTest {
             );
 
             when(companyDao.selectAll()).thenReturn(companyAll);
-            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(1, "銀行業", null));
-            when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
+            when(industryDao.selectByName("銀行業")).thenReturn(new IndustryEntity(1, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new IndustryEntity(2, "保険業", null));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of());
 
             assertDoesNotThrow(() -> service.analyze(submitDate, targetTypes));
@@ -189,7 +189,7 @@ class AnalysisServiceTest {
             var period = LocalDate.parse("2020-12-31");
             var docId = "docId";
             var companyAll = List.of(
-                    new Company(
+                    new CompanyEntity(
                             null,
                             null,
                             1,
@@ -201,7 +201,7 @@ class AnalysisServiceTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "not null",
                             null,
                             2,
@@ -213,7 +213,7 @@ class AnalysisServiceTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             code,
                             "ターゲット",
                             3,
@@ -226,7 +226,7 @@ class AnalysisServiceTest {
                             null
                     )
             );
-            var targetDocument = Document.builder()
+            var targetDocument = DocumentEntity.builder()
                     .documentId(docId)
                     .edinetCode("edinetCode")
                     .documentPeriod(period)
@@ -236,8 +236,8 @@ class AnalysisServiceTest {
                     .build();
 
             when(companyDao.selectAll()).thenReturn(companyAll);
-            when(industryDao.selectByName("銀行業")).thenReturn(new Industry(1, "銀行業", null));
-            when(industryDao.selectByName("保険業")).thenReturn(new Industry(2, "保険業", null));
+            when(industryDao.selectByName("銀行業")).thenReturn(new IndustryEntity(1, "銀行業", null));
+            when(industryDao.selectByName("保険業")).thenReturn(new IndustryEntity(2, "保険業", null));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(targetDocument));
 
             assertDoesNotThrow(() -> service.analyze(submitDate, targetTypes));

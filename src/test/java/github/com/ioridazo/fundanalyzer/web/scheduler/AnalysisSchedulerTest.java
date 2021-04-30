@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
 import github.com.ioridazo.fundanalyzer.domain.service.StockService;
@@ -62,10 +62,10 @@ class AnalysisSchedulerTest {
             var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
 
             when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-04"))
                             .build(),
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-05"))
                             .build()
             ));
@@ -86,7 +86,7 @@ class AnalysisSchedulerTest {
             var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
 
             when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-07"))
                             .build()
             ));
@@ -103,7 +103,7 @@ class AnalysisSchedulerTest {
         @Test
         void analysisScheduler_throwable() {
             when(documentDao.selectByDocumentTypeCode(List.of("120", "130"))).thenReturn(List.of(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .submitDate(LocalDate.parse("2021-02-06"))
                             .build()
             ));

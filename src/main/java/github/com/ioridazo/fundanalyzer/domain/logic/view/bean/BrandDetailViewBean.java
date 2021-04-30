@@ -1,8 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.view.bean;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import lombok.Value;
 
 import java.time.LocalDate;
@@ -16,13 +16,13 @@ public class BrandDetailViewBean {
 
     private final CorporateViewBean corporateView;
 
-    private final List<AnalysisResult> analysisResultList;
+    private final List<AnalysisResultEntity> analysisResultEntityList;
 
     private final List<BrandDetailFinancialStatement> financialStatement;
 
-    private final List<StockPrice> stockPriceList;
+    private final List<StockPriceEntity> stockPriceEntityList;
 
-    private final List<Minkabu> minkabuList;
+    private final List<MinkabuEntity> minkabuEntityList;
 
     @Value
     public static class BrandDetailFinancialStatement {

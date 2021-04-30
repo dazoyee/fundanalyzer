@@ -7,12 +7,12 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class BrandDetailCorporateViewLogicTest {
     void brandDetailCompanyViewOf_ok() {
         var code = "9999";
 
-        when(companyDao.selectByCode(code)).thenReturn(Optional.of(new Company(
+        when(companyDao.selectByCode(code)).thenReturn(Optional.of(new CompanyEntity(
                 "code",
                 "name",
                 1,
@@ -73,9 +73,9 @@ class BrandDetailCorporateViewLogicTest {
                 null,
                 null
         )));
-        when(industryDao.selectById(1)).thenReturn(new Industry(1, "industry", null));
+        when(industryDao.selectById(1)).thenReturn(new IndustryEntity(1, "industry", null));
         when(stockPriceDao.selectByCode(code)).thenReturn(List.of(
-                new StockPrice(
+                new StockPriceEntity(
                         1,
                         "code",
                         null,
@@ -121,7 +121,7 @@ class BrandDetailCorporateViewLogicTest {
         var code = "9999";
 
         when(financialStatementDao.selectByCode(code)).thenReturn(List.of(
-                new FinancialStatement(
+                new FinancialStatementEntity(
                         1,
                         "9999",
                         null,
@@ -135,7 +135,7 @@ class BrandDetailCorporateViewLogicTest {
                         null,
                         null
                 ),
-                new FinancialStatement(
+                new FinancialStatementEntity(
                         2,
                         "9999",
                         null,
@@ -149,7 +149,7 @@ class BrandDetailCorporateViewLogicTest {
                         null,
                         null
                 ),
-                new FinancialStatement(
+                new FinancialStatementEntity(
                         3,
                         "9999",
                         null,
@@ -163,7 +163,7 @@ class BrandDetailCorporateViewLogicTest {
                         null,
                         null
                 ),
-                new FinancialStatement(
+                new FinancialStatementEntity(
                         4,
                         "9999",
                         null,
@@ -177,7 +177,7 @@ class BrandDetailCorporateViewLogicTest {
                         null,
                         null
                 ),
-                new FinancialStatement(
+                new FinancialStatementEntity(
                         5,
                         "9999",
                         null,
@@ -192,9 +192,9 @@ class BrandDetailCorporateViewLogicTest {
                         null
                 )
         ));
-        when(bsSubjectDao.selectById("1")).thenReturn(new BsSubject("1", "1", "1", "subject1"));
-        when(bsSubjectDao.selectById("2")).thenReturn(new BsSubject("2", "1", "2", "subject2"));
-        when(plSubjectDao.selectById("1")).thenReturn(new PlSubject("1", "1", "1", "subject1"));
+        when(bsSubjectDao.selectById("1")).thenReturn(new BsSubjectEntity("1", "1", "1", "subject1"));
+        when(bsSubjectDao.selectById("2")).thenReturn(new BsSubjectEntity("2", "1", "2", "subject2"));
+        when(plSubjectDao.selectById("1")).thenReturn(new PlSubjectEntity("1", "1", "1", "subject1"));
 
         var actual = logic.brandDetailFinancialStatement(code);
 

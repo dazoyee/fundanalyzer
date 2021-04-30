@@ -31,10 +31,10 @@ public class CorporatePresenter {
         final var brandDetail = viewService.brandDetailView(code + "0");
         model.addAttribute("corporate", brandDetail.getCorporate());
         model.addAttribute("corporateView", brandDetail.getCorporateView());
-        model.addAttribute("analysisResults", brandDetail.getAnalysisResultList());
+        model.addAttribute("analysisResults", brandDetail.getAnalysisResultEntityList());
         model.addAttribute("financialStatements", brandDetail.getFinancialStatement());
-        model.addAttribute("forecastStocks", brandDetail.getMinkabuList());
-        model.addAttribute("stockPrices", brandDetail.getStockPriceList());
+        model.addAttribute("forecastStocks", brandDetail.getMinkabuEntityList());
+        model.addAttribute("stockPrices", brandDetail.getStockPriceEntityList());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
         return CORPORATE;
     }

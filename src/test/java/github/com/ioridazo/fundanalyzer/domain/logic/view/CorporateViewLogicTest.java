@@ -5,11 +5,11 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +58,7 @@ class CorporateViewLogicTest {
     @DisplayName("corporateViewOf : CorporateViewBeanを生成する")
     @Test
     void corporateViewOf_ok() {
-        var company = new Company(
+        var company = new CompanyEntity(
                 "code",
                 "会社名",
                 1,
@@ -113,7 +113,7 @@ class CorporateViewLogicTest {
         @DisplayName("latestSubmitDate : 対象の書類が存在したときの処理を確認する")
         @Test
         void latestSubmitDate_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -126,7 +126,7 @@ class CorporateViewLogicTest {
                     null
             );
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .edinetCode("edinetCode")
                     .submitDate(LocalDate.parse("2020-10-11"))
                     .build();
@@ -139,7 +139,7 @@ class CorporateViewLogicTest {
         @DisplayName("latestSubmitDate : 対象の書類が存在しないときの処理を確認する")
         @Test
         void latestSubmitDate_nothing() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -152,7 +152,7 @@ class CorporateViewLogicTest {
                     null
             );
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .edinetCode("edinetCode2")
                     .submitDate(LocalDate.parse("2020-10-11"))
                     .build();
@@ -169,7 +169,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 企業価値等が算出されることを確認する")
         @Test
         void corporateValue_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -181,8 +181,8 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
-            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 
@@ -200,7 +200,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 企業価値に関する値が存在しないときの処理を確認する")
         @Test
         void corporateValue_nothing() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -228,7 +228,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 企業価値を算出するロジックを確認する")
         @Test
         void corporateValue_scale() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -240,7 +240,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(
+            var analysisResult1 = new AnalysisResultEntity(
                     1,
                     "code",
                     LocalDate.parse("2020-06-30"),
@@ -267,7 +267,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 企業価値を算出するロジックを確認する")
         @Test
         void corporateValue_sd() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -279,8 +279,8 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), "120", null, null, null);
-            var analysisResult2 = new AnalysisResult(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), "120", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500.250515), "120", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(418.02101), "120", null, null, null);
 
             when(analysisResultDao.selectByCompanyCode("code")).thenReturn(List.of(analysisResult1, analysisResult2));
 
@@ -298,7 +298,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 最新企業価値が複数存在するときに訂正版を取得する")
         @Test
         void corporateValue_latest_multiple() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -310,7 +310,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(
+            var analysisResult1 = new AnalysisResultEntity(
                     1,
                     "code",
                     LocalDate.parse("2021-03-31"),
@@ -320,7 +320,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult2 = new AnalysisResult(
+            var analysisResult2 = new AnalysisResultEntity(
                     2,
                     "code",
                     LocalDate.parse("2021-03-31"),
@@ -341,7 +341,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 企業価値が重複して存在するときに訂正版を基に算出する")
         @Test
         void corporateValue_average_multiple() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -353,7 +353,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(
+            var analysisResult1 = new AnalysisResultEntity(
                     1,
                     "code",
                     LocalDate.parse("2020-06-30"),
@@ -363,7 +363,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult2 = new AnalysisResult(
+            var analysisResult2 = new AnalysisResultEntity(
                     2,
                     "code",
                     LocalDate.parse("2020-06-30"),
@@ -373,7 +373,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult3 = new AnalysisResult(
+            var analysisResult3 = new AnalysisResultEntity(
                     3,
                     "code",
                     LocalDate.parse("2019-06-30"),
@@ -400,7 +400,7 @@ class CorporateViewLogicTest {
         @DisplayName("corporateValue : 企業価値が重複して存在するときに訂正版を基に算出する")
         @Test
         void corporateValue_sd_multiple() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -412,7 +412,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult1 = new AnalysisResult(
+            var analysisResult1 = new AnalysisResultEntity(
                     1,
                     "code",
                     LocalDate.parse("2020-06-30"),
@@ -422,7 +422,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult2 = new AnalysisResult(
+            var analysisResult2 = new AnalysisResultEntity(
                     2,
                     "code",
                     LocalDate.parse("2020-06-30"),
@@ -432,7 +432,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var analysisResult3 = new AnalysisResult(
+            var analysisResult3 = new AnalysisResultEntity(
                     3,
                     "code",
                     LocalDate.parse("2019-06-30"),
@@ -463,7 +463,7 @@ class CorporateViewLogicTest {
         @DisplayName("stockPrice : 株価取得できることを確認する")
         @Test
         void stockPrice_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -476,7 +476,7 @@ class CorporateViewLogicTest {
                     null
             );
             var submitDate = LocalDate.parse("2020-10-08");
-            var stockPrice1 = new StockPrice(
+            var stockPrice1 = new StockPriceEntity(
                     null,
                     null,
                     LocalDate.parse("2020-10-07"),
@@ -495,7 +495,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var stockPrice2 = new StockPrice(
+            var stockPrice2 = new StockPriceEntity(
                     null,
                     null,
                     LocalDate.parse("2020-10-08"),
@@ -514,7 +514,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var stockPrice3 = new StockPrice(
+            var stockPrice3 = new StockPriceEntity(
                     null,
                     null,
                     LocalDate.parse("2020-10-09"),
@@ -533,7 +533,7 @@ class CorporateViewLogicTest {
                     null,
                     null
             );
-            var latestStockPrice = new StockPrice(
+            var latestStockPrice = new StockPriceEntity(
                     null,
                     null,
                     LocalDate.parse("2020-10-10"),
@@ -568,7 +568,7 @@ class CorporateViewLogicTest {
         @DisplayName("stockPrice : 株価取得できないときの処理を確認する")
         @Test
         void stockPrice_nothing() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -628,7 +628,7 @@ class CorporateViewLogicTest {
         @DisplayName("forecastStock : 最新のみんかぶ株価予想を取得する")
         @Test
         void forecastStock_ok() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -642,7 +642,7 @@ class CorporateViewLogicTest {
             );
 
             when(minkabuDao.selectByCode("code")).thenReturn(List.of(
-                    new Minkabu(
+                    new MinkabuEntity(
                             null,
                             "code",
                             LocalDate.parse("2020-12-12"),
@@ -653,7 +653,7 @@ class CorporateViewLogicTest {
                             null,
                             null
                     ),
-                    new Minkabu(
+                    new MinkabuEntity(
                             null,
                             "code",
                             LocalDate.parse("2020-10-12"),
@@ -673,7 +673,7 @@ class CorporateViewLogicTest {
         @DisplayName("forecastStock : みんかぶ株価予想が存在しないときはnullを返却する")
         @Test
         void forecastStock_null() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,

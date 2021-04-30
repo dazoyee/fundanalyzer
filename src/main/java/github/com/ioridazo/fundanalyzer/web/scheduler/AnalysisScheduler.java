@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -64,7 +64,7 @@ public class AnalysisScheduler {
         try {
             final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
             final List<LocalDate> submitDateList = documentDao.selectByDocumentTypeCode(docTypeCode).stream()
-                    .map(Document::getSubmitDate)
+                    .map(DocumentEntity::getSubmitDate)
                     // データベースの最新提出日を取得
                     .max(LocalDate::compareTo)
                     // 次の日から

@@ -5,8 +5,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
@@ -55,7 +55,7 @@ class EdinetDetailViewLogicTest {
         void edinetDetailView_ok() {
             var submitDate = LocalDate.parse("2020-12-14");
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -69,7 +69,7 @@ class EdinetDetailViewLogicTest {
             );
             var allTargetCompanies = List.of(company);
             var period = LocalDate.parse("2020-12-31");
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .documentId("documentId")
                     .documentTypeCode(DocumentTypeCode.DTC_120.toValue())
                     .edinetCode("edinetCode")
@@ -110,8 +110,8 @@ class EdinetDetailViewLogicTest {
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),
-                    () -> assertEquals(company, actual.getDocumentDetailList().get(0).getCompany()),
-                    () -> assertEquals(document, actual.getDocumentDetailList().get(0).getDocument()),
+                    () -> assertEquals(company, actual.getDocumentDetailList().get(0).getCompanyEntity()),
+                    () -> assertEquals(document, actual.getDocumentDetailList().get(0).getDocumentEntity()),
                     () -> assertAll("ValuesForAnalysis",
                             () -> assertEquals(1000L, actual.getDocumentDetailList().get(0).getValues().getTotalCurrentAssets()),
                             () -> assertEquals(2000L, actual.getDocumentDetailList().get(0).getValues().getTotalInvestmentsAndOtherAssets()),
@@ -128,7 +128,7 @@ class EdinetDetailViewLogicTest {
         void edinetDetailView_value_is_null() {
             var submitDate = LocalDate.parse("2020-12-14");
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -142,7 +142,7 @@ class EdinetDetailViewLogicTest {
             );
             var allTargetCompanies = List.of(company);
             var period = LocalDate.parse("2020-12-31");
-            var document = Document.builder()
+            var document = DocumentEntity.builder()
                     .documentId("documentId")
                     .documentTypeCode(DocumentTypeCode.DTC_120.toValue())
                     .edinetCode("edinetCode")
@@ -183,7 +183,7 @@ class EdinetDetailViewLogicTest {
 
             assertAll("EdinetDetailViewBean",
                     () -> assertEquals(edinetListViewBean, actual.getEdinetListView()),
-                    () -> assertEquals(document, actual.getDocumentDetailList().get(0).getDocument()),
+                    () -> assertEquals(document, actual.getDocumentDetailList().get(0).getDocumentEntity()),
                     () -> assertAll("ValuesForAnalysis",
                             () -> assertEquals(1000L, actual.getDocumentDetailList().get(0).getValues().getTotalCurrentAssets()),
                             () -> assertEquals(2000L, actual.getDocumentDetailList().get(0).getValues().getTotalInvestmentsAndOtherAssets()),

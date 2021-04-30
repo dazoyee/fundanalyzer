@@ -11,12 +11,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.PlEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -84,7 +84,7 @@ public class AnalysisLogic {
         final var document = documentDao.selectByDocumentId(documentId);
         final var companyCode = Converter.toCompanyCode(document.getEdinetCode(), companyDao.selectAll()).orElseThrow();
         try {
-            analysisResultDao.insert(AnalysisResult.of(
+            analysisResultDao.insert(AnalysisResultEntity.of(
                     companyCode,
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     calculate(companyCode, document),
@@ -116,17 +116,17 @@ public class AnalysisLogic {
      * 企業価値を算出する
      *
      * @param companyCode 企業コード
-     * @param document    ドキュメント
+     * @param documentEntity    ドキュメント
      * @return 企業価値
      */
-    BigDecimal calculate(final String companyCode, final Document document) {
+    BigDecimal calculate(final String companyCode, final DocumentEntity documentEntity) {
         final var company = companyDao.selectByCode(companyCode).orElseThrow();
         final FsValueParameter parameter = FsValueParameter.of(
                 company,
-                document.getDocumentPeriod()
+                documentEntity.getDocumentPeriod()
                         .orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
-                document.getSubmitDate()
+                DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode()),
+                documentEntity.getSubmitDate()
         );
 
         // 流動資産合計
@@ -162,15 +162,15 @@ public class AnalysisLogic {
     @NewSpan("AnalysisLogic.bsValue")
     public Long bsValue(final BsEnum bsEnum, final FsValueParameter parameter) {
         return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
-                .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
+                .sorted(Comparator.comparing(BsSubjectEntity::getDetailSubjectId))
                 .map(bsSubject -> financialStatementDao.selectByUniqueKey(
-                        parameter.getCompany().getEdinetCode(),
+                        parameter.getCompanyEntity().getEdinetCode(),
                         FinancialStatementEnum.BALANCE_SHEET.toValue(),
                         bsSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
                         parameter.getDocumentTypeCode().toValue(),
                         parameter.getSubmitDate()
-                        ).flatMap(FinancialStatement::getValue)
+                        ).flatMap(FinancialStatementEntity::getValue)
                 )
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -181,7 +181,7 @@ public class AnalysisLogic {
                         bsEnum.getSubject(),
                         document -> {
                             if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedBs()))) {
-                                documentDao.update(Document.ofUpdateBsToHalfWay(document.getDocumentId(), nowLocalDateTime()));
+                                documentDao.update(DocumentEntity.ofUpdateBsToHalfWay(document.getDocumentId(), nowLocalDateTime()));
                             }
                         }));
     }
@@ -196,15 +196,15 @@ public class AnalysisLogic {
     @NewSpan("AnalysisLogic.plValue")
     public Long plValue(final PlEnum plEnum, final FsValueParameter parameter) {
         return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
-                .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
+                .sorted(Comparator.comparing(PlSubjectEntity::getDetailSubjectId))
                 .map(plSubject -> financialStatementDao.selectByUniqueKey(
-                        parameter.getCompany().getEdinetCode(),
+                        parameter.getCompanyEntity().getEdinetCode(),
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.toValue(),
                         plSubject.getId(),
                         String.valueOf(parameter.getPeriod().getYear()),
                         parameter.getDocumentTypeCode().toValue(),
                         parameter.getSubmitDate()
-                        ).flatMap(FinancialStatement::getValue)
+                        ).flatMap(FinancialStatementEntity::getValue)
                 )
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -215,7 +215,7 @@ public class AnalysisLogic {
                         plEnum.getSubject(),
                         document -> {
                             if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedPl()))) {
-                                documentDao.update(Document.ofUpdatePlToHalfWay(document.getDocumentId(), nowLocalDateTime()));
+                                documentDao.update(DocumentEntity.ofUpdatePlToHalfWay(document.getDocumentId(), nowLocalDateTime()));
                             }
                         }));
     }
@@ -229,21 +229,21 @@ public class AnalysisLogic {
     @NewSpan("AnalysisLogic.nsValue")
     public Long nsValue(final FsValueParameter parameter) {
         return financialStatementDao.selectByUniqueKey(
-                parameter.getCompany().getEdinetCode(),
+                parameter.getCompanyEntity().getEdinetCode(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
                 "0",
                 String.valueOf(parameter.getPeriod().getYear()),
                 parameter.getDocumentTypeCode().toValue(),
                 parameter.getSubmitDate()
         )
-                .flatMap(FinancialStatement::getValue)
+                .flatMap(FinancialStatementEntity::getValue)
                 .orElseThrow(() -> fsValueThrow(
                         "  株式総数",
                         parameter,
                         "株式総数",
                         document -> {
                             if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(document.getScrapedNumberOfShares()))) {
-                                documentDao.update(Document.ofUpdateNumberOfSharesToHalfWay(document.getDocumentId(), nowLocalDateTime()));
+                                documentDao.update(DocumentEntity.ofUpdateNumberOfSharesToHalfWay(document.getDocumentId(), nowLocalDateTime()));
                             }
                         }));
     }
@@ -261,26 +261,26 @@ public class AnalysisLogic {
             final String fsName,
             final FsValueParameter parameter,
             final String subjectName,
-            final Consumer<Document> updateDocument) {
+            final Consumer<DocumentEntity> updateDocument) {
         try {
-            final Document document = documentDao.selectDocumentBy(
-                    Converter.toEdinetCode(parameter.getCompany().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
+            final DocumentEntity documentEntity = documentDao.selectDocumentBy(
+                    Converter.toEdinetCode(parameter.getCompanyEntity().getCode().orElseThrow(), companyDao.selectAll()).orElseThrow(),
                     parameter.getDocumentTypeCode().toValue(),
                     parameter.getSubmitDate(),
                     String.valueOf(parameter.getPeriod().getYear())
             );
 
             // ステータスをHALF_WAY（途中）に更新する
-            updateDocument.accept(document);
+            updateDocument.accept(documentEntity);
 
             log.warn(
                     "{}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                             "\t会社コード:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
                     fsName,
-                    parameter.getCompany().getCode().orElseThrow(),
+                    parameter.getCompanyEntity().getCode().orElseThrow(),
                     subjectName,
                     parameter.getPeriod(),
-                    document.getPlDocumentPath()
+                    documentEntity.getPlDocumentPath()
             );
 
         } catch (NestedRuntimeException e) {
@@ -288,7 +288,7 @@ public class AnalysisLogic {
                     "{}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                             "\t会社コード:{}\t科目名:{}\t対象年:{}",
                     fsName,
-                    parameter.getCompany().getCode().orElseThrow(),
+                    parameter.getCompanyEntity().getCode().orElseThrow(),
                     subjectName,
                     parameter.getPeriod()
             );
@@ -297,7 +297,7 @@ public class AnalysisLogic {
                 log.warn(
                         "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
                                 "\t会社コード:{}\t書類種別コード:{}\t提出日:{}\t対象年:{}",
-                        parameter.getCompany().getCode().orElseThrow(),
+                        parameter.getCompanyEntity().getCode().orElseThrow(),
                         parameter.getDocumentTypeCode().toValue(),
                         parameter.getSubmitDate(),
                         String.valueOf(parameter.getPeriod().getYear())
@@ -314,7 +314,7 @@ public class AnalysisLogic {
     @SuppressWarnings("RedundantModifiersValueLombok")
     @Value(staticConstructor = "of")
     public static class FsValueParameter {
-        private final Company company;
+        private final CompanyEntity companyEntity;
         private final LocalDate period;
         private final DocumentTypeCode documentTypeCode;
         private final LocalDate submitDate;

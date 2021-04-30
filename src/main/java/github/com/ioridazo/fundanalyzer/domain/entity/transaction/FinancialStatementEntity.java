@@ -17,7 +17,7 @@ import java.util.Optional;
 @Value
 @Entity(immutable = true)
 @Table(name = "financial_statement")
-public class FinancialStatement {
+public class FinancialStatementEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,7 +46,7 @@ public class FinancialStatement {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
-    public static FinancialStatement of(
+    public static FinancialStatementEntity of(
             final String companyCode,
             final String edinetCode,
             final String financialStatementId,
@@ -58,7 +58,7 @@ public class FinancialStatement {
             final LocalDate submitDate,
             final String documentId,
             final LocalDateTime createdAt) {
-        return new FinancialStatement(
+        return new FinancialStatementEntity(
                 null,
                 companyCode,
                 edinetCode,

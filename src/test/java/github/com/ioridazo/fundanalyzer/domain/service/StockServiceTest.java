@@ -5,10 +5,10 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Minkabu;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPrice;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScraping;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.MinkabuResultBean;
@@ -69,11 +69,11 @@ class StockServiceTest {
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate)).thenReturn(List.of(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .edinetCode("edinetCode")
                             .build()
             ));
-            when(companyDao.selectAll()).thenReturn(List.of(new Company(
+            when(companyDao.selectAll()).thenReturn(List.of(new CompanyEntity(
                     "code",
                     "会社名",
                     1,
@@ -118,7 +118,7 @@ class StockServiceTest {
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
 
-            verify(stockPriceDao, times(1)).insert(new StockPrice(
+            verify(stockPriceDao, times(1)).insert(new StockPriceEntity(
                     null,
                     "code",
                     LocalDate.parse("2020-11-01"),
@@ -155,7 +155,7 @@ class StockServiceTest {
                     "1000",
                     "1000"
             )));
-            when(stockPriceDao.selectByCode(code)).thenReturn(List.of(new StockPrice(
+            when(stockPriceDao.selectByCode(code)).thenReturn(List.of(new StockPriceEntity(
                     1,
                     "code",
                     LocalDate.parse("2020-11-01"),
@@ -179,7 +179,7 @@ class StockServiceTest {
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
 
-            verify(stockPriceDao, times(0)).insert(new StockPrice(
+            verify(stockPriceDao, times(0)).insert(new StockPriceEntity(
                     null,
                     "code",
                     LocalDate.parse("2020-11-01"),
@@ -198,7 +198,7 @@ class StockServiceTest {
                     "1",
                     createdAt
             ));
-            verify(stockPriceDao, times(1)).insert(new StockPrice(
+            verify(stockPriceDao, times(1)).insert(new StockPriceEntity(
                     null,
                     "code",
                     LocalDate.parse("2020-11-14"),
@@ -241,7 +241,7 @@ class StockServiceTest {
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
 
-            verify(minkabuDao, times(1)).insert(new Minkabu(
+            verify(minkabuDao, times(1)).insert(new MinkabuEntity(
                     null,
                     "code",
                     MonthDay.parse("--11-27").atYear(LocalDate.now().getYear()),
@@ -285,7 +285,7 @@ class StockServiceTest {
                     "1000"
             )));
             when(stockPriceDao.selectByCode(code)).thenReturn(List.of(
-                    new StockPrice(
+                    new StockPriceEntity(
                             1,
                             "code",
                             LocalDate.parse("2020-11-01"),
@@ -304,7 +304,7 @@ class StockServiceTest {
                             "1",
                             createdAt
                     ),
-                    new StockPrice(
+                    new StockPriceEntity(
                             2,
                             "code",
                             LocalDate.parse("2020-11-14"),
@@ -338,7 +338,7 @@ class StockServiceTest {
 
             assertDoesNotThrow(() -> service.importStockPrice(code));
 
-            verify(stockPriceDao, times(0)).insert(new StockPrice(
+            verify(stockPriceDao, times(0)).insert(new StockPriceEntity(
                     null,
                     "code",
                     LocalDate.parse("2020-11-01"),
@@ -357,7 +357,7 @@ class StockServiceTest {
                     "1",
                     createdAt
             ));
-            verify(stockPriceDao, times(0)).insert(new StockPrice(
+            verify(stockPriceDao, times(0)).insert(new StockPriceEntity(
                     null,
                     "code",
                     LocalDate.parse("2020-11-14"),

@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -34,17 +34,17 @@ public class XbrlScraping {
      * 対象のフォルダ配下にあるファイルからキーワードに合致するものを返却する
      *
      * @param filePath        フォルダパス
-     * @param scrapingKeyword キーワード
+     * @param scrapingKeywordEntity キーワード
      * @return キーワードに合致するファイル
      */
     @NewSpan("XbrlScraping.findFile")
-    public Optional<File> findFile(final File filePath, final ScrapingKeyword scrapingKeyword) {
+    public Optional<File> findFile(final File filePath, final ScrapingKeywordEntity scrapingKeywordEntity) {
         // 対象のディレクトリから"honbun"ファイルを取得
         final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()
                 .filter(File::isFile)
                 .map(file -> new File(filePath, file.getName()))
                 // キーワードが存在するものを見つける
-                .filter(filePathName -> elementsByKeyMatch(filePathName, KeyMatch.of("name", scrapingKeyword.getKeyword())).hasText())
+                .filter(filePathName -> elementsByKeyMatch(filePathName, KeyMatch.of("name", scrapingKeywordEntity.getKeyword())).hasText())
                 .collect(Collectors.toList());
 
         if (filePathList.size() == 1) {
@@ -54,15 +54,15 @@ public class XbrlScraping {
             // ファイルがみつからなかったとき
             FundanalyzerLogClient.logLogic(MessageFormat.format(
                     "次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{0}\tキーワード:{1}",
-                    scrapingKeyword.getRemarks(),
-                    scrapingKeyword.getKeyword()),
+                    scrapingKeywordEntity.getRemarks(),
+                    scrapingKeywordEntity.getKeyword()),
                     Category.DOCUMENT,
                     Process.SCRAPING
             );
             return Optional.empty();
         } else {
             // ファイルが複数見つかったとき
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", scrapingKeyword.getKeyword(), file));
+            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", scrapingKeywordEntity.getKeyword(), file));
             throw new FundanalyzerFileException("ファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
 
         }

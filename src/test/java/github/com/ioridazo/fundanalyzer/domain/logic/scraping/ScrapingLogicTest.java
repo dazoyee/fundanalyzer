@@ -10,12 +10,12 @@ import github.com.ioridazo.fundanalyzer.domain.entity.BsEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubject;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeyword;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatement;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
@@ -116,7 +116,7 @@ class ScrapingLogicTest {
                     new File(pathEdinet + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate),
                     new AcquisitionRequestParameter(docId, AcquisitionType.DEFAULT)
             );
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(docId)
                     .downloaded(DocumentStatus.DONE.toValue())
                     .updatedAt(updated)
@@ -125,7 +125,7 @@ class ScrapingLogicTest {
                     new File(pathEdinet + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate + "/" + docId),
                     new File(pathDecode + "/" + targetDate.getYear() + "/" + targetDate.getMonth() + "/" + targetDate + "/" + docId)
             );
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(docId)
                     .decoded(DocumentStatus.DONE.toValue())
                     .updatedAt(updated)
@@ -147,7 +147,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.download(docId, targetDate));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(docId)
                     .downloaded(DocumentStatus.ERROR.toValue())
                     .updatedAt(updated)
@@ -169,7 +169,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.download(docId, targetDate));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(docId)
                     .decoded(DocumentStatus.ERROR.toValue())
                     .updatedAt(updated)
@@ -186,9 +186,9 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocTypeCode("120");
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -201,7 +201,7 @@ class ScrapingLogicTest {
                     null
             );
             var file = new File("");
-            var scrapingKeyword = new ScrapingKeyword(null, null, null, null, null);
+            var scrapingKeyword = new ScrapingKeywordEntity(null, null, null, null, null);
             var targetFile = Pair.of(file, scrapingKeyword);
             var updated = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -233,7 +233,7 @@ class ScrapingLogicTest {
                     eq(edinetDocument)
             );
             verify(scrapingLogic, times(1)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
+            verify(documentDao, times(1)).update(DocumentEntity.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -248,9 +248,9 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT;
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocTypeCode("120");
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -263,7 +263,7 @@ class ScrapingLogicTest {
                     null
             );
             var file = new File("");
-            var scrapingKeyword = new ScrapingKeyword(null, null, null, null, null);
+            var scrapingKeyword = new ScrapingKeywordEntity(null, null, null, null, null);
             var targetFile = Pair.of(file, scrapingKeyword);
             var updated = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -294,7 +294,7 @@ class ScrapingLogicTest {
                     eq(edinetDocument)
             );
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
+            verify(documentDao, times(1)).update(DocumentEntity.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -309,9 +309,9 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES;
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocTypeCode("120");
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -324,7 +324,7 @@ class ScrapingLogicTest {
                     null
             );
             var file = new File("");
-            var scrapingKeyword = new ScrapingKeyword(null, null, "keyword", null, null);
+            var scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null);
             var targetFile = Pair.of(file, scrapingKeyword);
             var updated = LocalDateTime.of(2020, 9, 26, 12, 18);
 
@@ -354,7 +354,7 @@ class ScrapingLogicTest {
                     any()
             );
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
+            verify(documentDao, times(1)).update(DocumentEntity.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.DONE,
@@ -369,10 +369,10 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES;
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodEnd("2020-09-30");
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -402,9 +402,9 @@ class ScrapingLogicTest {
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var documentId = "documentId";
             var date = LocalDate.parse("2020-09-26");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocTypeCode("120");
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -431,7 +431,7 @@ class ScrapingLogicTest {
             verify(scrapingLogic, times(0))
                     .insertFinancialStatement(any(), any(), any(), any(), any(), any());
             verify(scrapingLogic, times(0)).checkBs(company, edinetDocument);
-            verify(documentDao, times(1)).update(Document.ofUpdateSwitchFs(
+            verify(documentDao, times(1)).update(DocumentEntity.ofUpdateSwitchFs(
                     fs,
                     documentId,
                     DocumentStatus.ERROR,
@@ -445,7 +445,7 @@ class ScrapingLogicTest {
         void findTargetFile_ok() throws FundanalyzerFileException {
             var targetFile = new File("");
             var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "keyword",
@@ -467,7 +467,7 @@ class ScrapingLogicTest {
         void findTargetFile_FundanalyzerFileException() throws FundanalyzerFileException {
             var targetFile = new File("");
             var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "keyword",
@@ -486,7 +486,7 @@ class ScrapingLogicTest {
         @Test
         void insertFinancialStatement_insert_foreach() throws FundanalyzerFileException {
             var targetFile = new File("");
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "keyword",
@@ -494,7 +494,7 @@ class ScrapingLogicTest {
                     null
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -506,13 +506,13 @@ class ScrapingLogicTest {
                     null,
                     null
             );
-            var detailList = List.of(new BsSubject(
+            var detailList = List.of(new BsSubjectEntity(
                     "1",
                     null,
                     null,
                     "科目"
             ));
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
@@ -527,7 +527,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(targetFile, scrapingKeyword, fs, company, detailList, edinetDocument));
 
-            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(1)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -548,7 +548,7 @@ class ScrapingLogicTest {
         @Test
         void insertFinancialStatement_not_insert() throws FundanalyzerFileException {
             var targetFile = new File("");
-            var scrapingKeyword = new ScrapingKeyword(
+            var scrapingKeyword = new ScrapingKeywordEntity(
                     null,
                     null,
                     "keyword",
@@ -556,7 +556,7 @@ class ScrapingLogicTest {
                     null
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -568,13 +568,13 @@ class ScrapingLogicTest {
                     null,
                     null
             );
-            var detailList = List.of(new BsSubject(
+            var detailList = List.of(new BsSubjectEntity(
                     "1",
                     null,
                     null,
                     "科目"
             ));
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
@@ -590,7 +590,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(targetFile, scrapingKeyword, fs, company, detailList, edinetDocument));
 
-            verify(financialStatementDao, times(0)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(0)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -609,7 +609,7 @@ class ScrapingLogicTest {
         @DisplayName("insertFinancialStatement : DB登録することを確認する")
         @Test
         void insertFinancialStatement_insert() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -623,7 +623,7 @@ class ScrapingLogicTest {
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
@@ -636,7 +636,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
 
-            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(1)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -655,7 +655,7 @@ class ScrapingLogicTest {
         @DisplayName("insertFinancialStatement : 一意制約違反のときはDB登録しないことを確認する")
 //        @Test
         void insertFinancialStatement_UniqueConstraintException() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -669,7 +669,7 @@ class ScrapingLogicTest {
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
@@ -683,7 +683,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
 
-            verify(financialStatementDao, times(0)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(0)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -702,7 +702,7 @@ class ScrapingLogicTest {
         @DisplayName("insertFinancialStatement : throwされることを確認する")
         @Test
         void insertFinancialStatement_Exception() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -716,7 +716,7 @@ class ScrapingLogicTest {
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
             var value = 1000L;
@@ -729,7 +729,7 @@ class ScrapingLogicTest {
         @DisplayName("insertFinancialStatement : periodが存在するときはパースしてparseを生成する")
         @Test
         void insertFinancialStatement_parsePeriod_period_present() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -743,7 +743,7 @@ class ScrapingLogicTest {
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setPeriodStart("2020-01-01");
@@ -756,7 +756,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
 
-            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(1)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -775,7 +775,7 @@ class ScrapingLogicTest {
         @DisplayName("insertFinancialStatement : periodが存在しないときは親書類からparseを生成する")
         @Test
         void insertFinancialStatement_parsePeriod_period_null_edinetDocument_present() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -789,12 +789,12 @@ class ScrapingLogicTest {
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId1");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setSubmitDateTime("2021-03-20 20:22");
             edinetDocument.setParentDocId("docId");
-            var parentEdinetDocument = new EdinetDocument();
+            var parentEdinetDocument = new EdinetDocumentEntity();
             parentEdinetDocument.setPeriodStart("2020-01-01");
             parentEdinetDocument.setPeriodEnd("2020-12-31");
             var value = 1000L;
@@ -805,7 +805,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
 
-            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(1)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -824,7 +824,7 @@ class ScrapingLogicTest {
         @DisplayName("insertFinancialStatement : periodも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
         @Test
         void insertFinancialStatement_parsePeriod_period_null_edinetDocument_null() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -838,7 +838,7 @@ class ScrapingLogicTest {
             );
             var fs = FinancialStatementEnum.BALANCE_SHEET;
             var dId = "0";
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("docId1");
             edinetDocument.setDocTypeCode("120");
             edinetDocument.setSubmitDateTime("2021-03-20 20:22");
@@ -849,7 +849,7 @@ class ScrapingLogicTest {
 
             assertDoesNotThrow(() -> scrapingLogic.insertFinancialStatement(company, fs, dId, edinetDocument, value));
 
-            verify(financialStatementDao, times(1)).insert(new FinancialStatement(
+            verify(financialStatementDao, times(1)).insert(new FinancialStatementEntity(
                     null,
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
@@ -869,7 +869,7 @@ class ScrapingLogicTest {
         @DisplayName("checkBs : 既に登録した流動負債合計と負債合計の金額が一致していたら、固定負債合計に0としてDBに登録することを確認する")
         @Test
         void checkBs_insert() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -881,14 +881,14 @@ class ScrapingLogicTest {
                     null,
                     null
             );
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             var targetType = DocumentTypeCode.DTC_120;
             edinetDocument.setDocTypeCode(targetType.toValue());
             var submitDateTime = "2021-03-20 23:00";
             edinetDocument.setSubmitDateTime(submitDateTime);
             var submitDate = LocalDate.parse(submitDateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            var totalCurrentLiabilities = new BsSubject("1", null, null, null);
-            var fsTotalCurrentLiabilities = new FinancialStatement(
+            var totalCurrentLiabilities = new BsSubjectEntity("1", null, null, null);
+            var fsTotalCurrentLiabilities = new FinancialStatementEntity(
                     null,
                     null,
                     null,
@@ -902,8 +902,8 @@ class ScrapingLogicTest {
                     null,
                     null
             );
-            var totalLiabilities = new BsSubject("2", null, null, null);
-            var fsTotalLiabilities = new FinancialStatement(
+            var totalLiabilities = new BsSubjectEntity("2", null, null, null);
+            var fsTotalLiabilities = new FinancialStatementEntity(
                     null,
                     null,
                     null,
@@ -939,7 +939,7 @@ class ScrapingLogicTest {
                     submitDate
             )).thenReturn(Optional.of(fsTotalLiabilities));
             doNothing().when(scrapingLogic).insertFinancialStatement(eq(company), any(), any(), eq(edinetDocument), eq(0L));
-            when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));
+            when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubjectEntity("1", null, null, null));
 
             assertDoesNotThrow(() -> scrapingLogic.checkBs(company, edinetDocument));
 
@@ -949,7 +949,7 @@ class ScrapingLogicTest {
         @DisplayName("checkBs : 既に登録した流動負債合計と負債合計の金額が一致していなかったら、DBに登録しないことを確認する")
         @Test
         void checkBs_not_insert() {
-            var company = new Company(
+            var company = new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -961,14 +961,14 @@ class ScrapingLogicTest {
                     null,
                     null
             );
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             var targetType = DocumentTypeCode.DTC_120;
             edinetDocument.setDocTypeCode(targetType.toValue());
             var submitDateTime = "2021-03-20 23:00";
             edinetDocument.setSubmitDateTime(submitDateTime);
             var submitDate = LocalDate.parse(submitDateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            var totalCurrentLiabilities = new BsSubject("1", null, null, null);
-            var fsTotalCurrentLiabilities = new FinancialStatement(
+            var totalCurrentLiabilities = new BsSubjectEntity("1", null, null, null);
+            var fsTotalCurrentLiabilities = new FinancialStatementEntity(
                     null,
                     null,
                     null,
@@ -982,8 +982,8 @@ class ScrapingLogicTest {
                     null,
                     null
             );
-            var totalLiabilities = new BsSubject("2", null, null, null);
-            var fsTotalLiabilities = new FinancialStatement(
+            var totalLiabilities = new BsSubjectEntity("2", null, null, null);
+            var fsTotalLiabilities = new FinancialStatementEntity(
                     null,
                     null,
                     null,
@@ -1018,7 +1018,7 @@ class ScrapingLogicTest {
                     targetType.toValue(),
                     submitDate
             )).thenReturn(Optional.of(fsTotalLiabilities));
-            when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubject("1", null, null, null));
+            when(bsSubjectDao.selectByUniqueKey(any(), any())).thenReturn(new BsSubjectEntity("1", null, null, null));
 
             assertDoesNotThrow(() -> scrapingLogic.checkBs(company, edinetDocument));
 

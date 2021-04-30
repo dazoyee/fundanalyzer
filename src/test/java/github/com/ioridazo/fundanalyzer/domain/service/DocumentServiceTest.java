@@ -9,9 +9,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.CompanyLogic;
 import github.com.ioridazo.fundanalyzer.domain.logic.scraping.ScrapingLogic;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
@@ -110,7 +110,7 @@ class DocumentServiceTest {
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .id(1)
                                     .documentId("documentId1")
                                     .documentTypeCode("120")
@@ -123,14 +123,14 @@ class DocumentServiceTest {
                                     .scrapedPl("0")
                                     .removed("0")
                                     .build(),
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .id(2)
                                     .documentId("documentId2")
                                     .documentTypeCode("120")
                                     .edinetCode("E00002")
                                     .submitDate(LocalDate.parse("2020-09-19"))
                                     .build(),
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .id(3)
                                     .documentId("documentId2")
                                     .documentTypeCode("120")
@@ -139,7 +139,7 @@ class DocumentServiceTest {
                                     .build()
 
                     ));
-            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new CompanyEntity(
                     "0001",
                     "対象となる会社",
                     1,
@@ -151,7 +151,7 @@ class DocumentServiceTest {
                     null,
                     null
             )));
-            when(companyDao.selectByEdinetCode("E00002")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("E00002")).thenReturn(Optional.of(new CompanyEntity(
                     null,
                     "対象外となる会社",
                     1,
@@ -164,7 +164,7 @@ class DocumentServiceTest {
                     null
             )));
             when(documentDao.selectByDocumentId("documentId1")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(1)
                             .documentId("documentId1")
                             .documentTypeCode("120")
@@ -178,7 +178,7 @@ class DocumentServiceTest {
                             .removed("0")
                             .build()
             ).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(1)
                             .documentId("documentId1")
                             .documentTypeCode("120")
@@ -193,7 +193,7 @@ class DocumentServiceTest {
                             .build()
             );
             when(documentDao.selectByDocumentId("documentId2")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(2)
                             .documentId("documentId2")
                             .documentTypeCode("120")
@@ -207,7 +207,7 @@ class DocumentServiceTest {
                             .removed("0")
                             .build()
             ).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(2)
                             .documentId("documentId2")
                             .documentTypeCode("120")
@@ -222,7 +222,7 @@ class DocumentServiceTest {
                             .build()
             );
             when(documentDao.selectByDocumentId("documentId3")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(3)
                             .documentId("documentId2")
                             .documentTypeCode("120")
@@ -236,7 +236,7 @@ class DocumentServiceTest {
                             .removed("0")
                             .build()
             ).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(3)
                             .documentId("documentId2")
                             .documentTypeCode("120")
@@ -270,7 +270,7 @@ class DocumentServiceTest {
 
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
-                    .thenReturn(List.of(Document.builder()
+                    .thenReturn(List.of(DocumentEntity.builder()
                             .id(1)
                             .documentId("documentId1")
                             .documentTypeCode("120")
@@ -284,7 +284,7 @@ class DocumentServiceTest {
                             .removed("0")
                             .build()
                     ));
-            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new CompanyEntity(
                     null,
                     "対象となる会社",
                     1,
@@ -314,7 +314,7 @@ class DocumentServiceTest {
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .id(1)
                                     .documentId("documentId1")
                                     .documentTypeCode("120")
@@ -328,7 +328,7 @@ class DocumentServiceTest {
                                     .removed("0")
                                     .build()
                     ));
-            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new CompanyEntity(
                     "0001",
                     "対象となる会社",
                     1,
@@ -341,7 +341,7 @@ class DocumentServiceTest {
                     null
             )));
             when(documentDao.selectByDocumentId("documentId1")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(1)
                             .documentId("documentId1")
                             .documentTypeCode("120")
@@ -376,7 +376,7 @@ class DocumentServiceTest {
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .id(1)
                                     .documentId("documentId1")
                                     .documentTypeCode("120")
@@ -389,7 +389,7 @@ class DocumentServiceTest {
                                     .scrapedPl("1")
                                     .removed("1")
                                     .build()));
-            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new CompanyEntity(
                     "0001",
                     "対象となる会社",
                     1,
@@ -423,7 +423,7 @@ class DocumentServiceTest {
             doNothing().when(service).edinetList(LocalDate.parse(date));
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), LocalDate.parse(date)))
                     .thenReturn(List.of(
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .id(1)
                                     .documentId("documentId1")
                                     .documentTypeCode("120")
@@ -436,7 +436,7 @@ class DocumentServiceTest {
                                     .scrapedPl("0")
                                     .removed("0")
                                     .build()));
-            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("E00001")).thenReturn(Optional.of(new CompanyEntity(
                     "0001",
                     "対象となる会社",
                     1,
@@ -450,7 +450,7 @@ class DocumentServiceTest {
             )));
             when(service.nowLocalDateTime()).thenReturn(updatedAt);
             when(documentDao.selectByDocumentId("documentId1")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(1)
                             .documentId("documentId1")
                             .documentTypeCode("120")
@@ -464,7 +464,7 @@ class DocumentServiceTest {
                             .removed("0")
                             .build()
             ).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .id(1)
                             .documentId("documentId1")
                             .documentTypeCode("120")
@@ -481,7 +481,7 @@ class DocumentServiceTest {
 
             assertDoesNotThrow(() -> service.execute(date, targetTypes));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId("documentId1")
                     .removed(Flag.ON.toValue())
                     .updatedAt(updatedAt)
@@ -509,9 +509,9 @@ class DocumentServiceTest {
         @Test
         void edinetList_ok_date() {
             var date = LocalDate.parse("2020-09-19");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("already");
-            var document = Document.builder().documentId("already").build();
+            var document = DocumentEntity.builder().documentId("already").build();
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
             var metadata = new Metadata();
@@ -534,7 +534,7 @@ class DocumentServiceTest {
             when(documentDao.selectBySubmitDate(date)).thenReturn(List.of(document));
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
-            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new CompanyEntity(
                     null,
                     null,
                     null,
@@ -550,9 +550,9 @@ class DocumentServiceTest {
 
             assertDoesNotThrow(() -> service.edinetList(date));
 
-            verify(edinetDocumentDao, times(1)).insert(EdinetDocument.of(resultsInserted, createdAt));
-            verify(edinetDocumentDao, times(0)).insert(EdinetDocument.of(resultsAlready, createdAt));
-            verify(documentDao, times(1)).insert(Document.builder()
+            verify(edinetDocumentDao, times(1)).insert(EdinetDocumentEntity.of(resultsInserted, createdAt));
+            verify(edinetDocumentDao, times(0)).insert(EdinetDocumentEntity.of(resultsAlready, createdAt));
+            verify(documentDao, times(1)).insert(DocumentEntity.builder()
                     .documentId(resultsInserted.getDocId())
                     .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
@@ -561,7 +561,7 @@ class DocumentServiceTest {
                     .createdAt(createdAt)
                     .updatedAt(createdAt)
                     .build());
-            verify(documentDao, times(0)).insert(Document.builder()
+            verify(documentDao, times(0)).insert(DocumentEntity.builder()
                     .documentId(resultsAlready.getDocId())
                     .documentTypeCode(resultsAlready.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsAlready.getEdinetCode().orElse(null))
@@ -583,7 +583,7 @@ class DocumentServiceTest {
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
 
-            when(edinetDocumentDao.selectAll()).thenReturn(List.of(new EdinetDocument()));
+            when(edinetDocumentDao.selectAll()).thenReturn(List.of(new EdinetDocumentEntity()));
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
 
             assertDoesNotThrow(() -> service.edinetList(date));
@@ -619,7 +619,7 @@ class DocumentServiceTest {
 
             assertDoesNotThrow(() -> service.edinetList(date));
 
-            verify(companyDao, times(1)).insert(Company.ofSqlForeignKey("edinetCode", "filerName", createdAt));
+            verify(companyDao, times(1)).insert(CompanyEntity.ofSqlForeignKey("edinetCode", "filerName", createdAt));
         }
 
         @Disabled("catchできない")
@@ -644,7 +644,7 @@ class DocumentServiceTest {
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(edinetDocumentDao.insert(any())).thenThrow(UniqueConstraintException.class);
-            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new CompanyEntity(
                     null,
                     null,
                     null,
@@ -662,8 +662,8 @@ class DocumentServiceTest {
 //            assertDoesNotThrow(() -> service.edinetList(date));
             assertThrows(UniqueConstraintException.class, () -> service.edinetList(date));
 
-            verify(edinetDocumentDao, times(0)).insert(EdinetDocument.of(resultsInserted, createdAt));
-            verify(documentDao, times(0)).insert(Document.builder()
+            verify(edinetDocumentDao, times(0)).insert(EdinetDocumentEntity.of(resultsInserted, createdAt));
+            verify(documentDao, times(0)).insert(DocumentEntity.builder()
                     .documentId(resultsInserted.getDocId())
                     .documentTypeCode(resultsInserted.getDocTypeCode().orElseThrow())
                     .edinetCode(resultsInserted.getEdinetCode().orElse(null))
@@ -678,7 +678,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_documentPeriod_present() {
             var date = LocalDate.parse("2021-03-22");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("already");
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
@@ -701,7 +701,7 @@ class DocumentServiceTest {
 
             service.edinetList(date);
 
-            verify(documentDao, times(1)).insert(Document.builder()
+            verify(documentDao, times(1)).insert(DocumentEntity.builder()
                     .documentId("docId")
                     .documentTypeCode("120")
                     .edinetCode("edinetCode")
@@ -717,7 +717,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_documentPeriod_null_parentDocument_present() {
             var date = LocalDate.parse("2021-03-22");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("already");
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
@@ -736,12 +736,12 @@ class DocumentServiceTest {
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
             when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
-            when(documentDao.selectByDocumentId("docId")).thenReturn(Document.builder().documentPeriod(LocalDate.parse("2020-01-01")).build());
+            when(documentDao.selectByDocumentId("docId")).thenReturn(DocumentEntity.builder().documentPeriod(LocalDate.parse("2020-01-01")).build());
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
             service.edinetList(date);
 
-            verify(documentDao, times(1)).insert(Document.builder()
+            verify(documentDao, times(1)).insert(DocumentEntity.builder()
                     .documentId("docId2")
                     .documentTypeCode("120")
                     .edinetCode("edinetCode")
@@ -756,7 +756,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_documentPeriod_null_parentDocument_null() {
             var date = LocalDate.parse("2021-03-22");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("already");
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
@@ -778,7 +778,7 @@ class DocumentServiceTest {
 
             service.edinetList(date);
 
-            verify(documentDao, times(1)).insert(Document.builder()
+            verify(documentDao, times(1)).insert(DocumentEntity.builder()
                     .documentId("docId")
                     .documentTypeCode("130")
                     .edinetCode("edinetCode")
@@ -794,7 +794,7 @@ class DocumentServiceTest {
         @Test
         void edinetList_documentPeriod_no_target() {
             var date = LocalDate.parse("2021-03-22");
-            var edinetDocument = new EdinetDocument();
+            var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setDocId("already");
             var resultSet = new Metadata.ResultSet();
             resultSet.setCount("2");
@@ -816,7 +816,7 @@ class DocumentServiceTest {
 
             service.edinetList(date);
 
-            verify(documentDao, times(1)).insert(Document.builder()
+            verify(documentDao, times(1)).insert(DocumentEntity.builder()
                     .documentId("docId")
                     .documentTypeCode("140")
                     .edinetCode("edinetCode")
@@ -857,7 +857,7 @@ class DocumentServiceTest {
 
             assertDoesNotThrow(() -> service.store(docId, targetDate));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId(docId)
                     .downloaded(DocumentStatus.DONE.toValue())
                     .decoded(DocumentStatus.DONE.toValue())
@@ -878,7 +878,7 @@ class DocumentServiceTest {
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of(
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .documentId("id")
                                     .edinetCode("target")
                                     .submitDate(LocalDate.parse("2020-09-22"))
@@ -889,7 +889,7 @@ class DocumentServiceTest {
                                     .scrapedNumberOfShares("0")
                                     .removed("0")
                                     .build(),
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .edinetCode("noTarget")
                                     .submitDate(LocalDate.parse("2020-09-22"))
                                     .downloaded("0")
@@ -898,7 +898,7 @@ class DocumentServiceTest {
                                     .scrapedPl("0")
                                     .scrapedNumberOfShares("0")
                                     .build(),
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .edinetCode("removed")
                                     .submitDate(LocalDate.parse("2020-09-22"))
                                     .downloaded("0")
@@ -909,7 +909,7 @@ class DocumentServiceTest {
                                     .removed("1")
                                     .build()
                     ));
-            when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -922,7 +922,7 @@ class DocumentServiceTest {
                     null
             )));
             when(documentDao.selectByDocumentId("id")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .documentId("id")
                             .edinetCode("target")
                             .downloaded("1")
@@ -961,7 +961,7 @@ class DocumentServiceTest {
 
             when(documentDao.selectByTypeAndSubmitDate(List.of("120"), submitDate))
                     .thenReturn(List.of(
-                            Document.builder()
+                            DocumentEntity.builder()
                                     .documentId("id")
                                     .edinetCode("target")
                                     .submitDate(LocalDate.parse("2020-09-22"))
@@ -973,7 +973,7 @@ class DocumentServiceTest {
                                     .removed("0")
                                     .build()
                     ));
-            when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new Company(
+            when(companyDao.selectByEdinetCode(eq("target"))).thenReturn(Optional.of(new CompanyEntity(
                     "code",
                     null,
                     null,
@@ -986,7 +986,7 @@ class DocumentServiceTest {
                     null
             )));
             when(documentDao.selectByDocumentId("id")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .documentId("id")
                             .edinetCode("target")
                             .submitDate(LocalDate.parse("2020-09-22"))
@@ -1040,7 +1040,7 @@ class DocumentServiceTest {
             var documentId = "id";
 
             when(documentDao.selectByDocumentId("id")).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .documentId(documentId)
                             .edinetCode("target")
                             .submitDate(LocalDate.parse("2020-09-22"))
@@ -1052,7 +1052,7 @@ class DocumentServiceTest {
                             .removed("0")
                             .build()
             ).thenReturn(
-                    Document.builder()
+                    DocumentEntity.builder()
                             .documentId(documentId)
                             .edinetCode("target")
                             .submitDate(LocalDate.parse("2020-09-22"))
@@ -1089,7 +1089,7 @@ class DocumentServiceTest {
         @Test
         void scrape_documentId_nothing() {
             var documentId = "id";
-            var documentTargeted = Document.builder()
+            var documentTargeted = DocumentEntity.builder()
                     .documentId(documentId)
                     .edinetCode("target")
                     .submitDate(LocalDate.parse("2020-09-22"))
@@ -1123,7 +1123,7 @@ class DocumentServiceTest {
             var targetTypes = List.of(DocumentTypeCode.DTC_120);
             var updatedAt = LocalDateTime.of(2020, 9, 22, 13, 9);
 
-            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(Document.builder()
+            when(documentDao.selectByDocumentTypeCode(List.of("120"))).thenReturn(List.of(DocumentEntity.builder()
                     .documentId("id")
                     .scrapedBs("9")
                     .scrapedPl("9")
@@ -1134,12 +1134,12 @@ class DocumentServiceTest {
 
             assertDoesNotThrow(() -> service.resetForRetry(targetTypes));
 
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId("id")
                     .scrapedBs(DocumentStatus.NOT_YET.toValue())
                     .updatedAt(updatedAt)
                     .build());
-            verify(documentDao, times(1)).update(Document.builder()
+            verify(documentDao, times(1)).update(DocumentEntity.builder()
                     .documentId("id")
                     .scrapedPl(DocumentStatus.NOT_YET.toValue())
                     .updatedAt(updatedAt)

@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -20,16 +20,16 @@ public final class Target {
      * <p/>
      * 銀行業、保険業は対象外とする想定
      *
-     * @param companyList          データベースに登録されている会社一覧
-     * @param excludedIndustryList 対象外とする業種リスト
+     * @param companyEntityList          データベースに登録されている会社一覧
+     * @param excludedIndustryEntityList 対象外とする業種リスト
      * @return 処理対象の会社一覧
      */
-    public static List<Company> allCompanies(
-            final List<Company> companyList,
-            final List<Industry> excludedIndustryList) {
-        return companyList.stream()
+    public static List<CompanyEntity> allCompanies(
+            final List<CompanyEntity> companyEntityList,
+            final List<IndustryEntity> excludedIndustryEntityList) {
+        return companyEntityList.stream()
                 .filter(company -> company.getCode().isPresent())
-                .filter(company -> excludedIndustryList.stream().noneMatch(industry -> company.getIndustryId().equals(industry.getId())))
+                .filter(company -> excludedIndustryEntityList.stream().noneMatch(industry -> company.getIndustryId().equals(industry.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -37,16 +37,16 @@ public final class Target {
      * 処理対象となる会社から特定のEdinetコードが含まれているかどうかを返却する
      *
      * @param edinetCode           EDINETコード
-     * @param companyList          データベースに登録されている会社一覧
-     * @param excludedIndustryList 対象外とする業種リスト
+     * @param companyEntityList          データベースに登録されている会社一覧
+     * @param excludedIndustryEntityList 対象外とする業種リスト
      * @return boolean
      */
     public static boolean containsEdinetCode(
             final String edinetCode,
-            final List<Company> companyList,
-            final List<Industry> excludedIndustryList) {
-        return allCompanies(companyList, excludedIndustryList).stream()
-                .map(Company::getEdinetCode)
+            final List<CompanyEntity> companyEntityList,
+            final List<IndustryEntity> excludedIndustryEntityList) {
+        return allCompanies(companyEntityList, excludedIndustryEntityList).stream()
+                .map(CompanyEntity::getEdinetCode)
                 .collect(Collectors.toList())
                 .contains(edinetCode);
     }
@@ -56,23 +56,23 @@ public final class Target {
      * <p/>
      * documentPeriodが重複するときに、最新提出日を採用する
      *
-     * @param analysisResultList 分析結果リスト
+     * @param analysisResultEntityList 分析結果リスト
      * @return 処理対象の分析結果一覧
      */
-    public static List<AnalysisResult> distinctAnalysisResults(final List<AnalysisResult> analysisResultList) {
-        final List<LocalDate> periodList = analysisResultList.stream()
-                .map(AnalysisResult::getDocumentPeriod)
+    public static List<AnalysisResultEntity> distinctAnalysisResults(final List<AnalysisResultEntity> analysisResultEntityList) {
+        final List<LocalDate> periodList = analysisResultEntityList.stream()
+                .map(AnalysisResultEntity::getDocumentPeriod)
                 // null のときはEPOCHとなるため、除外する
                 .filter(period -> !LocalDate.EPOCH.isEqual(period))
                 .distinct()
                 .collect(Collectors.toList());
 
         return periodList.stream()
-                .map(period -> analysisResultList.stream()
+                .map(period -> analysisResultEntityList.stream()
                         // match period
                         .filter(analysisResult -> period.equals(analysisResult.getDocumentPeriod()))
                         // latest submit date
-                        .max(Comparator.comparing(AnalysisResult::getSubmitDate))
+                        .max(Comparator.comparing(AnalysisResultEntity::getSubmitDate))
                         .orElseThrow())
                 .collect(Collectors.toList());
     }

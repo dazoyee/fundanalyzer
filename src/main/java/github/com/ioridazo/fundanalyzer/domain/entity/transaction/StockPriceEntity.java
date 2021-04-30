@@ -20,7 +20,7 @@ import java.util.Optional;
 @Value
 @Entity(immutable = true)
 @Table(name = "stock_price")
-public class StockPrice {
+public class StockPriceEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,9 +67,9 @@ public class StockPrice {
      * @param createdAt 登録日
      * @return StockPrice
      */
-    public static StockPrice ofNikkeiResultBean(
+    public static StockPriceEntity ofNikkeiResultBean(
             final String code, final NikkeiResultBean nikkei, final LocalDateTime createdAt) {
-        return new StockPrice(
+        return new StockPriceEntity(
                 null,
                 code,
                 LocalDate.parse(nikkei.getTargetDate(), DateTimeFormatter.ofPattern("yyyy/M/d")),
@@ -98,9 +98,9 @@ public class StockPrice {
      * @param createdAt 登録日
      * @return StockPrice
      */
-    public static StockPrice ofKabuoji3ResultBean(
+    public static StockPriceEntity ofKabuoji3ResultBean(
             final String code, final Kabuoji3ResultBean kabuoji3, final LocalDateTime createdAt) {
-        return new StockPrice(
+        return new StockPriceEntity(
                 null,
                 code,
                 LocalDate.parse(kabuoji3.getTargetDate()),
@@ -124,18 +124,18 @@ public class StockPrice {
     /**
      * データベースに登録されている株価情報から銘柄詳細画面表示するためにマッピングする
      *
-     * @param stockPrice データベースに登録されている株価情報から
+     * @param stockPriceEntity データベースに登録されている株価情報から
      * @return StockPrice
      */
-    public static StockPrice ofBrandDetail(final StockPrice stockPrice) {
-        return new StockPrice(
+    public static StockPriceEntity ofBrandDetail(final StockPriceEntity stockPriceEntity) {
+        return new StockPriceEntity(
                 null,
                 null,
-                stockPrice.getTargetDate(),
-                stockPrice.getStockPrice(),
-                stockPrice.getOpeningPrice(),
-                stockPrice.getHighPrice(),
-                stockPrice.getLowPrice(),
+                stockPriceEntity.getTargetDate(),
+                stockPriceEntity.getStockPrice(),
+                stockPriceEntity.getOpeningPrice(),
+                stockPriceEntity.getHighPrice(),
+                stockPriceEntity.getLowPrice(),
                 null,
                 null,
                 null,

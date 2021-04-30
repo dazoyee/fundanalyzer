@@ -20,7 +20,7 @@ import java.time.format.DateTimeParseException;
 @Value
 @Entity(immutable = true)
 @Table(name = "minkabu")
-public class Minkabu {
+public class MinkabuEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,14 +43,14 @@ public class Minkabu {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
-    public static Minkabu ofMinkabuResultBean(final String code, final MinkabuResultBean minkabu, final LocalDateTime createdAt) {
+    public static MinkabuEntity ofMinkabuResultBean(final String code, final MinkabuResultBean minkabu, final LocalDateTime createdAt) {
         LocalDate targetDate;
         try {
             targetDate = MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear());
         } catch (DateTimeParseException e) {
             targetDate = LocalDate.now();
         }
-        return new Minkabu(
+        return new MinkabuEntity(
                 null,
                 code,
                 targetDate,

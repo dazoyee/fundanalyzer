@@ -9,9 +9,9 @@ import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -164,8 +164,8 @@ public class DocumentService {
             // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
             final var documentList = documentDao.selectByTypeAndSubmitDate(targetTypeCodes, LocalDate.parse(date))
                     .stream()
-                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
-                    .filter(Document::getNotRemoved)
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(CompanyEntity::getCode).isPresent())
+                    .filter(DocumentEntity::getNotRemoved)
                     .collect(Collectors.toList());
 
             if (documentList.isEmpty()) {
@@ -181,31 +181,31 @@ public class DocumentService {
                         store(document.getDocumentId(), LocalDate.parse(date));
                     }
 
-                    final Document decodedDocument = documentDao.selectByDocumentId(document.getDocumentId());
-                    if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getDecoded()))) {
+                    final DocumentEntity decodedDocumentEntity = documentDao.selectByDocumentId(document.getDocumentId());
+                    if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocumentEntity.getDecoded()))) {
                         // スクレイピング
                         // 貸借対照表
-                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedBs()))) {
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedBs()))) {
                             scrapeBs(document.getDocumentId(), LocalDate.parse(date));
                         }
                         // 損益計算書
-                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedPl()))) {
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedPl()))) {
                             scrapePl(document.getDocumentId(), LocalDate.parse(date));
                         }
                         // 株式総数
-                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedNumberOfShares()))) {
+                        if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedNumberOfShares()))) {
                             scrapeNs(document.getDocumentId(), LocalDate.parse(date));
                         }
                     }
 
-                    final Document processedDocument = documentDao.selectByDocumentId(document.getDocumentId());
+                    final DocumentEntity processedDocumentEntity = documentDao.selectByDocumentId(document.getDocumentId());
                     // 除外フラグON
                     if (List.of(
-                            processedDocument.getScrapedBs(),
-                            processedDocument.getScrapedPl(),
-                            processedDocument.getScrapedNumberOfShares()
+                            processedDocumentEntity.getScrapedBs(),
+                            processedDocumentEntity.getScrapedPl(),
+                            processedDocumentEntity.getScrapedNumberOfShares()
                     ).stream().allMatch(status -> DocumentStatus.ERROR.equals(DocumentStatus.fromValue(status)))) {
-                        documentDao.update(Document.builder()
+                        documentDao.update(DocumentEntity.builder()
                                 .documentId(document.getDocumentId())
                                 .removed(Flag.ON.toValue())
                                 .updatedAt(nowLocalDateTime())
@@ -274,7 +274,7 @@ public class DocumentService {
 
             // edinet_document
             final List<String> docIdList = edinetDocumentDao.selectAll().stream()
-                    .map(EdinetDocument::getDocId)
+                    .map(EdinetDocumentEntity::getDocId)
                     .collect(Collectors.toList());
             edinetResponse.getResults().forEach(results -> Stream.of(results)
                     .filter(r -> docIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
@@ -282,7 +282,7 @@ public class DocumentService {
 
             // document
             final List<String> documentIdList = documentDao.selectBySubmitDate(date).stream()
-                    .map(Document::getDocumentId)
+                    .map(DocumentEntity::getDocumentId)
                     .collect(Collectors.toList());
             edinetResponse.getResults().forEach(results -> Stream.of(results)
                     .filter(r -> documentIdList.stream().noneMatch(docId -> r.getDocId().equals(docId)))
@@ -304,7 +304,7 @@ public class DocumentService {
 
     private void insertEdinetDocument(final Results results) {
         try {
-            edinetDocumentDao.insert(EdinetDocument.of(results, nowLocalDateTime()));
+            edinetDocumentDao.insert(EdinetDocumentEntity.of(results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -330,7 +330,7 @@ public class DocumentService {
                 }
             });
 
-            documentDao.insert(Document.of(date, parseDocumentPeriod(results).orElse(null), results, nowLocalDateTime()));
+            documentDao.insert(DocumentEntity.of(date, parseDocumentPeriod(results).orElse(null), results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
@@ -361,7 +361,7 @@ public class DocumentService {
         // 既にファイルが存在しているか確認する
         if (fileListAlready(targetDate).stream()
                 .anyMatch(docIdList -> docIdList.stream().anyMatch(docId::equals))) {
-            documentDao.update(Document.ofUpdateStoreToDone(docId, nowLocalDateTime()));
+            documentDao.update(DocumentEntity.ofUpdateStoreToDone(docId, nowLocalDateTime()));
         } else {
             // ファイル取得
             scrapingLogic.download(docId, targetDate);
@@ -393,31 +393,31 @@ public class DocumentService {
     @NewSpan("DocumentService.scrape.targetDate")
     public void scrape(final LocalDate targetDate, final List<DocumentTypeCode> targetTypes) {
         final List<String> targetTypeCodes = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-        final List<Document> documentList = documentDao.selectByTypeAndSubmitDate(targetTypeCodes, targetDate);
-        if (documentList.isEmpty()) {
+        final List<DocumentEntity> documentEntityList = documentDao.selectByTypeAndSubmitDate(targetTypeCodes, targetDate);
+        if (documentEntityList.isEmpty()) {
             FundanalyzerLogClient.logService(
                     MessageFormat.format("次のドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}", targetDate),
                     Category.DOCUMENT,
                     Process.SCRAPING
             );
         } else {
-            documentList.stream()
-                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).isPresent())
-                    .filter(Document::getNotRemoved)
+            documentEntityList.stream()
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(CompanyEntity::getCode).isPresent())
+                    .filter(DocumentEntity::getNotRemoved)
                     .forEach(d -> {
                         if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(d.getDownloaded()))) {
                             store(d.getDocumentId(), d.getSubmitDate());
                         }
 
-                        final Document decodedDocument = documentDao.selectByDocumentId(d.getDocumentId());
-                        if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getDecoded()))) {
-                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedBs()))) {
+                        final DocumentEntity decodedDocumentEntity = documentDao.selectByDocumentId(d.getDocumentId());
+                        if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocumentEntity.getDecoded()))) {
+                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedBs()))) {
                                 scrapeBs(d.getDocumentId(), targetDate);
                             }
-                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedPl()))) {
+                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedPl()))) {
                                 scrapePl(d.getDocumentId(), targetDate);
                             }
-                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocument.getScrapedNumberOfShares()))) {
+                            if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedNumberOfShares()))) {
                                 scrapeNs(d.getDocumentId(), targetDate);
                             }
                         }
@@ -444,15 +444,15 @@ public class DocumentService {
             store(documentId, document.getSubmitDate());
         }
 
-        final Document decodedDocument = documentDao.selectByDocumentId(document.getDocumentId());
-        if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getDecoded()))) {
-            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getScrapedBs()))) {
+        final DocumentEntity decodedDocumentEntity = documentDao.selectByDocumentId(document.getDocumentId());
+        if (DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocumentEntity.getDecoded()))) {
+            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedBs()))) {
                 scrapeBs(documentId, document.getSubmitDate());
             }
-            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getScrapedPl()))) {
+            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedPl()))) {
                 scrapePl(documentId, document.getSubmitDate());
             }
-            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocument.getScrapedNumberOfShares()))) {
+            if (!DocumentStatus.DONE.equals(DocumentStatus.fromValue(decodedDocumentEntity.getScrapedNumberOfShares()))) {
                 scrapeNs(documentId, document.getSubmitDate());
             }
         }
@@ -472,26 +472,26 @@ public class DocumentService {
      */
     public void resetForRetry(final List<DocumentTypeCode> targetTypes) {
         final List<String> targetTypeCodes = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-        final List<Document> documentList = documentDao.selectByDocumentTypeCode(targetTypeCodes);
+        final List<DocumentEntity> documentEntityList = documentDao.selectByDocumentTypeCode(targetTypeCodes);
         // 貸借対照表
-        documentList.stream()
+        documentEntityList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
-                .filter(Document::getNotRemoved)
-                .map(Document::getDocumentId)
+                .filter(DocumentEntity::getNotRemoved)
+                .map(DocumentEntity::getDocumentId)
                 .forEach(documentId -> {
-                    documentDao.update(Document.ofUpdateBsToNotYet(documentId, nowLocalDateTime()));
+                    documentDao.update(DocumentEntity.ofUpdateBsToNotYet(documentId, nowLocalDateTime()));
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "貸借対照表");
                 });
 
         // 損益計算書
-        documentList.stream()
+        documentEntityList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
-                .filter(Document::getNotRemoved)
-                .map(Document::getDocumentId)
+                .filter(DocumentEntity::getNotRemoved)
+                .map(DocumentEntity::getDocumentId)
                 .forEach(documentId -> {
-                    documentDao.update(Document.ofUpdatePlToNotYet(documentId, nowLocalDateTime()));
+                    documentDao.update(DocumentEntity.ofUpdatePlToNotYet(documentId, nowLocalDateTime()));
                     log.info("次のドキュメントステータスを初期化しました。\t書類ID:{}\t財務諸表名:{}", documentId, "損益計算書");
                 });
     }
@@ -504,7 +504,7 @@ public class DocumentService {
     @NewSpan("DocumentService.removeDocument")
     @Transactional
     public void removeDocument(final String documentId) {
-        documentDao.update(Document.ofUpdateRemoved(documentId, nowLocalDateTime()));
+        documentDao.update(DocumentEntity.ofUpdateRemoved(documentId, nowLocalDateTime()));
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", documentId),
@@ -514,7 +514,7 @@ public class DocumentService {
     }
 
     private void insertCompanyForSqlForeignKey(final String edinetCode, final String companyName) {
-        companyDao.insert(Company.ofSqlForeignKey(edinetCode, companyName, nowLocalDateTime()));
+        companyDao.insert(CompanyEntity.ofSqlForeignKey(edinetCode, companyName, nowLocalDateTime()));
         log.warn("会社情報が登録されていないため、仮情報を登録します。" +
                 "\tEDINETコード:{}\t会社名:{}", edinetCode, companyName);
     }
@@ -560,10 +560,10 @@ public class DocumentService {
                 return Optional.of(LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1));
             } else {
                 if (Objects.nonNull(results.getParentDocID())) {
-                    final Document document = documentDao.selectByDocumentId(results.getParentDocID());
-                    if (Objects.nonNull(document)) {
+                    final DocumentEntity documentEntity = documentDao.selectByDocumentId(results.getParentDocID());
+                    if (Objects.nonNull(documentEntity)) {
                         // parent document is present
-                        return document.getDocumentPeriod();
+                        return documentEntity.getDocumentPeriod();
                     } else {
                         // parent document is null
                         return Optional.of(LocalDate.EPOCH);

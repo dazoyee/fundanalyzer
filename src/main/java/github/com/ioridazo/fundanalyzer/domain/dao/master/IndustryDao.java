@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.dao.master;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
@@ -14,14 +14,14 @@ import java.util.List;
 public interface IndustryDao {
 
     @Select
-    List<Industry> selectAll();
+    List<IndustryEntity> selectAll();
 
     @Select
-    Industry selectById(Integer id);
+    IndustryEntity selectById(Integer id);
 
     @Select
-    Industry selectByName(String name);
+    IndustryEntity selectByName(String name);
 
     @Insert(include = {"name", "createdAt"})
-    Result<Industry> insert(Industry industry);
+    Result<IndustryEntity> insert(IndustryEntity industryEntity);
 }

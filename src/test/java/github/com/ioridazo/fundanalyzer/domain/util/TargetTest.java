@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Company;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Industry;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResult;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class TargetTest {
         @Test
         void allCompanies_ok() {
             var companyList = List.of(
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             1,
@@ -38,7 +38,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             2,
@@ -50,7 +50,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             3,
@@ -64,12 +64,12 @@ class TargetTest {
                     )
             );
             var excludedIndustryList = List.of(
-                    new Industry(
+                    new IndustryEntity(
                             1,
                             null,
                             null
                     ),
-                    new Industry(
+                    new IndustryEntity(
                             2,
                             null,
                             null
@@ -90,7 +90,7 @@ class TargetTest {
         @Test
         void containsEdinetCode_true() {
             var companyList = List.of(
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             1,
@@ -102,7 +102,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             2,
@@ -114,7 +114,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             3,
@@ -126,7 +126,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             4,
@@ -141,12 +141,12 @@ class TargetTest {
 
             );
             var excludedIndustryList = List.of(
-                    new Industry(
+                    new IndustryEntity(
                             1,
                             null,
                             null
                     ),
-                    new Industry(
+                    new IndustryEntity(
                             2,
                             null,
                             null
@@ -163,7 +163,7 @@ class TargetTest {
         @Test
         void containsEdinetCode_false() {
             var companyList = List.of(
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             1,
@@ -175,7 +175,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             2,
@@ -187,7 +187,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             3,
@@ -199,7 +199,7 @@ class TargetTest {
                             null,
                             null
                     ),
-                    new Company(
+                    new CompanyEntity(
                             "code",
                             null,
                             4,
@@ -214,12 +214,12 @@ class TargetTest {
 
             );
             var excludedIndustryList = List.of(
-                    new Industry(
+                    new IndustryEntity(
                             1,
                             null,
                             null
                     ),
-                    new Industry(
+                    new IndustryEntity(
                             2,
                             null,
                             null
@@ -239,7 +239,7 @@ class TargetTest {
         @DisplayName("distinctAnalysisResults : 処理対象の分析結果を抽出する（期間の重複なし）")
         @Test
         void distinctAnalysisResults_single() {
-            var analysisResult1 = new AnalysisResult(
+            var analysisResult1 = new AnalysisResultEntity(
                     null,
                     null,
                     LocalDate.of(2020, 1, 1),
@@ -249,7 +249,7 @@ class TargetTest {
                     null,
                     null
             );
-            var analysisResult2 = new AnalysisResult(
+            var analysisResult2 = new AnalysisResultEntity(
                     null,
                     null,
                     LocalDate.of(2021, 1, 1),
@@ -272,7 +272,7 @@ class TargetTest {
         @DisplayName("distinctAnalysisResults : 処理対象の分析結果を抽出する（期間の重複あり）")
         @Test
         void distinctAnalysisResults_multiple() {
-            var analysisResult1 = new AnalysisResult(
+            var analysisResult1 = new AnalysisResultEntity(
                     null,
                     null,
                     LocalDate.of(2021, 1, 1),
@@ -282,7 +282,7 @@ class TargetTest {
                     null,
                     null
             );
-            var analysisResult2 = new AnalysisResult(
+            var analysisResult2 = new AnalysisResultEntity(
                     null,
                     null,
                     LocalDate.of(2021, 1, 1),
@@ -292,7 +292,7 @@ class TargetTest {
                     null,
                     null
             );
-            var analysisResult3 = new AnalysisResult(
+            var analysisResult3 = new AnalysisResultEntity(
                     null,
                     null,
                     LocalDate.of(2021, 1, 1),

@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
+import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -48,7 +48,7 @@ public class StockScheduler {
         try {
             final String dayOfMonth = String.valueOf(nowLocalDate().getDayOfMonth());
             final List<LocalDate> targetList = documentDao.selectByDayOfSubmitDate(dayOfMonth).stream()
-                    .map(Document::getSubmitDate)
+                    .map(DocumentEntity::getSubmitDate)
                     .distinct()
                     .collect(Collectors.toList());
 
