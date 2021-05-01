@@ -82,13 +82,13 @@ public class AnalysisLogic {
     @Transactional
     public void analyze(final String documentId) {
         final var document = documentDao.selectByDocumentId(documentId);
-        final var companyCode = Converter.toCompanyCode(document.getEdinetCode(), companyDao.selectAll()).orElseThrow();
+        final var companyCode = Converter.toCompanyCode(document.getEdinetCode().orElseThrow(), companyDao.selectAll()).orElseThrow();
         try {
             analysisResultDao.insert(AnalysisResultEntity.of(
                     companyCode,
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     calculate(companyCode, document),
-                    DocumentTypeCode.fromValue(document.getDocumentTypeCode()),
+                    DocumentTypeCode.fromValue(document.getDocumentTypeCode().orElseThrow()),
                     document.getSubmitDate(),
                     documentId,
                     nowLocalDateTime()
@@ -115,8 +115,8 @@ public class AnalysisLogic {
     /**
      * 企業価値を算出する
      *
-     * @param companyCode 企業コード
-     * @param documentEntity    ドキュメント
+     * @param companyCode    企業コード
+     * @param documentEntity ドキュメント
      * @return 企業価値
      */
     BigDecimal calculate(final String companyCode, final DocumentEntity documentEntity) {
@@ -125,7 +125,7 @@ public class AnalysisLogic {
                 company,
                 documentEntity.getDocumentPeriod()
                         .orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode()),
+                DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode().orElseThrow()),
                 documentEntity.getSubmitDate()
         );
 

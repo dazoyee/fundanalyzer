@@ -164,8 +164,8 @@ public class DocumentService {
             // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
             final var documentList = documentDao.selectByTypeAndSubmitDate(targetTypeCodes, LocalDate.parse(date))
                     .stream()
-                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(CompanyEntity::getCode).isPresent())
-                    .filter(DocumentEntity::getNotRemoved)
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode().orElseThrow()).flatMap(CompanyEntity::getCode).isPresent())
+//                    .filter(DocumentEntity::getNotRemoved)
                     .collect(Collectors.toList());
 
             if (documentList.isEmpty()) {
@@ -262,9 +262,9 @@ public class DocumentService {
      */
     @NewSpan("DocumentService.edinetList.date")
     public void edinetList(final LocalDate date) {
-        final boolean isPresent = Stream.of(date.toString())
+        final boolean isPresent = Stream.of(date)
                 // EDINETに提出書類の問い合わせ
-                .map(d -> edinetProxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                .map(d -> edinetProxy.list(new ListRequestParameter(d.toString(), ListType.DEFAULT)))
                 .map(edinetResponse -> edinetResponse.getMetadata().getResultset().getCount())
                 .anyMatch(c -> !"0".equals(c));
 
@@ -361,7 +361,7 @@ public class DocumentService {
         // 既にファイルが存在しているか確認する
         if (fileListAlready(targetDate).stream()
                 .anyMatch(docIdList -> docIdList.stream().anyMatch(docId::equals))) {
-            documentDao.update(DocumentEntity.ofUpdateStoreToDone(docId, nowLocalDateTime()));
+//            documentDao.update(DocumentEntity.ofUpdateStoreToDone(docId, nowLocalDateTime()));
         } else {
             // ファイル取得
             scrapingLogic.download(docId, targetDate);
@@ -402,8 +402,8 @@ public class DocumentService {
             );
         } else {
             documentEntityList.stream()
-                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode()).flatMap(CompanyEntity::getCode).isPresent())
-                    .filter(DocumentEntity::getNotRemoved)
+                    .filter(document -> companyDao.selectByEdinetCode(document.getEdinetCode().orElseThrow()).flatMap(CompanyEntity::getCode).isPresent())
+//                    .filter(DocumentEntity::getNotRemoved)
                     .forEach(d -> {
                         if (DocumentStatus.NOT_YET.equals(DocumentStatus.fromValue(d.getDownloaded()))) {
                             store(d.getDocumentId(), d.getSubmitDate());
@@ -477,7 +477,7 @@ public class DocumentService {
         documentEntityList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedBs()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedBs()))
-                .filter(DocumentEntity::getNotRemoved)
+//                .filter(DocumentEntity::getNotRemoved)
                 .map(DocumentEntity::getDocumentId)
                 .forEach(documentId -> {
                     documentDao.update(DocumentEntity.ofUpdateBsToNotYet(documentId, nowLocalDateTime()));
@@ -488,7 +488,7 @@ public class DocumentService {
         documentEntityList.stream()
                 .filter(document -> !DocumentStatus.DONE.toValue().equals(document.getScrapedPl()))
                 .filter(document -> !DocumentStatus.NOT_YET.toValue().equals(document.getScrapedPl()))
-                .filter(DocumentEntity::getNotRemoved)
+//                .filter(DocumentEntity::getNotRemoved)
                 .map(DocumentEntity::getDocumentId)
                 .forEach(documentId -> {
                     documentDao.update(DocumentEntity.ofUpdatePlToNotYet(documentId, nowLocalDateTime()));
@@ -504,7 +504,7 @@ public class DocumentService {
     @NewSpan("DocumentService.removeDocument")
     @Transactional
     public void removeDocument(final String documentId) {
-        documentDao.update(DocumentEntity.ofUpdateRemoved(documentId, nowLocalDateTime()));
+//        documentDao.update(DocumentEntity.ofUpdateRemoved(documentId, nowLocalDateTime()));
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", documentId),

@@ -95,9 +95,9 @@ public class EdinetListViewLogic {
     List<DocumentEntity> extractTargetList(final List<DocumentEntity> documentEntityList, final List<CompanyEntity> allTargetCompanies) {
         return documentEntityList.stream()
                 // filter companyCode is present
-                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode().orElseThrow(), allTargetCompanies).isPresent())
                 // filter removed
-                .filter(DocumentEntity::getNotRemoved)
+//                .filter(DocumentEntity::getNotRemoved)
                 .collect(Collectors.toList());
     }
 
@@ -137,14 +137,14 @@ public class EdinetListViewLogic {
         final List<DocumentEntity> notAnalyzedList = new ArrayList<>();
 
         scrapedList.forEach(document -> {
-            final Optional<CompanyEntity> company = companyDao.selectByEdinetCode(document.getEdinetCode());
+            final Optional<CompanyEntity> company = companyDao.selectByEdinetCode(document.getEdinetCode().orElseThrow());
 
             // document period is present && company code is present
             if (document.getDocumentPeriod().isPresent() && company.flatMap(CompanyEntity::getCode).isPresent()) {
                 final Optional<AnalysisResultEntity> analysisResult = analysisResultDao.selectByUniqueKey(
                         company.flatMap(CompanyEntity::getCode).get(),
                         document.getDocumentPeriod().get(),
-                        document.getDocumentTypeCode(),
+                        document.getDocumentTypeCode().orElseThrow(),
                         document.getSubmitDate()
                 );
 

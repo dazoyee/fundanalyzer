@@ -532,8 +532,8 @@ class DocumentServiceTest {
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of(edinetDocument));
             when(documentDao.selectBySubmitDate(date)).thenReturn(List.of(document));
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new CompanyEntity(
                     null,
                     null,
@@ -584,7 +584,7 @@ class DocumentServiceTest {
             edinetResponse.setMetadata(metadata);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of(new EdinetDocumentEntity()));
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
 
             assertDoesNotThrow(() -> service.edinetList(date));
 
@@ -612,8 +612,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.empty());
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
@@ -641,8 +641,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(edinetDocumentDao.insert(any())).thenThrow(UniqueConstraintException.class);
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(new CompanyEntity(
                     null,
@@ -695,8 +695,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
             service.edinetList(date);
@@ -734,8 +734,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(documentDao.selectByDocumentId("docId")).thenReturn(DocumentEntity.builder().documentPeriod(LocalDate.parse("2020-01-01")).build());
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
@@ -772,8 +772,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
             service.edinetList(date);
@@ -810,8 +810,8 @@ class DocumentServiceTest {
             var createdAt = LocalDateTime.of(2020, 9, 19, 17, 39);
 
             when(edinetDocumentDao.selectAll()).thenReturn(List.of());
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.DEFAULT))).thenReturn(edinetResponse);
+//            when(edinetProxy.list(new ListRequestParameter(date.toString(), ListType.GET_LIST))).thenReturn(edinetResponse);
             when(service.nowLocalDateTime()).thenReturn(createdAt);
 
             service.edinetList(date);

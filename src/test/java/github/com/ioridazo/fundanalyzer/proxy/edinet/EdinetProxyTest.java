@@ -20,6 +20,7 @@ import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -61,7 +62,7 @@ class EdinetProxyTest {
         @DisplayName("list : EDINETの書類一覧APIでパラメータのみを取得する")
         @Test
         void list_ok_DEFAULT() throws InterruptedException {
-            var parameter = new ListRequestParameter("2019-04-01", ListType.DEFAULT);
+            var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
             var json = "" +
                     "{" +
@@ -116,7 +117,7 @@ class EdinetProxyTest {
         @DisplayName("list : EDINETの書類一覧APIで提出書類一覧を取得する")
         @Test
         void list_ok_GET_LIST() throws InterruptedException {
-            var parameter = new ListRequestParameter("2019-04-01", ListType.GET_LIST);
+            var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.GET_LIST);
 
             var json = "" +
                     "{" +
@@ -232,7 +233,7 @@ class EdinetProxyTest {
         @ParameterizedTest
         @ValueSource(ints = {400, 404, 500, 503})
         void list_FundanalyzerRestClientException(int httpStatus) throws InterruptedException {
-            var parameter = new ListRequestParameter("2019-04-01", ListType.DEFAULT);
+            var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
             server.enqueue(new MockResponse().setResponseCode(httpStatus));
 

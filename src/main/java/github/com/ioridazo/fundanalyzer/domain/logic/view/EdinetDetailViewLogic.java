@@ -57,9 +57,9 @@ public class EdinetDetailViewLogic {
         final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
         final var cantScrapedList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
                 // filter companyCode is present
-                .filter(d -> Converter.toCompanyCode(d.getEdinetCode(), allTargetCompanies).isPresent())
+                .filter(d -> Converter.toCompanyCode(d.getEdinetCode().orElseThrow(), allTargetCompanies).isPresent())
                 // filter removed
-                .filter(DocumentEntity::getNotRemoved)
+//                .filter(DocumentEntity::getNotRemoved)
                 .filter(d -> {
                     if (!DocumentStatus.DONE.toValue().equals(d.getScrapedBs())) {
                         // filter scrapedBs is not done
@@ -80,7 +80,7 @@ public class EdinetDetailViewLogic {
                 // 提出日に関連する未処理ドキュメントのリスト
                 cantScrapedList.stream()
                         .map(document -> new EdinetDetailViewBean.DocumentDetail(
-                                companyDao.selectByEdinetCode(document.getEdinetCode()).orElse(CompanyEntity.ofNull()),
+                                companyDao.selectByEdinetCode(document.getEdinetCode().orElseThrow()).orElse(CompanyEntity.ofNull()),
                                 document,
                                 valuesForAnalysis(document)
                         )).collect(Collectors.toList())
@@ -94,7 +94,7 @@ public class EdinetDetailViewLogic {
      * @return スクレイピング結果
      */
     private EdinetDetailViewBean.ValuesForAnalysis valuesForAnalysis(final DocumentEntity documentEntity) {
-        final var company = companyDao.selectByEdinetCode(documentEntity.getEdinetCode()).orElseThrow();
+        final var company = companyDao.selectByEdinetCode(documentEntity.getEdinetCode().orElseThrow()).orElseThrow();
 
         return new EdinetDetailViewBean.ValuesForAnalysis(
                 fsValue(company, BsEnum.TOTAL_CURRENT_ASSETS, documentEntity, analysisLogic::bsValue),
@@ -117,7 +117,7 @@ public class EdinetDetailViewLogic {
                     AnalysisLogic.FsValueParameter.of(
                             companyEntity,
                             documentEntity.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                            DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode()),
+                            DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode().orElseThrow()),
                             documentEntity.getSubmitDate()
                     )
             );
@@ -135,7 +135,7 @@ public class EdinetDetailViewLogic {
                     AnalysisLogic.FsValueParameter.of(
                             companyEntity,
                             documentEntity.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                            DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode()),
+                            DocumentTypeCode.fromValue(documentEntity.getDocumentTypeCode().orElseThrow()),
                             documentEntity.getSubmitDate()
                     )
             );

@@ -249,7 +249,7 @@ public class ViewService {
 
         documentEntityList.stream()
                 .map(DocumentEntity::getEdinetCode)
-                .map(companyDao::selectByEdinetCode)
+                .map((Optional<String> edinetCode) -> companyDao.selectByEdinetCode(edinetCode.orElseThrow()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .distinct()

@@ -75,7 +75,7 @@ public class StockService {
             // 対象となる会社コード一覧を取得する
             final List<String> targetCompanyList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate).stream()
                     .map(DocumentEntity::getEdinetCode)
-                    .map(edinetCode -> Converter.toCompanyCode(edinetCode, companyDao.selectAll()))
+                    .map(edinetCode -> Converter.toCompanyCode(edinetCode.orElseThrow(), companyDao.selectAll()))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .distinct()
