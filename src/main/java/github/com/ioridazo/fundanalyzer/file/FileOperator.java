@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.file;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -14,12 +14,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-@Log4j2
 @Component
 public class FileOperator {
+
+    @Value("${app.settings.file.path.company.company}")
+    String pathCompany;
+    @Value("${app.settings.file.path.company.zip}")
+    String pathCompanyZip;
+    @Value("${app.settings.file.path.decode}")
+    String pathDecode;
 
     FileOperator() {
     }
@@ -67,5 +78,23 @@ public class FileOperator {
                 Category.DOCUMENT,
                 Process.DECODE
         );
+    }
+
+    /**
+     * デコード済みのファイルを取得する
+     *
+     * @param targetDate 提出日
+     * @return ファイルリスト
+     */
+    public Optional<List<String>> findDecodedFile(final LocalDate targetDate) {
+        return Optional.ofNullable(makeTargetPath(pathDecode, targetDate).listFiles())
+                .map(Arrays::stream)
+                .map(fileList -> fileList.map(File::getName))
+                .map(fileName -> fileName.collect(Collectors.toList()))
+                .or(Optional::empty);
+    }
+
+    private File makeTargetPath(final String prePath, final LocalDate targetDate) {
+        return new File(String.format("%s/%d/%s/%s", prePath, targetDate.getYear(), targetDate.getMonth(), targetDate));
     }
 }

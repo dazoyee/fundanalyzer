@@ -2,10 +2,13 @@ package github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request;
 
 import lombok.Value;
 
+import java.time.LocalDate;
+
+@SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 public class ListRequestParameter {
 
-    private String date;
+    private final LocalDate date;
 
-    private ListType type;
+    private final ListType type;
 }

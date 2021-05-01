@@ -70,7 +70,7 @@ public class EdinetProxy {
             final EdinetResponse edinetResponse = restTemplate.getForObject(
                     baseUri + "/api/v1/documents.json?date={date}&type={type}",
                     EdinetResponse.class,
-                    Map.of("date", parameter.getDate(), "type", parameter.getType().toValue())
+                    Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
             );
 
             if (ListType.DEFAULT.equals(parameter.getType())) {
