@@ -24,4 +24,12 @@ public class IndustryEntity {
 
     @Column(updatable = false)
     private final LocalDateTime createdAt;
+
+    public static IndustryEntity of(final String industryName, final LocalDateTime nowLocalDateTime) {
+        return new IndustryEntity(
+                null,
+                industryName,
+                nowLocalDateTime
+        );
+    }
 }

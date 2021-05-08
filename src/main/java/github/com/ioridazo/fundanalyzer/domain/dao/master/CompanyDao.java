@@ -25,8 +25,8 @@ public interface CompanyDao {
     Optional<CompanyEntity> selectByCode(String code);
 
     @Insert
-    Result<CompanyEntity> insert(CompanyEntity companyEntity);
+    Result<CompanyEntity> insert(CompanyEntity company);
 
     @Update
-    Result<CompanyEntity> update(CompanyEntity companyEntity);
+    Result<CompanyEntity> update(CompanyEntity company);
 }
