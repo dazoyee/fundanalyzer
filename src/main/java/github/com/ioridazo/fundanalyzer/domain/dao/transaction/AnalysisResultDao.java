@@ -26,7 +26,7 @@ public interface AnalysisResultDao {
     List<AnalysisResultEntity> selectByCompanyCode(String code);
 
     @Select
-    List<AnalysisResultEntity> selectByPeriod(LocalDate documentPeriod);
+    List<AnalysisResultEntity> selectByCodeAndPeriod(String code, LocalDate documentPeriod);
 
     @Insert
     Result<AnalysisResultEntity> insert(AnalysisResultEntity analysisResultEntity);
