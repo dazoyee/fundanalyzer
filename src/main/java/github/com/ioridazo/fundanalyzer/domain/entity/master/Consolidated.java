@@ -22,11 +22,19 @@ public enum Consolidated {
     }
 
     @JsonCreator
+    public static Consolidated fromValue(final String code) {
+        return Arrays.stream(values())
+                .filter(v -> v.code.equals(code))
+                .findFirst()
+                .orElse(Consolidated.NULL);
+    }
+
+    @JsonCreator
     public static Consolidated fromName(final String name) {
         return Arrays.stream(values())
                 .filter(v -> v.name.equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(name)));
+                .orElse(Consolidated.NULL);
     }
 
     @JsonValue

@@ -22,11 +22,19 @@ public enum ListCategories {
     }
 
     @JsonCreator
+    public static ListCategories fromValue(final String code) {
+        return Arrays.stream(values())
+                .filter(v -> v.code.equals(code))
+                .findFirst()
+                .orElse(ListCategories.NULL);
+    }
+
+    @JsonCreator
     public static ListCategories fromName(final String name) {
         return Arrays.stream(values())
                 .filter(v -> v.name.equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(name)));
+                .orElse(ListCategories.NULL);
     }
 
     @JsonValue
