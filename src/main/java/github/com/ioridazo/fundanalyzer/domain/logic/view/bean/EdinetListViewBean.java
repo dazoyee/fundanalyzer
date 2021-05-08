@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.view.bean;
 
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -68,6 +69,22 @@ public class EdinetListViewBean {
                 cantScrapedCode,
                 (long) countNotScraped,
                 (long) (countAll - countTarget),
+                nowLocalDateTime,
+                nowLocalDateTime
+        );
+    }
+
+    public static EdinetListViewBean of(final EdinetListViewModel viewModel, final LocalDateTime nowLocalDateTime) {
+        return new EdinetListViewBean(
+                viewModel.getSubmitDate(),
+                viewModel.getCountAll(),
+                viewModel.getCountTarget(),
+                viewModel.getCountScraped(),
+                viewModel.getCountAnalyzed(),
+                viewModel.getNotAnalyzedId(),
+                viewModel.getCantScrapedId(),
+                viewModel.getCountNotScraped(),
+                viewModel.getCountNotTarget(),
                 nowLocalDateTime,
                 nowLocalDateTime
         );

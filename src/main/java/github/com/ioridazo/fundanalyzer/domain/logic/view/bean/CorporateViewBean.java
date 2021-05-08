@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.logic.view.bean;
 
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -63,4 +64,25 @@ public class CorporateViewBean {
     private final LocalDateTime createdAt;
 
     private final LocalDateTime updatedAt;
+
+    public static CorporateViewBean of(final CorporateViewModel viewModel, final LocalDateTime nowLocalDateTime) {
+        return new CorporateViewBean(
+                viewModel.getCode(),
+                viewModel.getCode(),
+                viewModel.getSubmitDate(),
+                viewModel.getLatestCorporateValue(),
+                viewModel.getAverageCorporateValue(),
+                viewModel.getStandardDeviation(),
+                viewModel.getCoefficientOfVariation(),
+                viewModel.getAverageStockPrice(),
+                viewModel.getImportDate(),
+                viewModel.getLatestStockPrice(),
+                viewModel.getDiscountValue(),
+                viewModel.getDiscountRate(),
+                viewModel.getCountYear(),
+                viewModel.getForecastStock(),
+                nowLocalDateTime,
+                nowLocalDateTime
+        );
+    }
 }
