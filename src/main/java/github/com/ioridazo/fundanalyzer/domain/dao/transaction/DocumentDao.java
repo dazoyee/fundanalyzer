@@ -30,6 +30,9 @@ public interface DocumentDao {
     List<DocumentEntity> selectByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select
+    List<DocumentEntity> selectByEdinetCodeAndType(String edinetCode, List<String> documentTypeCode);
+
+    @Select
     List<DocumentEntity> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
 
     @Select
