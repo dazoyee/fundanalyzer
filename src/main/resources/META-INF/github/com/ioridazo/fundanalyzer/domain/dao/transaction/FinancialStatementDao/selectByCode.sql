@@ -1,3 +1,3 @@
-select * from financial_statement
-where
-  company_code = /* companyCode */'00000'
+select *
+from financial_statement
+where edinet_code = /* edinetCode */'E00000'

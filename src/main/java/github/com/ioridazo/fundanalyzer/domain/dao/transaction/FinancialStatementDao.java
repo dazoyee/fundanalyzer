@@ -17,9 +17,6 @@ import java.util.Optional;
 public interface FinancialStatementDao {
 
     @Select
-    List<FinancialStatementEntity> selectByCode(String companyCode);
-
-    @Select
     Optional<FinancialStatementEntity> selectByUniqueKey(
             String edinetCode,
             String financialStatementId,
@@ -29,10 +26,11 @@ public interface FinancialStatementDao {
             LocalDate submitDate);
 
     @Select
-    List<FinancialStatementEntity> selectByEdinetCodeAndFsAndYear(
-            String edinetCode,
-            String financialStatementId,
-            String dayOfYear);
+    List<FinancialStatementEntity> selectByCode(String edinetCode);
+
+    @Select
+    List<FinancialStatementEntity> selectByCodeAndPeriod(
+            String edinetCode, LocalDate periodEnd, String documentTypeCode, LocalDate submitDate);
 
     @Transactional
     @Insert
