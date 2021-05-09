@@ -41,13 +41,19 @@ public class EdinetDocumentSpecification {
         final EdinetDocumentEntity edinetDocumentEntity = edinetDocumentDao.selectByDocId(documentId);
         final EdinetDocument edinetDocument = new EdinetDocument();
 
+        if (Objects.isNull(edinetDocumentEntity)) {
+            edinetDocument.setPeriodStart(LocalDate.EPOCH);
+            edinetDocument.setPeriodEnd(LocalDate.EPOCH);
+            return edinetDocument;
+        }
+
         // periodStart
         if (edinetDocumentEntity.getPeriodStart().isPresent()) {
             // period start is present
             edinetDocument.setPeriodStart(LocalDate.parse(edinetDocumentEntity.getPeriodStart().orElseThrow()));
         } else if (Objects.nonNull(edinetDocumentEntity.getParentDocId())) {
             final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId());
-            if (Objects.nonNull(parentEdinetDocumentEntity)) {
+            if (Objects.nonNull(parentEdinetDocumentEntity) && parentEdinetDocumentEntity.getPeriodStart().isPresent()) {
                 // parent edinet document is present
                 edinetDocument.setPeriodStart(LocalDate.parse(parentEdinetDocumentEntity.getPeriodStart().orElseThrow()));
             } else {
@@ -64,7 +70,7 @@ public class EdinetDocumentSpecification {
             edinetDocument.setPeriodEnd(LocalDate.parse(edinetDocumentEntity.getPeriodEnd().orElseThrow()));
         } else if (Objects.nonNull(edinetDocumentEntity.getParentDocId())) {
             final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId());
-            if (Objects.nonNull(parentEdinetDocumentEntity)) {
+            if (Objects.nonNull(parentEdinetDocumentEntity) && parentEdinetDocumentEntity.getPeriodEnd().isPresent()) {
                 // parent edinet document is present
                 edinetDocument.setPeriodEnd(LocalDate.parse(parentEdinetDocumentEntity.getPeriodEnd().orElseThrow()));
             } else {

@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -89,14 +90,13 @@ public class AnalysisResultSpecification {
     public Optional<BigDecimal> latestCorporateValue(final Company company) {
         return targetList(company).stream()
                 // latest
-                .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod))
+                .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod)
+                        .thenComparing(AnalysisResultEntity::getSubmitDate))
                 // corporate value
                 .map(AnalysisResultEntity::getCorporateValue)
                 // scale
                 .map(bigDecimal -> bigDecimal.setScale(SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
-
-    // TODo リスト0のときを確認
 
     /**
      * 平均の企業価値を取得する
@@ -104,14 +104,18 @@ public class AnalysisResultSpecification {
      * @param company 企業情報
      * @return 平均の企業価値
      */
-    public BigDecimal averageCorporateValue(final Company company) {
+    public Optional<BigDecimal> averageCorporateValue(final Company company) {
         final List<AnalysisResultEntity> targetList = targetList(company);
-        return targetList.stream()
-                .map(AnalysisResultEntity::getCorporateValue)
-                // sum
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                // average
-                .divide(BigDecimal.valueOf(targetList.size()), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP);
+        if (targetList.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(targetList.stream()
+                    .map(AnalysisResultEntity::getCorporateValue)
+                    // sum
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    // average
+                    .divide(BigDecimal.valueOf(targetList.size()), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
+        }
     }
 
     /**
@@ -121,18 +125,22 @@ public class AnalysisResultSpecification {
      * @param averageCorporateValue 平均の企業価値
      * @return 標準偏差
      */
-    public BigDecimal standardDeviation(final Company company, final BigDecimal averageCorporateValue) {
+    public Optional<BigDecimal> standardDeviation(final Company company, final BigDecimal averageCorporateValue) {
         final List<AnalysisResultEntity> targetList = targetList(company);
-        return targetList.stream()
-                .map(AnalysisResultEntity::getCorporateValue)
-                // (value - average) ^2
-                .map(value -> value.subtract(averageCorporateValue).pow(2))
-                // sum
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                // average
-                .divide(BigDecimal.valueOf(targetList.size()), THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)
-                // sqrt
-                .sqrt(new MathContext(5, RoundingMode.HALF_UP));
+        if (Objects.isNull(averageCorporateValue) || targetList.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(targetList.stream()
+                    .map(AnalysisResultEntity::getCorporateValue)
+                    // (value - average) ^2
+                    .map(value -> value.subtract(averageCorporateValue).pow(2))
+                    // sum
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    // average
+                    .divide(BigDecimal.valueOf(targetList.size()), THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)
+                    // sqrt
+                    .sqrt(new MathContext(5, RoundingMode.HALF_UP)));
+        }
     }
 
     /**
@@ -142,8 +150,13 @@ public class AnalysisResultSpecification {
      * @param averageCorporateValue 平均の企業価値
      * @return 変動係数
      */
-    public BigDecimal coefficientOfVariation(final BigDecimal standardDeviation, final BigDecimal averageCorporateValue) {
-        return standardDeviation.divide(averageCorporateValue, THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP);
+    public Optional<BigDecimal> coefficientOfVariation(
+            final BigDecimal standardDeviation, final BigDecimal averageCorporateValue) {
+        if (Objects.isNull(standardDeviation) || Objects.isNull(averageCorporateValue)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(standardDeviation.divide(averageCorporateValue, THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP));
+        }
     }
 
     /**

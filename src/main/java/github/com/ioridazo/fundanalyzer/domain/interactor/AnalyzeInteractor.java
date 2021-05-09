@@ -124,24 +124,41 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      */
     @Override
     public CorporateValue calculateCorporateValue(final Company company) {
+        final CorporateValue corporateValue = CorporateValue.of();
+
         // 最新企業価値
         final Optional<BigDecimal> latestCorporateValue = analysisResultSpecification.latestCorporateValue(company);
+        if (latestCorporateValue.isEmpty()) {
+            return corporateValue;
+        } else {
+            corporateValue.setLatestCorporateValue(latestCorporateValue.get());
+        }
         // 平均企業価値
-        final BigDecimal averageCorporateValue = analysisResultSpecification.averageCorporateValue(company);
+        final Optional<BigDecimal> averageCorporateValue = analysisResultSpecification.averageCorporateValue(company);
+        if (averageCorporateValue.isEmpty()) {
+            return corporateValue;
+        } else {
+            corporateValue.setAverageCorporateValue(averageCorporateValue.get());
+        }
         // 標準偏差
-        final BigDecimal standardDeviation = analysisResultSpecification.standardDeviation(company, averageCorporateValue);
+        final Optional<BigDecimal> standardDeviation = analysisResultSpecification.standardDeviation(company, averageCorporateValue.get());
+        if (standardDeviation.isEmpty()) {
+            return corporateValue;
+        } else {
+            corporateValue.setStandardDeviation(standardDeviation.get());
+        }
         // 変動係数
-        final BigDecimal coefficientOfVariation = analysisResultSpecification.coefficientOfVariation(standardDeviation, averageCorporateValue);
+        final Optional<BigDecimal> coefficientOfVariation = analysisResultSpecification.coefficientOfVariation(standardDeviation.get(), averageCorporateValue.get());
+        if (coefficientOfVariation.isEmpty()) {
+            return corporateValue;
+        } else {
+            corporateValue.setCoefficientOfVariation(coefficientOfVariation.get());
+        }
         // 対象年カウント
         final BigDecimal countYear = analysisResultSpecification.countYear(company);
+        corporateValue.setCountYear(countYear);
 
-        return CorporateValue.of(
-                latestCorporateValue.orElse(null),
-                averageCorporateValue,
-                standardDeviation,
-                coefficientOfVariation,
-                countYear
-        );
+        return corporateValue;
     }
 
     /**

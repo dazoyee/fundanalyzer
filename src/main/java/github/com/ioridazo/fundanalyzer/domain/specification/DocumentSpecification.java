@@ -2,7 +2,6 @@ package github.com.ioridazo.fundanalyzer.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -402,12 +401,8 @@ public class DocumentSpecification {
      * @param results EDINETレスポンス
      * @return 期間
      */
-    private Optional<LocalDate> parseDocumentPeriod(final Results results) {
-        final boolean anyMatchTargetTypes = List.of(
-                DocumentTypeCode.DTC_120,
-                DocumentTypeCode.DTC_130
-        ).stream()
-                .map(DocumentTypeCode::toValue)
+    Optional<LocalDate> parseDocumentPeriod(final Results results) {
+        final boolean anyMatchTargetTypes = targetTypeCodes.stream()
                 .anyMatch(documentTypeCode -> results.getDocTypeCode().stream().allMatch(documentTypeCode::equals));
 
         if (anyMatchTargetTypes) {

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
-@Value
+@Value(staticConstructor = "of")
 public class CorporateViewModel {
 
     // 証券コード

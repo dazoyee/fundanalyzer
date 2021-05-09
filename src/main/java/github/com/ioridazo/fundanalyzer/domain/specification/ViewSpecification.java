@@ -163,20 +163,20 @@ public class ViewSpecification {
     public CorporateViewModel generateCorporateView(final Company company, final CorporateValue corporateValue) {
         final Stock stock = stockSpecification.findStock(company);
 
-        return new CorporateViewModel(
+        return CorporateViewModel.of(
                 company.getCode().map(code -> code.substring(0, 4)).orElseThrow(FundanalyzerNotExistException::new),
                 company.getCompanyName(),
                 documentSpecification.latestDocument(company).map(Document::getSubmitDate).orElse(null),
-                corporateValue.getLatestCorporateValue(),
-                corporateValue.getAverageCorporateValue(),
-                corporateValue.getStandardDeviation(),
-                corporateValue.getCoefficientOfVariation(),
+                corporateValue.getLatestCorporateValue().orElse(null),
+                corporateValue.getAverageCorporateValue().orElse(null),
+                corporateValue.getStandardDeviation().orElse(null),
+                corporateValue.getCoefficientOfVariation().orElse(null),
                 stock.getAverageStockPrice().orElse(null),
                 stock.getImportDate().orElse(null),
                 stock.getLatestStockPrice().orElse(null),
                 calculateDiscountValue(corporateValue, stock).orElse(null),
                 calculateDiscountRate(corporateValue, stock).orElse(null),
-                corporateValue.getCountYear(),
+                corporateValue.getCountYear().orElse(null),
                 stock.getLatestForecastStock().orElse(null)
         );
     }
@@ -216,11 +216,11 @@ public class ViewSpecification {
      * @return 割安値
      */
     private Optional<BigDecimal> calculateDiscountValue(final CorporateValue corporateValue, final Stock stock) {
-        if (stock.getLatestStockPrice().isEmpty()) {
+        if (corporateValue.getAverageCorporateValue().isEmpty() || stock.getLatestStockPrice().isEmpty()) {
             return Optional.empty();
         }
 
-        return Optional.of(corporateValue.getAverageCorporateValue()
+        return Optional.of(corporateValue.getAverageCorporateValue().orElseThrow()
                 .subtract(stock.getLatestStockPrice().orElseThrow())
                 .abs(new MathContext(DIGIT_NUMBER_OF_DISCOUNT_VALUE)));
     }
@@ -233,11 +233,11 @@ public class ViewSpecification {
      * @return 割安度
      */
     private Optional<BigDecimal> calculateDiscountRate(final CorporateValue corporateValue, final Stock stock) {
-        if (stock.getLatestStockPrice().isEmpty()) {
+        if (corporateValue.getAverageCorporateValue().isEmpty() || stock.getLatestStockPrice().isEmpty()) {
             return Optional.empty();
         }
 
-        return Optional.of(corporateValue.getAverageCorporateValue()
+        return Optional.of(corporateValue.getAverageCorporateValue().orElseThrow()
                 .divide(stock.getLatestStockPrice().orElseThrow(), FIFTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
                 .multiply(ONE_HUNDRED).setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
