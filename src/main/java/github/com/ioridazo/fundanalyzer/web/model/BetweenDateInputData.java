@@ -5,7 +5,7 @@ import lombok.Value;
 import java.time.LocalDate;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
-@Value
+@Value(staticConstructor = "of")
 public class BetweenDateInputData {
 
     private final LocalDate fromDate;

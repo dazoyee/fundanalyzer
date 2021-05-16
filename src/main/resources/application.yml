@@ -64,6 +64,7 @@ app:
       discount-rate: 120  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.6  # 以下を表示
+      diff-forecast-stock: 100  # 株価予想と最新株価との差が100以上を表示
       edinet-list.size: 400  # 日間を表示
     target:
       document-type-code: 120,130  # 処理対象

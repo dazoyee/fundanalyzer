@@ -18,8 +18,8 @@ import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
@@ -233,7 +233,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
         final Optional<Long> totalCurrentLiabilities = financialStatementSpecification.findValue(
                 FinancialStatementEnum.BALANCE_SHEET,
                 document,
-                subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)
+                subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES)
         );
         final Optional<Long> totalLiabilities = financialStatementSpecification.findValue(
                 FinancialStatementEnum.BALANCE_SHEET,
@@ -278,8 +278,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
             final Document document,
             final BiConsumer<Company, Pair<File, ScrapingKeywordEntity>> doScraping) {
         final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
-                .orElseThrow(FundanalyzerNotExistException::new);
-        final var targetDirectory = makeDocumentPath(pathDecode, document.getSubmitDate(), document.getDocumentId());
+                .orElseThrow(FundanalyzerRuntimeException::new);
+        final File targetDirectory = makeDocumentPath(pathDecode, document.getSubmitDate(), document.getDocumentId());
 
         try {
             final Pair<File, ScrapingKeywordEntity> targetFile = findTargetFile(targetDirectory, fs);
@@ -299,7 +299,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             );
 
             documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
-        } catch (FundanalyzerFileException | FundanalyzerNotExistException e) {
+        } catch (FundanalyzerFileException e) {
             documentSpecification.updateFsToError(document, fs);
             log.warn(
                     "スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +

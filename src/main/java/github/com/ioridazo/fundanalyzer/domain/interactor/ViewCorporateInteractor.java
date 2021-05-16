@@ -54,6 +54,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     BigDecimal configOutlierOfStandardDeviation;
     @Value("${app.config.view.coefficient-of-variation}")
     BigDecimal configCoefficientOfVariation;
+    @Value("${app.config.view.diff-forecast-stock}")
+    BigDecimal configDiffForecastStock;
 
     public ViewCorporateInteractor(
             final AnalyzeInteractor analyzeInteractor,
@@ -84,20 +86,27 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         return viewSpecification.findAllCorporateView().stream()
                 // not null
                 .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
+                .filter(cvm -> Objects.nonNull(cvm.getStandardDeviation()))
+                .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
                 // 割安度が120%以上を表示
-                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) > 0)
+                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
                 // 標準偏差が外れ値となっていたら除外
                 .filter(cvm -> cvm.getStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
                 // 最新企業価値がマイナスの場合は除外
                 .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
                 // 変動係数
                 .filter(cvm -> {
-                    // 変動係数が0.6以下であること
-                    if (cvm.getCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
+                    if (Objects.isNull(cvm.getCoefficientOfVariation())) {
+                        // 変動係数が存在しない
                         return true;
                     } else {
-                        // 変動係数が0.6以上でも最新企業価値が高ければOK
-                        return cvm.getLatestCorporateValue().compareTo(cvm.getAverageCorporateValue()) > -1;
+                        // 変動係数が0.6未満であること
+                        if (cvm.getCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
+                            return true;
+                        } else {
+                            // 変動係数が0.6以上でも最新企業価値が高ければOK
+                            return cvm.getLatestCorporateValue().compareTo(cvm.getAverageCorporateValue()) > -1;
+                        }
                     }
                 })
                 // 予想株価
@@ -105,7 +114,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                     if (Objects.nonNull(cvb.getForecastStock())) {
                         // 株価予想が存在する場合、最新株価より高ければOK
                         return (cvb.getForecastStock().divide(cvb.getLatestStockPrice(), 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
-                                && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(BigDecimal.valueOf(100)) > 0);
+                                && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(configDiffForecastStock) >= 0);
                     } else {
                         return true;
                     }

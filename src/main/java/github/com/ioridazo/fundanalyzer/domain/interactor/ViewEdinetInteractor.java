@@ -57,15 +57,9 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
      */
     @Override
     public List<EdinetListViewModel> viewMain() {
-        final List<EdinetListViewModel> viewModelList = viewSpecification.findAllEdinetListView();
-        viewModelList.removeIf(
-                viewModel -> List.of(
-                        viewModel.getCountTarget(),
-                        viewModel.getCountScraped(),
-                        viewModel.getCountAnalyzed()
-                ).stream().distinct().count() == 1
-        );
-        return viewModelList;
+        return viewSpecification.findAllEdinetListView().stream()
+                .filter(viewModel -> !viewModel.isAllDone())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -95,7 +89,10 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
                 ))
                 .collect(Collectors.toList());
 
-        return EdinetDetailViewModel.of(viewSpecification.findEdinetListView(inputData), documentView);
+        return EdinetDetailViewModel.of(
+                viewSpecification.findEdinetListView(inputData),
+                documentView
+        );
     }
 
     /**

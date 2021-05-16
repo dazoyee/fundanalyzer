@@ -196,7 +196,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         ));
         // 営業利益
         final Long operatingProfit = financeValue.getOperatingProfit().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
+                FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
                 PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
                 document
         ));

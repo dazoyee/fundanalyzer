@@ -36,37 +36,37 @@ public class CompanyViewModel {
                         .filter(stockPrice -> stockPrice.getPer().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getPer)
-                        .orElseThrow(),
+                        .orElse(null),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getPbr().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getPbr)
-                        .orElseThrow(),
+                        .orElse(null),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getRoe().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getRoe)
-                        .orElseThrow(),
+                        .orElse(null),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getNumberOfShares().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getNumberOfShares)
-                        .orElseThrow(),
+                        .orElse(null),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getMarketCapitalization().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getMarketCapitalization)
-                        .orElseThrow(),
+                        .orElse(null),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getDividendYield().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getDividendYield)
-                        .orElseThrow(),
+                        .orElse(null),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getShareholderBenefit().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getShareholderBenefit)
-                        .orElseThrow()
+                        .orElse(null)
         );
     }
 }

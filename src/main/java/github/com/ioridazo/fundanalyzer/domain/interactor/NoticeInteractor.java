@@ -43,7 +43,7 @@ public class NoticeInteractor implements NoticeUseCase {
 
         viewSpecification.findAllCorporateView(inputData).stream()
                 // 割安度が120%以上を表示
-                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) > 0)
+                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
                 .forEach(cvm -> {
                     // 優良銘柄を通知する
                     slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
