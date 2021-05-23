@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.proxy.selenium;
+package github.com.ioridazo.fundanalyzer.client.selenium;
 
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -17,12 +17,12 @@ import java.text.MessageFormat;
 
 @Log4j2
 @Component
-public class SeleniumProxy {
+public class SeleniumClient {
 
     private final RestTemplate restTemplate;
     private final String baseUri;
 
-    public SeleniumProxy(
+    public SeleniumClient(
             final RestTemplate restTemplate,
             @Value("${app.api.selenium}") final String baseUri) {
         this.restTemplate = restTemplate;

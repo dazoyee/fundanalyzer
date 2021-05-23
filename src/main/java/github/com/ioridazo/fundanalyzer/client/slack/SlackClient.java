@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.proxy.slack;
+package github.com.ioridazo.fundanalyzer.client.slack;
 
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -23,7 +23,7 @@ import java.util.Objects;
 
 @Component
 @PropertySource(value = "classpath:/slack-message.properties", encoding = "UTF-8")
-public class SlackProxy {
+public class SlackClient {
 
     private final RestTemplate restTemplate;
     private final String baseUri;
@@ -35,7 +35,7 @@ public class SlackProxy {
     @Value("${app.api.slack.parameter.x}")
     String parameterX;
 
-    public SlackProxy(
+    public SlackClient(
             final RestTemplate restTemplate,
             @Value("${app.api.slack.base-uri}") final String baseUri,
             final Environment environment) {

@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.domain.specification.ViewSpecification;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
@@ -25,18 +25,18 @@ import static org.mockito.Mockito.when;
 class NoticeInteractorTest {
 
     private ViewSpecification viewSpecification;
-    private SlackProxy slackProxy;
+    private SlackClient slackClient;
 
     private NoticeInteractor noticeInteractor;
 
     @BeforeEach
     void setUp() {
         viewSpecification = Mockito.mock(ViewSpecification.class);
-        slackProxy = Mockito.mock(SlackProxy.class);
+        slackClient = Mockito.mock(SlackClient.class);
 
         noticeInteractor = Mockito.spy(new NoticeInteractor(
                 viewSpecification,
-                slackProxy
+                slackClient
         ));
         noticeInteractor.configDiscountRate = BigDecimal.valueOf(120);
     }
@@ -62,7 +62,7 @@ class NoticeInteractorTest {
             when(viewSpecification.findEdinetListView(inputData)).thenReturn(viewModel);
 
             assertDoesNotThrow(() -> noticeInteractor.noticeSlack(inputData));
-            verify(slackProxy, times(1))
+            verify(slackClient, times(1))
                     .sendMessage(eq("g.c.i.f.domain.service.ViewService.processing.notice.info"), any());
         }
 
@@ -82,7 +82,7 @@ class NoticeInteractorTest {
             when(viewSpecification.findEdinetListView(inputData)).thenReturn(viewModel);
 
             assertDoesNotThrow(() -> noticeInteractor.noticeSlack(inputData));
-            verify(slackProxy, times(1))
+            verify(slackClient, times(1))
                     .sendMessage(eq("g.c.i.f.domain.service.ViewService.processing.notice.warn"), any());
         }
 
@@ -119,7 +119,7 @@ class NoticeInteractorTest {
             when(viewSpecification.findAllCorporateView(inputData)).thenReturn(List.of(corporateViewModel));
 
             assertDoesNotThrow(() -> noticeInteractor.noticeSlack(inputData));
-            verify(slackProxy, times(1))
+            verify(slackClient, times(1))
                     .sendMessage(eq("g.c.i.f.domain.service.ViewService.processing.notice.submitDate"), any());
         }
     }

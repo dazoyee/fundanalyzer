@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.specification;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

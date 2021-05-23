@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
+import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
@@ -9,8 +9,8 @@ import github.com.ioridazo.fundanalyzer.domain.specification.CompanySpecificatio
 import github.com.ioridazo.fundanalyzer.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.proxy.selenium.SeleniumProxy;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +32,7 @@ public class CompanyInteractor implements CompanyUseCase {
     private final CompanySpecification companySpecification;
     private final FileOperator fileOperator;
     private final CsvCommander csvCommander;
-    private final SeleniumProxy seleniumProxy;
+    private final SeleniumClient seleniumClient;
 
     @Value("${app.settings.file.path.company.company}")
     String pathCompany;
@@ -44,12 +44,12 @@ public class CompanyInteractor implements CompanyUseCase {
             final CompanySpecification companySpecification,
             final FileOperator fileOperator,
             final CsvCommander csvCommander,
-            final SeleniumProxy seleniumProxy) {
+            final SeleniumClient seleniumClient) {
         this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.fileOperator = fileOperator;
         this.csvCommander = csvCommander;
-        this.seleniumProxy = seleniumProxy;
+        this.seleniumClient = seleniumClient;
     }
 
     /**
@@ -70,7 +70,7 @@ public class CompanyInteractor implements CompanyUseCase {
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
         try {
             // ファイルダウンロード
-            final String fileName = seleniumProxy.edinetCodeList(inputFilePath);
+            final String fileName = seleniumClient.edinetCodeList(inputFilePath);
 
             final File inputFile = new File(String.format("%s/%s", inputFilePath, fileName.replace(".zip", "")));
             final File outputFile = new File(pathCompany);

@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request;
+package github.com.ioridazo.fundanalyzer.client.edinet.entity.request;
 
 import lombok.Value;
 

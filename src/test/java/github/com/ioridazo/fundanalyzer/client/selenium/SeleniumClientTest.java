@@ -1,5 +1,6 @@
-package github.com.ioridazo.fundanalyzer.proxy.selenium;
+package github.com.ioridazo.fundanalyzer.client.selenium;
 
+import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import okhttp3.mockwebserver.MockResponse;
@@ -19,17 +20,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Timeout(10)
-class SeleniumProxyTest {
+class SeleniumClientTest {
 
     private static MockWebServer server;
-    private SeleniumProxy proxy;
+    private SeleniumClient proxy;
 
     @BeforeEach
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new SeleniumProxy(new AppConfig().restTemplate(2000, 2000),
+        this.proxy = Mockito.spy(new SeleniumClient(new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort())
         ));
 

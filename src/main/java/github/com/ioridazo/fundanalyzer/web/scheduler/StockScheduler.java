@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,15 +21,15 @@ public class StockScheduler {
 
     private final AnalysisService analysisService;
     private final DocumentSpecification documentSpecification;
-    private final SlackProxy slackProxy;
+    private final SlackClient slackClient;
 
     public StockScheduler(
             final AnalysisService analysisService,
             final DocumentSpecification documentSpecification,
-            final SlackProxy slackProxy) {
+            final SlackClient slackClient) {
         this.analysisService = analysisService;
         this.documentSpecification = documentSpecification;
-        this.slackProxy = slackProxy;
+        this.slackClient = slackClient;
     }
 
     LocalDate nowLocalDate() {
@@ -50,11 +50,11 @@ public class StockScheduler {
                     .map(DateInputData::of)
                     .forEach(analysisService::importStock);
 
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.IMPORT);
         } catch (Throwable t) {
             // slack通知
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
             throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }

@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -15,13 +15,13 @@ import org.springframework.stereotype.Component;
 public class CompanyScheduler {
 
     private final CompanyUseCase companyUseCase;
-    private final SlackProxy slackProxy;
+    private final SlackClient slackClient;
 
     public CompanyScheduler(
             final CompanyUseCase companyUseCase,
-            final SlackProxy slackProxy) {
+            final SlackClient slackClient) {
         this.companyUseCase = companyUseCase;
-        this.slackProxy = slackProxy;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -37,7 +37,7 @@ public class CompanyScheduler {
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.COMPANY);
         } catch (Throwable t) {
             // Slack通知
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
             throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }

@@ -11,7 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -45,7 +45,7 @@ class ViewCorporateInteractorTest {
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
     private ViewSpecification viewSpecification;
-    private SlackProxy slackProxy;
+    private SlackClient slackClient;
 
     private ViewCorporateInteractor viewCorporateInteractor;
 
@@ -58,7 +58,7 @@ class ViewCorporateInteractorTest {
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
-        slackProxy = Mockito.mock(SlackProxy.class);
+        slackClient = Mockito.mock(SlackClient.class);
 
         viewCorporateInteractor = Mockito.spy(new ViewCorporateInteractor(
                 analyzeInteractor,
@@ -68,7 +68,7 @@ class ViewCorporateInteractorTest {
                 analysisResultSpecification,
                 stockSpecification,
                 viewSpecification,
-                slackProxy
+                slackClient
         ));
         viewCorporateInteractor.configDiscountRate = BigDecimal.valueOf(120);
         viewCorporateInteractor.configOutlierOfStandardDeviation = BigDecimal.valueOf(10000);
@@ -413,7 +413,7 @@ class ViewCorporateInteractorTest {
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
-            verify(slackProxy, times(1)).sendMessage(any());
+            verify(slackClient, times(1)).sendMessage(any());
         }
 
         @DisplayName("updateView : ビューを更新する")
@@ -425,7 +425,7 @@ class ViewCorporateInteractorTest {
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
-            verify(slackProxy, times(0)).sendMessage(any());
+            verify(slackClient, times(0)).sendMessage(any());
         }
     }
 

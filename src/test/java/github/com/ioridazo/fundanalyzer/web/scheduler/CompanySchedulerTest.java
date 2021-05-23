@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,16 +20,16 @@ import static org.mockito.Mockito.verify;
 class CompanySchedulerTest {
 
     private CompanyUseCase companyUseCase;
-    private SlackProxy slackProxy;
+    private SlackClient slackClient;
 
     private CompanyScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         this.companyUseCase = Mockito.mock(CompanyUseCase.class);
-        this.slackProxy = Mockito.mock(SlackProxy.class);
+        this.slackClient = Mockito.mock(SlackClient.class);
 
-        this.scheduler = new CompanyScheduler(companyUseCase, slackProxy);
+        this.scheduler = new CompanyScheduler(companyUseCase, slackClient);
     }
 
     @Nested
@@ -47,7 +47,7 @@ class CompanySchedulerTest {
         void company_throwable() {
             doThrow(FundanalyzerRuntimeException.class).when(companyUseCase).importCompanyInfo();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.companyScheduler());
-            verify(slackProxy, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any());
         }
     }
 }

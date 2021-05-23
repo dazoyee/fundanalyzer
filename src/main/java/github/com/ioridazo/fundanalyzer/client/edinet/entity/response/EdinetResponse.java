@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response;
+package github.com.ioridazo.fundanalyzer.client.edinet.entity.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

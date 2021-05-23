@@ -8,7 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,17 +23,17 @@ public class AnalysisScheduler {
     private final AnalysisService analysisService;
     private final ViewService viewService;
     private final DocumentSpecification documentSpecification;
-    private final SlackProxy slackProxy;
+    private final SlackClient slackClient;
 
     public AnalysisScheduler(
             final AnalysisService analysisService,
             final ViewService viewService,
             final DocumentSpecification documentSpecification,
-            final SlackProxy slackProxy) {
+            final SlackClient slackClient) {
         this.analysisService = analysisService;
         this.viewService = viewService;
         this.documentSpecification = documentSpecification;
-        this.slackProxy = slackProxy;
+        this.slackClient = slackClient;
     }
 
     public LocalDate nowLocalDate() {
@@ -61,7 +61,7 @@ public class AnalysisScheduler {
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.ANALYSIS);
         } catch (Throwable t) {
             // Slack通知
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
             throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }
@@ -79,7 +79,7 @@ public class AnalysisScheduler {
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.UPDATE);
         } catch (Throwable t) {
             // Slack通知
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
             throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }

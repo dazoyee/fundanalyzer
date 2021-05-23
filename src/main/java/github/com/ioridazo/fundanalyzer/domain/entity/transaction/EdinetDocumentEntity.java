@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.transaction;
 
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

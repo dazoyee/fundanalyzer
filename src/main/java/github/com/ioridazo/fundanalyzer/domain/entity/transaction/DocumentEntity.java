@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.entity.Flag;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import lombok.Builder;
 import lombok.Value;
 import org.seasar.doma.Column;

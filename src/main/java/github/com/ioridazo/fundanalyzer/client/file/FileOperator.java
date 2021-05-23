@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.file;
+package github.com.ioridazo.fundanalyzer.client.file;
 
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
@@ -49,6 +49,7 @@ public class FileOperator {
         ZipInputStream zis = new ZipInputStream(bis, Charset.forName("MS932"));
 
         if (!fileOutputPath.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             fileOutputPath.mkdir();
         }
 

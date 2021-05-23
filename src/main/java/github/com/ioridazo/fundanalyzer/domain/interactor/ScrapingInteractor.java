@@ -20,10 +20,10 @@ import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +50,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
     private final FinancialStatementSpecification financialStatementSpecification;
     private final XbrlScraping xbrlScraping;
     private final FileOperator fileOperator;
-    private final EdinetProxy edinetProxy;
+    private final EdinetClient edinetClient;
 
     @Value("${app.settings.file.path.edinet}")
     String pathEdinet;
@@ -65,7 +65,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final XbrlScraping xbrlScraping,
             final FileOperator fileOperator,
-            final EdinetProxy edinetProxy) {
+            final EdinetClient edinetClient) {
         this.scrapingKeywordDao = scrapingKeywordDao;
         this.companySpecification = companySpecification;
         this.subjectSpecification = subjectSpecification;
@@ -73,7 +73,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
         this.financialStatementSpecification = financialStatementSpecification;
         this.xbrlScraping = xbrlScraping;
         this.fileOperator = fileOperator;
-        this.edinetProxy = edinetProxy;
+        this.edinetClient = edinetClient;
     }
 
     /**
@@ -85,7 +85,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
     public void download(final Document document) {
         try {
             // ファイル取得
-            edinetProxy.acquisition(
+            edinetClient.acquisition(
                     makeTargetPath(pathEdinet, document.getSubmitDate()),
                     new AcquisitionRequestParameter(document.getDocumentId(), AcquisitionType.DEFAULT)
             );

@@ -10,11 +10,11 @@ import github.com.ioridazo.fundanalyzer.domain.specification.EdinetDocumentSpeci
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +33,7 @@ public class DocumentInteractor implements DocumentUseCase {
     private final DocumentSpecification documentSpecification;
     private final EdinetDocumentSpecification edinetDocumentSpecification;
     private final FileOperator fileOperator;
-    private final EdinetProxy edinetProxy;
+    private final EdinetClient edinetClient;
 
     @Value("${app.config.target.document-type-code}")
     List<String> targetTypeCodes;
@@ -44,13 +44,13 @@ public class DocumentInteractor implements DocumentUseCase {
             final DocumentSpecification documentSpecification,
             final EdinetDocumentSpecification edinetDocumentSpecification,
             final FileOperator fileOperator,
-            final EdinetProxy edinetProxy) {
+            final EdinetClient edinetClient) {
         this.companySpecification = companySpecification;
         this.edinetDocumentSpecification = edinetDocumentSpecification;
         this.fileOperator = fileOperator;
         this.scraping = scraping;
         this.documentSpecification = documentSpecification;
-        this.edinetProxy = edinetProxy;
+        this.edinetClient = edinetClient;
     }
 
     /**
@@ -100,7 +100,7 @@ public class DocumentInteractor implements DocumentUseCase {
     public void saveEdinetList(final DateInputData inputData) {
         if (isPresentEdinet(inputData.getDate())) {
             // 書類が0件ではないときは書類リストを取得してデータベースに登録する
-            final EdinetResponse edinetResponse = edinetProxy.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
+            final EdinetResponse edinetResponse = edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
 
             // edinet document
             edinetDocumentSpecification.insert(edinetResponse);
@@ -252,7 +252,7 @@ public class DocumentInteractor implements DocumentUseCase {
     boolean isPresentEdinet(final LocalDate submitDate) {
         return Stream.of(submitDate)
                 // EDINETに提出書類の問い合わせ
-                .map(d -> edinetProxy.list(new ListRequestParameter(d, ListType.DEFAULT)))
+                .map(d -> edinetClient.list(new ListRequestParameter(d, ListType.DEFAULT)))
                 .map(edinetResponse -> edinetResponse.getMetadata().getResultset().getCount())
                 .anyMatch(c -> !"0".equals(c));
     }

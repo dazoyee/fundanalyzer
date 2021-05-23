@@ -10,7 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.DocumentViewModel;
@@ -30,7 +30,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
     private final DocumentSpecification documentSpecification;
     private final FinancialStatementSpecification financialStatementSpecification;
     private final ViewSpecification viewSpecification;
-    private final SlackProxy slackProxy;
+    private final SlackClient slackClient;
 
     @Value("${app.config.view.edinet-list.size}")
     int edinetListSize;
@@ -40,12 +40,12 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
             final DocumentSpecification documentSpecification,
             final FinancialStatementSpecification financialStatementSpecification,
             final ViewSpecification viewSpecification,
-            final SlackProxy slackProxy) {
+            final SlackClient slackClient) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.financialStatementSpecification = financialStatementSpecification;
         this.viewSpecification = viewSpecification;
-        this.slackProxy = slackProxy;
+        this.slackClient = slackClient;
     }
 
     LocalDate nowLocalDate() {
@@ -111,7 +111,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
 
-        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
+        slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
 
         FundanalyzerLogClient.logService(
                 "処理状況アップデートが正常に終了しました。",

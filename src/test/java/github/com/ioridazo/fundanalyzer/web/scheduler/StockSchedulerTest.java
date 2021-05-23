@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +28,7 @@ class StockSchedulerTest {
 
     private AnalysisService analysisService;
     private DocumentSpecification documentSpecification;
-    private SlackProxy slackProxy;
+    private SlackClient slackClient;
 
     private StockScheduler scheduler;
 
@@ -36,9 +36,9 @@ class StockSchedulerTest {
     void setUp() {
         this.analysisService = Mockito.mock(AnalysisService.class);
         this.documentSpecification = Mockito.mock(DocumentSpecification.class);
-        this.slackProxy = Mockito.mock(SlackProxy.class);
+        this.slackClient = Mockito.mock(SlackClient.class);
 
-        this.scheduler = Mockito.spy(new StockScheduler(analysisService, documentSpecification, slackProxy));
+        this.scheduler = Mockito.spy(new StockScheduler(analysisService, documentSpecification, slackClient));
     }
 
     @Nested
@@ -56,7 +56,7 @@ class StockSchedulerTest {
             assertDoesNotThrow(() -> scheduler.stockScheduler());
             verify(analysisService, times(1)).importStock(DateInputData.of(LocalDate.parse("2021-01-06")));
             verify(analysisService, times(1)).importStock(DateInputData.of(LocalDate.parse("2021-02-06")));
-            verify(slackProxy, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 2);
+            verify(slackClient, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 2);
         }
 
         @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
@@ -69,7 +69,7 @@ class StockSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).importStock((DateInputData) any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());
-            verify(slackProxy, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
+            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
         }
     }
 }

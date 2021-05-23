@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +30,7 @@ class AnalysisSchedulerTest {
     private AnalysisService analysisService;
     private ViewService viewService;
     private DocumentSpecification documentSpecification;
-    private SlackProxy slackProxy;
+    private SlackClient slackClient;
 
     private AnalysisScheduler scheduler;
 
@@ -39,13 +39,13 @@ class AnalysisSchedulerTest {
         this.analysisService = Mockito.mock(AnalysisService.class);
         this.viewService = Mockito.mock(ViewService.class);
         this.documentSpecification = Mockito.mock(DocumentSpecification.class);
-        this.slackProxy = Mockito.mock(SlackProxy.class);
+        this.slackClient = Mockito.mock(SlackClient.class);
 
         this.scheduler = Mockito.spy(new AnalysisScheduler(
                 analysisService,
                 viewService,
                 documentSpecification,
-                slackProxy
+                slackClient
         ));
     }
 
@@ -89,7 +89,7 @@ class AnalysisSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).doMain(any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.analysisScheduler());
-            verify(slackProxy, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any());
         }
     }
 
@@ -108,7 +108,7 @@ class AnalysisSchedulerTest {
         void updateViewScheduler_throwable() {
             doThrow(new FundanalyzerRuntimeException()).when(viewService).updateView();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.updateViewScheduler());
-            verify(slackProxy, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any());
         }
     }
 }

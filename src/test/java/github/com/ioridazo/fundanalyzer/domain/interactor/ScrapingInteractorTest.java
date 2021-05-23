@@ -17,8 +17,8 @@ import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,7 +53,7 @@ class ScrapingInteractorTest {
     private FinancialStatementSpecification financialStatementSpecification;
     private XbrlScraping xbrlScraping;
     private FileOperator fileOperator;
-    private EdinetProxy edinetProxy;
+    private EdinetClient edinetClient;
 
     private ScrapingInteractor scrapingInteractor;
 
@@ -66,7 +66,7 @@ class ScrapingInteractorTest {
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         xbrlScraping = Mockito.mock(XbrlScraping.class);
         fileOperator = Mockito.mock(FileOperator.class);
-        edinetProxy = Mockito.mock(EdinetProxy.class);
+        edinetClient = Mockito.mock(EdinetClient.class);
 
         scrapingInteractor = Mockito.spy(new ScrapingInteractor(
                 scrapingKeywordDao,
@@ -76,7 +76,7 @@ class ScrapingInteractorTest {
                 financialStatementSpecification,
                 xbrlScraping,
                 fileOperator,
-                edinetProxy
+                edinetClient
         ));
         scrapingInteractor.pathEdinet = "pathEdinet";
         scrapingInteractor.pathDecode = "pathDecode";
@@ -91,7 +91,7 @@ class ScrapingInteractorTest {
         @Test
         void execute() throws IOException {
             assertDoesNotThrow(() -> scrapingInteractor.download(document));
-            verify(edinetProxy, times(1)).acquisition(any(), any());
+            verify(edinetClient, times(1)).acquisition(any(), any());
             verify(documentSpecification, times(1)).updateDownloadToDone(document);
             verify(fileOperator, times(1)).decodeZipFile(any(), any());
             verify(documentSpecification, times(1)).updateDecodeToDone(document);
@@ -100,9 +100,9 @@ class ScrapingInteractorTest {
         @DisplayName("download : ダウンロード処理に失敗したとき")
         @Test
         void fundanalyzerRestClientException() throws IOException {
-            doThrow(new FundanalyzerRestClientException("")).when(edinetProxy).acquisition(any(), any());
+            doThrow(new FundanalyzerRestClientException("")).when(edinetClient).acquisition(any(), any());
             assertDoesNotThrow(() -> scrapingInteractor.download(document));
-            verify(edinetProxy, times(1)).acquisition(any(), any());
+            verify(edinetClient, times(1)).acquisition(any(), any());
             verify(documentSpecification, times(1)).updateDownloadToError(document);
             verify(documentSpecification, times(0)).updateDownloadToDone(document);
             verify(fileOperator, times(0)).decodeZipFile(any(), any());
@@ -114,7 +114,7 @@ class ScrapingInteractorTest {
         void iOException() throws IOException {
             doThrow(new IOException()).when(fileOperator).decodeZipFile(any(), any());
             assertDoesNotThrow(() -> scrapingInteractor.download(document));
-            verify(edinetProxy, times(1)).acquisition(any(), any());
+            verify(edinetClient, times(1)).acquisition(any(), any());
             verify(documentSpecification, times(0)).updateDownloadToError(document);
             verify(documentSpecification, times(1)).updateDownloadToDone(document);
             verify(fileOperator, times(1)).decodeZipFile(any(), any());

@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
 import github.com.ioridazo.fundanalyzer.domain.logic.company.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;

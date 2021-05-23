@@ -1,12 +1,12 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.csv.CsvCommander;
+import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.proxy.selenium.SeleniumProxy;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +30,7 @@ class CompanyInteractorTest {
 
     private CompanySpecification companySpecification;
     private FileOperator fileOperator;
-    private SeleniumProxy seleniumProxy;
+    private SeleniumClient seleniumClient;
 
     private CompanyInteractor companyInteractor;
 
@@ -38,14 +38,14 @@ class CompanyInteractorTest {
     void setUp() {
         companySpecification = Mockito.mock(CompanySpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
-        seleniumProxy = Mockito.mock(SeleniumProxy.class);
+        seleniumClient = Mockito.mock(SeleniumClient.class);
 
         companyInteractor = Mockito.spy(new CompanyInteractor(
                 Mockito.mock(IndustrySpecification.class),
                 companySpecification,
                 fileOperator,
                 Mockito.mock(CsvCommander.class),
-                seleniumProxy
+                seleniumClient
         ));
         companyInteractor.pathCompany = "pathCompany";
         companyInteractor.pathCompanyZip = "pathCompanyZip";
@@ -77,11 +77,11 @@ class CompanyInteractorTest {
         @DisplayName("importCompanyInfo : 企業情報ファイルを取得して登録する")
         @Test
         void ok() throws IOException {
-            when(seleniumProxy.edinetCodeList(any())).thenReturn("fileName");
+            when(seleniumClient.edinetCodeList(any())).thenReturn("fileName");
             doNothing().when(companyInteractor).saveCompanyInfo();
 
             assertDoesNotThrow(() -> companyInteractor.importCompanyInfo());
-            verify(seleniumProxy, times(1)).edinetCodeList(any());
+            verify(seleniumClient, times(1)).edinetCodeList(any());
             verify(fileOperator, times(1)).decodeZipFile(any(), any());
             verify(companyInteractor, times(1)).saveCompanyInfo();
         }
@@ -89,14 +89,14 @@ class CompanyInteractorTest {
         @DisplayName("importCompanyInfo : Selenium処理中にエラーが発生したときの挙動を確認する")
         @Test
         void fundanalyzerRestClientException() {
-            when(seleniumProxy.edinetCodeList(any())).thenThrow(FundanalyzerRestClientException.class);
+            when(seleniumClient.edinetCodeList(any())).thenThrow(FundanalyzerRestClientException.class);
             assertThrows(FundanalyzerRuntimeException.class, () -> companyInteractor.importCompanyInfo());
         }
 
         @DisplayName("importCompanyInfo : zipファイル解凍処理中にエラーが発生したときの挙動を確認する")
         @Test
         void iOException() throws IOException {
-            when(seleniumProxy.edinetCodeList(any())).thenReturn("fileName");
+            when(seleniumClient.edinetCodeList(any())).thenReturn("fileName");
             doThrow(IOException.class).when(fileOperator).decodeZipFile(any(), any());
             assertThrows(FundanalyzerRuntimeException.class, () -> companyInteractor.importCompanyInfo());
         }

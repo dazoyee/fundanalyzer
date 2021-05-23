@@ -7,13 +7,13 @@ import github.com.ioridazo.fundanalyzer.domain.specification.EdinetDocumentSpeci
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Metadata;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +42,7 @@ class DocumentInteractorTest {
     private DocumentSpecification documentSpecification;
     private EdinetDocumentSpecification edinetDocumentSpecification;
     private FileOperator fileOperator;
-    private EdinetProxy edinetProxy;
+    private EdinetClient edinetClient;
 
     private DocumentInteractor documentInteractor;
 
@@ -53,7 +53,7 @@ class DocumentInteractorTest {
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         edinetDocumentSpecification = Mockito.mock(EdinetDocumentSpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
-        edinetProxy = Mockito.mock(EdinetProxy.class);
+        edinetClient = Mockito.mock(EdinetClient.class);
 
         documentInteractor = Mockito.spy(new DocumentInteractor(
                 scraping,
@@ -61,7 +61,7 @@ class DocumentInteractorTest {
                 documentSpecification,
                 edinetDocumentSpecification,
                 fileOperator,
-                edinetProxy
+                edinetClient
         ));
         documentInteractor.targetTypeCodes = List.of("120");
     }
@@ -127,8 +127,8 @@ class DocumentInteractorTest {
             edinetResponse.setMetadata(metadata);
             edinetResponse.setResults(List.of(target, already));
 
-            when(edinetProxy.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.DEFAULT))).thenReturn(edinetResponse);
-            when(edinetProxy.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.GET_LIST))).thenReturn(edinetResponse);
+            when(edinetClient.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetClient.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.GET_LIST))).thenReturn(edinetResponse);
 
             assertDoesNotThrow(() -> documentInteractor.saveEdinetList(inputData));
 
@@ -150,7 +150,7 @@ class DocumentInteractorTest {
             var edinetResponse = new EdinetResponse();
             edinetResponse.setMetadata(metadata);
 
-            when(edinetProxy.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetClient.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.DEFAULT))).thenReturn(edinetResponse);
 
             assertDoesNotThrow(() -> documentInteractor.saveEdinetList(inputData));
 

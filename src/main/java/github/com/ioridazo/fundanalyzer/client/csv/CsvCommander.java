@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.csv;
+package github.com.ioridazo.fundanalyzer.client.csv;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;

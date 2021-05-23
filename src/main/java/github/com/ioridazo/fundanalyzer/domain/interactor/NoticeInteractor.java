@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,14 +15,14 @@ import java.util.Objects;
 public class NoticeInteractor implements NoticeUseCase {
 
     private final ViewSpecification viewSpecification;
-    private final SlackProxy slackProxy;
+    private final SlackClient slackClient;
 
     @Value("${app.config.view.discount-rate}")
     BigDecimal configDiscountRate;
 
-    public NoticeInteractor(final ViewSpecification viewSpecification, final SlackProxy slackProxy) {
+    public NoticeInteractor(final ViewSpecification viewSpecification, final SlackClient slackClient) {
         this.viewSpecification = viewSpecification;
-        this.slackProxy = slackProxy;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -36,11 +36,11 @@ public class NoticeInteractor implements NoticeUseCase {
 
         if (edinetListView.isAllDone()) {
             // info message
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
+            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
                     edinetListView.getSubmitDate(), edinetListView.getCountTarget());
         } else {
             // warn message
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
+            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
                     edinetListView.getSubmitDate(), edinetListView.getCountTarget(), edinetListView.getCountNotScraped());
         }
 
@@ -50,7 +50,7 @@ public class NoticeInteractor implements NoticeUseCase {
                 .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
                 .forEach(cvm -> {
                     // 優良銘柄を通知する
-                    slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
+                    slackClient.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
                             cvm.getCode(), cvm.getName(), cvm.getDiscountRate());
                 });
     }

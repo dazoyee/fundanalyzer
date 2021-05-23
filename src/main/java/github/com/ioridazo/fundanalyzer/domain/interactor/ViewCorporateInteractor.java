@@ -15,7 +15,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -48,7 +48,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final ViewSpecification viewSpecification;
-    private final SlackProxy slackProxy;
+    private final SlackClient slackClient;
 
     @Value("${app.config.view.discount-rate}")
     BigDecimal configDiscountRate;
@@ -67,7 +67,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
             final ViewSpecification viewSpecification,
-            final SlackProxy slackProxy) {
+            final SlackClient slackClient) {
         this.analyzeInteractor = analyzeInteractor;
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
@@ -75,7 +75,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
         this.viewSpecification = viewSpecification;
-        this.slackProxy = slackProxy;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -197,7 +197,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
 
-        slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
 
         FundanalyzerLogClient.logService(
                 "表示アップデートが正常に終了しました。",

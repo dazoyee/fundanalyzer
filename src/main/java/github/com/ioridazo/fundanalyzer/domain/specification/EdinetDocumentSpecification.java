@@ -4,8 +4,8 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.EdinetDocumentDao
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;

@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.proxy.slack;
+package github.com.ioridazo.fundanalyzer.client.slack;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
@@ -25,11 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
 @Timeout(10)
-class SlackProxyTest {
+class SlackClientTest {
 
     private static MockWebServer server;
     private Environment environment;
-    private SlackProxy proxy;
+    private SlackClient proxy;
 
     @BeforeEach
     void before() throws IOException {
@@ -37,7 +37,7 @@ class SlackProxyTest {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new SlackProxy(
+        this.proxy = Mockito.spy(new SlackClient(
                 new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort()),
                 environment
@@ -60,7 +60,7 @@ class SlackProxyTest {
     void sendMessage_tester() {
         var propertyPath = "property.path";
 
-        this.proxy = new SlackProxy(
+        this.proxy = new SlackClient(
                 new AppConfig().restTemplate(1, 1),
                 "https://hooks.slack.com",
                 environment

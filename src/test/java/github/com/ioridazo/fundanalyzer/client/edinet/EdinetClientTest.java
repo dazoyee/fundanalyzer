@@ -1,11 +1,12 @@
-package github.com.ioridazo.fundanalyzer.proxy.edinet;
+package github.com.ioridazo.fundanalyzer.client.edinet;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionType;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionType;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -32,17 +33,17 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 @Timeout(10)
-class EdinetProxyTest {
+class EdinetClientTest {
 
     private static MockWebServer server;
-    private EdinetProxy proxy;
+    private EdinetClient proxy;
 
     @BeforeEach
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new EdinetProxy(
+        this.proxy = Mockito.spy(new EdinetClient(
                 new AppConfig().restTemplate(2000, 2000),
                 String.format("http://localhost:%s", server.getPort())
         ));

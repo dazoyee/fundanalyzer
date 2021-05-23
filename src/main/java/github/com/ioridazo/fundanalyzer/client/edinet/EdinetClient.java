@@ -1,13 +1,13 @@
-package github.com.ioridazo.fundanalyzer.proxy.edinet;
+package github.com.ioridazo.fundanalyzer.client.edinet;
 
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.AcquisitionRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -33,12 +33,12 @@ import java.util.Optional;
 
 @Log4j2
 @Component
-public class EdinetProxy {
+public class EdinetClient {
 
     private final RestTemplate restTemplate;
     private final String baseUri;
 
-    public EdinetProxy(
+    public EdinetClient(
             final RestTemplate restTemplate,
             @Value("${app.api.edinet}") final String baseUri) {
         this.restTemplate = restTemplate;

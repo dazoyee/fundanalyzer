@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
-import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
