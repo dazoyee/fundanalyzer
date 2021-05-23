@@ -1,13 +1,13 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
 import github.com.ioridazo.fundanalyzer.domain.entity.master.BsSubjectEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Subject;
 import lombok.AllArgsConstructor;
 
 import java.util.Arrays;
 
 @AllArgsConstructor
-public class BsSubject extends Detail {
+public class BsSubject extends Subject {
 
     private final String id;
 
@@ -21,7 +21,7 @@ public class BsSubject extends Detail {
         return new BsSubject(
                 entity.getId(),
                 entity.getOutlineSubjectId(),
-                entity.getOutlineSubjectId(),
+                entity.getDetailSubjectId().orElse(null),
                 entity.getName()
         );
     }

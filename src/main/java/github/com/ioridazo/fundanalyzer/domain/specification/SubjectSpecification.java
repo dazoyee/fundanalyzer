@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.specification;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.BsSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -60,7 +60,7 @@ public class SubjectSpecification {
      * @param subjectId 科目ID
      * @return 科目情報
      */
-    public Detail findSubject(final FinancialStatementEnum fs, final String subjectId) {
+    public Subject findSubject(final FinancialStatementEnum fs, final String subjectId) {
         switch (fs) {
             case BALANCE_SHEET:
                 return BsSubject.of(bsSubjectDao.selectById(subjectId));
@@ -77,7 +77,7 @@ public class SubjectSpecification {
      * @param bsEnum 貸借対照表の科目
      * @return 貸借対照表の科目情報
      */
-    public Detail findBsSubject(final BsSubject.BsEnum bsEnum) {
+    public Subject findBsSubject(final BsSubject.BsEnum bsEnum) {
         return BsSubject.of(bsSubjectDao.selectByUniqueKey(bsEnum.getOutlineSubjectId(), bsEnum.getDetailSubjectId()));
     }
 
@@ -87,7 +87,7 @@ public class SubjectSpecification {
      * @param bsEnum 貸借対照表の科目
      * @return 貸借対照表の科目情報リスト
      */
-    public List<Detail> findBsSubjectList(final BsSubject.BsEnum bsEnum) {
+    public List<Subject> findBsSubjectList(final BsSubject.BsEnum bsEnum) {
         return bsSubjectDao.selectByOutlineSubjectId(bsEnum.getOutlineSubjectId()).stream()
                 .map(BsSubject::of)
                 .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
@@ -100,7 +100,7 @@ public class SubjectSpecification {
      * @param plEnum 損益計算書の科目
      * @return 損益計算書の科目情報リスト
      */
-    public List<Detail> findPlSubjectList(final PlSubject.PlEnum plEnum) {
+    public List<Subject> findPlSubjectList(final PlSubject.PlEnum plEnum) {
         return plSubjectDao.selectByOutlineSubjectId(plEnum.getOutlineSubjectId()).stream()
                 .map(PlSubject::of)
                 .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))

@@ -2,7 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -50,7 +50,7 @@ public class FinancialStatementSpecification {
      * @param subject  科目
      * @return 値
      */
-    public Optional<Long> findValue(final FinancialStatementEnum fs, final Document document, final Detail subject) {
+    public Optional<Long> findValue(final FinancialStatementEnum fs, final Document document, final Subject subject) {
         return financialStatementDao.selectByUniqueKey(
                 document.getEdinetCode(),
                 fs.toValue(),
@@ -70,8 +70,8 @@ public class FinancialStatementSpecification {
      * @return 値
      */
     public Optional<Long> findValue(
-            final FinancialStatementEnum fs, final Document document, final List<Detail> subjectList) {
-        for (Detail subject : subjectList) {
+            final FinancialStatementEnum fs, final Document document, final List<Subject> subjectList) {
+        for (Subject subject : subjectList) {
             final Optional<Long> value = this.findValue(fs, document, subject);
 
             if (value.isPresent()) {

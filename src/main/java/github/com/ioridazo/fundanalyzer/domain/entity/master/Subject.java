@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
-public abstract class Detail {
+public abstract class Subject {
 
     private String id;
 

@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.dao.transaction.FinancialStatemen
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Detail;
+import github.com.ioridazo.fundanalyzer.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -64,7 +64,7 @@ class FinancialStatementSpecificationTest {
                 null,
                 false
         );
-        List<Detail> subjectList = List.of(new BsSubject(null, null, null, null));
+        List<Subject> subjectList = List.of(new BsSubject(null, null, null, null));
 
         @DisplayName("findValue : 値が存在したら値を返す")
         @Test

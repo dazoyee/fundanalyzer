@@ -1,12 +1,17 @@
 package github.com.ioridazo.fundanalyzer.domain.entity.master;
 
+import lombok.Value;
 import org.seasar.doma.Entity;
 import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
+import java.util.Optional;
+
+@SuppressWarnings("RedundantModifiersValueLombok")
+@Value
 @Entity(immutable = true)
 @Table(name = "bs_subject")
-public final class BsSubjectEntity extends Detail {
+public final class BsSubjectEntity {
 
     @Id
     private final String id;
@@ -17,34 +22,7 @@ public final class BsSubjectEntity extends Detail {
 
     private final String name;
 
-    public BsSubjectEntity(
-            final String id,
-            final String outlineSubjectId,
-            final String detailSubjectId,
-            final String name) {
-        this.id = id;
-        this.outlineSubjectId = outlineSubjectId;
-        this.detailSubjectId = detailSubjectId;
-        this.name = name;
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public String getOutlineSubjectId() {
-        return outlineSubjectId;
-    }
-
-    @Override
-    public String getDetailSubjectId() {
-        return detailSubjectId;
-    }
-
-    @Override
-    public String getName() {
-        return name;
+    public Optional<String> getDetailSubjectId() {
+        return Optional.ofNullable(detailSubjectId);
     }
 }
