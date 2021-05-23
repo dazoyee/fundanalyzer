@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
 import lombok.Value;
 
 import java.time.LocalDate;

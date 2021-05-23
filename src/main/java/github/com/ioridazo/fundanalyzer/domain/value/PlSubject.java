@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Subject;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.PlSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.PlSubjectEntity;
 import lombok.AllArgsConstructor;
 
 import java.util.Arrays;

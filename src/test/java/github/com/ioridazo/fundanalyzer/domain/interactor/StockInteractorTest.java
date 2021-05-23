@@ -1,12 +1,12 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.StockScraping;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Kabuoji3ResultBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.MinkabuResultBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.StockScraping;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.MinkabuResultBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
@@ -79,23 +79,23 @@ class StockInteractorTest {
             CodeInputData inputData = CodeInputData.of("code");
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData));
-            verify(stockSpecification, times(1)).insert(eq("code"), (NikkeiResultBean) any());
+            verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
             //noinspection unchecked
-            verify(stockSpecification, times(1)).insert(eq("code"), (List<Kabuoji3ResultBean>) any());
-            verify(stockSpecification, times(1)).insert(eq("code"), (MinkabuResultBean) any());
+            verify(stockSpecification, times(1)).insert(eq("code0"), (List<Kabuoji3ResultBean>) any());
+            verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
         }
 
         @DisplayName("importStockPrice : エラー発生したとき")
         @Test
         void exception() {
             CodeInputData inputData = CodeInputData.of("code");
-            when(stockScraping.minkabu("code")).thenThrow(FundanalyzerScrapingException.class);
+            when(stockScraping.minkabu("code0")).thenThrow(FundanalyzerScrapingException.class);
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData));
-            verify(stockSpecification, times(1)).insert(eq("code"), (NikkeiResultBean) any());
+            verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
             //noinspection unchecked
-            verify(stockSpecification, times(1)).insert(eq("code"), (List<Kabuoji3ResultBean>) any());
-            verify(stockSpecification, times(0)).insert(eq("code"), (MinkabuResultBean) any());
+            verify(stockSpecification, times(1)).insert(eq("code0"), (List<Kabuoji3ResultBean>) any());
+            verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
         }
     }
 

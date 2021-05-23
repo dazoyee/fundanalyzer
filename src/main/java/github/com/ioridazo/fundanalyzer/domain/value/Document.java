@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
 import lombok.Value;
 
 import java.time.LocalDate;

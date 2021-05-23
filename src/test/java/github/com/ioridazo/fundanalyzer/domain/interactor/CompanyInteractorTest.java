@@ -1,8 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
-import github.com.ioridazo.fundanalyzer.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.IndustrySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;

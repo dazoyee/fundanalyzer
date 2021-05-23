@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.FinancialStatementEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import lombok.Value;
 
 import java.time.LocalDate;

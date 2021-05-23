@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import lombok.Value;
 
 import java.math.BigDecimal;

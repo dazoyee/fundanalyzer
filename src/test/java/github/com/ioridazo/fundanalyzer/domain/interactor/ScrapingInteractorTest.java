@@ -1,15 +1,15 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.dao.master.ScrapingKeywordDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.ScrapingKeywordEntity;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.XbrlScraping;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.FinancialTableResultBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.scraping.jsoup.bean.Unit;
-import github.com.ioridazo.fundanalyzer.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.FinancialStatementSpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.SubjectSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.SubjectSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;

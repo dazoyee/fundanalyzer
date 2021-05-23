@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import lombok.Value;
 
 import java.math.BigDecimal;

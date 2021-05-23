@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import lombok.Value;

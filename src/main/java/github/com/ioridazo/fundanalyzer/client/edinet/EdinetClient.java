@@ -1,8 +1,8 @@
 package github.com.ioridazo.fundanalyzer.client.edinet;
 
-import github.com.ioridazo.fundanalyzer.domain.log.Category;
-import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.domain.log.Process;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;

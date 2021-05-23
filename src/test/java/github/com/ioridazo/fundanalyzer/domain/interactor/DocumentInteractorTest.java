@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
-import github.com.ioridazo.fundanalyzer.domain.specification.EdinetDocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -92,13 +92,6 @@ class DocumentInteractorTest {
             assertDoesNotThrow(() -> documentInteractor.allProcess(inputData));
             verify(documentInteractor, times(1)).saveEdinetList(inputData);
             verify(documentInteractor, times(0)).scrape((Document) any());
-        }
-
-        @DisplayName("allProcess : 想定外のエラー")
-        @Test
-        void exception() {
-            doThrow(RuntimeException.class).when(documentInteractor).saveEdinetList(inputData);
-            assertThrows(FundanalyzerRuntimeException.class, () -> documentInteractor.allProcess(inputData));
         }
     }
 

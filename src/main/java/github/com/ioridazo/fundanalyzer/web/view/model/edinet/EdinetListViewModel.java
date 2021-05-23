@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.edinet;
 
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import lombok.Value;
 
 import java.time.LocalDate;

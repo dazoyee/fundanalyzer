@@ -1,8 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.Consolidated;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.ListCategories;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.CompanyEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Consolidated;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategories;
 import lombok.Value;
 
 import java.util.Optional;
