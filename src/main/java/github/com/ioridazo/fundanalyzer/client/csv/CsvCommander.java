@@ -15,7 +15,7 @@ import java.util.List;
 @Component
 public class CsvCommander {
 
-    @NewSpan("CsvCommander.readCsv")
+    @NewSpan
     public <T> List<T> readCsv(final File file, final Charset charset, final Class<? extends T> beanClass) {
         if (!file.exists()) {
             //noinspection ResultOfMethodCallIgnored

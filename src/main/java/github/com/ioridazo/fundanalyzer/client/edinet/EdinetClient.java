@@ -1,13 +1,13 @@
 package github.com.ioridazo.fundanalyzer.client.edinet;
 
-import github.com.ioridazo.fundanalyzer.client.log.Category;
-import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -52,7 +52,7 @@ public class EdinetClient {
      * @param parameter パラメータ
      * @return EdinetResponse
      */
-    @NewSpan("EdinetProxy.list")
+    @NewSpan
     public EdinetResponse list(final ListRequestParameter parameter) {
         try {
             String message;
@@ -122,7 +122,7 @@ public class EdinetClient {
      * @param storagePath 保存先
      * @param parameter   パラメータ
      */
-    @NewSpan("EdinetProxy.acquisition")
+    @NewSpan
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
         try {

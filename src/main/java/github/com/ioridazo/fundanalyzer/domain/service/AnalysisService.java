@@ -111,6 +111,7 @@ public class AnalysisService {
      *
      * @param inputData 提出日
      */
+    @NewSpan
     public void importStock(final DateInputData inputData) {
         // stock
         stockUseCase.importStockPrice(inputData);

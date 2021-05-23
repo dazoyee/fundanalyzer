@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.jsoup;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
@@ -12,7 +12,6 @@ import lombok.extern.log4j.Log4j2;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -33,11 +32,10 @@ public class XbrlScraping {
     /**
      * 対象のフォルダ配下にあるファイルからキーワードに合致するものを返却する
      *
-     * @param filePath        フォルダパス
+     * @param filePath              フォルダパス
      * @param scrapingKeywordEntity キーワード
      * @return キーワードに合致するファイル
      */
-    @NewSpan("XbrlScraping.findFile")
     public Optional<File> findFile(final File filePath, final ScrapingKeywordEntity scrapingKeywordEntity) {
         // 対象のディレクトリから"honbun"ファイルを取得
         final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()
@@ -75,7 +73,6 @@ public class XbrlScraping {
      * @param keyWord    キーワード
      * @return スクレイピングした結果のリスト
      */
-    @NewSpan("XbrlScraping.scrapeFinancialStatement")
     public List<FinancialTableResultBean> scrapeFinancialStatement(final File targetFile, final String keyWord) {
         final var unit = unit(targetFile, keyWord);
 
@@ -139,7 +136,6 @@ public class XbrlScraping {
      * @param keyWord キーワード
      * @return 株式総数
      */
-    @NewSpan("XbrlScraping.scrapeNumberOfShares")
     public String scrapeNumberOfShares(final File file, final String keyWord) {
         final var scrapingList = elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())

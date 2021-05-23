@@ -35,7 +35,7 @@ public class SeleniumClient {
      * @param inputFilePath 保存先パス
      * @return ダウンロードファイル名
      */
-    @NewSpan("SeleniumProxy.edinetCodeList")
+    @NewSpan
     public String edinetCodeList(final String inputFilePath) {
         try {
             final URI uri = UriComponentsBuilder
