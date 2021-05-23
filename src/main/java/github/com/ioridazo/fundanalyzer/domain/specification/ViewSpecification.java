@@ -106,7 +106,7 @@ public class ViewSpecification {
     public List<CorporateViewModel> findAllCorporateView() {
         return corporateViewDao.selectAll().stream()
                 // 提出日が存在したら表示する
-                .filter(corporateViewBean -> corporateViewBean.getSubmitDate() != null)
+                .filter(corporateViewBean -> corporateViewBean.getSubmitDate().isPresent())
                 .map(CorporateViewModel::of)
                 .sorted(Comparator
                         .comparing(CorporateViewModel::getSubmitDate).reversed()

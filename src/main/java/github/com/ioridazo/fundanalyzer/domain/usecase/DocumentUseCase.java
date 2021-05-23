@@ -30,16 +30,6 @@ public interface DocumentUseCase {
      * @param inputData 提出日
      */
     @NewSpan
-    void saveEdinetList(BetweenDateInputData inputData);
-
-    /**
-     * EDINETに書類有無を問い合わせ
-     * ↓
-     * 書類をデータベース登録
-     *
-     * @param inputData 提出日
-     */
-    @NewSpan
     void saveEdinetList(DateInputData inputData);
 
     /**

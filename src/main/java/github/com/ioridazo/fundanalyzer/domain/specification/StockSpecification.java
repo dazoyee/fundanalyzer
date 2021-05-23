@@ -41,7 +41,7 @@ public class StockSpecification {
     private final MinkabuDao minkabuDao;
     private final DocumentSpecification documentSpecification;
 
-    @Value("${app.config}")
+    @Value("${app.config.view.edinet-list.size}")
     int lastDays;
 
     public StockSpecification(

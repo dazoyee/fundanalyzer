@@ -2,7 +2,6 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
-import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
@@ -14,10 +13,10 @@ public interface AnalyzeUseCase {
     /**
      * 企業価値をデータベース登録
      *
-     * @param document ドキュメント
+     * @param inputData 書類ID
      */
     @NewSpan
-    void analyze(Document document);
+    void analyze(IdInputData inputData);
 
     /**
      * 企業価値をデータベース登録

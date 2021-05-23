@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyExcep
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.NonUniqueResultException;
@@ -68,7 +69,23 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Document findDocument(final String documentId) {
-        return Document.of(documentDao.selectByDocumentId(documentId), edinetDocumentSpecification.parsePeriod(documentId));
+        return Document.of(
+                documentDao.selectByDocumentId(documentId),
+                edinetDocumentSpecification.parsePeriod(documentId)
+        );
+    }
+
+    /**
+     * ドキュメント情報を取得する
+     *
+     * @param inputData 書類ID
+     * @return ドキュメント情報
+     */
+    public Document findDocument(final IdInputData inputData) {
+        return Document.of(
+                documentDao.selectByDocumentId(inputData.getId()),
+                edinetDocumentSpecification.parsePeriod(inputData.getId())
+        );
     }
 
     /**
@@ -137,6 +154,19 @@ public class DocumentSpecification {
                 .filter(document -> document.getDocumentPeriod().isPresent())
                 // only not analyze
                 .filter(document -> !analysisResultSpecification.isAnalyzed(document))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * スケジューラで株価取得するときの対象提出日リストを取得する
+     *
+     * @param dayOfMonth 日
+     * @return 提出日リスト
+     */
+    public List<LocalDate> stockSchedulerTargetList(final String dayOfMonth) {
+        return documentDao.selectByDayOfSubmitDate(dayOfMonth).stream()
+                .map(DocumentEntity::getSubmitDate)
+                .distinct()
                 .collect(Collectors.toList());
     }
 

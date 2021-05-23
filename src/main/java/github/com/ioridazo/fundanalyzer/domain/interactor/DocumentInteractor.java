@@ -16,7 +16,6 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Component;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -108,21 +105,6 @@ public class DocumentInteractor implements DocumentUseCase {
      * @param inputData 提出日
      */
     @Override
-    public void saveEdinetList(final BetweenDateInputData inputData) {
-        final List<LocalDate> dateList = inputData.getFromDate()
-                .datesUntil(inputData.getToDate().plusDays(1))
-                .collect(Collectors.toList());
-
-        // 書類リストをデータベースに登録する
-        dateList.stream().map(DateInputData::of).forEach(this::saveEdinetList);
-    }
-
-    /**
-     * EDINETリストを保存する
-     *
-     * @param inputData 提出日
-     */
-    @Override
     public void saveEdinetList(final DateInputData inputData) {
         if (isPresentEdinet(inputData.getDate())) {
             // 書類が0件ではないときは書類リストを取得してデータベースに登録する
@@ -189,7 +171,7 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void scrape(final IdInputData inputData) {
-        scrape(documentSpecification.findDocument(inputData.getId()));
+        scrape(documentSpecification.findDocument(inputData));
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}", inputData.getId()),

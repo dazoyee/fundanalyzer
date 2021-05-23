@@ -16,12 +16,14 @@ import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewMode
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.DocumentViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class ViewEdinetInteractor implements ViewEdinetUseCase {
 
     private final CompanySpecification companySpecification;

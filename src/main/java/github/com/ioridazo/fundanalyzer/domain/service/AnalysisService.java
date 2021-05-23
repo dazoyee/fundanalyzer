@@ -1,124 +1,129 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
-import github.com.ioridazo.fundanalyzer.domain.log.Category;
-import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.logic.analysis.AnalysisLogic;
-import github.com.ioridazo.fundanalyzer.domain.util.Converter;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
+import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.text.MessageFormat;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Service
 public class AnalysisService {
 
-    private final AnalysisLogic analysisLogic;
-    private final IndustryDao industryDao;
-    private final CompanyDao companyDao;
-    private final DocumentDao documentDao;
-    private final AnalysisResultDao analysisResultDao;
+    private final DocumentUseCase documentUseCase;
+    private final AnalyzeUseCase analyzeUseCase;
+    private final StockUseCase stockUseCase;
+    private final ViewCorporateUseCase viewCorporateUseCase;
+    private final ViewEdinetUseCase viewEdinetUseCase;
+    private final NoticeUseCase noticeUseCase;
 
     public AnalysisService(
-            final AnalysisLogic analysisLogic,
-            final IndustryDao industryDao,
-            final CompanyDao companyDao,
-            final DocumentDao documentDao,
-            final AnalysisResultDao analysisResultDao) {
-        this.analysisLogic = analysisLogic;
-        this.industryDao = industryDao;
-        this.companyDao = companyDao;
-        this.documentDao = documentDao;
-        this.analysisResultDao = analysisResultDao;
+            final DocumentUseCase documentUseCase,
+            final AnalyzeUseCase analyzeUseCase,
+            final StockUseCase stockUseCase,
+            final ViewCorporateUseCase viewCorporateUseCase,
+            final ViewEdinetUseCase viewEdinetUseCase,
+            final NoticeUseCase noticeUseCase) {
+        this.documentUseCase = documentUseCase;
+        this.analyzeUseCase = analyzeUseCase;
+        this.stockUseCase = stockUseCase;
+        this.viewCorporateUseCase = viewCorporateUseCase;
+        this.viewEdinetUseCase = viewEdinetUseCase;
+        this.noticeUseCase = noticeUseCase;
     }
 
     /**
-     * 対象書類の分析結果をデータベースに登録する
+     * メイン分析処理
      *
-     * @param documentId 書類ID
+     * @param inputData 複数の提出日
      */
-    public void analyze(final String documentId) {
-        analysisLogic.analyze(documentId);
-
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("書類ID[{0}]の分析が正常に終了しました。", documentId),
-                Category.DOCUMENT,
-                Process.ANALYSIS
-        );
+    @NewSpan
+    @Async
+    public void doMain(final BetweenDateInputData inputData) {
+        inputData.getFromDate()
+                .datesUntil(inputData.getToDate().plusDays(1))
+                .map(DateInputData::of)
+                .forEach(date -> {
+                    // scraping
+                    documentUseCase.allProcess(date);
+                    // analysis
+                    analyzeUseCase.analyze(date);
+                    // stock
+                    stockUseCase.importStockPrice(date);
+                    // view corporate
+                    viewCorporateUseCase.updateView(date);
+                    // view edinet
+                    viewEdinetUseCase.updateView(date);
+                    // slack
+                    noticeUseCase.noticeSlack(date);
+                });
     }
 
     /**
-     * 対象書類の分析結果をデータベースに登録する
+     * 指定提出日の書類分析
      *
-     * @param submitDate  提出日
-     * @param targetTypes 書類種別コード
-     * @return Void
+     * @param inputData 提出日
      */
-    @NewSpan("AnalysisService.analyze.submitDate")
-    public CompletableFuture<Void> analyze(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        try {
-            final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-            final var companyAll = companyDao.selectAll();
-            final var bank = industryDao.selectByName("銀行業");
-            final var insurance = industryDao.selectByName("保険業");
+    @NewSpan
+    public void doByDate(final DateInputData inputData) {
+        // scraping
+        documentUseCase.scrape(inputData);
+        // analysis
+        analyzeUseCase.analyze(inputData);
+    }
 
-            final List<DocumentEntity> documentEntityList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
-            if (documentEntityList.isEmpty()) {
-                FundanalyzerLogClient.logService(
-                        MessageFormat.format("次の企業はデータベースに存在しませんでした。\t対象提出日:{0}", submitDate),
-                        Category.DOCUMENT,
-                        Process.ANALYSIS
-                );
-            } else {
-                documentEntityList.stream()
-                        // all match status done
-                        .filter(document -> List.of(
-                                document.getScrapedBs(),
-                                document.getScrapedPl(),
-                                document.getScrapedNumberOfShares()
-                                ).stream()
-                                        .map(DocumentStatus::fromValue)
-                                        .allMatch(DocumentStatus.DONE::equals)
-                        )
-                        // target company code
-                        .filter(document -> Target.containsEdinetCode(
-                                document.getEdinetCode().orElseThrow(), companyAll, List.of(bank, insurance))
-                        )
-                        // documentPeriod is present
-                        .filter(document -> document.getDocumentPeriod().isPresent())
-                        // only not analyze
-                        .filter(document -> analysisResultDao.selectByUniqueKey(
-                                Converter.toCompanyCode(document.getEdinetCode().orElseThrow(), companyAll).orElseThrow(),
-                                document.getDocumentPeriod().get(),
-                                document.getDocumentTypeCode().orElseThrow(),
-                                submitDate
-                                ).isEmpty()
-                        )
-                        .forEach(document -> analysisLogic.analyze(document.getDocumentId()));
+    /**
+     * 指定書類IDを分析
+     *
+     * @param inputData 書類ID
+     */
+    @NewSpan
+    public void doById(final IdInputData inputData) {
+        // scraping
+        documentUseCase.scrape(inputData);
+        // analysis
+        analyzeUseCase.analyze(inputData);
+    }
 
-                FundanalyzerLogClient.logService(
-                        MessageFormat.format("次の企業に対して分析を正常に終了しました。\t対象提出日:{0}", submitDate),
-                        Category.DOCUMENT,
-                        Process.ANALYSIS
-                );
-            }
-            return null;
-        } catch (Throwable t) {
-            FundanalyzerLogClient.logError(t);
-            throw new FundanalyzerRuntimeException(t);
-        }
+    /**
+     * 指定提出日の株価取得
+     *
+     * @param inputData 複数の提出日
+     */
+    @NewSpan
+    public void importStock(final BetweenDateInputData inputData) {
+        inputData.getFromDate()
+                .datesUntil(inputData.getToDate().plusDays(1))
+                .map(DateInputData::of)
+                // stock
+                .forEach(stockUseCase::importStockPrice);
+    }
+
+    /**
+     * 提出日の株価取得
+     *
+     * @param inputData 提出日
+     */
+    public void importStock(final DateInputData inputData) {
+        // stock
+        stockUseCase.importStockPrice(inputData);
+    }
+
+    /**
+     * 企業コードの株価取得
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    public void importStock(final CodeInputData inputData) {
+        // stock
+        stockUseCase.importStockPrice(inputData);
     }
 }

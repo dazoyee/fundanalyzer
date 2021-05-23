@@ -16,8 +16,8 @@ import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,6 @@ import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @Component
 public class AnalyzeInteractor implements AnalyzeUseCase {
@@ -54,27 +53,17 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     /**
      * 企業価値を算出する
      *
-     * @param document ドキュメント
+     * @param inputData 書類ID
      */
     @Override
-    public void analyze(final Document document) {
-        final String companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
-                .flatMap(Company::getCode)
-                .orElseThrow(FundanalyzerNotExistException::new);
+    public void analyze(final IdInputData inputData) {
+        this.analyze(documentSpecification.findDocument(inputData));
 
-        try {
-            analysisResultSpecification.insert(document, calculateFsValue(document));
-        } catch (FundanalyzerNotExistException ignored) {
-            FundanalyzerLogClient.logLogic(
-                    MessageFormat.format(
-                            "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
-                            companyCode,
-                            document.getDocumentId()
-                    ),
-                    Category.DOCUMENT,
-                    Process.ANALYSIS
-            );
-        }
+        FundanalyzerLogClient.logService(
+                MessageFormat.format("書類ID[{0}]の分析が正常に終了しました。", inputData.getId()),
+                Category.DOCUMENT,
+                Process.ANALYSIS
+        );
     }
 
     /**
@@ -113,6 +102,31 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         } catch (Throwable t) {
             FundanalyzerLogClient.logError(t);
             throw new FundanalyzerRuntimeException(t);
+        }
+    }
+
+    /**
+     * 企業価値を算出する
+     *
+     * @param document ドキュメント
+     */
+    void analyze(final Document document) {
+        final String companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
+                .flatMap(Company::getCode)
+                .orElseThrow(FundanalyzerNotExistException::new);
+
+        try {
+            analysisResultSpecification.insert(document, calculateFsValue(document));
+        } catch (FundanalyzerNotExistException ignored) {
+            FundanalyzerLogClient.logLogic(
+                    MessageFormat.format(
+                            "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
+                            companyCode,
+                            document.getDocumentId()
+                    ),
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            );
         }
     }
 

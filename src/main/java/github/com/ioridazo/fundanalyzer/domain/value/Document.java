@@ -62,7 +62,7 @@ public class Document {
                 entity.getBsDocumentPath().orElse(null),
                 DocumentStatus.fromValue(entity.getScrapedPl()),
                 entity.getPlDocumentPath().orElse(null),
-                "0".equals(entity.getRemoved())
+                "1".equals(entity.getRemoved())
         );
     }
 

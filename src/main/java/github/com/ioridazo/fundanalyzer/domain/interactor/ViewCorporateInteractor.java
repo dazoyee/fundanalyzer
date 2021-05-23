@@ -27,6 +27,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.Financia
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,6 +38,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Component
 public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
     private final AnalyzeInteractor analyzeInteractor;
@@ -140,6 +142,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public List<CorporateViewModel> sortByDiscountRate() {
         return viewSpecification.findAllCorporateView().stream()
+                .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
                 .sorted(Comparator.comparing(CorporateViewModel::getDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
@@ -152,7 +155,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData) {
-        final Company company = companySpecification.findCompanyByCode(inputData.getCode()).orElseThrow(FundanalyzerNotExistException::new);
+        final Company company = companySpecification.findCompanyByCode(inputData.getCode5()).orElseThrow(FundanalyzerNotExistException::new);
         final Stock stock = stockSpecification.findStock(company);
 
         final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.targetList(company).stream()
@@ -217,7 +220,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .map(company -> viewSpecification.generateCorporateView(company.get(), analyzeInteractor.calculateCorporateValue(company.get())))
                 .collect(Collectors.toList());
 
-        viewModelList.parallelStream().forEach(viewSpecification::upsert);
+        viewModelList.forEach(viewSpecification::upsert);
 
         FundanalyzerLogClient.logService(
                 MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),

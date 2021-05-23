@@ -1,461 +1,136 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
-import github.com.ioridazo.fundanalyzer.domain.dao.master.CompanyDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.master.IndustryDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.AnalysisResultDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.MinkabuDao;
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.StockPriceDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.master.CompanyEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.AnalysisResultEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.MinkabuEntity;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.StockPriceEntity;
-import github.com.ioridazo.fundanalyzer.domain.log.Category;
-import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.BrandDetailCorporateViewLogic;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.CorporateViewLogic;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.EdinetDetailViewLogic;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.EdinetListViewLogic;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.BrandDetailViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.CorporateViewDao;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetDetailViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewBean;
-import github.com.ioridazo.fundanalyzer.domain.logic.view.bean.EdinetListViewDao;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
-import org.springframework.beans.factory.annotation.Value;
+import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.MessageFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Service
 public class ViewService {
 
-    @Value("${app.config.view.discount-rate}")
-    BigDecimal configDiscountRate;
-    @Value("${app.config.view.outlier-of-standard-deviation}")
-    BigDecimal configOutlierOfStandardDeviation;
-    @Value("${app.config.view.coefficient-of-variation}")
-    BigDecimal configCoefficientOfVariation;
-    @Value("${app.config.view.edinet-list.size}")
-    int edinetListSize;
-
-    private final SlackProxy slackProxy;
-    private final CorporateViewLogic corporateViewLogic;
-    private final EdinetListViewLogic edinetListViewLogic;
-    private final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic;
-    private final EdinetDetailViewLogic edinetDetailViewLogic;
-    private final IndustryDao industryDao;
-    private final CompanyDao companyDao;
-    private final DocumentDao documentDao;
-    private final AnalysisResultDao analysisResultDao;
-    private final StockPriceDao stockPriceDao;
-    private final MinkabuDao minkabuDao;
-    private final CorporateViewDao corporateViewDao;
-    private final EdinetListViewDao edinetListViewDao;
+    private final CompanyUseCase companyUseCase;
+    private final ViewCorporateUseCase viewCorporateUseCase;
+    private final ViewEdinetUseCase viewEdinetUseCase;
 
     public ViewService(
-            final SlackProxy slackProxy,
-            final CorporateViewLogic corporateViewLogic,
-            final EdinetListViewLogic edinetListViewLogic,
-            final BrandDetailCorporateViewLogic brandDetailCorporateViewLogic,
-            final EdinetDetailViewLogic edinetDetailViewLogic,
-            final IndustryDao industryDao,
-            final CompanyDao companyDao,
-            final DocumentDao documentDao,
-            final AnalysisResultDao analysisResultDao,
-            final StockPriceDao stockPriceDao,
-            final MinkabuDao minkabuDao,
-            final CorporateViewDao corporateViewDao,
-            final EdinetListViewDao edinetListViewDao) {
-        this.slackProxy = slackProxy;
-        this.corporateViewLogic = corporateViewLogic;
-        this.edinetListViewLogic = edinetListViewLogic;
-        this.brandDetailCorporateViewLogic = brandDetailCorporateViewLogic;
-        this.edinetDetailViewLogic = edinetDetailViewLogic;
-        this.industryDao = industryDao;
-        this.companyDao = companyDao;
-        this.documentDao = documentDao;
-        this.analysisResultDao = analysisResultDao;
-        this.stockPriceDao = stockPriceDao;
-        this.minkabuDao = minkabuDao;
-        this.corporateViewDao = corporateViewDao;
-        this.edinetListViewDao = edinetListViewDao;
-    }
-
-    LocalDate nowLocalDate() {
-        return LocalDate.now();
+            final CompanyUseCase companyUseCase,
+            final ViewCorporateUseCase viewCorporateUseCase,
+            final ViewEdinetUseCase viewEdinetUseCase) {
+        this.companyUseCase = companyUseCase;
+        this.viewCorporateUseCase = viewCorporateUseCase;
+        this.viewEdinetUseCase = viewEdinetUseCase;
     }
 
     /**
-     * 企業価値等を算出して一定以上を表示する
+     * 企業情報（メイン）
      *
-     * @return 会社一覧
+     * @return 企業一覧
      */
-    @NewSpan("ViewService.corporateView")
-    public List<CorporateViewBean> corporateView() {
-        return sortedCompanyList(getCorporateViewBeanList().stream()
-                // not null
-                .filter(cvb -> cvb.getDiscountRate() != null)
-                // 割安度が120%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(configDiscountRate) > 0)
-                // 標準偏差が外れ値となっていたら除外
-                .filter(cvb -> cvb.getStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
-                // 最新企業価値がマイナスの場合は除外
-                .filter(cvb -> cvb.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
-                // 変動係数
-                .filter(cvb -> {
-                    // 変動係数が0.6以下であること
-                    if (cvb.getCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
-                        return true;
-                    } else {
-                        // 変動係数が0.6以上でも最新企業価値が高ければOK
-                        return cvb.getLatestCorporateValue().compareTo(cvb.getAverageCorporateValue()) > -1;
-                    }
-                })
-                // 予想株価
-                .filter(cvb -> {
-                    if (Objects.nonNull(cvb.getForecastStock())) {
-                        // 株価予想が存在する場合、最新株価より高ければOK
-                        return isHigher(cvb.getForecastStock(), cvb.getLatestStockPrice());
-                    } else {
-                        return true;
-                    }
-                })
-                .collect(Collectors.toList()));
+    @NewSpan
+    public List<CorporateViewModel> getCorporateView() {
+        return viewCorporateUseCase.viewMain();
     }
 
     /**
-     * 予想株価が最新株価より高い and 予想株価と最新株価の差が100以上 であること
+     * 企業情報（企業価値ソート）
      *
-     * @param forecast 予想株価
-     * @param latest   最新株価
-     * @return bool
+     * @return 企業一覧
      */
-    private boolean isHigher(final BigDecimal forecast, final BigDecimal latest) {
-        return (forecast.divide(latest, 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
-                && (forecast.subtract(latest).compareTo(BigDecimal.valueOf(100)) > 0);
+    @NewSpan
+    public List<CorporateViewModel> getSortedCorporateView() {
+        return viewCorporateUseCase.sortByDiscountRate();
     }
 
     /**
-     * 企業価値等を算出してすべてを表示する
+     * 企業情報（すべて）
      *
-     * @return 会社一覧
+     * @return 企業一覧
      */
-    @NewSpan("ViewService.corporateViewAll")
-    public List<CorporateViewBean> corporateViewAll() {
-        return sortedCompanyList(getCorporateViewBeanList());
+    @NewSpan
+    public List<CorporateViewModel> getAllCorporateView() {
+        return viewCorporateUseCase.viewAll();
     }
 
     /**
-     * 企業価値等を割安度でソートする
+     * EDINETリスト（メイン）
      *
-     * @return ソート後のリスト
+     * @return 書類状況リスト
      */
-    @NewSpan("ViewService.sortByDiscountRate")
-    public List<CorporateViewBean> sortByDiscountRate() {
-        return corporateView().stream()
-                .sorted(Comparator.comparing(CorporateViewBean::getDiscountRate).reversed())
-                .collect(Collectors.toList());
-    }
-
-    private List<CorporateViewBean> getCorporateViewBeanList() {
-        return corporateViewDao.selectAll().stream()
-                // 提出日が存在したら表示する
-                .filter(corporateViewBean -> corporateViewBean.getSubmitDate() != null)
-                .collect(Collectors.toList());
-    }
-
-    private List<CorporateViewBean> sortedCompanyList(final List<CorporateViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator
-                        .comparing(CorporateViewBean::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewBean::getCode))
-                .collect(Collectors.toList());
+    @NewSpan
+    public List<EdinetListViewModel> getEdinetListView() {
+        return viewEdinetUseCase.viewMain();
     }
 
     /**
-     * 非同期で表示するリストをアップデートする
+     * EDINETリスト（すべて）
      *
-     * @param targetTypes 書類種別コード
-     * @return Void
+     * @return 書類状況リスト
      */
-    @NewSpan("ViewService.updateCorporateView")
+    @NewSpan
+    public List<EdinetListViewModel> getAllEdinetListView() {
+        return viewEdinetUseCase.viewAll();
+    }
+
+    /**
+     * 企業情報更新日時
+     *
+     * @return 更新日時
+     */
+    @NewSpan
+    public String getUpdateDate() {
+        return companyUseCase.getUpdateDate();
+    }
+
+    /**
+     * 企業詳細情報
+     *
+     * @return 企業詳細
+     */
+    @NewSpan
+    public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData) {
+        return viewCorporateUseCase.viewCorporateDetail(inputData);
+    }
+
+    /**
+     * EDINET詳細リスト
+     *
+     * @return 処理詳細情報
+     */
+    @NewSpan
+    public EdinetDetailViewModel getEdinetDetailView(final DateInputData inputData) {
+        return viewEdinetUseCase.viewEdinetDetail(inputData);
+    }
+
+    /**
+     * 表示アップデート
+     */
+    @NewSpan
     @Async
-    @Transactional
-    public CompletableFuture<Void> updateCorporateView(final List<DocumentTypeCode> targetTypes) {
-        try {
-            final List<CompanyEntity> allTargetCompanies = Target.allCompanies(
-                    companyDao.selectAll(),
-                    List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
-            final var beanAllList = corporateViewDao.selectAll();
-            allTargetCompanies.stream()
-                    .map(company -> corporateViewLogic.corporateViewOf(company, targetTypes))
-                    .parallel().forEach(corporateViewBean -> {
-                final var match = beanAllList.stream()
-                        .map(CorporateViewBean::getCode)
-                        .anyMatch(corporateViewBean.getCode()::equals);
-                if (match) {
-                    corporateViewDao.update(corporateViewBean);
-                } else {
-                    corporateViewDao.insert(corporateViewBean);
-                }
-            });
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
-
-            FundanalyzerLogClient.logService(
-                    "表示アップデートが正常に終了しました。",
-                    Category.VIEW,
-                    Process.UPDATE
-            );
-            return null;
-        } catch (Throwable t) {
-            FundanalyzerLogClient.logError(t);
-            throw new FundanalyzerRuntimeException(t);
-        }
+    public void updateView() {
+        // view corporate
+        viewCorporateUseCase.updateView();
+        // view edinet
+        viewEdinetUseCase.updateView();
     }
 
     /**
-     * 対象提出日の表示するリストをアップデートする
+     * EDINETリストアップデート
      *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
+     * @param inputData 提出日
      */
-    @NewSpan("ViewService.updateCorporateView.submitDate")
-    @Transactional
-    public void updateCorporateView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-        final List<DocumentEntity> documentEntityList = documentDao.selectByTypeAndSubmitDate(docTypeCode, submitDate);
-        final var beanAllList = corporateViewDao.selectAll();
-
-        documentEntityList.stream()
-                .map(DocumentEntity::getEdinetCode)
-                .map((Optional<String> edinetCode) -> companyDao.selectByEdinetCode(edinetCode.orElseThrow()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .distinct()
-                .filter(company -> company.getCode().isPresent())
-                .map(company -> corporateViewLogic.corporateViewOf(company, targetTypes))
-                .forEach(corporateViewBean -> {
-                    final var match = beanAllList.stream()
-                            .map(CorporateViewBean::getCode)
-                            .anyMatch(corporateViewBean.getCode()::equals);
-                    if (match) {
-                        corporateViewDao.update(corporateViewBean);
-                    } else {
-                        corporateViewDao.insert(corporateViewBean);
-                    }
-                });
-
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", submitDate),
-                Category.VIEW,
-                Process.UPDATE
-        );
-    }
-
-    // ----------
-
-    /**
-     * 会社情報の更新日を取得する
-     *
-     * @return 最新更新日
-     */
-    @NewSpan("ViewService.companyUpdated")
-    public String companyUpdated() {
-        return companyDao.selectAll().stream()
-                .map(CompanyEntity::getUpdatedAt)
-                .max(LocalDateTime::compareTo)
-                .map(dateTime -> dateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")))
-                .orElse("null");
-    }
-
-    // ----------
-
-    /**
-     * 処理結果をSlackに通知する
-     *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
-     */
-    @NewSpan("ViewService.notice")
-    public void notice(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final EdinetListViewBean edinetListViewBean = edinetListViewLogic.counter(submitDate, targetTypes);
-
-        if (edinetListViewBean.getCountTarget().equals(edinetListViewBean.getCountScraped())
-                && edinetListViewBean.getCountTarget().equals(edinetListViewBean.getCountAnalyzed())) {
-            // info message
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.info",
-                    edinetListViewBean.getSubmitDate(), edinetListViewBean.getCountTarget());
-        } else {
-            // warn message
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.warn",
-                    edinetListViewBean.getSubmitDate(), edinetListViewBean.getCountTarget(), edinetListViewBean.getCountNotScraped());
-        }
-
-        corporateViewDao.selectBySubmitDate(submitDate).stream()
-                // 割安度が120%以上を表示
-                .filter(cvb -> cvb.getDiscountRate().compareTo(configDiscountRate) > 0)
-                .forEach(cvb -> {
-                    // 優良銘柄を通知する
-                    slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
-                            cvb.getCode(), cvb.getName(), cvb.getDiscountRate());
-                });
-    }
-
-    // ----------
-
-    /**
-     * 処理状況を表示するためのリストを取得する
-     *
-     * @return 処理状況リスト
-     */
-    @NewSpan("ViewService.edinetListview")
-    public List<EdinetListViewBean> edinetListview() {
-        final var viewBeanList = edinetListViewDao.selectAll();
-        viewBeanList.removeIf(
-                el -> el.getCountTarget().equals(el.getCountScraped())
-                        && el.getCountTarget().equals(el.getCountAnalyzed())
-        );
-        return sortedEdinetList(viewBeanList);
-    }
-
-    /**
-     * すべての処理状況を表示するためのリストを取得する
-     *
-     * @return 処理状況リスト
-     */
-    @NewSpan("ViewService.edinetListViewAll")
-    public List<EdinetListViewBean> edinetListViewAll() {
-        return sortedEdinetList(edinetListViewDao.selectAll());
-    }
-
-    private List<EdinetListViewBean> sortedEdinetList(final List<EdinetListViewBean> viewBeanList) {
-        return viewBeanList.stream()
-                .sorted(Comparator.comparing(EdinetListViewBean::getSubmitDate).reversed())
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 非同期で表示する処理状況リストをアップデートする
-     *
-     * @param targetTypes 書類種別コード
-     * @return Void
-     */
-    @NewSpan("ViewService.updateEdinetListView")
-    @Async
-    @Transactional
-    public CompletableFuture<Void> updateEdinetListView(final List<DocumentTypeCode> targetTypes) {
-        try {
-            final List<String> docTypeCode = targetTypes.stream().map(DocumentTypeCode::toValue).collect(Collectors.toList());
-            final List<LocalDate> allSubmitDate = documentDao.selectByDocumentTypeCode(docTypeCode).stream()
-                    .map(DocumentEntity::getSubmitDate).collect(Collectors.toList());
-
-            allSubmitDate.stream()
-                    .filter(submitDate -> submitDate.isAfter(nowLocalDate().minusDays(edinetListSize)))
-                    .collect(Collectors.toList())
-                    .parallelStream()
-                    .forEach(submitDate -> updateEdinetListView(submitDate, targetTypes));
-
-            slackProxy.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
-
-            FundanalyzerLogClient.logService(
-                    "処理状況アップデートが正常に終了しました。",
-                    Category.VIEW,
-                    Process.UPDATE
-            );
-            return null;
-        } catch (Throwable t) {
-            FundanalyzerLogClient.logError(t);
-            throw new FundanalyzerRuntimeException(t);
-        }
-    }
-
-    /**
-     * 対象提出日の処理状況をアップデートする
-     *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
-     */
-    @NewSpan("ViewService.updateEdinetListView")
-    @Transactional
-    public void updateEdinetListView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final EdinetListViewBean edinetListViewBean = edinetListViewLogic.counter(submitDate, targetTypes);
-
-        if (edinetListViewDao.selectBySubmitDate(submitDate).isPresent()) {
-            edinetListViewDao.update(edinetListViewBean);
-        } else {
-            edinetListViewDao.insert(edinetListViewBean);
-        }
-
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", submitDate),
-                Category.VIEW,
-                Process.UPDATE
-        );
-    }
-
-    // ----------
-
-    /**
-     * 企業ごとの銘柄詳細情報を取得する
-     *
-     * @param code 会社コード
-     * @return 銘柄詳細情報
-     */
-    @NewSpan("ViewService.brandDetailView")
-    public BrandDetailViewBean brandDetailView(final String code) {
-        return new BrandDetailViewBean(
-                brandDetailCorporateViewLogic.brandDetailCompanyViewOf(code),
-                corporateViewDao.selectByCode(code.substring(0, 4)),
-                Target.distinctAnalysisResults(analysisResultDao.selectByCompanyCode(code)).stream()
-                        .sorted(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod).reversed())
-                        .collect(Collectors.toList()),
-                brandDetailCorporateViewLogic.brandDetailFinancialStatement(code),
-                stockPriceDao.selectByCode(code).stream()
-                        .map(StockPriceEntity::ofBrandDetail)
-                        .distinct()
-                        .sorted(Comparator.comparing(StockPriceEntity::getTargetDate).reversed())
-                        .collect(Collectors.toList()),
-                minkabuDao.selectByCode(code).stream()
-                        .sorted(Comparator.comparing(MinkabuEntity::getTargetDate).reversed())
-                        .collect(Collectors.toList())
-        );
-    }
-
-    // ----------
-
-    /**
-     * 提出日ごとの処理詳細情報を取得する
-     *
-     * @param submitDate  対象提出日
-     * @param targetTypes 書類種別コード
-     * @return スクレイピング処理詳細情報
-     */
-    @NewSpan("ViewService.edinetDetailView")
-    public EdinetDetailViewBean edinetDetailView(final LocalDate submitDate, final List<DocumentTypeCode> targetTypes) {
-        final List<CompanyEntity> allTargetCompanies = Target.allCompanies(
-                companyDao.selectAll(),
-                List.of(industryDao.selectByName("銀行業"), industryDao.selectByName("保険業")));
-        return edinetDetailViewLogic.edinetDetailView(submitDate, targetTypes, allTargetCompanies);
+    @NewSpan
+    public void updateEdinetListView(final DateInputData inputData) {
+        // view edinet
+        viewEdinetUseCase.updateView(inputData);
     }
 }

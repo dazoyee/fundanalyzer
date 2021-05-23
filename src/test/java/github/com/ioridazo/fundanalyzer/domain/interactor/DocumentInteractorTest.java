@@ -14,7 +14,6 @@ import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.response.Results;
-import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,17 +104,6 @@ class DocumentInteractorTest {
 
     @Nested
     class saveEdinetList {
-
-        @DisplayName("saveEdinetList : 指定日付分だけ登録処理が実行されることを確認する")
-        @Test
-        void betweenDateInputData() {
-            var inputData = BetweenDateInputData.of(LocalDate.parse("2020-09-15"), LocalDate.parse("2020-09-19"));
-
-            doNothing().when(documentInteractor).saveEdinetList((DateInputData) any());
-
-            assertDoesNotThrow(() -> documentInteractor.saveEdinetList(inputData));
-            verify(documentInteractor, times(5)).saveEdinetList((DateInputData) any());
-        }
 
         @DisplayName("saveEdinetList: EDINETリストを保存する")
         @Test

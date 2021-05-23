@@ -56,18 +56,18 @@ public class CorporateViewModel {
         return new CorporateViewModel(
                 viewBean.getCode(),
                 viewBean.getName(),
-                viewBean.getSubmitDate(),
-                viewBean.getLatestCorporateValue(),
-                viewBean.getAverageCorporateValue(),
-                viewBean.getStandardDeviation(),
-                viewBean.getCoefficientOfVariation(),
-                viewBean.getAverageStockPrice(),
-                viewBean.getImportDate(),
-                viewBean.getLatestStockPrice(),
-                viewBean.getDiscountValue(),
-                viewBean.getDiscountRate(),
-                viewBean.getCountYear(),
-                viewBean.getForecastStock()
+                viewBean.getSubmitDate().orElse(null),
+                viewBean.getLatestCorporateValue().orElse(null),
+                viewBean.getAverageCorporateValue().orElse(null),
+                viewBean.getStandardDeviation().orElse(null),
+                viewBean.getCoefficientOfVariation().orElse(null),
+                viewBean.getAverageStockPrice().orElse(null),
+                viewBean.getImportDate().orElse(null),
+                viewBean.getLatestStockPrice().orElse(null),
+                viewBean.getDiscountValue().orElse(null),
+                viewBean.getDiscountRate().orElse(null),
+                viewBean.getCountYear().orElse(null),
+                viewBean.getForecastStock().orElse(null)
         );
     }
 }

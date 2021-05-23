@@ -10,6 +10,7 @@ import org.seasar.doma.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -68,7 +69,7 @@ public class CorporateViewBean {
     public static CorporateViewBean of(final CorporateViewModel viewModel, final LocalDateTime nowLocalDateTime) {
         return new CorporateViewBean(
                 viewModel.getCode(),
-                viewModel.getCode(),
+                viewModel.getName(),
                 viewModel.getSubmitDate(),
                 viewModel.getLatestCorporateValue(),
                 viewModel.getAverageCorporateValue(),
@@ -84,5 +85,53 @@ public class CorporateViewBean {
                 nowLocalDateTime,
                 nowLocalDateTime
         );
+    }
+
+    public Optional<LocalDate> getSubmitDate() {
+        return Optional.ofNullable(submitDate);
+    }
+
+    public Optional<BigDecimal> getLatestCorporateValue() {
+        return Optional.ofNullable(latestCorporateValue);
+    }
+
+    public Optional<BigDecimal> getAverageCorporateValue() {
+        return Optional.ofNullable(averageCorporateValue);
+    }
+
+    public Optional<BigDecimal> getStandardDeviation() {
+        return Optional.ofNullable(standardDeviation);
+    }
+
+    public Optional<BigDecimal> getCoefficientOfVariation() {
+        return Optional.ofNullable(coefficientOfVariation);
+    }
+
+    public Optional<BigDecimal> getAverageStockPrice() {
+        return Optional.ofNullable(averageStockPrice);
+    }
+
+    public Optional<LocalDate> getImportDate() {
+        return Optional.ofNullable(importDate);
+    }
+
+    public Optional<BigDecimal> getLatestStockPrice() {
+        return Optional.ofNullable(latestStockPrice);
+    }
+
+    public Optional<BigDecimal> getDiscountValue() {
+        return Optional.ofNullable(discountValue);
+    }
+
+    public Optional<BigDecimal> getDiscountRate() {
+        return Optional.ofNullable(discountRate);
+    }
+
+    public Optional<BigDecimal> getCountYear() {
+        return Optional.ofNullable(countYear);
+    }
+
+    public Optional<BigDecimal> getForecastStock() {
+        return Optional.ofNullable(forecastStock);
     }
 }

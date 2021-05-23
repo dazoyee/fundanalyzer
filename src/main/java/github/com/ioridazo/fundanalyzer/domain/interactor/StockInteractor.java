@@ -88,15 +88,15 @@ public class StockInteractor implements StockUseCase {
     public void importStockPrice(final CodeInputData inputData) {
         try {
             // 日経
-            stockSpecification.insert(inputData.getCode(), stockScraping.nikkei(inputData.getCode()));
+            stockSpecification.insert(inputData.getCode5(), stockScraping.nikkei(inputData.getCode5()));
 
             // kabuoji3
-            stockSpecification.insert(inputData.getCode(), stockScraping.kabuoji3(inputData.getCode()));
+            stockSpecification.insert(inputData.getCode5(), stockScraping.kabuoji3(inputData.getCode5()));
 
             // みんかぶ
-            stockSpecification.insert(inputData.getCode(), stockScraping.minkabu(inputData.getCode()));
+            stockSpecification.insert(inputData.getCode5(), stockScraping.minkabu(inputData.getCode5()));
         } catch (FundanalyzerScrapingException e) {
-            log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", inputData.getCode(), e);
+            log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", inputData.getCode5(), e);
         }
     }
 }

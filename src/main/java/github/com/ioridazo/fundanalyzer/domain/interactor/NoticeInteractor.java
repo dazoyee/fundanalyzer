@@ -6,9 +6,12 @@ import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
+@Component
 public class NoticeInteractor implements NoticeUseCase {
 
     private final ViewSpecification viewSpecification;
@@ -42,6 +45,7 @@ public class NoticeInteractor implements NoticeUseCase {
         }
 
         viewSpecification.findAllCorporateView(inputData).stream()
+                .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
                 // 割安度が120%以上を表示
                 .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
                 .forEach(cvm -> {
