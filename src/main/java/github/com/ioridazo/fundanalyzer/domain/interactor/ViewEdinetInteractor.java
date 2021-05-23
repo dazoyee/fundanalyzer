@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
@@ -10,11 +11,12 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecific
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.DocumentViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class ViewEdinetInteractor implements ViewEdinetUseCase {
+
+    private static final Logger log = LogManager.getLogger(ViewEdinetInteractor.class);
 
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
@@ -102,6 +106,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
      */
     @Override
     public void updateView() {
+        final long startTime = System.currentTimeMillis();
         final List<EdinetListViewModel> viewModelList = documentSpecification.documentList().stream()
                 .map(Document::getSubmitDate)
                 .filter(submitDate -> submitDate.isAfter(nowLocalDate().minusDays(edinetListSize)))
@@ -113,11 +118,12 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
 
         slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
 
-        FundanalyzerLogClient.logService(
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "処理状況アップデートが正常に終了しました。",
                 Category.VIEW,
-                Process.UPDATE
-        );
+                Process.UPDATE,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**
@@ -127,12 +133,14 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
      */
     @Override
     public void updateView(final DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
         viewSpecification.upsert(viewSpecification.generateEdinetListView(inputData));
 
-        FundanalyzerLogClient.logService(
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
                 Category.VIEW,
-                Process.UPDATE
-        );
+                Process.UPDATE,
+                System.currentTimeMillis() - startTime
+        ));
     }
 }

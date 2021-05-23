@@ -48,6 +48,7 @@ public class StockInteractor implements StockUseCase {
      */
     @Override
     public void importStockPrice(final DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
         final List<String> companyCodeList = documentSpecification.targetList(inputData).stream()
                 .map(document -> companySpecification.findCompanyByEdinetCode(document.getEdinetCode()))
                 .filter(Optional::isPresent)
@@ -61,13 +62,15 @@ public class StockInteractor implements StockUseCase {
                 .collect(Collectors.toList())
                 .forEach(this::importStockPrice);
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
+                MessageFormat.format(
+                        "最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
                         inputData.getDate(),
                         companyCodeList.size()),
                 Category.STOCK,
-                Process.IMPORT
-        );
+                Process.IMPORT,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**
@@ -87,7 +90,14 @@ public class StockInteractor implements StockUseCase {
             // みんかぶ
             stockSpecification.insert(inputData.getCode5(), stockScraping.minkabu(inputData.getCode5()));
         } catch (FundanalyzerScrapingException e) {
-            log.warn("株価取得できなかったため、DBに登録できませんでした。\t企業コード:{}", inputData.getCode5(), e);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "株価取得できなかったため、DBに登録できませんでした。\t企業コード:{0}",
+                            inputData.getCode5()
+                    ),
+                    Category.STOCK,
+                    Process.IMPORT
+            ), e);
         }
     }
 }

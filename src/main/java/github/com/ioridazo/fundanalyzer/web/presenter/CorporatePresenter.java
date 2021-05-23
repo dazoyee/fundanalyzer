@@ -1,8 +1,5 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
-import github.com.ioridazo.fundanalyzer.client.log.Category;
-import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
@@ -31,8 +28,6 @@ public class CorporatePresenter {
      */
     @GetMapping("fundanalyzer/v1/corporate/{code}")
     public String corporateDetailView(@PathVariable final String code, final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
-
         final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
         model.addAttribute("corporate", view.getCompany());
         model.addAttribute("corporateView", view.getCorporate());
@@ -40,9 +35,6 @@ public class CorporatePresenter {
         model.addAttribute("financialStatements", view.getFinancialStatement());
         model.addAttribute("forecastStocks", view.getMinkabuList());
         model.addAttribute("stockPrices", view.getStockPriceList());
-
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
-
         return CORPORATE;
     }
 }

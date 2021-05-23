@@ -1,11 +1,17 @@
 package github.com.ioridazo.fundanalyzer.client.log;
 
 public enum Category {
-    VIEW("view"),
-    DOCUMENT("document"),
-    STOCK("stock"),
-    SLACK("slack"),
+    ACCESS("access"),
     SCHEDULER("scheduler"),
+
+    COMPANY("company"),
+    DOCUMENT("document"),
+    SCRAPING("scraping"),
+    ANALYSIS("analysis"),
+    VIEW("view"),
+    STOCK("stock"),
+    NOTICE("notice"),
+
     ERROR("error"),
     ;
 

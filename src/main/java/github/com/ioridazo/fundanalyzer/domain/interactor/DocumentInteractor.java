@@ -1,22 +1,24 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,8 @@ import java.util.stream.Stream;
 
 @Component
 public class DocumentInteractor implements DocumentUseCase {
+
+    private static final Logger log = LogManager.getLogger(DocumentInteractor.class);
 
     private final ScrapingUseCase scraping;
     private final CompanySpecification companySpecification;
@@ -60,6 +64,8 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void allProcess(final DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
         // 書類リストをデータベースに登録する
         saveEdinetList(inputData);
 
@@ -67,27 +73,29 @@ public class DocumentInteractor implements DocumentUseCase {
         final var documentList = documentSpecification.targetList(inputData);
 
         if (documentList.isEmpty()) {
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}",
                             inputData.getDate(),
                             String.join(",", targetTypeCodes)
                     ),
                     Category.DOCUMENT,
-                    Process.EDINET
-            );
+                    Process.EDINET,
+                    System.currentTimeMillis() - startTime
+            ));
         } else {
             documentList.parallelStream().forEach(this::scrape);
 
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
                             inputData.getDate(),
                             String.join(",", targetTypeCodes)
                     ),
                     Category.DOCUMENT,
-                    Process.EDINET
-            );
+                    Process.SCRAPING,
+                    System.currentTimeMillis() - startTime
+            ));
         }
     }
 
@@ -98,6 +106,8 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void saveEdinetList(final DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
         if (isPresentEdinet(inputData.getDate())) {
             // 書類が0件ではないときは書類リストを取得してデータベースに登録する
             final EdinetResponse edinetResponse = edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
@@ -111,17 +121,25 @@ public class DocumentInteractor implements DocumentUseCase {
             // document
             documentSpecification.insert(inputData.getDate(), edinetResponse);
 
-            FundanalyzerLogClient.logService(
-                    MessageFormat.format("データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}", inputData.getDate()),
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}",
+                            inputData.getDate()
+                    ),
                     Category.DOCUMENT,
-                    Process.EDINET
-            );
+                    Process.EDINET,
+                    System.currentTimeMillis() - startTime
+            ));
         } else {
-            FundanalyzerLogClient.logService(
-                    MessageFormat.format("データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}", inputData.getDate()),
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}",
+                            inputData.getDate()
+                    ),
                     Category.DOCUMENT,
-                    Process.EDINET
-            );
+                    Process.EDINET,
+                    System.currentTimeMillis() - startTime
+            ));
         }
     }
 
@@ -132,27 +150,31 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void scrape(final DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
         final List<Document> targetList = documentSpecification.targetList(inputData);
         if (targetList.isEmpty()) {
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次の提出日におけるドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}",
                             inputData.getDate()
                     ),
                     Category.DOCUMENT,
-                    Process.SCRAPING
-            );
+                    Process.SCRAPING,
+                    System.currentTimeMillis() - startTime
+            ));
         } else {
             targetList.forEach(this::scrape);
 
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次の提出日におけるドキュメントに対してスクレイピング処理が終了しました。\t対象提出日:{0}",
                             inputData.getDate()
                     ),
                     Category.DOCUMENT,
-                    Process.SCRAPING
-            );
+                    Process.SCRAPING,
+                    System.currentTimeMillis() - startTime
+            ));
         }
     }
 
@@ -163,13 +185,19 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void scrape(final IdInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
         scrape(documentSpecification.findDocument(inputData));
 
-        FundanalyzerLogClient.logService(
-                MessageFormat.format("次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}", inputData.getId()),
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
+                MessageFormat.format(
+                        "次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}",
+                        inputData.getId()
+                ),
                 Category.DOCUMENT,
-                Process.SCRAPING
-        );
+                Process.SCRAPING,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**
@@ -179,13 +207,16 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void removeDocument(final IdInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
         documentSpecification.updateRemoved(inputData.getId());
 
-        FundanalyzerLogClient.logService(
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", inputData.getId()),
                 Category.DOCUMENT,
-                Process.UPDATE
-        );
+                Process.REMOVE,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**
@@ -232,14 +263,14 @@ public class DocumentInteractor implements DocumentUseCase {
                 processedDocument.getScrapedNumberOfShares()
         ).stream().allMatch(status -> DocumentStatus.ERROR == status)) {
             documentSpecification.updateRemoved(document);
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
                             document
                     ),
                     Category.DOCUMENT,
-                    Process.EDINET
-            );
+                    Process.SCRAPING
+            ));
         }
     }
 

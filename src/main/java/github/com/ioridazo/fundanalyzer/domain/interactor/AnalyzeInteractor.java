@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
@@ -57,13 +57,15 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      */
     @Override
     public void analyze(final IdInputData inputData) {
+        final long startTime = System.currentTimeMillis();
         this.analyze(documentSpecification.findDocument(inputData));
 
-        FundanalyzerLogClient.logService(
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("書類ID[{0}]の分析が正常に終了しました。", inputData.getId()),
-                Category.DOCUMENT,
-                Process.ANALYSIS
-        );
+                Category.ANALYSIS,
+                Process.ANALYSIS,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**
@@ -73,28 +75,31 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      */
     @Override
     public void analyze(DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
         final List<Document> targetList = documentSpecification.analysisTargetList(inputData);
 
         if (targetList.isEmpty()) {
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次の提出日に関する書類は分析済みかまたはデータベースに存在しませんでした。\t対象提出日:{0}",
                             inputData.getDate()
                     ),
-                    Category.DOCUMENT,
-                    Process.ANALYSIS
-            );
+                    Category.ANALYSIS,
+                    Process.ANALYSIS,
+                    System.currentTimeMillis() - startTime
+            ));
         } else {
             targetList.forEach(this::analyze);
 
-            FundanalyzerLogClient.logService(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次の提出日に関する書類に対して分析を正常に終了しました。\t対象提出日:{0}",
                             inputData.getDate()
                     ),
-                    Category.DOCUMENT,
-                    Process.ANALYSIS
-            );
+                    Category.ANALYSIS,
+                    Process.ANALYSIS,
+                    System.currentTimeMillis() - startTime
+            ));
         }
     }
 
@@ -111,15 +116,15 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         try {
             analysisResultSpecification.insert(document, calculateFsValue(document));
         } catch (FundanalyzerNotExistException ignored) {
-            FundanalyzerLogClient.logLogic(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
                             companyCode,
                             document.getDocumentId()
                     ),
-                    Category.DOCUMENT,
+                    Category.ANALYSIS,
                     Process.ANALYSIS
-            );
+            ));
         }
     }
 
@@ -231,16 +236,20 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      */
     private FundanalyzerNotExistException fsValueThrow(
             final FinancialStatementEnum fs, final String subjectName, final Document document) {
-        log.warn(
-                "{}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                        "\t会社コード:{}\t書類ID:{}\t科目名:{}\t対象年:{}\n書類パス:{}",
-                fs.getName(),
-                companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).orElse("null"),
-                document.getDocumentId(),
-                subjectName,
-                document.getDocumentPeriod().map(String::valueOf).orElse("null"),
-                document.getFsDocumentPath(fs).orElse("null")
-        );
+        log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                MessageFormat.format(
+                        "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                                "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
+                        fs.getName(),
+                        companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).orElse("null"),
+                        document.getDocumentId(),
+                        subjectName,
+                        document.getDocumentPeriod().map(String::valueOf).orElse("null"),
+                        document.getFsDocumentPath(fs).orElse("null")
+                ),
+                Category.ANALYSIS,
+                Process.of(fs)
+        ));
 
         // ステータスをHALF_WAY（途中）に更新する
         documentSpecification.updateFsToHalfWay(document, fs);

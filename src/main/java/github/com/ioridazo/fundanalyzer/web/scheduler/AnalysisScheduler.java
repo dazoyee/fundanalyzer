@@ -3,13 +3,15 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import java.time.LocalDate;
 @Component
 @Profile({"prod"})
 public class AnalysisScheduler {
+
+    private static final Logger log = LogManager.getLogger(AnalysisScheduler.class);
 
     private final AnalysisService analysisService;
     private final ViewService viewService;
@@ -45,7 +49,9 @@ public class AnalysisScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.analysis}", zone = "Asia/Tokyo")
     public void analysisScheduler() {
-        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.ANALYSIS);
+        final long startTime = System.currentTimeMillis();
+
+        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "analysisScheduler", startTime));
 
         try {
             final LocalDate fromDate = documentSpecification.documentList().stream()
@@ -58,7 +64,9 @@ public class AnalysisScheduler {
 
             analysisService.doMain(BetweenDateInputData.of(fromDate, nowLocalDate()));
 
-            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.ANALYSIS);
+            final long durationTime = System.currentTimeMillis() - startTime;
+
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "analysisScheduler", durationTime));
         } catch (Throwable t) {
             // Slack通知
             slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
@@ -71,12 +79,16 @@ public class AnalysisScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.update-view}", zone = "Asia/Tokyo")
     public void updateViewScheduler() {
-        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.UPDATE);
+        final long startTime = System.currentTimeMillis();
+
+        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "updateViewScheduler", startTime));
 
         try {
             viewService.updateView();
 
-            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.UPDATE);
+            final long durationTime = System.currentTimeMillis() - startTime;
+
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "updateViewScheduler", durationTime));
         } catch (Throwable t) {
             // Slack通知
             slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);

@@ -8,7 +8,8 @@ import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableR
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import lombok.Value;
-import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -23,9 +24,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Log4j2
 @Component
 public class XbrlScraping {
+
+    private static final Logger log = LogManager.getLogger(XbrlScraping.class);
 
     private static final String TOTAL = "計";
 
@@ -50,17 +52,27 @@ public class XbrlScraping {
             return filePathList.stream().findFirst();
         } else if (filePathList.isEmpty()) {
             // ファイルがみつからなかったとき
-            FundanalyzerLogClient.logLogic(MessageFormat.format(
-                    "次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{0}\tキーワード:{1}",
-                    scrapingKeywordEntity.getRemarks(),
-                    scrapingKeywordEntity.getKeyword()),
-                    Category.DOCUMENT,
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{0}\tキーワード:{1}",
+                            scrapingKeywordEntity.getRemarks(),
+                            scrapingKeywordEntity.getKeyword()
+                    ),
+                    Category.SCRAPING,
                     Process.SCRAPING
-            );
+            ));
             return Optional.empty();
         } else {
             // ファイルが複数見つかったとき
-            filePathList.forEach(file -> log.error("複数ファイルエラー\tキーワード：{}\t対象ファイル：{}", scrapingKeywordEntity.getKeyword(), file));
+            filePathList.forEach(file -> log.error(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "複数ファイルエラー\tキーワード：{0}\t対象ファイル：{1}",
+                            scrapingKeywordEntity.getKeyword(),
+                            file
+                    ),
+                    Category.SCRAPING,
+                    Process.SCRAPING
+            )));
             throw new FundanalyzerFileException("ファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
 
         }
@@ -198,7 +210,14 @@ public class XbrlScraping {
             return Jsoup.parse(file, "UTF-8")
                     .getElementsByAttributeValue(keyMatch.getKey(), keyMatch.getMatch());
         } catch (IOException e) {
-            log.error("ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{}\"", file.getPath());
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "ファイル形式に問題があり、読み取りに失敗しました。\t対象ファイルパス:\"{0}\"",
+                            file.getPath()
+                    ),
+                    Category.SCRAPING,
+                    Process.SCRAPING
+            ));
             throw new FundanalyzerFileException("ファイルの認識に失敗しました。スタックトレースから詳細を確認してください。", e);
         }
     }

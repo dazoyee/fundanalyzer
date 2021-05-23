@@ -8,7 +8,8 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
-import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.http.HttpMethod;
@@ -31,9 +32,10 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
-@Log4j2
 @Component
 public class EdinetClient {
+
+    private static final Logger log = LogManager.getLogger(EdinetClient.class);
 
     private final RestTemplate restTemplate;
     private final String baseUri;
@@ -61,11 +63,11 @@ public class EdinetClient {
             } else {
                 message = MessageFormat.format("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate());
             }
-            FundanalyzerLogClient.logProxy(
+            log.info(FundanalyzerLogClient.toClientLogObject(
                     message,
                     Category.DOCUMENT,
                     Process.EDINET
-            );
+            ));
 
             final EdinetResponse edinetResponse = restTemplate.getForObject(
                     baseUri + "/api/v1/documents.json?date={date}&type={type}",
@@ -82,20 +84,24 @@ public class EdinetClient {
             } else {
                 message = "書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。";
             }
-            FundanalyzerLogClient.logProxy(
+            log.info(FundanalyzerLogClient.toClientLogObject(
                     message,
                     Category.DOCUMENT,
                     Process.EDINET
-            );
+            ));
 
             return edinetResponse;
         } catch (final RestClientResponseException e) {
-            log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
-                            "\tHTTPステータスコード:{}" +
-                            "\tHTTPレスポンスボディ:{}",
-                    e.getRawStatusCode(),
-                    e.getResponseBodyAsString()
-            );
+            log.error(FundanalyzerLogClient.toClientLogObject(
+                    MessageFormat.format(
+                            "EDINETから200以外のHTTPステータスコードが返却されました。" +
+                                    "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                            e.getRawStatusCode(),
+                            e.getResponseBodyAsString()
+                    ),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            ));
 
             if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
                 throw new FundanalyzerRestClientException(
@@ -126,11 +132,11 @@ public class EdinetClient {
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
         try {
-            FundanalyzerLogClient.logProxy(
+            log.info(FundanalyzerLogClient.toClientLogObject(
                     MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
-            );
+            ));
 
             restTemplate.execute(
                     baseUri + "/api/v1/documents/{docId}?type={type}",
@@ -142,18 +148,22 @@ public class EdinetClient {
                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
             );
 
-            FundanalyzerLogClient.logProxy(
-                    "書類のダウンロードが正常に実行されました。",
+            log.info(FundanalyzerLogClient.toClientLogObject(
+                    MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.getDocId()),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
-            );
+            ));
         } catch (final RestClientResponseException e) {
-            log.error("EDINETから200以外のHTTPステータスコードが返却されました。" +
-                            "\tHTTPステータスコード:{}" +
-                            "\tHTTPレスポンスボディ:{}",
-                    e.getRawStatusCode(),
-                    e.getResponseBodyAsString()
-            );
+            log.error(FundanalyzerLogClient.toClientLogObject(
+                    MessageFormat.format(
+                            "EDINETから200以外のHTTPステータスコードが返却されました。" +
+                                    "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                            e.getRawStatusCode(),
+                            e.getResponseBodyAsString()
+                    ),
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
+            ));
 
             if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
                 throw new FundanalyzerRestClientException(
@@ -203,7 +213,11 @@ public class EdinetClient {
         try {
             Files.copy(file, path);
         } catch (final FileAlreadyExistsException e) {
-            log.error("重複ファイル：\"{}\"", e.getFile());
+            log.error(FundanalyzerLogClient.toClientLogObject(
+                    MessageFormat.format("重複ファイル：\"{0}\"", e.getFile()),
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
+            ));
             throw e;
         }
         return null;

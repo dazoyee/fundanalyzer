@@ -1,8 +1,5 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
-import github.com.ioridazo.fundanalyzer.client.log.Category;
-import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.EdinetService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
@@ -39,9 +36,7 @@ public class EdinetController {
      */
     @GetMapping("fundanalyzer/v1/company")
     public String updateCompany(final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.COMPANY);
         edinetService.updateCompany();
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.COMPANY);
         return REDIRECT_EDINET + "?message=Company is updated!";
     }
 
@@ -54,9 +49,7 @@ public class EdinetController {
      */
     @PostMapping("fundanalyzer/v1/edinet/list")
     public String saveEdinet(final String fromDate, final String toDate) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.EDINET);
         edinetService.saveEdinetList(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.EDINET);
         return REDIRECT_EDINET;
     }
 
@@ -68,9 +61,7 @@ public class EdinetController {
      */
     @PostMapping("fundanalyzer/v1/update/edinet/list")
     public String updateEdinetList(final String date) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
         viewService.updateEdinetListView(DateInputData.of(LocalDate.parse(date)));
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET;
     }
 
@@ -83,9 +74,7 @@ public class EdinetController {
      */
     @PostMapping("fundanalyzer/v1/remove/document")
     public String removeDocument(final String submitDate, final String documentId) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
         edinetService.removeDocument(IdInputData.of(documentId));
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET_DETAIL + "?submitDate=" + submitDate;
     }
 }

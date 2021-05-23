@@ -1,8 +1,5 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
-import github.com.ioridazo.fundanalyzer.client.log.Category;
-import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.springframework.stereotype.Controller;
@@ -32,9 +29,7 @@ public class EdinetDetailPresenter {
      */
     @GetMapping("fundanalyzer/v1/edinet/list/detail")
     public String edinetListDetail(@RequestParam(name = "submitDate") final String submitDate, final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
         model.addAttribute("edinetDetail", viewService.getEdinetDetailView(DateInputData.of(LocalDate.parse(submitDate))));
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
         return EDINET_DETAIL;
     }
 }

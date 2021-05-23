@@ -44,19 +44,19 @@ public class SeleniumClient {
                     .queryParam("path", inputFilePath.replace("/", "\\"))
                     .build().toUri();
 
-            FundanalyzerLogClient.logProxy(
+            log.info(FundanalyzerLogClient.toClientLogObject(
                     MessageFormat.format("Seleniumの通信を開始します。\tURL:{0}", uri),
-                    Category.DOCUMENT,
-                    Process.COMPANY
-            );
+                    Category.COMPANY,
+                    Process.EDINET
+            ));
 
             final String fileName = restTemplate.getForObject(uri, String.class);
 
-            FundanalyzerLogClient.logProxy(
+            log.info(FundanalyzerLogClient.toClientLogObject(
                     MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", uri),
-                    Category.DOCUMENT,
-                    Process.COMPANY
-            );
+                    Category.COMPANY,
+                    Process.EDINET
+            ));
 
             return fileName;
         } catch (RestClientException e) {

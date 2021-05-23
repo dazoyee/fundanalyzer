@@ -3,6 +3,8 @@ package github.com.ioridazo.fundanalyzer.client.file;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,8 @@ import java.util.zip.ZipInputStream;
 @Component
 public class FileOperator {
 
+    private static final Logger log = LogManager.getLogger(FileOperator.class);
+
     @Value("${app.settings.file.path.company.company}")
     String pathCompany;
     @Value("${app.settings.file.path.company.zip}")
@@ -36,11 +40,11 @@ public class FileOperator {
     }
 
     public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
-        FundanalyzerLogClient.logLogic(
+        log.info(FundanalyzerLogClient.toClientLogObject(
                 MessageFormat.format("zipファイルの解凍処理を実行します。\tパス:{0}", fileInputPath.getPath()),
                 Category.DOCUMENT,
                 Process.DECODE
-        );
+        ));
 
         byte[] buffer = new byte[1024];
 
@@ -74,11 +78,11 @@ public class FileOperator {
         zis.closeEntry();
         zis.close();
 
-        FundanalyzerLogClient.logLogic(
+        log.info(FundanalyzerLogClient.toClientLogObject(
                 MessageFormat.format("zipファイルの解凍処理が正常に実行されました。\tパス:{0}", fileOutputPath.getPath()),
                 Category.DOCUMENT,
                 Process.DECODE
-        );
+        ));
     }
 
     /**

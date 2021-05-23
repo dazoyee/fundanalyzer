@@ -1,8 +1,5 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
-import github.com.ioridazo.fundanalyzer.client.log.Category;
-import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,10 +28,8 @@ public class IndexPresenter {
      */
     @GetMapping("fundanalyzer/v1/index")
     public String corporateView(@RequestParam(name = "message", required = false) final String message, final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
         model.addAttribute("message", message);
         model.addAttribute("companies", viewService.getCorporateView());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
         return INDEX;
     }
 
@@ -46,9 +41,7 @@ public class IndexPresenter {
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
     public String sortedCorporateView(final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
         model.addAttribute("companies", viewService.getSortedCorporateView());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
         return INDEX;
     }
 
@@ -60,9 +53,7 @@ public class IndexPresenter {
      */
     @GetMapping("fundanalyzer/v1/index/all")
     public String allCorporateView(final Model model) {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
         model.addAttribute("companies", viewService.getAllCorporateView());
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
         return INDEX;
     }
 }

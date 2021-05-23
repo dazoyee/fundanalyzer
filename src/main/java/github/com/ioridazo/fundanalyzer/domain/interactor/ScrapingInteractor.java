@@ -1,11 +1,15 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionType;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
@@ -20,10 +24,6 @@ import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,6 +83,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
      */
     @Override
     public void download(final Document document) {
+        final long startTime = System.currentTimeMillis();
+
         try {
             // ファイル取得
             edinetClient.acquisition(
@@ -99,12 +101,30 @@ public class ScrapingInteractor implements ScrapingUseCase {
             documentSpecification.updateDecodeToDone(document);
 
         } catch (FundanalyzerRestClientException e) {
-            log.error("書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
-                    "\t処理対象日:{}\t書類管理番号:{}", document.getSubmitDate(), document.getDocumentId(), e);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
+                                    "\t処理対象日:{0}\t書類管理番号:{1}",
+                            document.getSubmitDate(),
+                            document.getDocumentId()
+                    ),
+                    Category.SCRAPING,
+                    Process.DOWNLOAD,
+                    System.currentTimeMillis() - startTime
+            ), e);
             documentSpecification.updateDownloadToError(document);
         } catch (IOException e) {
-            log.error("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
-                    "\t処理対象日:{}\t書類管理番号:{}", document.getSubmitDate(), document.getDocumentId(), e);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
+                                    "\t処理対象日:{0}\t書類管理番号:{1}",
+                            document.getSubmitDate(),
+                            document.getDocumentId()
+                    ),
+                    Category.SCRAPING,
+                    Process.DECODE,
+                    System.currentTimeMillis() - startTime
+            ), e);
             documentSpecification.updateDecodeToError(document);
         }
     }
@@ -197,26 +217,10 @@ public class ScrapingInteractor implements ScrapingUseCase {
     Pair<File, ScrapingKeywordEntity> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
         final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
 
-        FundanalyzerLogClient.logLogic(
-                MessageFormat.format("[{0}] のスクレイピング処理を開始します。\tパス:{1}",
-                        fs.getName(),
-                        targetFile.getPath()),
-                Category.DOCUMENT,
-                Process.SCRAPING
-        );
-
         for (final ScrapingKeywordEntity scrapingKeyword : scrapingKeywordList) {
             final Optional<File> findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);
 
             if (findFile.isPresent()) {
-                FundanalyzerLogClient.logLogic(
-                        MessageFormat.format("[{0}]の対象ファイルを正常に確認できました。\tキーワード:{1}",
-                                scrapingKeyword.getRemarks(),
-                                scrapingKeyword.getKeyword()),
-                        Category.DOCUMENT,
-                        Process.SCRAPING
-                );
-
                 return Pair.of(findFile.get(), scrapingKeyword);
             }
         }
@@ -251,7 +255,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     0L
             );
 
-            FundanalyzerLogClient.logLogic(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "[貸借対照表] の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
                                     "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
@@ -260,9 +264,9 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             totalCurrentLiabilities.get(),
                             totalLiabilities.get()
                     ),
-                    Category.DOCUMENT,
-                    Process.SCRAPING
-            );
+                    Category.SCRAPING,
+                    Process.BS
+            ));
         }
     }
 
@@ -277,39 +281,54 @@ public class ScrapingInteractor implements ScrapingUseCase {
             final FinancialStatementEnum fs,
             final Document document,
             final BiConsumer<Company, Pair<File, ScrapingKeywordEntity>> doScraping) {
+        final long startTime = System.currentTimeMillis();
         final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
                 .orElseThrow(FundanalyzerRuntimeException::new);
         final File targetDirectory = makeDocumentPath(pathDecode, document.getSubmitDate(), document.getDocumentId());
+
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
+                MessageFormat.format("[{0}] のスクレイピング処理を開始します。\tパス:{1}",
+                        fs.getName(),
+                        targetDirectory.getPath()),
+                Category.SCRAPING,
+                Process.of(fs),
+                System.currentTimeMillis() - startTime
+        ));
 
         try {
             final Pair<File, ScrapingKeywordEntity> targetFile = findTargetFile(targetDirectory, fs);
 
             doScraping.accept(company, targetFile);
 
-            FundanalyzerLogClient.logLogic(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "次のスクレイピング情報を正常に登録しました。\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
+                            "次のスクレイピング情報を正常に登録しました。" +
+                                    "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
                             company.getCode().orElse("null"),
                             company.getEdinetCode(),
                             fs.getName(),
                             targetFile.getFirst().getPath()
                     ),
-                    Category.DOCUMENT,
-                    Process.SCRAPING
-            );
+                    Category.SCRAPING,
+                    Process.of(fs),
+                    System.currentTimeMillis() - startTime
+            ));
 
             documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
         } catch (FundanalyzerFileException e) {
             documentSpecification.updateFsToError(document, fs);
-            log.warn(
-                    "スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\n企業コード:{}\tEDINETコード:{}\t財務諸表名:{}\tファイルパス:{}",
-                    company.getCode().orElse("null"),
-                    company.getEdinetCode(),
-                    fs.getName(),
-                    targetDirectory.getPath(),
-                    e
-            );
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
+                                    "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
+                            company.getCode().orElse("null"),
+                            company.getEdinetCode(),
+                            fs.getName(),
+                            targetDirectory.getPath()),
+                    Category.SCRAPING,
+                    Process.of(fs),
+                    System.currentTimeMillis() - startTime
+            ), e);
         }
     }
 
@@ -364,7 +383,14 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             .replace("△", "-")
                     ));
         } catch (NumberFormatException e) {
-            log.error("数値を正常に認識できなかったため、NULLで登録します。\tvalue:{}", value);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "数値を正常に認識できなかったため、NULLで登録します。\tvalue:{0}",
+                            value
+                    ),
+                    Category.SCRAPING,
+                    Process.SCRAPING
+            ));
             return Optional.empty();
         }
     }

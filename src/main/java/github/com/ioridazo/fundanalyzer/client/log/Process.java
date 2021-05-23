@@ -1,22 +1,45 @@
 package github.com.ioridazo.fundanalyzer.client.log;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+
 public enum Process {
+    BEGINNING("beginning"),
+    END("end"),
+
     EDINET("edinet"),
-    COMPANY("company"),
     SCRAPING("scraping"),
+    REMOVE("remove"),
+
     DOWNLOAD("download"),
     DECODE("decode"),
+    BS("bs"),
+    PL("pl"),
+    NS("ns"),
+
     ANALYSIS("analysis"),
     IMPORT("import"),
     UPDATE("update"),
-    NOTICE("notice"),
-    SORT("sort"),
+    SLACK("slack"),
     ;
 
     private final String value;
 
     Process(final String value) {
         this.value = value;
+    }
+
+    public static Process of(final FinancialStatementEnum fs) {
+        switch (fs) {
+            case BALANCE_SHEET:
+                return BS;
+            case PROFIT_AND_LESS_STATEMENT:
+                return PL;
+            case TOTAL_NUMBER_OF_SHARES:
+                return NS;
+            default:
+                throw new FundanalyzerRuntimeException();
+        }
     }
 
     public String getValue() {

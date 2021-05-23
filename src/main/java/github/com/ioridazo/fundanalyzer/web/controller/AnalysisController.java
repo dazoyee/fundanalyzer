@@ -1,8 +1,5 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
-import github.com.ioridazo.fundanalyzer.client.log.Category;
-import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
@@ -40,9 +37,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String doMain(final String fromDate, final String toDate) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         analysisService.doMain(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
 
@@ -53,9 +48,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/update/view")
     public String updateView() {
-        FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.UPDATE);
         viewService.updateView();
-        FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.UPDATE);
         return REDIRECT_INDEX + "?message=updating";
     }
 
@@ -67,9 +60,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         analysisService.doByDate(DateInputData.of(LocalDate.parse(date)));
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
 
@@ -81,12 +72,10 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/scrape/id")
     public String scrapeById(final String documentId) {
-        FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         Arrays.stream(documentId.split(","))
                 .filter(dId -> dId.length() == 8)
                 .map(IdInputData::of)
                 .forEach(analysisService::doById);
-        FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
 
@@ -99,9 +88,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/import/stock/date")
     public String importStock(final String fromDate, final String toDate) {
-        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
         analysisService.importStock(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_INDEX;
     }
 
@@ -113,9 +100,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/import/stock/code")
     public String importStock(final String code) {
-        FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
         analysisService.importStock(CodeInputData.of(code));
-        FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
     }
 }

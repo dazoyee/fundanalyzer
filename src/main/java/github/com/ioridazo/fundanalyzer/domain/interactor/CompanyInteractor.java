@@ -1,16 +1,16 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
+import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,6 +67,7 @@ public class CompanyInteractor implements CompanyUseCase {
      */
     @Override
     public void importCompanyInfo() {
+        final long startTime = System.currentTimeMillis();
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
         try {
             // ファイルダウンロード
@@ -80,9 +81,19 @@ public class CompanyInteractor implements CompanyUseCase {
 
             saveCompanyInfo();
 
-            FundanalyzerLogClient.logService("CSVファイルから会社情報の登録が完了しました。", Category.DOCUMENT, Process.COMPANY);
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    "CSVファイルから会社情報の登録が完了しました。",
+                    Category.COMPANY,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
         } catch (Throwable t) {
-            log.error("Selenium経由での会社情報更新処理が異常終了しました。内容を確認してください。", t);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    "Selenium経由での会社情報更新処理が異常終了しました。内容を確認してください。",
+                    Category.COMPANY,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ), t);
             throw new FundanalyzerRuntimeException(t);
         }
     }
@@ -92,6 +103,7 @@ public class CompanyInteractor implements CompanyUseCase {
      */
     @Override
     public void saveCompanyInfo() {
+        final long startTime = System.currentTimeMillis();
         // ファイル読み取り
         final List<EdinetCsvResultBean> resultBeanList = csvCommander.readCsv(
                 Arrays.stream(Objects.requireNonNull(new File(pathCompany).listFiles())).findFirst().orElseThrow(),
@@ -105,7 +117,12 @@ public class CompanyInteractor implements CompanyUseCase {
         // Companyの登録
         companySpecification.upsert(resultBeanList);
 
-        FundanalyzerLogClient.logService("CSVファイルから会社情報の登録が完了しました。", Category.DOCUMENT, Process.COMPANY);
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
+                "CSVファイルから会社情報の登録が完了しました。",
+                Category.COMPANY,
+                Process.UPDATE,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**

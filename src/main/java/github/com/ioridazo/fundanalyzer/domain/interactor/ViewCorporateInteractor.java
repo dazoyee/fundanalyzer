@@ -1,9 +1,10 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
@@ -15,7 +16,6 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -26,6 +26,8 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.Financia
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class ViewCorporateInteractor implements ViewCorporateUseCase {
+
+    private static final Logger log = LogManager.getLogger(ViewCorporateInteractor.class);
 
     private final AnalyzeInteractor analyzeInteractor;
     private final CompanySpecification companySpecification;
@@ -191,6 +195,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public void updateView() {
+        final long startTime = System.currentTimeMillis();
         final List<CorporateViewModel> viewModelList = companySpecification.allTargetCompanies().stream()
                 .map(company -> viewSpecification.generateCorporateView(company, analyzeInteractor.calculateCorporateValue(company)))
                 .collect(Collectors.toList());
@@ -199,11 +204,12 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
 
-        FundanalyzerLogClient.logService(
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "表示アップデートが正常に終了しました。",
                 Category.VIEW,
-                Process.UPDATE
-        );
+                Process.UPDATE,
+                System.currentTimeMillis() - startTime
+        ));
     }
 
     /**
@@ -213,6 +219,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public void updateView(final DateInputData inputData) {
+        final long startTime = System.currentTimeMillis();
         final List<CorporateViewModel> viewModelList = documentSpecification.targetList(inputData).stream()
                 .map(Document::getEdinetCode)
                 .map(companySpecification::findCompanyByEdinetCode)
@@ -222,10 +229,11 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         viewModelList.forEach(viewSpecification::upsert);
 
-        FundanalyzerLogClient.logService(
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
                 Category.VIEW,
-                Process.UPDATE
-        );
+                Process.UPDATE,
+                System.currentTimeMillis() - startTime
+        ));
     }
 }

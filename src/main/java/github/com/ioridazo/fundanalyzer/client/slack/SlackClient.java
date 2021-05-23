@@ -4,6 +4,8 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
@@ -23,6 +25,8 @@ import java.util.Objects;
 @Component
 @PropertySource(value = "classpath:/slack-message.properties", encoding = "UTF-8")
 public class SlackClient {
+
+    private static final Logger log = LogManager.getLogger(SlackClient.class);
 
     private final RestTemplate restTemplate;
     private final String baseUri;
@@ -55,7 +59,6 @@ public class SlackClient {
     public void sendMessage(final String propertyPath) {
         final var message = Objects.requireNonNullElse(environment.getProperty(propertyPath), "message error");
         execute(message);
-        FundanalyzerLogClient.logProxy("Slack通知完了. " + message, Category.SLACK, Process.NOTICE);
     }
 
     /**
@@ -68,8 +71,6 @@ public class SlackClient {
         final var templateMessage = Objects.requireNonNullElse(environment.getProperty(propertyPath), "message error");
         final String message = nowLocalDataTime() + "\t" + MessageFormat.format(templateMessage, arguments);
         execute(message);
-
-        FundanalyzerLogClient.logProxy("Slack通知完了. " + message, Category.SLACK, Process.NOTICE);
     }
 
     private void execute(final String message) {
@@ -83,6 +84,12 @@ public class SlackClient {
                             .body("{\"text\": \"" + message + "\"}"),
                     String.class
             );
+
+            log.info(FundanalyzerLogClient.toClientLogObject(
+                    "Slack通知完了. ",
+                    Category.NOTICE,
+                    Process.SLACK
+            ));
         } catch (RestClientException e) {
             throw new FundanalyzerRestClientException(
                     "Slackとの通信でなんらかのエラーが発生したため、通知できませんでした。詳細を確認してください。", e);
