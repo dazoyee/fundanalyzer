@@ -1,11 +1,10 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
-import github.com.ioridazo.fundanalyzer.domain.service.StockService;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,25 +19,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class StockSchedulerTest {
 
-    private StockService stockService;
+    private AnalysisService analysisService;
+    private DocumentSpecification documentSpecification;
     private SlackProxy slackProxy;
-    private DocumentDao documentDao;
 
     private StockScheduler scheduler;
 
     @BeforeEach
     void setUp() {
-        this.stockService = Mockito.mock(StockService.class);
+        this.analysisService = Mockito.mock(AnalysisService.class);
+        this.documentSpecification = Mockito.mock(DocumentSpecification.class);
         this.slackProxy = Mockito.mock(SlackProxy.class);
-        this.documentDao = Mockito.mock(DocumentDao.class);
 
-        this.scheduler = Mockito.spy(new StockScheduler(stockService, slackProxy, documentDao));
+        this.scheduler = Mockito.spy(new StockScheduler(analysisService, documentSpecification, slackProxy));
     }
 
     @Nested
@@ -47,25 +47,15 @@ class StockSchedulerTest {
         @DisplayName("stockScheduler : 日が一致する提出日の会社の株価を更新する")
         @Test
         void stockScheduler_ok() {
-            var targetTypes = List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130);
-
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
-            when(documentDao.selectByDayOfSubmitDate("6")).thenReturn(List.of(
-                    DocumentEntity.builder()
-                            .submitDate(LocalDate.parse("2021-01-06"))
-                            .build(),
-                    DocumentEntity.builder()
-                            .submitDate(LocalDate.parse("2021-02-06"))
-                            .build(),
-                    DocumentEntity.builder()
-                            .submitDate(LocalDate.parse("2021-02-06"))
-                            .build()
+            when(documentSpecification.stockSchedulerTargetList("6")).thenReturn(List.of(
+                    LocalDate.parse("2021-01-06"),
+                    LocalDate.parse("2021-02-06")
             ));
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
-
-            verify(stockService, times(1)).importStockPrice(LocalDate.parse("2021-01-06"), targetTypes);
-            verify(stockService, times(1)).importStockPrice(LocalDate.parse("2021-02-06"), targetTypes);
+            verify(analysisService, times(1)).importStock(DateInputData.of(LocalDate.parse("2021-01-06")));
+            verify(analysisService, times(1)).importStock(DateInputData.of(LocalDate.parse("2021-02-06")));
             verify(slackProxy, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 2);
         }
 
@@ -73,15 +63,12 @@ class StockSchedulerTest {
         @Test
         void stockScheduler_throwable() {
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
-            when(documentDao.selectByDayOfSubmitDate("6")).thenReturn(List.of(
-                    DocumentEntity.builder()
-                            .submitDate(LocalDate.parse("2021-02-06"))
-                            .build()
+            when(documentSpecification.stockSchedulerTargetList("6")).thenReturn(List.of(
+                    LocalDate.parse("2021-02-06")
             ));
-            when(stockService.importStockPrice(any(), any())).thenThrow(FundanalyzerRuntimeException.class);
+            doThrow(new FundanalyzerRuntimeException()).when(analysisService).importStock((DateInputData) any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());
-
             verify(slackProxy, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
         }
     }

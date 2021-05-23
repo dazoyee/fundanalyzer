@@ -1,37 +1,35 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.service.StockService;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @Profile({"prod"})
 public class StockScheduler {
 
-    private final StockService stockService;
+    private final AnalysisService analysisService;
+    private final DocumentSpecification documentSpecification;
     private final SlackProxy slackProxy;
-    private final DocumentDao documentDao;
 
     public StockScheduler(
-            final StockService stockService,
-            final SlackProxy slackProxy,
-            final DocumentDao documentDao) {
-        this.stockService = stockService;
+            final AnalysisService analysisService,
+            final DocumentSpecification documentSpecification,
+            final SlackProxy slackProxy) {
+        this.analysisService = analysisService;
+        this.documentSpecification = documentSpecification;
         this.slackProxy = slackProxy;
-        this.documentDao = documentDao;
     }
 
     LocalDate nowLocalDate() {
@@ -47,12 +45,10 @@ public class StockScheduler {
 
         try {
             final String dayOfMonth = String.valueOf(nowLocalDate().getDayOfMonth());
-            final List<LocalDate> targetList = documentDao.selectByDayOfSubmitDate(dayOfMonth).stream()
-                    .map(DocumentEntity::getSubmitDate)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            targetList.forEach(submitDate -> stockService.importStockPrice(submitDate, Target.annualSecuritiesReport()));
+            final List<LocalDate> targetList = documentSpecification.stockSchedulerTargetList(dayOfMonth);
+            targetList.stream()
+                    .map(DateInputData::of)
+                    .forEach(analysisService::importStock);
 
             slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
             FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.IMPORT);

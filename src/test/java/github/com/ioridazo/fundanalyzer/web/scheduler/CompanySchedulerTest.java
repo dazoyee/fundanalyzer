@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,17 +19,17 @@ import static org.mockito.Mockito.verify;
 
 class CompanySchedulerTest {
 
-    private DocumentService documentService;
+    private CompanyUseCase companyUseCase;
     private SlackProxy slackProxy;
 
     private CompanyScheduler scheduler;
 
     @BeforeEach
     void setUp() {
-        this.documentService = Mockito.mock(DocumentService.class);
+        this.companyUseCase = Mockito.mock(CompanyUseCase.class);
         this.slackProxy = Mockito.mock(SlackProxy.class);
 
-        this.scheduler = new CompanyScheduler(documentService, slackProxy);
+        this.scheduler = new CompanyScheduler(companyUseCase, slackProxy);
     }
 
     @Nested
@@ -38,14 +38,14 @@ class CompanySchedulerTest {
         @DisplayName("company : 会社一覧を更新する")
         @Test
         void company_ok() {
-            doNothing().when(documentService).downloadCompanyInfo();
+            doNothing().when(companyUseCase).importCompanyInfo();
             assertDoesNotThrow(() -> scheduler.companyScheduler());
         }
 
         @DisplayName("company : 想定外のエラーが発生したときはSlack通知する")
         @Test
         void company_throwable() {
-            doThrow(FundanalyzerRuntimeException.class).when(documentService).downloadCompanyInfo();
+            doThrow(FundanalyzerRuntimeException.class).when(companyUseCase).importCompanyInfo();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.companyScheduler());
             verify(slackProxy, times(1)).sendMessage(any(), any());
         }
