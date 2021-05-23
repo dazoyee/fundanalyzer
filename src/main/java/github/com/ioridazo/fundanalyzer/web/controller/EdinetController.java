@@ -3,9 +3,11 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
+import github.com.ioridazo.fundanalyzer.domain.service.EdinetService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,13 +21,13 @@ public class EdinetController {
     private static final String REDIRECT_EDINET = "redirect:/fundanalyzer/v1/edinet/list";
     private static final String REDIRECT_EDINET_DETAIL = "redirect:/fundanalyzer/v1/edinet/list/detail";
 
-    private final DocumentService documentService;
+    private final EdinetService edinetService;
     private final ViewService viewService;
 
     public EdinetController(
-            final DocumentService documentService,
+            final EdinetService edinetService,
             final ViewService viewService) {
-        this.documentService = documentService;
+        this.edinetService = edinetService;
         this.viewService = viewService;
     }
 
@@ -36,9 +38,9 @@ public class EdinetController {
      * @return EdinetList
      */
     @GetMapping("fundanalyzer/v1/company")
-    public String company(final Model model) {
+    public String updateCompany(final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.COMPANY);
-        documentService.downloadCompanyInfo();
+        edinetService.updateCompany();
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.COMPANY);
         return REDIRECT_EDINET + "?message=Company is updated!";
     }
@@ -51,9 +53,9 @@ public class EdinetController {
      * @return EdinetList
      */
     @PostMapping("fundanalyzer/v1/edinet/list")
-    public String edinet(final String fromDate, final String toDate) {
+    public String saveEdinet(final String fromDate, final String toDate) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.EDINET);
-        documentService.edinetList(fromDate, toDate);
+        edinetService.saveEdinetList(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.EDINET);
         return REDIRECT_EDINET;
     }
@@ -67,7 +69,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/update/edinet/list")
     public String updateEdinetList(final String date) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
-        viewService.updateEdinetListView(LocalDate.parse(date), Target.annualSecuritiesReport());
+        viewService.updateEdinetListView(DateInputData.of(LocalDate.parse(date)));
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET;
     }
@@ -82,7 +84,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/remove/document")
     public String removeDocument(final String submitDate, final String documentId) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.UPDATE);
-        documentService.removeDocument(documentId);
+        edinetService.removeDocument(IdInputData.of(documentId));
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.UPDATE);
         return REDIRECT_EDINET_DETAIL + "?submitDate=" + submitDate;
     }

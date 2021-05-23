@@ -30,11 +30,11 @@ public class EdinetPresenter {
      * @return EdinetList
      */
     @GetMapping("fundanalyzer/v1/edinet/list")
-    public String edinetList(@RequestParam(name = "message", required = false) final String message, final Model model) {
+    public String edinetListView(@RequestParam(name = "message", required = false) final String message, final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
         model.addAttribute("message", message);
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListview());
+        model.addAttribute("companyUpdated", viewService.getUpdateDate());
+        model.addAttribute("edinetList", viewService.getEdinetListView());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
         return EDINET;
     }
@@ -46,12 +46,11 @@ public class EdinetPresenter {
      * @return EdinetList
      */
     @GetMapping("fundanalyzer/v1/edinet/list/all")
-    public String edinetListAll(final Model model) {
+    public String allEdinetListView(final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListViewAll());
+        model.addAttribute("companyUpdated", viewService.getUpdateDate());
+        model.addAttribute("edinetList", viewService.getAllEdinetListView());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
         return EDINET;
     }
-
 }

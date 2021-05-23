@@ -1,20 +1,19 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
-import github.com.ioridazo.fundanalyzer.domain.entity.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
-import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
-import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.List;
 
 @Controller
 public class AnalysisController {
@@ -22,19 +21,13 @@ public class AnalysisController {
     private static final String REDIRECT_INDEX = "redirect:/fundanalyzer/v1/index";
     private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
 
-    private final DocumentService documentService;
     private final AnalysisService analysisService;
-    private final StockService stockService;
     private final ViewService viewService;
 
     public AnalysisController(
-            final DocumentService documentService,
             final AnalysisService analysisService,
-            final StockService stockService,
             final ViewService viewService) {
-        this.documentService = documentService;
         this.analysisService = analysisService;
-        this.stockService = stockService;
         this.viewService = viewService;
     }
 
@@ -46,27 +39,9 @@ public class AnalysisController {
      * @return Index
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
-    public String documentAnalysis(final String fromDate, final String toDate) {
+    public String doMain(final String fromDate, final String toDate) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
-
-        final List<DocumentTypeCode> targetTypes = Target.annualSecuritiesReport();
-
-        LocalDate.parse(fromDate)
-                .datesUntil(LocalDate.parse(toDate).plusDays(1))
-                .forEach(date -> {
-                    // execute実行
-                    documentService.execute(date.toString(), targetTypes)
-                            // execute完了後、analyze実行
-                            .thenAcceptAsync(unused -> analysisService.analyze(date, targetTypes))
-                            // analyze完了後、importStockPrice実行
-                            .thenAcceptAsync(unused -> stockService.importStockPrice(date, targetTypes))
-                            // importStockPrice完了後、updateCorporateView実行
-                            .thenAcceptAsync(unused -> viewService.updateCorporateView(date, targetTypes))
-                            // updateCorporateView完了後、updateEdinetListView実行
-                            .thenAcceptAsync(unused -> viewService.updateEdinetListView(date, targetTypes))
-                            // updateEdinetListView完了後、notice実行
-                            .thenAcceptAsync(unused -> viewService.notice(date, targetTypes));
-                });
+        analysisService.doMain(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
@@ -79,8 +54,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/update/view")
     public String updateView() {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.UPDATE);
-        viewService.updateCorporateView(Target.annualSecuritiesReport());
-        viewService.updateEdinetListView(Target.annualSecuritiesReport());
+        viewService.updateView();
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.UPDATE);
         return REDIRECT_INDEX + "?message=updating";
     }
@@ -94,8 +68,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
-        documentService.scrape(LocalDate.parse(date), Target.annualSecuritiesReport());
-        analysisService.analyze(LocalDate.parse(date), Target.annualSecuritiesReport());
+        analysisService.doByDate(DateInputData.of(LocalDate.parse(date)));
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
@@ -111,10 +84,8 @@ public class AnalysisController {
         FundanalyzerLogClient.logProcessStart(Category.DOCUMENT, Process.ANALYSIS);
         Arrays.stream(documentId.split(","))
                 .filter(dId -> dId.length() == 8)
-                .forEach(dId -> {
-                    documentService.scrape(dId);
-                    analysisService.analyze(dId);
-                });
+                .map(IdInputData::of)
+                .forEach(analysisService::doById);
         FundanalyzerLogClient.logProcessEnd(Category.DOCUMENT, Process.ANALYSIS);
         return REDIRECT_INDEX;
     }
@@ -127,11 +98,9 @@ public class AnalysisController {
      * @return Index
      */
     @PostMapping("fundanalyzer/v1/import/stock/date")
-    public String importStocks(final String fromDate, final String toDate) {
+    public String importStock(final String fromDate, final String toDate) {
         FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
-        LocalDate.parse(fromDate)
-                .datesUntil(LocalDate.parse(toDate).plusDays(1))
-                .forEach(submitDate -> stockService.importStockPrice(submitDate, Target.annualSecuritiesReport()));
+        analysisService.importStock(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
         FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_INDEX;
     }
@@ -143,9 +112,9 @@ public class AnalysisController {
      * @return BrandDetail
      */
     @PostMapping("fundanalyzer/v1/import/stock/code")
-    public String importStocks(final String code) {
+    public String importStock(final String code) {
         FundanalyzerLogClient.logProcessStart(Category.STOCK, Process.IMPORT);
-        stockService.importStockPrice(code);
+        analysisService.importStock(CodeInputData.of(code));
         FundanalyzerLogClient.logProcessEnd(Category.STOCK, Process.IMPORT);
         return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
     }

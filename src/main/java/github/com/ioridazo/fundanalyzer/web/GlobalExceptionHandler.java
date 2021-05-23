@@ -29,8 +29,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({FundanalyzerSqlForeignKeyException.class})
     public String sqlForeignKeyException(final Exception e, final Model model) {
         model.addAttribute("error", "マスタに登録されていないEDINETコードが存在していたため、登録できませんでした。");
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListview());
+        model.addAttribute("companyUpdated", viewService.getUpdateDate());
+        model.addAttribute("edinetList", viewService.getEdinetListView());
         return "edinet";
     }
 }

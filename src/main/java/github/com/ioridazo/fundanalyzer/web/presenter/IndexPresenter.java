@@ -30,10 +30,10 @@ public class IndexPresenter {
      * @return Index
      */
     @GetMapping("fundanalyzer/v1/index")
-    public String index(@RequestParam(name = "message", required = false) final String message, final Model model) {
+    public String corporateView(@RequestParam(name = "message", required = false) final String message, final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
         model.addAttribute("message", message);
-        model.addAttribute("companies", viewService.corporateView());
+        model.addAttribute("companies", viewService.getCorporateView());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
         return INDEX;
     }
@@ -45,9 +45,9 @@ public class IndexPresenter {
      * @return Index
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
-    public String sortedDiscountRate(final Model model) {
+    public String sortedCorporateView(final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
-        model.addAttribute("companies", viewService.sortByDiscountRate());
+        model.addAttribute("companies", viewService.getSortedCorporateView());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
         return INDEX;
     }
@@ -59,9 +59,9 @@ public class IndexPresenter {
      * @return Index
      */
     @GetMapping("fundanalyzer/v1/index/all")
-    public String indexAll(final Model model) {
+    public String allCorporateView(final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.SORT);
-        model.addAttribute("companies", viewService.corporateViewAll());
+        model.addAttribute("companies", viewService.getAllCorporateView());
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.SORT);
         return INDEX;
     }

@@ -4,13 +4,15 @@ import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
+@Controller
 public class EdinetDetailPresenter {
 
     private static final String EDINET_DETAIL = "edinet-detail";
@@ -31,7 +33,7 @@ public class EdinetDetailPresenter {
     @GetMapping("fundanalyzer/v1/edinet/list/detail")
     public String edinetListDetail(@RequestParam(name = "submitDate") final String submitDate, final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.EDINET);
-        model.addAttribute("edinetDetail", viewService.edinetDetailView(LocalDate.parse(submitDate), Target.annualSecuritiesReport()));
+        model.addAttribute("edinetDetail", viewService.getEdinetDetailView(DateInputData.of(LocalDate.parse(submitDate))));
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.EDINET);
         return EDINET_DETAIL;
     }

@@ -1,10 +1,9 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
-import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
-import github.com.ioridazo.fundanalyzer.domain.service.StockService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,55 +16,43 @@ import java.time.LocalDate;
 @Controller
 public class DevelopController {
 
-    private final DocumentService documentService;
     private final AnalysisService analysisService;
-    private final StockService stockService;
     private final ViewService viewService;
+    private final CompanyUseCase companyUseCase;
 
     public DevelopController(
-            final DocumentService documentService,
             final AnalysisService analysisService,
-            final StockService stockService,
-            final ViewService viewService) {
-        this.documentService = documentService;
+            final ViewService viewService,
+            final CompanyUseCase companyUseCase) {
         this.analysisService = analysisService;
-        this.stockService = stockService;
         this.viewService = viewService;
+        this.companyUseCase = companyUseCase;
     }
 
     @GetMapping("/edinet/list")
     public String devEdinetList(final Model model) {
-        model.addAttribute("companyUpdated", viewService.companyUpdated());
-        model.addAttribute("edinetList", viewService.edinetListview());
+        model.addAttribute("companyUpdated", companyUseCase.getUpdateDate());
+        model.addAttribute("edinetList", viewService.getEdinetListView());
         return "edinet";
     }
 
     @GetMapping("/company")
     public String devCompany(final Model model) {
-        documentService.readCompanyInfo();
+        // company
+        companyUseCase.saveCompanyInfo();
 
-        model.addAttribute("companies", viewService.corporateView());
+        model.addAttribute("companies", viewService.getCorporateView());
         return "index";
     }
 
     @GetMapping("/scrape/analysis/{date}")
-    public String scrapeAndAnalyze(@PathVariable final String date, final Model model) {
-        documentService.readCompanyInfo();
+    public String devDoMain(@PathVariable final String date, final Model model) {
+        // company
+        companyUseCase.saveCompanyInfo();
 
-        // execute実行
-        documentService.execute(date, Target.annualSecuritiesReport())
-                // execute完了後、analyze実行
-                .thenAcceptAsync(unused -> analysisService.analyze(LocalDate.parse(date), Target.annualSecuritiesReport()))
-                // analyze完了後、importStockPrice実行
-                .thenAcceptAsync(unused -> stockService.importStockPrice(LocalDate.parse(date), Target.annualSecuritiesReport()))
-                // importStockPrice完了後、updateCorporateView実行
-                .thenAcceptAsync(unused -> viewService.updateCorporateView(LocalDate.parse(date), Target.annualSecuritiesReport()))
-                // updateCorporateView完了後、updateEdinetListView実行
-                .thenAcceptAsync(unused -> viewService.updateEdinetListView(LocalDate.parse(date), Target.annualSecuritiesReport()))
-                // updateEdinetListView完了後、notice実行
-                .thenAcceptAsync(unused -> viewService.notice(LocalDate.parse(date), Target.annualSecuritiesReport()));
+        analysisService.doMain(BetweenDateInputData.of(LocalDate.parse(date), LocalDate.parse(date)));
 
-        model.addAttribute("companies", viewService.corporateView());
+        model.addAttribute("companies", viewService.getCorporateView());
         return "redirect:/fundanalyzer/v1/index" + "?message=updating";
     }
 }

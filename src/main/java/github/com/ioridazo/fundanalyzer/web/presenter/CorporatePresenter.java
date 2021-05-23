@@ -4,10 +4,14 @@ import github.com.ioridazo.fundanalyzer.domain.log.Category;
 import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.domain.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+@Controller
 public class CorporatePresenter {
 
     private static final String CORPORATE = "corporate";
@@ -26,16 +30,19 @@ public class CorporatePresenter {
      * @return BrandDetail
      */
     @GetMapping("fundanalyzer/v1/corporate/{code}")
-    public String brandDetail(@PathVariable final String code, final Model model) {
+    public String corporateDetailView(@PathVariable final String code, final Model model) {
         FundanalyzerLogClient.logProcessStart(Category.VIEW, Process.COMPANY);
-        final var brandDetail = viewService.brandDetailView(code + "0");
-        model.addAttribute("corporate", brandDetail.getCorporate());
-        model.addAttribute("corporateView", brandDetail.getCorporateView());
-        model.addAttribute("analysisResults", brandDetail.getAnalysisResultEntityList());
-        model.addAttribute("financialStatements", brandDetail.getFinancialStatement());
-        model.addAttribute("forecastStocks", brandDetail.getMinkabuEntityList());
-        model.addAttribute("stockPrices", brandDetail.getStockPriceEntityList());
+
+        final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
+        model.addAttribute("corporate", view.getCompany());
+        model.addAttribute("corporateView", view.getCorporate());
+        model.addAttribute("analysisResults", view.getAnalysisResultList());
+        model.addAttribute("financialStatements", view.getFinancialStatement());
+        model.addAttribute("forecastStocks", view.getMinkabuList());
+        model.addAttribute("stockPrices", view.getStockPriceList());
+
         FundanalyzerLogClient.logProcessEnd(Category.VIEW, Process.COMPANY);
+
         return CORPORATE;
     }
 }
