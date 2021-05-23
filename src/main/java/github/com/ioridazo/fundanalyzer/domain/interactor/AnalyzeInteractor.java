@@ -70,38 +70,31 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      * 企業価値を算出する
      *
      * @param inputData 提出日
-     * @return Void
      */
     @Override
-    public CompletableFuture<Void> analyze(DateInputData inputData) {
-        try {
-            final List<Document> targetList = documentSpecification.analysisTargetList(inputData);
+    public void analyze(DateInputData inputData) {
+        final List<Document> targetList = documentSpecification.analysisTargetList(inputData);
 
-            if (targetList.isEmpty()) {
-                FundanalyzerLogClient.logService(
-                        MessageFormat.format(
-                                "次の提出日に関する書類は分析済みかまたはデータベースに存在しませんでした。\t対象提出日:{0}",
-                                inputData.getDate()
-                        ),
-                        Category.DOCUMENT,
-                        Process.ANALYSIS
-                );
-            } else {
-                targetList.forEach(this::analyze);
+        if (targetList.isEmpty()) {
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format(
+                            "次の提出日に関する書類は分析済みかまたはデータベースに存在しませんでした。\t対象提出日:{0}",
+                            inputData.getDate()
+                    ),
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            );
+        } else {
+            targetList.forEach(this::analyze);
 
-                FundanalyzerLogClient.logService(
-                        MessageFormat.format(
-                                "次の提出日に関する書類に対して分析を正常に終了しました。\t対象提出日:{0}",
-                                inputData.getDate()
-                        ),
-                        Category.DOCUMENT,
-                        Process.ANALYSIS
-                );
-            }
-            return null;
-        } catch (Throwable t) {
-            FundanalyzerLogClient.logError(t);
-            throw new FundanalyzerRuntimeException(t);
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format(
+                            "次の提出日に関する書類に対して分析を正常に終了しました。\t対象提出日:{0}",
+                            inputData.getDate()
+                    ),
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            );
         }
     }
 

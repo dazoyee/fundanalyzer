@@ -1,12 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
-import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
-import org.springframework.scheduling.annotation.Async;
-
-import java.util.concurrent.CompletableFuture;
 
 public interface DocumentUseCase {
 
@@ -16,11 +12,9 @@ public interface DocumentUseCase {
      * スクレイピング
      *
      * @param inputData 提出日
-     * @return Void
      */
-    @Async
     @NewSpan
-    CompletableFuture<Void> allProcess(DateInputData inputData);
+    void allProcess(DateInputData inputData);
 
     /**
      * EDINETに書類有無を問い合わせ

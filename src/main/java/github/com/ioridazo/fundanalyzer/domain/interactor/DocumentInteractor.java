@@ -10,7 +10,6 @@ import github.com.ioridazo.fundanalyzer.domain.specification.EdinetDocumentSpeci
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.EdinetProxy;
 import github.com.ioridazo.fundanalyzer.proxy.edinet.entity.request.ListRequestParameter;
@@ -58,44 +57,37 @@ public class DocumentInteractor implements DocumentUseCase {
      * ドキュメントを取得してスクレイピングする
      *
      * @param inputData 提出日
-     * @return Void
      */
     @Override
-    public CompletableFuture<Void> allProcess(final DateInputData inputData) {
-        try {
-            // 書類リストをデータベースに登録する
-            saveEdinetList(inputData);
+    public void allProcess(final DateInputData inputData) {
+        // 書類リストをデータベースに登録する
+        saveEdinetList(inputData);
 
-            // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-            final var documentList = documentSpecification.targetList(inputData);
+        // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
+        final var documentList = documentSpecification.targetList(inputData);
 
-            if (documentList.isEmpty()) {
-                FundanalyzerLogClient.logService(
-                        MessageFormat.format(
-                                "{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}",
-                                inputData.getDate(),
-                                String.join(",", targetTypeCodes)
-                        ),
-                        Category.DOCUMENT,
-                        Process.EDINET
-                );
-            } else {
-                documentList.parallelStream().forEach(this::scrape);
+        if (documentList.isEmpty()) {
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format(
+                            "{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}",
+                            inputData.getDate(),
+                            String.join(",", targetTypeCodes)
+                    ),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
+        } else {
+            documentList.parallelStream().forEach(this::scrape);
 
-                FundanalyzerLogClient.logService(
-                        MessageFormat.format(
-                                "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
-                                inputData.getDate(),
-                                String.join(",", targetTypeCodes)
-                        ),
-                        Category.DOCUMENT,
-                        Process.EDINET
-                );
-            }
-            return null;
-        } catch (Throwable t) {
-            FundanalyzerLogClient.logError(t);
-            throw new FundanalyzerRuntimeException(t);
+            FundanalyzerLogClient.logService(
+                    MessageFormat.format(
+                            "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
+                            inputData.getDate(),
+                            String.join(",", targetTypeCodes)
+                    ),
+                    Category.DOCUMENT,
+                    Process.EDINET
+            );
         }
     }
 

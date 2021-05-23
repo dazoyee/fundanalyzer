@@ -3,10 +3,8 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
-import org.springframework.scheduling.annotation.Async;
-
-import java.util.concurrent.CompletableFuture;
 
 public interface AnalyzeUseCase {
 
@@ -22,11 +20,9 @@ public interface AnalyzeUseCase {
      * 企業価値をデータベース登録
      *
      * @param inputData 提出日
-     * @return Void
      */
-    @Async
     @NewSpan
-    CompletableFuture<Void> analyze(DateInputData inputData);
+    void analyze(DateInputData inputData);
 
     /**
      * 企業価値情報の取得
