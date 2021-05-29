@@ -1,12 +1,12 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -90,7 +90,7 @@ class CompanyInteractorTest {
         @Test
         void fundanalyzerRestClientException() {
             when(seleniumClient.edinetCodeList(any())).thenThrow(FundanalyzerRestClientException.class);
-            assertThrows(FundanalyzerRuntimeException.class, () -> companyInteractor.importCompanyInfo());
+            assertThrows(FundanalyzerRestClientException.class, () -> companyInteractor.importCompanyInfo());
         }
 
         @DisplayName("importCompanyInfo : zipファイル解凍処理中にエラーが発生したときの挙動を確認する")
@@ -98,7 +98,7 @@ class CompanyInteractorTest {
         void iOException() throws IOException {
             when(seleniumClient.edinetCodeList(any())).thenReturn("fileName");
             doThrow(IOException.class).when(fileOperator).decodeZipFile(any(), any());
-            assertThrows(FundanalyzerRuntimeException.class, () -> companyInteractor.importCompanyInfo());
+            assertThrows(FundanalyzerFileException.class, () -> companyInteractor.importCompanyInfo());
         }
     }
 }

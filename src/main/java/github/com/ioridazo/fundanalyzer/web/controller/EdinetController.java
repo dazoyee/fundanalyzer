@@ -37,7 +37,7 @@ public class EdinetController {
     @GetMapping("fundanalyzer/v1/company")
     public String updateCompany(final Model model) {
         edinetService.updateCompany();
-        return REDIRECT_EDINET + "?message=Company is updated!";
+        return REDIRECT_EDINET + "?message=Company is updating!";
     }
 
     /**
