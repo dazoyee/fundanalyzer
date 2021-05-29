@@ -12,11 +12,13 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Component
 @Profile({"prod"})
@@ -28,6 +30,11 @@ public class AnalysisScheduler {
     private final ViewService viewService;
     private final DocumentSpecification documentSpecification;
     private final SlackClient slackClient;
+
+    @Value("${app.scheduler.hour.analysis}")
+    int hourOfAnalysis;
+    @Value("${app.scheduler.hour.update-view}")
+    int hourOfUpdateView;
 
     public AnalysisScheduler(
             final AnalysisService analysisService,
@@ -44,55 +51,65 @@ public class AnalysisScheduler {
         return LocalDate.now();
     }
 
+    public LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
     /**
      * 財務分析スケジューラ
      */
-    @Scheduled(cron = "${app.scheduler.cron.analysis}", zone = "Asia/Tokyo")
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Tokyo")
     public void analysisScheduler() {
-        final long startTime = System.currentTimeMillis();
+        if (nowLocalDateTime().getHour() == hourOfAnalysis) {
 
-        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "analysisScheduler", startTime));
+            final long startTime = System.currentTimeMillis();
 
-        try {
-            final LocalDate fromDate = documentSpecification.documentList().stream()
-                    .map(Document::getSubmitDate)
-                    // データベースの最新提出日を取得
-                    .max(LocalDate::compareTo)
-                    // 次の日から
-                    .map(submitDate -> submitDate.plusDays(1))
-                    .orElse(nowLocalDate());
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "analysisScheduler", 0));
 
-            analysisService.doMain(BetweenDateInputData.of(fromDate, nowLocalDate()));
+            try {
+                final LocalDate fromDate = documentSpecification.documentList().stream()
+                        .map(Document::getSubmitDate)
+                        // データベースの最新提出日を取得
+                        .max(LocalDate::compareTo)
+                        // 次の日から
+                        .map(submitDate -> submitDate.plusDays(1))
+                        .orElse(nowLocalDate());
 
-            final long durationTime = System.currentTimeMillis() - startTime;
+                analysisService.doMain(BetweenDateInputData.of(fromDate, nowLocalDate()));
 
-            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "analysisScheduler", durationTime));
-        } catch (Throwable t) {
-            // Slack通知
-            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
-            throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+                final long durationTime = System.currentTimeMillis() - startTime;
+
+                log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "analysisScheduler", durationTime));
+            } catch (Throwable t) {
+                // Slack通知
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+                throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+            }
         }
     }
 
     /**
      * 画面更新スケジューラ
      */
-    @Scheduled(cron = "${app.scheduler.cron.update-view}", zone = "Asia/Tokyo")
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Tokyo")
     public void updateViewScheduler() {
-        final long startTime = System.currentTimeMillis();
+        if (nowLocalDateTime().getHour() == hourOfUpdateView) {
 
-        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "updateViewScheduler", startTime));
+            final long startTime = System.currentTimeMillis();
 
-        try {
-            viewService.updateView();
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "updateViewScheduler", 0));
 
-            final long durationTime = System.currentTimeMillis() - startTime;
+            try {
+                viewService.updateView();
 
-            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "updateViewScheduler", durationTime));
-        } catch (Throwable t) {
-            // Slack通知
-            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
-            throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+                final long durationTime = System.currentTimeMillis() - startTime;
+
+                log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "updateViewScheduler", durationTime));
+            } catch (Throwable t) {
+                // Slack通知
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+                throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+            }
         }
     }
 }
