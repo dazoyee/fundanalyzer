@@ -1,37 +1,39 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.entity.transaction.Document;
-import github.com.ioridazo.fundanalyzer.domain.log.Category;
-import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.service.StockService;
-import github.com.ioridazo.fundanalyzer.domain.util.Target;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @Profile({"prod"})
 public class StockScheduler {
 
-    private final StockService stockService;
-    private final SlackProxy slackProxy;
-    private final DocumentDao documentDao;
+    private static final Logger log = LogManager.getLogger(StockScheduler.class);
+
+    private final AnalysisService analysisService;
+    private final DocumentSpecification documentSpecification;
+    private final SlackClient slackClient;
 
     public StockScheduler(
-            final StockService stockService,
-            final SlackProxy slackProxy,
-            final DocumentDao documentDao) {
-        this.stockService = stockService;
-        this.slackProxy = slackProxy;
-        this.documentDao = documentDao;
+            final AnalysisService analysisService,
+            final DocumentSpecification documentSpecification,
+            final SlackClient slackClient) {
+        this.analysisService = analysisService;
+        this.documentSpecification = documentSpecification;
+        this.slackClient = slackClient;
     }
 
     LocalDate nowLocalDate() {
@@ -43,22 +45,25 @@ public class StockScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.stock}", zone = "Asia/Tokyo")
     public void stockScheduler() {
-        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.IMPORT);
+        final long startTime = System.currentTimeMillis();
+
+        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "stockScheduler", startTime));
 
         try {
             final String dayOfMonth = String.valueOf(nowLocalDate().getDayOfMonth());
-            final List<LocalDate> targetList = documentDao.selectByDayOfSubmitDate(dayOfMonth).stream()
-                    .map(Document::getSubmitDate)
-                    .distinct()
-                    .collect(Collectors.toList());
+            final List<LocalDate> targetList = documentSpecification.stockSchedulerTargetList(dayOfMonth);
+            targetList.stream()
+                    .map(DateInputData::of)
+                    .forEach(analysisService::importStock);
 
-            targetList.forEach(submitDate -> stockService.importStockPrice(submitDate, Target.annualSecuritiesReport()));
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
 
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
-            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.IMPORT);
+            final long durationTime = System.currentTimeMillis() - startTime;
+
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "stockScheduler", durationTime));
         } catch (Throwable t) {
             // slack通知
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
             throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }
