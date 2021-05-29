@@ -10,7 +10,7 @@
 <body>
 <div class="container">
     <h1>処理詳細</h1>
-    <h2 th:text="${edinetDetail.edinetListView.submitDate}">対象提出日</h2>
+    <h2 th:text="${edinetDetail.edinetList.submitDate}">対象提出日</h2>
     <p th:if="${error}" class="alert alert-danger" role="alert">
         <th:block th:each="error: ${error}"><!-- 改行コードでsplitしてループ -->
             <th:block th:text="${error}"/>
@@ -26,7 +26,7 @@
     <div class="row">
         <div class="col-lg-3">
             <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/list}">
-                <input type="hidden" th:value="${edinetDetail.edinetListView.submitDate}" name="date"/>
+                <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
                 <button type="submit" class="btn">更新して前に戻る</button>
             </form>
         </div>
@@ -47,14 +47,14 @@
         </thead>
         <tbody>
         <tr>
-            <td th:text="${edinetDetail.edinetListView.countAll}">総件数</td>
-            <td th:text="${edinetDetail.edinetListView.countTarget}">処理対象件数</td>
-            <td th:text="${edinetDetail.edinetListView.countScraped}">処理済件数</td>
-            <td th:text="${edinetDetail.edinetListView.countAnalyzed}">分析済件数</td>
-            <td th:text="${edinetDetail.edinetListView.getNotAnalyzedId}">未分析ID</td>
-            <td th:text="${edinetDetail.edinetListView.getCantScrapedId}">処理確認ID</td>
-            <td th:text="${edinetDetail.edinetListView.countNotScraped}">未処理件数</td>
-            <td th:text="${edinetDetail.edinetListView.countNotTarget}">対象外件数</td>
+            <td th:text="${edinetDetail.edinetList.countAll}">総件数</td>
+            <td th:text="${edinetDetail.edinetList.countTarget}">処理対象件数</td>
+            <td th:text="${edinetDetail.edinetList.countScraped}">処理済件数</td>
+            <td th:text="${edinetDetail.edinetList.countAnalyzed}">分析済件数</td>
+            <td th:text="${edinetDetail.edinetList.getNotAnalyzedId}">未分析ID</td>
+            <td th:text="${edinetDetail.edinetList.getCantScrapedId}">処理確認ID</td>
+            <td th:text="${edinetDetail.edinetList.countNotScraped}">未処理件数</td>
+            <td th:text="${edinetDetail.edinetList.countNotTarget}">対象外件数</td>
         </tr>
         </tbody>
     </table>
@@ -88,10 +88,10 @@
                 <td th:text="${documentDetail.document.scrapedPl}">PL</td>
                 <td>
                     <form method="post" th:action="@{/fundanalyzer/v1/remove/document}">
-                    <input type="hidden" th:value="${edinetDetail.edinetListView.submitDate}" name="submitDate"/>
-                    <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
-                    <button type="submit" class="btn">除外</button>
-                </form>
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <button type="submit" class="btn">除外</button>
+                    </form>
                 </td>
             </tr>
             </tbody>

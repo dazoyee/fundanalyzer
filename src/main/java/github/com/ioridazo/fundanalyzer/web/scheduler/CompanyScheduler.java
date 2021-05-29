@@ -1,11 +1,13 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.domain.log.Category;
-import github.com.ioridazo.fundanalyzer.domain.log.FundanalyzerLogClient;
-import github.com.ioridazo.fundanalyzer.domain.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.service.DocumentService;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.proxy.slack.SlackProxy;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,14 +16,16 @@ import org.springframework.stereotype.Component;
 @Profile({"prod"})
 public class CompanyScheduler {
 
-    private final DocumentService documentService;
-    private final SlackProxy slackProxy;
+    private static final Logger log = LogManager.getLogger(CompanyScheduler.class);
+
+    private final CompanyUseCase companyUseCase;
+    private final SlackClient slackClient;
 
     public CompanyScheduler(
-            final DocumentService documentService,
-            final SlackProxy slackProxy) {
-        this.documentService = documentService;
-        this.slackProxy = slackProxy;
+            final CompanyUseCase companyUseCase,
+            final SlackClient slackClient) {
+        this.companyUseCase = companyUseCase;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -29,15 +33,19 @@ public class CompanyScheduler {
      */
     @Scheduled(cron = "${app.scheduler.cron.company}", zone = "Asia/Tokyo")
     public void companyScheduler() {
-        FundanalyzerLogClient.logProcessStart(Category.SCHEDULER, Process.COMPANY);
+        final long startTime = System.currentTimeMillis();
+
+        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "companyScheduler", startTime));
 
         try {
-            documentService.downloadCompanyInfo();
+            companyUseCase.importCompanyInfo();
 
-            FundanalyzerLogClient.logProcessEnd(Category.SCHEDULER, Process.COMPANY);
+            final long durationTime = System.currentTimeMillis() - startTime;
+
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "companyScheduler", durationTime));
         } catch (Throwable t) {
             // Slack通知
-            slackProxy.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
             throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
         }
     }
