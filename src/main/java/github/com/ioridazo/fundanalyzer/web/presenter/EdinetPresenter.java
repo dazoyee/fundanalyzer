@@ -5,6 +5,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriUtils;
+
+import java.util.Objects;
 
 @Controller
 public class EdinetPresenter {
@@ -17,8 +20,6 @@ public class EdinetPresenter {
         this.viewService = viewService;
     }
 
-    // TODO URL update
-
     /**
      * EDINETリストを表示する
      *
@@ -27,8 +28,12 @@ public class EdinetPresenter {
      * @return EdinetList
      */
     @GetMapping("fundanalyzer/v1/edinet/list")
-    public String edinetListView(@RequestParam(name = "message", required = false) final String message, final Model model) {
-        model.addAttribute("message", message);
+    public String edinetListView(
+            @RequestParam(name = "message", required = false) final String message,
+            final Model model) {
+        if (Objects.nonNull(message)) {
+            model.addAttribute("message", UriUtils.decode(message, "UTF-8"));
+        }
         model.addAttribute("companyUpdated", viewService.getUpdateDate());
         model.addAttribute("edinetList", viewService.getEdinetListView());
         return EDINET;

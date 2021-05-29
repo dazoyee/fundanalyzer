@@ -6,17 +6,19 @@ import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.LocalDate;
 
 @Controller
 public class EdinetController {
 
-    private static final String REDIRECT_EDINET = "redirect:/fundanalyzer/v1/edinet/list";
-    private static final String REDIRECT_EDINET_DETAIL = "redirect:/fundanalyzer/v1/edinet/list/detail";
+    private static final String REDIRECT = "redirect:";
+    private static final URI V1_EDINET_PATH = URI.create("/fundanalyzer/v1/edinet/list");
+    private static final URI V1_EDINET_DETAIL_PATH = URI.create("/fundanalyzer/v1/edinet/list/detail");
 
     private final EdinetService edinetService;
     private final ViewService viewService;
@@ -31,13 +33,13 @@ public class EdinetController {
     /**
      * 会社情報を更新する
      *
-     * @param model model
      * @return EdinetList
      */
     @GetMapping("fundanalyzer/v1/company")
-    public String updateCompany(final Model model) {
+    public String updateCompany() {
         edinetService.updateCompany();
-        return REDIRECT_EDINET + "?message=Company is updating!";
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH)
+                .queryParam("message", "表示アップデート処理を要求しました。").build().encode().toUriString();
     }
 
     /**
@@ -50,7 +52,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/edinet/list")
     public String saveEdinet(final String fromDate, final String toDate) {
         edinetService.saveEdinetList(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT_EDINET;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH).toUriString();
     }
 
     /**
@@ -62,7 +64,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/update/edinet/list")
     public String updateEdinetList(final String date) {
         viewService.updateEdinetListView(DateInputData.of(LocalDate.parse(date)));
-        return REDIRECT_EDINET;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH).toUriString();
     }
 
     /**
@@ -75,6 +77,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/remove/document")
     public String removeDocument(final String submitDate, final String documentId) {
         edinetService.removeDocument(IdInputData.of(documentId));
-        return REDIRECT_EDINET_DETAIL + "?submitDate=" + submitDate;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+                .queryParam("submitDate", submitDate).build().encode().toUriString();
     }
 }

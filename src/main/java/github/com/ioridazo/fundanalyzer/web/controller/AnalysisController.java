@@ -8,15 +8,18 @@ import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.Arrays;
 
 @Controller
 public class AnalysisController {
 
-    private static final String REDIRECT_INDEX = "redirect:/fundanalyzer/v1/index";
-    private static final String REDIRECT_CORPORATE = "redirect:/fundanalyzer/v1/corporate";
+    private static final String REDIRECT = "redirect:";
+    private static final URI V1_INDEX_PATH = URI.create("/fundanalyzer/v1/index");
+    private static final URI V1_CORPORATE_PATH = URI.create("/fundanalyzer/v1/corporate");
 
     private final AnalysisService analysisService;
     private final ViewService viewService;
@@ -38,7 +41,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String doMain(final String fromDate, final String toDate) {
         analysisService.doMain(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT_INDEX;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 
     /**
@@ -49,7 +52,8 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/update/view")
     public String updateView() {
         viewService.updateView();
-        return REDIRECT_INDEX + "?message=updating";
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH)
+                .queryParam("message", "表示アップデート処理を要求しました。").build().encode().toUriString();
     }
 
     /**
@@ -61,7 +65,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
         analysisService.doByDate(DateInputData.of(LocalDate.parse(date)));
-        return REDIRECT_INDEX;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 
     /**
@@ -76,7 +80,7 @@ public class AnalysisController {
                 .filter(dId -> dId.length() == 8)
                 .map(IdInputData::of)
                 .forEach(analysisService::doById);
-        return REDIRECT_INDEX;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 
     /**
@@ -89,7 +93,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/import/stock/date")
     public String importStock(final String fromDate, final String toDate) {
         analysisService.importStock(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT_INDEX;
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 
     /**
@@ -101,6 +105,6 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/import/stock/code")
     public String importStock(final String code) {
         analysisService.importStock(CodeInputData.of(code));
-        return REDIRECT_CORPORATE + "/" + code.substring(0, 4);
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_CORPORATE_PATH).path("/" + code.substring(0, 4)).toUriString();
     }
 }
