@@ -8,9 +8,12 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 @Component
 @Profile({"prod"})
@@ -21,6 +24,9 @@ public class CompanyScheduler {
     private final CompanyUseCase companyUseCase;
     private final SlackClient slackClient;
 
+    @Value("${app.scheduler.hour.company}")
+    int hourOfCompany;
+
     public CompanyScheduler(
             final CompanyUseCase companyUseCase,
             final SlackClient slackClient) {
@@ -28,25 +34,32 @@ public class CompanyScheduler {
         this.slackClient = slackClient;
     }
 
+    public LocalDateTime nowLocalDateTime() {
+        return LocalDateTime.now();
+    }
+
     /**
      * 会社情報更新スケジューラ
      */
-    @Scheduled(cron = "${app.scheduler.cron.company}", zone = "Asia/Tokyo")
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Tokyo")
     public void companyScheduler() {
-        final long startTime = System.currentTimeMillis();
+        if (nowLocalDateTime().getHour() == hourOfCompany) {
 
-        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "companyScheduler", startTime));
+            final long startTime = System.currentTimeMillis();
 
-        try {
-            companyUseCase.importCompanyInfo();
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "companyScheduler", 0));
 
-            final long durationTime = System.currentTimeMillis() - startTime;
+            try {
+                companyUseCase.importCompanyInfo();
 
-            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "companyScheduler", durationTime));
-        } catch (Throwable t) {
-            // Slack通知
-            slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
-            throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+                final long durationTime = System.currentTimeMillis() - startTime;
+
+                log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "companyScheduler", durationTime));
+            } catch (Throwable t) {
+                // Slack通知
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
+                throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+            }
         }
     }
 }
