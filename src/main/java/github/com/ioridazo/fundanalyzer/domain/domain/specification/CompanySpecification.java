@@ -1,14 +1,18 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.CompanyDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.CompanyEntity;
-import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -90,8 +94,16 @@ public class CompanySpecification {
         results.getEdinetCode().ifPresent(edinetCode -> {
             if (companyDao.selectByEdinetCode(edinetCode).isEmpty()) {
                 companyDao.insert(CompanyEntity.ofSqlForeignKey(edinetCode, results.getFilerName(), nowLocalDateTime()));
-                log.warn("企業情報が登録されていないため、仮情報を登録します。" +
-                        "\tEDINETコード:{}\t企業名:{}", edinetCode, results.getFilerName());
+
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "企業情報が登録されていないため、仮情報を登録します。\tEDINETコード:{0}\t企業名:{1}",
+                                edinetCode,
+                                results.getFilerName()
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
             }
         });
     }

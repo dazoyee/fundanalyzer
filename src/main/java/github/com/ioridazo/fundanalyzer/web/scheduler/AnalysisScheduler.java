@@ -82,8 +82,8 @@ public class AnalysisScheduler {
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "analysisScheduler", durationTime));
             } catch (Throwable t) {
                 // Slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
-                throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "財務分析", t);
+                throw new FundanalyzerRuntimeException("財務分析スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
     }
@@ -107,8 +107,8 @@ public class AnalysisScheduler {
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "updateViewScheduler", durationTime));
             } catch (Throwable t) {
                 // Slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
-                throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "画面更新", t);
+                throw new FundanalyzerRuntimeException("画面更新スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
     }

@@ -74,8 +74,8 @@ public class StockScheduler {
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "stockScheduler", durationTime));
             } catch (Throwable t) {
                 // slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", t);
-                throw new FundanalyzerRuntimeException("スケジューラ処理中に想定外のエラーが発生しました。", t);
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "株価更新", t);
+                throw new FundanalyzerRuntimeException("株価更新スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
     }
