@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.jsoup;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.StockScraping;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -87,6 +87,29 @@ class StockScrapingTest {
                     () -> assertEquals("時価総額（解説） 100,362 百万円", actual.getMarketCapitalization()),
                     () -> assertEquals("株式益回り（予想）（解説） N/A", actual.getDividendYield()),
                     () -> assertEquals("株主優待 ギフト券 レジャー 招待券", actual.getShareholderBenefit())
+            );
+        }
+
+        @DisplayName("nikkei : 日経の会社コードによる株価情報を取得できないときはnullにする")
+        @Test
+        void nikkei_null() {
+            var code = "9999";
+            var actual = stockScraping.nikkei(code);
+
+            assertAll("NikkeiResultBean",
+                    () -> assertNull(actual.getStockPrice()),
+                    () -> assertNull(actual.getTargetDate()),
+                    () -> assertNull(actual.getOpeningPrice()),
+                    () -> assertNull(actual.getHighPrice()),
+                    () -> assertNull(actual.getLowPrice()),
+                    () -> assertNull(actual.getVolume()),
+                    () -> assertNull(actual.getPer()),
+                    () -> assertNull(actual.getPbr()),
+                    () -> assertNull(actual.getRoe()),
+                    () -> assertNull(actual.getNumberOfShares()),
+                    () -> assertNull(actual.getMarketCapitalization()),
+                    () -> assertNull(actual.getDividendYield()),
+                    () -> assertNull(actual.getShareholderBenefit())
             );
         }
     }
@@ -211,7 +234,29 @@ class StockScrapingTest {
                     () -> assertEquals("2,575", actual.getExpectedStockPrice().getGoals()),
                     () -> assertEquals("3,013", actual.getExpectedStockPrice().getTheoretical()),
                     () -> assertEquals("1,918", actual.getExpectedStockPrice().getIndividualInvestors()),
-                    () -> assertEquals("", actual.getExpectedStockPrice().getSecuritiesAnalyst())
+                    () -> assertNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
+            );
+        }
+
+        @DisplayName("minkabu : みんかぶの会社コードによる株価情報予想を取得できないときはnullにする")
+        @Test
+        void minkabu_null() throws IOException {
+            var code = "9999";
+
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/minkabu/minkabu_null.html");
+
+            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
+
+            var actual = stockScraping.minkabu(code);
+
+
+            assertAll("MinkabuResultBean",
+                    () -> assertEquals("408. 0 円", actual.getStockPrice()),
+                    () -> assertEquals("11/27", actual.getTargetDate()),
+                    () -> assertEquals("636", actual.getExpectedStockPrice().getGoals()),
+                    () -> assertNull(actual.getExpectedStockPrice().getTheoretical()),
+                    () -> assertNull(actual.getExpectedStockPrice().getIndividualInvestors()),
+                    () -> assertNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
             );
         }
 

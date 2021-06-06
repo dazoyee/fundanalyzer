@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,17 +57,17 @@ public class StockInteractor implements StockUseCase {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        // 並列で株価取得処理を実施する
+        // 株価取得処理を実施する
         companyCodeList.stream()
                 .map(CodeInputData::of)
-                .collect(Collectors.toList())
+                .distinct()
                 .forEach(this::importStockPrice);
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format(
-                        "最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得件数:{1}",
+                        "最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得企業数:{1}",
                         inputData.getDate(),
-                        companyCodeList.size()),
+                        companyCodeList.stream().distinct().count()),
                 Category.STOCK,
                 Process.IMPORT,
                 System.currentTimeMillis() - startTime
@@ -99,5 +100,20 @@ public class StockInteractor implements StockUseCase {
                     Process.IMPORT
             ), e);
         }
+    }
+
+    /**
+     * 株価削除
+     *
+     * @return 削除カウント
+     */
+    @Override
+    public int deleteStockPrice() {
+        int count = 0;
+        for (final LocalDate targetDate : stockSpecification.findTargetDateToDelete()) {
+            final int delete = stockSpecification.delete(targetDate);
+            count += delete;
+        }
+        return count;
     }
 }

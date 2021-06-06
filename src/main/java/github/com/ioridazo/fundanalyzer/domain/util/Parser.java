@@ -14,7 +14,7 @@ public final class Parser {
     }
 
     public static String parseStringNikkei(final String value) {
-        return Optional.of(value)
+        return Optional.ofNullable(value)
                 .map(v -> v.substring(v.lastIndexOf(("）")) + 1))
                 .map(String::trim)
                 .map(v -> v.replace(" ", ""))
@@ -26,7 +26,7 @@ public final class Parser {
 
     public static Optional<Integer> parseIntegerStock(final String value) {
         try {
-            return Optional.of(Integer.valueOf(value));
+            return Optional.ofNullable(value).map(Integer::valueOf);
         } catch (NumberFormatException e1) {
             return Optional.of(value)
                     .map(v -> v.substring(v.lastIndexOf(("売買高")) + 4, v.length() - 1))
@@ -50,7 +50,7 @@ public final class Parser {
 
     public static Optional<Double> parseDoubleStock(final String value) {
         try {
-            return Optional.of(Double.valueOf(value));
+            return Optional.ofNullable(value).map(Double::valueOf);
         } catch (NumberFormatException e1) {
             return Optional.of(value)
                     .map(v -> {
@@ -81,7 +81,7 @@ public final class Parser {
 
     public static Optional<Double> parseDoubleMinkabu(final String value) {
         try {
-            return Optional.of(Double.valueOf(value));
+            return Optional.ofNullable(value).map(Double::valueOf);
         } catch (NumberFormatException e1) {
             return Optional.of(value)
                     .map(v -> {

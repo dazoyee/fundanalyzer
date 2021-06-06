@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
-@Value
+@Value(staticConstructor = "of")
 public class Kabuoji3ResultBean {
 
     private final String targetDate;

@@ -48,7 +48,7 @@ class StockSchedulerTest {
 
         @DisplayName("stockScheduler : 日が一致する提出日の会社の株価を更新する")
         @Test
-        void stockScheduler_ok() {
+        void insertStockScheduler_ok() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
 
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
@@ -65,7 +65,7 @@ class StockSchedulerTest {
 
         @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
         @Test
-        void stockScheduler_throwable() {
+        void insertStockScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
 
             doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
@@ -78,6 +78,31 @@ class StockSchedulerTest {
             verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
         }
 
+        @DisplayName("stockScheduler : 株価を削除する")
+        @Test
+        void deleteStockScheduler_ok() {
+            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
+
+            doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
+            when(analysisService.deleteStock()).thenReturn(1);
+
+            assertDoesNotThrow(() -> scheduler.stockScheduler());
+            verify(analysisService, times(1)).deleteStock();
+            verify(slackClient, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 1);
+        }
+
+        @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @Test
+        void deleteStockScheduler_throwable() {
+            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
+
+            doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
+            doThrow(new FundanalyzerRuntimeException()).when(analysisService).deleteStock();
+
+            assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());
+            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
+        }
+
         @DisplayName("stockScheduler : 処理時間外")
         @Test
         void stockScheduler_noTarget() {
@@ -85,6 +110,7 @@ class StockSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
             verify(analysisService, times(0)).importStock((DateInputData) any());
+            verify(analysisService, times(0)).deleteStock();
         }
     }
 }
