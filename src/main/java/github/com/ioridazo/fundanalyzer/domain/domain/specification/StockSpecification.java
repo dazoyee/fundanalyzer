@@ -42,7 +42,9 @@ public class StockSpecification {
     private final DocumentSpecification documentSpecification;
 
     @Value("${app.config.view.edinet-list.size}")
-    int lastDays;
+    int daysToViewEdinetList;
+    @Value("${app.config.target.store-stock-price-for-last-days}")
+    int daysToStoreStockPrice;
 
     public StockSpecification(
             final StockPriceDao stockPriceDao,
@@ -51,6 +53,10 @@ public class StockSpecification {
         this.stockPriceDao = stockPriceDao;
         this.minkabuDao = minkabuDao;
         this.documentSpecification = documentSpecification;
+    }
+
+    LocalDate nowLocalDate() {
+        return LocalDate.now();
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -94,6 +100,17 @@ public class StockSpecification {
     }
 
     /**
+     * 削除対象となる日付を取得する
+     *
+     * @return 対象日付リスト
+     */
+    public List<LocalDate> findTargetDateToDelete() {
+        return stockPriceDao.selectDistinctTargetDate().stream()
+                .filter(targetDate -> targetDate.isBefore(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 日経から取得した株価情報を登録する
      *
      * @param code   企業コード
@@ -112,20 +129,24 @@ public class StockSpecification {
      * @param kabuoji3List kabuoji3から取得した株価情報
      */
     public void insert(final String code, final List<Kabuoji3ResultBean> kabuoji3List) {
-        kabuoji3List.forEach(kabuoji3 -> {
-            if (isEmptyStockPrice(code, kabuoji3.getTargetDate())) {
-                try {
-                    stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
-                } catch (NestedRuntimeException e) {
-                    if (e.contains(UniqueConstraintException.class)) {
-                        log.debug("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                "\t企業コード:{}\t対象日:{}", code, kabuoji3.getTargetDate());
-                    } else {
-                        throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+        kabuoji3List.stream()
+                // 保存する株価を絞る
+                .filter(kabuoji3 -> LocalDate.parse(kabuoji3.getTargetDate())
+                        .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                .forEach(kabuoji3 -> {
+                    if (isEmptyStockPrice(code, kabuoji3.getTargetDate())) {
+                        try {
+                            stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
+                        } catch (NestedRuntimeException e) {
+                            if (e.contains(UniqueConstraintException.class)) {
+                                log.debug("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                                        "\t企業コード:{}\t対象日:{}", code, kabuoji3.getTargetDate());
+                            } else {
+                                throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
     }
 
     /**
@@ -138,6 +159,15 @@ public class StockSpecification {
         if (!isPresentMinkabu(code, minkabu.getTargetDate())) {
             minkabuDao.insert(MinkabuEntity.ofMinkabuResultBean(code, minkabu, nowLocalDateTime()));
         }
+    }
+
+    /**
+     * 対象日付の株価を削除する
+     *
+     * @param targetDate 対象日付
+     */
+    public int delete(final LocalDate targetDate) {
+        return stockPriceDao.delete(targetDate);
     }
 
     /**
@@ -155,7 +185,7 @@ public class StockSpecification {
         }
 
         final List<Double> certainPeriodList = stockPriceList.stream()
-                .filter(stockPrice -> submitDate.get().minusDays(lastDays).isBefore(stockPrice.getTargetDate()))
+                .filter(stockPrice -> submitDate.get().minusDays(daysToViewEdinetList).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> submitDate.get().isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
                 .filter(Objects::nonNull)

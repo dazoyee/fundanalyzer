@@ -70,6 +70,7 @@ app:
       document-type-code: 120,130  # 処理対象
       no-industry: 銀行業,保険業  # 処理対象外
       average-stock-price-for-last-days: 30  # 株価平均値の期間
+      store-stock-price-for-last-days: 365  # 株価の保存期間
 
   settings:
     file:

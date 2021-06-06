@@ -1,0 +1,2 @@
+select distinct target_date
+from stock_price

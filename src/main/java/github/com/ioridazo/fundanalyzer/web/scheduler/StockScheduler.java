@@ -56,27 +56,50 @@ public class StockScheduler {
     public void stockScheduler() {
         if (nowLocalDateTime().getHour() == hourOfStock) {
 
-            final long startTime = System.currentTimeMillis();
-
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "stockScheduler", 0));
 
             try {
-                final String dayOfMonth = String.valueOf(nowLocalDate().getDayOfMonth());
-                final List<LocalDate> targetList = documentSpecification.stockSchedulerTargetList(dayOfMonth);
-                targetList.stream()
-                        .map(DateInputData::of)
-                        .forEach(analysisService::importStock);
-
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
-
-                final long durationTime = System.currentTimeMillis() - startTime;
-
-                log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "stockScheduler", durationTime));
+                insert();
+                delete();
             } catch (Throwable t) {
                 // slack通知
                 slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "株価更新", t);
                 throw new FundanalyzerRuntimeException("株価更新スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
+    }
+
+    /**
+     * 株価を取得する
+     */
+    private void insert() {
+        final long startTime = System.currentTimeMillis();
+
+        final String dayOfMonth = String.valueOf(nowLocalDate().getDayOfMonth());
+        final List<LocalDate> targetList = documentSpecification.stockSchedulerTargetList(dayOfMonth);
+        targetList.stream()
+                .map(DateInputData::of)
+                .forEach(analysisService::importStock);
+
+        slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", targetList.size());
+
+        final long durationTime = System.currentTimeMillis() - startTime;
+
+        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "insertStockScheduler", durationTime));
+    }
+
+    /**
+     * 過去の株価を削除する
+     */
+    private void delete() {
+        final long startTime = System.currentTimeMillis();
+
+        final int deleteStock = analysisService.deleteStock();
+
+        slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", deleteStock);
+
+        final long durationTime = System.currentTimeMillis() - startTime;
+
+        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "deleteStockScheduler", durationTime));
     }
 }

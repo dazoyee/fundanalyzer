@@ -127,4 +127,13 @@ public class AnalysisService {
         // stock
         stockUseCase.importStockPrice(inputData);
     }
+
+    /**
+     * 過去の株価削除
+     */
+    @NewSpan
+    public int deleteStock() {
+        // delete stock
+        return stockUseCase.deleteStockPrice();
+    }
 }
