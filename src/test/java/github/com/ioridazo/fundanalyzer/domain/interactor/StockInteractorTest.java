@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -96,6 +97,20 @@ class StockInteractorTest {
             //noinspection unchecked
             verify(stockSpecification, times(1)).insert(eq("code0"), (List<Kabuoji3ResultBean>) any());
             verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
+        }
+    }
+
+    @Nested
+    class deleteStockPrice {
+
+        @DisplayName("deleteStockPrice : 削除対象の株価をカウントする")
+        @Test
+        void count() {
+            when(stockSpecification.findTargetDateToDelete()).thenReturn(List.of(
+                    LocalDate.parse("2020-06-06"), LocalDate.parse("2020-06-05"), LocalDate.parse("2020-05-06")
+            ));
+            when(stockSpecification.delete(any())).thenReturn(1);
+            assertEquals(3, stockInteractor.deleteStockPrice());
         }
     }
 

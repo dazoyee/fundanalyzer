@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import org.seasar.doma.Dao;
+import org.seasar.doma.Delete;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
@@ -20,6 +21,12 @@ public interface StockPriceDao {
     @Select
     List<StockPriceEntity> selectByCode(String code);
 
+    @Select
+    List<LocalDate> selectDistinctTargetDate();
+
     @Insert
     Result<StockPriceEntity> insert(StockPriceEntity stockPriceEntity);
+
+    @Delete(sqlFile = true)
+    int delete(LocalDate targetDate);
 }

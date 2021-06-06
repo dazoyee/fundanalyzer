@@ -36,8 +36,8 @@ app:
         x: x # 任意の値を設定
 
   scheduler:
-    cron:
-      company: 0 0 12 * * *
-      stock: 0 30 12 * * *
-      analysis: 0 0 14 * * *
-      update-view: 0 0 21 * * *
+    hour:
+      company: 12  # 時に処理実施
+      stock: 13  # 時に処理実施
+      analysis: 14  # 時に処理実施
+      update-view: 21  # 時に処理実施

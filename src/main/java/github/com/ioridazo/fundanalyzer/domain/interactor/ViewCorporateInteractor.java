@@ -173,11 +173,13 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .map(key -> {
                     final List<FinancialStatementEntity> valueList = financialStatementSpecification.findByKeyPerCompany(company, key);
                     return FinancialStatementViewModel.of(
+                            key.getSubmitDate(),
                             key,
                             financialStatementSpecification.parseBsSubjectValue(valueList),
                             financialStatementSpecification.parsePlSubjectValue(valueList)
                     );
                 })
+                .sorted(Comparator.comparing(FinancialStatementViewModel::getSubmitDate).reversed())
                 .collect(Collectors.toList());
 
         return CorporateDetailViewModel.of(
@@ -185,8 +187,14 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 viewSpecification.findCorporateView(inputData),
                 analysisResultList,
                 fsList,
-                stock.getMinkabuEntityList().stream().map(MinkabuViewModel::of).collect(Collectors.toList()),
-                stock.getStockPriceEntityList().stream().map(StockPriceViewModel::of).collect(Collectors.toList())
+                stock.getMinkabuEntityList().stream()
+                        .map(MinkabuViewModel::of)
+                        .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate).reversed())
+                        .collect(Collectors.toList()),
+                stock.getStockPriceEntityList().stream()
+                        .map(StockPriceViewModel::of)
+                        .sorted(Comparator.comparing(StockPriceViewModel::getTargetDate).reversed())
+                        .collect(Collectors.toList())
         );
     }
 

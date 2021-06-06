@@ -36,30 +36,30 @@ public class NikkeiResultBean {
 
     public static NikkeiResultBean ofJsoup(final Document document) {
         return new NikkeiResultBean(
-                document.select(".m-stockPriceElm dd").first().text(),
-                document.select(".m-stockInfo_date").first().text(),
+                document.select(".m-stockPriceElm dd").stream().map(Element::text).findFirst().orElse(null),
+                document.select(".m-stockInfo_date").stream().map(Element::text).findFirst().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("始値")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("始値")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("高値")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("高値")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("安値")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("安値")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_right li").stream()
-                        .filter(e -> e.text().contains("売買高")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("売買高")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_right li").stream()
-                        .filter(e -> e.text().contains("PER")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("PER")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("PBR")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("PBR")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("ROE")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("ROE")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("普通株式数")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("普通株式数")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("時価総額")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("時価総額")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("株式益回り")).map(Element::text).findAny().orElse(null),
+                        .map(Element::text).filter(text -> text.contains("株式益回り")).findAny().orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .filter(e -> e.text().contains("株主優待")).map(Element::text).findAny().orElse(null)
+                        .map(Element::text).filter(text -> text.contains("株主優待")).findAny().orElse(null)
         );
     }
 }

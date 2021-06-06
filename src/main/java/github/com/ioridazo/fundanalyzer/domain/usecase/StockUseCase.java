@@ -21,4 +21,12 @@ public interface StockUseCase {
      */
     @NewSpan
     void importStockPrice(CodeInputData inputData);
+
+    /**
+     * 株価削除
+     *
+     * @return 削除カウント
+     */
+    @NewSpan
+    int deleteStockPrice();
 }

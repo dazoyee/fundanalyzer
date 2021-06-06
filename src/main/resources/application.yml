@@ -70,6 +70,7 @@ app:
       document-type-code: 120,130  # 処理対象
       no-industry: 銀行業,保険業  # 処理対象外
       average-stock-price-for-last-days: 30  # 株価平均値の期間
+      store-stock-price-for-last-days: 365  # 株価の保存期間
 
   settings:
     file:
@@ -85,8 +86,8 @@ app:
     selenium: http://localhost:9001
 
   scheduler:
-    cron:
-      company: 0 0 12 * * *
-      stock: 0 30 12 * * *
-      analysis: 0 0 14 * * *
-      update-view: 0 0 21 * * *
+    hour:
+      company: 12  # 時に処理実施
+      stock: 13  # 時に処理実施
+      analysis: 14  # 時に処理実施
+      update-view: 21  # 時に処理実施

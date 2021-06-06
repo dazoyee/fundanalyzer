@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -39,6 +40,7 @@ public class FileOperator {
     FileOperator() {
     }
 
+    @NewSpan
     public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
         log.info(FundanalyzerLogClient.toClientLogObject(
                 MessageFormat.format("zipファイルの解凍処理を実行します。\tパス:{0}", fileInputPath.getPath()),

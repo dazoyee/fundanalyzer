@@ -10,13 +10,14 @@ import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -67,35 +68,22 @@ public class CompanyInteractor implements CompanyUseCase {
      */
     @Override
     public void importCompanyInfo() {
-        final long startTime = System.currentTimeMillis();
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
+        // ファイルダウンロード
+        final String fileName = seleniumClient.edinetCodeList(inputFilePath);
+
+        final File inputFile = new File(String.format("%s/%s", inputFilePath, fileName.replace(".zip", "")));
+        final File outputFile = new File(pathCompany);
+
+        // zipファイル解凍
         try {
-            // ファイルダウンロード
-            final String fileName = seleniumClient.edinetCodeList(inputFilePath);
-
-            final File inputFile = new File(String.format("%s/%s", inputFilePath, fileName.replace(".zip", "")));
-            final File outputFile = new File(pathCompany);
-
-            // zipファイル解凍
             fileOperator.decodeZipFile(inputFile, outputFile);
-
-            saveCompanyInfo();
-
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    "CSVファイルから会社情報の登録が完了しました。",
-                    Category.COMPANY,
-                    Process.UPDATE,
-                    System.currentTimeMillis() - startTime
-            ));
-        } catch (Throwable t) {
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                    "Selenium経由での会社情報更新処理が異常終了しました。内容を確認してください。",
-                    Category.COMPANY,
-                    Process.UPDATE,
-                    System.currentTimeMillis() - startTime
-            ), t);
-            throw new FundanalyzerRuntimeException(t);
+        } catch (IOException e) {
+            throw new FundanalyzerFileException("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。", e);
         }
+
+        // データベースアップデート
+        saveCompanyInfo();
     }
 
     /**

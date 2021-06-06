@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +26,7 @@ public class EdinetService {
      * 企業情報の更新
      */
     @NewSpan
+    @Async
     public void updateCompany() {
         // company
         companyUseCase.importCompanyInfo();
