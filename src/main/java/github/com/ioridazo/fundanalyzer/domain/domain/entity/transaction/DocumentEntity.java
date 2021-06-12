@@ -1,8 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import lombok.Builder;
 import lombok.Value;
 import org.seasar.doma.Column;
@@ -90,14 +90,6 @@ public class DocumentEntity {
                 .build();
     }
 
-    public static DocumentEntity ofUpdateDownloadToDone(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .downloaded(DocumentStatus.DONE.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
     public static DocumentEntity ofUpdateDownloadToDone(final Document document, final LocalDateTime nowLocalDateTime) {
         return DocumentEntity.builder()
                 .documentId(document.getDocumentId())
@@ -106,26 +98,10 @@ public class DocumentEntity {
                 .build();
     }
 
-    public static DocumentEntity ofUpdateDownloadToError(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .downloaded(DocumentStatus.ERROR.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
     public static DocumentEntity ofUpdateDownloadToError(final Document document, final LocalDateTime updatedAt) {
         return DocumentEntity.builder()
                 .documentId(document.getDocumentId())
                 .downloaded(DocumentStatus.ERROR.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
-    public static DocumentEntity ofUpdateDecodeToDone(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .decoded(DocumentStatus.DONE.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
@@ -138,58 +114,10 @@ public class DocumentEntity {
                 .build();
     }
 
-    public static DocumentEntity ofUpdateDecodeToError(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .decoded(DocumentStatus.ERROR.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
     public static DocumentEntity ofUpdateDecodeToError(final Document document, final LocalDateTime updatedAt) {
         return DocumentEntity.builder()
                 .documentId(document.getDocumentId())
                 .decoded(DocumentStatus.ERROR.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
-    public static DocumentEntity ofUpdateBsToNotYet(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .scrapedBs(DocumentStatus.NOT_YET.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
-    public static DocumentEntity ofUpdateBsToHalfWay(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .scrapedBs(DocumentStatus.HALF_WAY.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
-    public static DocumentEntity ofUpdatePlToNotYet(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .scrapedPl(DocumentStatus.NOT_YET.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
-    public static DocumentEntity ofUpdatePlToHalfWay(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .scrapedPl(DocumentStatus.HALF_WAY.toValue())
-                .updatedAt(updatedAt)
-                .build();
-    }
-
-    public static DocumentEntity ofUpdateNumberOfSharesToHalfWay(final String documentId, final LocalDateTime updatedAt) {
-        return DocumentEntity.builder()
-                .documentId(documentId)
-                .scrapedNumberOfShares(DocumentStatus.HALF_WAY.toValue())
                 .updatedAt(updatedAt)
                 .build();
     }
@@ -257,9 +185,5 @@ public class DocumentEntity {
 
     public Optional<String> getPlDocumentPath() {
         return Optional.ofNullable(plDocumentPath);
-    }
-
-    public Optional<String> getCfDocumentPath() {
-        return Optional.ofNullable(cfDocumentPath);
     }
 }

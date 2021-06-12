@@ -324,7 +324,7 @@ public class DocumentSpecification {
         documentDao.update(DocumentEntity.ofUpdateSwitchFs(
                 fs,
                 document.getDocumentId(),
-                DocumentStatus.DONE,
+                DocumentStatus.ERROR,
                 null,
                 nowLocalDateTime()
         ));
