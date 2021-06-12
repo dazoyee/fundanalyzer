@@ -258,6 +258,11 @@ class StockSpecificationTest {
     @Nested
     class findTargetDateToDelete {
 
+        @BeforeEach
+        void setUp() {
+            doReturn(LocalDate.parse("2021-06-06")).when(stockSpecification).nowLocalDate();
+        }
+
         @DisplayName("findTargetDateToDelete : 削除対象の日付を取得する")
         @Test
         void targetDate() {
