@@ -61,7 +61,7 @@
 
     <div class="border-top border-4" th:each="documentDetail : ${edinetDetail.documentDetailList}">
         <br/>
-        <h3 th:text="${documentDetail.company.companyName}">会社名</h3>
+        <h3 th:text="${documentDetail.companyName}">会社名</h3>
         <table class="table table-bordered">
             <thead>
             <tr>
@@ -128,27 +128,27 @@
             <tbody>
             <tr>
                 <td>流動資産合計</td>
-                <td th:text="${documentDetail.values.totalCurrentAssets}">流動資産合計</td>
+                <td th:text="${documentDetail.fundamentalValue.totalCurrentAssets}">流動資産合計</td>
             </tr>
             <tr>
                 <td>投資その他の資産合計</td>
-                <td th:text="${documentDetail.values.totalInvestmentsAndOtherAssets}">投資その他の資産合計</td>
+                <td th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">投資その他の資産合計</td>
             </tr>
             <tr>
                 <td>流動負債合計</td>
-                <td th:text="${documentDetail.values.totalCurrentLiabilities}">流動負債合計</td>
+                <td th:text="${documentDetail.fundamentalValue.totalCurrentLiabilities}">流動負債合計</td>
             </tr>
             <tr>
                 <td>固定負債合計</td>
-                <td th:text="${documentDetail.values.totalFixedLiabilities}">固定負債合計</td>
+                <td th:text="${documentDetail.fundamentalValue.totalFixedLiabilities}">固定負債合計</td>
             </tr>
             <tr>
                 <td>営業利益</td>
-                <td th:text="${documentDetail.values.operatingProfit}">営業利益</td>
+                <td th:text="${documentDetail.fundamentalValue.operatingProfit}">営業利益</td>
             </tr>
             <tr>
                 <td>株式総数</td>
-                <td th:text="${documentDetail.values.numberOfShares}">株式総数</td>
+                <td th:text="${documentDetail.fundamentalValue.numberOfShares}">株式総数</td>
             </tr>
             </tbody>
         </table>
