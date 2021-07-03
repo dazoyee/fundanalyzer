@@ -60,6 +60,7 @@ public class AnalysisResultSpecification {
                     document.getDocumentPeriod().orElseThrow(FundanalyzerNotExistException::new),
                     value,
                     document.getDocumentTypeCode(),
+                    document.getQuarterType(),
                     document.getSubmitDate(),
                     document.getDocumentId(),
                     nowLocalDateTime()

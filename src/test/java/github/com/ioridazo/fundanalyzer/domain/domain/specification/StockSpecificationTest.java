@@ -152,6 +152,7 @@ class StockSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     LocalDate.parse("2020-10-08"),
                     null,
                     null,
@@ -176,6 +177,7 @@ class StockSpecificationTest {
         @Test
         void latestStock() {
             when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(new Document(
+                    null,
                     null,
                     null,
                     null,
@@ -208,6 +210,7 @@ class StockSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     LocalDate.parse("2020-10-08"),
                     null,
                     null,
@@ -231,6 +234,7 @@ class StockSpecificationTest {
         @Test
         void averageStockPrice_isNull() {
             when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(new Document(
+                    null,
                     null,
                     null,
                     null,

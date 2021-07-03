@@ -30,6 +30,8 @@ public class AnalysisResultEntity {
 
     private final String documentTypeCode;
 
+    private final String quarterType;
+
     private final LocalDate submitDate;
 
     private final String documentId;
@@ -42,6 +44,7 @@ public class AnalysisResultEntity {
             final LocalDate period,
             final BigDecimal corporateValue,
             final DocumentTypeCode documentTypeCode,
+            final QuarterType quarterType,
             final LocalDate submitDate,
             final String documentId,
             final LocalDateTime createdAt) {
@@ -51,6 +54,7 @@ public class AnalysisResultEntity {
                 period,
                 corporateValue,
                 documentTypeCode.toValue(),
+                quarterType.toValue(),
                 submitDate,
                 documentId,
                 createdAt

@@ -1,8 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.AnalysisResultDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,8 +61,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("latestCorporateValue : 最新の企業価値を取得する")
         @Test
         void present_period() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company);
 
             var actual = analysisResultSpecification.latestCorporateValue(company);
@@ -71,8 +72,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("latestCorporateValue : 最新の企業価値を取得する")
         @Test
         void present_submitDate() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", LocalDate.parse("2020-09-01"), null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", LocalDate.parse("2020-10-01"), null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", "4", LocalDate.parse("2020-09-01"), null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", LocalDate.parse("2020-10-01"), null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company);
 
             var actual = analysisResultSpecification.latestCorporateValue(company);
@@ -97,6 +98,7 @@ class AnalysisResultSpecificationTest {
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
                     DocumentTypeCode.DTC_120.toValue(),
+                    QuarterType.QT_4.toValue(),
                     LocalDate.parse("2020-09-30"),
                     null,
                     null
@@ -126,8 +128,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("averageCorporateValue : 平均の企業価値を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company);
 
             var actual = analysisResultSpecification.averageCorporateValue(company);
@@ -152,6 +154,7 @@ class AnalysisResultSpecificationTest {
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
                     DocumentTypeCode.DTC_120.toValue(),
+                    QuarterType.QT_4.toValue(),
                     LocalDate.parse("2020-09-30"),
                     null,
                     null
@@ -181,8 +184,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("standardDeviation : 企業価値の標準偏差を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(100000, 2));
@@ -216,6 +219,7 @@ class AnalysisResultSpecificationTest {
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
                     DocumentTypeCode.DTC_120.toValue(),
+                    QuarterType.QT_4.toValue(),
                     LocalDate.parse("2020-09-30"),
                     null,
                     null
@@ -293,8 +297,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("countYear : 分析年数を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company);
 
             var actual = analysisResultSpecification.countYear(company);
@@ -331,11 +335,12 @@ class AnalysisResultSpecificationTest {
         void boolean_true() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             when(analysisResultDao.selectByUniqueKey(any(), any(), any(), any()))
-                    .thenReturn(Optional.of(new AnalysisResultEntity(null, null, null, null, null, null, null, null)));
+                    .thenReturn(Optional.of(new AnalysisResultEntity(null, null, null, null, null, null, null, null, null)));
 
             assertTrue(analysisResultSpecification.isAnalyzed(new Document(
                     null,
                     DocumentTypeCode.DTC_120,
+                    QuarterType.QT_4,
                     "edinetCode",
                     LocalDate.parse("2021-01-01"),
                     null,
@@ -361,6 +366,7 @@ class AnalysisResultSpecificationTest {
             assertFalse(analysisResultSpecification.isAnalyzed(new Document(
                     null,
                     DocumentTypeCode.DTC_120,
+                    QuarterType.QT_4,
                     "edinetCode",
                     LocalDate.parse("2021-01-01"),
                     null,
@@ -384,6 +390,7 @@ class AnalysisResultSpecificationTest {
             assertFalse(analysisResultSpecification.isAnalyzed(new Document(
                     null,
                     DocumentTypeCode.DTC_120,
+                    QuarterType.QT_4,
                     "edinetCode",
                     LocalDate.parse("2021-01-01"),
                     null,
@@ -407,6 +414,7 @@ class AnalysisResultSpecificationTest {
             assertFalse(analysisResultSpecification.isAnalyzed(new Document(
                     null,
                     DocumentTypeCode.DTC_120,
+                    QuarterType.QT_4,
                     "edinetCode",
                     null,
                     null,

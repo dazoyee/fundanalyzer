@@ -1,19 +1,18 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
-import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
-import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,10 +26,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -201,6 +198,7 @@ class DocumentInteractorTest {
                         null,
                         null,
                         null,
+                        null,
                         DocumentStatus.DONE,
                         DocumentStatus.DONE,
                         DocumentStatus.NOT_YET,
@@ -212,6 +210,7 @@ class DocumentInteractorTest {
                         false
                 )).thenReturn(new Document(
                         "notYet",
+                        null,
                         null,
                         null,
                         null,
@@ -236,6 +235,7 @@ class DocumentInteractorTest {
                         null,
                         null,
                         null,
+                        null,
                         DocumentStatus.DONE,
                         DocumentStatus.DONE,
                         DocumentStatus.DONE,
@@ -247,6 +247,7 @@ class DocumentInteractorTest {
                         false
                 )).thenReturn(new Document(
                         "done",
+                        null,
                         null,
                         null,
                         null,
@@ -270,6 +271,7 @@ class DocumentInteractorTest {
             void notYet_download_isPresent() {
                 var document = new Document(
                         "notYet",
+                        null,
                         null,
                         null,
                         null,
@@ -305,6 +307,7 @@ class DocumentInteractorTest {
                         null,
                         null,
                         null,
+                        null,
                         DocumentStatus.NOT_YET,
                         DocumentStatus.NOT_YET,
                         DocumentStatus.NOT_YET,
@@ -328,6 +331,7 @@ class DocumentInteractorTest {
             void error_decoded() {
                 var document = new Document(
                         "error_decoded",
+                        null,
                         null,
                         null,
                         null,
@@ -366,6 +370,7 @@ class DocumentInteractorTest {
                         null,
                         null,
                         null,
+                        null,
                         DocumentStatus.NOT_YET,
                         DocumentStatus.NOT_YET,
                         DocumentStatus.NOT_YET,
@@ -397,6 +402,7 @@ class DocumentInteractorTest {
                         null,
                         null,
                         null,
+                        null,
                         DocumentStatus.DONE,
                         DocumentStatus.DONE,
                         DocumentStatus.DONE,
@@ -422,6 +428,7 @@ class DocumentInteractorTest {
             void remove() {
                 var document = new Document(
                         "remove",
+                        null,
                         null,
                         null,
                         null,
@@ -461,6 +468,7 @@ class DocumentInteractorTest {
 
     private Document defaultDocument() {
         return new Document(
+                null,
                 null,
                 null,
                 null,

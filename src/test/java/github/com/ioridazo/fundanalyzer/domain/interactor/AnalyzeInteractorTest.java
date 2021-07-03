@@ -323,6 +323,7 @@ class AnalyzeInteractorTest {
         return new Document(
                 null,
                 null,
+                null,
                 "edinetCode",
                 null,
                 LocalDate.now(),

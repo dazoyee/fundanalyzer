@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
@@ -11,7 +12,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecific
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -314,6 +314,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             var bsEntity = new FinancialStatementEntity(
@@ -326,6 +327,7 @@ class ViewCorporateInteractorTest {
                     LocalDate.parse("2021-12-31"),
                     null,
                     "120",
+                    "4",
                     LocalDate.parse("2021-05-15"),
                     null,
                     null
@@ -340,6 +342,7 @@ class ViewCorporateInteractorTest {
                     LocalDate.parse("2021-12-31"),
                     null,
                     "120",
+                    "4",
                     LocalDate.parse("2021-05-15"),
                     null,
                     null
@@ -445,6 +448,7 @@ class ViewCorporateInteractorTest {
 
     private Document defaultDocument() {
         return new Document(
+                null,
                 null,
                 null,
                 "edinetCode",
