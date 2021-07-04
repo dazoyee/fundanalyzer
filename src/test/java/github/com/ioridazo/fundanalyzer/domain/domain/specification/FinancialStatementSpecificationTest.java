@@ -1,11 +1,12 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
@@ -49,6 +50,7 @@ class FinancialStatementSpecificationTest {
         Document document = new Document(
                 null,
                 DocumentTypeCode.DTC_120,
+                QuarterType.QT_4,
                 null,
                 LocalDate.parse("2021-01-01"),
                 null,
@@ -82,6 +84,7 @@ class FinancialStatementSpecificationTest {
                             null,
                             null,
                             null,
+                            null,
                             null
                     )));
 
@@ -95,6 +98,7 @@ class FinancialStatementSpecificationTest {
         void empty() {
             when(financialStatementDao.selectByUniqueKey(any(), any(), any(), any(), any(), any()))
                     .thenReturn(Optional.of(new FinancialStatementEntity(
+                            null,
                             null,
                             null,
                             null,
@@ -139,6 +143,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -161,6 +166,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     100L,
+                    null,
                     null,
                     null,
                     null,
@@ -197,6 +203,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -219,6 +226,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     100L,
+                    null,
                     null,
                     null,
                     null,

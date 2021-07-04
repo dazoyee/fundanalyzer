@@ -11,11 +11,15 @@ import java.time.LocalDate;
 public class AnalysisResultViewModel {
     private final LocalDate documentPeriod;
     private final BigDecimal corporateValue;
+    private final String documentTypeCode;
+    private final String quarterType;
 
     public static AnalysisResultViewModel of(final AnalysisResultEntity entity) {
         return new AnalysisResultViewModel(
                 entity.getDocumentPeriod(),
-                entity.getCorporateValue()
+                entity.getCorporateValue(),
+                entity.getDocumentTypeCode(),
+                entity.getQuarterType()
         );
     }
 }

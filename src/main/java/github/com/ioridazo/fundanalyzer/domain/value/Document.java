@@ -1,9 +1,10 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import lombok.Value;
 
 import java.time.LocalDate;
@@ -16,6 +17,8 @@ public class Document {
     private final String documentId;
 
     private final DocumentTypeCode documentTypeCode;
+
+    private final QuarterType quarterType;
 
     private final String edinetCode;
 
@@ -49,6 +52,7 @@ public class Document {
         return new Document(
                 entity.getDocumentId(),
                 DocumentTypeCode.fromValue(entity.getDocumentTypeCode().orElse(null)),
+                QuarterType.fromDocDescription(edinetDocument.getDocDescription().orElse(null)),
                 entity.getEdinetCode().orElse(null),
                 entity.getDocumentPeriod().orElse(null),
                 entity.getSubmitDate(),

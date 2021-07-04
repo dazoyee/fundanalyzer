@@ -167,10 +167,10 @@ public class XbrlScraping {
             // "事業年度末現在発行数"を含む項目を探す
             final var key1 = scrapingList.stream()
                     // 対象行の取得
-                    .filter(tdList -> tdList.stream().anyMatch(this::isFiscalYearEndNumber))
+                    .filter(tdList -> tdList.stream().anyMatch(this::isTargetKey))
                     .findFirst().orElseThrow().stream()
                     // 対象行から"事業年度末現在発行数"を含むカラムを取得
-                    .filter(this::isFiscalYearEndNumber)
+                    .filter(this::isTargetKey)
                     .findFirst()
                     .orElseThrow();
 
@@ -183,7 +183,7 @@ public class XbrlScraping {
             // "計"を含む項目を探す
             final var key2 = scrapingList.stream()
                     // 対象行の取得
-                    .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(TOTAL)))
+                    .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(TOTAL) && !td.contains("会計")))
                     .findFirst().orElseThrow().stream()
                     // 対象行から"計"を含むカラムを取得
                     .filter(td -> td.contains(TOTAL))
@@ -200,9 +200,12 @@ public class XbrlScraping {
         }
     }
 
-    private boolean isFiscalYearEndNumber(final String td) {
-        return td.contains("事業") && td.contains("年度") && td.contains("末")
-                && td.contains("現在") && td.contains("発行") && td.contains("数");
+    private boolean isTargetKey(final String td) {
+        return (td.contains("事業") && td.contains("年度") && td.contains("末")
+                && td.contains("現在") && td.contains("発行") && td.contains("数"))
+                ||
+                (td.contains("四半期") && td.contains("末")
+                        && td.contains("現在") && td.contains("発行") && td.contains("数"));
     }
 
     Elements elementsByKeyMatch(final File file, final KeyMatch keyMatch) {

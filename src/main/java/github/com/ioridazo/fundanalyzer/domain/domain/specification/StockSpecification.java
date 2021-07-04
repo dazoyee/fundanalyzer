@@ -41,9 +41,9 @@ public class StockSpecification {
     private final MinkabuDao minkabuDao;
     private final DocumentSpecification documentSpecification;
 
-    @Value("${app.config.view.edinet-list.size}")
-    int daysToViewEdinetList;
-    @Value("${app.config.target.store-stock-price-for-last-days}")
+    @Value("${app.config.stock.average-stock-price-for-last-days}")
+    int daysToAverageStockPrice;
+    @Value("${app.config.stock.store-stock-price-for-last-days}")
     int daysToStoreStockPrice;
 
     public StockSpecification(
@@ -185,7 +185,7 @@ public class StockSpecification {
         }
 
         final List<Double> certainPeriodList = stockPriceList.stream()
-                .filter(stockPrice -> submitDate.get().minusDays(daysToViewEdinetList).isBefore(stockPrice.getTargetDate()))
+                .filter(stockPrice -> submitDate.get().minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> submitDate.get().isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
                 .filter(Objects::nonNull)

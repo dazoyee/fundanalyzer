@@ -12,7 +12,7 @@ app:
       queue-capacity: 50
       max-pool-size: 500
     view:
-      discount-rate: 120  # 以上を表示
+      discount-rate: 170  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.6  # 以下を表示
 

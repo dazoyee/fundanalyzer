@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,9 @@ public class AnalysisResultSpecification {
 
     private final AnalysisResultDao analysisResultDao;
     private final CompanySpecification companySpecification;
+
+    @Value("${app.config.view.document-type-code}")
+    List<String> targetTypeCodes;
 
     public AnalysisResultSpecification(
             final AnalysisResultDao analysisResultDao,
@@ -60,6 +64,7 @@ public class AnalysisResultSpecification {
                     document.getDocumentPeriod().orElseThrow(FundanalyzerNotExistException::new),
                     value,
                     document.getDocumentTypeCode(),
+                    document.getQuarterType(),
                     document.getSubmitDate(),
                     document.getDocumentId(),
                     nowLocalDateTime()
@@ -88,7 +93,7 @@ public class AnalysisResultSpecification {
      * @return 最新の企業価値
      */
     public Optional<BigDecimal> latestCorporateValue(final Company company) {
-        return targetList(company).stream()
+        return analysisTargetList(company, targetTypeCodes).stream()
                 // latest
                 .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod)
                         .thenComparing(AnalysisResultEntity::getSubmitDate))
@@ -105,7 +110,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> averageCorporateValue(final Company company) {
-        final List<AnalysisResultEntity> targetList = targetList(company);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company, targetTypeCodes);
         if (targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -126,7 +131,7 @@ public class AnalysisResultSpecification {
      * @return 標準偏差
      */
     public Optional<BigDecimal> standardDeviation(final Company company, final BigDecimal averageCorporateValue) {
-        final List<AnalysisResultEntity> targetList = targetList(company);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company, targetTypeCodes);
         if (Objects.isNull(averageCorporateValue) || targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -166,17 +171,19 @@ public class AnalysisResultSpecification {
      * @return 分析年数
      */
     public BigDecimal countYear(final Company company) {
-        return BigDecimal.valueOf(targetList(company).size());
+        return BigDecimal.valueOf(analysisTargetList(company, targetTypeCodes).size());
     }
 
     /**
-     * 処理対象となる企業価値リストを取得する
+     * 分析処理対象となる企業価値リストを取得する
      *
-     * @param company 企業情報
+     * @param company          企業情報
+     * @param documentTypeCode 書類種別コード
      * @return 企業価値リスト
      */
-    public List<AnalysisResultEntity> targetList(final Company company) {
-        return analysisResultDao.selectByCompanyCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new)).stream()
+    public List<AnalysisResultEntity> analysisTargetList(final Company company, final List<String> documentTypeCode) {
+        final String code = company.getCode().orElseThrow(FundanalyzerNotExistException::new);
+        return analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode).stream()
                 .map(AnalysisResultEntity::getDocumentPeriod)
                 // null のときはEPOCHとなるため、除外する
                 .filter(period -> !LocalDate.EPOCH.isEqual(period))
@@ -185,6 +192,18 @@ public class AnalysisResultSpecification {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 表示対象とする企業価値リストを取得する
+     *
+     * @param company          企業情報
+     * @param documentTypeCode 書類種別コード
+     * @return 企業価値リスト
+     */
+    public List<AnalysisResultEntity> displayTargetList(final Company company, final List<String> documentTypeCode) {
+        final String code = company.getCode().orElseThrow(FundanalyzerNotExistException::new);
+        return analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode);
     }
 
     /**

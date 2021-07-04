@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
@@ -11,7 +12,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecific
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -30,13 +30,17 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ViewCorporateInteractorTest {
+
+    private static final List<String> targetTypeCodes = List.of("120", "130", "140", "150");
 
     private AnalyzeInteractor analyzeInteractor;
     private CompanySpecification companySpecification;
@@ -74,11 +78,17 @@ class ViewCorporateInteractorTest {
         viewCorporateInteractor.configOutlierOfStandardDeviation = BigDecimal.valueOf(10000);
         viewCorporateInteractor.configCoefficientOfVariation = BigDecimal.valueOf(0.6);
         viewCorporateInteractor.configDiffForecastStock = BigDecimal.valueOf(100);
-
+        viewCorporateInteractor.configCorporateSize = 300;
+        viewCorporateInteractor.targetTypeCodes = List.of("120", "130", "140", "150");
     }
 
     @Nested
     class viewMain {
+
+        @BeforeEach
+        void setUp() {
+            doReturn(LocalDate.parse("2021-07-04")).when(viewCorporateInteractor).nowLocalDate();
+        }
 
         @DisplayName("viewMain : 割安度が存在しないときは表示対象外とする")
         @Test
@@ -103,13 +113,36 @@ class ViewCorporateInteractorTest {
             assertEquals(0, viewCorporateInteractor.viewMain().size());
         }
 
+        @DisplayName("viewMain : 300日以前の提出日のみを表示する")
+        @Test
+        void configCorporateSize() {
+            when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
+                    null,
+                    null,
+                    LocalDate.parse("2020-07-04"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )));
+
+            assertEquals(0, viewCorporateInteractor.viewMain().size());
+        }
+
         @DisplayName("viewMain : 割安度が120%以上を表示する")
         @Test
         void configDiscountRate() {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     null,
                     null,
                     null,
@@ -132,7 +165,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     null,
                     null,
                     BigDecimal.valueOf(10000),
@@ -155,7 +188,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     BigDecimal.valueOf(-1),
                     null,
                     BigDecimal.valueOf(100),
@@ -178,7 +211,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     BigDecimal.valueOf(100),
                     null,
                     BigDecimal.valueOf(100),
@@ -201,7 +234,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     BigDecimal.valueOf(10000),
                     BigDecimal.valueOf(5000),
                     BigDecimal.valueOf(100),
@@ -224,7 +257,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     BigDecimal.valueOf(10000),
                     BigDecimal.valueOf(5000),
                     BigDecimal.valueOf(100),
@@ -247,7 +280,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     BigDecimal.valueOf(10000),
                     BigDecimal.valueOf(5000),
                     BigDecimal.valueOf(100),
@@ -270,7 +303,7 @@ class ViewCorporateInteractorTest {
             when(viewSpecification.findAllCorporateView()).thenReturn(List.of(CorporateViewModel.of(
                     null,
                     null,
-                    null,
+                    LocalDate.parse("2021-07-04"),
                     BigDecimal.valueOf(10000),
                     null,
                     BigDecimal.valueOf(100),
@@ -311,6 +344,7 @@ class ViewCorporateInteractorTest {
                     null,
                     LocalDate.parse("2021-01-01"),
                     BigDecimal.TEN,
+                    "120",
                     null,
                     null,
                     null,
@@ -326,6 +360,7 @@ class ViewCorporateInteractorTest {
                     LocalDate.parse("2021-12-31"),
                     null,
                     "120",
+                    "4",
                     LocalDate.parse("2021-05-15"),
                     null,
                     null
@@ -340,12 +375,13 @@ class ViewCorporateInteractorTest {
                     LocalDate.parse("2021-12-31"),
                     null,
                     "120",
+                    "4",
                     LocalDate.parse("2021-05-15"),
                     null,
                     null
             );
 
-            when(analysisResultSpecification.targetList(company)).thenReturn(List.of(analysisResultEntity));
+            when(analysisResultSpecification.displayTargetList(company, targetTypeCodes)).thenReturn(List.of(analysisResultEntity));
             when(financialStatementSpecification.findByCompany(company)).thenReturn(List.of(bsEntity, plEntity));
             when(financialStatementSpecification.findByKeyPerCompany(eq(company), any())).thenReturn(List.of(bsEntity, plEntity));
             when(financialStatementSpecification.parseBsSubjectValue(List.of(bsEntity, plEntity)))
@@ -372,7 +408,9 @@ class ViewCorporateInteractorTest {
                     ),
                     () -> assertAll(
                             () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getAnalysisResultList().get(0).getDocumentPeriod()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).getCorporateValue())
+                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).getCorporateValue()),
+                            () -> assertEquals("120", actual.getAnalysisResultList().get(0).getDocumentTypeCode()),
+                            () -> assertNull(actual.getAnalysisResultList().get(0).getQuarterType())
                     ),
                     () -> assertAll(
                             () -> assertAll(
@@ -445,6 +483,7 @@ class ViewCorporateInteractorTest {
 
     private Document defaultDocument() {
         return new Document(
+                null,
                 null,
                 null,
                 "edinetCode",

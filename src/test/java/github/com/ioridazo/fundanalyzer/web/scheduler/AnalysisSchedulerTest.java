@@ -65,6 +65,7 @@ class AnalysisSchedulerTest {
                     null,
                     null,
                     null,
+                    null,
                     LocalDate.parse("2021-02-05"),
                     null,
                     null,

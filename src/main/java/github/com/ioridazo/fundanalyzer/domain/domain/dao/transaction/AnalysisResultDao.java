@@ -23,7 +23,7 @@ public interface AnalysisResultDao {
             LocalDate submitDate);
 
     @Select
-    List<AnalysisResultEntity> selectByCompanyCode(String code);
+    List<AnalysisResultEntity> selectByCompanyCodeAndType(String code, List<String> documentTypeCode);
 
     @Select
     List<AnalysisResultEntity> selectByCodeAndPeriod(String code, LocalDate documentPeriod);

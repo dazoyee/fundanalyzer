@@ -1,8 +1,10 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
+import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
@@ -17,8 +19,6 @@ import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
-import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -382,6 +382,7 @@ class ScrapingInteractorTest {
 
     private Document defaultDocument() {
         return new Document(
+                null,
                 null,
                 null,
                 "edinetCode",
