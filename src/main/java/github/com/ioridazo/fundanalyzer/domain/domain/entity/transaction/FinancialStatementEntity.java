@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -10,6 +11,7 @@ import org.seasar.doma.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -60,6 +62,10 @@ public class FinancialStatementEntity {
             final LocalDate submitDate,
             final String documentId,
             final LocalDateTime createdAt) {
+        if (DocumentTypeCode.DTC_140 == documentTypeCode && Objects.isNull(quarterType.toValue())) {
+            throw new FundanalyzerNotExistException("四半期種別");
+        }
+
         return new FinancialStatementEntity(
                 null,
                 companyCode,

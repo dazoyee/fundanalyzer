@@ -22,6 +22,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
@@ -315,7 +316,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             ));
 
             documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
-        } catch (FundanalyzerFileException e) {
+        } catch (FundanalyzerFileException | FundanalyzerNotExistException e) {
             documentSpecification.updateFsToError(document, fs);
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
