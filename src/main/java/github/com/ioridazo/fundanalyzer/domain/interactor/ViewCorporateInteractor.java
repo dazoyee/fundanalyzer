@@ -62,6 +62,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     BigDecimal configCoefficientOfVariation;
     @Value("${app.config.view.diff-forecast-stock}")
     BigDecimal configDiffForecastStock;
+    @Value("${app.config.scraping.document-type-code}")
+    List<String> targetTypeCodes;
 
     public ViewCorporateInteractor(
             final AnalyzeInteractor analyzeInteractor,
@@ -162,7 +164,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         final Company company = companySpecification.findCompanyByCode(inputData.getCode5()).orElseThrow(FundanalyzerNotExistException::new);
         final Stock stock = stockSpecification.findStock(company);
 
-        final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.targetList(company).stream()
+        final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()
                 .map(AnalysisResultViewModel::of)
                 .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod).reversed())
                 .collect(Collectors.toList());

@@ -30,6 +30,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -37,6 +38,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ViewCorporateInteractorTest {
+
+    private static final List<String> targetTypeCodes = List.of("120", "130", "140", "150");
 
     private AnalyzeInteractor analyzeInteractor;
     private CompanySpecification companySpecification;
@@ -74,6 +77,7 @@ class ViewCorporateInteractorTest {
         viewCorporateInteractor.configOutlierOfStandardDeviation = BigDecimal.valueOf(10000);
         viewCorporateInteractor.configCoefficientOfVariation = BigDecimal.valueOf(0.6);
         viewCorporateInteractor.configDiffForecastStock = BigDecimal.valueOf(100);
+        viewCorporateInteractor.targetTypeCodes = List.of("120", "130", "140", "150");
 
     }
 
@@ -311,7 +315,7 @@ class ViewCorporateInteractorTest {
                     null,
                     LocalDate.parse("2021-01-01"),
                     BigDecimal.TEN,
-                    null,
+                    "120",
                     null,
                     null,
                     null,
@@ -348,7 +352,7 @@ class ViewCorporateInteractorTest {
                     null
             );
 
-            when(analysisResultSpecification.targetList(company)).thenReturn(List.of(analysisResultEntity));
+            when(analysisResultSpecification.displayTargetList(company, targetTypeCodes)).thenReturn(List.of(analysisResultEntity));
             when(financialStatementSpecification.findByCompany(company)).thenReturn(List.of(bsEntity, plEntity));
             when(financialStatementSpecification.findByKeyPerCompany(eq(company), any())).thenReturn(List.of(bsEntity, plEntity));
             when(financialStatementSpecification.parseBsSubjectValue(List.of(bsEntity, plEntity)))
@@ -375,7 +379,9 @@ class ViewCorporateInteractorTest {
                     ),
                     () -> assertAll(
                             () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getAnalysisResultList().get(0).getDocumentPeriod()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).getCorporateValue())
+                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).getCorporateValue()),
+                            () -> assertEquals("120", actual.getAnalysisResultList().get(0).getDocumentTypeCode()),
+                            () -> assertNull(actual.getAnalysisResultList().get(0).getQuarterType())
                     ),
                     () -> assertAll(
                             () -> assertAll(

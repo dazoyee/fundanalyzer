@@ -66,7 +66,7 @@ class AnalysisResultSpecificationTest {
         void present_period() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.latestCorporateValue(company);
             assertEquals(BigDecimal.valueOf(110000, 2), actual.orElseThrow());
@@ -77,7 +77,7 @@ class AnalysisResultSpecificationTest {
         void present_submitDate() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", "4", LocalDate.parse("2020-09-01"), null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", LocalDate.parse("2020-10-01"), null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.latestCorporateValue(company);
             assertEquals(BigDecimal.valueOf(110000, 2), actual.orElseThrow());
@@ -86,7 +86,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("latestCorporateValue : 企業価値がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.latestCorporateValue(company);
             assertNull(actual.orElse(null));
@@ -106,7 +106,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null
             );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.latestCorporateValue(company);
             assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
@@ -133,7 +133,7 @@ class AnalysisResultSpecificationTest {
         void present() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.averageCorporateValue(company);
             assertEquals(BigDecimal.valueOf(100000, 2), actual.orElseThrow());
@@ -142,7 +142,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("averageCorporateValue : 企業価値がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.averageCorporateValue(company);
             assertNull(actual.orElse(null));
@@ -162,7 +162,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null
             );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.averageCorporateValue(company);
             assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
@@ -189,7 +189,7 @@ class AnalysisResultSpecificationTest {
         void present() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(100000, 2));
             assertEquals(BigDecimal.valueOf(100.0), actual.orElseThrow());
@@ -198,7 +198,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("standardDeviation : 企業価値がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(100000, 2));
             assertNull(actual.orElse(null));
@@ -207,7 +207,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("standardDeviation : 平均の企業価値がないときは空で返却する")
         @Test
         void averageCorporateValue_isNull() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, null);
             assertNull(actual.orElse(null));
@@ -227,7 +227,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null
             );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(500.25));
             assertEquals(BigDecimal.valueOf(0, 1), actual.orElseThrow());
@@ -259,7 +259,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("coefficientOfVariation : 標準偏差がないときは空で返却する")
         @Test
         void coefficientOfVariation_isNull() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.coefficientOfVariation(null, BigDecimal.valueOf(100000, 2));
             assertNull(actual.orElse(null));
@@ -268,7 +268,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("coefficientOfVariation : 平均の企業価値がないときは空で返却する")
         @Test
         void averageCorporateValue_isNull() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.coefficientOfVariation(BigDecimal.valueOf(100.0), null);
             assertNull(actual.orElse(null));
@@ -302,7 +302,7 @@ class AnalysisResultSpecificationTest {
         void present() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.countYear(company);
             assertEquals(BigDecimal.valueOf(2), actual);
@@ -311,7 +311,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("countYear : 企業価値がないときは0で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).targetList(company, targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
             var actual = analysisResultSpecification.countYear(company);
             assertEquals(BigDecimal.valueOf(0), actual);
