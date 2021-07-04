@@ -65,7 +65,7 @@ class DocumentSpecificationTest {
         var document2 = defaultDocumentEntity(LocalDate.parse("2021-05-09"));
 
         when(documentDao.selectByEdinetCodeAndType(any(), any())).thenReturn(List.of(document1, document2));
-        when(edinetDocumentSpecification.parsePeriod(any())).thenReturn(new EdinetDocument());
+        when(edinetDocumentSpecification.findEdinetDocument(any())).thenReturn(new EdinetDocument());
 
         var actual = documentSpecification.latestDocument(company);
 

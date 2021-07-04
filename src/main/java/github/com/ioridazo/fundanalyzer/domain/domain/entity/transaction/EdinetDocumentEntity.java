@@ -169,6 +169,10 @@ public class EdinetDocumentEntity {
         return submitDateTime;
     }
 
+    public Optional<String> getDocDescription() {
+        return Optional.ofNullable(docDescription);
+    }
+
     public String getParentDocId() {
         return parentDocId;
     }

@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
@@ -33,6 +34,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     private static final Logger log = LogManager.getLogger(AnalyzeInteractor.class);
     private static final int WEIGHTING_BUSINESS_VALUE = 10;
     private static final double AVERAGE_CURRENT_RATIO = 1.2;
+    private static final int WEIGHTING_QUARTER_VALUE = 4;
 
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
@@ -212,15 +214,25 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                 PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
                 document
         ));
+        // 四半期種別の重みづけ
+        final Integer weightingQuarterType = Optional.of(document)
+                .map(Document::getQuarterType)
+                .map(QuarterType::getWeight)
+                .orElse(WEIGHTING_QUARTER_VALUE);
         // 株式総数
         final Long numberOfShares = financeValue.getNumberOfShares()
                 .orElseThrow(() -> fsValueThrow(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "株式総数", document));
 
         return BigDecimal.valueOf(
                 (
-                        operatingProfit * WEIGHTING_BUSINESS_VALUE
-                                + totalCurrentAssets - (totalCurrentLiabilities * AVERAGE_CURRENT_RATIO) + totalInvestmentsAndOtherAssets
-                                - totalFixedLiabilities
+                        (
+                                (
+                                        operatingProfit * WEIGHTING_BUSINESS_VALUE
+                                                + totalCurrentAssets - (totalCurrentLiabilities * AVERAGE_CURRENT_RATIO) + totalInvestmentsAndOtherAssets
+                                                - totalFixedLiabilities
+                                )
+                                        / weightingQuarterType
+                        ) * WEIGHTING_QUARTER_VALUE
                 )
                         / numberOfShares
         );

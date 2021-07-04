@@ -1,11 +1,11 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -29,6 +29,18 @@ public class EdinetDocumentSpecification {
 
     LocalDateTime nowLocalDateTime() {
         return LocalDateTime.now();
+    }
+
+    /**
+     * EDINETドキュメント情報を取得する
+     *
+     * @param documentId 書類ID
+     * @return EDINETドキュメント情報
+     */
+    public EdinetDocument findEdinetDocument(final String documentId) {
+        final EdinetDocument edinetDocument = parsePeriod(documentId);
+        edinetDocument.setDocDescription(edinetDocumentDao.selectByDocId(documentId).getDocDescription().orElse(null));
+        return edinetDocument;
     }
 
     /**

@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
@@ -211,6 +212,43 @@ class AnalyzeInteractorTest {
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
 
             var expected = BigDecimal.valueOf((10000L * 10 + 1000 - (1000 * 1.2) + 1000 - 1000) / 1000);
+            var actual = analyzeInteractor.calculateFsValue(document);
+            assertEquals(expected, actual);
+        }
+
+        @DisplayName("calculateFsValue : 四半期報告書の各値を取得して計算する")
+        @Test
+        void quarter() {
+            var document = new Document(
+                    null,
+                    null,
+                    QuarterType.QT_3,
+                    "edinetCode",
+                    null,
+                    LocalDate.now(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+            var financeValue = FinanceValue.of(
+                    1000L,
+                    1000L,
+                    1000L,
+                    1000L,
+                    10000L,
+                    1000L
+            );
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+
+            var expected = BigDecimal.valueOf((((10000L * 10 + 1000 - (1000 * 1.2) + 1000 - 1000) / 3) * 4) / 1000);
             var actual = analyzeInteractor.calculateFsValue(document);
             assertEquals(expected, actual);
         }
