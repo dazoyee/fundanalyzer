@@ -61,14 +61,16 @@ app:
       queue-capacity: 50
       max-pool-size: 500
     view:
-      discount-rate: 120  # 以上を表示
+      document-type-code: 120,130  # 分析表示処理対象
+      discount-rate: 170  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.6  # 以下を表示
       diff-forecast-stock: 100  # 株価予想と最新株価との差が100以上を表示
       edinet-list.size: 400  # 日間を表示
-    target:
-      document-type-code: 120,130,140  # 処理対象
+    scraping:
+      document-type-code: 120,130,140,150  # スクレイピング処理対象
       no-industry: 銀行業,保険業  # 処理対象外
+    stock:
       average-stock-price-for-last-days: 30  # 株価平均値の期間
       store-stock-price-for-last-days: 365  # 株価の保存期間
 

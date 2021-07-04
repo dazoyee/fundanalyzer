@@ -43,7 +43,7 @@ class StockSpecificationTest {
                 Mockito.mock(MinkabuDao.class),
                 documentSpecification
         ));
-        stockSpecification.daysToViewEdinetList = 30;
+        stockSpecification.daysToAverageStockPrice = 30;
         stockSpecification.daysToStoreStockPrice = 365;
     }
 

@@ -42,7 +42,7 @@ public class DocumentSpecification {
     private final EdinetDocumentSpecification edinetDocumentSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
 
-    @Value("${app.config.target.document-type-code}")
+    @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
 
     public DocumentSpecification(

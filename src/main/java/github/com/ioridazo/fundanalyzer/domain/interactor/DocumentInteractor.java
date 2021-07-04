@@ -39,7 +39,7 @@ public class DocumentInteractor implements DocumentUseCase {
     private final FileOperator fileOperator;
     private final EdinetClient edinetClient;
 
-    @Value("${app.config.target.document-type-code}")
+    @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
 
     public DocumentInteractor(
