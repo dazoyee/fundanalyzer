@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -62,6 +63,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     BigDecimal configCoefficientOfVariation;
     @Value("${app.config.view.diff-forecast-stock}")
     BigDecimal configDiffForecastStock;
+    @Value("${app.config.view.corporate.size}")
+    int configCorporateSize;
     @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
 
@@ -84,6 +87,10 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.slackClient = slackClient;
     }
 
+    LocalDate nowLocalDate() {
+        return LocalDate.now();
+    }
+
     /**
      * メインビューを取得する
      *
@@ -96,7 +103,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
                 .filter(cvm -> Objects.nonNull(cvm.getStandardDeviation()))
                 .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
-                // 割安度が120%以上を表示
+                // 表示する提出日は一定期間のみ
+                .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(configCorporateSize)))
+                // 割安度が170%(外部設定値)以上を表示
                 .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
                 // 標準偏差が外れ値となっていたら除外
                 .filter(cvm -> cvm.getStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
