@@ -1,8 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
-import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +16,7 @@ public class IndustrySpecification {
 
     private final IndustryDao industryDao;
 
-    @Value("${app.config.target.no-industry}")
+    @Value("${app.config.scraping.no-industry}")
     List<String> noTargetList;
 
     public IndustrySpecification(final IndustryDao industryDao) {

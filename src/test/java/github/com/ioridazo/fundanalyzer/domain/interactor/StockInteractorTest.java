@@ -118,6 +118,7 @@ class StockInteractorTest {
         return new Document(
                 null,
                 null,
+                null,
                 "edinetCode",
                 null,
                 LocalDate.now(),

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
@@ -41,9 +42,9 @@ public class StockSpecification {
     private final MinkabuDao minkabuDao;
     private final DocumentSpecification documentSpecification;
 
-    @Value("${app.config.view.edinet-list.size}")
-    int daysToViewEdinetList;
-    @Value("${app.config.target.store-stock-price-for-last-days}")
+    @Value("${app.config.stock.average-stock-price-for-last-days}")
+    int daysToAverageStockPrice;
+    @Value("${app.config.stock.store-stock-price-for-last-days}")
     int daysToStoreStockPrice;
 
     public StockSpecification(
@@ -185,7 +186,7 @@ public class StockSpecification {
         }
 
         final List<Double> certainPeriodList = stockPriceList.stream()
-                .filter(stockPrice -> submitDate.get().minusDays(daysToViewEdinetList).isBefore(stockPrice.getTargetDate()))
+                .filter(stockPrice -> submitDate.get().minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> submitDate.get().isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
                 .filter(Objects::nonNull)
@@ -211,13 +212,18 @@ public class StockSpecification {
      * @return boolean
      */
     private boolean isEmptyStockPrice(final String code, final String targetDateAsString) {
-        final LocalDate targetDate;
-        if (targetDateAsString.contains("/")) {
-            targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
-        } else {
-            targetDate = LocalDate.parse(targetDateAsString);
+        try {
+            final LocalDate targetDate;
+            if (targetDateAsString.contains("/")) {
+                targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
+            } else {
+                targetDate = LocalDate.parse(targetDateAsString);
+            }
+            return stockPriceDao.selectByCodeAndDate(code, targetDate).isEmpty();
+        } catch (final NullPointerException e) {
+            log.warn("", e);
+            return false;
         }
-        return stockPriceDao.selectByCodeAndDate(code, targetDate).isEmpty();
     }
 
     /**
@@ -228,9 +234,13 @@ public class StockSpecification {
      * @return boolean
      */
     private boolean isPresentMinkabu(final String code, final String targetDateAsString) {
-        final LocalDate targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd"))
-                .atYear(LocalDate.now().getYear());
-
+        LocalDate targetDate = LocalDate.now();
+        try {
+            targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd")).atYear(targetDate.getYear());
+        } catch (final DateTimeException e) {
+            log.info("みんかぶのスクレイピング処理で期待の対象日が得られませんでした。本日日付で処理を継続します。" +
+                    "\t企業コード:{}\tスクレイピング結果:{}\t登録対象日:{}", code, targetDateAsString, targetDate, e);
+        }
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
     }
 }

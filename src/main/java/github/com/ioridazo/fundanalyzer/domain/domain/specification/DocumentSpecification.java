@@ -1,15 +1,15 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.DocumentDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +42,7 @@ public class DocumentSpecification {
     private final EdinetDocumentSpecification edinetDocumentSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
 
-    @Value("${app.config.target.document-type-code}")
+    @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
 
     public DocumentSpecification(
@@ -71,7 +71,7 @@ public class DocumentSpecification {
     public Document findDocument(final String documentId) {
         return Document.of(
                 documentDao.selectByDocumentId(documentId),
-                edinetDocumentSpecification.parsePeriod(documentId)
+                edinetDocumentSpecification.findEdinetDocument(documentId)
         );
     }
 
@@ -84,7 +84,7 @@ public class DocumentSpecification {
     public Document findDocument(final IdInputData inputData) {
         return Document.of(
                 documentDao.selectByDocumentId(inputData.getId()),
-                edinetDocumentSpecification.parsePeriod(inputData.getId())
+                edinetDocumentSpecification.findEdinetDocument(inputData.getId())
         );
     }
 
@@ -96,7 +96,7 @@ public class DocumentSpecification {
      */
     public Optional<Document> latestDocument(final Company company) {
         return documentDao.selectByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes).stream()
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.parsePeriod(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
                 .max(Comparator.comparing(Document::getSubmitDate));
     }
 
@@ -108,7 +108,7 @@ public class DocumentSpecification {
     public List<Document> documentList() {
         return documentDao.selectByDocumentTypeCode(targetTypeCodes).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.parsePeriod(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
                 .collect(Collectors.toList());
     }
 
@@ -121,7 +121,7 @@ public class DocumentSpecification {
     public List<Document> documentList(final DateInputData inputData) {
         return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.parsePeriod(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
                 .collect(Collectors.toList());
     }
 
@@ -134,7 +134,7 @@ public class DocumentSpecification {
     public List<Document> targetList(final DateInputData inputData) {
         return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.parsePeriod(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
                 .filter(this::isTarget)
                 .filter(Document::isTarget)
                 .collect(Collectors.toList());

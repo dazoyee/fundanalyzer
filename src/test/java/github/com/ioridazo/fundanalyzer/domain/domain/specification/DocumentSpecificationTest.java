@@ -1,12 +1,12 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.DocumentDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
-import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +65,7 @@ class DocumentSpecificationTest {
         var document2 = defaultDocumentEntity(LocalDate.parse("2021-05-09"));
 
         when(documentDao.selectByEdinetCodeAndType(any(), any())).thenReturn(List.of(document1, document2));
-        when(edinetDocumentSpecification.parsePeriod(any())).thenReturn(new EdinetDocument());
+        when(edinetDocumentSpecification.findEdinetDocument(any())).thenReturn(new EdinetDocument());
 
         var actual = documentSpecification.latestDocument(company);
 
@@ -86,6 +86,7 @@ class DocumentSpecificationTest {
         @Test
         void present() {
             var document = new Document(
+                    null,
                     null,
                     null,
                     null,
@@ -114,6 +115,7 @@ class DocumentSpecificationTest {
         @Test
         void empty() {
             var document = new Document(
+                    null,
                     null,
                     null,
                     null,
@@ -149,6 +151,7 @@ class DocumentSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     LocalDate.parse("2021-01-01"),
                     null,
                     null,
@@ -174,6 +177,7 @@ class DocumentSpecificationTest {
         @Test
         void not_scraped() {
             var document = new Document(
+                    null,
                     null,
                     null,
                     null,
@@ -209,6 +213,7 @@ class DocumentSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     LocalDate.parse("2021-01-01"),
                     null,
                     null,
@@ -235,6 +240,7 @@ class DocumentSpecificationTest {
         @Test
         void not_analyzed() {
             var document = new Document(
+                    null,
                     null,
                     null,
                     null,
