@@ -51,7 +51,8 @@ values ('1', 'jpcrp_cor:ConsolidatedBalanceSheetTextBlock', '連結貸借対照�
        ('4', 'jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock', '株式総数'),
        ('1', 'jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock', '四半期連結貸借対照表'),
        ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfComprehensiveIncomeSingleStatementTextBlock',
-        '四半期連結損益及び包括利益計算書')
+        '四半期連結損益及び包括利益計算書'),
+       ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock', '四半期連結損益計算書及び四半期連結包括利益計算書')
 ;
 
 -- bs_subject

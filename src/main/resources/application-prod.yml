@@ -7,6 +7,11 @@ spring:
     username: fundanalyzer
     password: fundanalyzer
     driverClassName: com.mysql.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30
+      connection-timeout: 10000
+      max-lifetime: 180000
+      auto-commit: true
   thymeleaf:
     encoding: UTF-8
 
