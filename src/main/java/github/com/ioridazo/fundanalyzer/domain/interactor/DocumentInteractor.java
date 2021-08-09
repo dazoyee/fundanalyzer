@@ -236,32 +236,41 @@ public class DocumentInteractor implements DocumentUseCase {
                 // ファイル取得
                 scraping.download(document);
             }
+        } else if (DocumentStatus.ERROR == document.getDownloaded()) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "書類のダウンロードが完了していません。詳細を確認してください。\t書類ID:{0}",
+                            document.getDocumentId()
+                    ),
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
+            ));
         }
 
         final Document decodedDocument = documentSpecification.findDocument(document.getDocumentId());
         if (DocumentStatus.DONE == decodedDocument.getDecoded()) {
             // スクレイピング
             // 貸借対照表
-            if (DocumentStatus.NOT_YET == decodedDocument.getScrapedBs()) {
+            if (DocumentStatus.DONE != decodedDocument.getScrapedBs()) {
                 scraping.bs(document);
             }
             // 損益計算書
-            if (DocumentStatus.NOT_YET == decodedDocument.getScrapedPl()) {
+            if (DocumentStatus.DONE != decodedDocument.getScrapedPl()) {
                 scraping.pl(document);
             }
             // 株式総数
-            if (DocumentStatus.NOT_YET == decodedDocument.getScrapedNumberOfShares()) {
+            if (DocumentStatus.DONE != decodedDocument.getScrapedNumberOfShares()) {
                 scraping.ns(document);
             }
         }
 
         final Document processedDocument = documentSpecification.findDocument(document.getDocumentId());
         // 除外フラグON
-        if (List.of(
+        if (Stream.of(
                 processedDocument.getScrapedBs(),
                 processedDocument.getScrapedPl(),
                 processedDocument.getScrapedNumberOfShares()
-        ).stream().allMatch(status -> DocumentStatus.ERROR == status)) {
+        ).allMatch(status -> DocumentStatus.ERROR == status)) {
             documentSpecification.updateRemoved(document);
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(

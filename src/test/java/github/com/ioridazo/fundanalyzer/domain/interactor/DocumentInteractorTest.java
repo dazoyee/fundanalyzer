@@ -227,8 +227,8 @@ class DocumentInteractorTest {
                         null,
                         false
                 ));
-                when(documentSpecification.findDocument("done")).thenReturn(new Document(
-                        "done",
+                when(documentSpecification.findDocument("error")).thenReturn(new Document(
+                        "error",
                         null,
                         null,
                         null,
@@ -238,14 +238,15 @@ class DocumentInteractorTest {
                         null,
                         DocumentStatus.DONE,
                         DocumentStatus.DONE,
-                        DocumentStatus.DONE,
+                        DocumentStatus.ERROR,
                         null,
-                        DocumentStatus.DONE,
+                        DocumentStatus.ERROR,
                         null,
-                        DocumentStatus.DONE,
+                        DocumentStatus.ERROR,
                         null,
                         false
-                )).thenReturn(new Document(
+                ));
+                when(documentSpecification.findDocument("done")).thenReturn(new Document(
                         "done",
                         null,
                         null,
@@ -386,6 +387,38 @@ class DocumentInteractorTest {
 
                 assertDoesNotThrow(() -> documentInteractor.scrape(document));
                 verify(scraping, times(1)).download(document);
+                verify(scraping, times(1)).bs(document);
+                verify(scraping, times(1)).pl(document);
+                verify(scraping, times(1)).ns(document);
+            }
+
+            @DisplayName("scrape : ステータス失敗であれば処理する")
+            @Test
+            void error() {
+                var document = new Document(
+                        "error",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        DocumentStatus.DONE,
+                        DocumentStatus.DONE,
+                        DocumentStatus.ERROR,
+                        null,
+                        DocumentStatus.ERROR,
+                        null,
+                        DocumentStatus.ERROR,
+                        null,
+                        false
+                );
+
+                when(fileOperator.findDecodedFile(any())).thenReturn(Optional.of(List.of()));
+
+                assertDoesNotThrow(() -> documentInteractor.scrape(document));
+                verify(scraping, times(0)).download(document);
                 verify(scraping, times(1)).bs(document);
                 verify(scraping, times(1)).pl(document);
                 verify(scraping, times(1)).ns(document);
