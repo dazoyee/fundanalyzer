@@ -221,7 +221,7 @@ public class StockSpecification {
             }
             return stockPriceDao.selectByCodeAndDate(code, targetDate).isEmpty();
         } catch (final NullPointerException e) {
-            log.warn("", e);
+            log.info("{} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。", code, e);
             return false;
         }
     }

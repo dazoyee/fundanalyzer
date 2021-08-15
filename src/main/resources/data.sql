@@ -52,7 +52,11 @@ values ('1', 'jpcrp_cor:ConsolidatedBalanceSheetTextBlock', '連結貸借対照�
        ('1', 'jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock', '四半期連結貸借対照表'),
        ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfComprehensiveIncomeSingleStatementTextBlock',
         '四半期連結損益及び包括利益計算書'),
-       ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock', '四半期連結損益計算書及び四半期連結包括利益計算書')
+       ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock', '四半期連結損益計算書及び四半期連結包括利益計算書'),
+       ('1', 'jpcrp_cor:QuarterlyBalanceSheetTextBlock', '四半期財務諸表'),
+       ('2', 'jpcrp_cor:YearToQuarterEndStatementOfIncomeTextBlock', '四半期損益計算書'),
+       ('1', 'jpigp_cor:CondensedQuarterlyConsolidatedStatementOfFinancialPositionIFRSTextBlock', '要約四半期連結財務諸表'),
+       ('2', 'jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfProfitOrLossIFRSTextBlock', '要約四半期連結損益計算書')
 ;
 
 -- bs_subject
@@ -79,7 +83,9 @@ values ('1', '3', '流動資産'),
        ('1', '2', '流動資産計'),
        ('5', '2', '固定資産計'),
        ('8', '2', '流動負債計'),
-       ('9', '2', '固定負債計')
+       ('9', '2', '固定負債計'),
+       ('9', '4', '非流動負債合計'),
+       ('4', '3', 'その他の金融資産')
 ;
 
 -- pl_subject

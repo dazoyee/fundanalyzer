@@ -1,15 +1,14 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 
 @Component
 public class NoticeInteractor implements NoticeUseCase {
@@ -44,14 +43,14 @@ public class NoticeInteractor implements NoticeUseCase {
                     edinetListView.getSubmitDate(), edinetListView.getCountTarget(), edinetListView.getCountNotScraped());
         }
 
-        viewSpecification.findAllCorporateView(inputData).stream()
-                .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
-                // 割安度が120%以上を表示
-                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
-                .forEach(cvm -> {
-                    // 優良銘柄を通知する
-                    slackClient.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
-                            cvm.getCode(), cvm.getName(), cvm.getDiscountRate());
-                });
+//        viewSpecification.findAllCorporateView(inputData).stream()
+//                .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
+//                // 割安度が120%以上を表示
+//                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
+//                .forEach(cvm -> {
+//                    // 優良銘柄を通知する
+//                    slackClient.sendMessage("g.c.i.f.domain.service.ViewService.processing.notice.submitDate",
+//                            cvm.getCode(), cvm.getName(), cvm.getDiscountRate());
+//                });
     }
 }
