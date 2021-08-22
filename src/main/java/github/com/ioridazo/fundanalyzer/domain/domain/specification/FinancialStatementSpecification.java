@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
@@ -125,18 +126,20 @@ public class FinancialStatementSpecification {
     /**
      * 財務諸表の値を登録する
      *
-     * @param company  企業情報
-     * @param fs       財務諸表種別
-     * @param dId      科目ID
-     * @param document ドキュメント
-     * @param value    値
+     * @param company     企業情報
+     * @param fs          財務諸表種別
+     * @param dId         科目ID
+     * @param document    ドキュメント
+     * @param value       値
+     * @param createdType 登録方法
      */
     public void insert(
             final Company company,
             final FinancialStatementEnum fs,
             final String dId,
             final Document document,
-            final Long value) {
+            final Long value,
+            final CreatedType createdType) {
         try {
             financialStatementDao.insert(FinancialStatementEntity.of(
                     company.getCode().orElse(null),
@@ -150,6 +153,7 @@ public class FinancialStatementSpecification {
                     document.getQuarterType(),
                     document.getSubmitDate(),
                     document.getDocumentId(),
+                    createdType.toValue(),
                     nowLocalDateTime()
             ));
         } catch (NestedRuntimeException e) {

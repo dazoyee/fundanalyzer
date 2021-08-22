@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
@@ -150,7 +151,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
             verify(financialStatementSpecification, times(1))
-                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L);
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(1)).doBsOptionIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.BALANCE_SHEET, "file");
         }
@@ -166,7 +167,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
             verify(financialStatementSpecification, times(0))
-                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L);
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(1)).doBsOptionIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.BALANCE_SHEET, "file");
         }
@@ -204,7 +205,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionIfTarget(company, document));
             verify(financialStatementSpecification, times(1))
-                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L);
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
         }
 
         @DisplayName("doBsOptionIfTarget : 既に登録した流動負債合計と負債合計の金額が一致していなかったら、DBに登録しない")
@@ -222,7 +223,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionIfTarget(company, document));
             verify(financialStatementSpecification, times(0))
-                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L);
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
         }
     }
 
@@ -252,7 +253,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
             verify(financialStatementSpecification, times(1))
-                    .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L);
+                    .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
         }
@@ -267,7 +268,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
             verify(financialStatementSpecification, times(0))
-                    .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L);
+                    .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
         }
@@ -313,7 +314,7 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
             verify(financialStatementSpecification, times(1))
-                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L);
+                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
         }
