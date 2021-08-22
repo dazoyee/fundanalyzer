@@ -6,9 +6,11 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
@@ -90,6 +92,18 @@ public class AnalysisService {
         documentUseCase.scrape(inputData);
         // analysis
         analyzeUseCase.analyze(inputData);
+    }
+
+    /**
+     * 財務諸表の値の登録
+     *
+     * @param inputData 財務諸表の登録情報
+     * @return 処理結果
+     */
+    @NewSpan
+    public Result registerFinancialStatementValue(final FinancialStatementInputData inputData) {
+        // register
+        return documentUseCase.registerFinancialStatementValue(inputData);
     }
 
     /**

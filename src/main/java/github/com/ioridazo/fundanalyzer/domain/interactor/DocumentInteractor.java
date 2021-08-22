@@ -8,14 +8,21 @@ import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,6 +43,7 @@ public class DocumentInteractor implements DocumentUseCase {
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
     private final EdinetDocumentSpecification edinetDocumentSpecification;
+    private final FinancialStatementSpecification financialStatementSpecification;
     private final FileOperator fileOperator;
     private final EdinetClient edinetClient;
 
@@ -47,10 +55,12 @@ public class DocumentInteractor implements DocumentUseCase {
             final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
             final EdinetDocumentSpecification edinetDocumentSpecification,
+            final FinancialStatementSpecification financialStatementSpecification,
             final FileOperator fileOperator,
             final EdinetClient edinetClient) {
         this.companySpecification = companySpecification;
         this.edinetDocumentSpecification = edinetDocumentSpecification;
+        this.financialStatementSpecification = financialStatementSpecification;
         this.fileOperator = fileOperator;
         this.scraping = scraping;
         this.documentSpecification = documentSpecification;
@@ -198,6 +208,65 @@ public class DocumentInteractor implements DocumentUseCase {
                 Process.SCRAPING,
                 System.currentTimeMillis() - startTime
         ));
+    }
+
+    /**
+     * 財務諸表の値を登録する
+     *
+     * @param inputData 財務諸表の登録情報
+     * @return 処理結果
+     */
+    @Override
+    public Result registerFinancialStatementValue(final FinancialStatementInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
+        try {
+            financialStatementSpecification.insert(
+                    companySpecification.findCompanyByEdinetCode(inputData.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new),
+                    FinancialStatementEnum.fromValue(inputData.getFinancialStatementId()),
+                    inputData.getSubjectId(),
+                    documentSpecification.findDocument(inputData.getDocumentId()),
+                    inputData.getValue(),
+                    CreatedType.MANUAL
+            );
+
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "財務諸表の値を登録しました。\t書類ID:{0}\t財務諸表名:{1}\t科目ID:{2}\t値:{3}",
+                            inputData.getDocumentId(),
+                            FinancialStatementEnum.fromValue(inputData.getFinancialStatementId()).getName(),
+                            inputData.getSubjectId(),
+                            inputData.getValue()
+                    ),
+                    Category.DOCUMENT,
+                    Process.REMOVE,
+                    System.currentTimeMillis() - startTime
+            ));
+
+            return Result.OK;
+
+        } catch (final FundanalyzerNotExistException e) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("企業情報が見つかりませんでした。\tEDINETコード:{0}", inputData.getEdinetCode()),
+                    Category.DOCUMENT,
+                    Process.REGISTER,
+                    System.currentTimeMillis() - startTime
+            ));
+
+            return Result.NG;
+        } catch (final FundanalyzerRuntimeException e) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "エラーが発生したため、財務諸表の値を登録できませんでした。詳細を確認してください。\t{0}",
+                            inputData
+                    ),
+                    Category.DOCUMENT,
+                    Process.REGISTER,
+                    System.currentTimeMillis() - startTime
+            ));
+
+            return Result.NG;
+        }
     }
 
     /**
