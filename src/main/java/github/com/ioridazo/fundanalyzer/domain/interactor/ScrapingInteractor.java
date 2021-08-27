@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
@@ -151,7 +152,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                                     FinancialStatementEnum.BALANCE_SHEET,
                                     subject.getId(),
                                     document,
-                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
+                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
+                                    CreatedType.AUTO
                             ))
                     );
 
@@ -181,7 +183,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                                     FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
                                     subject.getId(),
                                     document,
-                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null)
+                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
+                                    CreatedType.AUTO
                             ))
                     );
                 }
@@ -202,7 +205,13 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     final String value = xbrlScraping.scrapeNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword());
 
                     financialStatementSpecification.insert(
-                            company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, parseValue(value).orElse(null));
+                            company,
+                            FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
+                            "0",
+                            document,
+                            parseValue(value).orElse(null),
+                            CreatedType.AUTO
+                    );
 
                 }
         );
@@ -253,7 +262,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     FinancialStatementEnum.BALANCE_SHEET,
                     subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES).getId(),
                     document,
-                    0L
+                    0L,
+                    CreatedType.AUTO
             );
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(

@@ -11,9 +11,14 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Documen
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -38,6 +44,7 @@ class DocumentInteractorTest {
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private EdinetDocumentSpecification edinetDocumentSpecification;
+    private FinancialStatementSpecification financialStatementSpecification;
     private FileOperator fileOperator;
     private EdinetClient edinetClient;
 
@@ -49,6 +56,7 @@ class DocumentInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         edinetDocumentSpecification = Mockito.mock(EdinetDocumentSpecification.class);
+        financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
         edinetClient = Mockito.mock(EdinetClient.class);
 
@@ -57,6 +65,7 @@ class DocumentInteractorTest {
                 companySpecification,
                 documentSpecification,
                 edinetDocumentSpecification,
+                financialStatementSpecification,
                 fileOperator,
                 edinetClient
         ));
@@ -489,6 +498,38 @@ class DocumentInteractorTest {
     }
 
     @Nested
+    class registerFinancialStatementValue {
+
+        private FinancialStatementInputData inputData;
+
+        @BeforeEach
+        void setUp() {
+            inputData = FinancialStatementInputData.of(
+                    "edinetCode",
+                    "documentId",
+                    "1",
+                    "1",
+                    1000
+            );
+        }
+
+        @DisplayName("registerFinancialStatementValue : 財務諸表の値を登録する")
+        @Test
+        void ok() {
+            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(defaultCompany()));
+            when(documentSpecification.findDocument("document")).thenReturn(defaultDocument());
+            assertEquals(Result.OK, documentInteractor.registerFinancialStatementValue(inputData));
+        }
+
+        @DisplayName("registerFinancialStatementValue : 財務諸表の値に失敗したらNGで返却する")
+        @Test
+        void ng() {
+            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenThrow(FundanalyzerNotExistException.class);
+            assertEquals(Result.NG, documentInteractor.registerFinancialStatementValue(inputData));
+        }
+    }
+
+    @Nested
     class removeDocument {
 
         @DisplayName("removeDocument : 指定書類IDを処理対象外にする")
@@ -518,6 +559,20 @@ class DocumentInteractorTest {
                 null,
                 null,
                 false
+        );
+    }
+
+    private Company defaultCompany() {
+        return new Company(
+                "code",
+                null,
+                null,
+                "edinetCode",
+                null,
+                null,
+                null,
+                null,
+                null
         );
     }
 }

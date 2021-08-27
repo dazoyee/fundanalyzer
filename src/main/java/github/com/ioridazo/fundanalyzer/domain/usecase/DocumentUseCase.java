@@ -1,6 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 
@@ -41,6 +43,15 @@ public interface DocumentUseCase {
      */
     @NewSpan
     void scrape(IdInputData inputData);
+
+    /**
+     * 財務諸表の値の登録
+     *
+     * @param inputData 財務諸表の登録情報
+     * @return 処理結果
+     */
+    @NewSpan
+    Result registerFinancialStatementValue(FinancialStatementInputData inputData);
 
     /**
      * 処理対象外に更新

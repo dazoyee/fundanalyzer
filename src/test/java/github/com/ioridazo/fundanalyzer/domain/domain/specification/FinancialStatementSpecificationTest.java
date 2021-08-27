@@ -85,6 +85,7 @@ class FinancialStatementSpecificationTest {
                             null,
                             null,
                             null,
+                            null,
                             null
                     )));
 
@@ -98,6 +99,7 @@ class FinancialStatementSpecificationTest {
         void empty() {
             when(financialStatementDao.selectByUniqueKey(any(), any(), any(), any(), any(), any()))
                     .thenReturn(Optional.of(new FinancialStatementEntity(
+                            null,
                             null,
                             null,
                             null,
@@ -144,6 +146,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -166,6 +169,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     100L,
+                    null,
                     null,
                     null,
                     null,
@@ -204,6 +208,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -226,6 +231,7 @@ class FinancialStatementSpecificationTest {
                     null,
                     null,
                     100L,
+                    null,
                     null,
                     null,
                     null,

@@ -67,6 +67,7 @@
             <tr>
                 <th>書類ID</th>
                 <th>EDINETコード</th>
+                <th>書類種別</th>
                 <th>対象年</th>
                 <th>DL</th>
                 <th>DC</th>
@@ -80,6 +81,7 @@
             <tr>
                 <td th:text="${documentDetail.document.documentId}">書類ID</td>
                 <td th:text="${documentDetail.document.edinetCode}">EDINETコード</td>
+                <td th:text="${documentDetail.document.documentTypeName}">書類種別</td>
                 <td th:text="${documentDetail.document.documentPeriod}">対象年</td>
                 <td th:text="${documentDetail.document.downloaded}">ダウンロード</td>
                 <td th:text="${documentDetail.document.decoded}">デコード</td>
@@ -128,27 +130,105 @@
             <tbody>
             <tr>
                 <td>流動資産合計</td>
-                <td th:text="${documentDetail.fundamentalValue.totalCurrentAssets}">流動資産合計</td>
+                <td th:unless="${documentDetail.fundamentalValue.totalCurrentAssets}">
+                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <input type="hidden" value="1" name="financialStatementId"/>
+                        <input type="hidden" value="2" name="subjectId"/>
+                        <input type="number" name="value"/>
+                        <button type="submit" class="btn">登録</button>
+                    </form>
+                </td>
+                <td th:if="${documentDetail.fundamentalValue.totalCurrentAssets}"
+                    th:text="${documentDetail.fundamentalValue.totalCurrentAssets}">流動資産合計
+                </td>
             </tr>
             <tr>
                 <td>投資その他の資産合計</td>
-                <td th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">投資その他の資産合計</td>
+                <td th:unless="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">
+                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <input type="hidden" value="1" name="financialStatementId"/>
+                        <input type="hidden" value="6" name="subjectId"/>
+                        <input type="number" name="value"/>
+                        <button type="submit" class="btn">登録</button>
+                    </form>
+                </td>
+                <td th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}"
+                    th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">投資その他の資産合計
+                </td>
             </tr>
             <tr>
                 <td>流動負債合計</td>
-                <td th:text="${documentDetail.fundamentalValue.totalCurrentLiabilities}">流動負債合計</td>
+                <td th:unless="${documentDetail.fundamentalValue.totalCurrentLiabilities}">
+                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <input type="hidden" value="1" name="financialStatementId"/>
+                        <input type="hidden" value="11" name="subjectId"/>
+                        <input type="number" name="value"/>
+                        <button type="submit" class="btn">登録</button>
+                    </form>
+                </td>
+                <td th:if="${documentDetail.fundamentalValue.totalCurrentLiabilities}"
+                    th:text="${documentDetail.fundamentalValue.totalCurrentLiabilities}">流動負債合計
+                </td>
             </tr>
             <tr>
                 <td>固定負債合計</td>
-                <td th:text="${documentDetail.fundamentalValue.totalFixedLiabilities}">固定負債合計</td>
+                <td th:unless="${documentDetail.fundamentalValue.totalFixedLiabilities}">
+                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <input type="hidden" value="1" name="financialStatementId"/>
+                        <input type="hidden" value="13" name="subjectId"/>
+                        <input type="number" name="value"/>
+                        <button type="submit" class="btn">登録</button>
+                    </form>
+                </td>
+                <td th:if="${documentDetail.fundamentalValue.totalFixedLiabilities}"
+                    th:text="${documentDetail.fundamentalValue.totalFixedLiabilities}">固定負債合計
+                </td>
             </tr>
             <tr>
                 <td>営業利益</td>
-                <td th:text="${documentDetail.fundamentalValue.operatingProfit}">営業利益</td>
+                <td th:unless="${documentDetail.fundamentalValue.operatingProfit}">
+                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <input type="hidden" value="2" name="financialStatementId"/>
+                        <input type="hidden" value="3" name="subjectId"/>
+                        <input type="number" name="value"/>
+                        <button type="submit" class="btn">登録</button>
+                    </form>
+                </td>
+                <td th:if="${documentDetail.fundamentalValue.operatingProfit}"
+                    th:text="${documentDetail.fundamentalValue.operatingProfit}">営業利益
+                </td>
             </tr>
             <tr>
                 <td>株式総数</td>
-                <td th:text="${documentDetail.fundamentalValue.numberOfShares}">株式総数</td>
+                <td th:unless="${documentDetail.fundamentalValue.numberOfShares}">
+                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="submitDate"/>
+                        <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <input type="hidden" value="4" name="financialStatementId"/>
+                        <input type="hidden" value="0" name="subjectId"/>-->
+                        <input type="number" name="value"/>
+                        <button type="submit" class="btn">登録</button>
+                    </form>
+                </td>
+                <td th:if="${documentDetail.fundamentalValue.numberOfShares}"
+                    th:text="${documentDetail.fundamentalValue.numberOfShares}">株式総数
+                </td>
             </tr>
             </tbody>
         </table>

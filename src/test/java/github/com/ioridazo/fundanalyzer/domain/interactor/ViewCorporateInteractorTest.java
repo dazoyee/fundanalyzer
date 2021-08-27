@@ -363,6 +363,7 @@ class ViewCorporateInteractorTest {
                     "4",
                     LocalDate.parse("2021-05-15"),
                     null,
+                    "0",
                     null
             );
             var plEntity = new FinancialStatementEntity(
@@ -378,6 +379,7 @@ class ViewCorporateInteractorTest {
                     "4",
                     LocalDate.parse("2021-05-15"),
                     null,
+                    "0",
                     null
             );
 
