@@ -19,6 +19,7 @@ public enum Process {
 
     ANALYSIS("analysis"),
     IMPORT("import"),
+    REGISTER("register"),
     UPDATE("update"),
     SLACK("slack"),
     ;

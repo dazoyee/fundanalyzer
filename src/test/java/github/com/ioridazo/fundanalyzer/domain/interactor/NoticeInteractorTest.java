@@ -87,7 +87,7 @@ class NoticeInteractorTest {
         }
 
         @DisplayName("noticeSlack : Slackに優良銘柄を通知する")
-        @Test
+        // @Test
         void submitDate() {
             var edinetListViewModel = EdinetListViewModel.of(
                     null,

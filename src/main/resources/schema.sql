@@ -147,6 +147,7 @@ CREATE TABLE IF NOT EXISTS `financial_statement`
     `quarter_type`           CHAR(1)                  DEFAULT NULL COMMENT '四半期種別' CHECK (`quarter_type` IN ('1', '2', '3', '4')),
     `submit_date`            DATE            NOT NULL COMMENT '提出日',
     `document_id`            CHAR(8)         NOT NULL COMMENT '書類ID',
+    `created_type`           CHAR(1)         NOT NULL COMMENT '登録方法' CHECK (`created_type` IN ('0', '1')),
     `created_at`             DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_fs` (`edinet_code`, `financial_statement_id`, `subject_id`, `period_end`, `document_type_code`,

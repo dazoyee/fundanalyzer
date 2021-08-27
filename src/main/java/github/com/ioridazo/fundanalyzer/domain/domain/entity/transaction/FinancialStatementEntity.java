@@ -46,6 +46,8 @@ public class FinancialStatementEntity {
 
     private final String documentId;
 
+    private final String createdType;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -61,6 +63,7 @@ public class FinancialStatementEntity {
             final QuarterType quarterType,
             final LocalDate submitDate,
             final String documentId,
+            final String createdType,
             final LocalDateTime createdAt) {
         if (DocumentTypeCode.DTC_140 == documentTypeCode && Objects.isNull(quarterType.toValue())) {
             throw new FundanalyzerNotExistException("四半期種別");
@@ -79,6 +82,7 @@ public class FinancialStatementEntity {
                 quarterType.toValue(),
                 submitDate,
                 documentId,
+                createdType,
                 createdAt
         );
     }

@@ -1,9 +1,12 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.EdinetService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,9 +19,11 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 class EdinetControllerTest {
 
+    private AnalysisService analysisService;
     private EdinetService edinetService;
     private ViewService viewService;
 
@@ -26,10 +31,11 @@ class EdinetControllerTest {
 
     @BeforeEach
     void setUp() {
+        analysisService = Mockito.mock(AnalysisService.class);
         edinetService = Mockito.mock(EdinetService.class);
         viewService = Mockito.mock(ViewService.class);
 
-        controller = new EdinetController(edinetService, viewService);
+        controller = new EdinetController(analysisService, edinetService, viewService);
     }
 
     @DisplayName("updateCompany : 会社情報を更新する")
@@ -55,6 +61,23 @@ class EdinetControllerTest {
     void updateEdinetList() {
         assertEquals("redirect:/fundanalyzer/v1/edinet/list", controller.updateEdinetList("2021-05-29"));
         Mockito.verify(viewService, Mockito.times(1)).updateEdinetListView(DateInputData.of(LocalDate.parse("2021-05-29")));
+    }
+
+    @DisplayName("registerFinancialStatementValue : 財務諸表の値を登録する")
+    @Test
+    void registerFinancialStatementValue() {
+        var inputData = FinancialStatementInputData.of(
+                "edinetCode",
+                "documentId",
+                "1",
+                "1",
+                1000
+        );
+        when(analysisService.registerFinancialStatementValue(inputData)).thenReturn(Result.OK);
+        assertEquals(
+                "redirect:/fundanalyzer/v1/edinet/list/detail?submitDate=2021-08-22",
+                controller.registerFinancialStatementValue("2021-08-22", inputData)
+        );
     }
 
     @DisplayName("removeDocument : 対象書類IDを処理対象外にする")

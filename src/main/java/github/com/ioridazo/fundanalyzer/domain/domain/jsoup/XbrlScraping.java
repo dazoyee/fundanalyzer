@@ -128,13 +128,13 @@ public class XbrlScraping {
                 .select(Tag.TABLE.getName())
                 .stream()
                 .map(Element::text)
-                .anyMatch(s -> s.contains(Unit.THOUSANDS_OF_YEN.getName()))) {
+                .anyMatch(text -> Unit.THOUSANDS_OF_YEN.getName().stream().anyMatch(text::contains))) {
             return Unit.THOUSANDS_OF_YEN;
         } else if (elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())
                 .stream()
                 .map(Element::text)
-                .anyMatch(s -> s.contains(Unit.MILLIONS_OF_YEN.getName()))) {
+                .anyMatch(text -> Unit.MILLIONS_OF_YEN.getName().stream().anyMatch(text::contains))) {
             return Unit.MILLIONS_OF_YEN;
         } else {
             throw new FundanalyzerFileException("財務諸表の金額単位を識別できませんでした。");

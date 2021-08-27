@@ -1,12 +1,16 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.EdinetService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,12 +24,15 @@ public class EdinetController {
     private static final URI V1_EDINET_PATH = URI.create("/fundanalyzer/v1/edinet/list");
     private static final URI V1_EDINET_DETAIL_PATH = URI.create("/fundanalyzer/v1/edinet/list/detail");
 
+    private final AnalysisService analysisService;
     private final EdinetService edinetService;
     private final ViewService viewService;
 
     public EdinetController(
+            final AnalysisService analysisService,
             final EdinetService edinetService,
             final ViewService viewService) {
+        this.analysisService = analysisService;
         this.edinetService = edinetService;
         this.viewService = viewService;
     }
@@ -65,6 +72,27 @@ public class EdinetController {
     public String updateEdinetList(final String date) {
         viewService.updateEdinetListView(DateInputData.of(LocalDate.parse(date)));
         return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH).toUriString();
+    }
+
+    /**
+     * 財務諸表の値を登録する
+     *
+     * @param date      提出日
+     * @param inputData 財務諸表の登録情報
+     * @return EdinetDetail
+     */
+    @PostMapping("fundanalyzer/v1/fix-fundamental-value")
+    public String registerFinancialStatementValue(
+            @ModelAttribute("submitDate") final String date, final FinancialStatementInputData inputData) {
+        final Result result = analysisService.registerFinancialStatementValue(inputData);
+        if (Result.OK.equals(result)) {
+            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+                    .queryParam("submitDate", date).build().encode().toUriString();
+        } else {
+            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+                    .queryParam("submitDate", date)
+                    .queryParam("error", "登録に失敗しました。").build().encode().toUriString();
+        }
     }
 
     /**

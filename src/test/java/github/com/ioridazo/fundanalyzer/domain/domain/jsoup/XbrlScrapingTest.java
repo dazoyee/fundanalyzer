@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.jsoup;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import org.junit.jupiter.api.BeforeEach;
@@ -207,11 +206,22 @@ class XbrlScrapingTest {
             assertEquals(Unit.THOUSANDS_OF_YEN, actual);
         }
 
-        @DisplayName("unit : ファイルから財務諸表の金額単位（百万円）をスクレイピングする")
+        @DisplayName("unit : ファイルから財務諸表の金額単位（単位：百万円）をスクレイピングする")
         @Test
         void unit_millions_ok() {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_millions.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
+
+            var actual = xbrlScraping.unit(file, keyword);
+
+            assertEquals(Unit.MILLIONS_OF_YEN, actual);
+        }
+
+        @DisplayName("unit : ファイルから財務諸表の金額単位（単位　百万円）をスクレイピングする")
+        @Test
+        void unit_millions_2_ok() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_millions_2.html");
+            var keyword = "jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock";
 
             var actual = xbrlScraping.unit(file, keyword);
 
