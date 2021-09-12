@@ -80,6 +80,19 @@ class EdinetControllerTest {
         );
     }
 
+    @DisplayName("updateAllDoneStatus : 処理ステータスを更新する")
+    @Test
+    void updateAllDoneStatus() {
+        var inputData = IdInputData.of(
+                "id"
+        );
+        when(edinetService.updateAllDoneStatus(inputData)).thenReturn(Result.OK);
+        assertEquals(
+                "redirect:/fundanalyzer/v1/edinet/list/detail?submitDate=2021-08-22",
+                controller.updateAllDoneStatus("2021-08-22", "id")
+        );
+    }
+
     @DisplayName("removeDocument : 対象書類IDを処理対象外にする")
     @Test
     void removeDocument() {

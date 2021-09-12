@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
@@ -44,6 +45,18 @@ public class EdinetService {
                 .map(DateInputData::of)
                 // edinet
                 .forEach(documentUseCase::saveEdinetList);
+    }
+
+    /**
+     * ステータス更新
+     *
+     * @param inputData 書類ID
+     * @return 処理結果
+     */
+    @NewSpan
+    public Result updateAllDoneStatus(final IdInputData inputData) {
+        // update
+        return documentUseCase.updateAllDoneStatus(inputData);
     }
 
     /**

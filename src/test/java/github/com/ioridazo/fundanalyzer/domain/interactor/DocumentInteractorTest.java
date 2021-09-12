@@ -17,6 +17,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
@@ -34,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -526,6 +528,32 @@ class DocumentInteractorTest {
         void ng() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenThrow(FundanalyzerNotExistException.class);
             assertEquals(Result.NG, documentInteractor.registerFinancialStatementValue(inputData));
+        }
+    }
+
+    @Nested
+    class updateAllDoneStatus {
+
+        private IdInputData inputData;
+
+        @BeforeEach
+        void setUp() {
+            inputData = IdInputData.of(
+                    "id"
+            );
+        }
+
+        @DisplayName("updateAllDoneStatus : 処理ステータスを更新する")
+        @Test
+        void ok() {
+            assertEquals(Result.OK, documentInteractor.updateAllDoneStatus(inputData));
+        }
+
+        @DisplayName("updateAllDoneStatus : 処理ステータスの更新に失敗したらNGで返却する")
+        @Test
+        void ng() {
+            doThrow(FundanalyzerRuntimeException.class).when(documentSpecification).updateAllDone("id");
+            assertEquals(Result.NG, documentInteractor.updateAllDoneStatus(inputData));
         }
     }
 

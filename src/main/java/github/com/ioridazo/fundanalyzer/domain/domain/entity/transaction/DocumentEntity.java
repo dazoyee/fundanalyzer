@@ -122,6 +122,18 @@ public class DocumentEntity {
                 .build();
     }
 
+    public static DocumentEntity ofUpdateAllDone(final String documentId, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(documentId)
+                .downloaded(DocumentStatus.DONE.toValue())
+                .decoded(DocumentStatus.DONE.toValue())
+                .scrapedBs(DocumentStatus.DONE.toValue())
+                .scrapedPl(DocumentStatus.DONE.toValue())
+                .scrapedNumberOfShares(DocumentStatus.DONE.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
     public static DocumentEntity ofUpdateRemoved(final Document document, final LocalDateTime updatedAt) {
         return DocumentEntity.builder()
                 .documentId(document.getDocumentId())

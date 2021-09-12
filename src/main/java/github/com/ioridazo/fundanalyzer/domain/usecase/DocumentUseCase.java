@@ -54,6 +54,15 @@ public interface DocumentUseCase {
     Result registerFinancialStatementValue(FinancialStatementInputData inputData);
 
     /**
+     * ステータス更新
+     *
+     * @param inputData 書類ID
+     * @return 処理結果
+     */
+    @NewSpan
+    Result updateAllDoneStatus(IdInputData inputData);
+
+    /**
      * 処理対象外に更新
      *
      * @param inputData 書類ID
