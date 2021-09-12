@@ -104,12 +104,21 @@
                 </tbody>
             </table>
 
-            <div>
-                <form method="post" th:action="@{/fundanalyzer/v1/analyze/id}">
-                    <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
-                    <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
-                    <button type="submit" class="btn">分析する</button>
-                </form>
+            <div class="row">
+                <div class="col-lg-3">
+                    <form method="post" th:action="@{/fundanalyzer/v1/update/all-done/status}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <button type="submit" class="btn">ステータス更新：すべて完了</button>
+                    </form>
+                </div>
+                <div class="col-lg-2">
+                    <form method="post" th:action="@{/fundanalyzer/v1/analyze/id}">
+                        <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
+                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                        <button type="submit" class="btn">分析する</button>
+                    </form>
+                </div>
             </div>
 
             <table>

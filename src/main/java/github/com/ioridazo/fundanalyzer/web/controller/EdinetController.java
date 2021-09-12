@@ -96,6 +96,26 @@ public class EdinetController {
     }
 
     /**
+     * 処理ステータスを更新する
+     *
+     * @param date       提出日
+     * @param documentId 書類ID
+     * @return EdinetDetail
+     */
+    @PostMapping("fundanalyzer/v1/update/all-done/status")
+    public String updateAllDoneStatus(final String date, final String documentId) {
+        final Result result = edinetService.updateAllDoneStatus(IdInputData.of(documentId));
+        if (Result.OK.equals(result)) {
+            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+                    .queryParam("submitDate", date).build().encode().toUriString();
+        } else {
+            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+                    .queryParam("submitDate", date)
+                    .queryParam("error", "登録に失敗しました。").build().encode().toUriString();
+        }
+    }
+
+    /**
      * 財務諸表の分析する
      *
      * @param date 提出日
