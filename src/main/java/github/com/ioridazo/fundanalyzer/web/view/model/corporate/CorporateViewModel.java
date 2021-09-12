@@ -1,10 +1,12 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.corporate;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import lombok.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.stream.Stream;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value(staticConstructor = "of")
@@ -18,6 +20,12 @@ public class CorporateViewModel {
 
     // 提出日
     private final LocalDate submitDate;
+
+    // 最新書類種別コード
+    private final String latestDocumentTypeCode;
+
+    // 有価証券報告書フラグ
+    private final boolean isMainReport;
 
     // 最新企業価値
     private final BigDecimal latestCorporateValue;
@@ -57,6 +65,11 @@ public class CorporateViewModel {
                 viewBean.getCode(),
                 viewBean.getName(),
                 viewBean.getSubmitDate().orElse(null),
+                viewBean.getLatestDocumentTypeCode().orElse(null),
+                viewBean.getLatestDocumentTypeCode().stream()
+                        .anyMatch(dtc -> Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
+                                .map(DocumentTypeCode::toValue)
+                                .anyMatch(dtc::equals)),
                 viewBean.getLatestCorporateValue().orElse(null),
                 viewBean.getAverageCorporateValue().orElse(null),
                 viewBean.getStandardDeviation().orElse(null),
