@@ -117,7 +117,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
 
         try {
             analysisResultSpecification.insert(document, calculateFsValue(document));
-        } catch (FundanalyzerNotExistException ignored) {
+        } catch (FundanalyzerNotExistException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
@@ -126,7 +126,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                     ),
                     Category.ANALYSIS,
                     Process.ANALYSIS
-            ));
+            ), e);
         }
     }
 
