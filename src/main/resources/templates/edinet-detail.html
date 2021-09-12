@@ -131,15 +131,18 @@
                 <tbody>
                 <tr>
                     <td>NS</td>
-                    <td th:text="${documentDetail.document.numberOfSharesDocumentPath}">NS</td>
+                    <td><a th:text="${documentDetail.document.numberOfSharesDocumentPath}"
+                           th:href="${documentDetail.document.numberOfSharesDocumentPath}" target="_blank">NS</a></td>
                 </tr>
                 <tr>
                     <td>BS</td>
-                    <td th:text="${documentDetail.document.bsDocumentPath}">BS</td>
+                    <td><a th:text="${documentDetail.document.bsDocumentPath}"
+                           th:href="${documentDetail.document.bsDocumentPath}" target="_blank">BS</a></td>
                 </tr>
                 <tr>
                     <td>PL</td>
-                    <td th:text="${documentDetail.document.plDocumentPath}">PL</td>
+                    <td><a th:text="${documentDetail.document.plDocumentPath}"
+                           th:href="${documentDetail.document.plDocumentPath}" target="_blank">PL</a></td>
                 </tr>
                 </tbody>
             </table>
