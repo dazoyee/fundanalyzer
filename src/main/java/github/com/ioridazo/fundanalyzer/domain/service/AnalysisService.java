@@ -69,7 +69,7 @@ public class AnalysisService {
     }
 
     /**
-     * 指定提出日の書類分析
+     * 指定提出日をスクレイピング/分析
      *
      * @param inputData 提出日
      */
@@ -82,7 +82,7 @@ public class AnalysisService {
     }
 
     /**
-     * 指定書類IDを分析
+     * 指定書類IDをスクレイピング/分析
      *
      * @param inputData 書類ID
      */
@@ -104,6 +104,30 @@ public class AnalysisService {
     public Result registerFinancialStatementValue(final FinancialStatementInputData inputData) {
         // register
         return documentUseCase.registerFinancialStatementValue(inputData);
+    }
+
+    /**
+     * 指定書類IDを分析
+     *
+     * @param inputData 提出日
+     */
+    @NewSpan
+    public void analyzeByDate(final DateInputData inputData) {
+        // analyze
+        analyzeUseCase.analyze(inputData);
+        // view edinet
+        viewEdinetUseCase.updateView(inputData);
+    }
+
+    /**
+     * 指定提出日を分析
+     *
+     * @param inputData 書類ID
+     */
+    @NewSpan
+    public void analyzeById(final IdInputData inputData) {
+        // analyze
+        analyzeUseCase.analyze(inputData);
     }
 
     /**

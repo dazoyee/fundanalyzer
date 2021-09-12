@@ -57,7 +57,7 @@ public class AnalysisController {
     }
 
     /**
-     * 指定提出日の書類を分析する
+     * 指定提出日の書類をスクレイピング/分析する
      *
      * @param date 提出日
      * @return Index
@@ -69,7 +69,7 @@ public class AnalysisController {
     }
 
     /**
-     * 指定書類IDを分析する
+     * 指定書類IDをスクレイピング/分析する
      *
      * @param documentId 書類ID（CSVで複数可能）
      * @return Index
