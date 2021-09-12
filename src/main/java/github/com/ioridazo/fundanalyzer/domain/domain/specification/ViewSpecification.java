@@ -1,9 +1,10 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -162,11 +163,15 @@ public class ViewSpecification {
      */
     public CorporateViewModel generateCorporateView(final Company company, final CorporateValue corporateValue) {
         final Stock stock = stockSpecification.findStock(company);
+        final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
 
         return CorporateViewModel.of(
                 company.getCode().map(code -> code.substring(0, 4)).orElseThrow(FundanalyzerNotExistException::new),
                 company.getCompanyName(),
-                documentSpecification.latestDocument(company).map(Document::getSubmitDate).orElse(null),
+                latestDocument.map(Document::getSubmitDate).orElse(null),
+                latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue).orElse(null),
+                latestDocument.map(Document::getDocumentTypeCode).stream()
+                        .anyMatch(dtc -> List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130).contains(dtc)),
                 corporateValue.getLatestCorporateValue().orElse(null),
                 corporateValue.getAverageCorporateValue().orElse(null),
                 corporateValue.getStandardDeviation().orElse(null),
