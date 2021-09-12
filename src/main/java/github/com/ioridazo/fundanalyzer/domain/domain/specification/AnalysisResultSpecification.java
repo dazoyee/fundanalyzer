@@ -175,26 +175,6 @@ public class AnalysisResultSpecification {
     }
 
     /**
-     * 分析処理対象となる企業価値リストを取得する
-     *
-     * @param company          企業情報
-     * @param documentTypeCode 書類種別コード
-     * @return 企業価値リスト
-     */
-    public List<AnalysisResultEntity> analysisTargetList(final Company company, final List<String> documentTypeCode) {
-        final String code = company.getCode().orElseThrow(FundanalyzerNotExistException::new);
-        return analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode).stream()
-                .map(AnalysisResultEntity::getDocumentPeriod)
-                // null のときはEPOCHとなるため、除外する
-                .filter(period -> !LocalDate.EPOCH.isEqual(period))
-                .distinct()
-                .map(documentPeriod -> latestAnalysisResult(company.getCode().get(), documentPeriod))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * 表示対象とする企業価値リストを取得する
      *
      * @param company          企業情報
@@ -232,14 +212,27 @@ public class AnalysisResultSpecification {
     }
 
     /**
-     * 最新の企業価値を取得する
+     * 分析処理対象となる企業価値リストを取得する
      *
-     * @param code           企業コード
-     * @param documentPeriod 期間
-     * @return 最新の企業価値
+     * @param company          企業情報
+     * @param documentTypeCode 書類種別コード
+     * @return 企業価値リスト
      */
-    private Optional<AnalysisResultEntity> latestAnalysisResult(final String code, final LocalDate documentPeriod) {
-        return analysisResultDao.selectByCodeAndPeriod(code, documentPeriod).stream()
-                .max(Comparator.comparing(AnalysisResultEntity::getSubmitDate));
+    List<AnalysisResultEntity> analysisTargetList(final Company company, final List<String> documentTypeCode) {
+        final String code = company.getCode().orElseThrow(FundanalyzerNotExistException::new);
+        final List<AnalysisResultEntity> analysisTargetList = analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode);
+
+        return analysisTargetList.stream()
+                .map(AnalysisResultEntity::getDocumentPeriod)
+                // null のときはEPOCHとなるため、除外する
+                .filter(period -> !LocalDate.EPOCH.isEqual(period))
+                .distinct()
+                // 最新の企業価値を取得する
+                .map(dp -> analysisTargetList.stream()
+                        .filter(e -> dp.equals(e.getDocumentPeriod()))
+                        .max(Comparator.comparing(AnalysisResultEntity::getSubmitDate)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 }

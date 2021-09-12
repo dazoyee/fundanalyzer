@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
@@ -56,6 +56,8 @@ class ViewSpecificationTest {
                 null,
                 null,
                 null,
+                null,
+                true,
                 null,
                 null,
                 null,
@@ -201,6 +203,7 @@ class ViewSpecificationTest {
 
     private CorporateViewBean defaultCorporateViewBean() {
         return new CorporateViewBean(
+                null,
                 null,
                 null,
                 null,

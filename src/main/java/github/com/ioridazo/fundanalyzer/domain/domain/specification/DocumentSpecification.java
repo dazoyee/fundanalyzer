@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class DocumentSpecification {
@@ -394,6 +395,15 @@ public class DocumentSpecification {
     }
 
     /**
+     * すべての処理ステータスを完了に更新する
+     *
+     * @param documentId 書類ID
+     */
+    public void updateAllDone(final String documentId) {
+        documentDao.update(DocumentEntity.ofUpdateAllDone(documentId, nowLocalDateTime()));
+    }
+
+    /**
      * 処理対象から除外する
      *
      * @param documentId 書類ID
@@ -418,11 +428,11 @@ public class DocumentSpecification {
      * @return boolean
      */
     public boolean allStatusDone(final Document document) {
-        return List.of(
+        return Stream.of(
                 document.getScrapedBs(),
                 document.getScrapedPl(),
                 document.getScrapedNumberOfShares()
-        ).stream().allMatch(DocumentStatus.DONE::equals);
+        ).allMatch(DocumentStatus.DONE::equals);
     }
 
     /**

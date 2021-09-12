@@ -239,7 +239,7 @@ public class DocumentInteractor implements DocumentUseCase {
                             inputData.getValue()
                     ),
                     Category.DOCUMENT,
-                    Process.REMOVE,
+                    Process.REGISTER,
                     System.currentTimeMillis() - startTime
             ));
 
@@ -262,6 +262,42 @@ public class DocumentInteractor implements DocumentUseCase {
                     ),
                     Category.DOCUMENT,
                     Process.REGISTER,
+                    System.currentTimeMillis() - startTime
+            ));
+
+            return Result.NG;
+        }
+    }
+
+    /**
+     * 処理ステータスを更新する
+     *
+     * @param inputData 書類ID
+     * @return 処理結果
+     */
+    @Override
+    public Result updateAllDoneStatus(final IdInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+        try {
+            documentSpecification.updateAllDone(inputData.getId());
+
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("すべての処理ステータスを完了に更新しました。\t書類ID:{0}", inputData.getId()),
+                    Category.DOCUMENT,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+
+            return Result.OK;
+
+        } catch (final FundanalyzerRuntimeException e) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "エラーが発生したため、処理ステータスを完了の更新に失敗しました。。\t書類ID:{0}",
+                            inputData.getId()
+                    ),
+                    Category.DOCUMENT,
+                    Process.UPDATE,
                     System.currentTimeMillis() - startTime
             ));
 
