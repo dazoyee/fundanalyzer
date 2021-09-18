@@ -159,43 +159,6 @@ class XbrlScrapingTest {
             assertEquals(85, actual.size());
         }
 
-        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする")
-        @Test
-        void scrapeFinancialStatement_ok_IndexOutOfBoundsException() {
-            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_main2.html");
-            var keyword = "jpcrp_cor:BalanceSheetTextBlock";
-
-            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
-
-            assertAll("FinancialTableResultBean",
-                    () -> assertAll(
-                            () -> assertEquals("前事業年度 (平成30年10月20日)", actual.get(1).getSubject().orElseThrow()),
-                            () -> assertNull(actual.get(1).getPreviousValue().orElse(null)),
-                            () -> assertEquals("当事業年度 (令和元年10月20日)", actual.get(1).getCurrentValue()),
-                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
-                    ),
-                    () -> assertAll(
-                            () -> assertEquals("現金及び預金", actual.get(2).getSubject().orElseThrow()),
-                            () -> assertEquals("※ 116,109", actual.get(2).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("※ 476,095", actual.get(2).getCurrentValue()),
-                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(2).getUnit())
-                    ),
-                    () -> assertAll(
-                            () -> assertEquals("流動負債合計", actual.get(63).getSubject().orElseThrow()),
-                            () -> assertEquals("1,070,764", actual.get(63).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("1,283,815", actual.get(63).getCurrentValue()),
-                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(63).getUnit())
-                    ),
-                    () -> assertAll(
-                            () -> assertEquals("負債純資産合計", actual.get(85).getSubject().orElseThrow()),
-                            () -> assertEquals("5,262,964", actual.get(85).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("5,457,406", actual.get(85).getCurrentValue()),
-                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(85).getUnit())
-                    )
-            );
-            assertEquals(86, actual.size());
-        }
-
         @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
         @Test
         void scrapeFinancialStatement_ok_dtc140() {
