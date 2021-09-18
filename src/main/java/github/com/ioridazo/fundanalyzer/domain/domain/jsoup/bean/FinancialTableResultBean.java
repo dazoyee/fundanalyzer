@@ -38,6 +38,15 @@ public class FinancialTableResultBean {
                 // テーブル項目の当年度が先に存在している場合
                 return FinancialTableResultBean.of(tdList.get(0), tdList.get(2), tdList.get(1), unit);
             }
+        } else if (tdList.size() == 4) {
+            // 財務諸表に記載の項目が当年度と昨年度がある場合（main）
+            if (isMain) {
+                // テーブル項目の当年度が後に存在している場合（main）
+                return FinancialTableResultBean.of(tdList.get(0), tdList.get(2), tdList.get(3), unit);
+            } else {
+                // テーブル項目の当年度が先に存在している場合
+                return FinancialTableResultBean.of(tdList.get(0), tdList.get(3), tdList.get(2), unit);
+            }
         } else {
             // 合致するものがない場合
             return null;
