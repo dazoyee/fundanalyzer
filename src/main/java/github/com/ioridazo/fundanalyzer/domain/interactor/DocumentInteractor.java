@@ -325,6 +325,34 @@ public class DocumentInteractor implements DocumentUseCase {
     }
 
     /**
+     * 除外条件に合致するドキュメントを処理対象外に更新する
+     *
+     * @param inputData 提出日
+     */
+    @Override
+    public void removeDocument(final DateInputData inputData) {
+        documentSpecification.removeTargetList(inputData).stream()
+                // download is done
+                .filter(document -> DocumentStatus.DONE.equals(document.getDownloaded()))
+                // decode is done
+                .filter(document -> DocumentStatus.DONE.equals(document.getDecoded()))
+                // ns is not null
+                .filter(document -> !DocumentStatus.NOT_YET.equals(document.getScrapedNumberOfShares()))
+                // bs path is null
+                .filter(document -> document.getBsDocumentPath().isEmpty())
+                // pl path is null
+                .filter(document -> document.getPlDocumentPath().isEmpty())
+                .forEach(document -> {
+                    documentSpecification.updateRemoved(document);
+                    log.info(FundanalyzerLogClient.toInteractorLogObject(
+                            MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", document.getDocumentId()),
+                            Category.DOCUMENT,
+                            Process.REMOVE
+                    ));
+                });
+    }
+
+    /**
      * ドキュメントをスクレイピングする
      *
      * @param document ドキュメント

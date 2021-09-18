@@ -45,6 +45,8 @@ public class DocumentSpecification {
 
     @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
+    @Value("${app.config.remove-document.document-type-code}")
+    List<String> targetTypeCodesToRemove;
 
     public DocumentSpecification(
             final DocumentDao documentDao,
@@ -147,7 +149,7 @@ public class DocumentSpecification {
      * @param inputData 提出日
      * @return ドキュメント情報リスト
      */
-    public List<Document> analysisTargetList(DateInputData inputData) {
+    public List<Document> analysisTargetList(final DateInputData inputData) {
         return targetList(inputData).stream()
                 // all match status done
                 .filter(this::allStatusDone)
@@ -155,6 +157,21 @@ public class DocumentSpecification {
                 .filter(document -> document.getDocumentPeriod().isPresent())
                 // only not analyze
                 .filter(document -> !analysisResultSpecification.isAnalyzed(document))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 除外対象となるドキュメント情報リストを取得する
+     *
+     * @param inputData 提出日
+     * @return ドキュメント情報リスト
+     */
+    public List<Document> removeTargetList(final DateInputData inputData) {
+        return documentDao.selectByTypeAndSubmitDate(targetTypeCodesToRemove, inputData.getDate()).stream()
+                .filter(entity -> entity.getEdinetCode().isPresent())
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
+                .filter(this::isTarget)
+                .filter(Document::isTarget)
                 .collect(Collectors.toList());
     }
 

@@ -55,6 +55,8 @@ public class AnalysisService {
                 .forEach(date -> {
                     // scraping
                     documentUseCase.allProcess(date);
+                    // remove
+                    documentUseCase.removeDocument(date);
                     // analysis
                     analyzeUseCase.analyze(date);
                     // stock
@@ -82,6 +84,8 @@ public class AnalysisService {
                 .forEach(date -> {
                     // scraping
                     documentUseCase.allProcess(date);
+                    // remove
+                    documentUseCase.removeDocument(date);
                     // analysis
                     analyzeUseCase.analyze(date);
                     // view corporate
