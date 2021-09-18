@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeyw
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.Value;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,13 +100,17 @@ public class XbrlScraping {
                         .collect(Collectors.toList()))
                 .collect(Collectors.toList());
 
+        // 年度以外の情報を取り除く
+        scrapingList.get(1).removeIf(s -> s.contains("注記"));
+
         // 年度の順序を確認する
-        final var isMain = Optional.of(true)
+        final boolean isMain = Optional.of(true)
                 .map(aBoolean -> {
-                    try {
+                    if (scrapingList.get(1).size() == 2) {
                         return scrapingList.get(1).get(0).contains("前") || scrapingList.get(1).get(1).contains("当");
-                    } catch (IndexOutOfBoundsException e) {
-                        return true;
+                    } else {
+                        throw new FundanalyzerScrapingException(
+                                "年度に関して対象の財務諸表は定形外でした。詳細を確認してください。\nファイルパス:" + targetFile);
                     }
                 })
                 .get();

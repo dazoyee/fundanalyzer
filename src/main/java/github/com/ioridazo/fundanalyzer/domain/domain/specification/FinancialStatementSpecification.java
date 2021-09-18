@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementKeyViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementValueViewModel;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +19,7 @@ import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,16 +52,30 @@ public class FinancialStatementSpecification {
      * @param document ドキュメント
      * @param subject  科目
      * @return 値
+     * @throws FundanalyzerBadDataException データ取得に失敗したとき
      */
-    public Optional<Long> findValue(final FinancialStatementEnum fs, final Document document, final Subject subject) {
-        return financialStatementDao.selectByUniqueKey(
-                document.getEdinetCode(),
-                fs.toValue(),
-                subject.getId(),
-                String.valueOf(document.getPeriodEnd().getYear()),
-                document.getDocumentTypeCode().toValue(),
-                document.getSubmitDate()
-        ).flatMap(FinancialStatementEntity::getValue);
+    public Optional<Long> findValue(
+            final FinancialStatementEnum fs,
+            final Document document,
+            final Subject subject) throws FundanalyzerBadDataException {
+        try {
+            return financialStatementDao.selectByUniqueKey(
+                    document.getEdinetCode(),
+                    fs.getId(),
+                    subject.getId(),
+                    String.valueOf(document.getPeriodEnd().getYear()),
+                    document.getDocumentTypeCode().toValue(),
+                    document.getSubmitDate()
+            ).flatMap(FinancialStatementEntity::getValue);
+        } catch (final NestedRuntimeException e) {
+            throw new FundanalyzerBadDataException(MessageFormat.format(
+                    "財務諸表の値を正常に取得できませんでした。詳細を確認してください。" +
+                            "\t財務諸表名:{0}\t書類ID:{1}\t科目名:{2}",
+                    fs.getName(),
+                    document.getDocumentId(),
+                    subject.getName()
+            ), e);
+        }
     }
 
     /**
@@ -91,7 +107,7 @@ public class FinancialStatementSpecification {
     public Optional<Long> findNsValue(final Document document) {
         return financialStatementDao.selectByUniqueKey(
                 document.getEdinetCode(),
-                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getId(),
                 "0",
                 String.valueOf(document.getPeriodEnd().getYear()),
                 document.getDocumentTypeCode().toValue(),
@@ -144,7 +160,7 @@ public class FinancialStatementSpecification {
             financialStatementDao.insert(FinancialStatementEntity.of(
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
-                    fs.toValue(),
+                    fs.getId(),
                     dId,
                     document.getPeriodStart(),
                     document.getPeriodEnd(),
@@ -215,6 +231,20 @@ public class FinancialStatementSpecification {
     }
 
     /**
+     * 投資その他の資産合計が存在するを確認する
+     *
+     * @param document ドキュメント
+     * @return boolean
+     */
+    public boolean isPresentTotalInvestmentsAndOtherAssets(final Document document) {
+        return findValue(
+                FinancialStatementEnum.BALANCE_SHEET,
+                document,
+                subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)
+        ).isPresent();
+    }
+
+    /**
      * 対象のデータベースリストから貸借対照表関連の値リストを取得する
      *
      * @param entityList データベースリスト
@@ -222,9 +252,9 @@ public class FinancialStatementSpecification {
      */
     public List<FinancialStatementValueViewModel> parseBsSubjectValue(final List<FinancialStatementEntity> entityList) {
         return entityList.stream()
-                .filter(entity -> FinancialStatementEnum.BALANCE_SHEET.equals(FinancialStatementEnum.fromValue(entity.getFinancialStatementId())))
+                .filter(entity -> FinancialStatementEnum.BALANCE_SHEET.equals(FinancialStatementEnum.fromId(entity.getFinancialStatementId())))
                 .map(entity -> {
-                    final FinancialStatementEnum fs = FinancialStatementEnum.fromValue(entity.getFinancialStatementId());
+                    final FinancialStatementEnum fs = FinancialStatementEnum.fromId(entity.getFinancialStatementId());
 
                     return FinancialStatementValueViewModel.of(
                             subjectSpecification.findSubject(fs, entity.getSubjectId()).getName(),
@@ -242,9 +272,9 @@ public class FinancialStatementSpecification {
      */
     public List<FinancialStatementValueViewModel> parsePlSubjectValue(final List<FinancialStatementEntity> entityList) {
         return entityList.stream()
-                .filter(entity -> FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(FinancialStatementEnum.fromValue(entity.getFinancialStatementId())))
+                .filter(entity -> FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(FinancialStatementEnum.fromId(entity.getFinancialStatementId())))
                 .map(entity -> {
-                    final FinancialStatementEnum fs = FinancialStatementEnum.fromValue(entity.getFinancialStatementId());
+                    final FinancialStatementEnum fs = FinancialStatementEnum.fromId(entity.getFinancialStatementId());
 
                     return FinancialStatementValueViewModel.of(
                             subjectSpecification.findSubject(fs, entity.getSubjectId()).getName(),

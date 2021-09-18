@@ -40,7 +40,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String doMain(final String fromDate, final String toDate) {
-        analysisService.doMain(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
+        analysisService.executePartOfMain(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
         return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 
@@ -64,7 +64,7 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
-        analysisService.doByDate(DateInputData.of(LocalDate.parse(date)));
+        analysisService.executeByDate(DateInputData.of(LocalDate.parse(date)));
         return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 
@@ -79,7 +79,7 @@ public class AnalysisController {
         Arrays.stream(documentId.split(","))
                 .filter(dId -> dId.length() == 8)
                 .map(IdInputData::of)
-                .forEach(analysisService::doById);
+                .forEach(analysisService::executeById);
         return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
     }
 

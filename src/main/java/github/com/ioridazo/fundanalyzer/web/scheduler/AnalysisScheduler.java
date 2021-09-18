@@ -75,7 +75,7 @@ public class AnalysisScheduler {
                         .map(submitDate -> submitDate.plusDays(1))
                         .orElse(nowLocalDate());
 
-                analysisService.doMain(BetweenDateInputData.of(fromDate, nowLocalDate()));
+                analysisService.executeAllMain(BetweenDateInputData.of(fromDate, nowLocalDate()));
 
                 final long durationTime = System.currentTimeMillis() - startTime;
 

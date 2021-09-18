@@ -69,4 +69,12 @@ public interface DocumentUseCase {
      */
     @NewSpan
     void removeDocument(IdInputData inputData);
+
+    /**
+     * 処理対象外に更新
+     *
+     * @param inputData 提出日
+     */
+    @NewSpan
+    void removeDocument(DateInputData inputData);
 }

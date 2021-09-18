@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.MessageFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -221,7 +225,12 @@ public class StockSpecification {
             }
             return stockPriceDao.selectByCodeAndDate(code, targetDate).isEmpty();
         } catch (final NullPointerException e) {
-            log.debug("{} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。", code, e);
+            log.info(FundanalyzerLogClient.toSpecificationLogObject(
+                    MessageFormat.format(
+                            "{} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。", code),
+                    Category.STOCK,
+                    Process.REGISTER
+            ), e);
             return false;
         }
     }

@@ -94,7 +94,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            documentList.parallelStream().forEach(this::scrape);
+            documentList.forEach(this::scrape);
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
@@ -223,7 +223,7 @@ public class DocumentInteractor implements DocumentUseCase {
         try {
             financialStatementSpecification.insert(
                     companySpecification.findCompanyByEdinetCode(inputData.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new),
-                    FinancialStatementEnum.fromValue(inputData.getFinancialStatementId()),
+                    FinancialStatementEnum.fromId(inputData.getFinancialStatementId()),
                     inputData.getSubjectId(),
                     documentSpecification.findDocument(inputData.getDocumentId()),
                     inputData.getValue(),
@@ -234,7 +234,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     MessageFormat.format(
                             "財務諸表の値を登録しました。\t書類ID:{0}\t財務諸表名:{1}\t科目ID:{2}\t値:{3}",
                             inputData.getDocumentId(),
-                            FinancialStatementEnum.fromValue(inputData.getFinancialStatementId()).getName(),
+                            FinancialStatementEnum.fromId(inputData.getFinancialStatementId()).getName(),
                             inputData.getSubjectId(),
                             inputData.getValue()
                     ),
@@ -322,6 +322,34 @@ public class DocumentInteractor implements DocumentUseCase {
                 Process.REMOVE,
                 System.currentTimeMillis() - startTime
         ));
+    }
+
+    /**
+     * 除外条件に合致するドキュメントを処理対象外に更新する
+     *
+     * @param inputData 提出日
+     */
+    @Override
+    public void removeDocument(final DateInputData inputData) {
+        documentSpecification.removeTargetList(inputData).stream()
+                // download is done
+                .filter(document -> DocumentStatus.DONE.equals(document.getDownloaded()))
+                // decode is done
+                .filter(document -> DocumentStatus.DONE.equals(document.getDecoded()))
+                // ns is not null
+                .filter(document -> !DocumentStatus.NOT_YET.equals(document.getScrapedNumberOfShares()))
+                // bs path is null
+                .filter(document -> document.getBsDocumentPath().isEmpty())
+                // pl path is null
+                .filter(document -> document.getPlDocumentPath().isEmpty())
+                .forEach(document -> {
+                    documentSpecification.updateRemoved(document);
+                    log.info(FundanalyzerLogClient.toInteractorLogObject(
+                            MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", document.getDocumentId()),
+                            Category.DOCUMENT,
+                            Process.REMOVE
+                    ));
+                });
     }
 
     /**

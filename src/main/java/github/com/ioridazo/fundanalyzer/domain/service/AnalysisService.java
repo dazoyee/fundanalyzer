@@ -42,19 +42,21 @@ public class AnalysisService {
     }
 
     /**
-     * メイン分析処理
+     * すべてのメイン分析処理
      *
      * @param inputData 複数の提出日
      */
     @NewSpan
     @Async
-    public void doMain(final BetweenDateInputData inputData) {
+    public void executeAllMain(final BetweenDateInputData inputData) {
         inputData.getFromDate()
                 .datesUntil(inputData.getToDate().plusDays(1))
                 .map(DateInputData::of)
                 .forEach(date -> {
                     // scraping
                     documentUseCase.allProcess(date);
+                    // remove
+                    documentUseCase.removeDocument(date);
                     // analysis
                     analyzeUseCase.analyze(date);
                     // stock
@@ -69,12 +71,37 @@ public class AnalysisService {
     }
 
     /**
+     * 一部のメイン分析処理
+     *
+     * @param inputData 複数の提出日
+     */
+    @NewSpan
+    @Async
+    public void executePartOfMain(final BetweenDateInputData inputData) {
+        inputData.getFromDate()
+                .datesUntil(inputData.getToDate().plusDays(1))
+                .map(DateInputData::of)
+                .forEach(date -> {
+                    // scraping
+                    documentUseCase.allProcess(date);
+                    // remove
+                    documentUseCase.removeDocument(date);
+                    // analysis
+                    analyzeUseCase.analyze(date);
+                    // view corporate
+                    viewCorporateUseCase.updateView(date);
+                    // view edinet
+                    viewEdinetUseCase.updateView(date);
+                });
+    }
+
+    /**
      * 指定提出日をスクレイピング/分析
      *
      * @param inputData 提出日
      */
     @NewSpan
-    public void doByDate(final DateInputData inputData) {
+    public void executeByDate(final DateInputData inputData) {
         // scraping
         documentUseCase.scrape(inputData);
         // analysis
@@ -87,7 +114,7 @@ public class AnalysisService {
      * @param inputData 書類ID
      */
     @NewSpan
-    public void doById(final IdInputData inputData) {
+    public void executeById(final IdInputData inputData) {
         // scraping
         documentUseCase.scrape(inputData);
         // analysis

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.UnknownContentTypeException;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,9 +54,10 @@ public class EdinetClient {
      *
      * @param parameter パラメータ
      * @return EdinetResponse
+     * @throws FundanalyzerRestClientException 通知エラー時
      */
     @NewSpan
-    public EdinetResponse list(final ListRequestParameter parameter) {
+    public EdinetResponse list(final ListRequestParameter parameter) throws FundanalyzerRestClientException {
         try {
             String message;
             if (ListType.DEFAULT.equals(parameter.getType())) {
@@ -119,6 +121,11 @@ public class EdinetClient {
         } catch (final ResourceAccessException e) {
             throw new FundanalyzerRestClientException(
                     "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+        } catch (final UnknownContentTypeException e) {
+            throw new FundanalyzerRestClientException(
+                    "HttpMessageConverter応答を抽出するのに適したものが見つかりませんでした。" +
+                            "外部機関のサービス稼働状況を確認してください。※システムメンテナンスの疑いあり", e
+            );
         }
     }
 

@@ -48,7 +48,7 @@ public class FundanalyzerLogClient {
                 "fundanalyzer", Map.of(
                         "category", category.getValue(),
                         "process", process.getValue(),
-                        "function", Function.SERVICE.getValue()),
+                        "function", Function.INTERACTOR.getValue()),
                 "message", message + " | " + durationTime + "ms"
         );
     }
@@ -69,7 +69,28 @@ public class FundanalyzerLogClient {
                 "fundanalyzer", Map.of(
                         "category", category.getValue(),
                         "process", process.getValue(),
-                        "function", Function.SERVICE.getValue()),
+                        "function", Function.INTERACTOR.getValue()),
+                "message", message
+        );
+    }
+
+    /**
+     * 業務処理用オブジェクト
+     *
+     * @param message  メッセージ
+     * @param category 処理カテゴリー
+     * @param process  処理内容
+     * @return LogObject
+     */
+    public static Map<String, Object> toSpecificationLogObject(
+            final String message,
+            final Category category,
+            final Process process) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.SPECIFICATION.getValue()),
                 "message", message
         );
     }
@@ -99,6 +120,8 @@ public class FundanalyzerLogClient {
         ACCESS("access"),
         CONTROLLER("controller"),
         SERVICE("service"),
+        INTERACTOR("interactor"),
+        SPECIFICATION("specification"),
         CLIENT("client"),
         ;
 
