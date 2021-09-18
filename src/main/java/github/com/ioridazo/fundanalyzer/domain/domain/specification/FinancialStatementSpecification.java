@@ -231,6 +231,20 @@ public class FinancialStatementSpecification {
     }
 
     /**
+     * 投資その他の資産合計が存在するを確認する
+     *
+     * @param document ドキュメント
+     * @return boolean
+     */
+    public boolean isPresentTotalInvestmentsAndOtherAssets(final Document document) {
+        return findValue(
+                FinancialStatementEnum.BALANCE_SHEET,
+                document,
+                subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)
+        ).isPresent();
+    }
+
+    /**
      * 対象のデータベースリストから貸借対照表関連の値リストを取得する
      *
      * @param entityList データベースリスト

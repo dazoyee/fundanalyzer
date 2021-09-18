@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
@@ -86,7 +87,7 @@ class ScrapingInteractorTest {
     @Nested
     class download {
 
-        Document document = defaultDocument();
+        Document document = defaultDocument(DocumentTypeCode.DTC_120);
 
         @DisplayName("download : ファイル取得・解凍する")
         @Test
@@ -127,7 +128,8 @@ class ScrapingInteractorTest {
     @Nested
     class bs {
 
-        Document document = defaultDocument();
+        Document document = defaultDocument(DocumentTypeCode.DTC_120);
+        Document documentOfDTC140 = defaultDocument(DocumentTypeCode.DTC_140);
         Company company = defaultCompany();
 
         File file = new File("file");
@@ -147,12 +149,12 @@ class ScrapingInteractorTest {
 
             when(xbrlScraping.scrapeFinancialStatement(file, "keyword")).thenReturn(List.of(resultBean));
             when(subjectSpecification.findBsSubject("subject")).thenReturn(Optional.of(bsSubject));
-            doNothing().when(scrapingInteractor).doBsOptionIfTarget(company, document);
+            doNothing().when(scrapingInteractor).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
 
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L, CreatedType.AUTO);
-            verify(scrapingInteractor, times(1)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(1)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.BALANCE_SHEET, "file");
         }
 
@@ -163,12 +165,12 @@ class ScrapingInteractorTest {
 
             when(xbrlScraping.scrapeFinancialStatement(file, "keyword")).thenReturn(List.of(resultBean));
             when(subjectSpecification.findBsSubject("subject")).thenReturn(Optional.empty());
-            doNothing().when(scrapingInteractor).doBsOptionIfTarget(company, document);
+            doNothing().when(scrapingInteractor).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
 
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L, CreatedType.AUTO);
-            verify(scrapingInteractor, times(1)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(1)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.BALANCE_SHEET, "file");
         }
 
@@ -178,7 +180,7 @@ class ScrapingInteractorTest {
             doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any());
 
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
-            verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(0)).updateFsToDone(document, FinancialStatementEnum.BALANCE_SHEET, "file");
             verify(documentSpecification, times(1)).updateFsToError(document, FinancialStatementEnum.BALANCE_SHEET);
         }
@@ -190,9 +192,9 @@ class ScrapingInteractorTest {
             assertThrows(FundanalyzerRuntimeException.class, () -> scrapingInteractor.bs(document));
         }
 
-        @DisplayName("doBsOptionIfTarget : 既に登録した流動負債合計と負債合計の金額が一致していたら、固定負債合計に0としてDBに登録する")
+        @DisplayName("doBsOptionOfTotalFixedLiabilitiesIfTarget : 既に登録した流動負債合計と負債合計の金額が一致していたら、固定負債合計に0としてDBに登録する")
         @Test
-        void doBsOptionIfTarget_insert() {
+        void doBsOptionOfTotalFixedLiabilitiesIfTarget_insert() {
             var bsSubject1 = new BsSubject("1", null, null, "TOTAL_CURRENT_LIABILITIES");
             var bsSubject2 = new BsSubject("2", null, null, "TOTAL_LIABILITIES");
             var bsSubject3 = new BsSubject("3", null, null, "TOTAL_FIXED_LIABILITIES");
@@ -203,14 +205,14 @@ class ScrapingInteractorTest {
             when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, bsSubject2)).thenReturn(Optional.of(1000L));
             when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)).thenReturn(bsSubject3);
 
-            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionIfTarget(company, document));
+            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
         }
 
-        @DisplayName("doBsOptionIfTarget : 既に登録した流動負債合計と負債合計の金額が一致していなかったら、DBに登録しない")
+        @DisplayName("doBsOptionOfTotalFixedLiabilitiesIfTarget : 既に登録した流動負債合計と負債合計の金額が一致していなかったら、DBに登録しない")
         @Test
-        void doBsOptionIfTarget_noInsert() {
+        void doBsOptionOfTotalFixedLiabilitiesIfTarget_noInsert() {
             var bsSubject1 = new BsSubject("1", null, null, "TOTAL_CURRENT_LIABILITIES");
             var bsSubject2 = new BsSubject("2", null, null, "TOTAL_LIABILITIES");
             var bsSubject3 = new BsSubject("3", null, null, "TOTAL_FIXED_LIABILITIES");
@@ -221,16 +223,55 @@ class ScrapingInteractorTest {
             when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, bsSubject2)).thenReturn(Optional.of(100L));
             when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)).thenReturn(bsSubject3);
 
-            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionIfTarget(company, document));
+            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document));
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
+        }
+
+        @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 四半期報告書で投資その他の資産合計が存在しないとき、投資その他の資産合計に0としてDBに登録する")
+        @Test
+        void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget_insert() {
+            var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
+
+            when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(documentOfDTC140)).thenReturn(false);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(bsSubject1);
+
+            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC140));
+            verify(financialStatementSpecification, times(1))
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
+        }
+
+        @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 四半期報告書で投資その他の資産合計が存在したら、DBに登録しない")
+        @Test
+        void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget_noInsert_140() {
+            var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
+
+            when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(documentOfDTC140)).thenReturn(true);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(bsSubject1);
+
+            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC140));
+            verify(financialStatementSpecification, times(0))
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
+        }
+
+        @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 四半期報告書以外のときはなにもしない")
+        @Test
+        void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget_noInsert_120() {
+            var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
+
+            when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)).thenReturn(true);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(bsSubject1);
+
+            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, document));
+            verify(financialStatementSpecification, times(0))
+                    .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 0L, CreatedType.AUTO);
         }
     }
 
     @Nested
     class pl {
 
-        Document document = defaultDocument();
+        Document document = defaultDocument(DocumentTypeCode.DTC_120);
         Company company = defaultCompany();
 
         File file = new File("file");
@@ -254,7 +295,7 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
-            verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
         }
 
@@ -269,7 +310,7 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
-            verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
         }
 
@@ -279,7 +320,7 @@ class ScrapingInteractorTest {
             doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any());
 
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
-            verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(0)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
             verify(documentSpecification, times(1)).updateFsToError(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
         }
@@ -295,7 +336,7 @@ class ScrapingInteractorTest {
     @Nested
     class ns {
 
-        Document document = defaultDocument();
+        Document document = defaultDocument(DocumentTypeCode.DTC_120);
         Company company = defaultCompany();
 
         File file = new File("file");
@@ -315,7 +356,7 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
-            verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
         }
 
@@ -325,7 +366,7 @@ class ScrapingInteractorTest {
             doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any());
 
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
-            verify(scrapingInteractor, times(0)).doBsOptionIfTarget(company, document);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(0)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
             verify(documentSpecification, times(1)).updateFsToError(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
         }
@@ -381,10 +422,10 @@ class ScrapingInteractorTest {
         }
     }
 
-    private Document defaultDocument() {
+    private Document defaultDocument(DocumentTypeCode documentTypeCode) {
         return new Document(
                 null,
-                null,
+                documentTypeCode,
                 null,
                 "edinetCode",
                 null,
