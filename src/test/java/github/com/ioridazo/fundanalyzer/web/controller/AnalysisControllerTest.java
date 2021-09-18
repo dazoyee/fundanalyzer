@@ -41,14 +41,16 @@ class AnalysisControllerTest {
                 .executePartOfMain(BetweenDateInputData.of(LocalDate.parse("2021-05-29"), LocalDate.parse("2021-05-29")));
     }
 
-    @DisplayName("updateView : 表示をアップデートする")
+    @DisplayName("updateCorporateView : 表示をアップデートする")
     @Test
-    void updateView() {
-        var actual = UriComponentsBuilder.fromUriString(controller.updateView()).build();
+    void updateCorporateView() {
+        var actual = UriComponentsBuilder.fromUriString(controller.updateCorporateView()).build();
 
         assertEquals("/fundanalyzer/v1/index", actual.getPath());
-        assertEquals("表示アップデート処理を要求しました。", UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
-        Mockito.verify(viewService, Mockito.times(1)).updateView();
+        assertEquals(
+                "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
+        Mockito.verify(viewService, Mockito.times(1)).updateCorporateView();
     }
 
     @DisplayName("scrapeByDate : 指定提出日の書類を分析する")

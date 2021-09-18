@@ -100,7 +100,8 @@ public class AnalysisScheduler {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "updateViewScheduler", 0));
 
             try {
-                viewService.updateView();
+                viewService.updateCorporateView();
+                viewService.updateEdinetView();
 
                 final long durationTime = System.currentTimeMillis() - startTime;
 
