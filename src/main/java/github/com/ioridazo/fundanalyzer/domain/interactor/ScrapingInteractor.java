@@ -225,7 +225,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
      * @return 対象ファイルとそのキーワード
      */
     Pair<File, ScrapingKeywordEntity> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
-        final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
+        final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.getId());
 
         for (final ScrapingKeywordEntity scrapingKeyword : scrapingKeywordList) {
             final Optional<File> findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);

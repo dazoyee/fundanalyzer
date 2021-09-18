@@ -223,7 +223,7 @@ public class DocumentInteractor implements DocumentUseCase {
         try {
             financialStatementSpecification.insert(
                     companySpecification.findCompanyByEdinetCode(inputData.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new),
-                    FinancialStatementEnum.fromValue(inputData.getFinancialStatementId()),
+                    FinancialStatementEnum.fromId(inputData.getFinancialStatementId()),
                     inputData.getSubjectId(),
                     documentSpecification.findDocument(inputData.getDocumentId()),
                     inputData.getValue(),
@@ -234,7 +234,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     MessageFormat.format(
                             "財務諸表の値を登録しました。\t書類ID:{0}\t財務諸表名:{1}\t科目ID:{2}\t値:{3}",
                             inputData.getDocumentId(),
-                            FinancialStatementEnum.fromValue(inputData.getFinancialStatementId()).getName(),
+                            FinancialStatementEnum.fromId(inputData.getFinancialStatementId()).getName(),
                             inputData.getSubjectId(),
                             inputData.getValue()
                     ),
