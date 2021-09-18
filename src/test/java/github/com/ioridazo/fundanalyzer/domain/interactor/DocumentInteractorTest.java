@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.EdinetDocumentSpecification;
@@ -562,9 +563,38 @@ class DocumentInteractorTest {
 
         @DisplayName("removeDocument : 指定書類IDを処理対象外にする")
         @Test
-        void ok() {
+        void id_ok() {
             var inputData = IdInputData.of("documentId");
             assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
+        }
+
+        @DisplayName("removeDocument : 除外条件に合致するドキュメントを処理対象外に更新する")
+        @Test
+        void date_ok() {
+            var inputData = DateInputData.of(LocalDate.parse("2021-09-18"));
+            var document = new Document(
+                    null,
+                    DocumentTypeCode.DTC_140,
+                    null,
+                    null,
+                    null,
+                    LocalDate.parse("2021-09-18"),
+                    null,
+                    null,
+                    DocumentStatus.DONE,
+                    DocumentStatus.DONE,
+                    DocumentStatus.DONE,
+                    "path",
+                    DocumentStatus.HALF_WAY,
+                    null,
+                    DocumentStatus.ERROR,
+                    null,
+                    false
+            );
+
+            when(documentSpecification.removeTargetList(inputData)).thenReturn(List.of(document));
+            assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
+            verify(documentSpecification, times(1)).updateRemoved(document);
         }
     }
 

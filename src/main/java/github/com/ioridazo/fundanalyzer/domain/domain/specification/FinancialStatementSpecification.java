@@ -61,7 +61,7 @@ public class FinancialStatementSpecification {
         try {
             return financialStatementDao.selectByUniqueKey(
                     document.getEdinetCode(),
-                    fs.toValue(),
+                    fs.getId(),
                     subject.getId(),
                     String.valueOf(document.getPeriodEnd().getYear()),
                     document.getDocumentTypeCode().toValue(),
@@ -107,7 +107,7 @@ public class FinancialStatementSpecification {
     public Optional<Long> findNsValue(final Document document) {
         return financialStatementDao.selectByUniqueKey(
                 document.getEdinetCode(),
-                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.toValue(),
+                FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getId(),
                 "0",
                 String.valueOf(document.getPeriodEnd().getYear()),
                 document.getDocumentTypeCode().toValue(),
@@ -160,7 +160,7 @@ public class FinancialStatementSpecification {
             financialStatementDao.insert(FinancialStatementEntity.of(
                     company.getCode().orElse(null),
                     company.getEdinetCode(),
-                    fs.toValue(),
+                    fs.getId(),
                     dId,
                     document.getPeriodStart(),
                     document.getPeriodEnd(),
@@ -231,6 +231,20 @@ public class FinancialStatementSpecification {
     }
 
     /**
+     * 投資その他の資産合計が存在するを確認する
+     *
+     * @param document ドキュメント
+     * @return boolean
+     */
+    public boolean isPresentTotalInvestmentsAndOtherAssets(final Document document) {
+        return findValue(
+                FinancialStatementEnum.BALANCE_SHEET,
+                document,
+                subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)
+        ).isPresent();
+    }
+
+    /**
      * 対象のデータベースリストから貸借対照表関連の値リストを取得する
      *
      * @param entityList データベースリスト
@@ -238,9 +252,9 @@ public class FinancialStatementSpecification {
      */
     public List<FinancialStatementValueViewModel> parseBsSubjectValue(final List<FinancialStatementEntity> entityList) {
         return entityList.stream()
-                .filter(entity -> FinancialStatementEnum.BALANCE_SHEET.equals(FinancialStatementEnum.fromValue(entity.getFinancialStatementId())))
+                .filter(entity -> FinancialStatementEnum.BALANCE_SHEET.equals(FinancialStatementEnum.fromId(entity.getFinancialStatementId())))
                 .map(entity -> {
-                    final FinancialStatementEnum fs = FinancialStatementEnum.fromValue(entity.getFinancialStatementId());
+                    final FinancialStatementEnum fs = FinancialStatementEnum.fromId(entity.getFinancialStatementId());
 
                     return FinancialStatementValueViewModel.of(
                             subjectSpecification.findSubject(fs, entity.getSubjectId()).getName(),
@@ -258,9 +272,9 @@ public class FinancialStatementSpecification {
      */
     public List<FinancialStatementValueViewModel> parsePlSubjectValue(final List<FinancialStatementEntity> entityList) {
         return entityList.stream()
-                .filter(entity -> FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(FinancialStatementEnum.fromValue(entity.getFinancialStatementId())))
+                .filter(entity -> FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(FinancialStatementEnum.fromId(entity.getFinancialStatementId())))
                 .map(entity -> {
-                    final FinancialStatementEnum fs = FinancialStatementEnum.fromValue(entity.getFinancialStatementId());
+                    final FinancialStatementEnum fs = FinancialStatementEnum.fromId(entity.getFinancialStatementId());
 
                     return FinancialStatementValueViewModel.of(
                             subjectSpecification.findSubject(fs, entity.getSubjectId()).getName(),

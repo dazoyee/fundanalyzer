@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.ScrapingKeywordDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.XbrlScraping;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
@@ -26,6 +27,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -157,7 +159,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             ))
                     );
 
-                    doBsOptionIfTarget(company, document);
+                    doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
+                    doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, document);
                 }
         );
     }
@@ -225,7 +228,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
      * @return 対象ファイルとそのキーワード
      */
     Pair<File, ScrapingKeywordEntity> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
-        final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.toValue());
+        final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.getId());
 
         for (final ScrapingKeywordEntity scrapingKeyword : scrapingKeywordList) {
             final Optional<File> findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);
@@ -238,12 +241,12 @@ public class ScrapingInteractor implements ScrapingUseCase {
     }
 
     /**
-     * 貸借対照表のオプション処理を実行する
+     * 固定負債合計に関する貸借対照表のオプション処理を実行する
      *
      * @param company  企業情報
      * @param document ドキュメント
      */
-    void doBsOptionIfTarget(final Company company, final Document document) {
+    void doBsOptionOfTotalFixedLiabilitiesIfTarget(final Company company, final Document document) {
         final Optional<Long> totalCurrentLiabilities = financialStatementSpecification.findValue(
                 FinancialStatementEnum.BALANCE_SHEET,
                 document,
@@ -268,12 +271,44 @@ public class ScrapingInteractor implements ScrapingUseCase {
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "[貸借対照表] の \"固定負債合計\" が存在しなかったため、次の通りとして\"0\" にてデータベースに登録しました。" +
+                            "[貸借対照表] の \"固定負債合計\" が存在しなかったため、\"0\" にてデータベースに登録しました。" +
                                     "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
                             company.getCode().orElse("null"),
                             document.getDocumentId(),
                             totalCurrentLiabilities.get(),
                             totalLiabilities.get()
+                    ),
+                    Category.SCRAPING,
+                    Process.BS
+            ));
+        }
+    }
+
+    /**
+     * 投資その他の資産合計に関する貸借対照表のオプション処理を実行する
+     *
+     * @param company  企業情報
+     * @param document ドキュメント
+     */
+    void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(final Company company, final Document document) {
+        if (List.of(DocumentTypeCode.DTC_140, DocumentTypeCode.DTC_150).contains(document.getDocumentTypeCode())
+                && !financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)) {
+            financialStatementSpecification.insert(
+                    company,
+                    FinancialStatementEnum.BALANCE_SHEET,
+                    subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS).getId(),
+                    document,
+                    0L,
+                    CreatedType.AUTO
+            );
+
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "[貸借対照表] の \"投資その他の資産合計\" が存在しなかったため、\"0\" にてデータベースに登録しました。" +
+                                    "\t企業コード:{0}\t書類ID:{1}\t書類種別コード:{2}",
+                            company.getCode().orElse("null"),
+                            document.getDocumentId(),
+                            document.getDocumentTypeCode().toValue() + "（" + document.getDocumentTypeCode().getName() + "）"
                     ),
                     Category.SCRAPING,
                     Process.BS
@@ -326,7 +361,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             ));
 
             documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
-        } catch (FundanalyzerFileException | FundanalyzerNotExistException e) {
+        } catch (final FundanalyzerFileException | FundanalyzerScrapingException | FundanalyzerNotExistException e) {
             documentSpecification.updateFsToError(document, fs);
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
