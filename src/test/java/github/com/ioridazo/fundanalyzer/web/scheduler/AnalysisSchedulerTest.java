@@ -84,7 +84,7 @@ class AnalysisSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
             verify(analysisService, times(1))
-                    .doMain(BetweenDateInputData.of(LocalDate.parse("2021-02-06"), LocalDate.parse("2021-02-08")));
+                    .executeAllMain(BetweenDateInputData.of(LocalDate.parse("2021-02-06"), LocalDate.parse("2021-02-08")));
         }
 
         @DisplayName("analysisScheduler : 想定外のエラーが発生したときはSlack通知する")
@@ -94,7 +94,7 @@ class AnalysisSchedulerTest {
 
             when(documentSpecification.documentList()).thenReturn(List.of());
             doReturn(LocalDate.parse("2021-02-08")).when(scheduler).nowLocalDate();
-            doThrow(new FundanalyzerRuntimeException()).when(analysisService).doMain(any());
+            doThrow(new FundanalyzerRuntimeException()).when(analysisService).executeAllMain(any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.analysisScheduler());
             verify(slackClient, times(1)).sendMessage(any(), any());
@@ -106,7 +106,7 @@ class AnalysisSchedulerTest {
             doReturn(LocalDateTime.of(2021, 5, 29, 15, 0)).when(scheduler).nowLocalDateTime();
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
-            verify(analysisService, times(0)).doMain(any());
+            verify(analysisService, times(0)).executeAllMain(any());
         }
     }
 
