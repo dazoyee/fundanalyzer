@@ -94,7 +94,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            documentList.parallelStream().forEach(this::scrape);
+            documentList.forEach(this::scrape);
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
