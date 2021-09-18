@@ -51,7 +51,7 @@ public class DevelopController {
         // company
         companyUseCase.saveCompanyInfo();
 
-        analysisService.doMain(BetweenDateInputData.of(LocalDate.parse(date), LocalDate.parse(date)));
+        analysisService.executePartOfMain(BetweenDateInputData.of(LocalDate.parse(date), LocalDate.parse(date)));
 
         model.addAttribute("companies", viewService.getCorporateView());
         return "redirect:" + UriComponentsBuilder.fromUriString("/fundanalyzer/v1/index")

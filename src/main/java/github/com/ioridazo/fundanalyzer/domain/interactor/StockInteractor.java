@@ -43,7 +43,7 @@ public class StockInteractor implements StockUseCase {
     }
 
     /**
-     * 並列で株価を取得する
+     * 株価を取得する
      *
      * @param inputData 提出日
      */
