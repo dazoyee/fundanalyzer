@@ -119,7 +119,8 @@ class AnalysisSchedulerTest {
             doReturn(LocalDateTime.of(2021, 5, 29, 21, 0)).when(scheduler).nowLocalDateTime();
 
             assertDoesNotThrow(() -> scheduler.updateViewScheduler());
-            verify(viewService, times(1)).updateView();
+            verify(viewService, times(1)).updateCorporateView();
+            verify(viewService, times(1)).updateEdinetView();
         }
 
         @DisplayName("updateViewScheduler : 想定外のエラーが発生したときはSlack通知する")
@@ -127,7 +128,7 @@ class AnalysisSchedulerTest {
         void updateViewScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 21, 0)).when(scheduler).nowLocalDateTime();
 
-            doThrow(new FundanalyzerRuntimeException()).when(viewService).updateView();
+            doThrow(new FundanalyzerRuntimeException()).when(viewService).updateCorporateView();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.updateViewScheduler());
             verify(slackClient, times(1)).sendMessage(any(), any());
         }
@@ -138,7 +139,8 @@ class AnalysisSchedulerTest {
             doReturn(LocalDateTime.of(2021, 5, 29, 15, 0)).when(scheduler).nowLocalDateTime();
 
             assertDoesNotThrow(() -> scheduler.updateViewScheduler());
-            verify(viewService, times(0)).updateView();
+            verify(viewService, times(0)).updateCorporateView();
+            verify(viewService, times(0)).updateEdinetView();
         }
     }
 }

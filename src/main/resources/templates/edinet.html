@@ -24,9 +24,18 @@
     </p>
     <label>会社リスト更新日：</label>
     <p th:text="${companyUpdated}"></p>
-    <form method="get" th:action="@{/fundanalyzer/v1/company}">
-        <button type="submit" class="btn">会社情報更新</button>
-    </form>
+    <div class="row">
+        <div class="col-lg-2">
+            <form method="get" th:action="@{/fundanalyzer/v1/company}">
+                <button type="submit" class="btn">会社情報更新</button>
+            </form>
+        </div>
+        <div class="col-lg-2">
+            <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/view}">
+                <button type="submit" class="btn">処理状況更新</button>
+            </form>
+        </div>
+    </div>
     <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/list}">
         <input type="date" name="date"/>
         <button type="submit" class="btn">更新する</button>

@@ -49,11 +49,12 @@ public class AnalysisController {
      *
      * @return Index
      */
-    @PostMapping("fundanalyzer/v1/update/view")
-    public String updateView() {
-        viewService.updateView();
+    @PostMapping("fundanalyzer/v1/update/corporate/view")
+    public String updateCorporateView() {
+        viewService.updateCorporateView();
         return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH)
-                .queryParam("message", "表示アップデート処理を要求しました。").build().encode().toUriString();
+                .queryParam("message", "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
+                .build().encode().toUriString();
     }
 
     /**

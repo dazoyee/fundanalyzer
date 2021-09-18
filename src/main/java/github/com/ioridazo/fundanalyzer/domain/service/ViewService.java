@@ -116,9 +116,17 @@ public class ViewService {
      */
     @NewSpan
     @Async
-    public void updateView() {
+    public void updateCorporateView() {
         // view corporate
         viewCorporateUseCase.updateView();
+    }
+
+    /**
+     * 処理状況アップデート
+     */
+    @NewSpan
+    @Async
+    public void updateEdinetView() {
         // view edinet
         viewEdinetUseCase.updateView();
     }

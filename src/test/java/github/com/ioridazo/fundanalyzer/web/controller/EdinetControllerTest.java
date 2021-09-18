@@ -44,8 +44,22 @@ class EdinetControllerTest {
         var actual = UriComponentsBuilder.fromUriString(controller.updateCompany()).build();
 
         assertEquals("/fundanalyzer/v1/edinet/list", actual.getPath());
-        assertEquals("表示アップデート処理を要求しました。", UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
+        assertEquals(
+                "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
         Mockito.verify(edinetService, Mockito.times(1)).updateCompany();
+    }
+
+    @DisplayName("updateEdinetView : 処理状況を更新する")
+    @Test
+    void updateEdinetView() {
+        var actual = UriComponentsBuilder.fromUriString(controller.updateEdinetView()).build();
+
+        assertEquals("/fundanalyzer/v1/edinet/list", actual.getPath());
+        assertEquals(
+                "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
+        Mockito.verify(viewService, Mockito.times(1)).updateEdinetView();
     }
 
     @DisplayName("saveEdinet : EDINETから提出書類一覧を取得する")
