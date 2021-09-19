@@ -201,14 +201,22 @@ public class ViewSpecification {
         final Pair<List<Document>, List<Document>> scrapedList = documentSpecification.extractScrapedList(targetList);
         // 分析済書類/未分析書類
         final Pair<List<Document>, List<Document>> analyzedList = documentSpecification.extractAnalyzedList(scrapedList.getFirst());
+
+        final String notAnalyzedId = analyzedList.getSecond().stream()
+                .map(Document::getDocumentId)
+                .collect(Collectors.joining(","));
+        final String cantScrapedId = scrapedList.getSecond().stream()
+                .map(Document::getDocumentId)
+                .collect(Collectors.joining(","));
+
         return EdinetListViewModel.of(
                 inputData.getDate(),
                 documentList.size(),
                 targetList.size(),
                 scrapedList.getFirst().size(),
                 analyzedList.getFirst().size(),
-                analyzedList.getSecond().stream().map(Document::getDocumentId).collect(Collectors.joining(",")),
-                scrapedList.getSecond().stream().map(Document::getDocumentId).collect(Collectors.joining(",")),
+                notAnalyzedId.length() > 998 ? notAnalyzedId.substring(0, 998) : notAnalyzedId,
+                cantScrapedId.length() > 998 ? cantScrapedId.substring(0, 998) : cantScrapedId,
                 scrapedList.getSecond().size()
         );
     }
