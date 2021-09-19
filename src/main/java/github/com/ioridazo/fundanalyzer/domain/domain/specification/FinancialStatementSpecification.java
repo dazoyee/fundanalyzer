@@ -65,6 +65,7 @@ public class FinancialStatementSpecification {
                     subject.getId(),
                     String.valueOf(document.getPeriodEnd().getYear()),
                     document.getDocumentTypeCode().toValue(),
+                    document.getQuarterType().toValue(),
                     document.getSubmitDate()
             ).flatMap(FinancialStatementEntity::getValue);
         } catch (final NestedRuntimeException e) {
@@ -111,6 +112,7 @@ public class FinancialStatementSpecification {
                 "0",
                 String.valueOf(document.getPeriodEnd().getYear()),
                 document.getDocumentTypeCode().toValue(),
+                document.getQuarterType().toValue(),
                 document.getSubmitDate()
         ).flatMap(FinancialStatementEntity::getValue);
     }
