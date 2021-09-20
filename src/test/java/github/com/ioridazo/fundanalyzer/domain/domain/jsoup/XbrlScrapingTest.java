@@ -167,8 +167,6 @@ class XbrlScrapingTest {
 
             var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
 
-            actual.forEach(System.out::println);
-
             assertAll("FinancialTableResultBean",
                     () -> assertAll(
                             () -> assertEquals("前連結会計年度末 (2021年３月31日)", actual.get(0).getSubject().orElseThrow()),
@@ -190,6 +188,184 @@ class XbrlScrapingTest {
                     )
             );
             assertEquals(45, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_2_bs() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_2.html");
+            var keyword = "jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("前連結会計年度 (2021年３月31日)", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("当第１四半期連結会計期間 (2021年６月30日)", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
+                            () -> assertEquals("7,575,986", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("8,051,246", actual.get(1).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("流動負債合計", actual.get(42).getSubject().orElseThrow()),
+                            () -> assertEquals("6,715,801", actual.get(42).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("7,167,002", actual.get(42).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(42).getUnit())
+                    )
+            );
+            assertEquals(64, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_2_pl() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_2.html");
+            var keyword = "jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("前第１四半期連結累計期間 (自　2020年４月１日 　至　2020年６月30日)", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("当第１四半期連結累計期間 (自　2021年４月１日 　至　2021年６月30日)", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("営業利益", actual.get(5).getSubject().orElseThrow()),
+                            () -> assertEquals("271,538", actual.get(5).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("374,949", actual.get(5).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(5).getUnit())
+                    )
+            );
+            assertEquals(21, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_3() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_3.html");
+            var keyword = "jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfProfitOrLossIFRSTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            actual.forEach(System.out::println);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("　前第１四半期連結累計期間 （自　2020年４月１日 　　至　2020年６月30日）", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("　当第１四半期連結累計期間 （自　2021年４月１日 　　至　2021年６月30日）", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("営業利益", actual.get(7).getSubject().orElseThrow()),
+                            () -> assertEquals("569", actual.get(7).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("694", actual.get(7).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(7).getUnit())
+                    )
+            );
+            assertEquals(18, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_4_bs() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_4.html");
+            var keyword = "jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("現金及び預金", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("1,846,271", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("流動負債合計", actual.get(26).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(26).getPreviousValue().orElse(null)),
+                            () -> assertEquals("870,533", actual.get(26).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(26).getUnit())
+                    )
+            );
+            assertEquals(40, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_4_pl() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_4.html");
+            var keyword = "jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("営業損失（△）", actual.get(4).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(4).getPreviousValue().orElse(null)),
+                            () -> assertEquals("△47,065", actual.get(4).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(4).getUnit())
+                    )
+            );
+            assertEquals(17, actual.size());
+        }
+
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_5_pl() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_5.html");
+            var keyword = "jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfProfitOrLossIFRSTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("営業利益（△損失）", actual.get(7).getSubject().orElseThrow()),
+                            () -> assertEquals("319,679", actual.get(7).getPreviousValue().orElse(null)),
+                            () -> assertEquals("△1,056,685", actual.get(7).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(7).getUnit())
+                    )
+            );
+            assertEquals(18, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_6() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_6.html");
+            var keyword = "jpigp_cor:CondensedQuarterlyConsolidatedStatementOfFinancialPositionIFRSTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("前連結会計年度 （2021年３月31日）", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("当第１四半期連結会計期間 （2021年６月30日）", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("現金及び現金同等物", actual.get(1).getSubject().orElseThrow()),
+                            () -> assertEquals("17,207", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("21,467", actual.get(1).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(1).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("流動負債合計", actual.get(24).getSubject().orElseThrow()),
+                            () -> assertEquals("30,204", actual.get(24).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("36,978", actual.get(24).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(24).getUnit())
+                    )
+            );
+            assertEquals(40, actual.size());
         }
 
         @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応できていないとき）")
@@ -279,6 +455,17 @@ class XbrlScrapingTest {
             var actual = assertThrows(FundanalyzerFileException.class, () -> xbrlScraping.scrapeNumberOfShares(file, keyword));
 
             System.out.println(actual.getMessage());
+        }
+
+        @DisplayName("scrapeNumberOfShares : ファイルから株式総数を取得し、その値をスクレイピングする")
+        @Test
+        void scrapeNumberOfShares_ok_2() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_ok_2.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
+
+            assertEquals("63,553,485", actual);
         }
     }
 }
