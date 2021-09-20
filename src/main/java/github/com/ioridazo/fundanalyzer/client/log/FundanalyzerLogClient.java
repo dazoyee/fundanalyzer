@@ -27,7 +27,7 @@ public class FundanalyzerLogClient {
                         "category", category.getValue(),
                         "process", process.getValue(),
                         "function", Function.ACCESS.getValue()),
-                "message", "[" + process.getValue().toUpperCase() + "] " + message + " | " + durationTime + "ms"
+                "message", "[" + process.getValue().toUpperCase() + "] " + message + " | " + parseDurationTime(durationTime)
         );
     }
 
@@ -55,7 +55,7 @@ public class FundanalyzerLogClient {
                         "category", category.getValue(),
                         "process", process.getValue(),
                         "function", Function.INTERACTOR.getValue()),
-                "message", message + " | " + durationTime + "ms"
+                "message", message + " | " + parseDurationTime(durationTime)
         );
     }
 
@@ -83,7 +83,7 @@ public class FundanalyzerLogClient {
                         "category", category.getValue(),
                         "process", process.getValue(),
                         "function", Function.INTERACTOR.getValue()),
-                "message", message + " | " + durationTime + "ms"
+                "message", message + " | " + parseDurationTime(durationTime)
         );
     }
 
@@ -109,7 +109,7 @@ public class FundanalyzerLogClient {
                         "category", category.getValue(),
                         "process", process.getValue(),
                         "function", Function.INTERACTOR.getValue()),
-                "message", message + " | " + durationTime + "ms"
+                "message", message + " | " + parseDurationTime(durationTime)
         );
     }
 
@@ -132,7 +132,7 @@ public class FundanalyzerLogClient {
                         "category", category.getValue(),
                         "process", process.getValue(),
                         "function", Function.INTERACTOR.getValue()),
-                "message", message + " | " + durationTime + "ms"
+                "message", message + " | " + parseDurationTime(durationTime)
         );
     }
 
@@ -295,6 +295,18 @@ public class FundanalyzerLogClient {
                         "function", Function.CLIENT.getValue()),
                 "message", message
         );
+    }
+
+    static String parseDurationTime(final long time) {
+        if (3600000 < time) {
+            return time / 3600000 + "." + Math.round((double) time % 3600000) / 1000 + "h";
+        } else if (60000 < time) {
+            return time / 60000 + "." + Math.round((double) time % 60000) / 1000 + "m";
+        } else if (1000 < time) {
+            return time / 1000 + "." + Math.round((double) time % 1000) / 100 + "s";
+        } else {
+            return time + "ms";
+        }
     }
 
     private enum Function {
