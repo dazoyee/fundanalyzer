@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.client.log;
 
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Map;
@@ -31,6 +32,88 @@ public class FundanalyzerLogClient {
     }
 
     /**
+     * /**
+     * ユースケース用オブジェクト
+     *
+     * @param message      メッセージ
+     * @param document     ドキュメント
+     * @param category     処理カテゴリー
+     * @param process      処理内容
+     * @param durationTime 処理時間
+     * @return LogObject
+     */
+    public static Map<String, Object> toInteractorLogObject(
+            final String message,
+            final Document document,
+            final Category category,
+            final Process process,
+            final long durationTime) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "documentId", document.getDocumentId(),
+                        "edinetCode", document.getEdinetCode(),
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.INTERACTOR.getValue()),
+                "message", message + " | " + durationTime + "ms"
+        );
+    }
+
+    /**
+     * ユースケース用オブジェクト
+     *
+     * @param message    メッセージ
+     * @param documentId 書類ID
+     * @param edinetCode EDINETコード
+     * @param category   処理カテゴリー
+     * @param process    処理内容
+     * @return LogObject
+     */
+    public static Map<String, Object> toInteractorLogObject(
+            final String message,
+            final String documentId,
+            final String edinetCode,
+            final Category category,
+            final Process process,
+            final long durationTime) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "documentId", documentId,
+                        "edinetCode", edinetCode,
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.INTERACTOR.getValue()),
+                "message", message + " | " + durationTime + "ms"
+        );
+    }
+
+    /**
+     * ユースケース用オブジェクト
+     *
+     * @param message      メッセージ
+     * @param documentId   書類ID
+     * @param category     処理カテゴリー
+     * @param process      処理内容
+     * @param durationTime 処理時間
+     * @return LogObject
+     */
+    public static Map<String, Object> toInteractorLogObject(
+            final String message,
+            final String documentId,
+            final Category category,
+            final Process process,
+            final long durationTime) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "documentId", documentId,
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.INTERACTOR.getValue()),
+                "message", message + " | " + durationTime + "ms"
+        );
+    }
+
+    /**
      * ユースケース用オブジェクト
      *
      * @param message      メッセージ
@@ -50,6 +133,31 @@ public class FundanalyzerLogClient {
                         "process", process.getValue(),
                         "function", Function.INTERACTOR.getValue()),
                 "message", message + " | " + durationTime + "ms"
+        );
+    }
+
+    /**
+     * ユースケース用オブジェクト
+     *
+     * @param message  メッセージ
+     * @param document ドキュメント
+     * @param category 処理カテゴリー
+     * @param process  処理内容
+     * @return LogObject
+     */
+    public static Map<String, Object> toInteractorLogObject(
+            final String message,
+            final Document document,
+            final Category category,
+            final Process process) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "documentId", document.getDocumentId(),
+                        "edinetCode", document.getEdinetCode(),
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.INTERACTOR.getValue()),
+                "message", message
         );
     }
 
@@ -78,6 +186,55 @@ public class FundanalyzerLogClient {
      * 業務処理用オブジェクト
      *
      * @param message  メッセージ
+     * @param document ドキュメント
+     * @param category 処理カテゴリー
+     * @param process  処理内容
+     * @return LogObject
+     */
+    public static Map<String, Object> toSpecificationLogObject(
+            final String message,
+            final Document document,
+            final Category category,
+            final Process process) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "documentId", document.getDocumentId(),
+                        "edinetCode", document.getEdinetCode(),
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.SPECIFICATION.getValue()),
+                "message", message
+        );
+    }
+
+    /**
+     * 業務処理用オブジェクト
+     *
+     * @param message    メッセージ
+     * @param edinetCode EDINETコード
+     * @param category   処理カテゴリー
+     * @param process    処理内容
+     * @return LogObject
+     */
+    public static Map<String, Object> toSpecificationLogObject(
+            final String message,
+            final String edinetCode,
+            final Category category,
+            final Process process) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "edinetCode", edinetCode,
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.SPECIFICATION.getValue()),
+                "message", message
+        );
+    }
+
+    /**
+     * 業務処理用オブジェクト
+     *
+     * @param message  メッセージ
      * @param category 処理カテゴリー
      * @param process  処理内容
      * @return LogObject
@@ -91,6 +248,30 @@ public class FundanalyzerLogClient {
                         "category", category.getValue(),
                         "process", process.getValue(),
                         "function", Function.SPECIFICATION.getValue()),
+                "message", message
+        );
+    }
+
+    /**
+     * クライアント用オブジェクト
+     *
+     * @param message    メッセージ
+     * @param documentId 書類ID
+     * @param category   処理カテゴリー
+     * @param process    処理内容
+     * @return LogObject
+     */
+    public static Map<String, Object> toClientLogObject(
+            final String message,
+            final String documentId,
+            final Category category,
+            final Process process) {
+        return Map.of(
+                "fundanalyzer", Map.of(
+                        "documentId", documentId,
+                        "category", category.getValue(),
+                        "process", process.getValue(),
+                        "function", Function.CLIENT.getValue()),
                 "message", message
         );
     }

@@ -359,7 +359,7 @@ class AnalyzeInteractorTest {
 
     private Document defaultDocument() {
         return new Document(
-                null,
+                "documentId",
                 null,
                 null,
                 "edinetCode",

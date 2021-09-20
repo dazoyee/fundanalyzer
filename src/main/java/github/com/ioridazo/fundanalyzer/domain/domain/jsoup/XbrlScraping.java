@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.Value;
@@ -37,9 +38,11 @@ public class XbrlScraping {
      *
      * @param filePath              フォルダパス
      * @param scrapingKeywordEntity キーワード
+     * @param document              ドキュメント
      * @return キーワードに合致するファイル
      */
-    public Optional<File> findFile(final File filePath, final ScrapingKeywordEntity scrapingKeywordEntity) {
+    public Optional<File> findFile(
+            final File filePath, final ScrapingKeywordEntity scrapingKeywordEntity, final Document document) {
         // 対象のディレクトリから"honbun"ファイルを取得
         final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()
                 .filter(File::isFile)
@@ -50,6 +53,16 @@ public class XbrlScraping {
 
         if (filePathList.size() == 1) {
             // ファイルが一つ見つかったとき
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "次のキーワードにてファイルを確認しました。\t財務諸表名:{0}\tキーワード:{1}",
+                            scrapingKeywordEntity.getRemarks(),
+                            scrapingKeywordEntity.getKeyword()
+                    ),
+                    document,
+                    Category.SCRAPING,
+                    Process.of(scrapingKeywordEntity)
+            ));
             return filePathList.stream().findFirst();
         } else if (filePathList.isEmpty()) {
             // ファイルがみつからなかったとき
@@ -59,8 +72,9 @@ public class XbrlScraping {
                             scrapingKeywordEntity.getRemarks(),
                             scrapingKeywordEntity.getKeyword()
                     ),
+                    document,
                     Category.SCRAPING,
-                    Process.SCRAPING
+                    Process.of(scrapingKeywordEntity)
             ));
             return Optional.empty();
         } else {
@@ -71,8 +85,9 @@ public class XbrlScraping {
                             scrapingKeywordEntity.getKeyword(),
                             file
                     ),
+                    document,
                     Category.SCRAPING,
-                    Process.SCRAPING
+                    Process.of(scrapingKeywordEntity)
             )));
             throw new FundanalyzerFileException("ファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
 
@@ -145,7 +160,7 @@ public class XbrlScraping {
                 .anyMatch(text -> Unit.MILLIONS_OF_YEN.getName().stream().anyMatch(text::contains))) {
             return Unit.MILLIONS_OF_YEN;
         } else {
-            throw new FundanalyzerFileException("財務諸表の金額単位を識別できませんでした。");
+            throw new FundanalyzerScrapingException("財務諸表の金額単位を識別できませんでした。");
         }
     }
 
@@ -194,7 +209,7 @@ public class XbrlScraping {
                 .collect(Collectors.toList());
 
         if (scrapingList.isEmpty()) {
-            throw new FundanalyzerFileException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
+            throw new FundanalyzerScrapingException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
         }
 
         try {
@@ -230,7 +245,7 @@ public class XbrlScraping {
 
             return scrapingList.get(indexOfKey2).get(indexOfKey1);
         } catch (NoSuchElementException e) {
-            throw new FundanalyzerFileException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
+            throw new FundanalyzerScrapingException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
         }
     }
 

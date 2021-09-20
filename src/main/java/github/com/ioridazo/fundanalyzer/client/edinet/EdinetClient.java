@@ -141,6 +141,7 @@ public class EdinetClient {
         try {
             log.info(FundanalyzerLogClient.toClientLogObject(
                     MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
+                    parameter.getDocId(),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             ));
@@ -157,6 +158,7 @@ public class EdinetClient {
 
             log.info(FundanalyzerLogClient.toClientLogObject(
                     MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.getDocId()),
+                    parameter.getDocId(),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             ));
@@ -168,6 +170,7 @@ public class EdinetClient {
                             e.getRawStatusCode(),
                             e.getResponseBodyAsString()
                     ),
+                    parameter.getDocId(),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             ));

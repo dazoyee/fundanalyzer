@@ -138,7 +138,7 @@ class ScrapingInteractorTest {
         @BeforeEach
         void setUp() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            doReturn(Pair.of(file, scrapingKeyword)).when(scrapingInteractor).findTargetFile(any(), eq(FinancialStatementEnum.BALANCE_SHEET));
+            doReturn(Pair.of(file, scrapingKeyword)).when(scrapingInteractor).findTargetFile(any(), eq(FinancialStatementEnum.BALANCE_SHEET), eq(document));
         }
 
         @DisplayName("bs : 貸借対照表をスクレイピングする")
@@ -177,7 +177,7 @@ class ScrapingInteractorTest {
         @DisplayName("bs : キーワードに合致するファイルが存在しないときはエラーにする")
         @Test
         void fundanalyzerFileException() {
-            doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any());
+            doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any(), any());
 
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
@@ -280,7 +280,7 @@ class ScrapingInteractorTest {
         @BeforeEach
         void setUp() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            doReturn(Pair.of(file, scrapingKeyword)).when(scrapingInteractor).findTargetFile(any(), eq(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT));
+            doReturn(Pair.of(file, scrapingKeyword)).when(scrapingInteractor).findTargetFile(any(), eq(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT), eq(document));
         }
 
         @DisplayName("pl : 損益計算書をスクレイピングする")
@@ -317,7 +317,7 @@ class ScrapingInteractorTest {
         @DisplayName("pl : キーワードに合致するファイルが存在しないときはエラーにする")
         @Test
         void fundanalyzerFileException() {
-            doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any());
+            doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any(), any());
 
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
@@ -345,7 +345,7 @@ class ScrapingInteractorTest {
         @BeforeEach
         void setUp() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            doReturn(Pair.of(file, scrapingKeyword)).when(scrapingInteractor).findTargetFile(any(), eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES));
+            doReturn(Pair.of(file, scrapingKeyword)).when(scrapingInteractor).findTargetFile(any(), eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES), eq(document));
         }
 
         @DisplayName("ns : 株式総数をスクレイピングする")
@@ -363,7 +363,7 @@ class ScrapingInteractorTest {
         @DisplayName("ns : キーワードに合致するファイルが存在しないときはエラーにする")
         @Test
         void fundanalyzerFileException() {
-            doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any());
+            doThrow(new FundanalyzerFileException()).when(scrapingInteractor).findTargetFile(any(), any(), any());
 
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
@@ -382,6 +382,8 @@ class ScrapingInteractorTest {
     @Nested
     class findTargetFile {
 
+        private final Document document = defaultDocument(DocumentTypeCode.DTC_120);
+
         ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(
                 null,
                 null,
@@ -395,9 +397,9 @@ class ScrapingInteractorTest {
         @Test
         void ok() {
             when(scrapingKeywordDao.selectByFinancialStatementId("1")).thenReturn(List.of(scrapingKeyword));
-            when(xbrlScraping.findFile(targetFile, scrapingKeyword)).thenReturn(Optional.of(new File("actual")));
+            when(xbrlScraping.findFile(targetFile, scrapingKeyword, document)).thenReturn(Optional.of(new File("actual")));
 
-            var actual = scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET);
+            var actual = scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET, document);
 
             assertEquals(new File("actual"), actual.getFirst());
             assertEquals(scrapingKeyword, actual.getSecond());
@@ -407,24 +409,24 @@ class ScrapingInteractorTest {
         @Test
         void noFile() {
             when(scrapingKeywordDao.selectByFinancialStatementId("1")).thenReturn(List.of(scrapingKeyword));
-            when(xbrlScraping.findFile(targetFile, scrapingKeyword)).thenThrow(FundanalyzerFileException.class);
+            when(xbrlScraping.findFile(targetFile, scrapingKeyword, document)).thenThrow(FundanalyzerFileException.class);
 
-            assertThrows(FundanalyzerFileException.class, () -> scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET));
+            assertThrows(FundanalyzerFileException.class, () -> scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET, document));
         }
 
         @DisplayName("findTargetFile : キーワードに合致するファイルが存在しなかったらエラー発生する")
         @Test
         void noKeyword() {
             when(scrapingKeywordDao.selectByFinancialStatementId("1")).thenReturn(List.of(scrapingKeyword));
-            when(xbrlScraping.findFile(targetFile, scrapingKeyword)).thenReturn(Optional.empty());
+            when(xbrlScraping.findFile(targetFile, scrapingKeyword, document)).thenReturn(Optional.empty());
 
-            assertThrows(FundanalyzerFileException.class, () -> scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET));
+            assertThrows(FundanalyzerFileException.class, () -> scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET, document));
         }
     }
 
     private Document defaultDocument(DocumentTypeCode documentTypeCode) {
         return new Document(
-                null,
+                "documentId",
                 documentTypeCode,
                 null,
                 "edinetCode",

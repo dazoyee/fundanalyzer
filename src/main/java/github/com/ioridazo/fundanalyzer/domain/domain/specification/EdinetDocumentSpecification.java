@@ -2,6 +2,9 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
@@ -12,6 +15,7 @@ import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -117,14 +121,19 @@ public class EdinetDocumentSpecification {
             edinetDocumentDao.insert(EdinetDocumentEntity.of(results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
-                                "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
-                        "edinet_document",
-                        results.getDocId(),
-                        results.getEdinetCode(),
-                        results.getFilerName(),
-                        results.getDocTypeCode()
-                );
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t書類ID:{1}\tEDINETコード:{2}\t提出者名:{3}\t書類種別コード:{4}",
+                                "edinet_document",
+                                results.getDocId(),
+                                results.getEdinetCode(),
+                                results.getFilerName(),
+                                results.getDocTypeCode()
+                        ),
+                        Category.DOCUMENT,
+                        Process.REGISTER
+                ));
             } else {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }

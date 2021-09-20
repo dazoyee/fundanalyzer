@@ -204,6 +204,7 @@ public class DocumentInteractor implements DocumentUseCase {
                         "次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}",
                         inputData.getId()
                 ),
+                inputData.getId(),
                 Category.DOCUMENT,
                 Process.SCRAPING,
                 System.currentTimeMillis() - startTime
@@ -238,6 +239,8 @@ public class DocumentInteractor implements DocumentUseCase {
                             inputData.getSubjectId(),
                             inputData.getValue()
                     ),
+                    inputData.getDocumentId(),
+                    inputData.getEdinetCode(),
                     Category.DOCUMENT,
                     Process.REGISTER,
                     System.currentTimeMillis() - startTime
@@ -248,6 +251,8 @@ public class DocumentInteractor implements DocumentUseCase {
         } catch (final FundanalyzerNotExistException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("企業情報が見つかりませんでした。\tEDINETコード:{0}", inputData.getEdinetCode()),
+                    inputData.getDocumentId(),
+                    inputData.getEdinetCode(),
                     Category.DOCUMENT,
                     Process.REGISTER,
                     System.currentTimeMillis() - startTime
@@ -260,6 +265,8 @@ public class DocumentInteractor implements DocumentUseCase {
                             "エラーが発生したため、財務諸表の値を登録できませんでした。詳細を確認してください。\t{0}",
                             inputData
                     ),
+                    inputData.getDocumentId(),
+                    inputData.getEdinetCode(),
                     Category.DOCUMENT,
                     Process.REGISTER,
                     System.currentTimeMillis() - startTime
@@ -283,6 +290,7 @@ public class DocumentInteractor implements DocumentUseCase {
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("すべての処理ステータスを完了に更新しました。\t書類ID:{0}", inputData.getId()),
+                    inputData.getId(),
                     Category.DOCUMENT,
                     Process.UPDATE,
                     System.currentTimeMillis() - startTime
@@ -296,6 +304,7 @@ public class DocumentInteractor implements DocumentUseCase {
                             "エラーが発生したため、処理ステータスを完了の更新に失敗しました。。\t書類ID:{0}",
                             inputData.getId()
                     ),
+                    inputData.getId(),
                     Category.DOCUMENT,
                     Process.UPDATE,
                     System.currentTimeMillis() - startTime
@@ -318,6 +327,7 @@ public class DocumentInteractor implements DocumentUseCase {
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", inputData.getId()),
+                inputData.getId(),
                 Category.DOCUMENT,
                 Process.REMOVE,
                 System.currentTimeMillis() - startTime
@@ -346,6 +356,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     documentSpecification.updateRemoved(document);
                     log.info(FundanalyzerLogClient.toInteractorLogObject(
                             MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", document.getDocumentId()),
+                            document,
                             Category.DOCUMENT,
                             Process.REMOVE
                     ));
@@ -375,6 +386,7 @@ public class DocumentInteractor implements DocumentUseCase {
                             "書類のダウンロードが完了していません。詳細を確認してください。\t書類ID:{0}",
                             document.getDocumentId()
                     ),
+                    document,
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             ));
@@ -410,6 +422,7 @@ public class DocumentInteractor implements DocumentUseCase {
                             "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
                             document
                     ),
+                    document,
                     Category.DOCUMENT,
                     Process.SCRAPING
             ));

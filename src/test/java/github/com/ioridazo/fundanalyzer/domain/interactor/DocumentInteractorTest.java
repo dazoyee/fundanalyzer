@@ -411,7 +411,7 @@ class DocumentInteractorTest {
                         "error",
                         null,
                         null,
-                        null,
+                        "edinetCode",
                         null,
                         null,
                         null,
@@ -475,7 +475,7 @@ class DocumentInteractorTest {
                         "remove",
                         null,
                         null,
-                        null,
+                        "edinetCode",
                         null,
                         null,
                         null,
@@ -573,10 +573,10 @@ class DocumentInteractorTest {
         void date_ok() {
             var inputData = DateInputData.of(LocalDate.parse("2021-09-18"));
             var document = new Document(
-                    null,
+                    "documentId",
                     DocumentTypeCode.DTC_140,
                     null,
-                    null,
+                    "edinetCode",
                     null,
                     LocalDate.parse("2021-09-18"),
                     null,
