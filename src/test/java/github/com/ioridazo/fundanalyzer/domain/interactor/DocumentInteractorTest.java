@@ -130,14 +130,37 @@ class DocumentInteractorTest {
             edinetResponse.setResults(List.of(target, already));
 
             when(edinetClient.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetDocumentSpecification.count(inputData)).thenReturn(0);
             when(edinetClient.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.GET_LIST))).thenReturn(edinetResponse);
 
             assertDoesNotThrow(() -> documentInteractor.saveEdinetList(inputData));
 
-            verify(edinetDocumentSpecification, times(1)).insert(edinetResponse);
+            verify(edinetDocumentSpecification, times(1)).insert(inputData.getDate(), edinetResponse);
             verify(companySpecification, times(1)).insertIfNotExist(target);
             verify(companySpecification, times(1)).insertIfNotExist(already);
             verify(documentSpecification, times(1)).insert(LocalDate.parse("2020-09-19"), edinetResponse);
+        }
+
+        @DisplayName("saveEdinetList: 対象件数が既に登録されていたらなにもしない")
+        @Test
+        void dateInputData_same_count() {
+            var inputData = DateInputData.of(LocalDate.parse("2020-09-19"));
+
+            var resultSet = new Metadata.ResultSet();
+            resultSet.setCount("10");
+            var metadata = new Metadata();
+            metadata.setResultset(resultSet);
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setMetadata(metadata);
+
+            when(edinetClient.list(new ListRequestParameter(LocalDate.parse("2020-09-19"), ListType.DEFAULT))).thenReturn(edinetResponse);
+            when(edinetDocumentSpecification.count(inputData)).thenReturn(10);
+
+            assertDoesNotThrow(() -> documentInteractor.saveEdinetList(inputData));
+
+            verify(edinetDocumentSpecification, times(0)).insert(inputData.getDate(), edinetResponse);
+            verify(companySpecification, times(0)).insertIfNotExist(any());
+            verify(documentSpecification, times(0)).insert(LocalDate.parse("2020-09-19"), edinetResponse);
         }
 
         @DisplayName("saveEdinetList: 対象件数がないときはなにもしない")
@@ -156,7 +179,7 @@ class DocumentInteractorTest {
 
             assertDoesNotThrow(() -> documentInteractor.saveEdinetList(inputData));
 
-            verify(edinetDocumentSpecification, times(0)).insert(edinetResponse);
+            verify(edinetDocumentSpecification, times(0)).insert(inputData.getDate(), edinetResponse);
             verify(companySpecification, times(0)).insertIfNotExist(any());
             verify(documentSpecification, times(0)).insert(LocalDate.parse("2020-09-19"), edinetResponse);
         }
@@ -411,7 +434,7 @@ class DocumentInteractorTest {
                         "error",
                         null,
                         null,
-                        null,
+                        "edinetCode",
                         null,
                         null,
                         null,
@@ -475,7 +498,7 @@ class DocumentInteractorTest {
                         "remove",
                         null,
                         null,
-                        null,
+                        "edinetCode",
                         null,
                         null,
                         null,
@@ -573,10 +596,10 @@ class DocumentInteractorTest {
         void date_ok() {
             var inputData = DateInputData.of(LocalDate.parse("2021-09-18"));
             var document = new Document(
-                    null,
+                    "documentId",
                     DocumentTypeCode.DTC_140,
                     null,
-                    null,
+                    "edinetCode",
                     null,
                     LocalDate.parse("2021-09-18"),
                     null,

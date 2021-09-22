@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -19,14 +20,17 @@ import java.util.List;
 public class ViewService {
 
     private final CompanyUseCase companyUseCase;
+    private final DocumentUseCase documentUseCase;
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
 
     public ViewService(
             final CompanyUseCase companyUseCase,
+            final DocumentUseCase documentUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
             final ViewEdinetUseCase viewEdinetUseCase) {
         this.companyUseCase = companyUseCase;
+        this.documentUseCase = documentUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
     }
@@ -138,6 +142,8 @@ public class ViewService {
      */
     @NewSpan
     public void updateEdinetListView(final DateInputData inputData) {
+        // remove
+        documentUseCase.removeDocument(inputData);
         // view edinet
         viewEdinetUseCase.updateView(inputData);
     }

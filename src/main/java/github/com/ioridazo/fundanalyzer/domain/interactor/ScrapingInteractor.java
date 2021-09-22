@@ -23,6 +23,7 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.ScrapingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
@@ -112,6 +113,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             document.getSubmitDate(),
                             document.getDocumentId()
                     ),
+                    document,
                     Category.SCRAPING,
                     Process.DOWNLOAD,
                     System.currentTimeMillis() - startTime
@@ -125,6 +127,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             document.getSubmitDate(),
                             document.getDocumentId()
                     ),
+                    document,
                     Category.SCRAPING,
                     Process.DECODE,
                     System.currentTimeMillis() - startTime
@@ -154,7 +157,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                                     FinancialStatementEnum.BALANCE_SHEET,
                                     subject.getId(),
                                     document,
-                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
+                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit(), document).orElse(null),
                                     CreatedType.AUTO
                             ))
                     );
@@ -186,7 +189,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                                     FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
                                     subject.getId(),
                                     document,
-                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit()).orElse(null),
+                                    parseValue(resultBean.getCurrentValue(), resultBean.getUnit(), document).orElse(null),
                                     CreatedType.AUTO
                             ))
                     );
@@ -212,7 +215,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
                             "0",
                             document,
-                            parseValue(value).orElse(null),
+                            parseValue(value, document).orElse(null),
                             CreatedType.AUTO
                     );
 
@@ -225,13 +228,15 @@ public class ScrapingInteractor implements ScrapingUseCase {
      *
      * @param targetFile 対象フォルダ
      * @param fs         財務諸表種別
+     * @param document   ドキュメント
      * @return 対象ファイルとそのキーワード
      */
-    Pair<File, ScrapingKeywordEntity> findTargetFile(final File targetFile, final FinancialStatementEnum fs) {
+    Pair<File, ScrapingKeywordEntity> findTargetFile(
+            final File targetFile, final FinancialStatementEnum fs, final Document document) {
         final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.getId());
 
         for (final ScrapingKeywordEntity scrapingKeyword : scrapingKeywordList) {
-            final Optional<File> findFile = xbrlScraping.findFile(targetFile, scrapingKeyword);
+            final Optional<File> findFile = xbrlScraping.findFile(targetFile, scrapingKeyword, document);
 
             if (findFile.isPresent()) {
                 return Pair.of(findFile.get(), scrapingKeyword);
@@ -278,6 +283,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             totalCurrentLiabilities.get(),
                             totalLiabilities.get()
                     ),
+                    document,
                     Category.SCRAPING,
                     Process.BS
             ));
@@ -310,6 +316,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             document.getDocumentId(),
                             document.getDocumentTypeCode().toValue() + "（" + document.getDocumentTypeCode().getName() + "）"
                     ),
+                    document,
                     Category.SCRAPING,
                     Process.BS
             ));
@@ -336,13 +343,14 @@ public class ScrapingInteractor implements ScrapingUseCase {
                 MessageFormat.format("[{0}] のスクレイピング処理を開始します。\tパス:{1}",
                         fs.getName(),
                         targetDirectory.getPath()),
+                document,
                 Category.SCRAPING,
                 Process.of(fs),
                 System.currentTimeMillis() - startTime
         ));
 
         try {
-            final Pair<File, ScrapingKeywordEntity> targetFile = findTargetFile(targetDirectory, fs);
+            final Pair<File, ScrapingKeywordEntity> targetFile = findTargetFile(targetDirectory, fs, document);
 
             doScraping.accept(company, targetFile);
 
@@ -355,13 +363,29 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             fs.getName(),
                             targetFile.getFirst().getPath()
                     ),
+                    document,
                     Category.SCRAPING,
                     Process.of(fs),
                     System.currentTimeMillis() - startTime
             ));
 
             documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
-        } catch (final FundanalyzerFileException | FundanalyzerScrapingException | FundanalyzerNotExistException e) {
+        } catch (final FundanalyzerFileException e) {
+            documentSpecification.updateFsToError(document, fs);
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "スクレイピング処理の過程でエラー発生しました。キーワードに合致するファイルが存在しませんでした。" +
+                                    "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
+                            company.getCode().orElse("null"),
+                            company.getEdinetCode(),
+                            fs.getName(),
+                            targetDirectory.getPath()),
+                    document,
+                    Category.SCRAPING,
+                    Process.of(fs),
+                    System.currentTimeMillis() - startTime
+            ), e);
+        } catch (final FundanalyzerScrapingException | FundanalyzerBadDataException | FundanalyzerNotExistException e) {
             documentSpecification.updateFsToError(document, fs);
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
@@ -371,6 +395,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             company.getEdinetCode(),
                             fs.getName(),
                             targetDirectory.getPath()),
+                    document,
                     Category.SCRAPING,
                     Process.of(fs),
                     System.currentTimeMillis() - startTime
@@ -385,8 +410,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
      * @param unit  単位
      * @return 値
      */
-    private Optional<Long> parseValue(final String value, final Unit unit) {
-        return parseValue(value).map(l -> l * unit.getValue());
+    private Optional<Long> parseValue(final String value, final Unit unit, final Document document) {
+        return parseValue(value, document).map(l -> l * unit.getValue());
     }
 
     /**
@@ -395,7 +420,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
      * @param value 数値
      * @return 値
      */
-    private Optional<Long> parseValue(final String value) {
+    private Optional<Long> parseValue(final String value, final Document document) {
         try {
             return Optional.of(value)
                     .filter(v -> !v.isBlank())
@@ -434,6 +459,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             "数値を正常に認識できなかったため、NULLで登録します。\tvalue:{0}",
                             value
                     ),
+                    document,
                     Category.SCRAPING,
                     Process.SCRAPING
             ));

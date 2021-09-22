@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.FinancialTableResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Unit;
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.Value;
@@ -37,9 +38,11 @@ public class XbrlScraping {
      *
      * @param filePath              フォルダパス
      * @param scrapingKeywordEntity キーワード
+     * @param document              ドキュメント
      * @return キーワードに合致するファイル
      */
-    public Optional<File> findFile(final File filePath, final ScrapingKeywordEntity scrapingKeywordEntity) {
+    public Optional<File> findFile(
+            final File filePath, final ScrapingKeywordEntity scrapingKeywordEntity, final Document document) {
         // 対象のディレクトリから"honbun"ファイルを取得
         final var filePathList = findFilesByTitleKeywordContaining("honbun", filePath).stream()
                 .filter(File::isFile)
@@ -50,6 +53,16 @@ public class XbrlScraping {
 
         if (filePathList.size() == 1) {
             // ファイルが一つ見つかったとき
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "次のキーワードにてファイルを確認しました。\t財務諸表名:{0}\tキーワード:{1}",
+                            scrapingKeywordEntity.getRemarks(),
+                            scrapingKeywordEntity.getKeyword()
+                    ),
+                    document,
+                    Category.SCRAPING,
+                    Process.of(scrapingKeywordEntity)
+            ));
             return filePathList.stream().findFirst();
         } else if (filePathList.isEmpty()) {
             // ファイルがみつからなかったとき
@@ -59,8 +72,9 @@ public class XbrlScraping {
                             scrapingKeywordEntity.getRemarks(),
                             scrapingKeywordEntity.getKeyword()
                     ),
+                    document,
                     Category.SCRAPING,
-                    Process.SCRAPING
+                    Process.of(scrapingKeywordEntity)
             ));
             return Optional.empty();
         } else {
@@ -71,8 +85,9 @@ public class XbrlScraping {
                             scrapingKeywordEntity.getKeyword(),
                             file
                     ),
+                    document,
                     Category.SCRAPING,
-                    Process.SCRAPING
+                    Process.of(scrapingKeywordEntity)
             )));
             throw new FundanalyzerFileException("ファイルが複数検出されました。スタックトレースを参考に詳細を確認してください。");
 
@@ -89,7 +104,7 @@ public class XbrlScraping {
     public List<FinancialTableResultBean> scrapeFinancialStatement(final File targetFile, final String keyWord) {
         final var unit = unit(targetFile, keyWord);
 
-        final var scrapingList = elementsByKeyMatch(targetFile, KeyMatch.of("name", keyWord))
+        final List<List<String>> scrapingList = elementsByKeyMatch(targetFile, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())
                 .select(Tag.TR.getName()).stream()
                 // tdの要素をリストにする
@@ -98,27 +113,30 @@ public class XbrlScraping {
                         // tdの中から" "（空）を取り除く
                         .filter(tdText -> !tdText.equals(" "))
                         .collect(Collectors.toList()))
+                // 不要なエレメントを削除
+                .filter(list -> list.stream().noneMatch(""::equals))
                 .collect(Collectors.toList());
 
         // 年度以外の情報を取り除く
         scrapingList.get(1).removeIf(s -> s.contains("注記"));
 
-        // 年度の順序を確認する
-        final boolean isMain = Optional.of(true)
-                .map(aBoolean -> {
-                    if (scrapingList.get(1).size() == 2) {
-                        return scrapingList.get(1).get(0).contains("前") || scrapingList.get(1).get(1).contains("当");
-                    } else {
-                        throw new FundanalyzerScrapingException(
-                                "年度に関して対象の財務諸表は定形外でした。詳細を確認してください。\nファイルパス:" + targetFile);
-                    }
-                })
-                .get();
-
-        return scrapingList.stream()
-                .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit, isMain))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        if (scrapingList.stream().allMatch(list -> list.size() <= 2)) {
+            // 当期のみの場合
+            return scrapingList.stream()
+                    .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } else if (scrapingList.stream().allMatch(list -> list.size() <= 4)) {
+            // 前期と当期がある場合
+            final boolean isMain = isMainOrderOfYear(scrapingList, targetFile);
+            return scrapingList.stream()
+                    .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit, isMain))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } else {
+            throw new FundanalyzerScrapingException(
+                    "定形外の財務諸表でした。詳細を確認してください。\nファイルパス:" + targetFile);
+        }
     }
 
     /**
@@ -142,8 +160,34 @@ public class XbrlScraping {
                 .anyMatch(text -> Unit.MILLIONS_OF_YEN.getName().stream().anyMatch(text::contains))) {
             return Unit.MILLIONS_OF_YEN;
         } else {
-            throw new FundanalyzerFileException("財務諸表の金額単位を識別できませんでした。");
+            throw new FundanalyzerScrapingException("財務諸表の金額単位を識別できませんでした。");
         }
+    }
+
+    /**
+     * 財務諸表の年度の順序を確認する
+     *
+     * @param scrapingList スクレイピング結果
+     * @param targetFile   対象ファイル
+     * @return boolean
+     */
+    private boolean isMainOrderOfYear(final List<List<String>> scrapingList, final File targetFile) {
+        if (scrapingList.get(1).size() == 2) {
+            if (scrapingList.get(1).get(0).contains("前") && scrapingList.get(1).get(1).contains("当")) {
+                return true;
+            } else if (scrapingList.get(1).get(0).contains("当") && scrapingList.get(1).get(1).contains("前")) {
+                return false;
+            }
+        } else if (scrapingList.get(1).size() == 3) {
+            if (scrapingList.get(1).get(0).contains("前") && scrapingList.get(1).get(2).contains("当")) {
+                return true;
+            } else if (scrapingList.get(1).get(0).contains("当") && scrapingList.get(1).get(2).contains("前")) {
+                return false;
+            }
+        }
+
+        throw new FundanalyzerScrapingException(
+                "年度に関して対象の財務諸表は定形外でした。詳細を確認してください。\nファイルパス:" + targetFile);
     }
 
     /**
@@ -165,7 +209,7 @@ public class XbrlScraping {
                 .collect(Collectors.toList());
 
         if (scrapingList.isEmpty()) {
-            throw new FundanalyzerFileException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
+            throw new FundanalyzerScrapingException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
         }
 
         try {
@@ -201,7 +245,7 @@ public class XbrlScraping {
 
             return scrapingList.get(indexOfKey2).get(indexOfKey1);
         } catch (NoSuchElementException e) {
-            throw new FundanalyzerFileException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
+            throw new FundanalyzerScrapingException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
         }
     }
 
@@ -210,7 +254,10 @@ public class XbrlScraping {
                 && td.contains("現在") && td.contains("発行") && td.contains("数"))
                 ||
                 (td.contains("四半期") && td.contains("末")
-                        && td.contains("現在") && td.contains("発行") && td.contains("数"));
+                        && td.contains("現在") && td.contains("発行") && td.contains("数"))
+                ||
+                (td.contains("四半期") && td.contains("末")
+                        && td.contains("現 在") && td.contains("発行") && td.contains("数"));
     }
 
     Elements elementsByKeyMatch(final File file, final KeyMatch keyMatch) {

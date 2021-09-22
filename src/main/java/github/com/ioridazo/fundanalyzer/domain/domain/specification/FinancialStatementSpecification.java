@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
@@ -65,6 +68,7 @@ public class FinancialStatementSpecification {
                     subject.getId(),
                     String.valueOf(document.getPeriodEnd().getYear()),
                     document.getDocumentTypeCode().toValue(),
+                    document.getQuarterType().toValue(),
                     document.getSubmitDate()
             ).flatMap(FinancialStatementEntity::getValue);
         } catch (final NestedRuntimeException e) {
@@ -111,6 +115,7 @@ public class FinancialStatementSpecification {
                 "0",
                 String.valueOf(document.getPeriodEnd().getYear()),
                 document.getDocumentTypeCode().toValue(),
+                document.getQuarterType().toValue(),
                 document.getSubmitDate()
         ).flatMap(FinancialStatementEntity::getValue);
     }
@@ -174,13 +179,19 @@ public class FinancialStatementSpecification {
             ));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
-                                "\t企業コード:{}\t財務諸表名:{}\t科目ID:{}\t対象年:{}",
-                        company.getCode().orElse(null),
-                        fs.getName(),
-                        dId,
-                        document.getDocumentPeriod().map(LocalDate::getYear).map(String::valueOf).orElse("null")
-                );
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\t企業コード:{0}\t財務諸表名:{1}\t科目ID:{2}\t対象年:{3}",
+                                company.getCode().orElse(null),
+                                fs.getName(),
+                                dId,
+                                document.getDocumentPeriod().map(LocalDate::getYear).map(String::valueOf).orElse("null")
+                        ),
+                        document,
+                        Category.SCRAPING,
+                        Process.of(fs)
+                ));
             } else {
                 throw e;
             }

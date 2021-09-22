@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -71,15 +75,20 @@ public class AnalysisResultSpecification {
             ));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.debug(
-                        "一意制約違反のため、データベースへの登録をスキップします。" +
-                                "\tテーブル名:{}\t会社コード:{}\t期間:{}\t書類種別コード:{}\t提出日:{}",
-                        "analysis_result",
-                        companyCode,
-                        document.getDocumentPeriod(),
-                        document.getDocumentTypeCode().toValue(),
-                        document.getSubmitDate()
-                );
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t会社コード:{1}\t期間:{2}\t書類種別コード:{3}\t提出日:{4}",
+                                "analysis_result",
+                                companyCode,
+                                document.getDocumentPeriod(),
+                                document.getDocumentTypeCode().toValue(),
+                                document.getSubmitDate()
+                        ),
+                        document,
+                        Category.ANALYSIS,
+                        Process.ANALYSIS
+                ));
             } else {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }

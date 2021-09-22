@@ -2,6 +2,9 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
@@ -22,6 +25,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -237,8 +241,11 @@ public class DocumentSpecification {
      * @param edinetResponse EDINETレスポンス
      */
     public void insert(final LocalDate submitDate, final EdinetResponse edinetResponse) {
+        final List<DocumentEntity> insertedList = documentDao.selectBySubmitDate(submitDate);
         edinetResponse.getResults().stream()
-                .filter(results -> isEmpty(results.getDocId(), submitDate))
+                .filter(results -> insertedList.stream()
+                        .map(DocumentEntity::getDocumentId)
+                        .noneMatch(inserted -> results.getDocId().equals(inserted)))
                 .forEach(results -> insert(submitDate, results));
     }
 
@@ -253,16 +260,25 @@ public class DocumentSpecification {
             documentDao.insert(DocumentEntity.of(submitDate, parseDocumentPeriod(results).orElse(null), results, nowLocalDateTime()));
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.debug("一意制約違反のため、データベースへの登録をスキップします。" +
-                                "\tテーブル名:{}\t書類ID:{}\tEDINETコード:{}\t提出者名:{}\t書類種別コード:{}",
-                        "document",
-                        results.getDocId(),
-                        results.getEdinetCode(),
-                        results.getFilerName(),
-                        results.getDocTypeCode()
-                );
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t書類ID:{1}\tEDINETコード:{2}\t提出者名:{3}\t書類種別コード:{4}",
+                                "document",
+                                results.getDocId(),
+                                results.getEdinetCode(),
+                                results.getFilerName(),
+                                results.getDocTypeCode()
+                        ),
+                        Category.DOCUMENT,
+                        Process.REGISTER
+                ));
             } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                log.error("参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。", e.getRootCause());
+                log.error(FundanalyzerLogClient.toSpecificationLogObject(
+                        "参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。",
+                        Category.DOCUMENT,
+                        Process.REGISTER
+                ), e.getRootCause());
                 throw new FundanalyzerSqlForeignKeyException(e);
             } else {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
@@ -395,16 +411,21 @@ public class DocumentSpecification {
             }
         } catch (NestedRuntimeException e) {
             if (e.contains(NonUniqueResultException.class)) {
-                log.warn(
-                        "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
-                                "\t会社コード:{}\t書類ID:{}\t書類種別コード:{}\t提出日:{}\t対象年:{}",
-                        companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).orElse("null"),
-                        document.getDocumentId(),
-                        document.getDocumentTypeCode().toValue(),
-                        document.getSubmitDate(),
-                        document.getDocumentPeriod().map(String::valueOf).orElse("null")
-
-                );
+                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
+                                        "\t会社コード:{0}\t書類ID:{1}\t書類種別コード:{2}\t提出日:{3}\t対象年:{4}",
+                                companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).orElse("null"),
+                                document.getDocumentId(),
+                                document.getDocumentTypeCode().toValue(),
+                                document.getSubmitDate(),
+                                document.getDocumentPeriod().map(String::valueOf).orElse("null")
+                        ),
+                        document,
+                        Category.DOCUMENT,
+                        Process.UPDATE
+                ))
+                ;
             } else {
                 log.error("想定外のエラーが発生しました。", e);
             }
@@ -497,18 +518,5 @@ public class DocumentSpecification {
         return companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).stream()
                 .filter(company -> company.getCode().isPresent())
                 .anyMatch(company -> industrySpecification.isTarget(company.getIndustryId()));
-    }
-
-    /**
-     * ドキュメントがデータベースに存在するか
-     *
-     * @param documentId 書類ID
-     * @param submitDate 提出日
-     * @return boolean
-     */
-    private boolean isEmpty(final String documentId, final LocalDate submitDate) {
-        return documentDao.selectBySubmitDate(submitDate).stream()
-                .map(DocumentEntity::getDocumentId)
-                .noneMatch(documentId::equals);
     }
 }

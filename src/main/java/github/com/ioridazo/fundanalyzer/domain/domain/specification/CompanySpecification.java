@@ -95,12 +95,13 @@ public class CompanySpecification {
             if (companyDao.selectByEdinetCode(edinetCode).isEmpty()) {
                 companyDao.insert(CompanyEntity.ofSqlForeignKey(edinetCode, results.getFilerName(), nowLocalDateTime()));
 
-                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                log.info(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "企業情報が登録されていないため、仮情報を登録します。\tEDINETコード:{0}\t企業名:{1}",
                                 edinetCode,
                                 results.getFilerName()
                         ),
+                        edinetCode,
                         Category.DOCUMENT,
                         Process.EDINET
                 ));
