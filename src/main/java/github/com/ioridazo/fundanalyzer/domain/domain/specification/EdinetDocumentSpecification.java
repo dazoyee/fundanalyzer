@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.EdinetDocu
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -45,6 +47,16 @@ public class EdinetDocumentSpecification {
         final EdinetDocument edinetDocument = parsePeriod(documentId);
         edinetDocument.setDocDescription(edinetDocumentDao.selectByDocId(documentId).getDocDescription().orElse(null));
         return edinetDocument;
+    }
+
+    /**
+     * EDINETドキュメントの件数を取得する
+     *
+     * @param inputData 提出日
+     * @return 件数
+     */
+    public int count(final DateInputData inputData) {
+        return edinetDocumentDao.count(inputData.getDate().toString());
     }
 
     /**
@@ -103,11 +115,15 @@ public class EdinetDocumentSpecification {
     /**
      * EDINETドキュメントを登録する
      *
+     * @param submitDate     提出日
      * @param edinetResponse EDINETレスポンス
      */
-    public void insert(final EdinetResponse edinetResponse) {
+    public void insert(final LocalDate submitDate, final EdinetResponse edinetResponse) {
+        final List<EdinetDocumentEntity> insertedList = edinetDocumentDao.selectBySubmitDate(submitDate.toString());
         edinetResponse.getResults().stream()
-                .filter(results -> isEmpty(results.getDocId()))
+                .filter(results -> insertedList.stream()
+                        .map(EdinetDocumentEntity::getDocId)
+                        .noneMatch(inserted -> results.getDocId().equals(inserted)))
                 .forEach(this::insert);
     }
 
@@ -138,17 +154,5 @@ public class EdinetDocumentSpecification {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }
         }
-    }
-
-    /**
-     * EDINETドキュメントがデータベースに存在するか
-     *
-     * @param docId 書類ID
-     * @return boolean
-     */
-    private boolean isEmpty(final String docId) {
-        return edinetDocumentDao.selectAll().stream()
-                .map(EdinetDocumentEntity::getDocId)
-                .noneMatch(docId::equals);
     }
 }

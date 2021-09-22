@@ -15,10 +15,13 @@ import java.util.List;
 public interface EdinetDocumentDao {
 
     @Select
-    List<EdinetDocumentEntity> selectAll();
+    EdinetDocumentEntity selectByDocId(String docId);
 
     @Select
-    EdinetDocumentEntity selectByDocId(String docId);
+    List<EdinetDocumentEntity> selectBySubmitDate(String submitDate);
+
+    @Select
+    int count(String submitDate);
 
     @Transactional
     @Insert

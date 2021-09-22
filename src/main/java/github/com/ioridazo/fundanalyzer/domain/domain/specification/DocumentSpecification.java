@@ -241,8 +241,11 @@ public class DocumentSpecification {
      * @param edinetResponse EDINETレスポンス
      */
     public void insert(final LocalDate submitDate, final EdinetResponse edinetResponse) {
+        final List<DocumentEntity> insertedList = documentDao.selectBySubmitDate(submitDate);
         edinetResponse.getResults().stream()
-                .filter(results -> isEmpty(results.getDocId(), submitDate))
+                .filter(results -> insertedList.stream()
+                        .map(DocumentEntity::getDocumentId)
+                        .noneMatch(inserted -> results.getDocId().equals(inserted)))
                 .forEach(results -> insert(submitDate, results));
     }
 
@@ -515,18 +518,5 @@ public class DocumentSpecification {
         return companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).stream()
                 .filter(company -> company.getCode().isPresent())
                 .anyMatch(company -> industrySpecification.isTarget(company.getIndustryId()));
-    }
-
-    /**
-     * ドキュメントがデータベースに存在するか
-     *
-     * @param documentId 書類ID
-     * @param submitDate 提出日
-     * @return boolean
-     */
-    private boolean isEmpty(final String documentId, final LocalDate submitDate) {
-        return documentDao.selectBySubmitDate(submitDate).stream()
-                .map(DocumentEntity::getDocumentId)
-                .noneMatch(documentId::equals);
     }
 }

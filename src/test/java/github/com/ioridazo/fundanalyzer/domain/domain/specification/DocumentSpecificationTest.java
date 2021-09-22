@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.DocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentEntity;
@@ -17,10 +18,13 @@ import org.mockito.Mockito;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DocumentSpecificationTest {
@@ -264,6 +268,43 @@ class DocumentSpecificationTest {
 
             assertEquals(0, actual.getFirst().size());
             assertEquals(1, actual.getSecond().size());
+        }
+    }
+
+    @Nested
+    class insert {
+
+        String documentId = "documentId";
+        LocalDate submitDate = LocalDate.parse("2021-09-21");
+
+        @DisplayName("insert : データベースに存在しなければ登録する")
+        @Test
+        void _insert() {
+            var results = new Results();
+            results.setDocId(documentId);
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setResults(List.of(results));
+
+            when(documentDao.selectBySubmitDate(submitDate)).thenReturn(List.of());
+
+            assertDoesNotThrow(() -> documentSpecification.insert(submitDate, edinetResponse));
+            verify(documentDao, times(1)).insert(any());
+        }
+
+        @DisplayName("insert : データベースに存在すれば登録しない")
+        @Test
+        void not_insert() {
+            var results = new Results();
+            results.setDocId(documentId);
+            var edinetResponse = new EdinetResponse();
+            edinetResponse.setResults(List.of(results));
+
+            var document = DocumentEntity.builder().documentId(documentId).build();
+
+            when(documentDao.selectBySubmitDate(submitDate)).thenReturn(List.of(document));
+
+            assertDoesNotThrow(() -> documentSpecification.insert(submitDate, edinetResponse));
+            verify(documentDao, times(0)).insert(any());
         }
     }
 

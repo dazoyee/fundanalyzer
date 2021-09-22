@@ -94,7 +94,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            documentList.forEach(this::scrape);
+            documentList.parallelStream().forEach(this::scrape);
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
@@ -118,29 +118,11 @@ public class DocumentInteractor implements DocumentUseCase {
     public void saveEdinetList(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
 
-        if (isPresentEdinet(inputData.getDate())) {
-            // 書類が0件ではないときは書類リストを取得してデータベースに登録する
-            final EdinetResponse edinetResponse = edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
+        // EDINETに提出書類の問い合わせ
+        final int count = Integer.parseInt(edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.DEFAULT))
+                .getMetadata().getResultset().getCount());
 
-            // edinet document
-            edinetDocumentSpecification.insert(edinetResponse);
-
-            // company
-            edinetResponse.getResults().forEach(companySpecification::insertIfNotExist);
-
-            // document
-            documentSpecification.insert(inputData.getDate(), edinetResponse);
-
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}",
-                            inputData.getDate()
-                    ),
-                    Category.DOCUMENT,
-                    Process.EDINET,
-                    System.currentTimeMillis() - startTime
-            ));
-        } else {
+        if (0 == count) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}",
@@ -150,6 +132,41 @@ public class DocumentInteractor implements DocumentUseCase {
                     Process.EDINET,
                     System.currentTimeMillis() - startTime
             ));
+        } else {
+            if (count == edinetDocumentSpecification.count(inputData)) {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "データベースへ登録済みの書類件数と一致するため、登録をスキップしました。\t指定ファイル日付:{0}",
+                                inputData.getDate()
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET,
+                        System.currentTimeMillis() - startTime
+                ));
+            } else {
+                // 書類が0件ではないときは書類リストを取得してデータベースに登録する
+                final EdinetResponse edinetResponse = edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
+
+                // edinet document
+                edinetDocumentSpecification.insert(inputData.getDate(), edinetResponse);
+
+                // company
+                edinetResponse.getResults().forEach(companySpecification::insertIfNotExist);
+
+                // document
+                documentSpecification.insert(inputData.getDate(), edinetResponse);
+
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}",
+                                inputData.getDate()
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET,
+                        System.currentTimeMillis() - startTime
+                ));
+
+            }
         }
     }
 
@@ -174,7 +191,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            targetList.forEach(this::scrape);
+            targetList.parallelStream().forEach(this::scrape);
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
