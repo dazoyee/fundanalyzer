@@ -139,6 +139,7 @@
             <table class="table table-bordered">
                 <thead>
                 <tr>
+                    <th>提出日</th>
                     <th>対象年</th>
                     <th>企業価値</th>
                     <th>書類種別コード</th>
@@ -147,6 +148,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="analysisResult : ${analysisResults}">
+                    <td th:text="${analysisResult.submitDate}">提出日</td>
                     <td th:text="${analysisResult.documentPeriod}">対象年</td>
                     <td th:text="${analysisResult.corporateValue}">企業価値</td>
                     <td th:text="${analysisResult.documentTypeCode}">書類種別コード</td>
