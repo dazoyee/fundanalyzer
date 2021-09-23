@@ -8,6 +8,7 @@ import org.seasar.doma.Update;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,13 +17,16 @@ import java.util.Optional;
 public interface CompanyDao {
 
     @Select
-    List<CompanyEntity> selectAll();
+    List<CompanyEntity> selectByCodeIsNotNull();
 
     @Select
     Optional<CompanyEntity> selectByEdinetCode(String edinetCode);
 
     @Select
     Optional<CompanyEntity> selectByCode(String code);
+
+    @Select
+    Optional<LocalDateTime> maxUpdatedAt();
 
     @Insert
     Result<CompanyEntity> insert(CompanyEntity company);

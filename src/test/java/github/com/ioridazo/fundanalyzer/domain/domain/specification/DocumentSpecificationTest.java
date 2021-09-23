@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,14 +67,13 @@ class DocumentSpecificationTest {
                 null
         );
         var document1 = defaultDocumentEntity(LocalDate.parse("2021-05-08"));
-        var document2 = defaultDocumentEntity(LocalDate.parse("2021-05-09"));
 
-        when(documentDao.selectByEdinetCodeAndType(any(), any())).thenReturn(List.of(document1, document2));
-        when(edinetDocumentSpecification.findEdinetDocument(any())).thenReturn(new EdinetDocument());
+        when(documentDao.maxSubmitDateByEdinetCodeAndType(any(), any())).thenReturn(Optional.of(document1));
+        when(edinetDocumentSpecification.inquiryLimitedEdinetDocument(any())).thenReturn(new EdinetDocument());
 
         var actual = documentSpecification.latestDocument(company);
 
-        assertEquals(LocalDate.parse("2021-05-09"), actual.map(Document::getSubmitDate).orElseThrow());
+        assertEquals(LocalDate.parse("2021-05-08"), actual.map(Document::getSubmitDate).orElseThrow());
     }
 
     @Nested

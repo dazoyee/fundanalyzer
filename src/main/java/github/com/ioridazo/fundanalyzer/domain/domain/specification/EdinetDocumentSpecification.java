@@ -13,6 +13,8 @@ import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,8 @@ import java.util.Objects;
 
 @Component
 public class EdinetDocumentSpecification {
+
+    private static final String CACHE_KEY_LIMITED_EDINET_DOCUMENT = "limitedEdinetDocument";
 
     private static final Logger log = LogManager.getLogger(EdinetDocumentSpecification.class);
 
@@ -39,11 +43,21 @@ public class EdinetDocumentSpecification {
 
     /**
      * EDINETドキュメント情報を取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
      *
      * @param documentId 書類ID
      * @return EDINETドキュメント情報
      */
-    public EdinetDocument findEdinetDocument(final String documentId) {
+    @Cacheable(CACHE_KEY_LIMITED_EDINET_DOCUMENT)
+    public EdinetDocument inquiryLimitedEdinetDocument(final String documentId) {
+        return findLimitedEdinetDocument(documentId);
+    }
+
+    @CachePut(CACHE_KEY_LIMITED_EDINET_DOCUMENT)
+    public EdinetDocument findLimitedEdinetDocument(final String documentId) {
         final EdinetDocument edinetDocument = parsePeriod(documentId);
         edinetDocument.setDocDescription(edinetDocumentDao.selectByDocId(documentId).getDocDescription().orElse(null));
         return edinetDocument;

@@ -13,13 +13,4 @@ public interface PlSubjectDao {
 
     @Select
     List<PlSubjectEntity> selectAll();
-
-    @Select
-    PlSubjectEntity selectById(String id);
-
-    @Select
-    PlSubjectEntity selectByUniqueKey(String outlineSubjectId, String detailSubjectId);
-
-    @Select
-    List<PlSubjectEntity> selectByOutlineSubjectId(String outlineSubjectId);
 }

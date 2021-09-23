@@ -29,7 +29,6 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,7 +77,7 @@ public class DocumentSpecification {
     public Document findDocument(final String documentId) {
         return Document.of(
                 documentDao.selectByDocumentId(documentId),
-                edinetDocumentSpecification.findEdinetDocument(documentId)
+                edinetDocumentSpecification.inquiryLimitedEdinetDocument(documentId)
         );
     }
 
@@ -91,7 +90,7 @@ public class DocumentSpecification {
     public Document findDocument(final IdInputData inputData) {
         return Document.of(
                 documentDao.selectByDocumentId(inputData.getId()),
-                edinetDocumentSpecification.findEdinetDocument(inputData.getId())
+                edinetDocumentSpecification.inquiryLimitedEdinetDocument(inputData.getId())
         );
     }
 
@@ -102,9 +101,9 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Optional<Document> latestDocument(final Company company) {
-        return documentDao.selectByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes).stream()
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
-                .max(Comparator.comparing(Document::getSubmitDate));
+        return documentDao.maxSubmitDateByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes).stream()
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
+                .findFirst();
     }
 
     /**
@@ -115,7 +114,7 @@ public class DocumentSpecification {
     public List<Document> documentList() {
         return documentDao.selectByDocumentTypeCode(targetTypeCodes).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .collect(Collectors.toList());
     }
 
@@ -128,7 +127,7 @@ public class DocumentSpecification {
     public List<Document> documentList(final DateInputData inputData) {
         return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .collect(Collectors.toList());
     }
 
@@ -141,7 +140,7 @@ public class DocumentSpecification {
     public List<Document> targetList(final DateInputData inputData) {
         return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .filter(this::isTarget)
                 .filter(Document::isTarget)
                 .collect(Collectors.toList());
@@ -173,7 +172,7 @@ public class DocumentSpecification {
     public List<Document> removeTargetList(final DateInputData inputData) {
         return documentDao.selectByTypeAndSubmitDate(targetTypeCodesToRemove, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .filter(this::isTarget)
                 .filter(Document::isTarget)
                 .collect(Collectors.toList());

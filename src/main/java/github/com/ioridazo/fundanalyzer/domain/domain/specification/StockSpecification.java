@@ -75,7 +75,8 @@ public class StockSpecification {
      * @return 株価情報
      */
     public Stock findStock(final Company company) {
-        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new));
+        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(
+                company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code")));
 
         final Optional<LocalDate> importDate = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -88,7 +89,9 @@ public class StockSpecification {
 
         final Optional<BigDecimal> averageStockPrice = averageStockPrice(company, stockPriceList);
 
-        final Optional<BigDecimal> latestForecastStock = minkabuDao.selectByCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new)).stream()
+        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(
+                company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code")));
+        final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
                 .map(MinkabuEntity::getGoalsStock)
                 .map(BigDecimal::new);
@@ -100,7 +103,7 @@ public class StockSpecification {
                 latestStock.orElse(null),
                 latestForecastStock.orElse(null),
                 stockPriceList,
-                minkabuDao.selectByCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new))
+                minkabuList
         );
     }
 
