@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.CompanyDao;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.CompanyEntity;
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Results;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.CompanyDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.CompanyEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,11 +37,10 @@ class CompanySpecificationTest {
         ));
     }
 
-    @DisplayName("findLastUpdateDateTime : ")
+    @DisplayName("findLastUpdateDateTime : 企業情報更新日時を取得する")
     @Test
     void findLastUpdateDateTime() {
-        when(companyDao.selectAll()).thenReturn(List.of(defaultCompanyEntity()));
-
+        when(companyDao.maxUpdatedAt()).thenReturn(Optional.of(LocalDateTime.of(2021, 5, 8, 23, 37)));
         assertEquals("2021/05/08 23:37:00", companySpecification.findLastUpdateDateTime().orElseThrow());
     }
 
@@ -85,7 +84,8 @@ class CompanySpecificationTest {
             resultBean.setSettlementDate("");
             var resultBeanList = List.of(resultBean);
 
-            when(companyDao.selectAll()).thenReturn(List.of(defaultCompanyEntity()));
+            when(companyDao.selectByCodeIsNotNull()).thenReturn(List.of(defaultCompanyEntity()));
+            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(defaultCompanyEntity()));
 
             assertDoesNotThrow(() -> companySpecification.upsert(resultBeanList));
             verify(companyDao, times(1)).update(any());
@@ -101,7 +101,8 @@ class CompanySpecificationTest {
             resultBean.setSettlementDate("");
             var resultBeanList = List.of(resultBean);
 
-            when(companyDao.selectAll()).thenReturn(List.of(defaultCompanyEntity()));
+            when(companyDao.selectByCodeIsNotNull()).thenReturn(List.of(defaultCompanyEntity()));
+            when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.empty());
 
             assertDoesNotThrow(() -> companySpecification.upsert(resultBeanList));
             verify(companyDao, times(0)).update(any());

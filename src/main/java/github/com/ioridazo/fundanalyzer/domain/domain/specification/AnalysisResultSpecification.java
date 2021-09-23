@@ -191,7 +191,7 @@ public class AnalysisResultSpecification {
      * @return 企業価値リスト
      */
     public List<AnalysisResultEntity> displayTargetList(final Company company, final List<String> documentTypeCode) {
-        final String code = company.getCode().orElseThrow(FundanalyzerNotExistException::new);
+        final String code = company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code"));
         return analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode);
     }
 
