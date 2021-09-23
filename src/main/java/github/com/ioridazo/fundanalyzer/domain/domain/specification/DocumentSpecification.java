@@ -29,7 +29,6 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -102,9 +101,9 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Optional<Document> latestDocument(final Company company) {
-        return documentDao.selectByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes).stream()
+        return documentDao.maxSubmitDateByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes).stream()
                 .map(entity -> Document.of(entity, edinetDocumentSpecification.findEdinetDocument(entity.getDocumentId())))
-                .max(Comparator.comparing(Document::getSubmitDate));
+                .findFirst();
     }
 
     /**
