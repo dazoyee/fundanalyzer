@@ -17,6 +17,11 @@ spring:
     sender:
       type: web
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=5m,recordStats
+
 #logging:
 #  file:
 #    name: ${spring.application.name}

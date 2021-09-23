@@ -16,12 +16,6 @@ public interface IndustryDao {
     @Select
     List<IndustryEntity> selectAll();
 
-    @Select
-    IndustryEntity selectById(Integer id);
-
-    @Select
-    IndustryEntity selectByName(String name);
-
     @Insert(include = {"name", "createdAt"})
     Result<IndustryEntity> insert(IndustryEntity industryEntity);
 }
