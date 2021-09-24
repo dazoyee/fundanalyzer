@@ -50,24 +50,23 @@ public class StockInteractor implements StockUseCase {
     @Override
     public void importStockPrice(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        final List<String> companyCodeList = documentSpecification.targetList(inputData).stream()
+        final List<CodeInputData> inputDataList = documentSpecification.targetList(inputData).stream()
                 .map(document -> companySpecification.findCompanyByEdinetCode(document.getEdinetCode()))
                 .filter(Optional::isPresent)
                 .map(c -> c.get().getCode())
                 .map(Optional::get)
+                .map(CodeInputData::of)
+                .distinct()
                 .collect(Collectors.toList());
 
         // 株価取得処理を実施する
-        companyCodeList.stream()
-                .map(CodeInputData::of)
-                .distinct()
-                .forEach(this::importStockPrice);
+        inputDataList.parallelStream().forEach(this::importStockPrice);
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format(
                         "最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得企業数:{1}",
                         inputData.getDate(),
-                        companyCodeList.stream().distinct().count()),
+                        inputDataList.stream().distinct().count()),
                 Category.STOCK,
                 Process.IMPORT,
                 System.currentTimeMillis() - startTime

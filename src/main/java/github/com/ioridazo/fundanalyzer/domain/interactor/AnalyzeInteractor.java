@@ -92,7 +92,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            targetList.forEach(this::analyze);
+            targetList.parallelStream().forEach(this::analyze);
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(

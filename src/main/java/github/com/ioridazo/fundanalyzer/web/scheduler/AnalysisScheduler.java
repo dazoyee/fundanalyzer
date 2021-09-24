@@ -4,10 +4,8 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import org.apache.logging.log4j.LogManager;
@@ -28,22 +26,21 @@ public class AnalysisScheduler {
 
     private final AnalysisService analysisService;
     private final ViewService viewService;
-    private final DocumentSpecification documentSpecification;
     private final SlackClient slackClient;
 
     @Value("${app.scheduler.hour.analysis}")
     int hourOfAnalysis;
     @Value("${app.scheduler.hour.update-view}")
     int hourOfUpdateView;
+    @Value("${app.scheduler.analysis.past-days}")
+    int pastDaysForAnalysis;
 
     public AnalysisScheduler(
             final AnalysisService analysisService,
             final ViewService viewService,
-            final DocumentSpecification documentSpecification,
             final SlackClient slackClient) {
         this.analysisService = analysisService;
         this.viewService = viewService;
-        this.documentSpecification = documentSpecification;
         this.slackClient = slackClient;
     }
 
@@ -67,15 +64,9 @@ public class AnalysisScheduler {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "analysisScheduler", 0));
 
             try {
-                final LocalDate fromDate = documentSpecification.documentList().stream()
-                        .map(Document::getSubmitDate)
-                        // データベースの最新提出日を取得
-                        .max(LocalDate::compareTo)
-                        // 次の日から
-                        .map(submitDate -> submitDate.plusDays(1))
-                        .orElse(nowLocalDate());
-
-                analysisService.executeAllMain(BetweenDateInputData.of(fromDate, nowLocalDate()));
+                final LocalDate nowLocalDate = nowLocalDate();
+                analysisService.executeAllMain(
+                        BetweenDateInputData.of(nowLocalDate.minusDays(pastDaysForAnalysis), nowLocalDate));
 
                 final long durationTime = System.currentTimeMillis() - startTime;
 

@@ -109,18 +109,6 @@ public class DocumentSpecification {
     /**
      * ドキュメント情報リストを取得する
      *
-     * @return ドキュメント情報リスト
-     */
-    public List<Document> documentList() {
-        return documentDao.selectByDocumentTypeCode(targetTypeCodes).stream()
-                .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * ドキュメント情報リストを取得する
-     *
      * @param inputData 提出日
      * @return ドキュメント情報リスト
      */
@@ -176,6 +164,15 @@ public class DocumentSpecification {
                 .filter(this::isTarget)
                 .filter(Document::isTarget)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * すべての提出日を取得する
+     *
+     * @return 提出日リスト
+     */
+    public List<LocalDate> submitDateList() {
+        return documentDao.selectDistinctSubmitDateByDocumentTypeCode(targetTypeCodes);
     }
 
     /**
