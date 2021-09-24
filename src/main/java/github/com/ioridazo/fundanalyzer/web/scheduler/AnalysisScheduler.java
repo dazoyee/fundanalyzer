@@ -7,7 +7,6 @@ import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import org.apache.logging.log4j.LogManager;
@@ -67,8 +66,7 @@ public class AnalysisScheduler {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "analysisScheduler", 0));
 
             try {
-                final LocalDate fromDate = documentSpecification.documentList().stream()
-                        .map(Document::getSubmitDate)
+                final LocalDate fromDate = documentSpecification.submitDateList().stream()
                         // データベースの最新提出日を取得
                         .max(LocalDate::compareTo)
                         // 次の日から

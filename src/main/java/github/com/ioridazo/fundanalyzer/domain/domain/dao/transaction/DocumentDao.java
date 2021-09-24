@@ -31,7 +31,7 @@ public interface DocumentDao {
     List<DocumentEntity> selectBySubmitDate(LocalDate submitDate);
 
     @Select
-    List<DocumentEntity> selectByDocumentTypeCode(List<String> documentTypeCode);
+    List<LocalDate> selectDistinctSubmitDateByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select
     List<DocumentEntity> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);

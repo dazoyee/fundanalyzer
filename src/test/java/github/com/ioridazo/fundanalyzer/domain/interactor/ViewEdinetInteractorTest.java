@@ -150,7 +150,7 @@ class ViewEdinetInteractorTest {
         @Test
         void all() {
             var inputData = DateInputData.of(LocalDate.parse("2021-05-16"));
-            when(documentSpecification.documentList()).thenReturn(List.of(document));
+            when(documentSpecification.submitDateList()).thenReturn(List.of(LocalDate.parse("2021-05-16")));
             when(viewSpecification.generateEdinetListView(inputData)).thenReturn(viewModel);
 
             assertDoesNotThrow(() -> viewEdinetInteractor.updateView());
@@ -162,7 +162,7 @@ class ViewEdinetInteractorTest {
         @Test
         void old_submitDate() {
             var inputData = DateInputData.of(LocalDate.parse("2019-05-16"));
-            when(documentSpecification.documentList()).thenReturn(List.of(document));
+            when(documentSpecification.submitDateList()).thenReturn(List.of(LocalDate.parse("2021-05-16")));
             when(viewSpecification.generateEdinetListView(inputData)).thenReturn(viewModel);
 
             assertDoesNotThrow(() -> viewEdinetInteractor.updateView());

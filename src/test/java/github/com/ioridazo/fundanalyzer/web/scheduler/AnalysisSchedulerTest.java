@@ -79,7 +79,7 @@ class AnalysisSchedulerTest {
                     null,
                     false
             );
-            when(documentSpecification.documentList()).thenReturn(List.of(document));
+            when(documentSpecification.submitDateList()).thenReturn(List.of(LocalDate.parse("2021-02-05")));
             doReturn(LocalDate.parse("2021-02-08")).when(scheduler).nowLocalDate();
 
             assertDoesNotThrow(() -> scheduler.analysisScheduler());
@@ -92,7 +92,7 @@ class AnalysisSchedulerTest {
         void analysisScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 14, 0)).when(scheduler).nowLocalDateTime();
 
-            when(documentSpecification.documentList()).thenReturn(List.of());
+            when(documentSpecification.submitDateList()).thenReturn(List.of());
             doReturn(LocalDate.parse("2021-02-08")).when(scheduler).nowLocalDate();
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).executeAllMain(any());
 
