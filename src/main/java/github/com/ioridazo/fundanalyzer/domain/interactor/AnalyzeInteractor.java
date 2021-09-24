@@ -64,6 +64,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("書類ID[{0}]の分析が正常に終了しました。", inputData.getId()),
+                inputData.getId(),
                 Category.ANALYSIS,
                 Process.ANALYSIS,
                 System.currentTimeMillis() - startTime
@@ -91,7 +92,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            targetList.forEach(this::analyze);
+            targetList.parallelStream().forEach(this::analyze);
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
@@ -124,6 +125,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                             companyCode,
                             document.getDocumentId()
                     ),
+                    document,
                     Category.ANALYSIS,
                     Process.ANALYSIS
             ), e);
@@ -259,6 +261,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         document.getDocumentPeriod().map(String::valueOf).orElse("null"),
                         document.getFsDocumentPath(fs).orElse("null")
                 ),
+                document,
                 Category.ANALYSIS,
                 Process.of(fs)
         ));

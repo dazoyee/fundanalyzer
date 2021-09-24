@@ -75,7 +75,8 @@ public class StockSpecification {
      * @return 株価情報
      */
     public Stock findStock(final Company company) {
-        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new));
+        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(
+                company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code")));
 
         final Optional<LocalDate> importDate = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -88,7 +89,9 @@ public class StockSpecification {
 
         final Optional<BigDecimal> averageStockPrice = averageStockPrice(company, stockPriceList);
 
-        final Optional<BigDecimal> latestForecastStock = minkabuDao.selectByCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new)).stream()
+        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(
+                company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code")));
+        final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
                 .map(MinkabuEntity::getGoalsStock)
                 .map(BigDecimal::new);
@@ -100,7 +103,7 @@ public class StockSpecification {
                 latestStock.orElse(null),
                 latestForecastStock.orElse(null),
                 stockPriceList,
-                minkabuDao.selectByCode(company.getCode().orElseThrow(FundanalyzerNotExistException::new))
+                minkabuList
         );
     }
 
@@ -144,8 +147,14 @@ public class StockSpecification {
                             stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
                         } catch (NestedRuntimeException e) {
                             if (e.contains(UniqueConstraintException.class)) {
-                                log.debug("一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                        "\t企業コード:{}\t対象日:{}", code, kabuoji3.getTargetDate());
+                                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                                        MessageFormat.format(
+                                                "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                                                        "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.getTargetDate()
+                                        ),
+                                        Category.STOCK,
+                                        Process.REGISTER
+                                ));
                             } else {
                                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
                             }
@@ -227,7 +236,9 @@ public class StockSpecification {
         } catch (final NullPointerException e) {
             log.info(FundanalyzerLogClient.toSpecificationLogObject(
                     MessageFormat.format(
-                            "{} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。", code),
+                            "{0} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。"
+                            , code
+                    ),
                     Category.STOCK,
                     Process.REGISTER
             ), e);
@@ -247,8 +258,17 @@ public class StockSpecification {
         try {
             targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd")).atYear(targetDate.getYear());
         } catch (final DateTimeException e) {
-            log.info("みんかぶのスクレイピング処理で期待の対象日が得られませんでした。本日日付で処理を継続します。" +
-                    "\t企業コード:{}\tスクレイピング結果:{}\t登録対象日:{}", code, targetDateAsString, targetDate, e);
+            log.info(FundanalyzerLogClient.toSpecificationLogObject(
+                    MessageFormat.format(
+                            "みんかぶのスクレイピング処理で期待の対象日が得られませんでした。本日日付で処理を継続します。" +
+                                    "\t企業コード:{0}\tスクレイピング結果:{1}\t登録対象日:{2}",
+                            code,
+                            targetDateAsString,
+                            targetDate
+                    ),
+                    Category.STOCK,
+                    Process.REGISTER
+            ), e);
         }
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
     }

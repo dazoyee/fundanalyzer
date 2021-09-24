@@ -9,7 +9,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
-import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
@@ -107,8 +106,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
     @Override
     public void updateView() {
         final long startTime = System.currentTimeMillis();
-        final List<EdinetListViewModel> viewModelList = documentSpecification.documentList().stream()
-                .map(Document::getSubmitDate)
+        final List<EdinetListViewModel> viewModelList = documentSpecification.submitDateList().stream()
                 .filter(submitDate -> submitDate.isAfter(nowLocalDate().minusDays(edinetListSize)))
                 .map(DateInputData::of)
                 .map(viewSpecification::generateEdinetListView)

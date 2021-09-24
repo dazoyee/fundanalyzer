@@ -17,6 +17,11 @@ spring:
     sender:
       type: web
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=5m,recordStats
+
 #logging:
 #  file:
 #    name: ${spring.application.name}
@@ -96,3 +101,5 @@ app:
       stock: 13  # 時に処理実施
       analysis: 14  # 時に処理実施
       update-view: 21  # 時に処理実施
+    analysis:
+      past-days: 30  # 日間に遡って処理実施

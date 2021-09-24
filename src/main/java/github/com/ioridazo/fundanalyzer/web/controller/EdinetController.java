@@ -46,7 +46,21 @@ public class EdinetController {
     public String updateCompany() {
         edinetService.updateCompany();
         return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH)
-                .queryParam("message", "表示アップデート処理を要求しました。").build().encode().toUriString();
+                .queryParam("message", "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
+                .build().encode().toUriString();
+    }
+
+    /**
+     * 処理状況を更新する
+     *
+     * @return EdinetList
+     */
+    @PostMapping("fundanalyzer/v1/update/edinet/view")
+    public String updateEdinetView() {
+        viewService.updateEdinetView();
+        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH)
+                .queryParam("message", "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
+                .build().encode().toUriString();
     }
 
     /**

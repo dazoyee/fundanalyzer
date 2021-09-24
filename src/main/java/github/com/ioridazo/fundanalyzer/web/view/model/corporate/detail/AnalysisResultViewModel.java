@@ -9,6 +9,7 @@ import java.time.LocalDate;
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 public class AnalysisResultViewModel {
+    private final LocalDate submitDate;
     private final LocalDate documentPeriod;
     private final BigDecimal corporateValue;
     private final String documentTypeCode;
@@ -16,6 +17,7 @@ public class AnalysisResultViewModel {
 
     public static AnalysisResultViewModel of(final AnalysisResultEntity entity) {
         return new AnalysisResultViewModel(
+                entity.getSubmitDate(),
                 entity.getDocumentPeriod(),
                 entity.getCorporateValue(),
                 entity.getDocumentTypeCode(),

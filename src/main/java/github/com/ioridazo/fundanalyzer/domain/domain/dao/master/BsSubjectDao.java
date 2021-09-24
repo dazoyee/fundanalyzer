@@ -13,13 +13,4 @@ public interface BsSubjectDao {
 
     @Select
     List<BsSubjectEntity> selectAll();
-
-    @Select
-    BsSubjectEntity selectById(String id);
-
-    @Select
-    BsSubjectEntity selectByUniqueKey(String outlineSubjectId, String detailSubjectId);
-
-    @Select
-    List<BsSubjectEntity> selectByOutlineSubjectId(String outlineSubjectId);
 }

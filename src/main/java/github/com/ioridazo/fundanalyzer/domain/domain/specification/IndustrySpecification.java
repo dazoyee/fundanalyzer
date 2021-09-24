@@ -1,26 +1,31 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.cache.IndustryCache;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Component
 public class IndustrySpecification {
 
     private final IndustryDao industryDao;
+    private final IndustryCache industryCache;
 
     @Value("${app.config.scraping.no-industry}")
     List<String> noTargetList;
 
-    public IndustrySpecification(final IndustryDao industryDao) {
+    public IndustrySpecification(
+            final IndustryDao industryDao,
+            final IndustryCache industryCache) {
         this.industryDao = industryDao;
+        this.industryCache = industryCache;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -34,7 +39,11 @@ public class IndustrySpecification {
      * @return 業種ID
      */
     public Integer convertFromNameToId(final String industryName) {
-        return industryDao.selectByName(industryName).getId();
+        return industryCache.inquiryIndustryList().stream()
+                .filter(industry -> Objects.equals(industryName, industry.getName()))
+                .map(IndustryEntity::getId)
+                .findFirst()
+                .orElseThrow(() -> new FundanalyzerRuntimeException("業種IDが存在しません。"));
     }
 
     /**
@@ -44,7 +53,11 @@ public class IndustrySpecification {
      * @return 業種名
      */
     public String convertFromIdToName(final Integer id) {
-        return industryDao.selectById(id).getName();
+        return industryCache.inquiryIndustryList().stream()
+                .filter(industryEntity -> Objects.equals(id, industryEntity.getId()))
+                .map(IndustryEntity::getName)
+                .findFirst()
+                .orElseThrow(() -> new FundanalyzerRuntimeException("業種名が存在しません。"));
     }
 
     /**
@@ -80,6 +93,9 @@ public class IndustrySpecification {
      * @return boolean
      */
     private boolean isEmpty(final String name) {
-        return Optional.ofNullable(industryDao.selectByName(name)).isEmpty();
+        return industryCache.inquiryIndustryList().stream()
+                .filter(industryEntity -> Objects.equals(name, industryEntity.getName()))
+                .findFirst()
+                .isEmpty();
     }
 }

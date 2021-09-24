@@ -66,10 +66,9 @@ public class CompanySpecification {
      * @return 企業情報更新日時
      */
     public Optional<String> findLastUpdateDateTime() {
-        return companyDao.selectAll().stream()
-                .map(CompanyEntity::getUpdatedAt)
-                .max(LocalDateTime::compareTo)
-                .map(dateTime -> dateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
+        return companyDao.maxUpdatedAt().stream()
+                .map(dateTime -> dateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")))
+                .findFirst();
     }
 
     /**
@@ -78,9 +77,8 @@ public class CompanySpecification {
      * @return 企業情報リスト
      */
     public List<Company> allTargetCompanies() {
-        return companyDao.selectAll().stream()
+        return companyDao.selectByCodeIsNotNull().stream()
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
-                .filter(company -> company.getCode().isPresent())
                 .filter(company -> industrySpecification.isTarget(company.getIndustryId()))
                 .collect(Collectors.toList());
     }
@@ -95,12 +93,13 @@ public class CompanySpecification {
             if (companyDao.selectByEdinetCode(edinetCode).isEmpty()) {
                 companyDao.insert(CompanyEntity.ofSqlForeignKey(edinetCode, results.getFilerName(), nowLocalDateTime()));
 
-                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                log.info(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "企業情報が登録されていないため、仮情報を登録します。\tEDINETコード:{0}\t企業名:{1}",
                                 edinetCode,
                                 results.getFilerName()
                         ),
+                        edinetCode,
                         Category.DOCUMENT,
                         Process.EDINET
                 ));
@@ -114,9 +113,8 @@ public class CompanySpecification {
      * @param resultBeanList CSVリスト
      */
     public void upsert(final List<EdinetCsvResultBean> resultBeanList) {
-        final List<CompanyEntity> allCompanies = companyDao.selectAll();
         resultBeanList.parallelStream().forEach(resultBean -> {
-                    if (isPresent(resultBean.getEdinetCode(), allCompanies)) {
+                    if (isPresent(resultBean.getEdinetCode())) {
                         companyDao.update(CompanyEntity.of(
                                 industrySpecification.convertFromNameToId(resultBean.getIndustry()),
                                 resultBean,
@@ -136,13 +134,10 @@ public class CompanySpecification {
     /**
      * 企業がデータベースに存在するか
      *
-     * @param edinetCode   EDINETコード
-     * @param allCompanies 処理対象となる企業情報リスト
+     * @param edinetCode EDINETコード
      * @return boolean
      */
-    private boolean isPresent(final String edinetCode, final List<CompanyEntity> allCompanies) {
-        return allCompanies.stream()
-                .map(CompanyEntity::getEdinetCode)
-                .anyMatch(edinetCode::equals);
+    private boolean isPresent(final String edinetCode) {
+        return companyDao.selectByEdinetCode(edinetCode).isPresent();
     }
 }

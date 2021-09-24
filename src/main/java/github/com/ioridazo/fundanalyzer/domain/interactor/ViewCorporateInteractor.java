@@ -175,7 +175,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()
                 .map(AnalysisResultViewModel::of)
-                .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod).reversed())
+                .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod).reversed()
+                        .thenComparing(AnalysisResultViewModel::getSubmitDate).reversed())
                 .collect(Collectors.toList());
 
         final List<FinancialStatementViewModel> fsList = financialStatementSpecification.findByCompany(company).stream()

@@ -23,6 +23,7 @@ public interface FinancialStatementDao {
             String subjectId,
             String dayOfYear,
             String documentTypeCode,
+            String quarterType,
             LocalDate submitDate);
 
     @Select

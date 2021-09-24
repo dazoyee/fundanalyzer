@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
@@ -24,13 +25,13 @@ public interface DocumentDao {
     DocumentEntity selectDocumentBy(String edinetCode, String documentTypeCode, LocalDate submitDate, String yearOfPeriod);
 
     @Select
+    Optional<DocumentEntity> maxSubmitDateByEdinetCodeAndType(String edinetCode, List<String> documentTypeCode);
+
+    @Select
     List<DocumentEntity> selectBySubmitDate(LocalDate submitDate);
 
     @Select
-    List<DocumentEntity> selectByDocumentTypeCode(List<String> documentTypeCode);
-
-    @Select
-    List<DocumentEntity> selectByEdinetCodeAndType(String edinetCode, List<String> documentTypeCode);
+    List<LocalDate> selectDistinctSubmitDateByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select
     List<DocumentEntity> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);

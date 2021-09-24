@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.client.log;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ScrapingKeywordEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 
@@ -41,6 +42,10 @@ public enum Process {
             default:
                 throw new FundanalyzerRuntimeException();
         }
+    }
+
+    public static Process of(final ScrapingKeywordEntity scrapingKeywordEntity) {
+        return of(FinancialStatementEnum.fromId(scrapingKeywordEntity.getFinancialStatementId()));
     }
 
     public String getValue() {

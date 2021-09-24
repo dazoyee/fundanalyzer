@@ -52,4 +52,14 @@ public class FinancialTableResultBean {
             return null;
         }
     }
+
+    public static FinancialTableResultBean ofTdList(final List<String> tdList, final Unit unit) {
+        if (tdList.size() == 2) {
+            // 財務諸表に記載の項目が当年度のみの場合
+            return FinancialTableResultBean.of(tdList.get(0), null, tdList.get(1), unit);
+        } else {
+            // 合致するものがない場合
+            return null;
+        }
+    }
 }
