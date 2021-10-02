@@ -140,6 +140,8 @@ public class AnalysisService {
      */
     @NewSpan
     public void analyzeByDate(final DateInputData inputData) {
+        // recovery
+        documentUseCase.updateDocumentPeriodIfNotExist(inputData);
         // analyze
         analyzeUseCase.analyze(inputData);
         // view edinet

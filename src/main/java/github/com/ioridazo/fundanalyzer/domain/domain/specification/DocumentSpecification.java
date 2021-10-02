@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Documen
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -22,6 +23,7 @@ import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -148,6 +150,13 @@ public class DocumentSpecification {
                 .filter(document -> document.getDocumentPeriod().isPresent())
                 // only not analyze
                 .filter(document -> !analysisResultSpecification.isAnalyzed(document))
+                .collect(Collectors.toList());
+    }
+
+    public List<Document> noDocumentPeriodList(final DateInputData inputData) {
+        return documentDao.selectByTypeAndNoPeriodAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
+                .filter(entity -> entity.getEdinetCode().isPresent())
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .collect(Collectors.toList());
     }
 
@@ -438,6 +447,17 @@ public class DocumentSpecification {
     }
 
     /**
+     * 対象期間を更新する
+     *
+     * @param periodDocument 対象期間
+     * @param document       ドキュメント
+     */
+    public void updateDocumentPeriod(final LocalDate periodDocument, final Document document) {
+        documentDao.update(DocumentEntity.ofUpdateDocumentPeriod(
+                document.getDocumentId(), periodDocument, nowLocalDateTime()));
+    }
+
+    /**
      * 処理対象から除外する
      *
      * @param documentId 書類ID
@@ -470,37 +490,71 @@ public class DocumentSpecification {
     }
 
     /**
-     * 期間を取得する
+     * 対象期間が存在していないドキュメントの期間を取得する
+     *
+     * @param document ドキュメント
+     * @return 対象期間
+     */
+    public LocalDate recoverDocumentPeriod(final Document document) {
+        if (document.getDocumentPeriod().isPresent()) {
+            return document.getDocumentPeriod().orElseThrow();
+        } else {
+            final EdinetDocument edinetDocument = edinetDocumentSpecification.inquiryLimitedEdinetDocument(document.getDocumentId());
+            return parseDocumentPeriod(
+                    edinetDocument.getPeriodEnd().map(LocalDate::toString).orElse(null),
+                    edinetDocument.getParentDocId().orElse(null)
+            );
+        }
+    }
+
+    /**
+     * 対象期間を取得する
      *
      * @param results EDINETレスポンス
      * @return 期間
      */
     Optional<LocalDate> parseDocumentPeriod(final Results results) {
-        final boolean anyMatchTargetTypes = targetTypeCodes.stream()
-                .anyMatch(documentTypeCode -> results.getDocTypeCode().stream().allMatch(documentTypeCode::equals));
+        final boolean anyMatchTargetTypes = results.getDocTypeCode()
+                .filter(docTypeCode -> targetTypeCodes.contains(docTypeCode))
+                .isPresent();
 
         if (anyMatchTargetTypes) {
-            if (Objects.nonNull(results.getPeriodEnd())) {
-                // period end is present
-                return Optional.of(LocalDate.of(Integer.parseInt(results.getPeriodEnd().substring(0, 4)), 1, 1));
-            } else {
-                if (Objects.nonNull(results.getParentDocID())) {
-                    final DocumentEntity documentEntity = documentDao.selectByDocumentId(results.getParentDocID());
-                    if (Objects.nonNull(documentEntity)) {
-                        // parent document is present
-                        return documentEntity.getDocumentPeriod();
-                    } else {
-                        // parent document is null
-                        return Optional.of(LocalDate.EPOCH);
-                    }
-                } else {
-                    // period end is null
-                    return Optional.of(LocalDate.EPOCH);
-                }
-            }
+            // target
+            return Optional.of(parseDocumentPeriod(
+                    results.getPeriodEnd().orElse(null),
+                    results.getParentDocID().orElse(null)
+            ));
         } else {
             // no target
             return Optional.empty();
+        }
+    }
+
+    /**
+     * 対象期間をパースする
+     *
+     * @param periodEnd   期間（至）
+     * @param parentDocId 親書類管理番号
+     * @return 対象期間
+     */
+    private LocalDate parseDocumentPeriod(@Nullable final String periodEnd, @Nullable final String parentDocId) {
+        if (Objects.nonNull(periodEnd)) {
+            // period end is present
+            return LocalDate.of(Integer.parseInt(periodEnd.substring(0, 4)), 1, 1);
+        } else {
+            if (Objects.nonNull(parentDocId)) {
+                final DocumentEntity documentEntity = documentDao.selectByDocumentId(parentDocId);
+                if (Objects.nonNull(documentEntity) && documentEntity.getDocumentPeriod().isPresent()) {
+                    // parent document is present
+                    return documentEntity.getDocumentPeriod().orElseThrow();
+                } else {
+                    // parent document is null
+                    return LocalDate.EPOCH;
+                }
+            } else {
+                // period document is null
+                return LocalDate.EPOCH;
+            }
         }
     }
 

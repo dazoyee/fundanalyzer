@@ -49,8 +49,8 @@ class EdinetDocumentSpecificationTest {
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
-            assertEquals(LocalDate.parse("2020-01-01"), actual.getPeriodStart());
-            assertEquals(LocalDate.parse("2020-12-31"), actual.getPeriodEnd());
+            assertEquals(LocalDate.parse("2020-01-01"), actual.getPeriodStart().orElseThrow());
+            assertEquals(LocalDate.parse("2020-12-31"), actual.getPeriodEnd().orElseThrow());
         }
 
         @DisplayName("parsePeriod : periodが存在しないときは親書類から生成する")
@@ -67,8 +67,8 @@ class EdinetDocumentSpecificationTest {
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
-            assertEquals(LocalDate.parse("2020-01-01"), actual.getPeriodStart());
-            assertEquals(LocalDate.parse("2020-12-31"), actual.getPeriodEnd());
+            assertEquals(LocalDate.parse("2020-01-01"), actual.getPeriodStart().orElseThrow());
+            assertEquals(LocalDate.parse("2020-12-31"), actual.getPeriodEnd().orElseThrow());
 
         }
 
@@ -84,8 +84,8 @@ class EdinetDocumentSpecificationTest {
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
-            assertEquals(LocalDate.EPOCH, actual.getPeriodStart());
-            assertEquals(LocalDate.EPOCH, actual.getPeriodEnd());
+            assertEquals(LocalDate.EPOCH, actual.getPeriodStart().orElseThrow());
+            assertEquals(LocalDate.EPOCH, actual.getPeriodEnd().orElseThrow());
 
         }
 
@@ -99,8 +99,8 @@ class EdinetDocumentSpecificationTest {
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
-            assertEquals(LocalDate.EPOCH, actual.getPeriodStart());
-            assertEquals(LocalDate.EPOCH, actual.getPeriodEnd());
+            assertEquals(LocalDate.EPOCH, actual.getPeriodStart().orElseThrow());
+            assertEquals(LocalDate.EPOCH, actual.getPeriodEnd().orElseThrow());
         }
 
         @DisplayName("parsePeriod : periodも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
@@ -108,8 +108,8 @@ class EdinetDocumentSpecificationTest {
         void all_empty() {
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
-            assertEquals(LocalDate.EPOCH, actual.getPeriodStart());
-            assertEquals(LocalDate.EPOCH, actual.getPeriodEnd());
+            assertEquals(LocalDate.EPOCH, actual.getPeriodStart().orElseThrow());
+            assertEquals(LocalDate.EPOCH, actual.getPeriodEnd().orElseThrow());
         }
     }
 

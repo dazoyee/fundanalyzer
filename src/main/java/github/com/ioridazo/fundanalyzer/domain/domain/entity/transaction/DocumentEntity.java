@@ -32,7 +32,7 @@ public class DocumentEntity {
     @Column(updatable = false)
     private final String edinetCode;
 
-    @Column(updatable = false)
+    @Column
     private final LocalDate documentPeriod;
 
     @Column(updatable = false)
@@ -130,6 +130,15 @@ public class DocumentEntity {
                 .scrapedBs(DocumentStatus.DONE.toValue())
                 .scrapedPl(DocumentStatus.DONE.toValue())
                 .scrapedNumberOfShares(DocumentStatus.DONE.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    public static DocumentEntity ofUpdateDocumentPeriod(
+            final String documentId, final LocalDate documentPeriod, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(documentId)
+                .documentPeriod(documentPeriod)
                 .updatedAt(updatedAt)
                 .build();
     }

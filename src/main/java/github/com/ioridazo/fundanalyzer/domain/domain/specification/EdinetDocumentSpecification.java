@@ -59,7 +59,9 @@ public class EdinetDocumentSpecification {
     @CachePut(CACHE_KEY_LIMITED_EDINET_DOCUMENT)
     public EdinetDocument findLimitedEdinetDocument(final String documentId) {
         final EdinetDocument edinetDocument = parsePeriod(documentId);
-        edinetDocument.setDocDescription(edinetDocumentDao.selectByDocId(documentId).getDocDescription().orElse(null));
+        final EdinetDocumentEntity entity = edinetDocumentDao.selectByDocId(documentId);
+        edinetDocument.setDocDescription(entity.getDocDescription().orElse(null));
+        edinetDocument.setParentDocId(entity.getParentDocId().orElse(null));
         return edinetDocument;
     }
 
@@ -93,8 +95,8 @@ public class EdinetDocumentSpecification {
         if (edinetDocumentEntity.getPeriodStart().isPresent()) {
             // period start is present
             edinetDocument.setPeriodStart(LocalDate.parse(edinetDocumentEntity.getPeriodStart().orElseThrow()));
-        } else if (Objects.nonNull(edinetDocumentEntity.getParentDocId())) {
-            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId());
+        } else if (edinetDocumentEntity.getParentDocId().isPresent()) {
+            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId().orElseThrow());
             if (Objects.nonNull(parentEdinetDocumentEntity) && parentEdinetDocumentEntity.getPeriodStart().isPresent()) {
                 // parent edinet document is present
                 edinetDocument.setPeriodStart(LocalDate.parse(parentEdinetDocumentEntity.getPeriodStart().orElseThrow()));
@@ -110,8 +112,8 @@ public class EdinetDocumentSpecification {
         if (edinetDocumentEntity.getPeriodEnd().isPresent()) {
             // period end is present
             edinetDocument.setPeriodEnd(LocalDate.parse(edinetDocumentEntity.getPeriodEnd().orElseThrow()));
-        } else if (Objects.nonNull(edinetDocumentEntity.getParentDocId())) {
-            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId());
+        } else if (edinetDocumentEntity.getParentDocId().isPresent()) {
+            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId().orElseThrow());
             if (Objects.nonNull(parentEdinetDocumentEntity) && parentEdinetDocumentEntity.getPeriodEnd().isPresent()) {
                 // parent edinet document is present
                 edinetDocument.setPeriodEnd(LocalDate.parse(parentEdinetDocumentEntity.getPeriodEnd().orElseThrow()));
