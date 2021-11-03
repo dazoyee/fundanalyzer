@@ -65,7 +65,7 @@ public class AnalysisResultSpecification {
         try {
             analysisResultDao.insert(AnalysisResultEntity.of(
                     companyCode,
-                    document.getDocumentPeriod().orElseThrow(FundanalyzerNotExistException::new),
+                    document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     value,
                     document.getDocumentTypeCode(),
                     document.getQuarterType(),
@@ -73,7 +73,18 @@ public class AnalysisResultSpecification {
                     document.getDocumentId(),
                     nowLocalDateTime()
             ));
-        } catch (NestedRuntimeException e) {
+        } catch (final FundanalyzerNotExistException e) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
+                            companyCode,
+                            document.getDocumentId()
+                    ),
+                    document,
+                    Category.ANALYSIS,
+                    Process.ANALYSIS
+            ), e);
+        } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(

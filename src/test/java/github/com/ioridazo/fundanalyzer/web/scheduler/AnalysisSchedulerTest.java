@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -43,7 +44,9 @@ class AnalysisSchedulerTest {
         ));
         scheduler.hourOfAnalysis = 14;
         scheduler.hourOfUpdateView = 21;
+        scheduler.hourOfRecoverDocumentPeriod = 1;
         scheduler.pastDaysForAnalysis = 30;
+        scheduler.pastDaysForRecoveringDocumentPeriod = 30;
     }
 
     @Nested
@@ -113,6 +116,43 @@ class AnalysisSchedulerTest {
             assertDoesNotThrow(() -> scheduler.updateViewScheduler());
             verify(viewService, times(0)).updateCorporateView();
             verify(viewService, times(0)).updateEdinetView();
+        }
+    }
+
+    @Nested
+    class recoverDocumentPeriodScheduler {
+
+        @DisplayName("recoverDocumentPeriodScheduler : 一定期間の処理機関リカバリを実施する")
+        @Test
+        void recoverDocumentPeriodScheduler_ok() {
+            doReturn(LocalDateTime.of(2021, 11, 3, 1, 0)).when(scheduler).nowLocalDateTime();
+            doReturn(LocalDate.parse("2021-11-03")).when(scheduler).nowLocalDate();
+
+            assertDoesNotThrow(() -> scheduler.recoverDocumentPeriodScheduler());
+            verify(analysisService, times(0)).analyzeByDate(DateInputData.of(LocalDate.parse("2021-10-03")));
+            verify(analysisService, times(1)).analyzeByDate(DateInputData.of(LocalDate.parse("2021-10-04")));
+            verify(analysisService, times(1)).analyzeByDate(DateInputData.of(LocalDate.parse("2021-11-03")));
+            verify(analysisService, times(0)).analyzeByDate(DateInputData.of(LocalDate.parse("2021-11-04")));
+        }
+
+        @DisplayName("recoverDocumentPeriodScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @Test
+        void recoverDocumentPeriodScheduler_throwable() {
+            doReturn(LocalDateTime.of(2021, 11, 3, 1, 0)).when(scheduler).nowLocalDateTime();
+            doReturn(LocalDate.parse("2021-11-03")).when(scheduler).nowLocalDate();
+            doThrow(new FundanalyzerRuntimeException()).when(analysisService).analyzeByDate(any());
+
+            assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.recoverDocumentPeriodScheduler());
+            verify(slackClient, times(1)).sendMessage(any(), any());
+        }
+
+        @DisplayName("recoverDocumentPeriodScheduler : 処理時間外")
+        @Test
+        void recoverDocumentPeriodScheduler_noTarget() {
+            doReturn(LocalDateTime.of(2021, 11, 3, 0, 0)).when(scheduler).nowLocalDateTime();
+
+            assertDoesNotThrow(() -> scheduler.recoverDocumentPeriodScheduler());
+            verify(analysisService, times(0)).analyzeByDate(any());
         }
     }
 }

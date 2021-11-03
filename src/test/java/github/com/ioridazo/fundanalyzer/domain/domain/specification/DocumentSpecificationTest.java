@@ -49,7 +49,7 @@ class DocumentSpecificationTest {
                 edinetDocumentSpecification,
                 analysisResultSpecification
         ));
-        documentSpecification.targetTypeCodes = List.of("120");
+        documentSpecification.targetTypeCodes = List.of("120", "130", "140", "150");
     }
 
     @DisplayName("latestDocument : 直近提出日のドキュメント情報を取得する")
@@ -309,6 +309,95 @@ class DocumentSpecificationTest {
     }
 
     @Nested
+    class recoverDocumentPeriod {
+
+        Document document = new Document(
+                "documentId",
+                null,
+                null,
+                "edinetCode",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false
+        );
+
+        @DisplayName("recoverDocumentPeriod : documentPeriodが存在するときはそのまま返却する")
+        @Test
+        void documentPeriod_isPresent() {
+            var document = new Document(
+                    "documentId",
+                    null,
+                    null,
+                    "edinetCode",
+                    LocalDate.of(2021, 1, 1),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+            var actual = documentSpecification.recoverDocumentPeriod(document);
+            assertEquals(LocalDate.parse("2021-01-01"), actual);
+        }
+
+        @DisplayName("recoverDocumentPeriod : periodEndが存在するときはパースしてdocumentPeriodを生成する")
+        @Test
+        void periodEnd_isPresent() {
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setPeriodEnd(LocalDate.parse("2020-10-02"));
+
+            when(edinetDocumentSpecification.inquiryLimitedEdinetDocument("documentId")).thenReturn(edinetDocument);
+            var actual = documentSpecification.recoverDocumentPeriod(document);
+            assertEquals(LocalDate.parse("2020-01-01"), actual);
+        }
+
+        @DisplayName("recoverDocumentPeriod : periodEndが存在しないときは親書類からdocumentPeriodを生成する")
+        @Test
+        void periodEnd_isEmpty_parentDocument_isPresent() {
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setParentDocId("parentDocId");
+
+            when(edinetDocumentSpecification.inquiryLimitedEdinetDocument("documentId")).thenReturn(edinetDocument);
+            when(documentDao.selectByDocumentId("parentDocId")).thenReturn(
+                    DocumentEntity.builder()
+                            .documentPeriod(LocalDate.parse("2019-01-01"))
+                            .build()
+            );
+            var actual = documentSpecification.recoverDocumentPeriod(document);
+            assertEquals(LocalDate.parse("2019-01-01"), actual);
+        }
+
+        @DisplayName("recoverDocumentPeriod : periodEndも親書類も存在しないときはnullの意をこめて1970-01-01にする（手パッチ対象）")
+        @Test
+        void periodEnd_isEmpty_parentDocument_isEmpty() {
+            var edinetDocument = new EdinetDocument();
+            edinetDocument.setParentDocId("parentDocId");
+
+            when(edinetDocumentSpecification.inquiryLimitedEdinetDocument("documentId")).thenReturn(edinetDocument);
+            when(documentDao.selectByDocumentId("parentDocId")).thenReturn(DocumentEntity.builder().build());
+            var actual = documentSpecification.recoverDocumentPeriod(document);
+            assertEquals(LocalDate.parse("1970-01-01"), actual);
+        }
+    }
+
+    @Nested
     class parseDocumentPeriod {
 
         @DisplayName("parseDocumentPeriod : periodEndが存在するときはパースしてdocumentPeriodを生成する")
@@ -354,13 +443,12 @@ class DocumentSpecificationTest {
         @Test
         void documentPeriod_noTarget() {
             var results = new Results();
-            results.setDocTypeCode("140");
+            results.setDocTypeCode("135");
 
             var actual = documentSpecification.parseDocumentPeriod(results);
 
             assertNull(actual.orElse(null));
         }
-
     }
 
     private DocumentEntity defaultDocumentEntity(LocalDate submitDate) {

@@ -63,6 +63,14 @@ public interface DocumentUseCase {
     Result updateAllDoneStatus(IdInputData inputData);
 
     /**
+     * 対象期間の更新（存在しない場合）
+     *
+     * @param inputData 提出日
+     */
+    @NewSpan
+    void updateDocumentPeriodIfNotExist(DateInputData inputData);
+
+    /**
      * 処理対象外に更新
      *
      * @param inputData 書類ID

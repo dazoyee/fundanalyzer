@@ -121,14 +121,14 @@ public class EdinetDocumentEntity {
                 results.getFormCode(),
                 results.getDocTypeCode().orElse(null),
                 results.getPeriodStart(),
-                results.getPeriodEnd(),
+                results.getPeriodEnd().orElse(null),
                 results.getSubmitDateTime(),
                 results.getDocDescription(),
                 results.getIssuerEdinetCode(),
                 results.getSubjectEdinetCode(),
                 results.getSubsidiaryEdinetCode(),
                 results.getCurrentReportReason(),
-                results.getParentDocID(),
+                results.getParentDocID().orElse(null),
                 results.getOpeDateTime(),
                 results.getWithdrawalStatus(),
                 results.getDocInfoEditStatus(),
@@ -173,8 +173,8 @@ public class EdinetDocumentEntity {
         return Optional.ofNullable(docDescription);
     }
 
-    public String getParentDocId() {
-        return parentDocId;
+    public Optional<String> getParentDocId() {
+        return Optional.ofNullable(parentDocId);
     }
 
     // for test

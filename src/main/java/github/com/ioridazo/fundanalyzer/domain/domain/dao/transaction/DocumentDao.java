@@ -31,13 +31,13 @@ public interface DocumentDao {
     List<DocumentEntity> selectBySubmitDate(LocalDate submitDate);
 
     @Select
+    List<DocumentEntity> selectByTypeAndNoPeriodAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
+
+    @Select
     List<LocalDate> selectDistinctSubmitDateByDocumentTypeCode(List<String> documentTypeCode);
 
     @Select
     List<DocumentEntity> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
-
-    @Select
-    List<DocumentEntity> selectByTypeAndPeriod(String documentTypeCode, String yearOfPeriod);
 
     @Select
     List<DocumentEntity> selectByDayOfSubmitDate(String day);

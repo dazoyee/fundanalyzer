@@ -125,4 +125,12 @@ public class Results {
     public Optional<String> getDocTypeCode() {
         return Optional.ofNullable(docTypeCode);
     }
+
+    public Optional<String> getPeriodEnd() {
+        return Optional.ofNullable(periodEnd);
+    }
+
+    public Optional<String> getParentDocID() {
+        return Optional.ofNullable(parentDocID);
+    }
 }
