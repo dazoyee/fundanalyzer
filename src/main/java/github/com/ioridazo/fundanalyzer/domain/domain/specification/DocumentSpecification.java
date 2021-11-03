@@ -157,6 +157,7 @@ public class DocumentSpecification {
         return documentDao.selectByTypeAndNoPeriodAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
                 .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
+                .filter(Document::isTarget)
                 .collect(Collectors.toList());
     }
 
