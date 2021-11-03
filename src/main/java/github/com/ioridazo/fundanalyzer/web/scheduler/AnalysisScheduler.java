@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
+import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,8 +33,12 @@ public class AnalysisScheduler {
     int hourOfAnalysis;
     @Value("${app.scheduler.hour.update-view}")
     int hourOfUpdateView;
+    @Value("${app.scheduler.hour.recover-document-period}")
+    int hourOfRecoverDocumentPeriod;
     @Value("${app.scheduler.analysis.past-days}")
     int pastDaysForAnalysis;
+    @Value("${app.scheduler.recover-document-period.past-days}")
+    int pastDaysForRecoveringDocumentPeriod;
 
     public AnalysisScheduler(
             final AnalysisService analysisService,
@@ -101,6 +106,35 @@ public class AnalysisScheduler {
                 // Slack通知
                 slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "画面更新", t);
                 throw new FundanalyzerRuntimeException("画面更新スケジューラ処理中に想定外のエラーが発生しました。", t);
+            }
+        }
+    }
+
+
+    /**
+     * 対象期間リカバリスケジューラ
+     */
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Tokyo")
+    public void recoverDocumentPeriodScheduler() {
+        if (nowLocalDateTime().getHour() == hourOfRecoverDocumentPeriod) {
+
+            final long startTime = System.currentTimeMillis();
+
+            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "recoverDocumentPeriodScheduler", 0));
+
+            try {
+                nowLocalDate().minusDays(pastDaysForRecoveringDocumentPeriod)
+                        .datesUntil(nowLocalDate().plusDays(1))
+                        .map(DateInputData::of)
+                        .forEach(analysisService::analyzeByDate);
+
+                final long durationTime = System.currentTimeMillis() - startTime;
+
+                log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "recoverDocumentPeriodScheduler", durationTime));
+            } catch (Throwable t) {
+                // Slack通知
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "対象期間リカバリ", t);
+                throw new FundanalyzerRuntimeException("対象期間リカバリスケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
     }

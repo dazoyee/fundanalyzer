@@ -582,6 +582,32 @@ class DocumentInteractorTest {
     }
 
     @Nested
+    class updateDocumentPeriodIfNotExist {
+
+        @DisplayName("updateDocumentPeriodIfNotExist : 対象期間が存在しない場合に更新する")
+        @Test
+        void execute() {
+            var inputData = DateInputData.of(LocalDate.parse("2021-10-02"));
+            var document = defaultDocument();
+
+            when(documentSpecification.noDocumentPeriodList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.recoverDocumentPeriod(document)).thenReturn(LocalDate.of(2021, 1, 1));
+            assertDoesNotThrow(() -> documentInteractor.updateDocumentPeriodIfNotExist(inputData));
+            verify(documentSpecification, times(1)).updateDocumentPeriod(LocalDate.of(2021, 1, 1), document);
+        }
+
+        @DisplayName("updateDocumentPeriodIfNotExist : 対象がいないときはなにもしない")
+        @Test
+        void no_execute() {
+            var inputData = DateInputData.of(LocalDate.parse("2021-10-02"));
+
+            when(documentSpecification.noDocumentPeriodList(inputData)).thenReturn(List.of());
+            assertDoesNotThrow(() -> documentInteractor.updateDocumentPeriodIfNotExist(inputData));
+            verify(documentSpecification, times(0)).updateDocumentPeriod(any(), any());
+        }
+    }
+
+    @Nested
     class removeDocument {
 
         @DisplayName("removeDocument : 指定書類IDを処理対象外にする")
@@ -623,10 +649,10 @@ class DocumentInteractorTest {
 
     private Document defaultDocument() {
         return new Document(
+                "documentId",
                 null,
                 null,
-                null,
-                null,
+                "edinetCode",
                 null,
                 null,
                 null,

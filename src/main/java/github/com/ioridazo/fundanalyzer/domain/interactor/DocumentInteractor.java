@@ -332,6 +332,33 @@ public class DocumentInteractor implements DocumentUseCase {
     }
 
     /**
+     * 対象期間の更新（存在しない場合）
+     *
+     * @param inputData 提出日
+     */
+    @Override
+    public void updateDocumentPeriodIfNotExist(final DateInputData inputData) {
+        final List<Document> targetList = documentSpecification.noDocumentPeriodList(inputData);
+        if (!targetList.isEmpty()) {
+            targetList.forEach(document -> {
+                final LocalDate periodDocument = documentSpecification.recoverDocumentPeriod(document);
+                documentSpecification.updateDocumentPeriod(periodDocument, document);
+
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "分析対象の書類で対象期間が存在しないためリカバリ更新しました。\t書類ID:{0}\t対象期間:{1}",
+                                document.getDocumentId(),
+                                periodDocument
+                        ),
+                        document,
+                        Category.DOCUMENT,
+                        Process.UPDATE
+                ));
+            });
+        }
+    }
+
+    /**
      * ドキュメントを処理対象外に更新する
      *
      * @param inputData 書類ID
@@ -444,19 +471,5 @@ public class DocumentInteractor implements DocumentUseCase {
                     Process.SCRAPING
             ));
         }
-    }
-
-    /**
-     * EDINETに書類有無を問い合わせる
-     *
-     * @param submitDate 提出日
-     * @return boolean
-     */
-    boolean isPresentEdinet(final LocalDate submitDate) {
-        return Stream.of(submitDate)
-                // EDINETに提出書類の問い合わせ
-                .map(d -> edinetClient.list(new ListRequestParameter(d, ListType.DEFAULT)))
-                .map(edinetResponse -> edinetResponse.getMetadata().getResultset().getCount())
-                .anyMatch(c -> !"0".equals(c));
     }
 }

@@ -1,12 +1,11 @@
 package github.com.ioridazo.fundanalyzer.client.edinet;
 
-import github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient;
-import github.com.ioridazo.fundanalyzer.config.AppConfig;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.AcquisitionType;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
+import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -210,14 +209,14 @@ class EdinetClientTest {
                             () -> assertEquals("04A000", actual.getResults().get(0).getFormCode()),
                             () -> assertEquals("030", actual.getResults().get(0).getDocTypeCode().orElseThrow()),
                             () -> assertEquals("2019-04-01", actual.getResults().get(0).getPeriodStart()),
-                            () -> assertEquals("2020-03-31", actual.getResults().get(0).getPeriodEnd()),
+                            () -> assertEquals("2020-03-31", actual.getResults().get(0).getPeriodEnd().orElseThrow()),
                             () -> assertEquals("2019-04-01 12:34", actual.getResults().get(0).getSubmitDateTime()),
                             () -> assertEquals("有価証券届出書（内国投資信託受益証券）", actual.getResults().get(0).getDocDescription()),
                             () -> assertNull(actual.getResults().get(0).getIssuerEdinetCode()),
                             () -> assertNull(actual.getResults().get(0).getSubjectEdinetCode()),
                             () -> assertNull(actual.getResults().get(0).getSubsidiaryEdinetCode()),
                             () -> assertNull(actual.getResults().get(0).getCurrentReportReason()),
-                            () -> assertNull(actual.getResults().get(0).getParentDocID()),
+                            () -> assertNull(actual.getResults().get(0).getParentDocID().orElse(null)),
                             () -> assertNull(actual.getResults().get(0).getOpeDateTime()),
                             () -> assertEquals("0", actual.getResults().get(0).getWithdrawalStatus()),
                             () -> assertEquals("0", actual.getResults().get(0).getDocInfoEditStatus()),
