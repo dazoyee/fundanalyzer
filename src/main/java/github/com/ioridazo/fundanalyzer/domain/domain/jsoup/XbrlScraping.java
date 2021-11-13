@@ -111,10 +111,12 @@ public class XbrlScraping {
                 .map(tr -> tr.select(Tag.TD.getName()).stream()
                         .map(Element::text)
                         // tdの中から" "（空）を取り除く
-                        .filter(tdText -> !tdText.equals(" "))
+                        .filter(tdText -> !" ".equals(tdText))
+                        // 不要なエレメントを削除
+                        .filter(tdText -> !"".equals(tdText))
                         .collect(Collectors.toList()))
                 // 不要なエレメントを削除
-                .filter(list -> list.stream().noneMatch(""::equals))
+                .filter(list -> 0 != list.size())
                 .collect(Collectors.toList());
 
         // 年度以外の情報を取り除く

@@ -105,8 +105,8 @@ class XbrlScrapingTest {
                     ),
                     () -> assertAll(
                             () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
-                            () -> assertEquals("※ 116,109", actual.get(1).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("※ 476,095", actual.get(1).getCurrentValue()),
+                            () -> assertEquals("※ 116,109", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("※ 476,095", actual.get(1).getCurrentValue()),
                             () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
                     ),
                     () -> assertAll(
@@ -142,8 +142,8 @@ class XbrlScrapingTest {
                     ),
                     () -> assertAll(
                             () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
-                            () -> assertEquals("※ 476,095", actual.get(1).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("※ 116,109", actual.get(1).getCurrentValue()),
+                            () -> assertEquals("※ 476,095", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("※ 116,109", actual.get(1).getCurrentValue()),
                             () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
                     ),
                     () -> assertAll(
