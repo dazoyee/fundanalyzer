@@ -25,6 +25,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class XbrlScraping {
@@ -110,11 +111,11 @@ public class XbrlScraping {
                 // tdの要素をリストにする
                 .map(tr -> tr.select(Tag.TD.getName()).stream()
                         .map(Element::text)
-                        // tdの中から" "（空）を取り除く
-                        .filter(tdText -> !tdText.equals(" "))
+                        // 不要なエレメントを削除
+                        .filter(tdText -> Stream.of(" ", "", "円").noneMatch(tdText::equals))
                         .collect(Collectors.toList()))
                 // 不要なエレメントを削除
-                .filter(list -> list.stream().noneMatch(""::equals))
+                .filter(list -> 0 != list.size())
                 .collect(Collectors.toList());
 
         // 年度以外の情報を取り除く
@@ -253,11 +254,11 @@ public class XbrlScraping {
         return (td.contains("事業") && td.contains("年度") && td.contains("末")
                 && td.contains("現在") && td.contains("発行") && td.contains("数"))
                 ||
-                (td.contains("四半期") && td.contains("末")
-                        && td.contains("現在") && td.contains("発行") && td.contains("数"))
+                (td.contains("四半期") && td.contains("末") && td.contains("発行") && td.contains("数"))
                 ||
                 (td.contains("四半期") && td.contains("末")
-                        && td.contains("現 在") && td.contains("発行") && td.contains("数"));
+                        && td.contains("現在") && td.contains("発行") && td.contains("株"))
+                ;
     }
 
     Elements elementsByKeyMatch(final File file, final KeyMatch keyMatch) {
