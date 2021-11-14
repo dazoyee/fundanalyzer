@@ -105,8 +105,8 @@ class XbrlScrapingTest {
                     ),
                     () -> assertAll(
                             () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
-                            () -> assertEquals("※ 116,109", actual.get(1).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("※ 476,095", actual.get(1).getCurrentValue()),
+                            () -> assertEquals("※ 116,109", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("※ 476,095", actual.get(1).getCurrentValue()),
                             () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
                     ),
                     () -> assertAll(
@@ -142,8 +142,8 @@ class XbrlScrapingTest {
                     ),
                     () -> assertAll(
                             () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
-                            () -> assertEquals("※ 476,095", actual.get(1).getPreviousValue().orElseThrow()),
-                            () -> assertEquals("※ 116,109", actual.get(1).getCurrentValue()),
+                            () -> assertEquals("※ 476,095", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("※ 116,109", actual.get(1).getCurrentValue()),
                             () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
                     ),
                     () -> assertAll(
@@ -371,6 +371,25 @@ class XbrlScrapingTest {
             assertEquals(40, actual.size());
         }
 
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応）")
+        @Test
+        void scrapeFinancialStatement_ok_dtc140_7_pl() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_dtc140_7.html");
+            var keyword = "jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfProfitOrLossIFRSTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("営業利益", actual.get(8).getSubject().orElseThrow()),
+                            () -> assertEquals("19,561", actual.get(8).getPreviousValue().orElse(null)),
+                            () -> assertEquals("31,639", actual.get(8).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(8).getUnit())
+                    )
+            );
+            assertEquals(26, actual.size());
+        }
+
         @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（四半期報告書に対応できていないとき）")
         @Test
         void scrapeFinancialStatement_ok_dtc140_error() {
@@ -469,6 +488,17 @@ class XbrlScrapingTest {
             var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
 
             assertEquals("63,553,485", actual);
+        }
+
+        @DisplayName("scrapeNumberOfShares : ファイルから株式総数を取得し、その値をスクレイピングする")
+        @Test
+        void scrapeNumberOfShares_ok_3() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_ok_3.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
+
+            assertEquals("15,856,400", actual);
         }
     }
 

@@ -49,6 +49,12 @@ public class DocumentInteractor implements DocumentUseCase {
 
     @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
+    @Value("${app.config.scraping.no-company}")
+    List<String> noTargetEdinetCodes;
+    @Value("${app.config.remove-document.document-type-code}")
+    List<String> removeTypeCodes;
+    @Value("${app.config.remove-document.company}")
+    List<String> removeEdinetCodes;
 
     public DocumentInteractor(
             final ScrapingUseCase scraping,
@@ -385,6 +391,33 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     @Override
     public void removeDocument(final DateInputData inputData) {
+        // 会社単位
+        documentSpecification.targetList(inputData).stream()
+                .filter(document -> {
+                    // 特定の会社を除外する
+                    if (noTargetEdinetCodes.stream().anyMatch(noTarget -> document.getEdinetCode().equals(noTarget))) {
+                        return true;
+                    } else {
+                        // 四半期報告書において特定の会社を除外する
+                        return removeTypeCodes.stream().anyMatch(noTarget -> document.getDocumentTypeCode().toValue().equals(noTarget))
+                                && removeEdinetCodes.stream().anyMatch(noTarget -> document.getEdinetCode().equals(noTarget));
+                    }
+                })
+                .forEach(document -> {
+                    documentSpecification.updateRemoved(document);
+                    log.info(FundanalyzerLogClient.toInteractorLogObject(
+                            MessageFormat.format(
+                                    "ドキュメントを処理対象外にしました。\t書類ID:{0}\tEDINETコード:{1}",
+                                    document.getDocumentId(),
+                                    document.getEdinetCode()
+                            ),
+                            document,
+                            Category.DOCUMENT,
+                            Process.REMOVE
+                    ));
+                });
+
+        // 四半期報告書単位
         documentSpecification.removeTargetList(inputData).stream()
                 // download is done
                 .filter(document -> DocumentStatus.DONE.equals(document.getDownloaded()))
@@ -399,7 +432,11 @@ public class DocumentInteractor implements DocumentUseCase {
                 .forEach(document -> {
                     documentSpecification.updateRemoved(document);
                     log.info(FundanalyzerLogClient.toInteractorLogObject(
-                            MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", document.getDocumentId()),
+                            MessageFormat.format(
+                                    "ドキュメントを処理対象外にしました。\t書類ID:{0}\t書類種別コード:{1}",
+                                    document.getDocumentId(),
+                                    document.getDocumentTypeCode().getName()
+                            ),
                             document,
                             Category.DOCUMENT,
                             Process.REMOVE
