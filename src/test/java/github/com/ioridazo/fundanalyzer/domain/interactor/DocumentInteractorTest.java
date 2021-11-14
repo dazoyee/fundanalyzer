@@ -73,6 +73,9 @@ class DocumentInteractorTest {
                 edinetClient
         ));
         documentInteractor.targetTypeCodes = List.of("120");
+        documentInteractor.noTargetEdinetCodes = List.of("no-target");
+        documentInteractor.removeTypeCodes = List.of("140", "150");
+        documentInteractor.removeEdinetCodes = List.of("remove");
     }
 
     @Nested
@@ -617,9 +620,96 @@ class DocumentInteractorTest {
             assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
         }
 
-        @DisplayName("removeDocument : 除外条件に合致するドキュメントを処理対象外に更新する")
+        @DisplayName("removeDocument : 会社単位での除外条件に合致するドキュメントを処理対象外に更新する")
         @Test
-        void date_ok() {
+        void date_ok_company() {
+            var inputData = DateInputData.of(LocalDate.parse("2021-11-13"));
+            var document = new Document(
+                    "documentId",
+                    DocumentTypeCode.DTC_120,
+                    null,
+                    "no-target",
+                    null,
+                    LocalDate.parse("2021-11-13"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+
+            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
+            verify(documentSpecification, times(1)).updateRemoved(document);
+        }
+
+        @DisplayName("removeDocument : 四半期報告書において会社単位での除外条件に合致するドキュメントを処理対象外に更新する")
+        @Test
+        void date_ok_dtc140_company() {
+            var inputData = DateInputData.of(LocalDate.parse("2021-11-13"));
+            var document = new Document(
+                    "documentId",
+                    DocumentTypeCode.DTC_140,
+                    null,
+                    "remove",
+                    null,
+                    LocalDate.parse("2021-11-13"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+
+            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
+            verify(documentSpecification, times(1)).updateRemoved(document);
+        }
+
+        @DisplayName("removeDocument : 四半期報告書において会社単位での除外条件に合致しない場合は除外しない")
+        @Test
+        void date_ok_dtc140_company_not_remove() {
+            var inputData = DateInputData.of(LocalDate.parse("2021-11-13"));
+            var document = new Document(
+                    "documentId",
+                    DocumentTypeCode.DTC_140,
+                    null,
+                    "target",
+                    null,
+                    LocalDate.parse("2021-11-13"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+
+            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
+            verify(documentSpecification, times(0)).updateRemoved(document);
+        }
+
+        @DisplayName("removeDocument : 四半期報告書単位での除外条件に合致するドキュメントを処理対象外に更新する")
+        @Test
+        void date_ok_dtc140() {
             var inputData = DateInputData.of(LocalDate.parse("2021-09-18"));
             var document = new Document(
                     "documentId",
