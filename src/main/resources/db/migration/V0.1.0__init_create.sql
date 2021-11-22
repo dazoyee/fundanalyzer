@@ -1,5 +1,4 @@
 -- Table structure for table `industry`(業種)
--- DROP TABLE IF EXISTS `industry`;
 CREATE TABLE IF NOT EXISTS `industry`
 (
     `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -7,10 +6,9 @@ CREATE TABLE IF NOT EXISTS `industry`
     `created_at` DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_industry_name` (`name`)
-);
+    );
 
 -- Table structure for table `company`(企業)
--- DROP TABLE IF EXISTS `company`;
 CREATE TABLE IF NOT EXISTS `company`
 (
     `code`            CHAR(5)               DEFAULT NULL COMMENT '企業コード',
@@ -26,10 +24,9 @@ CREATE TABLE IF NOT EXISTS `company`
     PRIMARY KEY (`edinet_code`),
     UNIQUE KEY `uk_company_code` (`code`),
     CONSTRAINT `fk_industry_id` FOREIGN KEY (`industry_id`) REFERENCES `industry` (`id`)
-);
+    );
 
 -- Table structure for table `scraping_keyword`(スクレイピングキーワード)
--- DROP TABLE IF EXISTS `scraping_keyword`;
 CREATE TABLE IF NOT EXISTS `scraping_keyword`
 (
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -39,10 +36,9 @@ CREATE TABLE IF NOT EXISTS `scraping_keyword`
     `created_at`             DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_scraping_keyword` (`keyword`)
-);
+    );
 
 -- Table structure for table `bs_subject`(貸借対照表)
--- DROP TABLE IF EXISTS `bs_subject`;
 CREATE TABLE IF NOT EXISTS `bs_subject`
 (
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -51,10 +47,9 @@ CREATE TABLE IF NOT EXISTS `bs_subject`
     `name`               VARCHAR(100)    NOT NULL COMMENT '科目名',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_bs_subject_id` (`outline_subject_id`, `detail_subject_id`)
-);
+    );
 
 -- Table structure for table `pl_subject`(損益計算書)
--- DROP TABLE IF EXISTS `pl_subject`;
 CREATE TABLE IF NOT EXISTS `pl_subject`
 (
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -63,10 +58,9 @@ CREATE TABLE IF NOT EXISTS `pl_subject`
     `name`               VARCHAR(100)    NOT NULL COMMENT '科目名',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_pl_subject_id` (`outline_subject_id`, `detail_subject_id`)
-);
+    );
 
 -- Table structure for table `edinet_document`(EDINETに提出された書類)
--- DROP TABLE IF EXISTS `edinet_document`;
 CREATE TABLE IF NOT EXISTS `edinet_document`
 (
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -99,11 +93,10 @@ CREATE TABLE IF NOT EXISTS `edinet_document`
     `created_at`             DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_ed_doc_id` (`doc_id`)
-);
+    );
 CREATE INDEX IF NOT EXISTS `idx_doc_type_code` ON edinet_document (`doc_type_code`);
 
 -- Table structure for table `document`(書類ステータス)
--- DROP TABLE IF EXISTS `document`;
 CREATE TABLE IF NOT EXISTS `document`
 (
     `id`                             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -128,11 +121,10 @@ CREATE TABLE IF NOT EXISTS `document`
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_document_document_id` (`document_id`),
     CONSTRAINT `fk_document_edinet_code` FOREIGN KEY (`edinet_code`) REFERENCES `company` (`edinet_code`)
-);
+    );
 CREATE INDEX IF NOT EXISTS `idx_document_type_code` ON document (`document_type_code`);
 
 -- Table structure for table `financial_statement`(財務諸表)
--- DROP TABLE IF EXISTS `financial_statement`;
 CREATE TABLE IF NOT EXISTS `financial_statement`
 (
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -154,10 +146,9 @@ CREATE TABLE IF NOT EXISTS `financial_statement`
                         `submit_date`),
     CONSTRAINT `fk_fs_edinet_code` FOREIGN KEY (`edinet_code`) REFERENCES `company` (`edinet_code`),
     CONSTRAINT `fk_fs_document_id` FOREIGN KEY (`document_id`) REFERENCES `document` (`document_id`)
-);
+    );
 
 -- Table structure for table `analysis_result`(企業価値)
--- DROP TABLE IF EXISTS `analysis_result`;
 CREATE TABLE IF NOT EXISTS `analysis_result`
 (
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -172,10 +163,9 @@ CREATE TABLE IF NOT EXISTS `analysis_result`
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_ar` (`company_code`, `document_period`, `document_type_code`, `submit_date`),
     CONSTRAINT `fk_ar_document_id` FOREIGN KEY (`document_id`) REFERENCES `document` (`document_id`)
-);
+    );
 
 -- Table structure for table `stock_price`(株価)
--- DROP TABLE IF EXISTS `stock_price`;
 CREATE TABLE IF NOT EXISTS `stock_price`
 (
     `id`                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -197,10 +187,9 @@ CREATE TABLE IF NOT EXISTS `stock_price`
     `created_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_sp` (`company_code`, `target_date`, `source_of`)
-);
+    );
 
 -- Table structure for table `minkabu`(みんかぶ)
--- DROP TABLE IF EXISTS `minkabu`;
 CREATE TABLE IF NOT EXISTS `minkabu`
 (
     `id`                         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -214,10 +203,9 @@ CREATE TABLE IF NOT EXISTS `minkabu`
     `created_at`                 DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_m` (`company_code`, `target_date`)
-);
+    );
 
 -- Table structure for table `corporate_view`(企業一覧)
--- DROP TABLE IF EXISTS `corporate_view`;
 CREATE TABLE IF NOT EXISTS `corporate_view`
 (
     `code`                      CHAR(4)      NOT NULL COMMENT '企業コード',
@@ -239,10 +227,9 @@ CREATE TABLE IF NOT EXISTS `corporate_view`
     `updated_at`                DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
     PRIMARY KEY (`code`),
     UNIQUE KEY `uk_cv_company_code` (`code`)
-);
+    );
 
 -- Table structure for table `edinet_list_view`(EDINET処理一覧)
--- DROP TABLE IF EXISTS `edinet_list_view`;
 CREATE TABLE IF NOT EXISTS edinet_list_view
 (
     `submit_date`       DATE     NOT NULL COMMENT '提出日',
@@ -258,4 +245,4 @@ CREATE TABLE IF NOT EXISTS edinet_list_view
     `updated_at`        DATETIME NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
     PRIMARY KEY (`submit_date`),
     UNIQUE KEY `uk_elv_submit_date` (`submit_date`)
-);
+    );
