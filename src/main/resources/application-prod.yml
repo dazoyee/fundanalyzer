@@ -19,9 +19,9 @@ spring:
     schemas: fundanalyzer
     user: fundanalyzer
     password: fundanalyzer
-    baseline-on-migrate: false  # Flywayのマイグレーションスクリプトの実行バージョンを途中から始めるか否か
-    # baseline-version: 1.0.0  # baseline-on-migrate が true の場合に開始するバージョン
-    # baseline-description: Initial  # baseline-version で実施された場合に記録されるコメント
+    baseline-on-migrate: true  # Flywayのマイグレーションスクリプトの実行バージョンを途中から始めるか否か
+    baseline-version: 0.1.0  # baseline-on-migrate が true の場合に開始するバージョン
+    baseline-description: Initial  # baseline-version で実施された場合に記録されるコメント
     locations: classpath:db/migration
 
   thymeleaf:
