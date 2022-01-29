@@ -90,7 +90,11 @@ class CompanyInteractorTest {
         @Test
         void fundanalyzerRestClientException() {
             when(seleniumClient.edinetCodeList(any())).thenThrow(FundanalyzerRestClientException.class);
-            assertThrows(FundanalyzerRestClientException.class, () -> companyInteractor.importCompanyInfo());
+            doNothing().when(companyInteractor).saveCompanyInfo();
+
+            assertDoesNotThrow(() -> companyInteractor.importCompanyInfo());
+            verify(seleniumClient, times(1)).edinetCodeList(any());
+            verify(companyInteractor, times(1)).saveCompanyInfo();
         }
 
         @DisplayName("importCompanyInfo : zipファイル解凍処理中にエラーが発生したときの挙動を確認する")
