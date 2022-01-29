@@ -1,127 +1,346 @@
-<html xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html>
+<html lang="ja">
 <head>
-    <meta charset="utf-8">
-    <link
-            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-            rel="stylesheet">
-    <title>会社一覧</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fundanalyzer | Dashboard</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+  <!-- IonIcons -->
+  <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="/dist/css/adminlte.min.css">
+  <!-- daterange picker -->
+  <link rel="stylesheet" href="/plugins/daterangepicker/daterangepicker.css">
+
 </head>
 
-<body>
-<div class="container">
-    <h1>会社一覧</h1>
-    <p th:if="${error}" class="alert alert-danger" role="alert">
-        <th:block th:each="error: ${error}"><!-- 改行コードでsplitしてループ -->
-            <th:block th:text="${error}"/>
-            <br/>
-        </th:block>
-    </p>
-    <p th:if="${message}" class="alert alert-info" role="alert">
-        <th:block th:each="message: ${message}"><!-- 改行コードでsplitしてループ -->
-            <th:block th:text="${message}"/>
-            <br/>
-        </th:block>
-    </p>
-    <form method="post" th:action="@{/fundanalyzer/v1/update/corporate/view}">
-        <button type="submit" class="btn">表示更新</button>
-    </form>
-    <div class="row">
-        <div class="col-lg-12">
-            財務諸表の取得と分析をする :
-            <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
-                <input type="date" name="fromDate"/> ～
-                <input type="date" name="toDate"/>
-                <button type="submit" class="btn">取得/分析する</button>
-            </form>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-6">
-            提出日から分析する :
-            <form method="post" th:action="@{/fundanalyzer/v1/scrape/date}">
-                <input type="date" name="date"/>
-                <button type="submit" class="btn">分析する</button>
-            </form>
-        </div>
-        <div class="col-lg-6">
-            書類IDから取得と分析する :
-            <form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
-                <input type="text" name="documentId" placeholder="書類ID"/>
-                <button type="submit" class="btn">分析する</button>
-            </form>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-12">
-            提出日ごとに最新株価を取得する
-            <form method="post" th:action="@{/fundanalyzer/v1/import/stock/date}">
-                <input type="date" name="fromDate"/> ～
-                <input type="date" name="toDate"/>
-                <button type="submit" class="btn">取得する（株価）</button>
-            </form>
-        </div>
-    </div>
-    <div class="border-top">
-        <br/>
-        <div class="row">
-            <div class="col-lg-2">
-                <form method="get" th:action="@{/fundanalyzer/v1/index/sort/discount-rate}">
-                    <button type="submit" class="btn">割安比率ソート</button>
-                </form>
-            </div>
-            <div class="col-lg-1">
-                <form method="get" th:action="@{/fundanalyzer/v1/index}">
-                    <button type="submit" class="btn">通常</button>
-                </form>
-            </div>
-            <div class="col-lg-1">
-                <form method="get" th:action="@{/fundanalyzer/v1/index/all}">
-                    <button type="submit" class="btn">ALL</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="/fundanalyzer/v2/index" class="nav-link">Home</a>
+      </li>
+    </ul>
 
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>コード</th>
-            <th>会社名</th>
-            <th>提出日</th>
-            <th>最新企業価値</th>
-            <th>変動係数</th>
-            <th>株価平均</th>
-            <th>割安比率</th>
-            <th>対象年数</th>
-        </tr>
-        </thead>
-        <tbody>
-        <div th:each="company : ${companies}">
-            <tr th:if="${company.isMainReport()}" class="table-info">
-                <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
-                       target="_blank">証券コード</a></td>
-                <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v1/corporate/'+${company.code}}">会社名</a></td>
-                <td th:text="${company.submitDate}">提出日</td>
-                <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                <td th:text="${company.coefficientOfVariation}">変動係数</td>
-                <td th:text="${company.averageStockPrice}">株価平均</td>
-                <td th:text="${company.discountRate}">割安比率</td>
-                <td th:text="${company.countYear}">対象年数</td>
-            </tr>
-            <tr th:unless="${company.isMainReport()}">
-                <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
-                       target="_blank">証券コード</a></td>
-                <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v1/corporate/'+${company.code}}">会社名</a></td>
-                <td th:text="${company.submitDate}">提出日</td>
-                <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                <td th:text="${company.coefficientOfVariation}">変動係数</td>
-                <td th:text="${company.averageStockPrice}">株価平均</td>
-                <td th:text="${company.discountRate}">割安比率</td>
-                <td th:text="${company.countYear}">対象年数</td>
-            </tr>
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+          <i class="fas fa-expand-arrows-alt"></i>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
+          <i class="fas fa-th-large"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <!-- /.navbar -->
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="/fundanalyzer/v2/index" class="brand-link">
+      <img src="/favicon.ico" alt="fundanalyzer Logo" class="brand-image img-circle elevation-3"
+           style="opacity: .8">
+      <span class="brand-text font-weight-light">fundanalyzer</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <li class="nav-item menu-open">
+            <a href="#" class="nav-link active">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>
+                Main
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/index" class="nav-link active">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Main Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/index-all" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Main All Dashboard</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>
+                Edinet
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Edinet Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/edinet-list-all" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Edinet All Dashboard</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">会社一覧</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
+              <li class="breadcrumb-item active">Main Dashboard</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">財務諸表の取得と分析をする</h3>
+              </div>
+              <div class="card-body">
+                <!-- Date range -->
+                <div class="form-group">
+                  <label>Date range:</label>
+                  <!-- form start -->
+                  <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text">
+                          <i class="far fa-calendar-alt"></i>
+                        </span>
+                      </div>
+                      <input type="text" class="form-control float-left" name="fromToDate" id="reservation">
+                      <button type="submit" class="btn btn-info">Submit</button>
+                    </div>
+                  </form>
+                  <!-- /.input group -->
+                </div>
+                <!-- /.form group -->
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col-md-6 -->
+          <div class="col-lg-6">
+            <div class="card card-info">
+              <div class="card-header">
+                <h3 class="card-title">書類IDから取得と分析する</h3>
+              </div>
+              <div class="card-body">
+                <!-- Date range -->
+                <div class="form-group">
+                  <label>Date range:</label>
+                  <!-- form start -->
+                  <form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text">
+                          <i class="far fa-calendar-alt"></i>
+                        </span>
+                      </div>
+                      <input type="text" class="form-control float-right" name="documentId" placeholder="書類ID"/>
+                      <button type="submit" class="btn btn-info">Submit</button>
+                    </div>
+                  </form>
+                  <!-- /.input group -->
+                </div>
+                <!-- /.form group -->
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col-md-6 -->
+          <div class="col-12">
+            <div class="card">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-hover">
+                  <thead>
+                  <tr>
+                    <th>コード</th>
+                    <th>会社名</th>
+                    <th>提出日</th>
+                    <th>最新企業価値</th>
+                    <th>変動係数</th>
+                    <th>株価平均</th>
+                    <th>割安比率</th>
+                    <th>対象年数</th>
+                  </tr>
+                  </thead>
+                  <tbody th:each="company : ${companies}">
+                  <tr th:if="${company.isMainReport()}" class="table-info">
+                    <td><a th:text="${company.code}"
+                           th:href="'https://minkabu.jp/stock/'+${company.code}"
+                           target="_blank">
+                      証券コード
+                    </a></td>
+                    <td><a th:text="${company.name}"
+                           th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                      会社名
+                    </a></td>
+                    <td th:text="${company.submitDate}">提出日</td>
+                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                    <td th:text="${company.coefficientOfVariation}">変動係数</td>
+                    <td th:text="${company.averageStockPrice}">株価平均</td>
+                    <td th:text="${company.discountRate}">割安比率</td>
+                    <td th:text="${company.countYear}">対象年数</td>
+                  </tr>
+                  <tr th:unless="${company.isMainReport()}">
+                    <td><a th:text="${company.code}"
+                           th:href="'https://minkabu.jp/stock/'+${company.code}"
+                           target="_blank">証券コード</a></td>
+                    <td><a th:text="${company.name}"
+                           th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                      会社名
+                    </a></td>
+                    <td th:text="${company.submitDate}">提出日</td>
+                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                    <td th:text="${company.coefficientOfVariation}">変動係数</td>
+                    <td th:text="${company.averageStockPrice}">株価平均</td>
+                    <td th:text="${company.discountRate}">割安比率</td>
+                    <td th:text="${company.countYear}">対象年数</td>
+                  </tr>
+                  </tbody>
+                  <tfoot>
+                  <tr>
+                    <th>コード</th>
+                    <th>会社名</th>
+                    <th>提出日</th>
+                    <th>最新企業価値</th>
+                    <th>変動係数</th>
+                    <th>株価平均</th>
+                    <th>割安比率</th>
+                    <th>対象年数</th>
+                  </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
         </div>
-        </tbody>
-    </table>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <!-- Control Sidebar -->
+  <aside class="control-sidebar control-sidebar-dark">
+    <!-- Control sidebar content goes here -->
+  </aside>
+  <!-- /.control-sidebar -->
+
+  <!-- Main Footer -->
+  <footer class="main-footer">
+    <strong>Copyright &copy; 2020-2021 fundanalyzer</strong>
+    All rights reserved.
+  </footer>
 </div>
+<!-- ./wrapper -->
+
+<!-- REQUIRED SCRIPTS -->
+
+<!-- jQuery -->
+<script src="../../plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap -->
+<script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="../../dist/js/adminlte.min.js"></script>
+
+<!-- InputMask -->
+<script src="../../plugins/moment/moment.min.js"></script>
+<script src="../../plugins/inputmask/jquery.inputmask.min.js"></script>
+<!-- date-range-picker -->
+<script src="../../plugins/daterangepicker/daterangepicker.js"></script>
+<!-- DataTables  & Plugins -->
+<script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="../../plugins/jszip/jszip.min.js"></script>
+<script src="../../plugins/pdfmake/pdfmake.min.js"></script>
+<script src="../../plugins/pdfmake/vfs_fonts.js"></script>
+<script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+
+<!-- Page specific script -->
+<script>
+    $(function () {
+        //Date range picker
+        $('#reservation').daterangepicker()
+
+        $("#example1").DataTable({
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": true,
+            "responsive": true,
+            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+        }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+
+    });
+</script>
 </body>
 </html>

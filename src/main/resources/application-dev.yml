@@ -4,14 +4,19 @@ server:
 spring:
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:fundanalyzer
+    url: jdbc:h2:mem:fundanalyzer;DB_CLOSE_ON_EXIT=TRUE;MODE=MySQL
     username: sa
     password:
+
   h2:
     console:
       enabled: true
+
   thymeleaf:
     encoding: UTF-8
+
+  flyway:
+    locations: classpath:/db/migration, classpath:/db/dataset
 
 doma:
   dialect: h2

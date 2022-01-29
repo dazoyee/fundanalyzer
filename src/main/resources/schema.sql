@@ -1,5 +1,5 @@
 -- Table structure for table `industry`(業種)
-DROP TABLE IF EXISTS `industry`;
+-- DROP TABLE IF EXISTS `industry`;
 CREATE TABLE IF NOT EXISTS `industry`
 (
     `id`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `industry`
 );
 
 -- Table structure for table `company`(企業)
-DROP TABLE IF EXISTS `company`;
+-- DROP TABLE IF EXISTS `company`;
 CREATE TABLE IF NOT EXISTS `company`
 (
     `code`            CHAR(5)               DEFAULT NULL COMMENT '企業コード',
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `company`
 );
 
 -- Table structure for table `scraping_keyword`(スクレイピングキーワード)
-DROP TABLE IF EXISTS `scraping_keyword`;
+-- DROP TABLE IF EXISTS `scraping_keyword`;
 CREATE TABLE IF NOT EXISTS `scraping_keyword`
 (
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `scraping_keyword`
 );
 
 -- Table structure for table `bs_subject`(貸借対照表)
-DROP TABLE IF EXISTS `bs_subject`;
+-- DROP TABLE IF EXISTS `bs_subject`;
 CREATE TABLE IF NOT EXISTS `bs_subject`
 (
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `bs_subject`
 );
 
 -- Table structure for table `pl_subject`(損益計算書)
-DROP TABLE IF EXISTS `pl_subject`;
+-- DROP TABLE IF EXISTS `pl_subject`;
 CREATE TABLE IF NOT EXISTS `pl_subject`
 (
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `pl_subject`
 );
 
 -- Table structure for table `edinet_document`(EDINETに提出された書類)
-DROP TABLE IF EXISTS `edinet_document`;
+-- DROP TABLE IF EXISTS `edinet_document`;
 CREATE TABLE IF NOT EXISTS `edinet_document`
 (
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `edinet_document`
 CREATE INDEX IF NOT EXISTS `idx_doc_type_code` ON edinet_document (`doc_type_code`);
 
 -- Table structure for table `document`(書類ステータス)
-DROP TABLE IF EXISTS `document`;
+-- DROP TABLE IF EXISTS `document`;
 CREATE TABLE IF NOT EXISTS `document`
 (
     `id`                             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS `document`
 CREATE INDEX IF NOT EXISTS `idx_document_type_code` ON document (`document_type_code`);
 
 -- Table structure for table `financial_statement`(財務諸表)
-DROP TABLE IF EXISTS `financial_statement`;
+-- DROP TABLE IF EXISTS `financial_statement`;
 CREATE TABLE IF NOT EXISTS `financial_statement`
 (
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS `financial_statement`
 );
 
 -- Table structure for table `analysis_result`(企業価値)
-DROP TABLE IF EXISTS `analysis_result`;
+-- DROP TABLE IF EXISTS `analysis_result`;
 CREATE TABLE IF NOT EXISTS `analysis_result`
 (
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS `analysis_result`
 );
 
 -- Table structure for table `stock_price`(株価)
-DROP TABLE IF EXISTS `stock_price`;
+-- DROP TABLE IF EXISTS `stock_price`;
 CREATE TABLE IF NOT EXISTS `stock_price`
 (
     `id`                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS `stock_price`
 );
 
 -- Table structure for table `minkabu`(みんかぶ)
-DROP TABLE IF EXISTS `minkabu`;
+-- DROP TABLE IF EXISTS `minkabu`;
 CREATE TABLE IF NOT EXISTS `minkabu`
 (
     `id`                         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `minkabu`
 );
 
 -- Table structure for table `corporate_view`(企業一覧)
-DROP TABLE IF EXISTS `corporate_view`;
+-- DROP TABLE IF EXISTS `corporate_view`;
 CREATE TABLE IF NOT EXISTS `corporate_view`
 (
     `code`                      CHAR(4)      NOT NULL COMMENT '企業コード',
@@ -242,7 +242,7 @@ CREATE TABLE IF NOT EXISTS `corporate_view`
 );
 
 -- Table structure for table `edinet_list_view`(EDINET処理一覧)
-DROP TABLE IF EXISTS `edinet_list_view`;
+-- DROP TABLE IF EXISTS `edinet_list_view`;
 CREATE TABLE IF NOT EXISTS edinet_list_view
 (
     `submit_date`       DATE     NOT NULL COMMENT '提出日',

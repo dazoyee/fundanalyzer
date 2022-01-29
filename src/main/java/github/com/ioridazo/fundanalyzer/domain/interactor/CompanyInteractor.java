@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,15 +70,17 @@ public class CompanyInteractor implements CompanyUseCase {
     @Override
     public void importCompanyInfo() {
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
-        // ファイルダウンロード
-        final String fileName = seleniumClient.edinetCodeList(inputFilePath);
-
-        final File inputFile = new File(String.format("%s/%s", inputFilePath, fileName.replace(".zip", "")));
-        final File outputFile = new File(pathCompany);
-
-        // zipファイル解凍
         try {
+            // ファイルダウンロード
+            final String fileName = seleniumClient.edinetCodeList(inputFilePath);
+
+            final File inputFile = new File(String.format("%s/%s", inputFilePath, fileName.replace(".zip", "")));
+            final File outputFile = new File(pathCompany);
+
+            // zipファイル解凍
             fileOperator.decodeZipFile(inputFile, outputFile);
+        } catch (FundanalyzerRestClientException e) {
+            log.warn("Selenium通信が完了しなかったため、ファイルダウンロードをスキップします。", e);
         } catch (IOException e) {
             throw new FundanalyzerFileException("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。", e);
         }
