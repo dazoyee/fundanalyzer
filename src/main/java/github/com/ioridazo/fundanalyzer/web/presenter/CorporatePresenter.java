@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.Corporat
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class CorporatePresenter {
@@ -26,8 +26,8 @@ public class CorporatePresenter {
      * @param model model
      * @return BrandDetail
      */
-    @GetMapping("fundanalyzer/v1/corporate/{code}")
-    public String corporateDetailView(@PathVariable final String code, final Model model) {
+    @GetMapping("fundanalyzer/v2/corporate")
+    public String corporateDetailView(@RequestParam(name = "code") final String code, final Model model) {
         final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
         model.addAttribute("corporate", view.getCompany());
         model.addAttribute("corporateView", view.getCorporate());

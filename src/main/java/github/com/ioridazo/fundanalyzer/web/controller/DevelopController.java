@@ -46,7 +46,12 @@ public class DevelopController {
         this.viewCorporateUseCase = viewCorporateUseCase;
     }
 
-    @GetMapping("/edinet/list")
+    @GetMapping("/template")
+    public String template() {
+        return "template";
+    }
+
+    @GetMapping("/edinet-list")
     public String devEdinetList(final Model model) {
         model.addAttribute("companyUpdated", companyUseCase.getUpdateDate());
         model.addAttribute("edinetList", viewService.getEdinetListView());
@@ -82,7 +87,7 @@ public class DevelopController {
         viewEdinetUseCase.updateView(inputData);
 
         model.addAttribute("companies", viewService.getCorporateView());
-        return "redirect:" + UriComponentsBuilder.fromUriString("/fundanalyzer/v1/index")
+        return "redirect:" + UriComponentsBuilder.fromUriString("/fundanalyzer/v2/index")
                 .queryParam("message", "処理を要求しました。").build().encode().toUriString();
     }
 }

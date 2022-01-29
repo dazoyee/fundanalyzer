@@ -21,8 +21,8 @@ import java.time.LocalDate;
 public class EdinetController {
 
     private static final String REDIRECT = "redirect:";
-    private static final URI V1_EDINET_PATH = URI.create("/fundanalyzer/v1/edinet/list");
-    private static final URI V1_EDINET_DETAIL_PATH = URI.create("/fundanalyzer/v1/edinet/list/detail");
+    private static final URI V2_EDINET_PATH = URI.create("/fundanalyzer/v2/edinet-list");
+    private static final URI V2_EDINET_DETAIL_PATH = URI.create("/fundanalyzer/v2/edinet-list-detail");
 
     private final AnalysisService analysisService;
     private final EdinetService edinetService;
@@ -45,7 +45,7 @@ public class EdinetController {
     @GetMapping("fundanalyzer/v1/company")
     public String updateCompany() {
         edinetService.updateCompany();
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)
                 .queryParam("message", "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
                 .build().encode().toUriString();
     }
@@ -58,7 +58,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/update/edinet/view")
     public String updateEdinetView() {
         viewService.updateEdinetView();
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)
                 .queryParam("message", "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
                 .build().encode().toUriString();
     }
@@ -70,10 +70,10 @@ public class EdinetController {
      * @param toDate   提出日
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v1/edinet/list")
+    @PostMapping("fundanalyzer/v2/edinet-list")
     public String saveEdinet(final String fromDate, final String toDate) {
         edinetService.saveEdinetList(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH).toUriString();
     }
 
     /**
@@ -82,10 +82,10 @@ public class EdinetController {
      * @param date 提出日
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v1/update/edinet/list")
+    @PostMapping("fundanalyzer/v1/update/edinet-list")
     public String updateEdinetList(final String date) {
         viewService.updateEdinetListView(DateInputData.of(LocalDate.parse(date)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH).toUriString();
     }
 
     /**
@@ -100,10 +100,10 @@ public class EdinetController {
             @ModelAttribute("submitDate") final String date, final FinancialStatementInputData inputData) {
         final Result result = analysisService.registerFinancialStatementValue(inputData);
         if (Result.OK.equals(result)) {
-            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+            return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                     .queryParam("submitDate", date).build().encode().toUriString();
         } else {
-            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+            return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                     .queryParam("submitDate", date)
                     .queryParam("error", "登録に失敗しました。").build().encode().toUriString();
         }
@@ -120,10 +120,10 @@ public class EdinetController {
     public String updateAllDoneStatus(final String date, final String documentId) {
         final Result result = edinetService.updateAllDoneStatus(IdInputData.of(documentId));
         if (Result.OK.equals(result)) {
-            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+            return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                     .queryParam("submitDate", date).build().encode().toUriString();
         } else {
-            return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+            return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                     .queryParam("submitDate", date)
                     .queryParam("error", "登録に失敗しました。").build().encode().toUriString();
         }
@@ -138,7 +138,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/analyze/date")
     public String analyzeByDate(final String date) {
         analysisService.analyzeByDate(DateInputData.of(LocalDate.parse(date)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                 .queryParam("submitDate", date).build().encode().toUriString();
     }
 
@@ -152,7 +152,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/analyze/id")
     public String analyzeById(final String date, final String documentId) {
         analysisService.analyzeById(IdInputData.of(documentId));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                 .queryParam("submitDate", date).build().encode().toUriString();
     }
 
@@ -166,7 +166,7 @@ public class EdinetController {
     @PostMapping("fundanalyzer/v1/remove/document")
     public String removeDocument(final String submitDate, final String documentId) {
         edinetService.removeDocument(IdInputData.of(documentId));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_EDINET_DETAIL_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                 .queryParam("submitDate", submitDate).build().encode().toUriString();
     }
 }

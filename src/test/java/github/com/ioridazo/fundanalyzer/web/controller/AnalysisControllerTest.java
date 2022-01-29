@@ -36,7 +36,7 @@ class AnalysisControllerTest {
     @DisplayName("doMain : 指定提出日の書類を一部メインの一連処理をする")
     @Test
     void doMain() {
-        assertEquals("redirect:/fundanalyzer/v1/index", controller.doMain("2021-05-29", "2021-05-29"));
+        assertEquals("redirect:/fundanalyzer/v2/index", controller.doMain("05/29/2021 - 05/29/2021"));
         Mockito.verify(analysisService, Mockito.times(1))
                 .executePartOfMain(BetweenDateInputData.of(LocalDate.parse("2021-05-29"), LocalDate.parse("2021-05-29")));
     }
@@ -46,7 +46,7 @@ class AnalysisControllerTest {
     void updateCorporateView() {
         var actual = UriComponentsBuilder.fromUriString(controller.updateCorporateView()).build();
 
-        assertEquals("/fundanalyzer/v1/index", actual.getPath());
+        assertEquals("/fundanalyzer/v2/index", actual.getPath());
         assertEquals(
                 "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
                 UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
@@ -56,7 +56,7 @@ class AnalysisControllerTest {
     @DisplayName("scrapeByDate : 指定提出日の書類を分析する")
     @Test
     void scrapeByDate() {
-        assertEquals("redirect:/fundanalyzer/v1/index", controller.scrapeByDate("2021-05-29"));
+        assertEquals("redirect:/fundanalyzer/v2/index", controller.scrapeByDate("2021-05-29"));
         Mockito.verify(analysisService, Mockito.times(1))
                 .executeByDate(DateInputData.of(LocalDate.parse("2021-05-29")));
     }
@@ -64,7 +64,7 @@ class AnalysisControllerTest {
     @DisplayName("scrapeById : 指定書類IDを分析する")
     @Test
     void scrapeById() {
-        assertEquals("redirect:/fundanalyzer/v1/index", controller.scrapeById("test1234,test5678"));
+        assertEquals("redirect:/fundanalyzer/v2/index", controller.scrapeById("test1234,test5678"));
         Mockito.verify(analysisService, Mockito.times(1)).executeById(IdInputData.of("test1234"));
         Mockito.verify(analysisService, Mockito.times(1)).executeById(IdInputData.of("test5678"));
     }
@@ -72,7 +72,7 @@ class AnalysisControllerTest {
     @DisplayName("importStock : 指定日に提出した企業の株価を取得する")
     @Test
     void importStock1() {
-        assertEquals("redirect:/fundanalyzer/v1/index", controller.importStock("2021-05-29", "2021-05-29"));
+        assertEquals("redirect:/fundanalyzer/v2/index", controller.importStock("2021-05-29", "2021-05-29"));
         Mockito.verify(analysisService, Mockito.times(1))
                 .importStock(BetweenDateInputData.of(LocalDate.parse("2021-05-29"), LocalDate.parse("2021-05-29")));
     }
@@ -80,7 +80,7 @@ class AnalysisControllerTest {
     @DisplayName("importStock : 企業の株価を取得する")
     @Test
     void importStock2() {
-        assertEquals("redirect:/fundanalyzer/v1/corporate/1234", controller.importStock("12345"));
+        assertEquals("redirect:/fundanalyzer/v2/corporate?code=1234", controller.importStock("12345"));
         Mockito.verify(analysisService, Mockito.times(1)).importStock(CodeInputData.of("12345"));
     }
 }
