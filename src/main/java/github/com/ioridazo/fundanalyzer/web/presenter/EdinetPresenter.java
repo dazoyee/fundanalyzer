@@ -27,7 +27,7 @@ public class EdinetPresenter {
      * @param model   model
      * @return EdinetList
      */
-    @GetMapping("fundanalyzer/v1/edinet/list")
+    @GetMapping("fundanalyzer/v2/edinet-list")
     public String edinetListView(
             @RequestParam(name = "message", required = false) final String message,
             final Model model) {
@@ -45,7 +45,7 @@ public class EdinetPresenter {
      * @param model model
      * @return EdinetList
      */
-    @GetMapping("fundanalyzer/v1/edinet/list/all")
+    @GetMapping("fundanalyzer/v2/edinet-list-all")
     public String allEdinetListView(final Model model) {
         model.addAttribute("companyUpdated", viewService.getUpdateDate());
         model.addAttribute("edinetList", viewService.getAllEdinetListView());

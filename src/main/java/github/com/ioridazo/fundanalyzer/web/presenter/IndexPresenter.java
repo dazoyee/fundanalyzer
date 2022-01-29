@@ -27,7 +27,7 @@ public class IndexPresenter {
      * @param model   model
      * @return Index
      */
-    @GetMapping("fundanalyzer/v1/index")
+    @GetMapping("fundanalyzer/v2/index")
     public String corporateView(
             @RequestParam(name = "message", required = false) final String message,
             final Model model) {
@@ -56,7 +56,7 @@ public class IndexPresenter {
      * @param model model
      * @return Index
      */
-    @GetMapping("fundanalyzer/v1/index/all")
+    @GetMapping("fundanalyzer/v2/index-all")
     public String allCorporateView(final Model model) {
         model.addAttribute("companies", viewService.getAllCorporateView());
         return INDEX;

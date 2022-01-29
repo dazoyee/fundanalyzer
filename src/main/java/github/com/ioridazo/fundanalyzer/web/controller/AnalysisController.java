@@ -12,14 +12,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 @Controller
 public class AnalysisController {
 
     private static final String REDIRECT = "redirect:";
-    private static final URI V1_INDEX_PATH = URI.create("/fundanalyzer/v1/index");
-    private static final URI V1_CORPORATE_PATH = URI.create("/fundanalyzer/v1/corporate");
+    private static final URI V2_INDEX_PATH = URI.create("/fundanalyzer/v2/index");
+    private static final URI V2_CORPORATE_PATH = URI.create("/fundanalyzer/v2/corporate");
 
     private final AnalysisService analysisService;
     private final ViewService viewService;
@@ -34,14 +35,17 @@ public class AnalysisController {
     /**
      * 指定提出日の書類をメインの一連処理をする
      *
-     * @param fromDate 提出日
-     * @param toDate   提出日
+     * @param fromToDate 提出日
      * @return Index
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
-    public String doMain(final String fromDate, final String toDate) {
-        analysisService.executePartOfMain(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
+    public String doMain(final String fromToDate) {
+        final LocalDate fromDate = LocalDate.parse(fromToDate.substring(0, 10), DateTimeFormatter.ofPattern("MM/dd/uuuu"));
+        final LocalDate toDate = LocalDate.parse(fromToDate.substring(13, 23), DateTimeFormatter.ofPattern("MM/dd/uuuu"));
+
+        analysisService.executePartOfMain(BetweenDateInputData.of(fromDate, toDate));
+
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
     }
 
     /**
@@ -52,7 +56,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/update/corporate/view")
     public String updateCorporateView() {
         viewService.updateCorporateView();
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH)
                 .queryParam("message", "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
                 .build().encode().toUriString();
     }
@@ -66,7 +70,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/scrape/date")
     public String scrapeByDate(final String date) {
         analysisService.executeByDate(DateInputData.of(LocalDate.parse(date)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
     }
 
     /**
@@ -81,7 +85,7 @@ public class AnalysisController {
                 .filter(dId -> dId.length() == 8)
                 .map(IdInputData::of)
                 .forEach(analysisService::executeById);
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
     }
 
     /**
@@ -94,7 +98,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/import/stock/date")
     public String importStock(final String fromDate, final String toDate) {
         analysisService.importStock(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_INDEX_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
     }
 
     /**
@@ -106,6 +110,7 @@ public class AnalysisController {
     @PostMapping("fundanalyzer/v1/import/stock/code")
     public String importStock(final String code) {
         analysisService.importStock(CodeInputData.of(code));
-        return REDIRECT + UriComponentsBuilder.fromUri(V1_CORPORATE_PATH).path("/" + code.substring(0, 4)).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+                .queryParam("code", code.substring(0, 4)).toUriString();
     }
 }
