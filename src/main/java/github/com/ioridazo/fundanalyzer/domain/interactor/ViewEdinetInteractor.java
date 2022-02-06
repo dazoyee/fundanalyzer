@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,6 +65,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
     public List<EdinetListViewModel> viewMain() {
         return viewSpecification.findAllEdinetListView().stream()
                 .filter(viewModel -> !viewModel.isAllDone())
+                .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -74,7 +76,9 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
      */
     @Override
     public List<EdinetListViewModel> viewAll() {
-        return viewSpecification.findAllEdinetListView();
+        return viewSpecification.findAllEdinetListView().stream()
+                .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
+                .collect(Collectors.toList());
     }
 
     /**
