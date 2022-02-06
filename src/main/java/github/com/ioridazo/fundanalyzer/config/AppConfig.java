@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.retry.support.RetryTemplateBuilder;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
@@ -15,13 +17,63 @@ import java.util.concurrent.Executor;
 @Configuration
 public class AppConfig {
 
-    @Bean
-    public RestTemplate restTemplate(
-            @Value("${app.config.rest-template.connect-timeout}") final int connectTimeout,
-            @Value("${app.config.rest-template.connect-timeout}") final int readTimeout) {
+    @Bean("edinet-rest")
+    public RestTemplate restTemplateEdinet(
+            @Value("${app.config.rest-template.edinet.connect-timeout}") final Duration connectTimeout,
+            @Value("${app.config.rest-template.edinet.read-timeout}") final Duration readTimeout) {
         return new RestTemplateBuilder()
-                .setConnectTimeout(Duration.ofMillis(connectTimeout))
-                .setReadTimeout(Duration.ofMillis(readTimeout))
+                .setConnectTimeout(connectTimeout)
+                .setReadTimeout(readTimeout)
+                .build();
+    }
+
+    @Bean("selenium-rest")
+    public RestTemplate restTemplateSelenium(
+            @Value("${app.config.rest-template.selenium.connect-timeout}") final Duration connectTimeout,
+            @Value("${app.config.rest-template.selenium.read-timeout}") final Duration readTimeout) {
+        return new RestTemplateBuilder()
+                .setConnectTimeout(connectTimeout)
+                .setReadTimeout(readTimeout)
+                .build();
+    }
+
+    @Bean("slack-rest")
+    public RestTemplate restTemplateSlack(
+            @Value("${app.config.rest-template.slack.connect-timeout}") final Duration connectTimeout,
+            @Value("${app.config.rest-template.slack.read-timeout}") final Duration readTimeout) {
+        return new RestTemplateBuilder()
+                .setConnectTimeout(connectTimeout)
+                .setReadTimeout(readTimeout)
+                .build();
+    }
+
+    @Bean("edinet-retry")
+    public RetryTemplate retryTemplateEdinet(
+            @Value("${app.config.rest-template.edinet.max-attempts}") final Integer maxAttempt,
+            @Value("${app.config.rest-template.edinet.back-off}") final Duration backOff) {
+        return new RetryTemplateBuilder()
+                .maxAttempts(maxAttempt)
+                .fixedBackoff(backOff.toMillis())
+                .build();
+    }
+
+    @Bean("selenium-retry")
+    public RetryTemplate retryTemplateSelenium(
+            @Value("${app.config.rest-template.selenium.max-attempts}") final Integer maxAttempt,
+            @Value("${app.config.rest-template.selenium.back-off}") final Duration backOff) {
+        return new RetryTemplateBuilder()
+                .maxAttempts(maxAttempt)
+                .fixedBackoff(backOff.toMillis())
+                .build();
+    }
+
+    @Bean("slack-retry")
+    public RetryTemplate retryTemplateSlack(
+            @Value("${app.config.rest-template.slack.max-attempts}") final Integer maxAttempt,
+            @Value("${app.config.rest-template.slack.back-off}") final Duration backOff) {
+        return new RetryTemplateBuilder()
+                .maxAttempts(maxAttempt)
+                .fixedBackoff(backOff.toMillis())
                 .build();
     }
 

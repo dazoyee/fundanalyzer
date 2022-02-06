@@ -6,11 +6,10 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -25,12 +24,15 @@ public class SeleniumClient {
     private static final Logger log = LogManager.getLogger(SeleniumClient.class);
 
     private final RestTemplate restTemplate;
+    private final RetryTemplate retryTemplate;
     private final String baseUri;
 
     public SeleniumClient(
-            final RestTemplate restTemplate,
-            @Value("${app.api.selenium}") final String baseUri) {
+            @Qualifier("selenium-rest") final RestTemplate restTemplate,
+            @Qualifier("selenium-retry") final RetryTemplate retryTemplate,
+            @Value("${app.config.rest-template.selenium.base-uri}") final String baseUri) {
         this.restTemplate = restTemplate;
+        this.retryTemplate = retryTemplate;
         this.baseUri = baseUri;
     }
 
@@ -41,7 +43,6 @@ public class SeleniumClient {
      * @return ダウンロードファイル名
      */
     @NewSpan
-    @Retryable(value = RestClientException.class, maxAttempts = 5, backoff = @Backoff(delay = 1000))
     public String edinetCodeList(final String inputFilePath) {
         final URI uri = UriComponentsBuilder
                 .fromUriString(baseUri)
@@ -49,25 +50,31 @@ public class SeleniumClient {
                 .queryParam("path", inputFilePath.replace("/", "\\"))
                 .build().toUri();
 
-        log.info(FundanalyzerLogClient.toClientLogObject(
-                MessageFormat.format("Seleniumの通信を開始します。\tURL:{0}", uri),
-                Category.COMPANY,
-                Process.EDINET
-        ));
 
-        final String fileName = restTemplate.getForObject(uri, String.class);
+        try {
+            final String fileName = retryTemplate.execute(context -> {
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        MessageFormat.format(
+                                "{0}回目のSeleniumへの通信を開始します。\tURL:{1}",
+                                context.getRetryCount() + 1,
+                                uri
+                        ),
+                        Category.COMPANY,
+                        Process.EDINET
+                ));
 
-        log.info(FundanalyzerLogClient.toClientLogObject(
-                MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", uri),
-                Category.COMPANY,
-                Process.EDINET
-        ));
+                return restTemplate.getForObject(uri, String.class);
+            });
 
-        return fileName;
-    }
+            log.info(FundanalyzerLogClient.toClientLogObject(
+                    MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", uri),
+                    Category.COMPANY,
+                    Process.EDINET
+            ));
 
-    @Recover
-    public String recover(final RestClientException e) {
-        throw new FundanalyzerRestClientException("Selenium通信がリトライ上限に達しました。エラー内容を確認してください。", e);
+            return fileName;
+        } catch (final RestClientException e) {
+            throw new FundanalyzerRestClientException("Selenium通信がリトライ上限に達しました。エラー内容を確認してください。", e);
+        }
     }
 }

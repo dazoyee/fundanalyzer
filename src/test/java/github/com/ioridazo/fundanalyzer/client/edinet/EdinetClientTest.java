@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,9 +18,11 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -28,27 +31,35 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @Timeout(10)
+@SuppressWarnings("NewClassNamingConvention")
 class EdinetClientTest {
 
     private static MockWebServer server;
-    private EdinetClient proxy;
+    private RestTemplate restTemplate;
+    private EdinetClient client;
 
     @BeforeEach
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new EdinetClient(
-                new AppConfig().restTemplate(2000, 2000),
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(Duration.ofMillis(1), Duration.ofMillis(1)));
+        this.client = Mockito.spy(new EdinetClient(
+                restTemplate,
+                new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
                 String.format("http://localhost:%s", server.getPort())
         ));
 
-        Mockito.clearInvocations(proxy);
-        Mockito.reset(proxy);
+        Mockito.clearInvocations(client);
+        Mockito.reset(client);
     }
 
     @AfterEach
@@ -89,7 +100,7 @@ class EdinetClientTest {
                     .setHeader("Content-Type", "application/json; charset=utf-8")
                     .setBody(json));
 
-            var actual = assertDoesNotThrow(() -> proxy.list(parameter));
+            var actual = assertDoesNotThrow(() -> client.list(parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -175,7 +186,7 @@ class EdinetClientTest {
                     .setHeader("Content-Type", "application/json; charset=utf-8")
                     .setBody(json));
 
-            var actual = assertDoesNotThrow(() -> proxy.list(parameter));
+            var actual = assertDoesNotThrow(() -> client.list(parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -237,7 +248,7 @@ class EdinetClientTest {
 
             server.enqueue(new MockResponse().setResponseCode(httpStatus));
 
-            var actual = assertThrows(FundanalyzerRestClientException.class, () -> proxy.list(parameter));
+            var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -246,6 +257,24 @@ class EdinetClientTest {
             );
 
             System.out.println(actual.getMessage());
+        }
+
+        @DisplayName("list : 通信をリトライする")
+        @Test
+        void retryable() throws InterruptedException {
+            var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
+
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+
+            assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+
+            var recordedRequest = server.takeRequest();
+            assertAll("request",
+                    () -> assertEquals("/api/v1/documents.json?date=2019-04-01&type=1", recordedRequest.getPath()),
+                    () -> assertEquals("GET", recordedRequest.getMethod())
+            );
+            verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
         }
     }
 
@@ -259,10 +288,10 @@ class EdinetClientTest {
             var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
             server.enqueue(new MockResponse().setResponseCode(200));
-            doNothing().when(proxy).makeDirectory(storagePath);
-            doReturn(null).when(proxy).copyFile(any(), any());
+            doNothing().when(client).makeDirectory(storagePath);
+            doReturn(null).when(client).copyFile(any(), any());
 
-            assertDoesNotThrow(() -> proxy.acquisition(storagePath, parameter));
+            assertDoesNotThrow(() -> client.acquisition(storagePath, parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -279,10 +308,10 @@ class EdinetClientTest {
             var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
             server.enqueue(new MockResponse().setResponseCode(httpStatus));
-            doNothing().when(proxy).makeDirectory(storagePath);
-            doReturn(null).when(proxy).copyFile(any(), any());
+            doNothing().when(client).makeDirectory(storagePath);
+            doReturn(null).when(client).copyFile(any(), any());
 
-            var actual = assertThrows(FundanalyzerRestClientException.class, () -> proxy.acquisition(storagePath, parameter));
+            var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -291,6 +320,26 @@ class EdinetClientTest {
             );
 
             System.out.println(actual.getMessage());
+        }
+
+
+        @DisplayName("acquisition : 通信をリトライする")
+        @Test
+        void retryable() throws InterruptedException {
+            var storagePath = new File("path1");
+            var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+
+            assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
+
+            var recordedRequest = server.takeRequest();
+            assertAll("request",
+                    () -> assertEquals("/api/v1/documents/docId?type=1", recordedRequest.getPath()),
+                    () -> assertEquals("GET", recordedRequest.getMethod())
+            );
+            verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
         }
     }
 }

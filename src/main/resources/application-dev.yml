@@ -32,9 +32,8 @@ management:
       application: ${spring.application.name}-dev
 
 app:
-  api:
+  config:
     slack:
-      base-uri: https://hooks.slack.com
       parameter:
         t: TKN2V6NQ4
         b: B01EYUAKEL8
