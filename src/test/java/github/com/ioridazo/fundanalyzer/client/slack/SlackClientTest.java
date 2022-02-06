@@ -15,8 +15,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -28,8 +30,9 @@ import static org.mockito.Mockito.doReturn;
 class SlackClientTest {
 
     private static MockWebServer server;
+    private RestTemplate restTemplate;
     private Environment environment;
-    private SlackClient proxy;
+    private SlackClient client;
 
     @BeforeEach
     void before() throws IOException {
@@ -37,17 +40,19 @@ class SlackClientTest {
         server = new MockWebServer();
         server.start();
 
-        this.proxy = Mockito.spy(new SlackClient(
-                new AppConfig().restTemplate(2000, 2000),
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateSelenium(Duration.ofMillis(1), Duration.ofMillis(1)));
+        this.client = Mockito.spy(new SlackClient(
+                restTemplate,
+                new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
                 String.format("http://localhost:%s", server.getPort()),
                 environment
         ));
-        proxy.parameterT = "t";
-        proxy.parameterB = "b";
-        proxy.parameterX = "x";
+        client.parameterT = "t";
+        client.parameterB = "b";
+        client.parameterX = "x";
 
-        Mockito.clearInvocations(proxy);
-        Mockito.reset(proxy);
+        Mockito.clearInvocations(client);
+        Mockito.reset(client);
     }
 
     @AfterEach
@@ -60,19 +65,20 @@ class SlackClientTest {
     void sendMessage_tester() {
         var propertyPath = "property.path";
 
-        this.proxy = new SlackClient(
-                new AppConfig().restTemplate(1, 1),
+        this.client = new SlackClient(
+                restTemplate,
+                new AppConfig().retryTemplateSelenium(2, Duration.ofSeconds(1)),
                 "https://hooks.slack.com",
                 environment
         );
-        proxy.parameterT = "TKN2V6NQ4";
-        proxy.parameterB = "B01DFHHPE07";
-        proxy.parameterX = "";
+        client.parameterT = "TKN2V6NQ4";
+        client.parameterB = "B01DFHHPE07";
+        client.parameterX = "";
 
         server.enqueue(new MockResponse());
         doReturn("*tester*").when(environment).getProperty(propertyPath);
 
-        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
+        assertDoesNotThrow(() -> client.sendMessage(propertyPath));
     }
 
     @DisplayName("sendMessage : Slackにメッセージをそのまま通知する")
@@ -83,7 +89,7 @@ class SlackClientTest {
         server.enqueue(new MockResponse());
         doReturn("*message*").when(environment).getProperty(propertyPath);
 
-        proxy.sendMessage(propertyPath);
+        client.sendMessage(propertyPath);
 //        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath));
 
         var recordedRequest = server.takeRequest();
@@ -104,9 +110,9 @@ class SlackClientTest {
 
         server.enqueue(new MockResponse());
         doReturn("*message, {0}, {1}*").when(environment).getProperty(propertyPath);
-        doReturn("nowLocalDataTime").when(proxy).nowLocalDataTime();
+        doReturn("nowLocalDataTime").when(client).nowLocalDataTime();
 
-        assertDoesNotThrow(() -> proxy.sendMessage(propertyPath, arguments1, arguments2));
+        assertDoesNotThrow(() -> client.sendMessage(propertyPath, arguments1, arguments2));
 
         var recordedRequest = server.takeRequest();
         assertAll("request",
@@ -126,7 +132,7 @@ class SlackClientTest {
         server.enqueue(new MockResponse().setResponseCode(httpStatus));
         doReturn("*message*").when(environment).getProperty(propertyPath);
 
-        var actual = assertThrows(FundanalyzerRestClientException.class, () -> proxy.sendMessage(propertyPath));
+        var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.sendMessage(propertyPath));
 
         var recordedRequest = server.takeRequest();
         assertAll("request",

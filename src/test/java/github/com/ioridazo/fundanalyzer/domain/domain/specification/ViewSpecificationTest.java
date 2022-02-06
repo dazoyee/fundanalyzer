@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class ViewSpecificationTest {
 
     private CorporateViewDao corporateViewDao;
@@ -58,6 +60,21 @@ class ViewSpecificationTest {
                 null,
                 null,
                 true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -133,41 +150,57 @@ class ViewSpecificationTest {
         @DisplayName("generateCorporateView : 割安値を算出する")
         @Test
         void calculateDiscountValue_isPresent() {
-            corporateValue.setAverageCorporateValue(BigDecimal.valueOf(2132.0512495));
+            var averageInfo = new AverageInfo();
+            averageInfo.setYear(AverageInfo.Year.ALL);
+            averageInfo.setAverageCorporateValue(BigDecimal.valueOf(2132.0512495));
+            corporateValue.setAverageInfoList(List.of(averageInfo));
+
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
-            assertEquals(BigDecimal.valueOf(1132.05), actual.getDiscountValue());
+            assertEquals(BigDecimal.valueOf(1132.05), actual.getAllDiscountValue());
         }
 
         @DisplayName("generateCorporateView : 割安値を算出できないときはnull")
         @Test
         void calculateDiscountValue_isEmpty() {
-            corporateValue.setAverageCorporateValue(null);
+            var averageInfo = new AverageInfo();
+            averageInfo.setYear(AverageInfo.Year.ALL);
+            averageInfo.setAverageCorporateValue(null);
+            corporateValue.setAverageInfoList(List.of(averageInfo));
+
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
-            assertNull(actual.getDiscountValue());
+            assertNull(actual.getAllDiscountValue());
         }
 
         @DisplayName("generateCorporateView : 割安度を算出する")
         @Test
         void calculateDiscountRate_isPresent() {
-            corporateValue.setAverageCorporateValue(BigDecimal.valueOf(2132.0512495));
+            var averageInfo = new AverageInfo();
+            averageInfo.setYear(AverageInfo.Year.ALL);
+            averageInfo.setAverageCorporateValue(BigDecimal.valueOf(2132.0512495));
+            corporateValue.setAverageInfoList(List.of(averageInfo));
+
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
-            assertEquals(BigDecimal.valueOf(213.205), actual.getDiscountRate());
+            assertEquals(BigDecimal.valueOf(213.205), actual.getAllDiscountRate());
         }
 
         @DisplayName("generateCorporateView : 割安度を算出できないときはnull")
         @Test
         void calculateDiscountRate_isEmpty() {
-            corporateValue.setAverageCorporateValue(null);
+            var averageInfo = new AverageInfo();
+            averageInfo.setYear(AverageInfo.Year.ALL);
+            averageInfo.setAverageCorporateValue(null);
+            corporateValue.setAverageInfoList(List.of(averageInfo));
+
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
-            assertNull(actual.getDiscountRate());
+            assertNull(actual.getAllDiscountRate());
         }
     }
 
@@ -203,6 +236,21 @@ class ViewSpecificationTest {
 
     private CorporateViewBean defaultCorporateViewBean() {
         return new CorporateViewBean(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,

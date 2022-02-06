@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResu
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
@@ -34,6 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class AnalyzeInteractorTest {
 
     private CompanySpecification companySpecification;
@@ -115,69 +119,140 @@ class AnalyzeInteractorTest {
 
             assertAll(
                     () -> assertNull(actual.getLatestCorporateValue().orElse(null)),
-                    () -> assertNull(actual.getAverageCorporateValue().orElse(null)),
-                    () -> assertNull(actual.getStandardDeviation().orElse(null)),
-                    () -> assertNull(actual.getCoefficientOfVariation().orElse(null)),
+                    () -> assertEquals(List.of(), actual.getAverageInfoList()),
+                    () -> assertNull(actual.getCountYear().orElse(null))
+            );
+        }
+
+        @DisplayName("calculateCorporateValue : 平均企業価値が存在しないとき")
+        @ParameterizedTest
+        @CsvSource({"0,3", "1,5", "2,10"})
+        void averageCorporateValue_year_isEmpty(int index, int year) {
+            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.empty());
+            var actual = analyzeInteractor.calculateCorporateValue(company);
+
+            assertAll(
+                    () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.yearFromValue(year), actual.getAverageInfoList().get(index).getYear()),
+                            () -> assertNull(actual.getAverageInfoList().get(index).getAverageCorporateValue().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(index).getStandardDeviation().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(index).getCoefficientOfVariation().orElse(null))
+                    ),
                     () -> assertNull(actual.getCountYear().orElse(null))
             );
         }
 
         @DisplayName("calculateCorporateValue : 平均企業価値が存在しないとき")
         @Test
-        void averageCorporateValue_isEmpty() {
+        void averageCorporateValue_allYear_isEmpty() {
             when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
-            when(analysisResultSpecification.averageCorporateValue(company)).thenReturn(Optional.empty());
+            when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
             assertAll(
                     () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
-                    () -> assertNull(actual.getAverageCorporateValue().orElse(null)),
-                    () -> assertNull(actual.getStandardDeviation().orElse(null)),
-                    () -> assertNull(actual.getCoefficientOfVariation().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.Year.ALL, actual.getAverageInfoList().get(3).getYear()),
+                            () -> assertNull(actual.getAverageInfoList().get(3).getAverageCorporateValue().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(3).getStandardDeviation().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(3).getCoefficientOfVariation().orElse(null))
+                    ),
+                    () -> assertNull(actual.getCountYear().orElse(null))
+            );
+        }
+
+        @DisplayName("calculateCorporateValue : 標準偏差が存在しないとき")
+        @ParameterizedTest
+        @CsvSource({"0,3", "1,5", "2,10"})
+        void standardDeviation_year_isEmpty(int index, int year) {
+            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.empty());
+            var actual = analyzeInteractor.calculateCorporateValue(company);
+
+            assertAll(
+                    () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.yearFromValue(year), actual.getAverageInfoList().get(index).getYear()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(index).getAverageCorporateValue().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(index).getStandardDeviation().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(index).getCoefficientOfVariation().orElse(null))
+                    ),
                     () -> assertNull(actual.getCountYear().orElse(null))
             );
         }
 
         @DisplayName("calculateCorporateValue : 標準偏差が存在しないとき")
         @Test
-        void standardDeviation_isEmpty() {
+        void standardDeviation_allYear_isEmpty() {
             when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
-            when(analysisResultSpecification.averageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
             assertAll(
                     () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
-                    () -> assertEquals(BigDecimal.TEN, actual.getAverageCorporateValue().orElse(null)),
-                    () -> assertNull(actual.getStandardDeviation().orElse(null)),
-                    () -> assertNull(actual.getCoefficientOfVariation().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.Year.ALL, actual.getAverageInfoList().get(3).getYear()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(3).getAverageCorporateValue().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(3).getStandardDeviation().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(3).getCoefficientOfVariation().orElse(null))
+                    ),
                     () -> assertNull(actual.getCountYear().orElse(null))
             );
         }
 
         @DisplayName("calculateCorporateValue : 変動係数が存在しないとき")
-        @Test
-        void coefficientOfVariation_isEmpty() {
+        @ParameterizedTest
+        @CsvSource({"0,3", "1,5", "2,10"})
+        void coefficientOfVariation_year_isEmpty(int index, int year) {
             when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
-            when(analysisResultSpecification.averageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
             assertAll(
                     () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
-                    () -> assertEquals(BigDecimal.TEN, actual.getAverageCorporateValue().orElse(null)),
-                    () -> assertEquals(BigDecimal.TEN, actual.getStandardDeviation().orElse(null)),
-                    () -> assertNull(actual.getCoefficientOfVariation().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.yearFromValue(year), actual.getAverageInfoList().get(index).getYear()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(index).getAverageCorporateValue().orElse(null)),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(index).getStandardDeviation().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(index).getCoefficientOfVariation().orElse(null))
+                    ),
+                    () -> assertNull(actual.getCountYear().orElse(null))
+            );
+        }
+
+        @DisplayName("calculateCorporateValue : 変動係数が存在しないとき")
+        @Test
+        void coefficientOfVariation_allYear_isEmpty() {
+            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.empty());
+            var actual = analyzeInteractor.calculateCorporateValue(company);
+
+            assertAll(
+                    () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.Year.ALL, actual.getAverageInfoList().get(3).getYear()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(3).getAverageCorporateValue().orElse(null)),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(3).getStandardDeviation().orElse(null)),
+                            () -> assertNull(actual.getAverageInfoList().get(3).getCoefficientOfVariation().orElse(null))
+                    ),
                     () -> assertNull(actual.getCountYear().orElse(null))
             );
         }
 
         @DisplayName("calculateCorporateValue : すべて存在する")
-        @Test
-        void present() {
+        @ParameterizedTest
+        @CsvSource({"0,3", "1,5", "2,10"})
+        void present_year(int index, int year) {
             when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
-            when(analysisResultSpecification.averageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.countYear(company)).thenReturn(BigDecimal.ONE);
@@ -185,9 +260,34 @@ class AnalyzeInteractorTest {
 
             assertAll(
                     () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
-                    () -> assertEquals(BigDecimal.TEN, actual.getAverageCorporateValue().orElse(null)),
-                    () -> assertEquals(BigDecimal.TEN, actual.getStandardDeviation().orElse(null)),
-                    () -> assertEquals(BigDecimal.TEN, actual.getCoefficientOfVariation().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.yearFromValue(year), actual.getAverageInfoList().get(index).getYear()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(index).getAverageCorporateValue().orElse(null)),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(index).getStandardDeviation().orElse(null)),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(index).getCoefficientOfVariation().orElse(null))
+                    ),
+                    () -> assertEquals(BigDecimal.ONE, actual.getCountYear().orElse(null))
+            );
+        }
+
+        @DisplayName("calculateCorporateValue : すべて存在する")
+        @Test
+        void present_allYear() {
+            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.countYear(company)).thenReturn(BigDecimal.ONE);
+            var actual = analyzeInteractor.calculateCorporateValue(company);
+
+            assertAll(
+                    () -> assertEquals(BigDecimal.TEN, actual.getLatestCorporateValue().orElse(null)),
+                    () -> assertAll(
+                            () -> assertEquals(AverageInfo.Year.ALL, actual.getAverageInfoList().get(3).getYear()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(3).getAverageCorporateValue().orElse(null)),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(3).getStandardDeviation().orElse(null)),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAverageInfoList().get(3).getCoefficientOfVariation().orElse(null))
+                    ),
                     () -> assertEquals(BigDecimal.ONE, actual.getCountYear().orElse(null))
             );
         }

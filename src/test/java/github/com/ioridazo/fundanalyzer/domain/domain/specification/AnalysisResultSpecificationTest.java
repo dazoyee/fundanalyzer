@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class AnalysisResultSpecificationTest {
 
     private static final List<String> targetTypeCodes = List.of("120", "130");
@@ -114,7 +115,9 @@ class AnalysisResultSpecificationTest {
     }
 
     @Nested
-    class averageCorporateValue {
+    class yearAverageCorporateValue {
+
+        private final Integer THREE = 3;
 
         Company company = new Company(
                 null,
@@ -128,27 +131,42 @@ class AnalysisResultSpecificationTest {
                 null
         );
 
-        @DisplayName("averageCorporateValue : 平均の企業価値を取得する")
+        @DisplayName("yearAverageCorporateValue : 平均の企業価値を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
+            var analysisResult3 = new AnalysisResultEntity(3, "code", LocalDate.parse("2018-06-30"), BigDecimal.valueOf(1400), "120", "4", null, null, null);
+            var analysisResult4 = new AnalysisResultEntity(4, "code", LocalDate.parse("2017-06-30"), BigDecimal.valueOf(10000), "120", "4", null, null, null);
+            doReturn(List.of(analysisResult1, analysisResult2, analysisResult3, analysisResult4))
+                    .when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
-            var actual = analysisResultSpecification.averageCorporateValue(company);
+            var actual = analysisResultSpecification.yearAverageCorporateValue(company, THREE);
             assertEquals(BigDecimal.valueOf(100000, 2), actual.orElseThrow());
         }
 
-        @DisplayName("averageCorporateValue : 企業価値がないときは空で返却する")
+        @DisplayName("yearAverageCorporateValue : 企業価値がないときは空で返却する")
         @Test
         void empty() {
             doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
-            var actual = analysisResultSpecification.averageCorporateValue(company);
+            var actual = analysisResultSpecification.yearAverageCorporateValue(company, THREE);
             assertNull(actual.orElse(null));
         }
 
-        @DisplayName("averageCorporateValue : 小数点以下表示を確認する")
+        @DisplayName("yearAverageCorporateValue : 企業価値がないときは空で返却する")
+        @Test
+        void not_enough() {
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
+            doReturn(List.of(analysisResult1, analysisResult2))
+                    .when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
+
+            var actual = analysisResultSpecification.yearAverageCorporateValue(company, THREE);
+            assertNull(actual.orElse(null));
+        }
+
+        @DisplayName("yearAverageCorporateValue : 小数点以下表示を確認する")
         @Test
         void scale() {
             var analysisResult1 = new AnalysisResultEntity(
@@ -164,7 +182,63 @@ class AnalysisResultSpecificationTest {
             );
             doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
 
-            var actual = analysisResultSpecification.averageCorporateValue(company);
+            var actual = analysisResultSpecification.yearAverageCorporateValue(company, 1);
+            assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
+        }
+    }
+
+    @Nested
+    class allYearAverageCorporateValue {
+
+        Company company = new Company(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        @DisplayName("allYearAverageCorporateValue : 平均の企業価値を取得する")
+        @Test
+        void present() {
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), "120", "4", null, null, null);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
+
+            var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
+            assertEquals(BigDecimal.valueOf(100000, 2), actual.orElseThrow());
+        }
+
+        @DisplayName("allYearAverageCorporateValue : 企業価値がないときは空で返却する")
+        @Test
+        void empty() {
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
+
+            var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
+            assertNull(actual.orElse(null));
+        }
+
+        @DisplayName("allYearAverageCorporateValue : 小数点以下表示を確認する")
+        @Test
+        void scale() {
+            var analysisResult1 = new AnalysisResultEntity(
+                    1,
+                    "code",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(500.250515),
+                    DocumentTypeCode.DTC_120.toValue(),
+                    QuarterType.QT_4.toValue(),
+                    LocalDate.parse("2020-09-30"),
+                    null,
+                    null
+            );
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList(company, targetTypeCodes);
+
+            var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
             assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
         }
     }

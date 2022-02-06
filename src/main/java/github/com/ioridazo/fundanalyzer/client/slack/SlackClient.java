@@ -6,11 +6,13 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -29,20 +31,23 @@ public class SlackClient {
     private static final Logger log = LogManager.getLogger(SlackClient.class);
 
     private final RestTemplate restTemplate;
+    private final RetryTemplate retryTemplate;
     private final String baseUri;
     private final Environment environment;
-    @Value("${app.api.slack.parameter.t}")
+    @Value("${app.config.slack.parameter.t}")
     String parameterT;
-    @Value("${app.api.slack.parameter.b}")
+    @Value("${app.config.slack.parameter.b}")
     String parameterB;
-    @Value("${app.api.slack.parameter.x}")
+    @Value("${app.config.slack.parameter.x}")
     String parameterX;
 
     public SlackClient(
-            final RestTemplate restTemplate,
-            @Value("${app.api.slack.base-uri}") final String baseUri,
+            @Qualifier("slack-rest") final RestTemplate restTemplate,
+            @Qualifier("slack-retry") final RetryTemplate retryTemplate,
+            @Value("${app.config.rest-template.slack.base-uri}") final String baseUri,
             final Environment environment) {
         this.restTemplate = restTemplate;
+        this.retryTemplate = retryTemplate;
         this.baseUri = baseUri;
         this.environment = environment;
     }
@@ -78,12 +83,12 @@ public class SlackClient {
                 .path("services/{t}/{b}/{x}")
                 .buildAndExpand(Map.of("t", parameterT, "b", parameterB, "x", parameterX)).toUri();
         try {
-            restTemplate.exchange(
+            retryTemplate.execute(retryContext -> restTemplate.exchange(
                     RequestEntity.post(url)
                             .contentType(MediaType.APPLICATION_JSON)
                             .body("{\"text\": \"" + message + "\"}"),
                     String.class
-            );
+            ));
 
             log.info(FundanalyzerLogClient.toClientLogObject(
                     "Slack通知完了. ",

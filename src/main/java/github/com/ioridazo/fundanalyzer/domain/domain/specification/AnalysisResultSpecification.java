@@ -124,12 +124,39 @@ public class AnalysisResultSpecification {
     }
 
     /**
-     * 平均の企業価値を取得する
+     * 指定年数平均の企業価値を取得する
+     *
+     * @param company 企業情報
+     * @param year    指定年数
+     * @return 平均の企業価値
+     */
+    public Optional<BigDecimal> yearAverageCorporateValue(final Company company, final Integer year) {
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company, targetTypeCodes);
+        if (targetList.isEmpty() || targetList.size() < year) {
+            return Optional.empty();
+        } else {
+
+            return Optional.of(targetList.stream()
+                    // sort
+                    .sorted(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod).reversed())
+                    .collect(Collectors.toList())
+                    // filter
+                    .subList(0, year).stream()
+                    .map(AnalysisResultEntity::getCorporateValue)
+                    // sum
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    // average
+                    .divide(BigDecimal.valueOf(year), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
+        }
+    }
+
+    /**
+     * 全年平均の企業価値を取得する
      *
      * @param company 企業情報
      * @return 平均の企業価値
      */
-    public Optional<BigDecimal> averageCorporateValue(final Company company) {
+    public Optional<BigDecimal> allYearAverageCorporateValue(final Company company) {
         final List<AnalysisResultEntity> targetList = analysisTargetList(company, targetTypeCodes);
         if (targetList.isEmpty()) {
             return Optional.empty();

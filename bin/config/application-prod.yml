@@ -5,19 +5,39 @@ logging.level: info
 app:
   config:
     rest-template:
-      connect-timeout: 15000
-      read-timeout: 300000
+      edinet:
+        base-uri: https://disclosure.edinet-fsa.go.jp
+        connect-timeout: 5s
+        read-timeout: 60s
+        max-attempts: 3
+        back-off: 10s
+      selenium:
+        base-uri: http://localhost:9001
+        connect-timeout: 5s
+        read-timeout: 120s
+        max-attempts: 3
+        back-off: 60s
+      slack:
+        base-uri: https://hooks.slack.com
+        connect-timeout: 5s
+        read-timeout: 30s
+        max-attempts: 3
+        back-off: 5s
+
     executor:
       core-pool-size: 50
       queue-capacity: 50
       max-pool-size: 500
+
     view:
       discount-rate: 170  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.6  # 以下を表示
+
     scraping:
       no-company: E31748
       # 日本郵政株式会社
+
     remove-document:
       company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840
       # マネックスグループ株式会社,株式会社クレディセゾン,株式会社日立製作所,ポート株式会社,プレミアグループ株式会社,株式会社荏原製作所

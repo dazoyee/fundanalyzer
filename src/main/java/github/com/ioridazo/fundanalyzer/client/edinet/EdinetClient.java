@@ -10,11 +10,13 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
@@ -39,12 +41,15 @@ public class EdinetClient {
     private static final Logger log = LogManager.getLogger(EdinetClient.class);
 
     private final RestTemplate restTemplate;
+    private final RetryTemplate retryTemplate;
     private final String baseUri;
 
     public EdinetClient(
-            final RestTemplate restTemplate,
-            @Value("${app.api.edinet}") final String baseUri) {
+            @Qualifier("edinet-rest") final RestTemplate restTemplate,
+            @Qualifier("edinet-retry") final RetryTemplate retryTemplate,
+            @Value("${app.config.rest-template.edinet.base-uri}") final String baseUri) {
         this.restTemplate = restTemplate;
+        this.retryTemplate = retryTemplate;
         this.baseUri = baseUri;
     }
 
@@ -59,38 +64,72 @@ public class EdinetClient {
     @NewSpan
     public EdinetResponse list(final ListRequestParameter parameter) throws FundanalyzerRestClientException {
         try {
-            String message;
             if (ListType.DEFAULT.equals(parameter.getType())) {
-                message = MessageFormat.format("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate());
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        MessageFormat.format("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate()),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
             } else {
-                message = MessageFormat.format("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate());
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        MessageFormat.format("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate()),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
             }
-            log.info(FundanalyzerLogClient.toClientLogObject(
-                    message,
-                    Category.DOCUMENT,
-                    Process.EDINET
-            ));
 
-            final EdinetResponse edinetResponse = restTemplate.getForObject(
-                    baseUri + "/api/v1/documents.json?date={date}&type={type}",
-                    EdinetResponse.class,
-                    Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
-            );
+
+            final EdinetResponse edinetResponse = retryTemplate.execute(context -> {
+                if (context.getRetryCount() > 0) {
+                    if (ListType.DEFAULT.equals(parameter.getType())) {
+                        log.info(FundanalyzerLogClient.toClientLogObject(
+                                MessageFormat.format(
+                                        "通信できなかったため、{0}回目の書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{1}",
+                                        context.getRetryCount() + 1,
+                                        parameter.getDate()
+                                ),
+                                Category.DOCUMENT,
+                                Process.EDINET
+                        ));
+                    } else {
+                        log.info(FundanalyzerLogClient.toClientLogObject(
+                                MessageFormat.format(
+                                        "通信できなかったため、{0}回目の書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{1}",
+                                        context.getRetryCount() + 1,
+                                        parameter.getDate()
+                                ),
+                                Category.DOCUMENT,
+                                Process.EDINET
+                        ));
+                    }
+                }
+
+                return restTemplate.getForObject(
+                        baseUri + "/api/v1/documents.json?date={date}&type={type}",
+                        EdinetResponse.class,
+                        Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
+                );
+            });
 
             if (ListType.DEFAULT.equals(parameter.getType())) {
-                message = MessageFormat.format("書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
-                        parameter.getDate(),
-                        Optional.ofNullable(edinetResponse)
-                                .map(er -> er.getMetadata().getResultset().getCount())
-                                .orElse("0"));
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        MessageFormat.format(
+                                "書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
+                                parameter.getDate(),
+                                Optional.ofNullable(edinetResponse)
+                                        .map(er -> er.getMetadata().getResultset().getCount())
+                                        .orElse("0")
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
             } else {
-                message = "書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。";
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        "書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。",
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
             }
-            log.info(FundanalyzerLogClient.toClientLogObject(
-                    message,
-                    Category.DOCUMENT,
-                    Process.EDINET
-            ));
 
             return edinetResponse;
         } catch (final RestClientResponseException e) {
@@ -139,22 +178,37 @@ public class EdinetClient {
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
         try {
-            log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
-                    parameter.getDocId(),
-                    Category.DOCUMENT,
-                    Process.DOWNLOAD
-            ));
+            retryTemplate.execute(retryContext -> {
+                if (retryContext.getRetryCount() == 0) {
+                    log.info(FundanalyzerLogClient.toClientLogObject(
+                            MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
+                            parameter.getDocId(),
+                            Category.DOCUMENT,
+                            Process.DOWNLOAD
+                    ));
+                } else {
+                    log.info(FundanalyzerLogClient.toClientLogObject(
+                            MessageFormat.format(
+                                    "通信できなかったため、{0}回目の書類のダウンロード処理を実行します。\t書類管理番号:{1}",
+                                    retryContext.getRetryCount(),
+                                    parameter.getDocId()
+                            ),
+                            parameter.getDocId(),
+                            Category.DOCUMENT,
+                            Process.DOWNLOAD
+                    ));
+                }
 
-            restTemplate.execute(
-                    baseUri + "/api/v1/documents/{docId}?type={type}",
-                    HttpMethod.GET,
-                    request -> request
-                            .getHeaders()
-                            .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
-                    response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
-                    Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
-            );
+                return restTemplate.execute(
+                        baseUri + "/api/v1/documents/{docId}?type={type}",
+                        HttpMethod.GET,
+                        request -> request
+                                .getHeaders()
+                                .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
+                        response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
+                        Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
+                );
+            });
 
             log.info(FundanalyzerLogClient.toClientLogObject(
                     MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.getDocId()),

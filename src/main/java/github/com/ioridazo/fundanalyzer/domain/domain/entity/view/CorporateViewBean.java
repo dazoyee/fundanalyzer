@@ -34,14 +34,41 @@ public class CorporateViewBean {
     // 最新企業価値
     private final BigDecimal latestCorporateValue;
 
-    // 平均企業価値
-    private final BigDecimal averageCorporateValue;
+    // 3年平均企業価値
+    private final BigDecimal threeAverageCorporateValue;
 
-    // 標準偏差
-    private final BigDecimal standardDeviation;
+    // 3年標準偏差
+    private final BigDecimal threeStandardDeviation;
 
-    // 変動係数
-    private final BigDecimal coefficientOfVariation;
+    // 3年変動係数
+    private final BigDecimal threeCoefficientOfVariation;
+
+    // 5年平均企業価値
+    private final BigDecimal fiveAverageCorporateValue;
+
+    // 5年標準偏差
+    private final BigDecimal fiveStandardDeviation;
+
+    // 5年変動係数
+    private final BigDecimal fiveCoefficientOfVariation;
+
+    // 10年平均企業価値
+    private final BigDecimal tenAverageCorporateValue;
+
+    // 10年標準偏差
+    private final BigDecimal tenStandardDeviation;
+
+    // 10年変動係数
+    private final BigDecimal tenCoefficientOfVariation;
+
+    // 全て平均企業価値
+    private final BigDecimal allAverageCorporateValue;
+
+    // 全て標準偏差
+    private final BigDecimal allStandardDeviation;
+
+    // 全て変動係数
+    private final BigDecimal allCoefficientOfVariation;
 
     // 提出日株価平均
     private final BigDecimal averageStockPrice;
@@ -52,11 +79,29 @@ public class CorporateViewBean {
     // 最新株価
     private final BigDecimal latestStockPrice;
 
-    // 割安値
-    private final BigDecimal discountValue;
+    // 3年割安値
+    private final BigDecimal threeDiscountValue;
 
-    // 割安度
-    private final BigDecimal discountRate;
+    // 3年割安度
+    private final BigDecimal threeDiscountRate;
+
+    // 5年割安値
+    private final BigDecimal fiveDiscountValue;
+
+    // 5年割安度
+    private final BigDecimal fiveDiscountRate;
+
+    // 10年割安値
+    private final BigDecimal tenDiscountValue;
+
+    // 10年割安度
+    private final BigDecimal tenDiscountRate;
+
+    // 全割安値
+    private final BigDecimal allDiscountValue;
+
+    // 全割安度
+    private final BigDecimal allDiscountRate;
 
     // 対象年カウント
     private final BigDecimal countYear;
@@ -76,14 +121,29 @@ public class CorporateViewBean {
                 viewModel.getSubmitDate(),
                 viewModel.getLatestDocumentTypeCode(),
                 viewModel.getLatestCorporateValue(),
-                viewModel.getAverageCorporateValue(),
-                viewModel.getStandardDeviation(),
-                viewModel.getCoefficientOfVariation(),
+                viewModel.getThreeAverageCorporateValue(),
+                viewModel.getThreeStandardDeviation(),
+                viewModel.getThreeCoefficientOfVariation(),
+                viewModel.getFiveAverageCorporateValue(),
+                viewModel.getFiveStandardDeviation(),
+                viewModel.getFiveCoefficientOfVariation(),
+                viewModel.getTenAverageCorporateValue(),
+                viewModel.getTenStandardDeviation(),
+                viewModel.getTenCoefficientOfVariation(),
+                viewModel.getAllAverageCorporateValue(),
+                viewModel.getAllStandardDeviation(),
+                viewModel.getAllCoefficientOfVariation(),
                 viewModel.getAverageStockPrice(),
                 viewModel.getImportDate(),
                 viewModel.getLatestStockPrice(),
-                viewModel.getDiscountValue(),
-                viewModel.getDiscountRate(),
+                viewModel.getThreeDiscountValue(),
+                viewModel.getThreeDiscountRate(),
+                viewModel.getFiveDiscountValue(),
+                viewModel.getFiveDiscountRate(),
+                viewModel.getTenDiscountValue(),
+                viewModel.getTenDiscountRate(),
+                viewModel.getAllDiscountValue(),
+                viewModel.getAllDiscountRate(),
                 viewModel.getCountYear(),
                 viewModel.getForecastStock(),
                 nowLocalDateTime,
@@ -103,16 +163,52 @@ public class CorporateViewBean {
         return Optional.ofNullable(latestCorporateValue);
     }
 
-    public Optional<BigDecimal> getAverageCorporateValue() {
-        return Optional.ofNullable(averageCorporateValue);
+    public Optional<BigDecimal> getThreeAverageCorporateValue() {
+        return Optional.ofNullable(threeAverageCorporateValue);
     }
 
-    public Optional<BigDecimal> getStandardDeviation() {
-        return Optional.ofNullable(standardDeviation);
+    public Optional<BigDecimal> getThreeStandardDeviation() {
+        return Optional.ofNullable(threeStandardDeviation);
     }
 
-    public Optional<BigDecimal> getCoefficientOfVariation() {
-        return Optional.ofNullable(coefficientOfVariation);
+    public Optional<BigDecimal> getThreeCoefficientOfVariation() {
+        return Optional.ofNullable(threeCoefficientOfVariation);
+    }
+
+    public Optional<BigDecimal> getFiveAverageCorporateValue() {
+        return Optional.ofNullable(fiveAverageCorporateValue);
+    }
+
+    public Optional<BigDecimal> getFiveStandardDeviation() {
+        return Optional.ofNullable(fiveStandardDeviation);
+    }
+
+    public Optional<BigDecimal> getFiveCoefficientOfVariation() {
+        return Optional.ofNullable(fiveCoefficientOfVariation);
+    }
+
+    public Optional<BigDecimal> getTenAverageCorporateValue() {
+        return Optional.ofNullable(tenAverageCorporateValue);
+    }
+
+    public Optional<BigDecimal> getTenStandardDeviation() {
+        return Optional.ofNullable(tenStandardDeviation);
+    }
+
+    public Optional<BigDecimal> getTenCoefficientOfVariation() {
+        return Optional.ofNullable(tenCoefficientOfVariation);
+    }
+
+    public Optional<BigDecimal> getAllAverageCorporateValue() {
+        return Optional.ofNullable(allAverageCorporateValue);
+    }
+
+    public Optional<BigDecimal> getAllStandardDeviation() {
+        return Optional.ofNullable(allStandardDeviation);
+    }
+
+    public Optional<BigDecimal> getAllCoefficientOfVariation() {
+        return Optional.ofNullable(allCoefficientOfVariation);
     }
 
     public Optional<BigDecimal> getAverageStockPrice() {
@@ -127,12 +223,36 @@ public class CorporateViewBean {
         return Optional.ofNullable(latestStockPrice);
     }
 
-    public Optional<BigDecimal> getDiscountValue() {
-        return Optional.ofNullable(discountValue);
+    public Optional<BigDecimal> getThreeDiscountValue() {
+        return Optional.ofNullable(threeDiscountValue);
     }
 
-    public Optional<BigDecimal> getDiscountRate() {
-        return Optional.ofNullable(discountRate);
+    public Optional<BigDecimal> getThreeDiscountRate() {
+        return Optional.ofNullable(threeDiscountRate);
+    }
+
+    public Optional<BigDecimal> getFiveDiscountValue() {
+        return Optional.ofNullable(fiveDiscountValue);
+    }
+
+    public Optional<BigDecimal> getFiveDiscountRate() {
+        return Optional.ofNullable(fiveDiscountRate);
+    }
+
+    public Optional<BigDecimal> getTenDiscountValue() {
+        return Optional.ofNullable(tenDiscountValue);
+    }
+
+    public Optional<BigDecimal> getTenDiscountRate() {
+        return Optional.ofNullable(tenDiscountRate);
+    }
+
+    public Optional<BigDecimal> getAllDiscountValue() {
+        return Optional.ofNullable(allDiscountValue);
+    }
+
+    public Optional<BigDecimal> getAllDiscountRate() {
+        return Optional.ofNullable(allDiscountRate);
     }
 
     public Optional<BigDecimal> getCountYear() {
