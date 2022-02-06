@@ -100,29 +100,29 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public List<CorporateViewModel> viewMain() {
         return viewSpecification.findAllCorporateView().stream()
                 // not null
-                .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
-                .filter(cvm -> Objects.nonNull(cvm.getStandardDeviation()))
+                .filter(cvm -> Objects.nonNull(cvm.getAllDiscountRate()))
+                .filter(cvm -> Objects.nonNull(cvm.getAllStandardDeviation()))
                 .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
                 // 表示する提出日は一定期間のみ
                 .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(configCorporateSize)))
                 // 割安度が170%(外部設定値)以上を表示
-                .filter(cvm -> cvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
+                .filter(cvm -> cvm.getAllDiscountRate().compareTo(configDiscountRate) >= 0)
                 // 標準偏差が外れ値となっていたら除外
-                .filter(cvm -> cvm.getStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
+                .filter(cvm -> cvm.getAllStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
                 // 最新企業価値がマイナスの場合は除外
                 .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
                 // 変動係数
                 .filter(cvm -> {
-                    if (Objects.isNull(cvm.getCoefficientOfVariation())) {
+                    if (Objects.isNull(cvm.getAllCoefficientOfVariation())) {
                         // 変動係数が存在しない
                         return true;
                     } else {
                         // 変動係数が0.6未満であること
-                        if (cvm.getCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
+                        if (cvm.getAllCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
                             return true;
                         } else {
                             // 変動係数が0.6以上でも最新企業価値が高ければOK
-                            return cvm.getLatestCorporateValue().compareTo(cvm.getAverageCorporateValue()) > -1;
+                            return cvm.getLatestCorporateValue().compareTo(cvm.getAllAverageCorporateValue()) > -1;
                         }
                     }
                 })
@@ -157,8 +157,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public List<CorporateViewModel> sortByDiscountRate() {
         return viewSpecification.findAllCorporateView().stream()
-                .filter(cvm -> Objects.nonNull(cvm.getDiscountRate()))
-                .sorted(Comparator.comparing(CorporateViewModel::getDiscountRate).reversed())
+                .filter(cvm -> Objects.nonNull(cvm.getAllDiscountRate()))
+                .sorted(Comparator.comparing(CorporateViewModel::getAllDiscountRate).reversed())
                 .collect(Collectors.toList());
     }
 

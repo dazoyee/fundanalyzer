@@ -311,43 +311,250 @@
         </div>
         <div class="card-body">
           <div class="row">
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-danger elevation-1"
+                      th:if="${corporateView.latestCorporateValue > corporateView.allAverageCorporateValue}">
+                  <i class="fas fa-thumbs-up"></i>
+                </span>
+                <span class="info-box-icon bg-primary elevation-1"
+                      th:if="${corporateView.latestCorporateValue <= corporateView.allAverageCorporateValue}">
+                  <i class="fas fa-thumbs-down"></i>
+                </span>
+                <div class="info-box-content">
+                  <span class="info-box-text">最新企業価値</span>
+                  <span class="info-box-number" th:if="${corporateView.latestCorporateValue == null}"> - </span>
+                  <span class="info-box-number" th:if="${corporateView.latestCorporateValue != null}"
+                        th:text="${corporateView.latestCorporateValue}"></span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-danger elevation-1"
+                      th:if="${corporateView.allCoefficientOfVariation > 0.5}">
+                  <i class="fas fa-thumbs-up"></i>
+                </span>
+                <span class="info-box-icon bg-danger elevation-1"
+                      th:if="${corporateView.latestCorporateValue > corporateView.allAverageCorporateValue
+                      && corporateView.allCoefficientOfVariation <= 0.5}">
+                  <i class="fas fa-thumbs-up"></i>
+                </span>
+                <span class="info-box-icon bg-primary elevation-1"
+                      th:if="${corporateView.latestCorporateValue <= corporateView.allAverageCorporateValue
+                      && corporateView.allCoefficientOfVariation <= 0.5}">
+                  <i class="fas fa-thumbs-down"></i>
+                </span>
+                <div class="info-box-content">
+                  <span class="info-box-text">変動係数</span>
+                  <span class="info-box-number" th:if="${corporateView.allCoefficientOfVariation == null}"> - </span>
+                  <span class="info-box-number" th:if="${corporateView.allCoefficientOfVariation != null}"
+                        th:text="${corporateView.allCoefficientOfVariation}"></span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-danger elevation-1"
+                      th:if="${corporateView.latestCorporateValue > corporateView.averageStockPrice}">
+                  <i class="fas fa-thumbs-up"></i>
+                </span>
+                <span class="info-box-icon bg-primary elevation-1"
+                      th:if="${corporateView.latestCorporateValue <= corporateView.averageStockPrice}">
+                  <i class="fas fa-thumbs-down"></i>
+                </span>
+                <div class="info-box-content">
+                  <span class="info-box-text">提出日株価平均</span>
+                  <span class="info-box-number" th:if="${corporateView.averageStockPrice == null}"> - </span>
+                  <span class="info-box-number" th:if="${corporateView.averageStockPrice != null}"
+                        th:text="${corporateView.averageStockPrice}"></span>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-danger elevation-1"
+                      th:if="${corporateView.allDiscountRate > 100}">
+                  <i class="fas fa-thumbs-up"></i>
+                </span>
+                <span class="info-box-icon bg-primary elevation-1"
+                      th:if="${corporateView.allDiscountRate <= 100}">
+                  <i class="fas fa-thumbs-down"></i>
+                </span>
+                <div class="info-box-content">
+                  <span class="info-box-text">割安比率</span>
+                  <span class="info-box-number" th:if="${corporateView.allDiscountRate == null}"> - </span>
+                  <span class="info-box-number" th:if="${corporateView.allDiscountRate != null}"
+                        th:text="${corporateView.allDiscountRate}"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
             <div class="col-3">
               <dl class="row">
                 <dt class="col-sm-4">提出日</dt>
-                <dd class="col-sm-8" th:text="${corporateView.submitDate}">提出日</dd>
+                <dd class="col-sm-8" th:if="${corporateView.submitDate == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.submitDate != null}"
+                    th:text="${corporateView.submitDate}">提出日
+                </dd>
                 <dt class="col-sm-4">最新企業価値</dt>
-                <dd class="col-sm-8" th:text="${corporateView.latestCorporateValue}">最新企業価値</dd>
+                <dd class="col-sm-8" th:if="${corporateView.latestCorporateValue == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.latestCorporateValue != null}"
+                    th:text="${corporateView.latestCorporateValue}">最新企業価値
+                </dd>
                 <dt class="col-sm-4">平均企業価値</dt>
-                <dd class="col-sm-8" th:text="${corporateView.averageCorporateValue}">平均企業価値</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allAverageCorporateValue == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allAverageCorporateValue != null}"
+                    th:text="${corporateView.allAverageCorporateValue}">平均企業価値
+                </dd>
               </dl>
             </div>
             <div class="col-3">
               <dl class="row">
                 <dt class="col-sm-4">標準偏差</dt>
-                <dd class="col-sm-8" th:text="${corporateView.standardDeviation}">標準偏差</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allStandardDeviation == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allStandardDeviation != null}"
+                    th:text="${corporateView.allStandardDeviation}">標準偏差
+                </dd>
                 <dt class="col-sm-4">変動係数</dt>
-                <dd class="col-sm-8" th:text="${corporateView.coefficientOfVariation}">変動係数</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allCoefficientOfVariation == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allCoefficientOfVariation != null}"
+                    th:text="${corporateView.allCoefficientOfVariation}">変動係数
+                </dd>
                 <dt class="col-sm-4">対象年数</dt>
-                <dd class="col-sm-8" th:text="${corporateView.countYear}">対象年数</dd>
+                <dd class="col-sm-8" th:if="${corporateView.countYear == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.countYear != null}"
+                    th:text="${corporateView.countYear}">対象年数
+                </dd>
               </dl>
             </div>
             <div class="col-3">
               <dl class="row">
                 <dt class="col-sm-4">提出日株価平均</dt>
-                <dd class="col-sm-8" th:text="${corporateView.averageStockPrice}">提出日株価平均</dd>
+                <dd class="col-sm-8" th:if="${corporateView.averageStockPrice == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.averageStockPrice != null}"
+                    th:text="${corporateView.averageStockPrice}">提出日株価平均
+                </dd>
                 <dt class="col-sm-4">株価取得日</dt>
-                <dd class="col-sm-8" th:text="${corporateView.importDate}">株価取得日</dd>
+                <dd class="col-sm-8" th:if="${corporateView.importDate != null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.importDate == null}"
+                    th:text="${corporateView.importDate}">株価取得日
+                </dd>
                 <dt class="col-sm-4">最新株価</dt>
-                <dd class="col-sm-8" th:text="${corporateView.latestStockPrice}">最新株価</dd>
+                <dd class="col-sm-8" th:if="${corporateView.latestStockPrice == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.latestStockPrice != null}"
+                    th:text="${corporateView.latestStockPrice}">最新株価
+                </dd>
               </dl>
             </div>
             <div class="col-3">
               <dl class="row">
                 <dt class="col-sm-4">割安比率</dt>
-                <dd class="col-sm-8" th:text="${corporateView.discountRate}">割安比率</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allDiscountRate == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.allDiscountRate != null}"
+                    th:text="${corporateView.allDiscountRate}">割安比率
+                </dd>
                 <dt class="col-sm-4">株価予想</dt>
-                <dd class="col-sm-8" th:text="${corporateView.forecastStock}">株価予想</dd>
+                <dd class="col-sm-8" th:if="${corporateView.forecastStock == null}"> -</dd>
+                <dd class="col-sm-8" th:if="${corporateView.forecastStock != null}"
+                    th:text="${corporateView.forecastStock}">株価予想
+                </dd>
               </dl>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-3 col-6">
+              <div class="description-block border-right">
+                <h5 class="description-header">3年平均</h5>
+                <dl class="description-text row">
+                  <dt class="col-sm-4">平均企業価値</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.threeAverageCorporateValue == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.threeAverageCorporateValue != null}"
+                      th:text="${corporateView.threeAverageCorporateValue}"></dd>
+                  <dt class="col-sm-4">標準偏差</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.threeStandardDeviation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.threeStandardDeviation != null}"
+                      th:text="${corporateView.threeStandardDeviation}"></dd>
+                  <dt class="col-sm-4">変動係数</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.threeCoefficientOfVariation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.threeCoefficientOfVariation != null}"
+                      th:text="${corporateView.threeCoefficientOfVariation}"></dd>
+                  <dt class="col-sm-4">割安比率</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.threeDiscountRate == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.threeDiscountRate != null}"
+                      th:text="${corporateView.threeDiscountRate}"></dd>
+                </dl>
+              </div>
+            </div>
+            <div class="col-sm-3 col-6">
+              <div class="description-block border-right">
+                <h5 class="description-header">5年平均</h5>
+                <dl class="description-text row">
+                  <dt class="col-sm-4">平均企業価値</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveAverageCorporateValue == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveAverageCorporateValue != null}"
+                      th:text="${corporateView.fiveAverageCorporateValue}"></dd>
+                  <dt class="col-sm-4">標準偏差</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveStandardDeviation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveStandardDeviation != null}"
+                      th:text="${corporateView.fiveStandardDeviation}"></dd>
+                  <dt class="col-sm-4">変動係数</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveCoefficientOfVariation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveCoefficientOfVariation != null}"
+                      th:text="${corporateView.fiveCoefficientOfVariation}"></dd>
+                  <dt class="col-sm-4">割安比率</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveDiscountRate == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.fiveDiscountRate != null}"
+                      th:text="${corporateView.fiveDiscountRate}"></dd>
+                </dl>
+              </div>
+            </div>
+            <div class="col-sm-3 col-6">
+              <div class="description-block border-right">
+                <h5 class="description-header">10年平均</h5>
+                <dl class="description-text row">
+                  <dt class="col-sm-4">平均企業価値</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.tenAverageCorporateValue == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.tenAverageCorporateValue != null}"
+                      th:text="${corporateView.tenAverageCorporateValue}"></dd>
+                  <dt class="col-sm-4">標準偏差</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.tenStandardDeviation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.tenStandardDeviation != null}"
+                      th:text="${corporateView.tenStandardDeviation}"></dd>
+                  <dt class="col-sm-4">変動係数</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.tenCoefficientOfVariation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.tenCoefficientOfVariation != null}"
+                      th:text="${corporateView.tenCoefficientOfVariation}"></dd>
+                  <dt class="col-sm-4">割安比率</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.tenDiscountRate == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.tenDiscountRate != null}"
+                      th:text="${corporateView.tenDiscountRate}"></dd>
+                </dl>
+              </div>
+            </div>
+            <div class="col-sm-3 col-6">
+              <div class="description-block">
+                <h5 class="description-header">全平均</h5>
+                <dl class="description-text row">
+                  <dt class="col-sm-4">平均企業価値</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.allAverageCorporateValue == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.allAverageCorporateValue != null}"
+                      th:text="${corporateView.allAverageCorporateValue}"></dd>
+                  <dt class="col-sm-4">標準偏差</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.allStandardDeviation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.allStandardDeviation != null}"
+                      th:text="${corporateView.allStandardDeviation}"></dd>
+                  <dt class="col-sm-4">変動係数</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.allCoefficientOfVariation == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.allCoefficientOfVariation != null}"
+                      th:text="${corporateView.allCoefficientOfVariation}"></dd>
+                  <dt class="col-sm-4">割安比率</dt>
+                  <dd class="col-sm-8" th:if="${corporateView.allDiscountRate == null}"> -</dd>
+                  <dd class="col-sm-8" th:if="${corporateView.allDiscountRate != null}"
+                      th:text="${corporateView.allDiscountRate}"></dd>
+                </dl>
+              </div>
             </div>
           </div>
         </div>
