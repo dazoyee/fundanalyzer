@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!--suppress ThymeleafVariablesResolveInspection -->
+<!--suppress HtmlUnknownTarget -->
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -322,7 +324,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="1" name="financialStatementId"/>
                                       <input type="hidden" value="2" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="totalCurrentAssets">
+                                        <input type="number" id="totalCurrentAssets" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
@@ -349,7 +353,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="1" name="financialStatementId"/>
                                       <input type="hidden" value="6" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="totalInvestmentsAndOtherAssets1">
+                                        <input type="number" id="totalInvestmentsAndOtherAssets1" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
@@ -376,7 +382,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="1" name="financialStatementId"/>
                                       <input type="hidden" value="6" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="totalInvestmentsAndOtherAssets2">
+                                        <input type="number" id="totalInvestmentsAndOtherAssets2" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
@@ -403,7 +411,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="1" name="financialStatementId"/>
                                       <input type="hidden" value="11" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="totalCurrentLiabilities">
+                                        <input type="number" id="totalCurrentLiabilities" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
@@ -430,7 +440,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="1" name="financialStatementId"/>
                                       <input type="hidden" value="13" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="totalFixedLiabilities">
+                                        <input type="number" id="totalFixedLiabilities" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
@@ -457,7 +469,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="2" name="financialStatementId"/>
                                       <input type="hidden" value="3" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="operatingProfit">
+                                        <input type="number" id="operatingProfit" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
@@ -484,7 +498,9 @@
                                              name="documentId"/>
                                       <input type="hidden" value="4" name="financialStatementId"/>
                                       <input type="hidden" value="0" name="subjectId"/>
-                                      <input type="number" name="value"/>
+                                      <label for="numberOfShares">
+                                        <input type="number" id="numberOfShares" name="value"/>
+                                      </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>

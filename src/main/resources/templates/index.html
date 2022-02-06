@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!--suppress ThymeleafVariablesResolveInspection -->
+<!--suppress HtmlUnknownTarget -->
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -149,18 +151,16 @@
                 <h3 class="card-title">財務諸表の取得と分析をする</h3>
               </div>
               <div class="card-body">
-                <!-- Date range -->
                 <div class="form-group">
-                  <label>Date range:</label>
-                  <!-- form start -->
                   <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
                     <div class="input-group">
+                      <label for="fromToDate">Date range:</label>
                       <div class="input-group-prepend">
                         <span class="input-group-text">
                           <i class="far fa-calendar-alt"></i>
                         </span>
                       </div>
-                      <input type="text" class="form-control float-left" name="fromToDate" id="reservation">
+                      <input type="text" class="form-control float-left" id="fromToDate" name="fromToDate">
                       <button type="submit" class="btn btn-info">Submit</button>
                     </div>
                   </form>
@@ -179,18 +179,17 @@
                 <h3 class="card-title">書類IDから取得と分析する</h3>
               </div>
               <div class="card-body">
-                <!-- Date range -->
                 <div class="form-group">
-                  <label>Date range:</label>
-                  <!-- form start -->
                   <form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
                     <div class="input-group">
+                      <label for="documentId">Document ID:</label>
                       <div class="input-group-prepend">
                         <span class="input-group-text">
-                          <i class="far fa-calendar-alt"></i>
+                          <i class="far fa-keyboard"></i>
                         </span>
                       </div>
-                      <input type="text" class="form-control float-right" name="documentId" placeholder="書類ID"/>
+                      <input type="text" class="form-control float-right" id="documentId" name="documentId"
+                             placeholder="書類ID"/>
                       <button type="submit" class="btn btn-info">Submit</button>
                     </div>
                   </form>
@@ -222,35 +221,31 @@
                   </thead>
                   <tbody th:each="company : ${companies}">
                   <tr th:if="${company.isMainReport()}" class="table-info">
-                    <td><a th:text="${company.code}"
-                           th:href="'https://minkabu.jp/stock/'+${company.code}"
+                    <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
                            target="_blank">
                       証券コード
                     </a></td>
-                    <td><a th:text="${company.name}"
-                           th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
                       会社名
                     </a></td>
                     <td th:text="${company.submitDate}">提出日</td>
                     <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                    <td th:text="${company.coefficientOfVariation}">変動係数</td>
+                    <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
                     <td th:text="${company.averageStockPrice}">株価平均</td>
-                    <td th:text="${company.discountRate}">割安比率</td>
+                    <td th:text="${company.allDiscountRate}">割安比率</td>
                     <td th:text="${company.countYear}">対象年数</td>
                   </tr>
                   <tr th:unless="${company.isMainReport()}">
-                    <td><a th:text="${company.code}"
-                           th:href="'https://minkabu.jp/stock/'+${company.code}"
+                    <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
                            target="_blank">証券コード</a></td>
-                    <td><a th:text="${company.name}"
-                           th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
                       会社名
                     </a></td>
                     <td th:text="${company.submitDate}">提出日</td>
                     <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                    <td th:text="${company.coefficientOfVariation}">変動係数</td>
+                    <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
                     <td th:text="${company.averageStockPrice}">株価平均</td>
-                    <td th:text="${company.discountRate}">割安比率</td>
+                    <td th:text="${company.allDiscountRate}">割安比率</td>
                     <td th:text="${company.countYear}">対象年数</td>
                   </tr>
                   </tbody>

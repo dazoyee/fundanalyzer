@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -24,7 +25,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -173,14 +176,77 @@ public class ViewSpecification {
                 latestDocument.map(Document::getDocumentTypeCode).stream()
                         .anyMatch(dtc -> List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130).contains(dtc)),
                 corporateValue.getLatestCorporateValue().orElse(null),
-                corporateValue.getAverageCorporateValue().orElse(null),
-                corporateValue.getStandardDeviation().orElse(null),
-                corporateValue.getCoefficientOfVariation().orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))
+                        .findFirst()
+                        .flatMap(AverageInfo::getAverageCorporateValue)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))
+                        .findFirst()
+                        .flatMap(AverageInfo::getStandardDeviation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))
+                        .findFirst()
+                        .flatMap(AverageInfo::getCoefficientOfVariation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.FIVE))
+                        .findFirst()
+                        .flatMap(AverageInfo::getAverageCorporateValue)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.FIVE))
+                        .findFirst()
+                        .flatMap(AverageInfo::getStandardDeviation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.FIVE))
+                        .findFirst()
+                        .flatMap(AverageInfo::getCoefficientOfVariation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.TEN))
+                        .findFirst()
+                        .flatMap(AverageInfo::getAverageCorporateValue)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.TEN))
+                        .findFirst()
+                        .flatMap(AverageInfo::getStandardDeviation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.TEN))
+                        .findFirst()
+                        .flatMap(AverageInfo::getCoefficientOfVariation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.ALL))
+                        .findFirst()
+                        .flatMap(AverageInfo::getAverageCorporateValue)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.ALL))
+                        .findFirst()
+                        .flatMap(AverageInfo::getStandardDeviation)
+                        .orElse(null),
+                corporateValue.getAverageInfoList().stream()
+                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.ALL))
+                        .findFirst()
+                        .flatMap(AverageInfo::getCoefficientOfVariation)
+                        .orElse(null),
                 stock.getAverageStockPrice().orElse(null),
                 stock.getImportDate().orElse(null),
                 stock.getLatestStockPrice().orElse(null),
-                calculateDiscountValue(corporateValue, stock).orElse(null),
-                calculateDiscountRate(corporateValue, stock).orElse(null),
+                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.THREE, Optional.empty()).orElse(null),
+                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.THREE, Optional.empty()).orElse(null),
+                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.FIVE, Optional.empty()).orElse(null),
+                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.FIVE, Optional.empty()).orElse(null),
+                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.TEN, Optional.empty()).orElse(null),
+                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.TEN, Optional.empty()).orElse(null),
+                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.ALL, Optional.empty()).orElse(null),
+                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.ALL, Optional.empty()).orElse(null),
                 corporateValue.getCountYear().orElse(null),
                 stock.getLatestForecastStock().orElse(null)
         );
@@ -228,14 +294,27 @@ public class ViewSpecification {
      * @param stock          株価情報
      * @return 割安値
      */
-    private Optional<BigDecimal> calculateDiscountValue(final CorporateValue corporateValue, final Stock stock) {
-        if (corporateValue.getAverageCorporateValue().isEmpty() || stock.getLatestStockPrice().isEmpty()) {
-            return Optional.empty();
-        }
+    private Map<AverageInfo.Year, Optional<BigDecimal>> calculateDiscountValue(
+            final CorporateValue corporateValue, final Stock stock) {
+        final Map<AverageInfo.Year, Optional<BigDecimal>> discountValue = new EnumMap<>(AverageInfo.Year.class);
 
-        return Optional.of(corporateValue.getAverageCorporateValue().orElseThrow()
-                .subtract(stock.getLatestStockPrice().orElseThrow())
-                .abs(new MathContext(DIGIT_NUMBER_OF_DISCOUNT_VALUE)));
+        corporateValue.getAverageInfoList().forEach(averageInfo -> {
+            if (averageInfo.getAverageCorporateValue().isEmpty() || stock.getLatestStockPrice().isEmpty()) {
+                // empty
+                discountValue.put(averageInfo.getYear(), Optional.empty());
+            } else {
+                // present
+                discountValue.put(
+                        averageInfo.getYear(),
+                        averageInfo.getAverageCorporateValue()
+                                .map(ave -> ave
+                                        .subtract(stock.getLatestStockPrice().orElseThrow())
+                                        .abs(new MathContext(DIGIT_NUMBER_OF_DISCOUNT_VALUE)))
+                );
+            }
+        });
+
+        return discountValue;
     }
 
     /**
@@ -245,14 +324,27 @@ public class ViewSpecification {
      * @param stock          株価情報
      * @return 割安度
      */
-    private Optional<BigDecimal> calculateDiscountRate(final CorporateValue corporateValue, final Stock stock) {
-        if (corporateValue.getAverageCorporateValue().isEmpty() || stock.getLatestStockPrice().isEmpty()) {
-            return Optional.empty();
-        }
+    private Map<AverageInfo.Year, Optional<BigDecimal>> calculateDiscountRate(
+            final CorporateValue corporateValue, final Stock stock) {
+        final Map<AverageInfo.Year, Optional<BigDecimal>> discountValue = new EnumMap<>(AverageInfo.Year.class);
 
-        return Optional.of(corporateValue.getAverageCorporateValue().orElseThrow()
-                .divide(stock.getLatestStockPrice().orElseThrow(), FIFTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
-                .multiply(ONE_HUNDRED).setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP));
+        corporateValue.getAverageInfoList().forEach(averageInfo -> {
+            if (averageInfo.getAverageCorporateValue().isEmpty() || stock.getLatestStockPrice().isEmpty()) {
+                // empty
+                discountValue.put(averageInfo.getYear(), Optional.empty());
+            } else {
+                // present
+                discountValue.put(
+                        averageInfo.getYear(),
+                        averageInfo.getAverageCorporateValue()
+                                .map(ave -> ave
+                                        .divide(stock.getLatestStockPrice().orElseThrow(), FIFTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
+                                        .multiply(ONE_HUNDRED).setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP))
+                );
+            }
+        });
+
+        return discountValue;
     }
 
     /**

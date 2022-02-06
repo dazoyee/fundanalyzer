@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -149,27 +151,45 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         } else {
             corporateValue.setLatestCorporateValue(latestCorporateValue.get());
         }
+
         // 平均企業価値
-        final Optional<BigDecimal> averageCorporateValue = analysisResultSpecification.averageCorporateValue(company);
-        if (averageCorporateValue.isEmpty()) {
-            return corporateValue;
-        } else {
-            corporateValue.setAverageCorporateValue(averageCorporateValue.get());
-        }
-        // 標準偏差
-        final Optional<BigDecimal> standardDeviation = analysisResultSpecification.standardDeviation(company, averageCorporateValue.get());
-        if (standardDeviation.isEmpty()) {
-            return corporateValue;
-        } else {
-            corporateValue.setStandardDeviation(standardDeviation.get());
-        }
-        // 変動係数
-        final Optional<BigDecimal> coefficientOfVariation = analysisResultSpecification.coefficientOfVariation(standardDeviation.get(), averageCorporateValue.get());
-        if (coefficientOfVariation.isEmpty()) {
-            return corporateValue;
-        } else {
-            corporateValue.setCoefficientOfVariation(coefficientOfVariation.get());
-        }
+        final List<AverageInfo> averageInfoList = new ArrayList<>();
+        List.of(
+                AverageInfo.Year.THREE,
+                AverageInfo.Year.FIVE,
+                AverageInfo.Year.TEN,
+                AverageInfo.Year.ALL
+        ).forEach(year -> {
+            final AverageInfo averageInfo = new AverageInfo();
+            averageInfo.setYear(year);
+
+            Optional.of(year)
+                    .flatMap(y -> {
+                        // 平均企業価値
+                        if (AverageInfo.Year.ALL.equals(year)) {
+                            return analysisResultSpecification.allYearAverageCorporateValue(company);
+                        } else {
+                            return analysisResultSpecification.yearAverageCorporateValue(company, AverageInfo.parseYear(y));
+                        }
+                    }).ifPresent(ave -> {
+                        averageInfo.setAverageCorporateValue(ave);
+
+                        // 標準偏差
+                        final Optional<BigDecimal> sd = analysisResultSpecification.standardDeviation(company, ave);
+                        if (sd.isPresent()) {
+                            averageInfo.setStandardDeviation(sd.get());
+
+                            // 変動係数
+                            analysisResultSpecification.coefficientOfVariation(sd.get(), ave)
+                                    .ifPresent(averageInfo::setCoefficientOfVariation);
+                        }
+                    });
+
+            averageInfoList.add(averageInfo);
+        });
+
+        corporateValue.setAverageInfoList(averageInfoList);
+
         // 対象年カウント
         final BigDecimal countYear = analysisResultSpecification.countYear(company);
         corporateValue.setCountYear(countYear);
