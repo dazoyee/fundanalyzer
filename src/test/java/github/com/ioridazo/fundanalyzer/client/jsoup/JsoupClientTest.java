@@ -1,15 +1,21 @@
-package github.com.ioridazo.fundanalyzer.domain.domain.jsoup;
+package github.com.ioridazo.fundanalyzer.client.jsoup;
 
+import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import okhttp3.mockwebserver.MockWebServer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -20,13 +26,32 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-class StockScrapingTest {
+@SuppressWarnings("NewClassNamingConvention")
+class JsoupClientTest {
 
-    private StockScraping stockScraping;
+    private static MockWebServer server;
+    private JsoupClient client;
 
     @BeforeEach
-    void setUp() {
-        stockScraping = spy(new StockScraping());
+    void setUp() throws IOException {
+        server = new MockWebServer();
+        server.start();
+
+        client = spy(new JsoupClient(
+                new AppConfig().retryTemplateJsoup(2, Duration.ofMillis(1)),
+                new CircuitBreakerRegistry.Builder().build(),
+                String.format("http://localhost:%s", server.getPort()),
+                String.format("http://localhost:%s", server.getPort()),
+                String.format("http://localhost:%s", server.getPort())
+        ));
+
+        Mockito.clearInvocations(client);
+        Mockito.reset(client);
+    }
+
+    @AfterEach
+    void after() throws IOException {
+        server.shutdown();
     }
 
     private Document jsoupParser(final File file) throws IOException {
@@ -41,7 +66,7 @@ class StockScrapingTest {
         void nikkei_test() {
             var code = "9434";
 
-            var actual = assertDoesNotThrow(() -> stockScraping.nikkei(code));
+            var actual = assertDoesNotThrow(() -> client.nikkei(code));
 
             assertAll("NikkeiResultBean",
                     () -> assertNotNull(actual.getStockPrice()),
@@ -67,11 +92,11 @@ class StockScrapingTest {
         void nikkei_ok() throws IOException {
             var code = "9999";
 
-            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/nikkei/nikkei.html");
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/nikkei/nikkei.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
+            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
 
-            var actual = stockScraping.nikkei(code);
+            var actual = client.nikkei(code);
 
             assertAll("NikkeiResultBean",
                     () -> assertEquals("1,047 円", actual.getStockPrice()),
@@ -94,7 +119,7 @@ class StockScrapingTest {
         @Test
         void nikkei_null() {
             var code = "9999";
-            var actual = stockScraping.nikkei(code);
+            var actual = client.nikkei(code);
 
             assertAll("NikkeiResultBean",
                     () -> assertNull(actual.getStockPrice()),
@@ -122,7 +147,7 @@ class StockScrapingTest {
         void kabuoji3_test() {
             var code = "9434";
 
-            var actual = stockScraping.kabuoji3(code);
+            var actual = client.kabuoji3(code);
 
             assertNotNull(actual);
             assertEquals(300, actual.size());
@@ -135,11 +160,11 @@ class StockScrapingTest {
         void kabuoji3_ok() throws IOException {
             var code = "9999";
 
-            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/kabuoji3/kabuoji3.html");
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/kabuoji3/kabuoji3.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
+            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
 
-            var actual = stockScraping.kabuoji3(code);
+            var actual = client.kabuoji3(code);
 
             assertAll("Kabuoji3ResultBean",
                     () -> assertAll(
@@ -182,7 +207,7 @@ class StockScrapingTest {
         void minkabu_test() {
             var code = "9434";
 
-            var actual = stockScraping.minkabu(code);
+            var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
                     () -> assertNotNull(actual.getStockPrice()),
@@ -201,11 +226,11 @@ class StockScrapingTest {
         void minkabu_ok() throws IOException {
             var code = "9999";
 
-            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/minkabu/minkabu.html");
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabu.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
+            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
 
-            var actual = stockScraping.minkabu(code);
+            var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
                     () -> assertEquals("408. 0 円", actual.getStockPrice()),
@@ -222,11 +247,11 @@ class StockScrapingTest {
         void minkabu_verify() throws IOException {
             var code = "9903";
 
-            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/minkabu/minkabu_9903.html");
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabu_9903.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
+            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
 
-            var actual = stockScraping.minkabu(code);
+            var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
                     () -> assertEquals("3,180. 0 円", actual.getStockPrice()),
@@ -243,11 +268,11 @@ class StockScrapingTest {
         void minkabu_null() throws IOException {
             var code = "9999";
 
-            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/minkabu/minkabu_null.html");
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabu_null.html");
 
-            doReturn(jsoupParser(htmlFile)).when(stockScraping).jsoup(any(), any(), any());
+            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
 
-            var actual = stockScraping.minkabu(code);
+            var actual = client.minkabu(code);
 
 
             assertAll("MinkabuResultBean",

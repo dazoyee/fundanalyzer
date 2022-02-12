@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.MinkabuResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Parser;
 import lombok.Value;
 import org.seasar.doma.Column;

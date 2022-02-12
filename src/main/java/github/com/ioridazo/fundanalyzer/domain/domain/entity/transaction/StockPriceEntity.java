@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Kabuoji3ResultBean;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Parser;
 import lombok.Value;
 import org.seasar.doma.Column;

@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.StockScraping;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Kabuoji3ResultBean;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.MinkabuResultBean;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
@@ -36,7 +36,7 @@ class StockInteractorTest {
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private StockSpecification stockSpecification;
-    private StockScraping stockScraping;
+    private JsoupClient jsoupClient;
 
     private StockInteractor stockInteractor;
 
@@ -45,13 +45,13 @@ class StockInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
-        stockScraping = Mockito.mock(StockScraping.class);
+        jsoupClient = Mockito.mock(JsoupClient.class);
 
         stockInteractor = Mockito.spy(new StockInteractor(
                 companySpecification,
                 documentSpecification,
                 stockSpecification,
-                stockScraping
+                jsoupClient
         ));
     }
 
@@ -90,7 +90,7 @@ class StockInteractorTest {
         @Test
         void exception() {
             CodeInputData inputData = CodeInputData.of("code");
-            when(stockScraping.minkabu("code0")).thenThrow(FundanalyzerScrapingException.class);
+            when(jsoupClient.minkabu("code0")).thenThrow(FundanalyzerScrapingException.class);
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData));
             verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());

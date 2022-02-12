@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.StockScraping;
+import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
@@ -29,17 +29,17 @@ public class StockInteractor implements StockUseCase {
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
     private final StockSpecification stockSpecification;
-    private final StockScraping stockScraping;
+    private final JsoupClient jsoupClient;
 
     public StockInteractor(
             final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
             final StockSpecification stockSpecification,
-            final StockScraping stockScraping) {
+            final JsoupClient jsoupClient) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.stockSpecification = stockSpecification;
-        this.stockScraping = stockScraping;
+        this.jsoupClient = jsoupClient;
     }
 
     /**
@@ -82,13 +82,13 @@ public class StockInteractor implements StockUseCase {
     public void importStockPrice(final CodeInputData inputData) {
         try {
             // 日経
-            stockSpecification.insert(inputData.getCode5(), stockScraping.nikkei(inputData.getCode5()));
+            stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
 
             // kabuoji3
-            stockSpecification.insert(inputData.getCode5(), stockScraping.kabuoji3(inputData.getCode5()));
+            stockSpecification.insert(inputData.getCode5(), jsoupClient.kabuoji3(inputData.getCode5()));
 
             // みんかぶ
-            stockSpecification.insert(inputData.getCode5(), stockScraping.minkabu(inputData.getCode5()));
+            stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
         } catch (FundanalyzerScrapingException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
