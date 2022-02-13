@@ -7,15 +7,17 @@ import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
 import java.time.LocalDate;
@@ -31,12 +33,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class StockInteractorTest {
 
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private StockSpecification stockSpecification;
-    private JsoupClient jsoupClient;
 
     private StockInteractor stockInteractor;
 
@@ -45,13 +47,12 @@ class StockInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
-        jsoupClient = Mockito.mock(JsoupClient.class);
 
         stockInteractor = Mockito.spy(new StockInteractor(
                 companySpecification,
                 documentSpecification,
                 stockSpecification,
-                jsoupClient
+                Mockito.mock(JsoupClient.class)
         ));
     }
 
@@ -68,35 +69,33 @@ class StockInteractorTest {
 
             when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            doNothing().when(stockInteractor).importStockPrice(CodeInputData.of("code"));
+            doNothing().when(stockInteractor).importStockPrice(eq(CodeInputData.of("code")), any());
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData));
-            verify(stockInteractor, times(1)).importStockPrice((CodeInputData) any());
+            verify(stockInteractor, times(1)).importStockPrice(any(), eq(StockUseCase.Place.NIKKEI));
+            verify(stockInteractor, times(1)).importStockPrice(any(), eq(StockUseCase.Place.KABUOJI3));
+            verify(stockInteractor, times(1)).importStockPrice(any(), eq(StockUseCase.Place.MINKABU));
         }
 
         @DisplayName("importStockPrice : 株価を取得する")
-        @Test
-        void code() {
+        @ParameterizedTest
+        @EnumSource(StockUseCase.Place.class)
+        void code(StockUseCase.Place place) {
             CodeInputData inputData = CodeInputData.of("code");
 
-            assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData));
-            verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
-            //noinspection unchecked
-            verify(stockSpecification, times(1)).insert(eq("code0"), (List<Kabuoji3ResultBean>) any());
-            verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
-        }
-
-        @DisplayName("importStockPrice : エラー発生したとき")
-        @Test
-        void exception() {
-            CodeInputData inputData = CodeInputData.of("code");
-            when(jsoupClient.minkabu("code0")).thenThrow(FundanalyzerScrapingException.class);
-
-            assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData));
-            verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
-            //noinspection unchecked
-            verify(stockSpecification, times(1)).insert(eq("code0"), (List<Kabuoji3ResultBean>) any());
-            verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
+            assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
+            switch (place) {
+                case NIKKEI:
+                    verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
+                    break;
+                case KABUOJI3:
+                    //noinspection unchecked
+                    verify(stockSpecification, times(1)).insert(eq("code0"), (List<Kabuoji3ResultBean>) any());
+                    break;
+                case MINKABU:
+                    verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
+                    break;
+            }
         }
     }
 

@@ -5,11 +5,11 @@ import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,13 +17,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,7 @@ public class JsoupClient {
     private static final String CIRCUIT_BREAKER_KABUOJI3 = "kabuoji3";
     private static final String CIRCUIT_BREAKER_MINKABU = "minkabu";
 
+    private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final String nikkeiBaseUri;
@@ -43,11 +46,13 @@ public class JsoupClient {
     private final String minkabuBaseUri;
 
     public JsoupClient(
+            @Qualifier("jsoup-rest") final RestTemplate restTemplate,
             @Qualifier("jsoup-retry") final RetryTemplate retryTemplate,
             final CircuitBreakerRegistry circuitBreakerRegistry,
             @Value("${app.config.rest-template.nikkei.base-uri}") final String nikkeiBaseUri,
             @Value("${app.config.rest-template.kabuoji3.base-uri}") final String kabuoji3BaseUri,
             @Value("${app.config.rest-template.minkabu.base-uri}") final String minkabuBaseUri) {
+        this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.nikkeiBaseUri = nikkeiBaseUri;
@@ -62,15 +67,14 @@ public class JsoupClient {
      * @return 株価情報
      */
     public NikkeiResultBean nikkei(final String code) {
-        return NikkeiResultBean.ofJsoup(jsoup(
+        return NikkeiResultBean.ofJsoup(getForHtml(
                 CIRCUIT_BREAKER_NIKKEI,
                 code,
-                UriComponentsBuilder
-                        .newInstance()
-                        .scheme("https").host("www.nikkei.com")
+                UriComponentsBuilder.fromUriString(nikkeiBaseUri)
                         .path("/nkd/company/")
                         .queryParam("scode", code.substring(0, 4))
-                        .toUriString()));
+                        .toUriString()
+        ));
     }
 
     /**
@@ -80,14 +84,12 @@ public class JsoupClient {
      * @return 株価情報
      */
     public List<Kabuoji3ResultBean> kabuoji3(final String code) {
-        final var url = UriComponentsBuilder
-                .newInstance()
-                .scheme("https").host("kabuoji3.com")
+        final var url = UriComponentsBuilder.fromUriString(kabuoji3BaseUri)
                 .path("/stock/{code}/")
                 .buildAndExpand(code.substring(0, 4))
                 .toUriString();
 
-        final var document = jsoup(CIRCUIT_BREAKER_KABUOJI3, code, url);
+        final var document = getForHtml(CIRCUIT_BREAKER_KABUOJI3, code, url);
         final var thOrder = readThOrder(document);
 
         return document.select(".table_wrap table").select("tr").stream()
@@ -106,12 +108,10 @@ public class JsoupClient {
      * @return 株価情報予想
      */
     public MinkabuResultBean minkabu(final String code) {
-        return MinkabuResultBean.ofJsoup(jsoup(
+        return MinkabuResultBean.ofJsoup(getForHtml(
                 CIRCUIT_BREAKER_MINKABU,
                 code,
-                UriComponentsBuilder
-                        .newInstance()
-                        .scheme("https").host("minkabu.jp")
+                UriComponentsBuilder.fromUriString(minkabuBaseUri)
                         .path("/stock/{code}")
                         .buildAndExpand(code.substring(0, 4))
                         .toUriString()
@@ -126,32 +126,35 @@ public class JsoupClient {
      * @param url                対象URL
      * @return スクレイピング結果
      */
-    Document jsoup(final String circuitBreakerName, final String code, final String url) {
+    Document getForHtml(final String circuitBreakerName, final String code, final String url) {
+        // retry
         return retryTemplate.execute(context -> {
 
             try {
+                // circuitBreaker
                 return circuitBreakerRegistry.circuitBreaker(circuitBreakerName)
                         .executeSupplier(() -> {
                             try {
-                                return Jsoup.connect(url).get();
-                            } catch (final SocketTimeoutException e) {
-                                throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
-                                        "{0}との通信でタイムアウトエラーが発生しました。\t企業コード:{1}\tURL:{2}",
+                                // scraping
+                                return Jsoup.parse(Objects.requireNonNull(restTemplate.getForObject(url, String.class)));
+                            } catch (final NullPointerException e) {
+                                throw new FundanalyzerScrapingException(MessageFormat.format(
+                                        "{0}からHTMLを取得できませんでした。\t企業コード:{1}\tURL:{2}",
                                         circuitBreakerName,
                                         code,
                                         url
                                 ), e);
-                            } catch (final HttpStatusException e) {
+                            } catch (final RestClientResponseException e) {
                                 throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
                                         "{0}から200以外のHTTPステータスコードが返却されました。\tHTTPステータスコード:{1}\t企業コード:{2}\tURL:{3}",
                                         circuitBreakerName,
-                                        e.getStatusCode(),
+                                        e.getRawStatusCode(),
                                         code,
                                         url
                                 ), e);
-                            } catch (final IOException | RuntimeException e) {
+                            } catch (final ResourceAccessException e) {
                                 throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
-                                        "{0}との通信で想定外のエラーが発生しました。次のURLを確認してください。\t企業コード:{1}\tURL:{2}",
+                                        "{0}との通信でタイムアウトエラーが発生しました。\t企業コード:{1}\tURL:{2}",
                                         circuitBreakerName,
                                         code,
                                         url
@@ -159,7 +162,7 @@ public class JsoupClient {
                             }
                         });
             } catch (final CallNotPermittedException e) {
-                throw new FundanalyzerScrapingException(CIRCUIT_BREAKER_NIKKEI + "との通信でサーキットブレーカーがオープンしました。");
+                throw new FundanalyzerShortCircuitException(circuitBreakerName + "との通信でサーキットブレーカーがオープンしました。");
             }
         });
     }
@@ -188,7 +191,7 @@ public class JsoupClient {
                     "終値調整", thList.indexOf("終値調整")
             );
         } catch (Throwable t) {
-            log.warn("kabuoji3の表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList.toString());
+            log.warn("kabuoji3の表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
             throw new FundanalyzerScrapingException(t);
         }
     }

@@ -47,6 +47,16 @@ public class AppConfig {
                 .build();
     }
 
+    @Bean("jsoup-rest")
+    public RestTemplate restTemplateJsoup(
+            @Value("${app.config.rest-template.jsoup.connect-timeout}") final Duration connectTimeout,
+            @Value("${app.config.rest-template.jsoup.read-timeout}") final Duration readTimeout) {
+        return new RestTemplateBuilder()
+                .setConnectTimeout(connectTimeout)
+                .setReadTimeout(readTimeout)
+                .build();
+    }
+
     @Bean("edinet-retry")
     public RetryTemplate retryTemplateEdinet(
             @Value("${app.config.rest-template.edinet.max-attempts}") final Integer maxAttempt,
@@ -71,6 +81,16 @@ public class AppConfig {
     public RetryTemplate retryTemplateSlack(
             @Value("${app.config.rest-template.slack.max-attempts}") final Integer maxAttempt,
             @Value("${app.config.rest-template.slack.back-off}") final Duration backOff) {
+        return new RetryTemplateBuilder()
+                .maxAttempts(maxAttempt)
+                .fixedBackoff(backOff.toMillis())
+                .build();
+    }
+
+    @Bean("jsoup-retry")
+    public RetryTemplate retryTemplateJsoup(
+            @Value("${app.config.rest-template.jsoup.max-attempts}") final Integer maxAttempt,
+            @Value("${app.config.rest-template.jsoup.back-off}") final Duration backOff) {
         return new RetryTemplateBuilder()
                 .maxAttempts(maxAttempt)
                 .fixedBackoff(backOff.toMillis())

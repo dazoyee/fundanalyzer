@@ -1,8 +1,14 @@
 package github.com.ioridazo.fundanalyzer.client.jsoup;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.AfterEach;
@@ -10,7 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.File;
@@ -22,14 +33,26 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+@Timeout(10)
 @SuppressWarnings("NewClassNamingConvention")
 class JsoupClientTest {
 
     private static MockWebServer server;
+    private RestTemplate restTemplate;
+    private RetryTemplate retryTemplate;
+    private CircuitBreakerRegistry circuitBreakerRegistry;
+    private String nikkeiBaseUri;
+    private String kabuoji3BaseUri;
+    private String minkabuBaseUri;
     private JsoupClient client;
 
     @BeforeEach
@@ -37,12 +60,19 @@ class JsoupClientTest {
         server = new MockWebServer();
         server.start();
 
-        client = spy(new JsoupClient(
-                new AppConfig().retryTemplateJsoup(2, Duration.ofMillis(1)),
-                new CircuitBreakerRegistry.Builder().build(),
-                String.format("http://localhost:%s", server.getPort()),
-                String.format("http://localhost:%s", server.getPort()),
-                String.format("http://localhost:%s", server.getPort())
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateJsoup(Duration.ofMillis(1), Duration.ofMillis(1)));
+        this.retryTemplate = new AppConfig().retryTemplateJsoup(2, Duration.ofMillis(1));
+        this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder().build();
+        this.nikkeiBaseUri = String.format("http://localhost:%s", server.getPort());
+        this.kabuoji3BaseUri = String.format("http://localhost:%s", server.getPort());
+        this.minkabuBaseUri = String.format("http://localhost:%s", server.getPort());
+        this.client = spy(new JsoupClient(
+                restTemplate,
+                retryTemplate,
+                circuitBreakerRegistry,
+                nikkeiBaseUri,
+                kabuoji3BaseUri,
+                minkabuBaseUri
         ));
 
         Mockito.clearInvocations(client);
@@ -62,10 +92,19 @@ class JsoupClientTest {
     class nikkei {
 
         @DisplayName("nikkei : 実際に日経の会社コードによる株価情報を取得する")
-//        @Test
+            // @Test
         void nikkei_test() {
-            var code = "9434";
+            nikkeiBaseUri = "https://www.nikkei.com";
+            client = spy(new JsoupClient(
+                    new AppConfig().restTemplateJsoup(Duration.ofMillis(1000), Duration.ofMillis(1000)),
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    nikkeiBaseUri,
+                    kabuoji3BaseUri,
+                    minkabuBaseUri
+            ));
 
+            var code = "9434";
             var actual = assertDoesNotThrow(() -> client.nikkei(code));
 
             assertAll("NikkeiResultBean",
@@ -83,7 +122,6 @@ class JsoupClientTest {
                     () -> assertNotNull(actual.getDividendYield()),
                     () -> assertNotNull(actual.getShareholderBenefit())
             );
-
             System.out.println(actual);
         }
 
@@ -91,11 +129,8 @@ class JsoupClientTest {
         @Test
         void nikkei_ok() throws IOException {
             var code = "9999";
-
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/nikkei/nikkei.html");
-
-            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
-
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
             var actual = client.nikkei(code);
 
             assertAll("NikkeiResultBean",
@@ -118,6 +153,15 @@ class JsoupClientTest {
         @DisplayName("nikkei : 日経の会社コードによる株価情報を取得できないときはnullにする")
         @Test
         void nikkei_null() {
+            nikkeiBaseUri = "https://www.nikkei.com";
+            client = spy(new JsoupClient(
+                    new AppConfig().restTemplateJsoup(Duration.ofMillis(10000), Duration.ofMillis(10000)),
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    nikkeiBaseUri,
+                    kabuoji3BaseUri,
+                    minkabuBaseUri
+            ));
             var code = "9999";
             var actual = client.nikkei(code);
 
@@ -143,15 +187,22 @@ class JsoupClientTest {
     class kabuoji3 {
 
         @DisplayName("kabuoji3 : 実際にkabuoji3の会社コードによる株価情報を取得する")
-//        @Test
+            // @Test
         void kabuoji3_test() {
+            kabuoji3BaseUri = "https://kabuoji3.com";
+            client = spy(new JsoupClient(
+                    new AppConfig().restTemplateJsoup(Duration.ofMillis(1000), Duration.ofMillis(1000)),
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    nikkeiBaseUri,
+                    kabuoji3BaseUri,
+                    minkabuBaseUri
+            ));
             var code = "9434";
-
             var actual = client.kabuoji3(code);
 
             assertNotNull(actual);
             assertEquals(300, actual.size());
-
             actual.forEach(System.out::println);
         }
 
@@ -159,11 +210,8 @@ class JsoupClientTest {
         @Test
         void kabuoji3_ok() throws IOException {
             var code = "9999";
-
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/kabuoji3/kabuoji3.html");
-
-            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
-
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
             var actual = client.kabuoji3(code);
 
             assertAll("Kabuoji3ResultBean",
@@ -203,10 +251,18 @@ class JsoupClientTest {
     class minkabu {
 
         @DisplayName("minkabu : 実際にみんかぶの会社コードによる株価情報予想を取得する")
-//        @Test
+            // @Test
         void minkabu_test() {
+            minkabuBaseUri = "https://minkabu.jp";
+            client = spy(new JsoupClient(
+                    new AppConfig().restTemplateJsoup(Duration.ofMillis(1000), Duration.ofMillis(1000)),
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    nikkeiBaseUri,
+                    kabuoji3BaseUri,
+                    minkabuBaseUri
+            ));
             var code = "9434";
-
             var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
@@ -217,7 +273,6 @@ class JsoupClientTest {
                     () -> assertNotNull(actual.getExpectedStockPrice().getIndividualInvestors()),
                     () -> assertNotNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
             );
-
             System.out.println(actual);
         }
 
@@ -225,11 +280,8 @@ class JsoupClientTest {
         @Test
         void minkabu_ok() throws IOException {
             var code = "9999";
-
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabu.html");
-
-            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
-
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
             var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
@@ -246,11 +298,8 @@ class JsoupClientTest {
         @Test
         void minkabu_verify() throws IOException {
             var code = "9903";
-
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabu_9903.html");
-
-            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
-
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
             var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
@@ -267,11 +316,8 @@ class JsoupClientTest {
         @Test
         void minkabu_null() throws IOException {
             var code = "9999";
-
             var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabu_null.html");
-
-            doReturn(jsoupParser(htmlFile)).when(client).jsoup(any(), any(), any());
-
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
             var actual = client.minkabu(code);
 
 
@@ -296,6 +342,171 @@ class JsoupClientTest {
                     .toUriString();
 
             System.out.println(Jsoup.connect(url).get());
+        }
+    }
+
+    @Nested
+    class getForHtml {
+
+        @DisplayName("nikkei : リクエスト内容を確認する")
+        @Test
+        void nikkei() throws InterruptedException {
+            var code = "9999";
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
+
+            assertDoesNotThrow(() -> client.nikkei(code));
+            var recordedRequest = server.takeRequest();
+            assertAll("request",
+                    () -> assertEquals("/nkd/company/?scode=9999", recordedRequest.getPath()),
+                    () -> assertEquals("GET", recordedRequest.getMethod())
+            );
+        }
+
+        @DisplayName("kabuoji3 : リクエスト内容を確認する")
+        @Test
+        void kabuoji3() throws InterruptedException {
+            var code = "9999";
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
+
+            assertDoesNotThrow(() -> client.kabuoji3(code));
+            var recordedRequest = server.takeRequest();
+            assertAll("request",
+                    () -> assertEquals("/stock/9999/", recordedRequest.getPath()),
+                    () -> assertEquals("GET", recordedRequest.getMethod())
+            );
+        }
+
+        @DisplayName("minkabu : リクエスト内容を確認する")
+        @Test
+        void minkabu() throws InterruptedException {
+            var code = "9999";
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("body"));
+
+            assertDoesNotThrow(() -> client.minkabu(code));
+            var recordedRequest = server.takeRequest();
+            assertAll("request",
+                    () -> assertEquals("/stock/9999", recordedRequest.getPath()),
+                    () -> assertEquals("GET", recordedRequest.getMethod())
+            );
+        }
+
+        @DisplayName("getForHtml : レスポンスが空のとき")
+        @Test
+        void response_null() {
+            var code = "9999";
+            server.enqueue(new MockResponse().setResponseCode(200));
+            server.enqueue(new MockResponse().setResponseCode(200));
+            assertThrows(FundanalyzerScrapingException.class, () -> client.minkabu(code));
+        }
+
+        @DisplayName("getForHtml : HTTPステータス200以外のとき")
+        @ParameterizedTest
+        @ValueSource(ints = {400, 404, 500, 503})
+        void http_status(int httpStatus) {
+            var code = "9999";
+            server.enqueue(new MockResponse().setResponseCode(httpStatus));
+            server.enqueue(new MockResponse().setResponseCode(httpStatus));
+
+            var actual = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.nikkei(code));
+            assertTrue(actual.getMessage().contains("から200以外のHTTPステータスコードが返却されました。"));
+        }
+
+        @DisplayName("getForHtml : タイムアウトが発生したとき")
+        @Test
+        void timeout() {
+            var code = "9999";
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+            assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.minkabu(code));
+        }
+
+        @DisplayName("getForHtml : サーキットブレーカーがオープンすること")
+        @Test
+        void circuitBreaker_open() {
+            circuitBreakerRegistry = new CircuitBreakerRegistry.Builder()
+                    .withCircuitBreakerConfig(
+                            new CircuitBreakerConfig.Builder()
+                                    .failureRateThreshold(100)
+                                    .permittedNumberOfCallsInHalfOpenState(1)
+                                    .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                                    .slidingWindowSize(2)
+                                    .recordException(new JsoupClient.RecordFailurePredicate())
+                                    .build()
+                    )
+                    .build();
+            client = spy(new JsoupClient(
+                    restTemplate,
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    nikkeiBaseUri,
+                    kabuoji3BaseUri,
+                    minkabuBaseUri
+            ));
+
+            var code = "9999";
+
+            server.enqueue(new MockResponse().setResponseCode(404));
+            server.enqueue(new MockResponse().setResponseCode(404));
+
+            var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.kabuoji3(code));
+            assertTrue(actual1.getMessage().contains("から200以外のHTTPステータスコードが返却されました。"));
+            assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker("kabuoji3").getState().name());
+
+            var actual2 = assertThrows(FundanalyzerShortCircuitException.class, () -> client.kabuoji3(code));
+            assertTrue(actual2.getMessage().contains("との通信でサーキットブレーカーがオープンしました。"));
+            assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker("kabuoji3").getState().name());
+
+            verify(restTemplate, times(2)).getForObject(anyString(), any());
+        }
+
+        @DisplayName("getForHtml : サーキットブレーカーがオープンしないこと")
+        @Test
+        void circuitBreaker_closed() {
+            circuitBreakerRegistry = new CircuitBreakerRegistry.Builder()
+                    .withCircuitBreakerConfig(
+                            new CircuitBreakerConfig.Builder()
+                                    .failureRateThreshold(100)
+                                    .permittedNumberOfCallsInHalfOpenState(1)
+                                    .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                                    .slidingWindowSize(2)
+                                    .recordException(new JsoupClient.RecordFailurePredicate())
+                                    .build()
+                    )
+                    .build();
+            client = spy(new JsoupClient(
+                    restTemplate,
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    nikkeiBaseUri,
+                    kabuoji3BaseUri,
+                    minkabuBaseUri
+            ));
+
+            var code = "9999";
+
+            server.enqueue(new MockResponse().setResponseCode(200));
+            server.enqueue(new MockResponse().setResponseCode(200));
+            server.enqueue(new MockResponse().setResponseCode(200));
+            server.enqueue(new MockResponse().setResponseCode(200));
+
+            var actual1 = assertThrows(FundanalyzerScrapingException.class, () -> client.kabuoji3(code));
+            assertTrue(actual1.getMessage().contains("からHTMLを取得できませんでした。"));
+            assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker("kabuoji3").getState().name());
+
+            var actual2 = assertThrows(FundanalyzerScrapingException.class, () -> client.kabuoji3(code));
+            assertTrue(actual2.getMessage().contains("からHTMLを取得できませんでした。"));
+            assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker("kabuoji3").getState().name());
+
+            verify(restTemplate, times(4)).getForObject(anyString(), any());
+        }
+
+        @DisplayName("getForHtml : 通信をリトライする")
+        @Test
+        void retryable() {
+            var code = "9999";
+            assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.kabuoji3(code));
+            verify(restTemplate, times(2)).getForObject(anyString(), any());
+            assertEquals(2, circuitBreakerRegistry.circuitBreaker("kabuoji3").getMetrics().getNumberOfFailedCalls());
         }
     }
 }

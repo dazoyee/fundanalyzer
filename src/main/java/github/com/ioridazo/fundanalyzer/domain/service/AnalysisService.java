@@ -192,7 +192,9 @@ public class AnalysisService {
     @NewSpan
     public void importStock(final CodeInputData inputData) {
         // stock
-        stockUseCase.importStockPrice(inputData);
+        stockUseCase.importStockPrice(inputData, StockUseCase.Place.NIKKEI);
+        stockUseCase.importStockPrice(inputData, StockUseCase.Place.KABUOJI3);
+        stockUseCase.importStockPrice(inputData, StockUseCase.Place.MINKABU);
     }
 
     /**
