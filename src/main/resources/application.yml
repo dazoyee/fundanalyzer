@@ -44,8 +44,11 @@ management:
       base-path: /actuator
   endpoint:
     health:
-      probes:
-        enabled: true
+      show-details: always
+
+  health:
+    diskspace.enabled: false
+    circuitbreakers.enabled: true
 
   metrics:
     distribution:
@@ -55,6 +58,19 @@ management:
         http.server.requests: 50ms, 100ms, 200ms, 400ms
     tags:
       application: ${spring.application.name}
+
+resilience4j.circuitbreaker:
+  instances:
+    edinet:
+      registerHealthIndicator: true
+      failureRateThreshold: 100                           # OPENへの閾値
+      permittedNumberOfCallsInHalfOpenState: 1            # HALF_OPENの時に許可する呼び出し回数
+      slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
+      slidingWindowSize: 10                               # OPENするかを計算する母数
+      minimumNumberOfCalls: 10                            # 最低エラー回数
+      waitDurationInOpenState: 10s                        # OPENからHALF_OPENに移行するまでの時間
+      automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
+      recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient.RecordFailurePredicate
 
 app:
   config:
