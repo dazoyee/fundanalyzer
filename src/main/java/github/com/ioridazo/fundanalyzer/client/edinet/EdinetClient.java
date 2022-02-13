@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.Acquisition
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.EdinetResponse;
+import github.com.ioridazo.fundanalyzer.client.edinet.entity.response.Metadata;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
@@ -166,7 +167,9 @@ public class EdinetClient {
                             "書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
                             parameter.getDate(),
                             Optional.ofNullable(edinetResponse)
-                                    .map(er -> er.getMetadata().getResultset().getCount())
+                                    .map(EdinetResponse::getMetadata)
+                                    .map(Metadata::getResultset)
+                                    .map(Metadata.ResultSet::getCount)
                                     .orElse("0")
                     ),
                     Category.DOCUMENT,
