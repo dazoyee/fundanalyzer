@@ -9,71 +9,96 @@ import org.springframework.retry.support.RetryTemplateBuilder;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
-import java.time.Duration;
 import java.util.concurrent.Executor;
 
 @EnableAsync
 @Configuration
 public class AppConfig {
 
-    @Bean("edinet-rest")
-    public RestTemplate restTemplateEdinet(
-            @Value("${app.config.rest-template.edinet.connect-timeout}") final Duration connectTimeout,
-            @Value("${app.config.rest-template.edinet.read-timeout}") final Duration readTimeout) {
+    private static final String REST = "rest-";
+    private static final String RETRY = "retry-";
+    private static final String EDINET = "edinet";
+    private static final String SELENIUM = "selenium";
+    private static final String SLACK = "slack";
+    private static final String JSOUP = "jsoup";
+
+    @Bean(REST + EDINET)
+    public RestTemplate restTemplateEdinet(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
+        final RestTemplate restTemplate = new RestTemplateBuilder()
+                .setConnectTimeout(settings.getConnectTimeout())
+                .setReadTimeout(settings.getReadTimeout())
+                .build();
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
+        return restTemplate;
+    }
+
+    @Bean(REST + SELENIUM)
+    public RestTemplate restTemplateSelenium(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
+        final RestTemplate restTemplate = new RestTemplateBuilder()
+                .setConnectTimeout(settings.getConnectTimeout())
+                .setReadTimeout(settings.getReadTimeout())
+                .build();
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
+        return restTemplate;
+    }
+
+    @Bean(REST + SLACK)
+    public RestTemplate restTemplateSlack(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(SLACK);
+        final RestTemplate restTemplate = new RestTemplateBuilder()
+                .setConnectTimeout(settings.getConnectTimeout())
+                .setReadTimeout(settings.getReadTimeout())
+                .build();
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
+        return restTemplate;
+    }
+
+    @Bean(REST + JSOUP)
+    public RestTemplate restTemplateJsoup(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(JSOUP);
         return new RestTemplateBuilder()
-                .setConnectTimeout(connectTimeout)
-                .setReadTimeout(readTimeout)
+                .setConnectTimeout(settings.getConnectTimeout())
+                .setReadTimeout(settings.getReadTimeout())
                 .build();
     }
 
-    @Bean("selenium-rest")
-    public RestTemplate restTemplateSelenium(
-            @Value("${app.config.rest-template.selenium.connect-timeout}") final Duration connectTimeout,
-            @Value("${app.config.rest-template.selenium.read-timeout}") final Duration readTimeout) {
-        return new RestTemplateBuilder()
-                .setConnectTimeout(connectTimeout)
-                .setReadTimeout(readTimeout)
-                .build();
-    }
-
-    @Bean("slack-rest")
-    public RestTemplate restTemplateSlack(
-            @Value("${app.config.rest-template.slack.connect-timeout}") final Duration connectTimeout,
-            @Value("${app.config.rest-template.slack.read-timeout}") final Duration readTimeout) {
-        return new RestTemplateBuilder()
-                .setConnectTimeout(connectTimeout)
-                .setReadTimeout(readTimeout)
-                .build();
-    }
-
-    @Bean("edinet-retry")
-    public RetryTemplate retryTemplateEdinet(
-            @Value("${app.config.rest-template.edinet.max-attempts}") final Integer maxAttempt,
-            @Value("${app.config.rest-template.edinet.back-off}") final Duration backOff) {
+    @Bean(RETRY + EDINET)
+    public RetryTemplate retryTemplateEdinet(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
         return new RetryTemplateBuilder()
-                .maxAttempts(maxAttempt)
-                .fixedBackoff(backOff.toMillis())
+                .maxAttempts(settings.getMaxAttempts())
+                .fixedBackoff(settings.getBackOff().toMillis())
                 .build();
     }
 
-    @Bean("selenium-retry")
-    public RetryTemplate retryTemplateSelenium(
-            @Value("${app.config.rest-template.selenium.max-attempts}") final Integer maxAttempt,
-            @Value("${app.config.rest-template.selenium.back-off}") final Duration backOff) {
+    @Bean(RETRY + SELENIUM)
+    public RetryTemplate retryTemplateSelenium(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
         return new RetryTemplateBuilder()
-                .maxAttempts(maxAttempt)
-                .fixedBackoff(backOff.toMillis())
+                .maxAttempts(settings.getMaxAttempts())
+                .fixedBackoff(settings.getBackOff().toMillis())
                 .build();
     }
 
-    @Bean("slack-retry")
-    public RetryTemplate retryTemplateSlack(
-            @Value("${app.config.rest-template.slack.max-attempts}") final Integer maxAttempt,
-            @Value("${app.config.rest-template.slack.back-off}") final Duration backOff) {
+    @Bean(RETRY + SLACK)
+    public RetryTemplate retryTemplateSlack(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(SLACK);
         return new RetryTemplateBuilder()
-                .maxAttempts(maxAttempt)
-                .fixedBackoff(backOff.toMillis())
+                .maxAttempts(settings.getMaxAttempts())
+                .fixedBackoff(settings.getBackOff().toMillis())
+                .build();
+    }
+
+    @Bean(RETRY + JSOUP)
+    public RetryTemplate retryTemplateJsoup(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(JSOUP);
+        return new RetryTemplateBuilder()
+                .maxAttempts(settings.getMaxAttempts())
+                .fixedBackoff(settings.getBackOff().toMillis())
                 .build();
     }
 

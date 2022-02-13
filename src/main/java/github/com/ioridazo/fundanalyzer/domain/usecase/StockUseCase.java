@@ -18,9 +18,10 @@ public interface StockUseCase {
      * 株価取得
      *
      * @param inputData 企業コード
+     * @param place     通信先
      */
     @NewSpan
-    void importStockPrice(CodeInputData inputData);
+    void importStockPrice(CodeInputData inputData, Place place);
 
     /**
      * 株価削除
@@ -29,4 +30,10 @@ public interface StockUseCase {
      */
     @NewSpan
     int deleteStockPrice();
+
+    enum Place {
+        NIKKEI,
+        KABUOJI3,
+        MINKABU
+    }
 }
