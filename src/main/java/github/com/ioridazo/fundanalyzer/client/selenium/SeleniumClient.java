@@ -7,15 +7,12 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientExceptio
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.text.MessageFormat;
 
 @Component
@@ -25,15 +22,12 @@ public class SeleniumClient {
 
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
-    private final String baseUri;
 
     public SeleniumClient(
-            @Qualifier("selenium-rest") final RestTemplate restTemplate,
-            @Qualifier("selenium-retry") final RetryTemplate retryTemplate,
-            @Value("${app.config.rest-template.selenium.base-uri}") final String baseUri) {
+            @Qualifier("rest-selenium") final RestTemplate restTemplate,
+            @Qualifier("retry-selenium") final RetryTemplate retryTemplate) {
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
-        this.baseUri = baseUri;
     }
 
     /**
@@ -44,12 +38,7 @@ public class SeleniumClient {
      */
     @NewSpan
     public String edinetCodeList(final String inputFilePath) {
-        final URI uri = UriComponentsBuilder
-                .fromUriString(baseUri)
-                .path("/selenium/v1/edinetcode")
-                .queryParam("path", inputFilePath.replace("/", "\\"))
-                .build().toUri();
-
+        final String endpoint = String.format("/selenium/v1/edinetcode?path=%s", inputFilePath.replace("/", "\\"));
 
         try {
             final String fileName = retryTemplate.execute(context -> {
@@ -57,17 +46,17 @@ public class SeleniumClient {
                         MessageFormat.format(
                                 "{0}回目のSeleniumへの通信を開始します。\tURL:{1}",
                                 context.getRetryCount() + 1,
-                                uri
+                                endpoint
                         ),
                         Category.COMPANY,
                         Process.EDINET
                 ));
 
-                return restTemplate.getForObject(uri, String.class);
+                return restTemplate.getForObject(endpoint, String.class);
             });
 
             log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", uri),
+                    MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", endpoint),
                     Category.COMPANY,
                     Process.EDINET
             ));

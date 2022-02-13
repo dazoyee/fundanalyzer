@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.client.slack;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -40,11 +42,10 @@ class SlackClientTest {
         server = new MockWebServer();
         server.start();
 
-        this.restTemplate = Mockito.spy(new AppConfig().restTemplateSelenium(Duration.ofMillis(1), Duration.ofMillis(1)));
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateSlack(properties()));
         this.client = Mockito.spy(new SlackClient(
                 restTemplate,
-                new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
-                String.format("http://localhost:%s", server.getPort()),
+                new AppConfig().retryTemplateSlack(properties()),
                 environment
         ));
         client.parameterT = "t";
@@ -65,10 +66,18 @@ class SlackClientTest {
     void sendMessage_tester() {
         var propertyPath = "property.path";
 
+        var slack = new RestClientProperties.Settings();
+        slack.setBaseUri("https://hooks.slack.com");
+        slack.setConnectTimeout(Duration.ofMillis(100));
+        slack.setReadTimeout(Duration.ofMillis(100));
+        slack.setMaxAttempts(2);
+        slack.setBackOff(Duration.ofMillis(0));
+        var properties = new RestClientProperties(Map.of(
+                "slack", slack
+        ));
         this.client = new SlackClient(
-                restTemplate,
-                new AppConfig().retryTemplateSelenium(2, Duration.ofSeconds(1)),
-                "https://hooks.slack.com",
+                new AppConfig().restTemplateSlack(properties),
+                new AppConfig().retryTemplateSlack(properties),
                 environment
         );
         client.parameterT = "TKN2V6NQ4";
@@ -143,5 +152,17 @@ class SlackClientTest {
         );
 
         System.out.println(actual.getMessage());
+    }
+
+    private static RestClientProperties properties() {
+        var slack = new RestClientProperties.Settings();
+        slack.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+        slack.setConnectTimeout(Duration.ofMillis(100));
+        slack.setReadTimeout(Duration.ofMillis(100));
+        slack.setMaxAttempts(2);
+        slack.setBackOff(Duration.ofMillis(1));
+        return new RestClientProperties(Map.of(
+                "slack", slack
+        ));
     }
 }

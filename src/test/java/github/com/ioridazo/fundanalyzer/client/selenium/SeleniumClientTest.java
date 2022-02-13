@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.client.selenium;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -16,12 +17,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -38,11 +41,10 @@ class SeleniumClientTest {
         server = new MockWebServer();
         server.start();
 
-        this.restTemplate = Mockito.spy(new AppConfig().restTemplateSelenium(Duration.ofMillis(1), Duration.ofMillis(1)));
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateSelenium(properties()));
         this.client = Mockito.spy(new SeleniumClient(
                 restTemplate,
-                new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
-                String.format("http://localhost:%s", server.getPort())
+                new AppConfig().retryTemplateSelenium(properties())
         ));
 
         Mockito.clearInvocations(client);
@@ -91,7 +93,19 @@ class SeleniumClientTest {
                     () -> assertEquals("/selenium/v1/edinetcode?path=inputFilePath", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
-            verify(restTemplate, times(2)).getForObject(any(), any());
+            verify(restTemplate, times(2)).getForObject(anyString(), any());
         }
+    }
+
+    private static RestClientProperties properties() {
+        var selenium = new RestClientProperties.Settings();
+        selenium.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+        selenium.setConnectTimeout(Duration.ofMillis(100));
+        selenium.setReadTimeout(Duration.ofMillis(100));
+        selenium.setMaxAttempts(2);
+        selenium.setBackOff(Duration.ofMillis(1));
+        return new RestClientProperties(Map.of(
+                "selenium", selenium
+        ));
     }
 }

@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean;
+package github.com.ioridazo.fundanalyzer.client.jsoup.result;
 
 import lombok.Value;
 
