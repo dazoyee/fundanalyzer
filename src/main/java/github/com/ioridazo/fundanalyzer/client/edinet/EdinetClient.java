@@ -14,7 +14,6 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -49,17 +48,14 @@ public class EdinetClient {
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
     private final CircuitBreakerRegistry circuitBreaker;
-    private final String baseUri;
 
     public EdinetClient(
-            @Qualifier("edinet-rest") final RestTemplate restTemplate,
-            @Qualifier("edinet-retry") final RetryTemplate retryTemplate,
-            final CircuitBreakerRegistry circuitBreaker,
-            @Value("${app.config.rest-template.edinet.base-uri}") final String baseUri) {
+            @Qualifier("rest-edinet") final RestTemplate restTemplate,
+            @Qualifier("retry-edinet") final RetryTemplate retryTemplate,
+            final CircuitBreakerRegistry circuitBreaker) {
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
         this.circuitBreaker = circuitBreaker;
-        this.baseUri = baseUri;
     }
 
     /**
@@ -120,7 +116,7 @@ public class EdinetClient {
                             try {
                                 // send
                                 return restTemplate.getForObject(
-                                        baseUri + "/api/v1/documents.json?date={date}&type={type}",
+                                        "/api/v1/documents.json?date={date}&type={type}",
                                         EdinetResponse.class,
                                         Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
                                 );
@@ -226,7 +222,7 @@ public class EdinetClient {
                             try {
                                 // send
                                 return restTemplate.execute(
-                                        baseUri + "/api/v1/documents/{docId}?type={type}",
+                                        "/api/v1/documents/{docId}?type={type}",
                                         HttpMethod.GET,
                                         request -> request
                                                 .getHeaders()

@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.client.jsoup;
 
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
@@ -27,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -50,9 +52,6 @@ class JsoupClientTest {
     private RestTemplate restTemplate;
     private RetryTemplate retryTemplate;
     private CircuitBreakerRegistry circuitBreakerRegistry;
-    private String nikkeiBaseUri;
-    private String kabuoji3BaseUri;
-    private String minkabuBaseUri;
     private JsoupClient client;
 
     @BeforeEach
@@ -60,19 +59,14 @@ class JsoupClientTest {
         server = new MockWebServer();
         server.start();
 
-        this.restTemplate = Mockito.spy(new AppConfig().restTemplateJsoup(Duration.ofMillis(1), Duration.ofMillis(1)));
-        this.retryTemplate = new AppConfig().retryTemplateJsoup(2, Duration.ofMillis(1));
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateJsoup(properties()));
+        this.retryTemplate = new AppConfig().retryTemplateJsoup(properties());
         this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder().build();
-        this.nikkeiBaseUri = String.format("http://localhost:%s", server.getPort());
-        this.kabuoji3BaseUri = String.format("http://localhost:%s", server.getPort());
-        this.minkabuBaseUri = String.format("http://localhost:%s", server.getPort());
         this.client = spy(new JsoupClient(
+                properties(),
                 restTemplate,
                 retryTemplate,
-                circuitBreakerRegistry,
-                nikkeiBaseUri,
-                kabuoji3BaseUri,
-                minkabuBaseUri
+                circuitBreakerRegistry
         ));
 
         Mockito.clearInvocations(client);
@@ -92,16 +86,20 @@ class JsoupClientTest {
     class nikkei {
 
         @DisplayName("nikkei : 実際に日経の会社コードによる株価情報を取得する")
-            // @Test
+//        @Test
         void nikkei_test() {
-            nikkeiBaseUri = "https://www.nikkei.com";
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(10000));
+            jsoup.setReadTimeout(Duration.ofMillis(10000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(0));
+            var nikkei = new RestClientProperties.Settings();
+            nikkei.setBaseUri("https://www.nikkei.com");
             client = spy(new JsoupClient(
-                    new AppConfig().restTemplateJsoup(Duration.ofMillis(1000), Duration.ofMillis(1000)),
+                    new RestClientProperties(Map.of("jsoup", jsoup, "nikkei", nikkei)),
+                    restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry,
-                    nikkeiBaseUri,
-                    kabuoji3BaseUri,
-                    minkabuBaseUri
+                    circuitBreakerRegistry
             ));
 
             var code = "9434";
@@ -153,15 +151,20 @@ class JsoupClientTest {
         @DisplayName("nikkei : 日経の会社コードによる株価情報を取得できないときはnullにする")
         @Test
         void nikkei_null() {
-            nikkeiBaseUri = "https://www.nikkei.com";
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(10000));
+            jsoup.setReadTimeout(Duration.ofMillis(10000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(0));
+            var nikkei = new RestClientProperties.Settings();
+            nikkei.setBaseUri("https://www.nikkei.com");
             client = spy(new JsoupClient(
-                    new AppConfig().restTemplateJsoup(Duration.ofMillis(10000), Duration.ofMillis(10000)),
+                    new RestClientProperties(Map.of("jsoup", jsoup, "nikkei", nikkei)),
+                    restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry,
-                    nikkeiBaseUri,
-                    kabuoji3BaseUri,
-                    minkabuBaseUri
+                    circuitBreakerRegistry
             ));
+
             var code = "9999";
             var actual = client.nikkei(code);
 
@@ -187,17 +190,22 @@ class JsoupClientTest {
     class kabuoji3 {
 
         @DisplayName("kabuoji3 : 実際にkabuoji3の会社コードによる株価情報を取得する")
-            // @Test
+//        @Test
         void kabuoji3_test() {
-            kabuoji3BaseUri = "https://kabuoji3.com";
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(10000));
+            jsoup.setReadTimeout(Duration.ofMillis(10000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(0));
+            var kabuoji3 = new RestClientProperties.Settings();
+            kabuoji3.setBaseUri("https://kabuoji3.com");
             client = spy(new JsoupClient(
-                    new AppConfig().restTemplateJsoup(Duration.ofMillis(1000), Duration.ofMillis(1000)),
+                    new RestClientProperties(Map.of("jsoup", jsoup, "kabuoji3", kabuoji3)),
+                    restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry,
-                    nikkeiBaseUri,
-                    kabuoji3BaseUri,
-                    minkabuBaseUri
+                    circuitBreakerRegistry
             ));
+
             var code = "9434";
             var actual = client.kabuoji3(code);
 
@@ -253,15 +261,20 @@ class JsoupClientTest {
         @DisplayName("minkabu : 実際にみんかぶの会社コードによる株価情報予想を取得する")
             // @Test
         void minkabu_test() {
-            minkabuBaseUri = "https://minkabu.jp";
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(10000));
+            jsoup.setReadTimeout(Duration.ofMillis(10000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(0));
+            var minkabu = new RestClientProperties.Settings();
+            minkabu.setBaseUri("https://minkabu.jp");
             client = spy(new JsoupClient(
-                    new AppConfig().restTemplateJsoup(Duration.ofMillis(1000), Duration.ofMillis(1000)),
+                    new RestClientProperties(Map.of("jsoup", jsoup, "minkabu", minkabu)),
+                    restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry,
-                    nikkeiBaseUri,
-                    kabuoji3BaseUri,
-                    minkabuBaseUri
+                    circuitBreakerRegistry
             ));
+
             var code = "9434";
             var actual = client.minkabu(code);
 
@@ -435,12 +448,10 @@ class JsoupClientTest {
                     )
                     .build();
             client = spy(new JsoupClient(
+                    properties(),
                     restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry,
-                    nikkeiBaseUri,
-                    kabuoji3BaseUri,
-                    minkabuBaseUri
+                    circuitBreakerRegistry
             ));
 
             var code = "9999";
@@ -474,12 +485,10 @@ class JsoupClientTest {
                     )
                     .build();
             client = spy(new JsoupClient(
+                    properties(),
                     restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry,
-                    nikkeiBaseUri,
-                    kabuoji3BaseUri,
-                    minkabuBaseUri
+                    circuitBreakerRegistry
             ));
 
             var code = "9999";
@@ -508,5 +517,26 @@ class JsoupClientTest {
             verify(restTemplate, times(2)).getForObject(anyString(), any());
             assertEquals(2, circuitBreakerRegistry.circuitBreaker("kabuoji3").getMetrics().getNumberOfFailedCalls());
         }
+    }
+
+    private static RestClientProperties properties() {
+        var jsoup = new RestClientProperties.Settings();
+        jsoup.setConnectTimeout(Duration.ofMillis(100));
+        jsoup.setReadTimeout(Duration.ofMillis(100));
+        jsoup.setMaxAttempts(2);
+        jsoup.setBackOff(Duration.ofMillis(1));
+        var nikkei = new RestClientProperties.Settings();
+        nikkei.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+        var kabuoji3 = new RestClientProperties.Settings();
+        kabuoji3.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+        var minkabu = new RestClientProperties.Settings();
+        minkabu.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+
+        return new RestClientProperties(Map.of(
+                "jsoup", jsoup,
+                "nikkei", nikkei,
+                "kabuoji3", kabuoji3,
+                "minkabu", minkabu
+        ));
     }
 }

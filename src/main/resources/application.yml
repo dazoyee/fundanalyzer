@@ -68,7 +68,7 @@ resilience4j.circuitbreaker:
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
-      waitDurationInOpenState: 10s                        # OPENからHALF_OPENに移行するまでの時間
+      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient.RecordFailurePredicate
     nikkei:
@@ -78,7 +78,7 @@ resilience4j.circuitbreaker:
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
-      waitDurationInOpenState: 10s                        # OPENからHALF_OPENに移行するまでの時間
+      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
     kabuoji3:
@@ -88,7 +88,7 @@ resilience4j.circuitbreaker:
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
-      waitDurationInOpenState: 10s                        # OPENからHALF_OPENに移行するまでの時間
+      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
     minkabu:
@@ -98,14 +98,13 @@ resilience4j.circuitbreaker:
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
-      waitDurationInOpenState: 10s                        # OPENからHALF_OPENに移行するまでの時間
+      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
 
 app:
   config:
-    // TODO name
-    rest-template:
+    rest-client:
       edinet:
         base-uri: https://disclosure.edinet-fsa.go.jp
         connect-timeout: 5s
@@ -124,24 +123,17 @@ app:
         read-timeout: 30s
         max-attempts: 3
         back-off: 5s
+      jsoup:
+        connect-timeout: 5s
+        read-timeout: 15s
+        max-attempts: 2
+        back-off: 20s
       nikkei:
         base-uri: https://www.nikkei.com
-        connect-timeout: 5s
-        read-timeout: 15s
-        max-attempts: 2
-        back-off: 15s
       kabuoji3:
         base-uri: https://kabuoji3.com
-        connect-timeout: 5s
-        read-timeout: 15s
-        max-attempts: 2
-        back-off: 20s
       minkabu:
         base-uri: https://minkabu.jp
-        connect-timeout: 5s
-        read-timeout: 15s
-        max-attempts: 2
-        back-off: 20s
 
     executor:
       core-pool-size: 50

@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.client.jsoup;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
@@ -14,7 +15,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -38,26 +38,20 @@ public class JsoupClient {
     private static final String CIRCUIT_BREAKER_KABUOJI3 = "kabuoji3";
     private static final String CIRCUIT_BREAKER_MINKABU = "minkabu";
 
+    private final RestClientProperties properties;
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
-    private final String nikkeiBaseUri;
-    private final String kabuoji3BaseUri;
-    private final String minkabuBaseUri;
 
     public JsoupClient(
-            @Qualifier("jsoup-rest") final RestTemplate restTemplate,
-            @Qualifier("jsoup-retry") final RetryTemplate retryTemplate,
-            final CircuitBreakerRegistry circuitBreakerRegistry,
-            @Value("${app.config.rest-template.nikkei.base-uri}") final String nikkeiBaseUri,
-            @Value("${app.config.rest-template.kabuoji3.base-uri}") final String kabuoji3BaseUri,
-            @Value("${app.config.rest-template.minkabu.base-uri}") final String minkabuBaseUri) {
+            final RestClientProperties properties,
+            @Qualifier("rest-jsoup") final RestTemplate restTemplate,
+            @Qualifier("retry-jsoup") final RetryTemplate retryTemplate,
+            final CircuitBreakerRegistry circuitBreakerRegistry) {
+        this.properties = properties;
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
-        this.nikkeiBaseUri = nikkeiBaseUri;
-        this.kabuoji3BaseUri = kabuoji3BaseUri;
-        this.minkabuBaseUri = minkabuBaseUri;
     }
 
     /**
@@ -70,7 +64,7 @@ public class JsoupClient {
         return NikkeiResultBean.ofJsoup(getForHtml(
                 CIRCUIT_BREAKER_NIKKEI,
                 code,
-                UriComponentsBuilder.fromUriString(nikkeiBaseUri)
+                UriComponentsBuilder.fromUriString(properties.getRestClient().get("nikkei").getBaseUri())
                         .path("/nkd/company/")
                         .queryParam("scode", code.substring(0, 4))
                         .toUriString()
@@ -84,7 +78,7 @@ public class JsoupClient {
      * @return 株価情報
      */
     public List<Kabuoji3ResultBean> kabuoji3(final String code) {
-        final var url = UriComponentsBuilder.fromUriString(kabuoji3BaseUri)
+        final var url = UriComponentsBuilder.fromUriString(properties.getRestClient().get("kabuoji3").getBaseUri())
                 .path("/stock/{code}/")
                 .buildAndExpand(code.substring(0, 4))
                 .toUriString();
@@ -111,7 +105,7 @@ public class JsoupClient {
         return MinkabuResultBean.ofJsoup(getForHtml(
                 CIRCUIT_BREAKER_MINKABU,
                 code,
-                UriComponentsBuilder.fromUriString(minkabuBaseUri)
+                UriComponentsBuilder.fromUriString(properties.getRestClient().get("minkabu").getBaseUri())
                         .path("/stock/{code}")
                         .buildAndExpand(code.substring(0, 4))
                         .toUriString()

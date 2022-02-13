@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.Acquisition
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequestParameter;
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
+import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -59,13 +61,12 @@ class EdinetClientTest {
         server = new MockWebServer();
         server.start();
 
-        this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(Duration.ofMillis(1), Duration.ofMillis(1)));
+        this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(properties()));
         this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder().build();
         this.client = Mockito.spy(new EdinetClient(
                 restTemplate,
-                new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
-                circuitBreakerRegistry,
-                String.format("http://localhost:%s", server.getPort())
+                new AppConfig().retryTemplateEdinet(properties()),
+                circuitBreakerRegistry
         ));
 
         Mockito.clearInvocations(client);
@@ -273,7 +274,7 @@ class EdinetClientTest {
         class circuitBreaker {
 
             private RestTemplate restTemplate;
-            private CircuitBreakerRegistry circuitBreaker;
+            private CircuitBreakerRegistry circuitBreakerRegistry;
             private EdinetClient client;
 
             @BeforeEach
@@ -281,8 +282,8 @@ class EdinetClientTest {
                 server = new MockWebServer();
                 server.start();
 
-                this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(Duration.ofMillis(1), Duration.ofMillis(1)));
-                this.circuitBreaker = new CircuitBreakerRegistry.Builder()
+                this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(properties()));
+                this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder()
                         .withCircuitBreakerConfig(
                                 new CircuitBreakerConfig.Builder()
                                         .failureRateThreshold(100)
@@ -295,9 +296,8 @@ class EdinetClientTest {
                         .build();
                 this.client = Mockito.spy(new EdinetClient(
                         restTemplate,
-                        new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
-                        circuitBreaker,
-                        String.format("http://localhost:%s", server.getPort())
+                        new AppConfig().retryTemplateEdinet(properties()),
+                        circuitBreakerRegistry
                 ));
 
                 Mockito.clearInvocations(client);
@@ -314,11 +314,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
                 assertEquals("データが取得できません。パラメータの設定値を見直してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
             }
@@ -333,11 +333,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
                 assertEquals("EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
             }
@@ -352,11 +352,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
                 assertEquals("EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
             }
@@ -371,11 +371,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
                 assertEquals("IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
             }
@@ -392,11 +392,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
                 assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。"));
-                assertEquals("CLOSED", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
                 assertTrue(Objects.requireNonNull(actual2.getMessage()).contains("リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。"));
-                assertEquals("CLOSED", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 // オープンしないからリトライは4回
                 verify(restTemplate, times(4)).getForObject(anyString(), any(), anyMap());
@@ -469,7 +469,7 @@ class EdinetClientTest {
         class circuitBreaker {
 
             private RestTemplate restTemplate;
-            private CircuitBreakerRegistry circuitBreaker;
+            private CircuitBreakerRegistry circuitBreakerRegistry;
             private EdinetClient client;
 
             @BeforeEach
@@ -477,8 +477,8 @@ class EdinetClientTest {
                 server = new MockWebServer();
                 server.start();
 
-                this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(Duration.ofMillis(1), Duration.ofMillis(1)));
-                this.circuitBreaker = new CircuitBreakerRegistry.Builder()
+                this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(properties()));
+                this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder()
                         .withCircuitBreakerConfig(
                                 new CircuitBreakerConfig.Builder()
                                         .failureRateThreshold(100)
@@ -491,9 +491,8 @@ class EdinetClientTest {
                         .build();
                 this.client = Mockito.spy(new EdinetClient(
                         restTemplate,
-                        new AppConfig().retryTemplateSelenium(2, Duration.ofMillis(1)),
-                        circuitBreaker,
-                        String.format("http://localhost:%s", server.getPort())
+                        new AppConfig().retryTemplateEdinet(properties()),
+                        circuitBreakerRegistry
                 ));
 
                 Mockito.clearInvocations(client);
@@ -511,11 +510,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
             }
@@ -531,11 +530,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
             }
@@ -551,11 +550,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
             }
@@ -571,11 +570,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", actual1.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
                 assertEquals("edinetとの通信でサーキットブレーカーがオープンしました。", actual2.getMessage());
-                assertEquals("OPEN", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
             }
@@ -593,11 +592,11 @@ class EdinetClientTest {
 
                 var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
                 assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。"));
-                assertEquals("CLOSED", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
                 assertTrue(Objects.requireNonNull(actual2.getMessage()).contains("リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。"));
-                assertEquals("CLOSED", circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
+                assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 // オープンしないからリトライは4回
                 verify(restTemplate, times(4)).execute(anyString(), any(), any(), any(), anyMap());
@@ -623,5 +622,17 @@ class EdinetClientTest {
             verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
             assertEquals(2, circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getMetrics().getNumberOfFailedCalls());
         }
+    }
+
+    private static RestClientProperties properties() {
+        var edinet = new RestClientProperties.Settings();
+        edinet.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+        edinet.setConnectTimeout(Duration.ofMillis(100));
+        edinet.setReadTimeout(Duration.ofMillis(100));
+        edinet.setMaxAttempts(2);
+        edinet.setBackOff(Duration.ofMillis(1));
+        return new RestClientProperties(Map.of(
+                "edinet", edinet
+        ));
     }
 }

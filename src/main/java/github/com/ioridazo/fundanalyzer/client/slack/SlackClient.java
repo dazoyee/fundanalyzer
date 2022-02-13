@@ -16,12 +16,10 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.Objects;
 
 @Component
@@ -32,7 +30,6 @@ public class SlackClient {
 
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
-    private final String baseUri;
     private final Environment environment;
     @Value("${app.config.slack.parameter.t}")
     String parameterT;
@@ -42,13 +39,11 @@ public class SlackClient {
     String parameterX;
 
     public SlackClient(
-            @Qualifier("slack-rest") final RestTemplate restTemplate,
-            @Qualifier("slack-retry") final RetryTemplate retryTemplate,
-            @Value("${app.config.rest-template.slack.base-uri}") final String baseUri,
+            @Qualifier("rest-slack") final RestTemplate restTemplate,
+            @Qualifier("retry-slack") final RetryTemplate retryTemplate,
             final Environment environment) {
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
-        this.baseUri = baseUri;
         this.environment = environment;
     }
 
@@ -79,12 +74,9 @@ public class SlackClient {
     }
 
     private void execute(final String message) {
-        final var url = UriComponentsBuilder.fromUriString(baseUri)
-                .path("services/{t}/{b}/{x}")
-                .buildAndExpand(Map.of("t", parameterT, "b", parameterB, "x", parameterX)).toUri();
         try {
             retryTemplate.execute(retryContext -> restTemplate.exchange(
-                    RequestEntity.post(url)
+                    RequestEntity.post(String.format("/services/%s/%s/%s", parameterT, parameterB, parameterX))
                             .contentType(MediaType.APPLICATION_JSON)
                             .body("{\"text\": \"" + message + "\"}"),
                     String.class
