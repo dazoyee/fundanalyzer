@@ -63,13 +63,9 @@ public class FinancialStatementSpecification {
             final Subject subject) throws FundanalyzerBadDataException {
         try {
             return financialStatementDao.selectByUniqueKey(
-                    document.getEdinetCode(),
+                    document.getDocumentId(),
                     fs.getId(),
-                    subject.getId(),
-                    String.valueOf(document.getPeriodEnd().getYear()),
-                    document.getDocumentTypeCode().toValue(),
-                    document.getQuarterType().toValue(),
-                    document.getSubmitDate()
+                    subject.getId()
             ).flatMap(FinancialStatementEntity::getValue);
         } catch (final NestedRuntimeException e) {
             throw new FundanalyzerBadDataException(MessageFormat.format(
@@ -110,13 +106,9 @@ public class FinancialStatementSpecification {
      */
     public Optional<Long> findNsValue(final Document document) {
         return financialStatementDao.selectByUniqueKey(
-                document.getEdinetCode(),
+                document.getDocumentId(),
                 FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getId(),
-                "0",
-                String.valueOf(document.getPeriodEnd().getYear()),
-                document.getDocumentTypeCode().toValue(),
-                document.getQuarterType().toValue(),
-                document.getSubmitDate()
+                "0"
         ).flatMap(FinancialStatementEntity::getValue);
     }
 

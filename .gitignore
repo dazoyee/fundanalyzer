@@ -5,6 +5,7 @@ target/
 !**/src/test/**
 develop/jmeter/*.log
 logs/
+bin/env
 
 ### STS ###
 .apt_generated

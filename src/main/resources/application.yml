@@ -88,7 +88,7 @@ resilience4j.circuitbreaker:
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
-      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
+      waitDurationInOpenState: 200h                        # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
     minkabu:

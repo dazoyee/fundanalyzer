@@ -18,13 +18,7 @@ public interface FinancialStatementDao {
 
     @Select
     Optional<FinancialStatementEntity> selectByUniqueKey(
-            String edinetCode,
-            String financialStatementId,
-            String subjectId,
-            String dayOfYear,
-            String documentTypeCode,
-            String quarterType,
-            LocalDate submitDate);
+            String documentId, String financialStatementId, String subjectId);
 
     @Select
     List<FinancialStatementEntity> selectByCode(String edinetCode);
