@@ -4,7 +4,7 @@ logging.level: info
 
 app:
   config:
-    rest-template:
+    rest-client:
       edinet:
         base-uri: https://disclosure.edinet-fsa.go.jp
         connect-timeout: 5s
@@ -23,6 +23,17 @@ app:
         read-timeout: 30s
         max-attempts: 3
         back-off: 5s
+      jsoup:
+        connect-timeout: 5s
+        read-timeout: 15s
+        max-attempts: 2
+        back-off: 20s
+      nikkei:
+        base-uri: https://www.nikkei.com
+      kabuoji3:
+        base-uri: https://kabuoji3.com
+      minkabu:
+        base-uri: https://minkabu.jp
 
     executor:
       core-pool-size: 50
