@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class FinancialStatementSpecificationTest {
 
     private FinancialStatementDao financialStatementDao;
@@ -71,7 +72,7 @@ class FinancialStatementSpecificationTest {
         @DisplayName("findValue : 値が存在したら値を返す")
         @Test
         void present() {
-            when(financialStatementDao.selectByUniqueKey(any(), any(), any(), any(), any(), any(), any()))
+            when(financialStatementDao.selectByUniqueKey(any(), any(), any()))
                     .thenReturn(Optional.of(new FinancialStatementEntity(
                             null,
                             null,
@@ -97,7 +98,7 @@ class FinancialStatementSpecificationTest {
         @DisplayName("findValue : 値が存在しなかったら空を返す")
         @Test
         void empty() {
-            when(financialStatementDao.selectByUniqueKey(any(), any(), any(), any(), any(), any(), any()))
+            when(financialStatementDao.selectByUniqueKey(any(), any(), any()))
                     .thenReturn(Optional.of(new FinancialStatementEntity(
                             null,
                             null,
