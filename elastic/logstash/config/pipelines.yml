@@ -1,6 +1,6 @@
 - pipeline.id: edinet_document
-  path.config: ..\config\pipeline.d\edinet_document.conf
+  path.config: .\config\pipeline.d\edinet_document.conf
 - pipeline.id: document
-  path.config: ..\config\pipeline.d\document.conf
+  path.config: .\config\pipeline.d\document.conf
 - pipeline.id: analysis_result
-  path.config: ..\config\pipeline.d\analysis_result.conf
+  path.config: .\config\pipeline.d\analysis_result.conf
