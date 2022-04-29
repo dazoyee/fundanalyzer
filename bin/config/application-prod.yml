@@ -34,6 +34,8 @@ app:
         base-uri: https://kabuoji3.com
       minkabu:
         base-uri: https://minkabu.jp
+      yahoo-finance:
+        base-uri: https://finance.yahoo.co.jp
 
     executor:
       core-pool-size: 50

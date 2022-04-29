@@ -1,5 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
@@ -7,9 +11,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
@@ -133,34 +134,28 @@ public class StockSpecification {
     /**
      * kabuoji3から取得した株価情報を登録する
      *
-     * @param code         企業コード
-     * @param kabuoji3List kabuoji3から取得した株価情報
+     * @param code     企業コード
+     * @param kabuoji3 kabuoji3から取得した株価情報
      */
-    public void insert(final String code, final List<Kabuoji3ResultBean> kabuoji3List) {
-        kabuoji3List.stream()
-                // 保存する株価を絞る
-                .filter(kabuoji3 -> LocalDate.parse(kabuoji3.getTargetDate())
-                        .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                .forEach(kabuoji3 -> {
-                    if (isEmptyStockPrice(code, kabuoji3.getTargetDate())) {
-                        try {
-                            stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
-                        } catch (NestedRuntimeException e) {
-                            if (e.contains(UniqueConstraintException.class)) {
-                                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
-                                        MessageFormat.format(
-                                                "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                                        "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.getTargetDate()
-                                        ),
-                                        Category.STOCK,
-                                        Process.REGISTER
-                                ));
-                            } else {
-                                throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
-                            }
-                        }
-                    }
-                });
+    public void insert(final String code, final Kabuoji3ResultBean kabuoji3) {
+        if (isEmptyStockPrice(code, kabuoji3.getTargetDate())) {
+            try {
+                stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
+            } catch (NestedRuntimeException e) {
+                if (e.contains(UniqueConstraintException.class)) {
+                    log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                            MessageFormat.format(
+                                    "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                                            "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.getTargetDate()
+                            ),
+                            Category.STOCK,
+                            Process.REGISTER
+                    ));
+                } else {
+                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+                }
+            }
+        }
     }
 
     /**
@@ -172,6 +167,33 @@ public class StockSpecification {
     public void insert(final String code, final MinkabuResultBean minkabu) {
         if (!isPresentMinkabu(code, minkabu.getTargetDate())) {
             minkabuDao.insert(MinkabuEntity.ofMinkabuResultBean(code, minkabu, nowLocalDateTime()));
+        }
+    }
+
+    /**
+     * yahoo-financeから取得した株価情報を登録する
+     *
+     * @param code         企業コード
+     * @param yahooFinance yahoo-financeから取得した株価情報
+     */
+    public void insert(final String code, final YahooFinanceResultBean yahooFinance) {
+        if (isEmptyStockPrice(code, yahooFinance.getTargetDate())) {
+            try {
+                stockPriceDao.insert(StockPriceEntity.ofYahooFinanceResultBean(code, yahooFinance, nowLocalDateTime()));
+            } catch (NestedRuntimeException e) {
+                if (e.contains(UniqueConstraintException.class)) {
+                    log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                            MessageFormat.format(
+                                    "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                                            "\t企業コード:{0}\t対象日:{1}", code, yahooFinance.getTargetDate()
+                            ),
+                            Category.STOCK,
+                            Process.REGISTER
+                    ));
+                } else {
+                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+                }
+            }
         }
     }
 
@@ -229,6 +251,8 @@ public class StockSpecification {
             final LocalDate targetDate;
             if (targetDateAsString.contains("/")) {
                 targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
+            } else if (targetDateAsString.contains("月") && targetDateAsString.contains("日")) {
+                targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy年M月d日"));
             } else {
                 targetDate = LocalDate.parse(targetDateAsString);
             }

@@ -16,10 +16,12 @@ import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,6 +36,9 @@ public class StockInteractor implements StockUseCase {
     private final StockSpecification stockSpecification;
     private final JsoupClient jsoupClient;
 
+    @Value("${app.config.stock.store-stock-price-for-last-days}")
+    int daysToStoreStockPrice;
+
     public StockInteractor(
             final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
@@ -43,6 +48,10 @@ public class StockInteractor implements StockUseCase {
         this.documentSpecification = documentSpecification;
         this.stockSpecification = stockSpecification;
         this.jsoupClient = jsoupClient;
+    }
+
+    LocalDate nowLocalDate() {
+        return LocalDate.now();
     }
 
     /**
@@ -63,7 +72,7 @@ public class StockInteractor implements StockUseCase {
                 .distinct()
                 .collect(Collectors.toList());
 
-        List.of(Place.NIKKEI, Place.KABUOJI3, Place.MINKABU).forEach(place -> {
+        List.of(Place.NIKKEI, Place.KABUOJI3, Place.MINKABU, Place.YAHOO_FINANCE).forEach(place -> {
             try {
                 inputDataList.parallelStream().forEach(code -> importStockPrice(code, place));
             } catch (final FundanalyzerShortCircuitException e) {
@@ -104,11 +113,22 @@ public class StockInteractor implements StockUseCase {
                     break;
                 case KABUOJI3:
                     // kabuoji3
-                    stockSpecification.insert(inputData.getCode5(), jsoupClient.kabuoji3(inputData.getCode5()));
+                    jsoupClient.kabuoji3(inputData.getCode5()).stream()
+                            // 保存する株価を絞る
+                            .filter(kabuoji3 -> LocalDate.parse(kabuoji3.getTargetDate())
+                                    .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                            .forEach(kabuoji3 -> stockSpecification.insert(inputData.getCode5(), kabuoji3));
                     break;
                 case MINKABU:
                     // みんかぶ
                     stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
+                    break;
+                case YAHOO_FINANCE:
+                    jsoupClient.yahooFinance(inputData.getCode5()).stream()
+                            // 保存する株価を絞る
+                            .filter(yahooFinance -> LocalDate.parse(yahooFinance.getTargetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
+                                    .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                            .forEach(yahooFinance -> stockSpecification.insert(inputData.getCode5(), yahooFinance));
                     break;
                 default:
                     throw new FundanalyzerRuntimeException();

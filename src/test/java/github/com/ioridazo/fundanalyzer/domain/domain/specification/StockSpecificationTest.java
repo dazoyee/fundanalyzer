@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,15 +16,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class StockSpecificationTest {
 
     private StockPriceDao stockPriceDao;
@@ -279,50 +275,6 @@ class StockSpecificationTest {
             var actual = stockSpecification.findTargetDateToDelete();
             assertEquals(LocalDate.parse("2019-06-06"), actual.get(0));
             assertEquals(1, actual.size());
-        }
-    }
-
-    @Nested
-    class insert {
-
-        @BeforeEach
-        void setUp() {
-            doReturn(LocalDate.parse("2021-06-06")).when(stockSpecification).nowLocalDate();
-        }
-
-        @DisplayName("insert : kabuoji3から取得した株価情報の保存する期間を絞る")
-        @Test
-        void kabuoji3() {
-            assertDoesNotThrow(() -> stockSpecification.insert("code", List.of(
-                    Kabuoji3ResultBean.of(
-                            "2019-06-05",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000"
-                    ),
-                    Kabuoji3ResultBean.of(
-                            "2020-06-05",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000"
-                    ),
-                    Kabuoji3ResultBean.of(
-                            "2021-06-05",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000"
-                    )
-            )));
-            verify(stockPriceDao, times(1)).insert(any());
         }
     }
 }

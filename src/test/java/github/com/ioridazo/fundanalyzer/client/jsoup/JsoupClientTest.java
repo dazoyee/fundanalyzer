@@ -66,12 +66,15 @@ class JsoupClientTest {
         kabuoji3.setBaseUri(String.format("http://localhost:%s", server.getPort()));
         var minkabu = new RestClientProperties.Settings();
         minkabu.setBaseUri(String.format("http://localhost:%s", server.getPort()));
+        var yahooFinance = new RestClientProperties.Settings();
+        yahooFinance.setBaseUri(String.format("http://localhost:%s", server.getPort()));
 
         return new RestClientProperties(Map.of(
                 "jsoup", jsoup,
                 "nikkei", nikkei,
                 "kabuoji3", kabuoji3,
-                "minkabu", minkabu
+                "minkabu", minkabu,
+                "yahoo-finance", yahooFinance
         ));
     }
 
@@ -89,6 +92,7 @@ class JsoupClientTest {
                 retryTemplate,
                 circuitBreakerRegistry
         ));
+        this.client.yahooPages = 1;
 
         Mockito.clearInvocations(client);
         Mockito.reset(client);
@@ -107,7 +111,7 @@ class JsoupClientTest {
     class nikkei {
 
         @DisplayName("nikkei : 実際に日経の会社コードによる株価情報を取得する")
-//        @Test
+            // @Test
         void nikkei_test() {
             var jsoup = new RestClientProperties.Settings();
             jsoup.setConnectTimeout(Duration.ofMillis(10000));
@@ -116,9 +120,11 @@ class JsoupClientTest {
             jsoup.setBackOff(Duration.ofMillis(0));
             var nikkei = new RestClientProperties.Settings();
             nikkei.setBaseUri("https://www.nikkei.com");
+
+            var properties = new RestClientProperties(Map.of("jsoup", jsoup, "nikkei", nikkei));
             client = spy(new JsoupClient(
-                    new RestClientProperties(Map.of("jsoup", jsoup, "nikkei", nikkei)),
-                    restTemplate,
+                    properties,
+                    Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
                     circuitBreakerRegistry
             ));
@@ -220,9 +226,11 @@ class JsoupClientTest {
             jsoup.setBackOff(Duration.ofMillis(0));
             var kabuoji3 = new RestClientProperties.Settings();
             kabuoji3.setBaseUri("https://kabuoji3.com");
+
+            var properties = new RestClientProperties(Map.of("jsoup", jsoup, "kabuoji3", kabuoji3));
             client = spy(new JsoupClient(
-                    new RestClientProperties(Map.of("jsoup", jsoup, "kabuoji3", kabuoji3)),
-                    restTemplate,
+                    properties,
+                    Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
                     circuitBreakerRegistry
             ));
@@ -289,9 +297,11 @@ class JsoupClientTest {
             jsoup.setBackOff(Duration.ofMillis(0));
             var minkabu = new RestClientProperties.Settings();
             minkabu.setBaseUri("https://minkabu.jp");
+
+            var properties = new RestClientProperties(Map.of("jsoup", jsoup, "minkabu", minkabu));
             client = spy(new JsoupClient(
-                    new RestClientProperties(Map.of("jsoup", jsoup, "minkabu", minkabu)),
-                    restTemplate,
+                    properties,
+                    Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
                     circuitBreakerRegistry
             ));
@@ -377,6 +387,77 @@ class JsoupClientTest {
                     .toUriString();
 
             System.out.println(Jsoup.connect(url).get());
+        }
+    }
+
+    @Nested
+    class yahooFinance {
+
+        @DisplayName("yahoo-finance : 実際にyahoo-financeの会社コードによる株価情報を取得する")
+            // @Test
+        void yahooFinance_test() {
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(1000));
+            jsoup.setReadTimeout(Duration.ofMillis(1000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(1000));
+            var yahooFinance = new RestClientProperties.Settings();
+            yahooFinance.setBaseUri("https://finance.yahoo.co.jp");
+
+            var properties = new RestClientProperties(Map.of("jsoup", jsoup, "yahoo-finance", yahooFinance));
+            client = spy(new JsoupClient(
+                    properties,
+                    Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
+                    retryTemplate,
+                    circuitBreakerRegistry
+            ));
+
+            var code = "9434";
+            var actual = client.yahooFinance(code);
+
+            assertNotNull(actual);
+            actual.forEach(System.out::println);
+        }
+
+        @DisplayName("yahoo-finance : yahoo-financeの会社コードによる株価情報を取得する")
+        @Test
+        void yahooFinance_ok() throws IOException {
+            var code = "9999";
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/yahoo-finance/yahoo-finance.html");
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
+            var actual = client.yahooFinance(code);
+
+            actual.forEach(System.out::println);
+            assertAll("YahooFinanceResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("2022年4月27日", actual.get(0).getTargetDate()),
+                            () -> assertEquals("1,484.5", actual.get(0).getOpeningPrice()),
+                            () -> assertEquals("1,503", actual.get(0).getHighPrice()),
+                            () -> assertEquals("1,474", actual.get(0).getLowPrice()),
+                            () -> assertEquals("1,501", actual.get(0).getClosingPrice()),
+                            () -> assertEquals("17,847,600", actual.get(0).getVolume()),
+                            () -> assertEquals("1,501", actual.get(0).getClosingPriceAdjustment())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("2022年4月26日", actual.get(1).getTargetDate()),
+                            () -> assertEquals("1,487.5", actual.get(1).getOpeningPrice()),
+                            () -> assertEquals("1,489", actual.get(1).getHighPrice()),
+                            () -> assertEquals("1,479", actual.get(1).getLowPrice()),
+                            () -> assertEquals("1,480.5", actual.get(1).getClosingPrice()),
+                            () -> assertEquals("6,474,600", actual.get(1).getVolume()),
+                            () -> assertEquals("1,480.5", actual.get(1).getClosingPriceAdjustment())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("2022年3月31日", actual.get(19).getTargetDate()),
+                            () -> assertEquals("1,432", actual.get(19).getOpeningPrice()),
+                            () -> assertEquals("1,440.5", actual.get(19).getHighPrice()),
+                            () -> assertEquals("1,425.5", actual.get(19).getLowPrice()),
+                            () -> assertEquals("1,428", actual.get(19).getClosingPrice()),
+                            () -> assertEquals("13,433,600", actual.get(19).getVolume()),
+                            () -> assertEquals("1,428", actual.get(19).getClosingPriceAdjustment())
+                    )
+            );
+            assertEquals(20, actual.size());
         }
     }
 

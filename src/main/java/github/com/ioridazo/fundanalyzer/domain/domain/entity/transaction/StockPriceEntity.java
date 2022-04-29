@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Parser;
 import lombok.Value;
 import org.seasar.doma.Column;
@@ -117,6 +118,37 @@ public class StockPriceEntity {
                 null,
                 null,
                 "2",
+                createdAt
+        );
+    }
+
+    /**
+     * yahoo-financeのスクレイピング結果からデータベース登録するためにマッピングする
+     *
+     * @param code         会社コード
+     * @param yahooFinance yahoo-financeのスクレイピング結果
+     * @param createdAt    登録日
+     * @return StockPrice
+     */
+    public static StockPriceEntity ofYahooFinanceResultBean(
+            final String code, final YahooFinanceResultBean yahooFinance, final LocalDateTime createdAt) {
+        return new StockPriceEntity(
+                null,
+                code,
+                LocalDate.parse(yahooFinance.getTargetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日")),
+                Parser.parseDoubleStock(yahooFinance.getClosingPrice()).orElse(null),
+                Parser.parseDoubleStock(yahooFinance.getOpeningPrice()).orElse(null),
+                Parser.parseDoubleStock(yahooFinance.getHighPrice()).orElse(null),
+                Parser.parseDoubleStock(yahooFinance.getLowPrice()).orElse(null),
+                Parser.parseIntegerStock(yahooFinance.getVolume()).orElse(null),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "3",
                 createdAt
         );
     }

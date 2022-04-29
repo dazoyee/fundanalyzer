@@ -101,6 +101,16 @@ resilience4j.circuitbreaker:
       waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
+    yahoo-finance:
+      registerHealthIndicator: true
+      failureRateThreshold: 100                           # OPENへの閾値
+      permittedNumberOfCallsInHalfOpenState: 1            # HALF_OPENの時に許可する呼び出し回数
+      slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
+      slidingWindowSize: 10                               # OPENするかを計算する母数
+      minimumNumberOfCalls: 10                            # 最低エラー回数
+      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
+      automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
+      recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
 
 app:
   config:
@@ -134,6 +144,8 @@ app:
         base-uri: https://kabuoji3.com
       minkabu:
         base-uri: https://minkabu.jp
+      yahoo-finance:
+        base-uri: https://finance.yahoo.co.jp
 
     executor:
       core-pool-size: 50
