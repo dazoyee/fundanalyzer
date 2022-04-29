@@ -195,6 +195,7 @@ public class AnalysisService {
         stockUseCase.importStockPrice(inputData, StockUseCase.Place.NIKKEI);
         stockUseCase.importStockPrice(inputData, StockUseCase.Place.KABUOJI3);
         stockUseCase.importStockPrice(inputData, StockUseCase.Place.MINKABU);
+        stockUseCase.importStockPrice(inputData, StockUseCase.Place.YAHOO_FINANCE);
     }
 
     /**

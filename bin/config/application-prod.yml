@@ -34,6 +34,8 @@ app:
         base-uri: https://kabuoji3.com
       minkabu:
         base-uri: https://minkabu.jp
+      yahoo-finance:
+        base-uri: https://finance.yahoo.co.jp
 
     executor:
       core-pool-size: 50
@@ -49,11 +51,18 @@ app:
       no-company: E31748
       # 日本郵政株式会社
 
+    stock:
+      nikkei.enabled: true
+      kabuoji3.enabled: false
+      minkabu.enabled: true
+      yahoo-finance.enabled: true
+
     remove-document:
-      company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840
+      document-type-code: 140,150
+      company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840,E05156,E02274
       # マネックスグループ株式会社,株式会社クレディセゾン,株式会社日立製作所,ポート株式会社,プレミアグループ株式会社,株式会社荏原製作所
       # アルヒ株式会社,Ｊトラスト株式会社,日本ユニシス株式会社,楽天グループ株式会社,日本ハム株式会社,ユニ・チャーム株式会社,ＨＯＹＡ株式会社
-      # 協和キリン株式会社,株式会社リログループ,三井化学株式会社
+      # 協和キリン株式会社,株式会社リログループ,三井化学株式会社,株式会社デジタルガレージ,キヤノン株式会社
 
   settings:
     file:
@@ -82,5 +91,6 @@ app:
       update-view: 2  # 時に処理実施
       recover-document-period: 1  # 時に処理実施
 
+    stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
     recover-document-period.past-days: 30  # 日間に遡って処理実施

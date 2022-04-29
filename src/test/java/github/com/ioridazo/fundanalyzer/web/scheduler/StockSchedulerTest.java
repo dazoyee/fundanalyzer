@@ -1,9 +1,10 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,10 +25,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class StockSchedulerTest {
 
     private AnalysisService analysisService;
-    private DocumentSpecification documentSpecification;
+    private StockSpecification stockSpecification;
     private SlackClient slackClient;
 
     private StockScheduler scheduler;
@@ -36,43 +37,22 @@ class StockSchedulerTest {
     @BeforeEach
     void setUp() {
         this.analysisService = Mockito.mock(AnalysisService.class);
-        this.documentSpecification = Mockito.mock(DocumentSpecification.class);
+        this.stockSpecification = Mockito.mock(StockSpecification.class);
         this.slackClient = Mockito.mock(SlackClient.class);
 
-        this.scheduler = Mockito.spy(new StockScheduler(analysisService, documentSpecification, slackClient));
+        this.scheduler = Mockito.spy(new StockScheduler(analysisService, stockSpecification, slackClient));
         scheduler.hourOfStock = 13;
     }
 
     @Nested
     class stockScheduler {
 
-        @DisplayName("stockScheduler : 日が一致する提出日の会社の株価を更新する")
-        @Test
-        void insertStockScheduler_ok() {
-            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
-
-            doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
-            when(documentSpecification.stockSchedulerTargetList("6")).thenReturn(List.of(
-                    LocalDate.parse("2021-01-06"),
-                    LocalDate.parse("2021-02-06")
-            ));
-
-            assertDoesNotThrow(() -> scheduler.stockScheduler());
-            verify(analysisService, times(1)).importStock(DateInputData.of(LocalDate.parse("2021-01-06")));
-            verify(analysisService, times(1)).importStock(DateInputData.of(LocalDate.parse("2021-02-06")));
-            verify(slackClient, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 2);
-        }
-
         @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
         @Test
         void insertStockScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
-
-            doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
-            when(documentSpecification.stockSchedulerTargetList("6")).thenReturn(List.of(
-                    LocalDate.parse("2021-02-06")
-            ));
-            doThrow(new FundanalyzerRuntimeException()).when(analysisService).importStock((DateInputData) any());
+            when(stockSpecification.findTargetCodeForStockScheduler()).thenReturn(List.of("code"));
+            doThrow(new FundanalyzerRuntimeException()).when(analysisService).importStock((CodeInputData) any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());
             verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
@@ -82,8 +62,6 @@ class StockSchedulerTest {
         @Test
         void deleteStockScheduler_ok() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
-
-            doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
             when(analysisService.deleteStock()).thenReturn(1);
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
@@ -95,8 +73,6 @@ class StockSchedulerTest {
         @Test
         void deleteStockScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
-
-            doReturn(LocalDate.parse("2021-02-06")).when(scheduler).nowLocalDate();
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).deleteStock();
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());

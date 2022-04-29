@@ -59,8 +59,8 @@ management:
     tags:
       application: ${spring.application.name}
 
-resilience4j.circuitbreaker:
-  instances:
+resilience4j:
+  circuitbreaker.instances:
     edinet:
       registerHealthIndicator: true
       failureRateThreshold: 100                           # OPENへの閾値
@@ -69,7 +69,7 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
       waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
-      automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
+      automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient.RecordFailurePredicate
     nikkei:
       registerHealthIndicator: true
@@ -79,7 +79,7 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
       waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
-      automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
+      automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
     kabuoji3:
       registerHealthIndicator: true
@@ -88,8 +88,8 @@ resilience4j.circuitbreaker:
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
-      waitDurationInOpenState: 200h                        # OPENからHALF_OPENに移行するまでの時間
-      automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
+      waitDurationInOpenState: 200h                       # OPENからHALF_OPENに移行するまでの時間
+      automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
     minkabu:
       registerHealthIndicator: true
@@ -99,8 +99,40 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 10                               # OPENするかを計算する母数
       minimumNumberOfCalls: 10                            # 最低エラー回数
       waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
-      automaticTransitionFromOpenToHalfOpenEnabled: true  # 自動でHALF_OPENにするか
+      automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
+    yahoo-finance:
+      registerHealthIndicator: true
+      failureRateThreshold: 100                           # OPENへの閾値
+      permittedNumberOfCallsInHalfOpenState: 1            # HALF_OPENの時に許可する呼び出し回数
+      slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
+      slidingWindowSize: 10                               # OPENするかを計算する母数
+      minimumNumberOfCalls: 10                            # 最低エラー回数
+      waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
+      automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
+      recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
+
+  ratelimiter.instances:
+    nikkei:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    kabuoji3:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    minkabu:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    yahoo-finance:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
   config:
@@ -134,6 +166,8 @@ app:
         base-uri: https://kabuoji3.com
       minkabu:
         base-uri: https://minkabu.jp
+      yahoo-finance:
+        base-uri: https://finance.yahoo.co.jp
 
     executor:
       core-pool-size: 50
@@ -156,15 +190,19 @@ app:
       # 日本郵政株式会社
 
     stock:
+      nikkei.enabled: true
+      kabuoji3.enabled: false
+      minkabu.enabled: true
+      yahoo-finance.enabled: true
       average-stock-price-for-last-days: 30  # 株価平均値の期間
-      store-stock-price-for-last-days: 365  # 株価の保存期間
+      store-stock-price-for-last-days: 400  # 株価の保存期間
 
     remove-document:
       document-type-code: 140,150
-      company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840
+      company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840,E05156,E02274
       # マネックスグループ株式会社,株式会社クレディセゾン,株式会社日立製作所,ポート株式会社,プレミアグループ株式会社,株式会社荏原製作所
       # アルヒ株式会社,Ｊトラスト株式会社,日本ユニシス株式会社,楽天グループ株式会社,日本ハム株式会社,ユニ・チャーム株式会社,ＨＯＹＡ株式会社
-      # 協和キリン株式会社,株式会社リログループ,三井化学株式会社
+      # 協和キリン株式会社,株式会社リログループ,三井化学株式会社,株式会社デジタルガレージ,キヤノン株式会社
 
   settings:
     file:
@@ -183,5 +221,6 @@ app:
       update-view: 2  # 時に処理実施
       recover-document-period: 1  # 時に処理実施
 
+    stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
     recover-document-period.past-days: 30  # 日間に遡って処理実施

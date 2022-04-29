@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,21 +13,20 @@ import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("NewClassNamingConvention")
 class StockSpecificationTest {
 
     private StockPriceDao stockPriceDao;
+    private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
 
     private StockSpecification stockSpecification;
@@ -36,14 +34,17 @@ class StockSpecificationTest {
     @BeforeEach
     void setUp() {
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
 
         stockSpecification = Mockito.spy(new StockSpecification(
                 stockPriceDao,
                 Mockito.mock(MinkabuDao.class),
+                companySpecification,
                 documentSpecification
         ));
         stockSpecification.daysToAverageStockPrice = 30;
+        stockSpecification.targetCompanyNumber = 1;
         stockSpecification.daysToStoreStockPrice = 365;
     }
 
@@ -260,6 +261,102 @@ class StockSpecificationTest {
     }
 
     @Nested
+    class findTargetCodeForStockScheduler {
+
+        @DisplayName("findTargetCodeForStockScheduler : 最新登録日が古い会社コードを取得する")
+        @Test
+        void getCode() {
+            when(companySpecification.allTargetCompanies()).thenReturn(List.of(
+                    new Company(
+                            "code1",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Company(
+                            "code2",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    )));
+            when(stockPriceDao.selectByCode("code1")).thenReturn(List.of(
+                    new StockPriceEntity(
+                            null,
+                            "code1",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.of(2021, 4, 29, 0, 0)
+                    ),
+                    new StockPriceEntity(
+                            null,
+                            "code1",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.of(2022, 4, 29, 0, 0)
+                    )));
+            when(stockPriceDao.selectByCode("code2")).thenReturn(List.of(
+                    new StockPriceEntity(
+                            null,
+                            "code2",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.of(2022, 4, 30, 0, 0)
+                    )));
+
+            var actual = stockSpecification.findTargetCodeForStockScheduler();
+
+            assertEquals("code1", actual.get(0));
+            assertEquals(1, actual.size());
+        }
+    }
+
+    @Nested
     class findTargetDateToDelete {
 
         @BeforeEach
@@ -279,50 +376,6 @@ class StockSpecificationTest {
             var actual = stockSpecification.findTargetDateToDelete();
             assertEquals(LocalDate.parse("2019-06-06"), actual.get(0));
             assertEquals(1, actual.size());
-        }
-    }
-
-    @Nested
-    class insert {
-
-        @BeforeEach
-        void setUp() {
-            doReturn(LocalDate.parse("2021-06-06")).when(stockSpecification).nowLocalDate();
-        }
-
-        @DisplayName("insert : kabuoji3から取得した株価情報の保存する期間を絞る")
-        @Test
-        void kabuoji3() {
-            assertDoesNotThrow(() -> stockSpecification.insert("code", List.of(
-                    Kabuoji3ResultBean.of(
-                            "2019-06-05",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000"
-                    ),
-                    Kabuoji3ResultBean.of(
-                            "2020-06-05",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000"
-                    ),
-                    Kabuoji3ResultBean.of(
-                            "2021-06-05",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000",
-                            "1000"
-                    )
-            )));
-            verify(stockPriceDao, times(1)).insert(any());
         }
     }
 }
