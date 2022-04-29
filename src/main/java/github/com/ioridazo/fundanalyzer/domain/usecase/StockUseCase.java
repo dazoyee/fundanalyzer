@@ -34,6 +34,7 @@ public interface StockUseCase {
     enum Place {
         NIKKEI,
         KABUOJI3,
-        MINKABU
+        MINKABU,
+        YAHOO_FINANCE,
     }
 }

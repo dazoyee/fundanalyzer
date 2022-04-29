@@ -4,16 +4,19 @@
         <Console name="LogToConsole" target="SYSTEM_OUT">
             <EcsLayout serviceName="fundanalyzer"/>
         </Console>
-        <File name="LogToFile" fileName="../logs/fundanalyzer.log">
-            <EcsLayout serviceName="fundanalyzer" spaceName="dev">
+        <RollingFile name="RollingFile" fileName="../logs/fundanalyzer.log" filePattern="../logs/fundanalyzer-%d{yyyy-MM-dd}.zip">
+            <EcsLayout serviceName="fundanalyzer" spaceName="prod">
                 <KeyValuePair key="space.name" value="production"/>
             </EcsLayout>
-        </File>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="LogToFile"/>
             <AppenderRef ref="LogToConsole"/>
+            <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 </Configuration>

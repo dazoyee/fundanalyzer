@@ -5,16 +5,19 @@
 <!--            <EcsLayout serviceName="fundanalyzer"/>-->
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c : %msg%n"/>
         </Console>
-        <File name="LogToFile" fileName="./logs/fundanalyzer.log">
+        <RollingFile name="RollingFile" fileName="./logs/fundanalyzer.log" filePattern="./logs/fundanalyzer-%d{yyyy-MM-dd}.zip">
             <EcsLayout serviceName="fundanalyzer" spaceName="dev">
                 <KeyValuePair key="space.name" value="develop"/>
             </EcsLayout>
-        </File>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="LogToFile"/>
             <AppenderRef ref="LogToConsole"/>
+            <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 </Configuration>
