@@ -45,19 +45,24 @@ public class StockSpecification {
 
     private final StockPriceDao stockPriceDao;
     private final MinkabuDao minkabuDao;
+    private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
 
     @Value("${app.config.stock.average-stock-price-for-last-days}")
     int daysToAverageStockPrice;
+    @Value("${app.scheduler.stock.target-company.number}")
+    int targetCompanyNumber;
     @Value("${app.config.stock.store-stock-price-for-last-days}")
     int daysToStoreStockPrice;
 
     public StockSpecification(
             final StockPriceDao stockPriceDao,
             final MinkabuDao minkabuDao,
+            final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification) {
         this.stockPriceDao = stockPriceDao;
         this.minkabuDao = minkabuDao;
+        this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
     }
 
@@ -106,6 +111,27 @@ public class StockSpecification {
                 stockPriceList,
                 minkabuList
         );
+    }
+
+    /**
+     * スケジューラで株価取得するときの対象会社リストを取得する
+     *
+     * @return 会社コードリスト
+     */
+    public List<String> findTargetCodeForStockScheduler() {
+        return companySpecification.allTargetCompanies().stream()
+                .map(Company::getCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                // 会社毎に最新の登録日を抽出する
+                .map(code -> stockPriceDao.selectByCode(code).stream()
+                        .max(Comparator.comparing(StockPriceEntity::getCreatedAt)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparing(StockPriceEntity::getCreatedAt))
+                .limit(targetCompanyNumber)
+                .map(StockPriceEntity::getCompanyCode)
+                .collect(Collectors.toList());
     }
 
     /**

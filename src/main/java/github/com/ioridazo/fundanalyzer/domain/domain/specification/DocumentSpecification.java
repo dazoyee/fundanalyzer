@@ -186,19 +186,6 @@ public class DocumentSpecification {
     }
 
     /**
-     * スケジューラで株価取得するときの対象提出日リストを取得する
-     *
-     * @param dayOfMonth 日
-     * @return 提出日リスト
-     */
-    public List<LocalDate> stockSchedulerTargetList(final String dayOfMonth) {
-        return documentDao.selectByDayOfSubmitDate(dayOfMonth).stream()
-                .map(DocumentEntity::getSubmitDate)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
-    /**
      * スクレイピング処理状況に関するドキュメント情報リストを取得する
      *
      * @param targetList 処理対象となるドキュメント情報リスト

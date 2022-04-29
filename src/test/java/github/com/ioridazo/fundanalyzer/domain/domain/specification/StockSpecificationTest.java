@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.when;
 class StockSpecificationTest {
 
     private StockPriceDao stockPriceDao;
+    private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
 
     private StockSpecification stockSpecification;
@@ -32,14 +34,17 @@ class StockSpecificationTest {
     @BeforeEach
     void setUp() {
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
 
         stockSpecification = Mockito.spy(new StockSpecification(
                 stockPriceDao,
                 Mockito.mock(MinkabuDao.class),
+                companySpecification,
                 documentSpecification
         ));
         stockSpecification.daysToAverageStockPrice = 30;
+        stockSpecification.targetCompanyNumber = 1;
         stockSpecification.daysToStoreStockPrice = 365;
     }
 
@@ -252,6 +257,102 @@ class StockSpecificationTest {
             var actual = stockSpecification.findStock(company);
 
             assertNull(actual.getAverageStockPrice().orElse(null));
+        }
+    }
+
+    @Nested
+    class findTargetCodeForStockScheduler {
+
+        @DisplayName("findTargetCodeForStockScheduler : 最新登録日が古い会社コードを取得する")
+        @Test
+        void getCode() {
+            when(companySpecification.allTargetCompanies()).thenReturn(List.of(
+                    new Company(
+                            "code1",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    ),
+                    new Company(
+                            "code2",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null
+                    )));
+            when(stockPriceDao.selectByCode("code1")).thenReturn(List.of(
+                    new StockPriceEntity(
+                            null,
+                            "code1",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.of(2021, 4, 29, 0, 0)
+                    ),
+                    new StockPriceEntity(
+                            null,
+                            "code1",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.of(2022, 4, 29, 0, 0)
+                    )));
+            when(stockPriceDao.selectByCode("code2")).thenReturn(List.of(
+                    new StockPriceEntity(
+                            null,
+                            "code2",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            LocalDateTime.of(2022, 4, 30, 0, 0)
+                    )));
+
+            var actual = stockSpecification.findTargetCodeForStockScheduler();
+
+            assertEquals("code1", actual.get(0));
+            assertEquals(1, actual.size());
         }
     }
 

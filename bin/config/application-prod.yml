@@ -91,5 +91,6 @@ app:
       update-view: 2  # 時に処理実施
       recover-document-period: 1  # 時に処理実施
 
+    stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
     recover-document-period.past-days: 30  # 日間に遡って処理実施
