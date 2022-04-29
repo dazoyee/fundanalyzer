@@ -51,6 +51,12 @@ app:
       no-company: E31748
       # 日本郵政株式会社
 
+    stock:
+      nikkei.enabled: true
+      kabuoji3.enabled: false
+      minkabu.enabled: true
+      yahoo-finance.enabled: true
+
     remove-document:
       document-type-code: 140,150
       company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840,E05156,E02274

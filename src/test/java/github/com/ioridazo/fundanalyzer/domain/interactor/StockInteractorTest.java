@@ -58,6 +58,10 @@ class StockInteractorTest {
                 stockSpecification,
                 jsoupClient
         ));
+        stockInteractor.isNikkei = true;
+        stockInteractor.isKabuoji3 = true;
+        stockInteractor.isMinkabu = true;
+        stockInteractor.isYahooFinance = true;
         stockInteractor.daysToStoreStockPrice = 365;
     }
 
@@ -181,6 +185,34 @@ class StockInteractorTest {
                     break;
                 case YAHOO_FINANCE:
                     verify(stockSpecification, times(1)).insert(eq("code0"), (YahooFinanceResultBean) any());
+                    break;
+            }
+        }
+
+        @DisplayName("importStockPrice : 株価を取得しない")
+        @ParameterizedTest
+        @EnumSource(StockUseCase.Place.class)
+        void code_nothing(StockUseCase.Place place) {
+            stockInteractor.isNikkei = false;
+            stockInteractor.isKabuoji3 = false;
+            stockInteractor.isMinkabu = false;
+            stockInteractor.isYahooFinance = false;
+
+            CodeInputData inputData = CodeInputData.of("code0");
+
+            assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
+            switch (place) {
+                case NIKKEI:
+                    verify(stockSpecification, times(0)).insert(eq("code0"), (NikkeiResultBean) any());
+                    break;
+                case KABUOJI3:
+                    verify(stockSpecification, times(0)).insert(eq("code0"), (Kabuoji3ResultBean) any());
+                    break;
+                case MINKABU:
+                    verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
+                    break;
+                case YAHOO_FINANCE:
+                    verify(stockSpecification, times(0)).insert(eq("code0"), (YahooFinanceResultBean) any());
                     break;
             }
         }

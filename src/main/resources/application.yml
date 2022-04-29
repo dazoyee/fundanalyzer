@@ -190,6 +190,10 @@ app:
       # 日本郵政株式会社
 
     stock:
+      nikkei.enabled: true
+      kabuoji3.enabled: false
+      minkabu.enabled: true
+      yahoo-finance.enabled: true
       average-stock-price-for-last-days: 30  # 株価平均値の期間
       store-stock-price-for-last-days: 365  # 株価の保存期間
 

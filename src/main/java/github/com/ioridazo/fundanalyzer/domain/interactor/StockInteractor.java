@@ -37,6 +37,14 @@ public class StockInteractor implements StockUseCase {
     private final StockSpecification stockSpecification;
     private final JsoupClient jsoupClient;
 
+    @Value("${app.config.stock.nikkei.enabled}")
+    boolean isNikkei;
+    @Value("${app.config.stock.kabuoji3.enabled}")
+    boolean isKabuoji3;
+    @Value("${app.config.stock.minkabu.enabled}")
+    boolean isMinkabu;
+    @Value("${app.config.stock.yahoo-finance.enabled}")
+    boolean isYahooFinance;
     @Value("${app.config.stock.store-stock-price-for-last-days}")
     int daysToStoreStockPrice;
 
@@ -109,27 +117,36 @@ public class StockInteractor implements StockUseCase {
         try {
             switch (place) {
                 case NIKKEI:
-                    // 日経
-                    stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
+                    if (isNikkei) {
+                        // 日経
+                        stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
+                    }
                     break;
                 case KABUOJI3:
-                    // kabuoji3
-                    jsoupClient.kabuoji3(inputData.getCode5()).stream()
-                            // 保存する株価を絞る
-                            .filter(kabuoji3 -> LocalDate.parse(kabuoji3.getTargetDate())
-                                    .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                            .forEach(kabuoji3 -> stockSpecification.insert(inputData.getCode5(), kabuoji3));
+                    if (isKabuoji3) {
+                        // kabuoji3
+                        jsoupClient.kabuoji3(inputData.getCode5()).stream()
+                                // 保存する株価を絞る
+                                .filter(kabuoji3 -> LocalDate.parse(kabuoji3.getTargetDate())
+                                        .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                                .forEach(kabuoji3 -> stockSpecification.insert(inputData.getCode5(), kabuoji3));
+                    }
                     break;
                 case MINKABU:
-                    // みんかぶ
-                    stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
+                    if (isMinkabu) {
+                        // みんかぶ
+                        stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
+                    }
                     break;
                 case YAHOO_FINANCE:
-                    jsoupClient.yahooFinance(inputData.getCode5()).stream()
-                            // 保存する株価を絞る
-                            .filter(yahooFinance -> LocalDate.parse(yahooFinance.getTargetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
-                                    .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                            .forEach(yahooFinance -> stockSpecification.insert(inputData.getCode5(), yahooFinance));
+                    if (isYahooFinance) {
+                        // Yahoo! ファイナンス
+                        jsoupClient.yahooFinance(inputData.getCode5()).stream()
+                                // 保存する株価を絞る
+                                .filter(yahooFinance -> LocalDate.parse(yahooFinance.getTargetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
+                                        .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                                .forEach(yahooFinance -> stockSpecification.insert(inputData.getCode5(), yahooFinance));
+                    }
                     break;
                 default:
                     throw new FundanalyzerRuntimeException();
