@@ -3,10 +3,13 @@ package github.com.ioridazo.fundanalyzer.client.jsoup;
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -52,6 +55,7 @@ class JsoupClientTest {
     private RestTemplate restTemplate;
     private RetryTemplate retryTemplate;
     private CircuitBreakerRegistry circuitBreakerRegistry;
+    private RateLimiterRegistry rateLimiterRegistry;
     private JsoupClient client;
 
     private static RestClientProperties properties() {
@@ -86,11 +90,13 @@ class JsoupClientTest {
         this.restTemplate = Mockito.spy(new AppConfig().restTemplateJsoup(properties()));
         this.retryTemplate = new AppConfig().retryTemplateJsoup(properties());
         this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder().build();
+        this.rateLimiterRegistry = new RateLimiterRegistry.Builder().build();
         this.client = spy(new JsoupClient(
                 properties(),
                 restTemplate,
                 retryTemplate,
-                circuitBreakerRegistry
+                circuitBreakerRegistry,
+                rateLimiterRegistry
         ));
         this.client.yahooPages = 1;
 
@@ -126,8 +132,8 @@ class JsoupClientTest {
                     properties,
                     Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
-                    circuitBreakerRegistry
-            ));
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry));
 
             var code = "9434";
             var actual = assertDoesNotThrow(() -> client.nikkei(code));
@@ -189,7 +195,8 @@ class JsoupClientTest {
                     new RestClientProperties(Map.of("jsoup", jsoup, "nikkei", nikkei)),
                     restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
             ));
 
             var code = "9999";
@@ -232,7 +239,8 @@ class JsoupClientTest {
                     properties,
                     Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
-                    circuitBreakerRegistry
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
             ));
 
             var code = "9434";
@@ -303,7 +311,8 @@ class JsoupClientTest {
                     properties,
                     Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
-                    circuitBreakerRegistry
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
             ));
 
             var code = "9434";
@@ -409,7 +418,8 @@ class JsoupClientTest {
                     properties,
                     Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
                     retryTemplate,
-                    circuitBreakerRegistry
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
             ));
 
             var code = "9434";
@@ -554,7 +564,8 @@ class JsoupClientTest {
                     properties(),
                     restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
             ));
 
             var code = "9999";
@@ -591,7 +602,8 @@ class JsoupClientTest {
                     properties(),
                     restTemplate,
                     retryTemplate,
-                    circuitBreakerRegistry
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
             ));
 
             var code = "9999";
@@ -610,6 +622,65 @@ class JsoupClientTest {
             assertEquals("CLOSED", circuitBreakerRegistry.circuitBreaker("kabuoji3").getState().name());
 
             verify(restTemplate, times(4)).getForObject(anyString(), any());
+        }
+
+        @DisplayName("getForHtml : レートリミッターが作動すること")
+        @Test
+        void rateLimiter_do() {
+            rateLimiterRegistry = new RateLimiterRegistry.Builder()
+                    .withRateLimiterConfig(
+                            new RateLimiterConfig.Builder()
+                                    .limitRefreshPeriod(Duration.ofMillis(1000))
+                                    .limitForPeriod(1)
+                                    .timeoutDuration(Duration.ofMillis(0))
+                                    .build()
+                    )
+                    .build();
+            client = spy(new JsoupClient(
+                    properties(),
+                    restTemplate,
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
+            ));
+
+            var code = "9999";
+
+            server.enqueue(new MockResponse().setResponseCode(200));
+
+            var actual = assertThrows(FundanalyzerRateLimiterException.class, () -> client.yahooFinance(code));
+            assertTrue(actual.getMessage().contains("との通信でレートリミッターが作動しました。"));
+            assertEquals("yahoo-finance", rateLimiterRegistry.rateLimiter("yahoo-finance").getName());
+
+            verify(restTemplate, times(1)).getForObject(anyString(), any());
+        }
+
+        @DisplayName("getForHtml : レートリミッターが作動しないこと")
+        @Test
+        void rateLimiter_dont() throws IOException {
+            rateLimiterRegistry = new RateLimiterRegistry.Builder()
+                    .withRateLimiterConfig(
+                            new RateLimiterConfig.Builder()
+                                    .limitRefreshPeriod(Duration.ofMillis(1000))
+                                    .limitForPeriod(10)
+                                    .timeoutDuration(Duration.ofMillis(0))
+                                    .build()
+                    )
+                    .build();
+            client = spy(new JsoupClient(
+                    properties(),
+                    restTemplate,
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
+            ));
+
+            var code = "9999";
+
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/yahoo-finance/yahoo-finance.html");
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
+
+            assertDoesNotThrow(() -> client.yahooFinance(code));
         }
 
         @DisplayName("getForHtml : 通信をリトライする")

@@ -59,8 +59,8 @@ management:
     tags:
       application: ${spring.application.name}
 
-resilience4j.circuitbreaker:
-  instances:
+resilience4j:
+  circuitbreaker.instances:
     edinet:
       registerHealthIndicator: true
       failureRateThreshold: 100                           # OPENへの閾値
@@ -111,6 +111,28 @@ resilience4j.circuitbreaker:
       waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
+
+  ratelimiter.instances:
+    nikkei:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    kabuoji3:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    minkabu:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    yahoo-finance:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
   config:

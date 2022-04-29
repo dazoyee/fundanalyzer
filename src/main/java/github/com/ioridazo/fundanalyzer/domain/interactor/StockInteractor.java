@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
@@ -133,7 +134,7 @@ public class StockInteractor implements StockUseCase {
                 default:
                     throw new FundanalyzerRuntimeException();
             }
-        } catch (final FundanalyzerCircuitBreakerRecordException e) {
+        } catch (final FundanalyzerCircuitBreakerRecordException | FundanalyzerRateLimiterException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("株価取得の通信に失敗しました。\t企業コード:{0}", inputData.getCode5()),
                     Category.STOCK,

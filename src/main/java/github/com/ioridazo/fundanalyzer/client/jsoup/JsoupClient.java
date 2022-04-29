@@ -6,10 +6,13 @@ import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
 import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -47,17 +50,20 @@ public class JsoupClient {
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
+    private final RateLimiterRegistry rateLimiterRegistry;
     int yahooPages = 13;
 
     public JsoupClient(
             final RestClientProperties properties,
             @Qualifier("rest-jsoup") final RestTemplate restTemplate,
             @Qualifier("retry-jsoup") final RetryTemplate retryTemplate,
-            final CircuitBreakerRegistry circuitBreakerRegistry) {
+            final CircuitBreakerRegistry circuitBreakerRegistry,
+            final RateLimiterRegistry rateLimiterRegistry) {
         this.properties = properties;
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
         this.circuitBreakerRegistry = circuitBreakerRegistry;
+        this.rateLimiterRegistry = rateLimiterRegistry;
     }
 
     LocalDate nowLocalDate() {
@@ -168,48 +174,59 @@ public class JsoupClient {
     /**
      * 対象URLのスクレイピングを実行する
      *
-     * @param circuitBreakerName サーキットブレーカー名
-     * @param code               会社コード
-     * @param url                対象URL
+     * @param targetName スクレイピング対象サイト名
+     * @param code       会社コード
+     * @param url        対象URL
      * @return スクレイピング結果
      */
-    Document getForHtml(final String circuitBreakerName, final String code, final String url) {
+    Document getForHtml(final String targetName, final String code, final String url) {
         // retry
         return retryTemplate.execute(context -> {
 
             try {
                 // circuitBreaker
-                return circuitBreakerRegistry.circuitBreaker(circuitBreakerName)
+                return circuitBreakerRegistry.circuitBreaker(targetName)
                         .executeSupplier(() -> {
+
                             try {
-                                // scraping
-                                return Jsoup.parse(Objects.requireNonNull(restTemplate.getForObject(url, String.class)));
-                            } catch (final NullPointerException e) {
-                                throw new FundanalyzerScrapingException(MessageFormat.format(
-                                        "{0}からHTMLを取得できませんでした。\t企業コード:{1}\tURL:{2}",
-                                        circuitBreakerName,
-                                        code,
-                                        url
-                                ), e);
-                            } catch (final RestClientResponseException e) {
-                                throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
-                                        "{0}から200以外のHTTPステータスコードが返却されました。\tHTTPステータスコード:{1}\t企業コード:{2}\tURL:{3}",
-                                        circuitBreakerName,
-                                        e.getRawStatusCode(),
-                                        code,
-                                        url
-                                ), e);
-                            } catch (final ResourceAccessException e) {
-                                throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
-                                        "{0}との通信でタイムアウトエラーが発生しました。\t企業コード:{1}\tURL:{2}",
-                                        circuitBreakerName,
-                                        code,
-                                        url
-                                ), e);
+
+                                // rateLimiter
+                                return rateLimiterRegistry.rateLimiter(targetName)
+                                        .executeSupplier(() -> {
+
+                                            try {
+                                                // scraping
+                                                return Jsoup.parse(Objects.requireNonNull(restTemplate.getForObject(url, String.class)));
+                                            } catch (final NullPointerException e) {
+                                                throw new FundanalyzerScrapingException(MessageFormat.format(
+                                                        "{0}からHTMLを取得できませんでした。\t企業コード:{1}\tURL:{2}",
+                                                        targetName,
+                                                        code,
+                                                        url
+                                                ), e);
+                                            } catch (final RestClientResponseException e) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
+                                                        "{0}から200以外のHTTPステータスコードが返却されました。\tHTTPステータスコード:{1}\t企業コード:{2}\tURL:{3}",
+                                                        targetName,
+                                                        e.getRawStatusCode(),
+                                                        code,
+                                                        url
+                                                ), e);
+                                            } catch (final ResourceAccessException e) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
+                                                        "{0}との通信でタイムアウトエラーが発生しました。\t企業コード:{1}\tURL:{2}",
+                                                        targetName,
+                                                        code,
+                                                        url
+                                                ), e);
+                                            }
+                                        });
+                            } catch (final RequestNotPermitted e) {
+                                throw new FundanalyzerRateLimiterException(targetName + "との通信でレートリミッターが作動しました。");
                             }
                         });
             } catch (final CallNotPermittedException e) {
-                throw new FundanalyzerShortCircuitException(circuitBreakerName + "との通信でサーキットブレーカーがオープンしました。");
+                throw new FundanalyzerShortCircuitException(targetName + "との通信でサーキットブレーカーがオープンしました。");
             }
         });
     }
