@@ -2,6 +2,29 @@ server.port: 8890
 
 logging.level: info
 
+resilience4j:
+  ratelimiter.instances:
+    nikkei:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    kabuoji3:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    minkabu:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+    yahoo-finance:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
+
 app:
   config:
     rest-client:
@@ -42,10 +65,19 @@ app:
       queue-capacity: 50
       max-pool-size: 500
 
+    slack:
+      parameter:
+        t: TKN2V6NQ4
+        b: B01DFHHPE07
+        x: x # 任意の値を設定
+
     view:
-      discount-rate: 170  # 以上を表示
+      discount-rate: 190  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
-      coefficient-of-variation: 0.6  # 以下を表示
+      coefficient-of-variation: 0.5  # 以下を表示
+      diff-forecast-stock: 100  # 株価予想と最新株価との差が100以上を表示
+      corporate.size: 300  # 日間を表示
+      edinet-list.size: 400  # 日間を表示
 
     scraping:
       no-company: E31748
@@ -56,6 +88,8 @@ app:
       kabuoji3.enabled: false
       minkabu.enabled: true
       yahoo-finance.enabled: true
+      average-stock-price-for-last-days: 30  # 株価平均値の期間
+      store-stock-price-for-last-days: 400  # 株価の保存期間
 
     remove-document:
       document-type-code: 140,150
@@ -73,23 +107,13 @@ app:
         edinet: C:/${spring.application.name}/edinet
         decode: C:/${spring.application.name}/decode
 
-  api:
-    edinet: https://disclosure.edinet-fsa.go.jp
-    selenium: http://localhost:9001
-    slack:
-      base-uri: https://hooks.slack.com
-      parameter:
-        t: TKN2V6NQ4
-        b: B01DFHHPE07
-        x: x # 任意の値を設定
-
   scheduler:
     hour:
-      company: 12  # 時に処理実施
-      stock: 13  # 時に処理実施
-      analysis: 0  # 時に処理実施
-      update-view: 2  # 時に処理実施
-      recover-document-period: 1  # 時に処理実施
+      company: 3  # 時に処理実施
+      stock: 4  # 時に処理実施
+      analysis: 1  # 時に処理実施
+      update-view: 6  # 時に処理実施
+      recover-document-period: 2  # 時に処理実施
 
     stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
