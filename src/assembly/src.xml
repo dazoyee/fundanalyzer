@@ -5,7 +5,6 @@
         xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <id>windows</id>
     <formats>
-        <format>tar.gz</format>
         <format>zip</format>
     </formats>
     <fileSets>
@@ -17,21 +16,21 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>bin</directory>
+            <directory>release</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>start.bat</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>bin/tool</directory>
+            <directory>release/tool</directory>
             <outputDirectory>bin/tool</outputDirectory>
             <includes>
                 <include>*.bat</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>bin/config</directory>
+            <directory>release/config</directory>
             <outputDirectory>bin/config</outputDirectory>
             <includes>
                 <include>*.yml</include>
@@ -44,13 +43,6 @@
                 <exclude>node_modules/**</exclude>
                 <exclude>.gitignore</exclude>
                 <exclude>package-lock.json</exclude>
-            </excludes>
-        </fileSet>
-        <fileSet>
-            <directory>.</directory>
-            <outputDirectory>bin/bk</outputDirectory>
-            <excludes>
-                <exclude>*/**</exclude>
             </excludes>
         </fileSet>
         <fileSet>
@@ -89,11 +81,4 @@
             </excludes>
         </fileSet>
     </fileSets>
-    <dependencySets>
-        <dependencySet>
-            <unpack>false</unpack>
-            <scope>runtime</scope>
-            <outputDirectory>bin/lib</outputDirectory>
-        </dependencySet>
-    </dependencySets>
 </assembly>
