@@ -17,8 +17,8 @@ pipeline {
                             '&maven.artifactId=' + pom.artifactId +
                             '&maven.baseVersion=' + pom.version
                             '&maven.extension=jar'
-                    env.TMP = 'C:\\jenkins-pipeline-sample\\tmp\\' + datetime + '\\'
-                    env.JAR = 'jenkins-pipeline-sample-' + pom.version + '.jar'
+                    env.TMP = 'C:\\fundanalyzer\\tmp\\' + datetime + '\\'
+                    env.JAR = 'fundanalyzer-' + pom.version + '.jar'
                     bat '''
                     mkdir %TMP%
                     bitsadmin /transfer "nexus" "%URL%" %TMP%%JAR%
@@ -33,13 +33,13 @@ pipeline {
                 print "===== デプロイを開始します ====="
                 script {
                     def pom = readMavenPom file: 'pom.xml'
-                    def jar = 'jenkins-pipeline-sample-' + pom.version + '.jar'
+                    def jar = 'fundanalyzer-' + pom.version + '.jar'
 
                     bat '''
-                    sc.exe stop jenkins-pipeline-sample
+                    sc.exe stop fundanalyzer
                     @echo off
                     :DoWhile
-                      sc.exe query jenkins-pipeline-sample | findstr STATE | findstr STOPPED
+                      sc.exe query fundanalyzer | findstr STATE | findstr STOPPED
                       if %errorlevel% equ 0 goto DoWhileExit
                     goto DoWhile
                     :DoWhileExit
@@ -47,24 +47,24 @@ pipeline {
                     echo "*********************"
                     echo "サービスを停止しました。"
                     echo "*********************"
-                    bat "sc.exe query jenkins-pipeline-sample"
+                    bat "sc.exe query fundanalyzer"
 
                     env.DATETIME = datetime
                     env.JAR = jar
                     bat '''
-                    cd C:\\jenkins-pipeline-sample
-                    ren jenkins-pipeline-sample.jar jenkins-pipeline-sample.jar.%DATETIME%
-                    copy C:\\jenkins-pipeline-sample\\tmp\\%DATETIME%\\%JAR% jenkins-pipeline-sample.jar
+                    cd C:\\fundanalyzer
+                    ren fundanalyzer.jar fundanalyzer.jar.%DATETIME%
+                    copy C:\\fundanalyzer\\tmp\\%DATETIME%\\%JAR% fundanalyzer.jar
                     '''
                     echo "*********************"
                     echo "JARファイルを差し替えました。"
                     echo "*********************"
 
                     bat '''
-                    sc.exe start jenkins-pipeline-sample
+                    sc.exe start fundanalyzer
                     @echo off
                     :DoWhile
-                      sc.exe query jenkins-pipeline-sample | findstr STATE | findstr RUNNING
+                      sc.exe query fundanalyzer | findstr STATE | findstr RUNNING
                       if %errorlevel% equ 0 goto DoWhileExit
                     goto DoWhile
                     :DoWhileExit
@@ -72,7 +72,7 @@ pipeline {
                     echo "*********************"
                     echo "サービスを起動しました。"
                     echo "*********************"
-                    bat "sc.exe query jenkins-pipeline-sample"
+                    bat "sc.exe query fundanalyzer"
                 }
                 print "===== デプロイを正常に終了しました ====="
             }
@@ -94,10 +94,10 @@ pipeline {
                         case "rollback":
                             print "===== ロールバックを開始します ====="
                             bat '''
-                            sc.exe stop jenkins-pipeline-sample
+                            sc.exe stop fundanalyzer
                             @echo off
                             :DoWhile
-                              sc.exe query jenkins-pipeline-sample | findstr STATE | findstr STOPPED
+                              sc.exe query fundanalyzer | findstr STATE | findstr STOPPED
                               if %errorlevel% equ 0 goto DoWhileExit
                             goto DoWhile
                             :DoWhileExit
@@ -105,29 +105,29 @@ pipeline {
                             echo "*********************"
                             echo "サービスを停止しました。"
                             echo "*********************"
-                            bat "sc.exe query jenkins-pipeline-sample"
+                            bat "sc.exe query fundanalyzer"
 
                             env.DATETIME = datetime
                             bat '''
-                            cd C:\\jenkins-pipeline-sample
-                            del jenkins-pipeline-sample.jar
+                            cd C:\\fundanalyzer
+                            del fundanalyzer.jar
                             @echo off
                             :DoWhile
-                              if not exist jenkins-pipeline-sample.jar goto DoWhileExit
+                              if not exist fundanalyzer.jar goto DoWhileExit
                             goto DoWhile
                             :DoWhileExit
                             @echo on
-                            ren jenkins-pipeline-sample.jar.%DATETIME% jenkins-pipeline-sample.jar
+                            ren fundanalyzer.jar.%DATETIME% fundanalyzer.jar
                             '''
                             echo "*********************"
                             echo "JARファイルを元に戻しました。"
                             echo "*********************"
 
                             bat '''
-                            sc.exe start jenkins-pipeline-sample
+                            sc.exe start fundanalyzer
                             @echo off
                             :DoWhile
-                              sc.exe query jenkins-pipeline-sample | findstr STATE | findstr RUNNING
+                              sc.exe query fundanalyzer | findstr STATE | findstr RUNNING
                               if %errorlevel% equ 0 goto DoWhileExit
                             goto DoWhile
                             :DoWhileExit
@@ -135,7 +135,7 @@ pipeline {
                             echo "*********************"
                             echo "サービスを起動しました。"
                             echo "*********************"
-                            bat "sc.exe query jenkins-pipeline-sample"
+                            bat "sc.exe query fundanalyzer"
 
                             print "===== ロールバックを正常に終了しました ====="
                         break
@@ -145,14 +145,32 @@ pipeline {
 
                             env.DATETIME = datetime
                             bat '''
-                            cd C:\\jenkins-pipeline-sample
-                            del jenkins-pipeline-sample.jar.%DATETIME%
+                            cd C:\\fundanalyzer
+                            del fundanalyzer.jar.%DATETIME%
                             '''
 
                             print "===== コンプリートを正常に終了しました ====="
                         break
                     }
                 }
+            }
+        }
+
+        stage('Check'){
+            steps {
+                print "===== 動作確認を開始します ====="
+                script {
+                    bat '''
+                    "C:\\Users\\iorid\\scoop\\apps\\nodejs\\current\\node.exe" "C:\\fundanalyzer\\puppeteer\\page-screenshot.js"
+                    '''
+                }
+
+                slackUploadFile(
+                    filePath: 'fundanalyzer_v2_index.png',
+                    channel: 'UKNK4SZPX',
+                    credentialId: 'Slack Jenkins Bot'
+                )
+                print "===== 動作確認を正常に終了しました ====="
             }
         }
     }

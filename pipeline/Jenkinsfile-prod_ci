@@ -17,7 +17,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 print "===== チェックアウトを開始します ====="
-                git url: 'https://github.com/ioridazo/jenkins-pipeline-sample.git', branch: 'main'
+                git url: 'https://github.com/ioridazo/fundanalyzer.git', branch: 'main'
                 // checkout scm
                 print "===== チェックアウトを正常に終了しました ====="
             }
@@ -96,7 +96,7 @@ pipeline {
                         artifacts: [
                             [
                                 artifactId: pom.artifactId,
-                                file: 'target/jenkins-pipeline-sample-' + pom.version + '.jar',
+                                file: 'target/fundanalyzer-' + pom.version + '.jar',
                                 type: 'jar'
                             ]
                         ]
