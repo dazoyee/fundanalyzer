@@ -5,44 +5,80 @@
         xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
     <id>windows</id>
     <formats>
-        <format>tar.gz</format>
         <format>zip</format>
     </formats>
     <fileSets>
         <fileSet>
             <directory>target</directory>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.jar</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>bin</directory>
-            <outputDirectory>/</outputDirectory>
+            <directory>release</directory>
+            <outputDirectory>bin</outputDirectory>
             <includes>
-                <include>*</include>
+                <include>start.bat</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>bin/tool</directory>
-            <outputDirectory>/tool</outputDirectory>
+            <directory>release/tool</directory>
+            <outputDirectory>bin/tool</outputDirectory>
             <includes>
                 <include>*.bat</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>bin/config</directory>
-            <outputDirectory>/config</outputDirectory>
+            <directory>release/config</directory>
+            <outputDirectory>bin/config</outputDirectory>
             <includes>
                 <include>*.yml</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>develop/puppeteer</directory>
+            <outputDirectory>puppeteer</outputDirectory>
+            <excludes>
+                <exclude>node_modules/**</exclude>
+                <exclude>.gitignore</exclude>
+                <exclude>package-lock.json</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>company</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>database</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>decode</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>edinet</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>.</directory>
+            <outputDirectory>logs</outputDirectory>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
-    <dependencySets>
-        <dependencySet>
-            <unpack>false</unpack>
-            <scope>runtime</scope>
-            <outputDirectory>/lib</outputDirectory>
-        </dependencySet>
-    </dependencySets>
 </assembly>
