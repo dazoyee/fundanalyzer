@@ -1,0 +1,14 @@
+{
+  "name": "screenshot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "page-screenshot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "iorid",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^13.7.0"
+  }
+}

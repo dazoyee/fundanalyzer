@@ -1,3 +1,5 @@
+@echo off
+
 :: 設定ファイルを読み込む
 for /f "usebackq tokens=1,* delims==" %%a in ("env") do (
     set %%a=%%b
@@ -5,7 +7,6 @@ for /f "usebackq tokens=1,* delims==" %%a in ("env") do (
 
 rem ELASTIC_APM_AGENT_PATH=
 rem ELASTIC_APM_AGENT_VERSION=
-rem FUNDANALYZER_VERSION=
 
 java^
     -javaagent:%ELASTIC_APM_AGENT_PATH%\elastic-apm-agent-%ELASTIC_APM_AGENT_VERSION%.jar  ^
@@ -14,8 +15,8 @@ java^
     -Delastic.apm.secret_token= ^
     -Delastic.apm.environment=production  ^
     -Delastic.apm.application_packages=com.github.ioridazo  ^
-    -Xms2G  ^
-    -Xmx2G  ^
+    -Xms1G  ^
+    -Xmx1G  ^
     -Duser.timezone=Asia/Tokyo  ^
-    -jar fundanalyzer-%FUNDANALYZER_VERSION%.jar  ^
+    -jar fundanalyzer.jar  ^
     --spring.profiles.active=prod
