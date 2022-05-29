@@ -140,7 +140,7 @@ public class JsoupClient {
         int page = 1;
         while (page <= yahooPages) {     // 13ページまでを取得
             final String url = UriComponentsBuilder.fromUriString(properties.getRestClient().get(YAHOO_FINANCE).getBaseUri())
-                    .path("/quote/{code}.T/history?from={fromDate}&to={toDate}&timeFrame=d&page={page}")
+                    .path("/quote/{code}/history?from={fromDate}&to={toDate}&timeFrame=d&page={page}")
                     .buildAndExpand(
                             code.substring(0, 4),
                             nowLocalDate().minusYears(1).format(DateTimeFormatter.ofPattern("uuuuMMdd")),
