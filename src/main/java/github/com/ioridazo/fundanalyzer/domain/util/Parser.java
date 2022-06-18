@@ -57,8 +57,9 @@ public final class Parser {
                         return v.substring(v.lastIndexOf((")")) + 1, v.length() - 1);
                     } else if (v.contains("）")) {
                         return v.substring(v.lastIndexOf(("）")) + 1, v.length() - 1);
+                    } else {
+                        return v.substring(0, v.length() - 1);
                     }
-                    return v;
                 })
                 .map(String::trim)
                 .map(v -> v.replace(",", ""))

@@ -21,6 +21,7 @@ class ParserTest {
 
     @Test
     void parseDoubleNikkei() {
+        assertEquals("1047.0", Parser.parseDoubleNikkei("1,047 円").orElseThrow().toString());
         assertEquals("1047.0", Parser.parseDoubleNikkei("始値 (15:00) 1,047 円").orElseThrow().toString());
     }
 
