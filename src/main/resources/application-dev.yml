@@ -27,6 +27,8 @@ logging:
   config: classpath:log4j2-spring-dev.xml
 
 management:
+  server:
+    port: 8989
   metrics:
     tags:
       application: ${spring.application.name}-dev
