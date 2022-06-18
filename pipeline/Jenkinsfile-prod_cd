@@ -17,7 +17,7 @@ pipeline {
                             '&maven.artifactId=' + pom.artifactId +
                             '&maven.baseVersion=' + pom.version
                             '&maven.extension=jar'
-                    env.TMP = 'C:\\fundanalyzer\\tmp\\' + datetime + '\\'
+                    env.TMP = 'C:\\fundanalyzer\\bin\\tmp\\' + datetime + '\\'
                     env.JAR = 'fundanalyzer-' + pom.version + '.jar'
                     bat '''
                     mkdir %TMP%
@@ -52,9 +52,9 @@ pipeline {
                     env.DATETIME = datetime
                     env.JAR = jar
                     bat '''
-                    cd C:\\fundanalyzer
+                    cd C:\\fundanalyzer\\bin
                     ren fundanalyzer.jar fundanalyzer.jar.%DATETIME%
-                    copy C:\\fundanalyzer\\tmp\\%DATETIME%\\%JAR% fundanalyzer.jar
+                    copy C:\\fundanalyzer\\bin\\tmp\\%DATETIME%\\%JAR% fundanalyzer.jar
                     '''
                     echo "*********************"
                     echo "JARファイルを差し替えました。"
@@ -109,7 +109,7 @@ pipeline {
 
                             env.DATETIME = datetime
                             bat '''
-                            cd C:\\fundanalyzer
+                            cd C:\\fundanalyzer\\bin
                             del fundanalyzer.jar
                             @echo off
                             :DoWhile
@@ -145,7 +145,7 @@ pipeline {
 
                             env.DATETIME = datetime
                             bat '''
-                            cd C:\\fundanalyzer
+                            cd C:\\fundanalyzer\\bin
                             del fundanalyzer.jar.%DATETIME%
                             '''
 
