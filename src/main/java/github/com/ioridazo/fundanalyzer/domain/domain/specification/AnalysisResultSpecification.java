@@ -52,6 +52,17 @@ public class AnalysisResultSpecification {
         return LocalDateTime.now();
     }
 
+
+    /**
+     * 本日にテーブルに登録されたリストを取得する
+     *
+     * @param submitDate 提出日
+     * @return 更新されたリスト
+     */
+    public List<AnalysisResultEntity> findUpdatedList(final LocalDate submitDate) {
+        return analysisResultDao.selectBySubmitDateAndCreatedAt(submitDate, LocalDate.now());
+    }
+
     /**
      * 企業価値を登録する
      *

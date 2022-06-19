@@ -75,7 +75,7 @@ public class StockScheduler {
                 .map(CodeInputData::of)
                 .forEach(analysisService::importStock);
 
-        slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", targetCodeList.size());
+        slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.insert", targetCodeList.size());
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
@@ -90,7 +90,7 @@ public class StockScheduler {
 
         final int deleteStock = analysisService.deleteStock();
 
-        slackClient.sendMessage("g.c.i.f.web.scheduler.notice.info", deleteStock);
+        slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.delete", deleteStock);
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
