@@ -20,6 +20,9 @@ public interface CompanyDao {
     List<CompanyEntity> selectByCodeIsNotNull();
 
     @Select
+    List<CompanyEntity> selectByFavorite();
+
+    @Select
     Optional<CompanyEntity> selectByEdinetCode(String edinetCode);
 
     @Select

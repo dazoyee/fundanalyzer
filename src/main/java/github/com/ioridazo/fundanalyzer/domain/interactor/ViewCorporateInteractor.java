@@ -150,6 +150,24 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     }
 
     /**
+     * お気に入りを取得する
+     *
+     * @return 企業情報ビュー
+     */
+    @Override
+    public List<CorporateViewModel> viewFavorite() {
+        final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
+                .map(Company::getCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        return viewSpecification.findAllCorporateView().stream()
+                .filter(cvm -> favoriteList.stream().anyMatch(favorite -> cvm.getCode().equals(favorite.substring(0, 4))))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 割安度でソートする
      *
      * @return 企業情報ビュー
