@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AnalysisService {
 
+    private final CompanyUseCase companyUseCase;
     private final DocumentUseCase documentUseCase;
     private final AnalyzeUseCase analyzeUseCase;
     private final StockUseCase stockUseCase;
@@ -27,12 +29,14 @@ public class AnalysisService {
     private final NoticeUseCase noticeUseCase;
 
     public AnalysisService(
+            final CompanyUseCase companyUseCase,
             final DocumentUseCase documentUseCase,
             final AnalyzeUseCase analyzeUseCase,
             final StockUseCase stockUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
             final ViewEdinetUseCase viewEdinetUseCase,
             final NoticeUseCase noticeUseCase) {
+        this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
         this.analyzeUseCase = analyzeUseCase;
         this.stockUseCase = stockUseCase;
@@ -205,5 +209,17 @@ public class AnalysisService {
     public int deleteStock() {
         // delete stock
         return stockUseCase.deleteStockPrice();
+    }
+
+    /**
+     * お気に入り企業の登録
+     *
+     * @param inputData 企業コード
+     * @return お気に入りかどうか
+     */
+    @NewSpan
+    public boolean updateFavoriteCompany(final CodeInputData inputData) {
+        // update favorite company
+        return companyUseCase.updateFavoriteCompany(inputData);
     }
 }

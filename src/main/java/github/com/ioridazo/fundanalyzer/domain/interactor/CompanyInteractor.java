@@ -10,8 +10,11 @@ import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,10 +23,12 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class CompanyInteractor implements CompanyUseCase {
@@ -114,6 +119,46 @@ public class CompanyInteractor implements CompanyUseCase {
                 Process.UPDATE,
                 System.currentTimeMillis() - startTime
         ));
+    }
+
+    /**
+     * 企業のお気に入り登録を更新する
+     *
+     * @param inputData 企業コード
+     */
+    @Override
+    public boolean updateFavoriteCompany(final CodeInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+        final Optional<Company> company = companySpecification.findCompanyByCode(inputData.getCode());
+
+        if (company.isPresent()) {
+            final boolean isFavorite = companySpecification.updateFavorite(company.get());
+            if (isFavorite) {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("対象の企業はお気に入りに登録しました。\t企業コード:{0}", inputData.getCode()),
+                        Category.COMPANY,
+                        Process.UPDATE,
+                        System.currentTimeMillis() - startTime
+                ));
+                return true;
+            } else {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("対象の企業はお気に入りから除外しました。\t企業コード:{0}", inputData.getCode()),
+                        Category.COMPANY,
+                        Process.UPDATE,
+                        System.currentTimeMillis() - startTime
+                ));
+                return false;
+            }
+        } else {
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("対象の企業は存在しませんでした。\t企業コード:{0}", inputData.getCode()),
+                    Category.COMPANY,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+            throw new FundanalyzerNotExistException();
+        }
     }
 
     /**

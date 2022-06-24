@@ -138,6 +138,16 @@
     </div>
     <!-- /.content-header -->
 
+    <div th:if="${isFavorite} != null">
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <span th:if="${isFavorite}">お気に入りに登録しました</span>
+        <span th:if="!${isFavorite}">お気に入りから除外しました</span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Main content -->
     <section class="content">
 
@@ -184,7 +194,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-12 col-sm-5">
+                <div class="col-12 col-sm-4">
                   <div class="info-box bg-light">
                     <div class="info-box-content">
                       <p class="info-box-text text-center text-muted"
@@ -201,6 +211,19 @@
                          th:text="${corporate.industry}">
                         業種
                       </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-1">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content info-box-icon">
+                      <form method="post" th:action="@{/fundanalyzer/v2/favorite/company}">
+                        <input type="hidden" th:value="${corporate.code}" name="code">
+                        <button type="submit" class="btn">
+                          <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
+                          <i th:if="${corporate.isFavorite}" class="fas fa-heart fa-2x" style="color:red;"></i>
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </div>

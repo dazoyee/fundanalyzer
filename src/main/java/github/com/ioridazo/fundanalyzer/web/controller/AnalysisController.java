@@ -113,4 +113,18 @@ public class AnalysisController {
         return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
                 .queryParam("code", code.substring(0, 4)).toUriString();
     }
+
+    /**
+     * 企業をお気に入りに登録する
+     *
+     * @param code 会社コード
+     * @return BrandDetail
+     */
+    @PostMapping("fundanalyzer/v2/favorite/company")
+    public String updateFavoriteCompany(final String code) {
+        final boolean isFavorite = analysisService.updateFavoriteCompany(CodeInputData.of(code));
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+                .queryParam("code", code.substring(0, 4))
+                .queryParam("favorite", isFavorite).toUriString();
+    }
 }

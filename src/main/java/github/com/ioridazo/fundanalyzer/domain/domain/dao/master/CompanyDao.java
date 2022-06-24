@@ -31,6 +31,6 @@ public interface CompanyDao {
     @Insert
     Result<CompanyEntity> insert(CompanyEntity company);
 
-    @Update
+    @Update(excludeNull = true)
     Result<CompanyEntity> update(CompanyEntity company);
 }

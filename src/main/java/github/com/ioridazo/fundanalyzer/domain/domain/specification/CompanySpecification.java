@@ -132,6 +132,17 @@ public class CompanySpecification {
     }
 
     /**
+     * お気に入りを更新する
+     *
+     * @param company 企業情報
+     * @return お気に入りに更新したか
+     */
+    public boolean updateFavorite(final Company company) {
+        companyDao.update(CompanyEntity.ofUpdateFavorite(company, nowLocalDateTime()));
+        return !company.isFavorite();
+    }
+
+    /**
      * 企業がデータベースに存在するか
      *
      * @param edinetCode EDINETコード

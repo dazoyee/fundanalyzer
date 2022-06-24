@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.master;
 
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -69,6 +70,22 @@ public class CompanyEntity {
                 null,
                 null,
                 null
+        );
+    }
+
+    public static CompanyEntity ofUpdateFavorite(final Company company, final LocalDateTime updatedAt) {
+        return new CompanyEntity(
+                null,
+                null,
+                null,
+                company.getEdinetCode(),
+                null,
+                null,
+                null,
+                null,
+                company.isFavorite() ? "0" : "1",   // 反転させるだけ
+                null,
+                updatedAt
         );
     }
 
