@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.context.MessageSource;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
@@ -30,7 +32,11 @@ class AnalysisControllerTest {
         analysisService = Mockito.mock(AnalysisService.class);
         viewService = Mockito.mock(ViewService.class);
 
-        controller = new AnalysisController(analysisService, viewService);
+        controller = new AnalysisController(
+                analysisService,
+                viewService,
+                Mockito.mock(MessageSource.class)
+        );
     }
 
     @DisplayName("doMain : 指定提出日の書類を一部メインの一連処理をする")
@@ -64,7 +70,7 @@ class AnalysisControllerTest {
     @DisplayName("scrapeById : 指定書類IDを分析する")
     @Test
     void scrapeById() {
-        assertEquals("redirect:/fundanalyzer/v2/index", controller.scrapeById("test1234,test5678"));
+        assertEquals("redirect:/fundanalyzer/v2/index", controller.scrapeById("test1234,test5678", new RedirectAttributesModelMap()));
         Mockito.verify(analysisService, Mockito.times(1)).executeById(IdInputData.of("test1234"));
         Mockito.verify(analysisService, Mockito.times(1)).executeById(IdInputData.of("test5678"));
     }
