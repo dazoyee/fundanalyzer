@@ -122,6 +122,7 @@ class CompanySpecificationTest {
                 null,
                 null,
                 null,
+                null,
                 LocalDateTime.of(2021, 5, 8, 23, 37)
         );
     }

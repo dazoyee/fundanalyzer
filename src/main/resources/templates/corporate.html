@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
   <!-- IonIcons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="/dist/css/adminlte.min.css">
 
@@ -66,7 +68,7 @@
                with font-awesome or any other icon font library -->
           <li class="nav-item menu-open">
             <a href="#" class="nav-link active">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fa-solid fa-building"></i>
               <p>
                 Main
                 <i class="right fas fa-angle-left"></i>
@@ -80,9 +82,15 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/index-all" class="nav-link">
+                <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Main All Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Main Favorite Dashboard</p>
                 </a>
               </li>
             </ul>
@@ -90,7 +98,7 @@
 
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fa-solid fa-list-check"></i>
               <p>
                 Edinet
                 <i class="right fas fa-angle-left"></i>
@@ -104,7 +112,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list-all" class="nav-link">
+                <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Edinet All Dashboard</p>
                 </a>
@@ -137,6 +145,16 @@
       </div><!-- /.container-fluid -->
     </div>
     <!-- /.content-header -->
+
+    <div th:if="${isFavorite} != null">
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <span th:if="${isFavorite}">お気に入りに登録しました</span>
+        <span th:if="!${isFavorite}">お気に入りから除外しました</span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Main content -->
     <section class="content">
@@ -184,7 +202,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-12 col-sm-5">
+                <div class="col-12 col-sm-4">
                   <div class="info-box bg-light">
                     <div class="info-box-content">
                       <p class="info-box-text text-center text-muted"
@@ -201,6 +219,19 @@
                          th:text="${corporate.industry}">
                         業種
                       </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-1">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content info-box-icon">
+                      <form method="post" th:action="@{/fundanalyzer/v2/favorite/company}">
+                        <input type="hidden" th:value="${corporate.code}" name="code">
+                        <button type="submit" class="btn">
+                          <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
+                          <i th:if="${corporate.isFavorite}" class="fas fa-heart fa-2x" style="color:red;"></i>
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </div>
@@ -818,6 +849,7 @@
 
 <!-- Page specific script -->
 <!--<script>-->
+
 <!--</script>-->
 </body>
 </html>

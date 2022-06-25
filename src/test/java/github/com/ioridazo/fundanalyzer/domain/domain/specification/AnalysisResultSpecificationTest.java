@@ -25,7 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("NewClassNamingConvention")
 class AnalysisResultSpecificationTest {
 
     private static final List<String> targetTypeCodes = List.of("120", "130");
@@ -49,18 +48,6 @@ class AnalysisResultSpecificationTest {
 
     @Nested
     class latestCorporateValue {
-
-        Company company = new Company(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
 
         @DisplayName("latestCorporateValue : 最新の企業価値を取得する")
         @Test
@@ -118,18 +105,6 @@ class AnalysisResultSpecificationTest {
     class yearAverageCorporateValue {
 
         private final Integer THREE = 3;
-
-        Company company = new Company(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
 
         @DisplayName("yearAverageCorporateValue : 平均の企業価値を取得する")
         @Test
@@ -190,18 +165,6 @@ class AnalysisResultSpecificationTest {
     @Nested
     class allYearAverageCorporateValue {
 
-        Company company = new Company(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
         @DisplayName("allYearAverageCorporateValue : 平均の企業価値を取得する")
         @Test
         void present() {
@@ -245,18 +208,6 @@ class AnalysisResultSpecificationTest {
 
     @Nested
     class standardDeviation {
-
-        Company company = new Company(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
 
         @DisplayName("standardDeviation : 企業価値の標準偏差を取得する")
         @Test
@@ -311,18 +262,6 @@ class AnalysisResultSpecificationTest {
     @Nested
     class coefficientOfVariation {
 
-        Company company = new Company(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
         @DisplayName("coefficientOfVariation : 変動係数を取得する")
         @Test
         void present() {
@@ -359,18 +298,6 @@ class AnalysisResultSpecificationTest {
     @Nested
     class countYear {
 
-        Company company = new Company(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
         @DisplayName("countYear : 分析年数を取得する")
         @Test
         void present() {
@@ -404,7 +331,8 @@ class AnalysisResultSpecificationTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
 
         @DisplayName("isAnalyzed : true")
@@ -509,4 +437,17 @@ class AnalysisResultSpecificationTest {
             )));
         }
     }
+
+    private final Company company = new Company(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false
+    );
 }

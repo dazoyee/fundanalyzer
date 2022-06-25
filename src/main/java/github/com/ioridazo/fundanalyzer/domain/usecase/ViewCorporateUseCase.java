@@ -27,6 +27,14 @@ public interface ViewCorporateUseCase {
     List<CorporateViewModel> viewAll();
 
     /**
+     * お気に入りビュー
+     *
+     * @return 企業情報ビュー
+     */
+    @NewSpan
+    List<CorporateViewModel> viewFavorite();
+
+    /**
      * 割安度ソート
      *
      * @return 企業情報ビュー

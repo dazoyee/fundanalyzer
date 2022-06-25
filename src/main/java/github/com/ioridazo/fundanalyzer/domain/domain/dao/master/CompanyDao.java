@@ -20,6 +20,9 @@ public interface CompanyDao {
     List<CompanyEntity> selectByCodeIsNotNull();
 
     @Select
+    List<CompanyEntity> selectByFavorite();
+
+    @Select
     Optional<CompanyEntity> selectByEdinetCode(String edinetCode);
 
     @Select
@@ -31,6 +34,6 @@ public interface CompanyDao {
     @Insert
     Result<CompanyEntity> insert(CompanyEntity company);
 
-    @Update
+    @Update(excludeNull = true)
     Result<CompanyEntity> update(CompanyEntity company);
 }

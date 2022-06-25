@@ -37,7 +37,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("NewClassNamingConvention")
 class AnalyzeInteractorTest {
 
     private CompanySpecification companySpecification;
@@ -489,7 +488,8 @@ class AnalyzeInteractorTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
     }
 }

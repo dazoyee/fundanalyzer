@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 
 public interface CompanyUseCase {
@@ -31,4 +32,12 @@ public interface CompanyUseCase {
      */
     @NewSpan
     void saveCompanyInfo();
+
+    /**
+     * お気に入り企業の登録
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    boolean updateFavoriteCompany(CodeInputData inputData);
 }

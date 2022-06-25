@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
   <!-- IonIcons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="/dist/css/adminlte.min.css">
   <!-- daterange picker -->
@@ -55,8 +57,7 @@
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="/fundanalyzer/v2/index" class="brand-link">
-      <img src="/favicon.ico" alt="fundanalyzer Logo" class="brand-image img-circle elevation-3"
-           style="opacity: .8">
+      <img src="/favicon.ico" alt="fundanalyzer Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
       <span class="brand-text font-weight-light">fundanalyzer</span>
     </a>
 
@@ -69,7 +70,7 @@
                with font-awesome or any other icon font library -->
           <li class="nav-item menu-open">
             <a href="#" class="nav-link active">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fa-solid fa-building"></i>
               <p>
                 Main
                 <i class="right fas fa-angle-left"></i>
@@ -77,23 +78,53 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/index" class="nav-link active">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Main Dashboard</p>
-                </a>
+                <th:block th:if="${target} == null">
+                  <a href="/fundanalyzer/v2/index" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Main Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == null">
+                  <a href="/fundanalyzer/v2/index" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Main Dashboard</p>
+                  </a>
+                </th:block>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/index-all" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Main All Dashboard</p>
-                </a>
+                <th:block th:if="${target} == 'all'">
+                  <a href="/fundanalyzer/v2/index?target=all" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Main All Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == 'all'">
+                  <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Main All Dashboard</p>
+                  </a>
+                </th:block>
+              </li>
+              <li class="nav-item">
+                <th:block th:if="${target} == 'favorite'">
+                  <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Main Favorite Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == 'favorite'">
+                  <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Main Favorite Dashboard</p>
+                  </a>
+                </th:block>
               </li>
             </ul>
           </li>
 
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fa-solid fa-list-check"></i>
               <p>
                 Edinet
                 <i class="right fas fa-angle-left"></i>
@@ -107,7 +138,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list-all" class="nav-link">
+                <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Edinet All Dashboard</p>
                 </a>
@@ -154,13 +185,13 @@
                 <div class="form-group">
                   <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
                     <div class="input-group">
-                      <label for="fromToDate">Date range:</label>
+                      <label for="calender">Date range:</label>
                       <div class="input-group-prepend">
                         <span class="input-group-text">
                           <i class="far fa-calendar-alt"></i>
                         </span>
                       </div>
-                      <input type="text" class="form-control float-left" id="fromToDate" name="fromToDate">
+                      <input type="text" class="form-control float-left" id="calender" name="fromToDate">
                       <button type="submit" class="btn btn-info">Submit</button>
                     </div>
                   </form>
@@ -219,48 +250,38 @@
                     <th>対象年数</th>
                   </tr>
                   </thead>
-                  <tbody th:each="company : ${companies}">
-                  <tr th:if="${company.isMainReport()}" class="table-info">
-                    <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
-                           target="_blank">
-                      証券コード
-                    </a></td>
-                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
-                      会社名
-                    </a></td>
-                    <td th:text="${company.submitDate}">提出日</td>
-                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                    <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
-                    <td th:text="${company.averageStockPrice}">株価平均</td>
-                    <td th:text="${company.allDiscountRate}">割安比率</td>
-                    <td th:text="${company.countYear}">対象年数</td>
-                  </tr>
-                  <tr th:unless="${company.isMainReport()}">
-                    <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
-                           target="_blank">証券コード</a></td>
-                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
-                      会社名
-                    </a></td>
-                    <td th:text="${company.submitDate}">提出日</td>
-                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                    <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
-                    <td th:text="${company.averageStockPrice}">株価平均</td>
-                    <td th:text="${company.allDiscountRate}">割安比率</td>
-                    <td th:text="${company.countYear}">対象年数</td>
-                  </tr>
-                  </tbody>
-                  <tfoot>
-                  <tr>
-                    <th>コード</th>
-                    <th>会社名</th>
-                    <th>提出日</th>
-                    <th>最新企業価値</th>
-                    <th>変動係数</th>
-                    <th>株価平均</th>
-                    <th>割安比率</th>
-                    <th>対象年数</th>
-                  </tr>
-                  </tfoot>
+                  <tbody>
+                  <div th:each="company : ${companies}">
+                    <tr th:if="${company.isMainReport()}" class="table-info">
+                      <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
+                             target="_blank">
+                        証券コード
+                      </a></td>
+                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                        会社名
+                      </a></td>
+                      <td th:text="${company.submitDate}">提出日</td>
+                      <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                      <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
+                      <td th:text="${company.averageStockPrice}">株価平均</td>
+                      <td th:text="${company.allDiscountRate}">割安比率</td>
+                      <td th:text="${company.countYear}">対象年数</td>
+                    </tr>
+
+                    <tr th:unless="${company.isMainReport()}">
+                      <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
+                             target="_blank">証券コード</a></td>
+                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                        会社名
+                      </a></td>
+                      <td th:text="${company.submitDate}">提出日</td>
+                      <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                      <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
+                      <td th:text="${company.averageStockPrice}">株価平均</td>
+                      <td th:text="${company.allDiscountRate}">割安比率</td>
+                      <td th:text="${company.countYear}">対象年数</td>
+                    </tr>
+                  </div>
                 </table>
               </div>
               <!-- /.card-body -->
@@ -323,7 +344,7 @@
 <script>
     $(function () {
         //Date range picker
-        $('#reservation').daterangepicker()
+        $('#calender').daterangepicker()
 
         $("#example1").DataTable({
             "lengthChange": true,

@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
   <!-- IonIcons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="/dist/css/adminlte.min.css">
 
@@ -62,13 +64,12 @@
     <div class="sidebar">
       <!-- Sidebar Menu -->
       <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
-            data-accordion="false">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fa-solid fa-building"></i>
               <p>
                 Main
                 <i class="right fas fa-angle-left"></i>
@@ -82,9 +83,15 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/index-all" class="nav-link">
+                <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Main All Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Main Favorite Dashboard</p>
                 </a>
               </li>
             </ul>
@@ -92,7 +99,7 @@
 
           <li class="nav-item menu-open">
             <a href="#" class="nav-link active">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fa-solid fa-list-check"></i>
               <p>
                 Edinet
                 <i class="right fas fa-angle-left"></i>
@@ -106,7 +113,7 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list-all" class="nav-link">
+                <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Edinet All Dashboard</p>
                 </a>

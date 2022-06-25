@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.master;
 
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -42,6 +43,9 @@ public class CompanyEntity {
     // 決算日
     private final String settlementDate;
 
+    // お気に入り
+    private final String favorite;
+
     // 登録日
     @Column(updatable = false)
     private final LocalDateTime createdAt;
@@ -64,7 +68,24 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
+                null,
                 null
+        );
+    }
+
+    public static CompanyEntity ofUpdateFavorite(final Company company, final LocalDateTime updatedAt) {
+        return new CompanyEntity(
+                null,
+                null,
+                null,
+                company.getEdinetCode(),
+                null,
+                null,
+                null,
+                null,
+                company.isFavorite() ? "0" : "1",   // 反転させるだけ
+                null,
+                updatedAt
         );
     }
 
@@ -81,6 +102,7 @@ public class CompanyEntity {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                "0",
                 createdAt,
                 createdAt
         );
@@ -99,6 +121,7 @@ public class CompanyEntity {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                "0",
                 createdAt,
                 createdAt
         );
@@ -119,6 +142,7 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
+                "0",
                 createdAt,
                 createdAt
         );

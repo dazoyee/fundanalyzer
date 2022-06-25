@@ -46,16 +46,6 @@ public class ViewService {
     }
 
     /**
-     * 企業情報（企業価値ソート）
-     *
-     * @return 企業一覧
-     */
-    @NewSpan
-    public List<CorporateViewModel> getSortedCorporateView() {
-        return viewCorporateUseCase.sortByDiscountRate();
-    }
-
-    /**
      * 企業情報（すべて）
      *
      * @return 企業一覧
@@ -63,6 +53,26 @@ public class ViewService {
     @NewSpan
     public List<CorporateViewModel> getAllCorporateView() {
         return viewCorporateUseCase.viewAll();
+    }
+
+    /**
+     * 企業情報（お気に入り）
+     *
+     * @return 企業一覧
+     */
+    @NewSpan
+    public List<CorporateViewModel> getFavoriteCorporateView() {
+        return viewCorporateUseCase.viewFavorite();
+    }
+
+    /**
+     * 企業情報（企業価値ソート）
+     *
+     * @return 企業一覧
+     */
+    @NewSpan
+    public List<CorporateViewModel> getSortedCorporateView() {
+        return viewCorporateUseCase.sortByDiscountRate();
     }
 
     /**
