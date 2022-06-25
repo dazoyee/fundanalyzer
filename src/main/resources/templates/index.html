@@ -184,13 +184,13 @@
                 <div class="form-group">
                   <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
                     <div class="input-group">
-                      <label for="fromToDate">Date range:</label>
+                      <label for="calender">Date range:</label>
                       <div class="input-group-prepend">
                         <span class="input-group-text">
                           <i class="far fa-calendar-alt"></i>
                         </span>
                       </div>
-                      <input type="text" class="form-control float-left" id="fromToDate" name="fromToDate">
+                      <input type="text" class="form-control float-left" id="calender" name="fromToDate">
                       <button type="submit" class="btn btn-info">Submit</button>
                     </div>
                   </form>
@@ -343,7 +343,7 @@
 <script>
     $(function () {
         //Date range picker
-        $('#reservation').daterangepicker()
+        $('#calender').daterangepicker()
 
         $("#example1").DataTable({
             "lengthChange": true,
