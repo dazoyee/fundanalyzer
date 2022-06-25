@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +46,7 @@ class EdinetDocumentSpecificationTest {
             edinetDocument.setPeriodStart("2020-01-01");
             edinetDocument.setPeriodEnd("2020-12-31");
 
-            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
+            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(Optional.of(edinetDocument));
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
@@ -62,8 +63,8 @@ class EdinetDocumentSpecificationTest {
             parentEdinetDocument.setPeriodStart("2020-01-01");
             parentEdinetDocument.setPeriodEnd("2020-12-31");
 
-            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
-            when(edinetDocumentDao.selectByDocId("docId")).thenReturn(parentEdinetDocument);
+            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(Optional.of(edinetDocument));
+            when(edinetDocumentDao.selectByDocId("docId")).thenReturn(Optional.of(parentEdinetDocument));
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
@@ -79,8 +80,8 @@ class EdinetDocumentSpecificationTest {
             edinetDocument.setParentDocId("docId");
             var parentEdinetDocument = new EdinetDocumentEntity();
 
-            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
-            when(edinetDocumentDao.selectByDocId("docId")).thenReturn(parentEdinetDocument);
+            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(Optional.of(edinetDocument));
+            when(edinetDocumentDao.selectByDocId("docId")).thenReturn(Optional.of(parentEdinetDocument));
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 
@@ -95,7 +96,7 @@ class EdinetDocumentSpecificationTest {
             var edinetDocument = new EdinetDocumentEntity();
             edinetDocument.setParentDocId("docId");
 
-            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(edinetDocument);
+            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(Optional.of(edinetDocument));
 
             var actual = edinetDocumentSpecification.parsePeriod(documentId);
 

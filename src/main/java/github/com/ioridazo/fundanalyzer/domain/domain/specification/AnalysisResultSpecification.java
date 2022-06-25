@@ -72,7 +72,9 @@ public class AnalysisResultSpecification {
     public void insert(final Document document, final BigDecimal value) {
         final String companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
                 .flatMap(Company::getCode)
-                .orElseThrow(FundanalyzerNotExistException::new);
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException("企業コード");
+                });
         try {
             analysisResultDao.insert(AnalysisResultEntity.of(
                     companyCode,
@@ -277,7 +279,10 @@ public class AnalysisResultSpecification {
      * @return 企業価値リスト
      */
     List<AnalysisResultEntity> analysisTargetList(final Company company, final List<String> documentTypeCode) {
-        final String code = company.getCode().orElseThrow(FundanalyzerNotExistException::new);
+        final String code = company.getCode()
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException("企業コード");
+                });
         final List<AnalysisResultEntity> analysisTargetList = analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode);
 
         return analysisTargetList.stream()

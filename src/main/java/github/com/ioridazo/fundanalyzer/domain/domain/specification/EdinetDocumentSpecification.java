@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.EdinetDocumentDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.EdinetDocumentEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.apache.logging.log4j.LogManager;
@@ -22,12 +23,13 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class EdinetDocumentSpecification {
 
     private static final String CACHE_KEY_LIMITED_EDINET_DOCUMENT = "limitedEdinetDocument";
+    private static final String MESSAGE_EDINET_DOCUMENT = "EDINETに提出された書類";
 
     private static final Logger log = LogManager.getLogger(EdinetDocumentSpecification.class);
 
@@ -59,7 +61,10 @@ public class EdinetDocumentSpecification {
     @CachePut(CACHE_KEY_LIMITED_EDINET_DOCUMENT)
     public EdinetDocument findLimitedEdinetDocument(final String documentId) {
         final EdinetDocument edinetDocument = parsePeriod(documentId);
-        final EdinetDocumentEntity entity = edinetDocumentDao.selectByDocId(documentId);
+        final EdinetDocumentEntity entity = edinetDocumentDao.selectByDocId(documentId)
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException(MESSAGE_EDINET_DOCUMENT);
+                });
         edinetDocument.setDocDescription(entity.getDocDescription().orElse(null));
         edinetDocument.setParentDocId(entity.getParentDocId().orElse(null));
         return edinetDocument;
@@ -82,24 +87,27 @@ public class EdinetDocumentSpecification {
      * @return 期間（EdinetDocument）
      */
     public EdinetDocument parsePeriod(final String documentId) {
-        final EdinetDocumentEntity edinetDocumentEntity = edinetDocumentDao.selectByDocId(documentId);
+        final Optional<EdinetDocumentEntity> edinetDocumentEntity = edinetDocumentDao.selectByDocId(documentId);
         final EdinetDocument edinetDocument = new EdinetDocument();
 
-        if (Objects.isNull(edinetDocumentEntity)) {
+        if (edinetDocumentEntity.isEmpty()) {
             edinetDocument.setPeriodStart(LocalDate.EPOCH);
             edinetDocument.setPeriodEnd(LocalDate.EPOCH);
             return edinetDocument;
         }
 
         // periodStart
-        if (edinetDocumentEntity.getPeriodStart().isPresent()) {
+        if (edinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodStart).isPresent()) {
             // period start is present
-            edinetDocument.setPeriodStart(LocalDate.parse(edinetDocumentEntity.getPeriodStart().orElseThrow()));
-        } else if (edinetDocumentEntity.getParentDocId().isPresent()) {
-            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId().orElseThrow());
-            if (Objects.nonNull(parentEdinetDocumentEntity) && parentEdinetDocumentEntity.getPeriodStart().isPresent()) {
+            edinetDocument.setPeriodStart(LocalDate.parse(
+                    edinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodStart).orElseThrow()));
+        } else if (edinetDocumentEntity.map(EdinetDocumentEntity::getParentDocId).isPresent()) {
+            final Optional<EdinetDocumentEntity> parentEdinetDocumentEntity =
+                    edinetDocumentDao.selectByDocId(edinetDocumentEntity.flatMap(EdinetDocumentEntity::getParentDocId).orElseThrow());
+            if (parentEdinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodStart).isPresent()) {
                 // parent edinet document is present
-                edinetDocument.setPeriodStart(LocalDate.parse(parentEdinetDocumentEntity.getPeriodStart().orElseThrow()));
+                edinetDocument.setPeriodStart(LocalDate.parse(
+                        parentEdinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodStart).orElseThrow()));
             } else {
                 // parent edinet document is null
                 edinetDocument.setPeriodStart(LocalDate.EPOCH);
@@ -109,14 +117,17 @@ public class EdinetDocumentSpecification {
         }
 
         // periodEnd
-        if (edinetDocumentEntity.getPeriodEnd().isPresent()) {
+        if (edinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodEnd).isPresent()) {
             // period end is present
-            edinetDocument.setPeriodEnd(LocalDate.parse(edinetDocumentEntity.getPeriodEnd().orElseThrow()));
-        } else if (edinetDocumentEntity.getParentDocId().isPresent()) {
-            final EdinetDocumentEntity parentEdinetDocumentEntity = edinetDocumentDao.selectByDocId(edinetDocumentEntity.getParentDocId().orElseThrow());
-            if (Objects.nonNull(parentEdinetDocumentEntity) && parentEdinetDocumentEntity.getPeriodEnd().isPresent()) {
+            edinetDocument.setPeriodEnd(LocalDate.parse(
+                    edinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodEnd).orElseThrow()));
+        } else if (edinetDocumentEntity.map(EdinetDocumentEntity::getParentDocId).isPresent()) {
+            final Optional<EdinetDocumentEntity> parentEdinetDocumentEntity =
+                    edinetDocumentDao.selectByDocId(edinetDocumentEntity.flatMap(EdinetDocumentEntity::getParentDocId).orElseThrow());
+            if (parentEdinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodEnd).isPresent()) {
                 // parent edinet document is present
-                edinetDocument.setPeriodEnd(LocalDate.parse(parentEdinetDocumentEntity.getPeriodEnd().orElseThrow()));
+                edinetDocument.setPeriodEnd(LocalDate.parse(
+                        parentEdinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodEnd).orElseThrow()));
             } else {
                 // parent edinet document is null
                 edinetDocument.setPeriodEnd(LocalDate.EPOCH);

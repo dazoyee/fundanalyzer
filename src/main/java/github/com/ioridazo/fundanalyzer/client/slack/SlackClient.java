@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 @Component
-@PropertySource(value = "classpath:/slack-message.properties", encoding = "UTF-8")
+@PropertySource(value = "classpath:/messages_ja.properties", encoding = "UTF-8")
 public class SlackClient {
 
     private static final Logger log = LogManager.getLogger(SlackClient.class);
