@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `company`
     `consolidated`    CHAR(1)               DEFAULT NULL COMMENT '連結の有無' CHECK (`consolidated` IN ('0', '1', '9')),
     `capital_stock`   INT(11)               DEFAULT NULL COMMENT '資本金',
     `settlement_date` VARCHAR(6)            DEFAULT NULL COMMENT '提出日',
+    `favorite`        CHAR(1)      NOT NULL DEFAULT '0' COMMENT 'お気に入り' CHECK (`favorite` IN ('0', '1')),
     `created_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     `updated_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
     PRIMARY KEY (`edinet_code`),

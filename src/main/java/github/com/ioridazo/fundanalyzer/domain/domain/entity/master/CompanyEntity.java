@@ -42,6 +42,9 @@ public class CompanyEntity {
     // 決算日
     private final String settlementDate;
 
+    // お気に入り
+    private final String favorite;
+
     // 登録日
     @Column(updatable = false)
     private final LocalDateTime createdAt;
@@ -55,6 +58,7 @@ public class CompanyEntity {
 
     public static CompanyEntity ofNull() {
         return new CompanyEntity(
+                null,
                 null,
                 null,
                 null,
@@ -81,6 +85,7 @@ public class CompanyEntity {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                "0",
                 createdAt,
                 createdAt
         );
@@ -99,6 +104,7 @@ public class CompanyEntity {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                "0",
                 createdAt,
                 createdAt
         );
@@ -119,6 +125,7 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
+                "0",
                 createdAt,
                 createdAt
         );

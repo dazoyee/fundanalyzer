@@ -47,7 +47,6 @@ class DocumentInteractorTest {
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private EdinetDocumentSpecification edinetDocumentSpecification;
-    private FinancialStatementSpecification financialStatementSpecification;
     private FileOperator fileOperator;
     private EdinetClient edinetClient;
 
@@ -59,7 +58,6 @@ class DocumentInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         edinetDocumentSpecification = Mockito.mock(EdinetDocumentSpecification.class);
-        financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
         edinetClient = Mockito.mock(EdinetClient.class);
 
@@ -68,7 +66,7 @@ class DocumentInteractorTest {
                 companySpecification,
                 documentSpecification,
                 edinetDocumentSpecification,
-                financialStatementSpecification,
+                Mockito.mock(FinancialStatementSpecification.class),
                 fileOperator,
                 edinetClient
         ));
@@ -769,7 +767,8 @@ class DocumentInteractorTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
     }
 }

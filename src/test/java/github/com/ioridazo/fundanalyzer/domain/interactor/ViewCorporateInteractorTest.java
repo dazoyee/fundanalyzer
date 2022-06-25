@@ -38,7 +38,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("NewClassNamingConvention")
 class ViewCorporateInteractorTest {
 
     private static final List<String> targetTypeCodes = List.of("120", "130", "140", "150");
@@ -648,7 +647,8 @@ class ViewCorporateInteractorTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
     }
 

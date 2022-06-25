@@ -28,7 +28,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("NewClassNamingConvention")
 class ViewSpecificationTest {
 
     private CorporateViewDao corporateViewDao;
@@ -214,7 +213,8 @@ class ViewSpecificationTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
     }
 
