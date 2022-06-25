@@ -249,48 +249,38 @@
                     <th>対象年数</th>
                   </tr>
                   </thead>
-                  <tbody th:each="company : ${companies}">
-                  <tr th:if="${company.isMainReport()}" class="table-info">
-                    <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
-                           target="_blank">
-                      証券コード
-                    </a></td>
-                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
-                      会社名
-                    </a></td>
-                    <td th:text="${company.submitDate}">提出日</td>
-                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                    <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
-                    <td th:text="${company.averageStockPrice}">株価平均</td>
-                    <td th:text="${company.allDiscountRate}">割安比率</td>
-                    <td th:text="${company.countYear}">対象年数</td>
-                  </tr>
-                  <tr th:unless="${company.isMainReport()}">
-                    <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
-                           target="_blank">証券コード</a></td>
-                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
-                      会社名
-                    </a></td>
-                    <td th:text="${company.submitDate}">提出日</td>
-                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                    <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
-                    <td th:text="${company.averageStockPrice}">株価平均</td>
-                    <td th:text="${company.allDiscountRate}">割安比率</td>
-                    <td th:text="${company.countYear}">対象年数</td>
-                  </tr>
-                  </tbody>
-                  <tfoot>
-                  <tr>
-                    <th>コード</th>
-                    <th>会社名</th>
-                    <th>提出日</th>
-                    <th>最新企業価値</th>
-                    <th>変動係数</th>
-                    <th>株価平均</th>
-                    <th>割安比率</th>
-                    <th>対象年数</th>
-                  </tr>
-                  </tfoot>
+                  <tbody>
+                  <div th:each="company : ${companies}">
+                    <tr th:if="${company.isMainReport()}" class="table-info">
+                      <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
+                             target="_blank">
+                        証券コード
+                      </a></td>
+                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                        会社名
+                      </a></td>
+                      <td th:text="${company.submitDate}">提出日</td>
+                      <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                      <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
+                      <td th:text="${company.averageStockPrice}">株価平均</td>
+                      <td th:text="${company.allDiscountRate}">割安比率</td>
+                      <td th:text="${company.countYear}">対象年数</td>
+                    </tr>
+
+                    <tr th:unless="${company.isMainReport()}">
+                      <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
+                             target="_blank">証券コード</a></td>
+                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                        会社名
+                      </a></td>
+                      <td th:text="${company.submitDate}">提出日</td>
+                      <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                      <td th:text="${company.allCoefficientOfVariation}">変動係数</td>
+                      <td th:text="${company.averageStockPrice}">株価平均</td>
+                      <td th:text="${company.allDiscountRate}">割安比率</td>
+                      <td th:text="${company.countYear}">対象年数</td>
+                    </tr>
+                  </div>
                 </table>
               </div>
               <!-- /.card-body -->
