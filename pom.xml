@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.5.6</version>
+        <version>2.6.9</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>github.com.ioridazo</groupId>
@@ -16,8 +16,8 @@
 
     <properties>
         <java.version>11</java.version>
-        <spring-cloud.version>2020.0.4</spring-cloud.version>
-        <ecs-logging-java.version>1.2.0</ecs-logging-java.version>
+        <spring-cloud.version>2021.0.3</spring-cloud.version>
+        <ecs-logging-java.version>1.4.0</ecs-logging-java.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-checkstyle-plugin.version>3.1.2</maven-checkstyle-plugin.version>
         <maven-pmd-plugin.version>3.15.0</maven-pmd-plugin.version>
@@ -67,7 +67,7 @@
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
-            <version>1.3.1</version>
+            <version>1.3.3</version>
         </dependency>
 
         <!-- scraping -->
@@ -91,12 +91,12 @@
         <dependency>
             <groupId>org.seasar.doma.boot</groupId>
             <artifactId>doma-spring-boot-starter</artifactId>
-            <version>1.5.0</version>
+            <version>1.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.seasar.doma</groupId>
             <artifactId>doma-processor</artifactId>
-            <version>2.49.0</version>
+            <version>2.51.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -125,7 +125,7 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>3.0.4</version>
+            <version>3.1.1</version>
         </dependency>
 
         <!-- resilience4j -->
@@ -146,6 +146,7 @@
         </dependency>
 
         <dependency>
+            <!--suppress VulnerableLibrariesLocal -->
             <groupId>pl.project13.maven</groupId>
             <artifactId>git-commit-id-plugin</artifactId>
             <version>4.9.10</version>
@@ -155,7 +156,7 @@
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>5.5.2</version>
+            <version>5.6</version>
         </dependency>
 
         <dependency>
@@ -168,12 +169,12 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.9.2</version>
+            <version>4.10.0</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
-            <version>4.9.2</version>
+            <version>4.10.0</version>
         </dependency>
 
         <dependency>
