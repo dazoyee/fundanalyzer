@@ -188,7 +188,10 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData) {
-        final Company company = companySpecification.findCompanyByCode(inputData.getCode5()).orElseThrow(FundanalyzerNotExistException::new);
+        final Company company = companySpecification.findCompanyByCode(inputData.getCode5())
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException("企業コード");
+                });
         final Stock stock = stockSpecification.findStock(company);
 
         final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()

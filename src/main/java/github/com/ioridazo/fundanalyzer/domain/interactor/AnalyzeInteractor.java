@@ -116,7 +116,9 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     void analyze(final Document document) {
         final String companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
                 .flatMap(Company::getCode)
-                .orElseThrow(FundanalyzerNotExistException::new);
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException("企業コード");
+                });
 
         try {
             analysisResultSpecification.insert(document, calculateFsValue(document));
