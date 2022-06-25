@@ -106,16 +106,32 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list" class="nav-link active">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Edinet Dashboard</p>
-                </a>
+                <th:block th:if="${target} == null">
+                  <a href="/fundanalyzer/v2/edinet-list" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Edinet Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == null">
+                  <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Edinet Dashboard</p>
+                  </a>
+                </th:block>
               </li>
               <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list-all" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Edinet All Dashboard</p>
-                </a>
+                <th:block th:if="${target} == 'all'">
+                  <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Edinet All Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == 'all'">
+                  <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Edinet All Dashboard</p>
+                  </a>
+                </th:block>
               </li>
             </ul>
           </li>

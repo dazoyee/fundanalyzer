@@ -14,6 +14,10 @@ public class EdinetPresenter {
 
     private static final String EDINET = "edinet";
 
+    private static final String TARGET_ALL = "all";
+
+    private static final String TARGET = "target";
+
     private final ViewService viewService;
 
     public EdinetPresenter(final ViewService viewService) {
@@ -29,26 +33,21 @@ public class EdinetPresenter {
      */
     @GetMapping("fundanalyzer/v2/edinet-list")
     public String edinetListView(
+            @RequestParam(name = "target", required = false) final String target,
             @RequestParam(name = "message", required = false) final String message,
             final Model model) {
         if (Objects.nonNull(message)) {
             model.addAttribute("message", UriUtils.decode(message, "UTF-8"));
         }
-        model.addAttribute("companyUpdated", viewService.getUpdateDate());
-        model.addAttribute("edinetList", viewService.getEdinetListView());
-        return EDINET;
-    }
 
-    /**
-     * すべてのEDINETリストを表示する
-     *
-     * @param model model
-     * @return EdinetList
-     */
-    @GetMapping("fundanalyzer/v2/edinet-list-all")
-    public String allEdinetListView(final Model model) {
-        model.addAttribute("companyUpdated", viewService.getUpdateDate());
-        model.addAttribute("edinetList", viewService.getAllEdinetListView());
+        if (TARGET_ALL.equals(target)) {
+            model.addAttribute(TARGET, TARGET_ALL);
+            model.addAttribute("companyUpdated", viewService.getUpdateDate());
+            model.addAttribute("edinetList", viewService.getAllEdinetListView());
+        } else {
+            model.addAttribute("companyUpdated", viewService.getUpdateDate());
+            model.addAttribute("edinetList", viewService.getEdinetListView());
+        }
         return EDINET;
     }
 }
