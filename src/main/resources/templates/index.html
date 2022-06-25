@@ -347,13 +347,18 @@
         $('#calender').daterangepicker()
 
         $("#example1").DataTable({
+            // @formatter:off
             "lengthChange": true,
+            "displayLength": 15,
+            "lengthMenu": [ 10, 15, 25, 50, 100 ],
             "searching": true,
             "ordering": true,
+            "order": [ [ 2, 'desc' ], [ 1, 'asc' ] ],
             "info": true,
             "autoWidth": true,
             "responsive": true,
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            // @formatter:on
         }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
 
     });
