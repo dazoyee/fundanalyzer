@@ -14,6 +14,13 @@ public class IndexPresenter {
 
     private static final String INDEX = "index";
 
+    private static final String TARGET_ALL = "all";
+    private static final String TARGET_FAVORITE = "favorite";
+
+    private static final String TARGET = "target";
+    private static final String COMPANIES = "companies";
+
+
     private final ViewService viewService;
 
     public IndexPresenter(final ViewService viewService) {
@@ -29,12 +36,22 @@ public class IndexPresenter {
      */
     @GetMapping("fundanalyzer/v2/index")
     public String corporateView(
+            @RequestParam(name = "target", required = false) final String target,
             @RequestParam(name = "message", required = false) final String message,
             final Model model) {
         if (Objects.nonNull(message)) {
             model.addAttribute("message", UriUtils.decode(message, "UTF-8"));
         }
-        model.addAttribute("companies", viewService.getCorporateView());
+
+        if (TARGET_ALL.equals(target)) {
+            model.addAttribute(TARGET, TARGET_ALL);
+            model.addAttribute(COMPANIES, viewService.getAllCorporateView());
+        } else if (TARGET_FAVORITE.equals(target)) {
+            model.addAttribute(TARGET, TARGET_FAVORITE);
+            model.addAttribute(COMPANIES, viewService.getFavoriteCorporateView());
+        } else {
+            model.addAttribute(COMPANIES, viewService.getCorporateView());
+        }
         return INDEX;
     }
 
@@ -46,19 +63,7 @@ public class IndexPresenter {
      */
     @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
     public String sortedCorporateView(final Model model) {
-        model.addAttribute("companies", viewService.getSortedCorporateView());
-        return INDEX;
-    }
-
-    /**
-     * すべての企業情報を表示する
-     *
-     * @param model model
-     * @return Index
-     */
-    @GetMapping("fundanalyzer/v2/index-all")
-    public String allCorporateView(final Model model) {
-        model.addAttribute("companies", viewService.getAllCorporateView());
+        model.addAttribute(COMPANIES, viewService.getSortedCorporateView());
         return INDEX;
     }
 }

@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Consolidated
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategories;
 import lombok.Value;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -38,6 +39,8 @@ public class Company {
     // 決算日
     private final String settlementDate;
 
+    private final boolean favorite;
+
     public static Company of(final CompanyEntity entity, final String industryName) {
         return new Company(
                 entity.getCode().orElse(null),
@@ -48,7 +51,8 @@ public class Company {
                 ListCategories.fromValue(entity.getListCategories()),
                 Consolidated.fromValue(entity.getConsolidated()),
                 entity.getCapitalStock(),
-                entity.getSettlementDate()
+                entity.getSettlementDate(),
+                Objects.equals(entity.getFavorite(), "1")
         );
     }
 

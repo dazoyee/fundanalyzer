@@ -25,7 +25,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("NewClassNamingConvention")
 class StockSchedulerTest {
 
     private AnalysisService analysisService;
@@ -66,7 +65,7 @@ class StockSchedulerTest {
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
             verify(analysisService, times(1)).deleteStock();
-            verify(slackClient, times(1)).sendMessage("g.c.i.f.web.scheduler.notice.info", 1);
+            verify(slackClient, times(1)).sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.delete", 1);
         }
 
         @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")

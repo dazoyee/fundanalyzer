@@ -14,6 +14,7 @@ public class CompanyViewModel {
     private final String name;
     private final String industry;
     private final String edinetCode;
+    private final Boolean isFavorite;
     private final Integer capitalStock;
     private final String settlementDate;
     private final String per;
@@ -30,6 +31,7 @@ public class CompanyViewModel {
                 company.getCompanyName(),
                 company.getIndustryName(),
                 company.getEdinetCode(),
+                company.isFavorite(),
                 company.getCapitalStock(),
                 company.getSettlementDate(),
                 stock.getStockPriceEntityList().stream()

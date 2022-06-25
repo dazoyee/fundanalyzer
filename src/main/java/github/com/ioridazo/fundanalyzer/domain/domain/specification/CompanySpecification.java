@@ -84,6 +84,17 @@ public class CompanySpecification {
     }
 
     /**
+     * お気に入りに企業情報リストを取得する
+     *
+     * @return 企業情報リスト
+     */
+    public List<Company> findFavoriteCompanies() {
+        return companyDao.selectByFavorite().stream()
+                .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 企業情報を登録する
      *
      * @param results EDINETレスポンス
@@ -129,6 +140,17 @@ public class CompanySpecification {
                     }
                 }
         );
+    }
+
+    /**
+     * お気に入りを更新する
+     *
+     * @param company 企業情報
+     * @return お気に入りに更新したか
+     */
+    public boolean updateFavorite(final Company company) {
+        companyDao.update(CompanyEntity.ofUpdateFavorite(company, nowLocalDateTime()));
+        return !company.isFavorite();
     }
 
     /**

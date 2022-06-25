@@ -35,6 +35,8 @@ logging:
   level: info
 
 management:
+  server:
+    port: 8990
   metrics:
     tags:
       application: ${spring.application.name}-main

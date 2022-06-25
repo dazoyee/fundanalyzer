@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("NewClassNamingConvention")
 class StockSpecificationTest {
 
     private StockPriceDao stockPriceDao;
@@ -60,7 +59,8 @@ class StockSpecificationTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
 
         @BeforeEach
@@ -276,7 +276,8 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
-                            null
+                            null,
+                            false
                     ),
                     new Company(
                             "code2",
@@ -287,7 +288,8 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
-                            null
+                            null,
+                            false
                     )));
             when(stockPriceDao.selectByCode("code1")).thenReturn(List.of(
                     new StockPriceEntity(

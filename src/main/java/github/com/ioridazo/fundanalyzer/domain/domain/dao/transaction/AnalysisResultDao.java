@@ -28,6 +28,9 @@ public interface AnalysisResultDao {
     @Select
     List<AnalysisResultEntity> selectByCodeAndPeriod(String code, LocalDate documentPeriod);
 
+    @Select
+    List<AnalysisResultEntity> selectBySubmitDateAndCreatedAt(LocalDate submitDate, LocalDate nowLocalDate);
+
     @Insert
     Result<AnalysisResultEntity> insert(AnalysisResultEntity analysisResultEntity);
 }

@@ -22,12 +22,18 @@ public class CorporatePresenter {
     /**
      * 銘柄詳細を表示する
      *
-     * @param code  会社コード
-     * @param model model
+     * @param code       会社コード
+     * @param isFavorite お気に入りかどうか
+     * @param model      model
      * @return BrandDetail
      */
     @GetMapping("fundanalyzer/v2/corporate")
-    public String corporateDetailView(@RequestParam(name = "code") final String code, final Model model) {
+    public String corporateDetailView(
+            @RequestParam(name = "code") final String code,
+            @RequestParam(name = "favorite", required = false) final Boolean isFavorite,
+            final Model model) {
+        model.addAttribute("isFavorite", isFavorite);
+
         final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
         model.addAttribute("corporate", view.getCompany());
         model.addAttribute("corporateView", view.getCorporate());
