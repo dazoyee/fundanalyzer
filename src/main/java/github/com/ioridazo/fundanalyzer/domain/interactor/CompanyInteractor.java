@@ -135,7 +135,7 @@ public class CompanyInteractor implements CompanyUseCase {
             final boolean isFavorite = companySpecification.updateFavorite(company.get());
             if (isFavorite) {
                 log.info(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format("対象の企業はお気に入りに登録しました。\t企業コード:{0}", inputData.getCode()),
+                        MessageFormat.format("対象の企業をお気に入りに登録しました。\t企業コード:{0}", inputData.getCode()),
                         Category.COMPANY,
                         Process.UPDATE,
                         System.currentTimeMillis() - startTime
@@ -143,7 +143,7 @@ public class CompanyInteractor implements CompanyUseCase {
                 return true;
             } else {
                 log.info(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format("対象の企業はお気に入りから除外しました。\t企業コード:{0}", inputData.getCode()),
+                        MessageFormat.format("対象の企業をお気に入りから除外しました。\t企業コード:{0}", inputData.getCode()),
                         Category.COMPANY,
                         Process.UPDATE,
                         System.currentTimeMillis() - startTime

@@ -126,13 +126,13 @@ public class CompanySpecification {
     public void upsert(final List<EdinetCsvResultBean> resultBeanList) {
         resultBeanList.parallelStream().forEach(resultBean -> {
                     if (isPresent(resultBean.getEdinetCode())) {
-                        companyDao.update(CompanyEntity.of(
+                        companyDao.update(CompanyEntity.ofUpdate(
                                 industrySpecification.convertFromNameToId(resultBean.getIndustry()),
                                 resultBean,
                                 nowLocalDateTime()
                         ));
                     } else {
-                        companyDao.insert(CompanyEntity.of(
+                        companyDao.insert(CompanyEntity.ofInsert(
                                 industrySpecification.convertFromNameToId(resultBean.getIndustry()),
                                 resultBean,
                                 nowLocalDateTime()

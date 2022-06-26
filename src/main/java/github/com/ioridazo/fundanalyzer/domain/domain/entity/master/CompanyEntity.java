@@ -89,26 +89,7 @@ public class CompanyEntity {
         );
     }
 
-    public static CompanyEntity of(
-            final List<IndustryEntity> industryEntityList,
-            final EdinetCsvResultBean resultBean,
-            final LocalDateTime createdAt) {
-        return new CompanyEntity(
-                resultBean.getSecuritiesCode().isBlank() ? null : resultBean.getSecuritiesCode(),
-                resultBean.getSubmitterName(),
-                mapToIndustryId(industryEntityList, resultBean.getIndustry()),
-                resultBean.getEdinetCode(),
-                ListCategories.fromName(resultBean.getListCategories()).toValue(),
-                Consolidated.fromName(resultBean.getConsolidated()).toValue(),
-                resultBean.getCapitalStock(),
-                resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
-                "0",
-                createdAt,
-                createdAt
-        );
-    }
-
-    public static CompanyEntity of(
+    public static CompanyEntity ofInsert(
             final Integer industryId,
             final EdinetCsvResultBean resultBean,
             final LocalDateTime createdAt) {
@@ -122,6 +103,25 @@ public class CompanyEntity {
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
                 "0",
+                createdAt,
+                createdAt
+        );
+    }
+
+    public static CompanyEntity ofUpdate(
+            final Integer industryId,
+            final EdinetCsvResultBean resultBean,
+            final LocalDateTime createdAt) {
+        return new CompanyEntity(
+                resultBean.getSecuritiesCode().isBlank() ? null : resultBean.getSecuritiesCode(),
+                resultBean.getSubmitterName(),
+                industryId,
+                resultBean.getEdinetCode(),
+                ListCategories.fromName(resultBean.getListCategories()).toValue(),
+                Consolidated.fromName(resultBean.getConsolidated()).toValue(),
+                resultBean.getCapitalStock(),
+                resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                null,
                 createdAt,
                 createdAt
         );
@@ -146,13 +146,5 @@ public class CompanyEntity {
                 createdAt,
                 createdAt
         );
-    }
-
-    private static Integer mapToIndustryId(final List<IndustryEntity> industryEntityList, final String industryName) {
-        return industryEntityList.stream()
-                .filter(industry -> industryName.equals(industry.getName()))
-                .map(IndustryEntity::getId)
-                .findAny()
-                .orElseThrow();
     }
 }
