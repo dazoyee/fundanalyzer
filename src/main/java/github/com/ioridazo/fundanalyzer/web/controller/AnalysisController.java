@@ -157,4 +157,19 @@ public class AnalysisController {
         return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
                 .queryParam("code", code.substring(0, 4)).toUriString();
     }
+
+    /**
+     * 株価を評価する
+     *
+     * @param code               会社コード
+     * @param redirectAttributes redirectAttributes
+     * @return BrandDetail
+     */
+    @PostMapping("fundanalyzer/v2/evaluate")
+    public String evaluate(final String code, final RedirectAttributes redirectAttributes) {
+        final boolean isEvaluated = analysisService.evaluate(CodeInputData.of(code));
+        redirectAttributes.addFlashAttribute("isEvaluated", isEvaluated);
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+                .queryParam("code", code.substring(0, 4)).toUriString();
+    }
 }

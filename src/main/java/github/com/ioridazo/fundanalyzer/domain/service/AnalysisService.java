@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Result;
@@ -24,6 +25,7 @@ public class AnalysisService {
     private final DocumentUseCase documentUseCase;
     private final AnalyzeUseCase analyzeUseCase;
     private final StockUseCase stockUseCase;
+    private final ValuationUseCase valuationUseCase;
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
     private final NoticeUseCase noticeUseCase;
@@ -33,6 +35,7 @@ public class AnalysisService {
             final DocumentUseCase documentUseCase,
             final AnalyzeUseCase analyzeUseCase,
             final StockUseCase stockUseCase,
+            final ValuationUseCase valuationUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
             final ViewEdinetUseCase viewEdinetUseCase,
             final NoticeUseCase noticeUseCase) {
@@ -40,6 +43,7 @@ public class AnalysisService {
         this.documentUseCase = documentUseCase;
         this.analyzeUseCase = analyzeUseCase;
         this.stockUseCase = stockUseCase;
+        this.valuationUseCase = valuationUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
         this.noticeUseCase = noticeUseCase;
@@ -221,5 +225,20 @@ public class AnalysisService {
     public boolean updateFavoriteCompany(final CodeInputData inputData) {
         // update favorite company
         return companyUseCase.updateFavoriteCompany(inputData);
+    }
+
+    /**
+     * 株価の評価
+     */
+    @NewSpan
+    public int evaluate() {
+        // evaluate
+        return valuationUseCase.evaluate();
+    }
+
+    @NewSpan
+    public boolean evaluate(final CodeInputData inputData) {
+        // evaluate
+        return valuationUseCase.evaluate(inputData);
     }
 }
