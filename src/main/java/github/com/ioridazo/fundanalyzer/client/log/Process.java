@@ -23,6 +23,7 @@ public enum Process {
     REGISTER("register"),
     UPDATE("update"),
     SLACK("slack"),
+    EVALUATE("evaluate"),
     ;
 
     private final String value;
