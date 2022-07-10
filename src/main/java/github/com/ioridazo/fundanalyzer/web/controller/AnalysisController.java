@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Controller
@@ -27,8 +28,10 @@ public class AnalysisController {
     private static final String REDIRECT = "redirect:";
     private static final URI V2_INDEX_PATH = URI.create("/fundanalyzer/v2/index");
     private static final URI V2_CORPORATE_PATH = URI.create("/fundanalyzer/v2/corporate");
+    private static final URI V2_VALUATION_PATH = URI.create("/fundanalyzer/v2/valuation");
 
     private static final String MESSAGE = "message";
+    private static final String DATETIME_FORMAT = "MM/dd/uuuu";
 
     private final AnalysisService analysisService;
     private final ViewService viewService;
@@ -51,8 +54,8 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v1/document/analysis")
     public String doMain(final String fromToDate) {
-        final LocalDate fromDate = LocalDate.parse(fromToDate.substring(0, 10), DateTimeFormatter.ofPattern("MM/dd/uuuu"));
-        final LocalDate toDate = LocalDate.parse(fromToDate.substring(13, 23), DateTimeFormatter.ofPattern("MM/dd/uuuu"));
+        final LocalDate fromDate = LocalDate.parse(fromToDate.substring(0, 10), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
+        final LocalDate toDate = LocalDate.parse(fromToDate.substring(13, 23), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
 
         analysisService.executePartOfMain(BetweenDateInputData.of(fromDate, toDate));
 
@@ -118,16 +121,26 @@ public class AnalysisController {
     }
 
     /**
-     * 指定日に提出した企業の株価を取得する
+     * 指定日に提出された企業の株価を取得する
      *
-     * @param fromDate 提出日
-     * @param toDate   提出日
-     * @return Index
+     * @param fromToDate 提出日
+     * @return Valuation
      */
-    @PostMapping("fundanalyzer/v1/import/stock/date")
-    public String importStock(final String fromDate, final String toDate) {
-        analysisService.importStock(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
+    @PostMapping("fundanalyzer/v2/import/stock/date")
+    public String importStockBySubmitDate(final String fromToDate, RedirectAttributes redirectAttributes) {
+        final LocalDate fromDate = LocalDate.parse(fromToDate.substring(0, 10), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
+        final LocalDate toDate = LocalDate.parse(fromToDate.substring(13, 23), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
+
+        analysisService.importStock(BetweenDateInputData.of(fromDate, toDate));
+
+        redirectAttributes.addFlashAttribute(
+                MESSAGE,
+                messageSource.getMessage(
+                        "github.com.ioridazo.fundanalyzer.web.controller.import.stock.success",
+                        new String[]{fromDate.toString(), toDate.toString()},
+                        Locale.getDefault())
+        );
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_VALUATION_PATH).toUriString();
     }
 
     /**
@@ -137,7 +150,7 @@ public class AnalysisController {
      * @return BrandDetail
      */
     @PostMapping("fundanalyzer/v1/import/stock/code")
-    public String importStock(final String code) {
+    public String importStockByCode(final String code) {
         analysisService.importStock(CodeInputData.of(code));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
                 .queryParam("code", code.substring(0, 4)).toUriString();
@@ -167,9 +180,21 @@ public class AnalysisController {
      */
     @PostMapping("fundanalyzer/v2/evaluate")
     public String evaluate(final String code, final RedirectAttributes redirectAttributes) {
-        final boolean isEvaluated = analysisService.evaluate(CodeInputData.of(code));
-        redirectAttributes.addFlashAttribute("isEvaluated", isEvaluated);
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
-                .queryParam("code", code.substring(0, 4)).toUriString();
+        if (Objects.nonNull(code)) {
+            final boolean isEvaluated = analysisService.evaluate(CodeInputData.of(code));
+            redirectAttributes.addFlashAttribute("isEvaluated", isEvaluated);
+            return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+                    .queryParam("code", code.substring(0, 4)).toUriString();
+        } else {
+            final int countValuation = analysisService.evaluate();
+            redirectAttributes.addFlashAttribute(
+                    MESSAGE,
+                    messageSource.getMessage(
+                            "github.com.ioridazo.fundanalyzer.web.controller.valuation.success",
+                            new String[]{String.valueOf(countValuation)},
+                            Locale.getDefault())
+            );
+            return REDIRECT + UriComponentsBuilder.fromUri(V2_VALUATION_PATH).toUriString();
+        }
     }
 }
