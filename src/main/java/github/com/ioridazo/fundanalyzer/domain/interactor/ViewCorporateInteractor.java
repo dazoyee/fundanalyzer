@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -19,6 +20,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CompanyViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
@@ -52,6 +54,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final FinancialStatementSpecification financialStatementSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
+    private final ValuationSpecification valuationSpecification;
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
 
@@ -75,6 +78,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
+            final ValuationSpecification valuationSpecification,
             final ViewSpecification viewSpecification,
             final SlackClient slackClient) {
         this.analyzeInteractor = analyzeInteractor;
@@ -83,6 +87,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
+        this.valuationSpecification = valuationSpecification;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
     }
@@ -277,5 +282,46 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 Process.UPDATE,
                 System.currentTimeMillis() - startTime
         ));
+    }
+
+    /**
+     * メインビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewValuation() {
+        return valuationSpecification.findAllValuationView().stream()
+                // 割安度が170%(外部設定値)以上を表示
+                .filter(vvm -> vvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * オールビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewAllValuation() {
+        return valuationSpecification.findAllValuationView();
+    }
+
+    /**
+     * お気に入りビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewFavoriteValuation() {
+        final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
+                .map(Company::getCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        return valuationSpecification.findAllValuationView().stream()
+                .filter(vvm -> favoriteList.stream().anyMatch(favorite -> vvm.getCode().equals(favorite.substring(0, 4))))
+                .collect(Collectors.toList());
     }
 }

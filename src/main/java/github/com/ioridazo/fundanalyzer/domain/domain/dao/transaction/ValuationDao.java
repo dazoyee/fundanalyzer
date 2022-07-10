@@ -15,6 +15,9 @@ import java.util.List;
 public interface ValuationDao {
 
     @Select
+    List<ValuationEntity> selectByCode(String code);
+
+    @Select
     List<ValuationEntity> selectByCodeAndSubmitDate(String code, LocalDate submitDate);
 
     @Insert

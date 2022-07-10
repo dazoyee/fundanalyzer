@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
@@ -156,5 +157,35 @@ public class ViewService {
         documentUseCase.removeDocument(inputData);
         // view edinet
         viewEdinetUseCase.updateView(inputData);
+    }
+
+    /**
+     * 株価評価（メイン）
+     *
+     * @return 株価評価
+     */
+    @NewSpan
+    public List<ValuationViewModel> getValuationView() {
+        return viewCorporateUseCase.viewValuation();
+    }
+
+    /**
+     * 株価評価（オール）
+     *
+     * @return 株価評価
+     */
+    @NewSpan
+    public List<ValuationViewModel> getAllValuationView() {
+        return viewCorporateUseCase.viewAllValuation();
+    }
+
+    /**
+     * 株価評価（お気に入り）
+     *
+     * @return 株価評価
+     */
+    @NewSpan
+    public List<ValuationViewModel> getFavoriteValuationView() {
+        return viewCorporateUseCase.viewFavoriteValuation();
     }
 }

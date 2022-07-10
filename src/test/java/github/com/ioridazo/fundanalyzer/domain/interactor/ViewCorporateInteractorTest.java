@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -69,6 +70,7 @@ class ViewCorporateInteractorTest {
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
+                Mockito.mock(ValuationSpecification.class),
                 viewSpecification,
                 slackClient
         ));
