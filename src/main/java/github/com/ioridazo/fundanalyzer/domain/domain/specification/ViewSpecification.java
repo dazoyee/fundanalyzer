@@ -87,7 +87,9 @@ public class ViewSpecification {
     public EdinetListViewModel findEdinetListView(final DateInputData inputData) throws FundanalyzerNotExistException {
         return edinetListViewDao.selectBySubmitDate(inputData.getDate())
                 .map(EdinetListViewModel::of)
-                .orElseThrow(FundanalyzerNotExistException::new);
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException("提出日");
+                });
     }
 
     /**
@@ -169,7 +171,10 @@ public class ViewSpecification {
         final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
 
         return CorporateViewModel.of(
-                company.getCode().map(code -> code.substring(0, 4)).orElseThrow(FundanalyzerNotExistException::new),
+                company.getCode().map(code -> code.substring(0, 4))
+                        .orElseThrow(() -> {
+                            throw new FundanalyzerNotExistException("企業コード");
+                        }),
                 company.getCompanyName(),
                 latestDocument.map(Document::getSubmitDate).orElse(null),
                 latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue).orElse(null),

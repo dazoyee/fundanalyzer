@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.context.MessageSource;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
@@ -30,7 +32,11 @@ class AnalysisControllerTest {
         analysisService = Mockito.mock(AnalysisService.class);
         viewService = Mockito.mock(ViewService.class);
 
-        controller = new AnalysisController(analysisService, viewService);
+        controller = new AnalysisController(
+                analysisService,
+                viewService,
+                Mockito.mock(MessageSource.class)
+        );
     }
 
     @DisplayName("doMain : 指定提出日の書類を一部メインの一連処理をする")
@@ -64,7 +70,7 @@ class AnalysisControllerTest {
     @DisplayName("scrapeById : 指定書類IDを分析する")
     @Test
     void scrapeById() {
-        assertEquals("redirect:/fundanalyzer/v2/index", controller.scrapeById("test1234,test5678"));
+        assertEquals("redirect:/fundanalyzer/v2/index", controller.scrapeById("test1234,test5678", new RedirectAttributesModelMap()));
         Mockito.verify(analysisService, Mockito.times(1)).executeById(IdInputData.of("test1234"));
         Mockito.verify(analysisService, Mockito.times(1)).executeById(IdInputData.of("test5678"));
     }
@@ -72,15 +78,17 @@ class AnalysisControllerTest {
     @DisplayName("importStock : 指定日に提出した企業の株価を取得する")
     @Test
     void importStock1() {
-        assertEquals("redirect:/fundanalyzer/v2/index", controller.importStock("2021-05-29", "2021-05-29"));
+        assertEquals(
+                "redirect:/fundanalyzer/v2/valuation",
+                controller.importStockBySubmitDate("07/10/2022 - 07/10/2022", new RedirectAttributesModelMap()));
         Mockito.verify(analysisService, Mockito.times(1))
-                .importStock(BetweenDateInputData.of(LocalDate.parse("2021-05-29"), LocalDate.parse("2021-05-29")));
+                .importStock(BetweenDateInputData.of(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-10")));
     }
 
     @DisplayName("importStock : 企業の株価を取得する")
     @Test
     void importStock2() {
-        assertEquals("redirect:/fundanalyzer/v2/corporate?code=1234", controller.importStock("12345"));
+        assertEquals("redirect:/fundanalyzer/v2/corporate?code=1234", controller.importStockByCode("12345"));
         Mockito.verify(analysisService, Mockito.times(1)).importStock(CodeInputData.of("12345"));
     }
 }

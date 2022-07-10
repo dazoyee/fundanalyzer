@@ -9,13 +9,14 @@ import org.seasar.doma.jdbc.Result;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
 public interface EdinetDocumentDao {
 
     @Select
-    EdinetDocumentEntity selectByDocId(String docId);
+    Optional<EdinetDocumentEntity> selectByDocId(String docId);
 
     @Select
     List<EdinetDocumentEntity> selectBySubmitDate(String submitDate);

@@ -77,12 +77,22 @@ public class StockSpecification {
     /**
      * 株価情報を取得する
      *
+     * @param companyCode 企業コード
+     * @param targetDate  対象日付
+     * @return 株価情報
+     */
+    public Optional<StockPriceEntity> findStock(final String companyCode, final LocalDate targetDate) {
+        return stockPriceDao.selectByCodeAndDate(companyCode, targetDate).stream().findAny();
+    }
+
+    /**
+     * 株価情報を取得する
+     *
      * @param company 企業情報
      * @return 株価情報
      */
     public Stock findStock(final Company company) {
-        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(
-                company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code")));
+        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(companyCode(company));
 
         final Optional<LocalDate> importDate = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -93,10 +103,9 @@ public class StockSpecification {
                 .map(StockPriceEntity::getStockPrice)
                 .map(BigDecimal::valueOf);
 
-        final Optional<BigDecimal> averageStockPrice = averageStockPrice(company, stockPriceList);
+        final Optional<BigDecimal> averageStockPrice = getAverageStockPriceOfLatestSubmitDate(company, stockPriceList);
 
-        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(
-                company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code")));
+        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(companyCode(company));
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
                 .map(MinkabuEntity::getGoalsStock)
@@ -235,11 +244,37 @@ public class StockSpecification {
     /**
      * 特定期間における平均の株価を取得する
      *
+     * @param companyCode 企業コード
+     * @return 平均の株価
+     */
+    public Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(final String companyCode) {
+        final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
+        return getAverageStockPriceOfLatestSubmitDate(
+                company,
+                stockPriceDao.selectByCode(company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("企業コード")))
+        );
+    }
+
+    /**
+     * 予想株価を取得する
+     *
+     * @param companyCode 企業コード
+     * @param targetDate  対象日付
+     * @return 予想株価
+     */
+    public Optional<Double> findForecastStock(final String companyCode, final LocalDate targetDate) {
+        return minkabuDao.selectByCodeAndDate(companyCode, targetDate).map(MinkabuEntity::getGoalsStock);
+    }
+
+    /**
+     * 特定期間における平均の株価を取得する
+     *
      * @param company        企業情報
      * @param stockPriceList 株価情報リスト
      * @return 平均の株価
      */
-    private Optional<BigDecimal> averageStockPrice(final Company company, final List<StockPriceEntity> stockPriceList) {
+    private Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(
+            final Company company, final List<StockPriceEntity> stockPriceList) {
         final Optional<LocalDate> submitDate = documentSpecification.latestDocument(company).map(Document::getSubmitDate);
 
         if (submitDate.isEmpty()) {
@@ -321,5 +356,12 @@ public class StockSpecification {
             ), e);
         }
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
+    }
+
+    private String companyCode(final Company company) {
+        return company.getCode()
+                .orElseThrow(() -> {
+                    throw new FundanalyzerNotExistException("企業コード");
+                });
     }
 }

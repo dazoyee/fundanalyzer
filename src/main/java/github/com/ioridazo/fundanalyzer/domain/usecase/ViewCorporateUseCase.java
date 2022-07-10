@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 
@@ -64,4 +65,28 @@ public interface ViewCorporateUseCase {
      */
     @NewSpan
     void updateView(DateInputData inputData);
+
+    /**
+     * メインビュー
+     *
+     * @return 株価評価ビュー
+     */
+    @NewSpan
+    List<ValuationViewModel> viewValuation();
+
+    /**
+     * オールビュー
+     *
+     * @return 株価評価ビュー
+     */
+    @NewSpan
+    List<ValuationViewModel> viewAllValuation();
+
+    /**
+     * お気に入りビュー
+     *
+     * @return 株価評価ビュー
+     */
+    @NewSpan
+    List<ValuationViewModel> viewFavoriteValuation();
 }

@@ -30,7 +30,13 @@
     <!-- Left navbar links -->
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+        <a class="nav-link" data-widget="pushmenu" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onClick="history.back()"><i class="fa-solid fa-backward"></i></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" onClick="history.forward()"><i class="fa-solid fa-forward"></i></a>
       </li>
       <li class="nav-item d-none d-sm-inline-block">
         <a href="/fundanalyzer/v2/index" class="nav-link">Home</a>
@@ -40,12 +46,12 @@
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
-        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+        <a class="nav-link" data-widget="fullscreen" role="button">
           <i class="fas fa-expand-arrows-alt"></i>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
+        <a class="nav-link" data-widget="control-sidebar" data-slide="true" role="button">
           <i class="fas fa-th-large"></i>
         </a>
       </li>
@@ -69,10 +75,10 @@
           <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
           <li class="nav-item menu-open">
-            <a href="#" class="nav-link active">
+            <a class="nav-link active">
               <i class="nav-icon fa-solid fa-building"></i>
               <p>
-                Main
+                Corporate
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
@@ -95,13 +101,13 @@
                 <th:block th:if="${target} == 'all'">
                   <a href="/fundanalyzer/v2/index?target=all" class="nav-link active">
                     <i class="far fa-circle nav-icon"></i>
-                    <p>Main All Dashboard</p>
+                    <p>All Dashboard</p>
                   </a>
                 </th:block>
                 <th:block th:unless="${target} == 'all'">
                   <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
-                    <p>Main All Dashboard</p>
+                    <p>All Dashboard</p>
                   </a>
                 </th:block>
               </li>
@@ -109,13 +115,13 @@
                 <th:block th:if="${target} == 'favorite'">
                   <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link active">
                     <i class="far fa-circle nav-icon"></i>
-                    <p>Main Favorite Dashboard</p>
+                    <p>Favorite Dashboard</p>
                   </a>
                 </th:block>
                 <th:block th:unless="${target} == 'favorite'">
                   <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
-                    <p>Main Favorite Dashboard</p>
+                    <p>Favorite Dashboard</p>
                   </a>
                 </th:block>
               </li>
@@ -123,7 +129,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a class="nav-link">
               <i class="nav-icon fa-solid fa-list-check"></i>
               <p>
                 Edinet
@@ -134,13 +140,43 @@
               <li class="nav-item">
                 <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Edinet Dashboard</p>
+                  <p>Main Dashboard</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Edinet All Dashboard</p>
+                  <p>All Dashboard</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link">
+              <i class="nav-icon fa-solid fa-chart-line"></i>
+              <p>
+                Valuation
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Main Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>All Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Favorite Dashboard</p>
                 </a>
               </li>
             </ul>
@@ -171,6 +207,15 @@
       </div><!-- /.container-fluid -->
     </div>
     <!-- /.content-header -->
+
+    <div th:if="${message} != null">
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Main content -->
     <section class="content">
@@ -347,13 +392,22 @@
         $('#calender').daterangepicker()
 
         $("#example1").DataTable({
+            // @formatter:off
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
+            },
             "lengthChange": true,
+            "displayLength": 15,
+            "lengthMenu": [ 10, 15, 25, 50, 100 ],
             "searching": true,
             "ordering": true,
+            "order": [ [ 2, 'desc' ], [ 1, 'asc' ] ],
             "info": true,
             "autoWidth": true,
             "responsive": true,
+            "stateSave": true,
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            // @formatter:on
         }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
 
     });
