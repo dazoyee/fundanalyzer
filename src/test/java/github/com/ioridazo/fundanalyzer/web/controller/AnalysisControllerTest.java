@@ -78,15 +78,17 @@ class AnalysisControllerTest {
     @DisplayName("importStock : 指定日に提出した企業の株価を取得する")
     @Test
     void importStock1() {
-        assertEquals("redirect:/fundanalyzer/v2/index", controller.importStock("2021-05-29", "2021-05-29"));
+        assertEquals(
+                "redirect:/fundanalyzer/v2/valuation",
+                controller.importStockBySubmitDate("07/10/2022 - 07/10/2022", new RedirectAttributesModelMap()));
         Mockito.verify(analysisService, Mockito.times(1))
-                .importStock(BetweenDateInputData.of(LocalDate.parse("2021-05-29"), LocalDate.parse("2021-05-29")));
+                .importStock(BetweenDateInputData.of(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-10")));
     }
 
     @DisplayName("importStock : 企業の株価を取得する")
     @Test
     void importStock2() {
-        assertEquals("redirect:/fundanalyzer/v2/corporate?code=1234", controller.importStock("12345"));
+        assertEquals("redirect:/fundanalyzer/v2/corporate?code=1234", controller.importStockByCode("12345"));
         Mockito.verify(analysisService, Mockito.times(1)).importStock(CodeInputData.of("12345"));
     }
 }

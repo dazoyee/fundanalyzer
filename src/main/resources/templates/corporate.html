@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="'fundanalyzer | Corporate -' + ${#strings.substring(corporate.code, 0, 4)}"></title>
+  <title th:text="'fundanalyzer | Corporate - ' + ${#strings.substring(corporate.code, 0, 4)}"></title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet"
@@ -76,7 +76,7 @@
             <a class="nav-link active">
               <i class="nav-icon fa-solid fa-building"></i>
               <p>
-                Main
+                Corporate
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
@@ -90,13 +90,13 @@
               <li class="nav-item">
                 <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Main All Dashboard</p>
+                  <p>All Dashboard</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Main Favorite Dashboard</p>
+                  <p>Favorite Dashboard</p>
                 </a>
               </li>
             </ul>
@@ -114,13 +114,43 @@
               <li class="nav-item">
                 <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Edinet Dashboard</p>
+                  <p>Main Dashboard</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Edinet All Dashboard</p>
+                  <p>All Dashboard</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link">
+              <i class="nav-icon fa-solid fa-chart-line"></i>
+              <p>
+                Valuation
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Main Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>All Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Favorite Dashboard</p>
                 </a>
               </li>
             </ul>
@@ -162,12 +192,28 @@
       </div>
     </div>
 
+    <div th:if="${isEvaluated} != null">
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <span th:if="${isEvaluated}">株価を評価しました</span>
+        <span th:if="!${isEvaluated}">評価対象が存在しないか または 評価に失敗しました</span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Main content -->
     <section class="content">
 
       <div class="row mb-2">
-        <div class="col-12">
+        <div class="col-11">
           <h3 class="m-1" th:text="${#strings.substring(corporate.code, 0, 4)} + ' : '+ ${corporate.name}"></h3>
+        </div>
+        <div class="col-1">
+          <form method="post" th:action="@{/fundanalyzer/v2/evaluate}">
+            <input type="hidden" th:value="${corporate.code}" name="code">
+            <button type="submit" class="btn btn-outline-secondary">評価する</button>
+          </form>
         </div>
       </div>
 

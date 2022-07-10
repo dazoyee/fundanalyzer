@@ -41,6 +41,7 @@ class StockSchedulerTest {
 
         this.scheduler = Mockito.spy(new StockScheduler(analysisService, stockSpecification, slackClient));
         scheduler.hourOfStock = 13;
+        scheduler.hourOfEvaluate = 13;
     }
 
     @Nested
@@ -86,6 +87,40 @@ class StockSchedulerTest {
             assertDoesNotThrow(() -> scheduler.stockScheduler());
             verify(analysisService, times(0)).importStock((DateInputData) any());
             verify(analysisService, times(0)).deleteStock();
+        }
+    }
+
+    @Nested
+    class evaluateScheduler {
+
+        @DisplayName("evaluateScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @Test
+        void throwable() {
+            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
+            doThrow(new FundanalyzerRuntimeException()).when(analysisService).evaluate();
+
+            assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.evaluateScheduler());
+            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
+        }
+
+        @DisplayName("evaluateScheduler : 株価を評価する")
+        @Test
+        void ok() {
+            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
+            when(analysisService.evaluate()).thenReturn(1);
+
+            assertDoesNotThrow(() -> scheduler.evaluateScheduler());
+            verify(analysisService, times(1)).evaluate();
+            verify(slackClient, times(1)).sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.evaluate", 1);
+        }
+
+        @DisplayName("evaluateScheduler : 処理時間外")
+        @Test
+        void evaluateScheduler_noTarget() {
+            doReturn(LocalDateTime.of(2021, 5, 29, 15, 0)).when(scheduler).nowLocalDateTime();
+
+            assertDoesNotThrow(() -> scheduler.evaluateScheduler());
+            verify(analysisService, times(0)).evaluate();
         }
     }
 }

@@ -30,6 +30,8 @@ public class StockScheduler {
 
     @Value("${app.scheduler.hour.stock}")
     int hourOfStock;
+    @Value("${app.scheduler.hour.evaluate}")
+    int hourOfEvaluate;
 
     public StockScheduler(
             final AnalysisService analysisService,
@@ -51,7 +53,12 @@ public class StockScheduler {
     public void stockScheduler() {
         if (nowLocalDateTime().getHour() == hourOfStock) {
 
-            log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.BEGINNING, "stockScheduler", 0));
+            log.info(FundanalyzerLogClient.toAccessLogObject(
+                    Category.SCHEDULER,
+                    Process.BEGINNING,
+                    "stockScheduler",
+                    0
+            ));
 
             try {
                 insert();
@@ -60,6 +67,40 @@ public class StockScheduler {
                 // slack通知
                 slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "株価更新", t);
                 throw new FundanalyzerRuntimeException("株価更新スケジューラ処理中に想定外のエラーが発生しました。", t);
+            }
+        }
+    }
+
+    /**
+     * 株価評価スケジューラ
+     */
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Tokyo")
+    public void evaluateScheduler() {
+        if (nowLocalDateTime().getHour() == hourOfEvaluate) {
+
+            log.info(FundanalyzerLogClient.toAccessLogObject(
+                    Category.SCHEDULER,
+                    Process.BEGINNING,
+                    "evaluateScheduler",
+                    0
+            ));
+
+            try {
+                final long startTime = System.currentTimeMillis();
+
+                final int countValuation = analysisService.evaluate();
+
+                slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.evaluate", countValuation);
+                log.info(FundanalyzerLogClient.toAccessLogObject(
+                        Category.SCHEDULER,
+                        Process.END,
+                        "evaluateScheduler",
+                        System.currentTimeMillis() - startTime
+                ));
+            } catch (Throwable t) {
+                // slack通知
+                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "株価評価", t);
+                throw new FundanalyzerRuntimeException("株価評価スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
     }
@@ -79,7 +120,12 @@ public class StockScheduler {
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
-        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "insertStockScheduler", durationTime));
+        log.info(FundanalyzerLogClient.toAccessLogObject(
+                Category.SCHEDULER,
+                Process.END,
+                "insertStockScheduler",
+                durationTime
+        ));
     }
 
     /**
@@ -94,6 +140,11 @@ public class StockScheduler {
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
-        log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "deleteStockScheduler", durationTime));
+        log.info(FundanalyzerLogClient.toAccessLogObject(
+                Category.SCHEDULER,
+                Process.END,
+                "deleteStockScheduler",
+                durationTime
+        ));
     }
 }
