@@ -291,7 +291,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public List<ValuationViewModel> viewValuation() {
         return valuationSpecification.findAllValuationView().stream()
                 // 割安度が170%(外部設定値)以上を表示
-                .filter(vvm -> vvm.getDiscountRate().compareTo(configDiscountRate) >= 0)
+                .filter(vvm -> vvm.getDiscountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
+                // 割安度が明らかな誤りは除外
+                .filter(vvm -> vvm.getDiscountRate().compareTo(BigDecimal.valueOf(1000)) < 0)
                 .collect(Collectors.toList());
     }
 
