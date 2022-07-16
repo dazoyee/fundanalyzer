@@ -155,7 +155,7 @@ public class FinancialStatementSpecification {
             final CreatedType createdType) {
         try {
             financialStatementDao.insert(FinancialStatementEntity.of(
-                    company.getCode().orElse(null),
+                    company.getCode(),
                     company.getEdinetCode(),
                     fs.getId(),
                     dId,
@@ -175,7 +175,7 @@ public class FinancialStatementSpecification {
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\t企業コード:{0}\t財務諸表名:{1}\t科目ID:{2}\t対象年:{3}",
-                                company.getCode().orElse(null),
+                                company.getCode(),
                                 fs.getName(),
                                 dId,
                                 document.getDocumentPeriod().map(LocalDate::getYear).map(String::valueOf).orElse("null")

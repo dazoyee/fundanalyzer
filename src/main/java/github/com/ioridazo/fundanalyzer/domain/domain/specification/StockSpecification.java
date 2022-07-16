@@ -91,7 +91,7 @@ public class StockSpecification {
      * @return 株価情報
      */
     public Stock findStock(final Company company) {
-        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(companyCode(company));
+        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.getCode());
 
         final Optional<LocalDate> importDate = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -104,7 +104,7 @@ public class StockSpecification {
 
         final Optional<BigDecimal> averageStockPrice = getAverageStockPriceOfLatestSubmitDate(company, stockPriceList);
 
-        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(companyCode(company));
+        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.getCode());
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
                 .map(MinkabuEntity::getGoalsStock)
@@ -127,10 +127,8 @@ public class StockSpecification {
      * @return 会社コードリスト
      */
     public List<String> findTargetCodeForStockScheduler() {
-        return companySpecification.allTargetCompanies().stream()
+        return companySpecification.inquiryAllTargetCompanies().stream()
                 .map(Company::getCode)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 // 会社毎に最新の登録日を抽出する
                 .map(code -> stockPriceDao.selectByCode(code).stream()
                         .max(Comparator.comparing(StockPriceEntity::getCreatedAt)))
@@ -250,7 +248,7 @@ public class StockSpecification {
         final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
         return getAverageStockPriceOfLatestSubmitDate(
                 company,
-                stockPriceDao.selectByCode(company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("企業コード")))
+                stockPriceDao.selectByCode(company.getCode())
         );
     }
 
@@ -356,12 +354,5 @@ public class StockSpecification {
             ), e);
         }
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
-    }
-
-    private String companyCode(final Company company) {
-        return company.getCode()
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException("企業コード");
-                });
     }
 }

@@ -47,9 +47,8 @@ public class ValuationInteractor implements ValuationUseCase {
      */
     @Override
     public int evaluate() {
-        return (int) companySpecification.allTargetCompanies().stream()
-                .filter(company -> company.getCode().isPresent())
-                .map(company -> CodeInputData.of(company.getCode().get()))
+        return (int) companySpecification.inquiryAllTargetCompanies().stream()
+                .map(company -> CodeInputData.of(company.getCode()))
                 .filter(this::evaluate)
                 .count();
     }

@@ -93,18 +93,6 @@ public class ViewSpecification {
     }
 
     /**
-     * 企業情報ビューを取得する
-     *
-     * @param inputData 提出日
-     * @return 企業情報ビューリスト
-     */
-    public List<CorporateViewModel> findAllCorporateView(final DateInputData inputData) {
-        return corporateViewDao.selectBySubmitDate(inputData.getDate()).stream()
-                .map(CorporateViewModel::of)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * すべての企業情報ビューを取得する
      *
      * @return 企業情報ビューリスト
@@ -171,10 +159,7 @@ public class ViewSpecification {
         final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
 
         return CorporateViewModel.of(
-                company.getCode().map(code -> code.substring(0, 4))
-                        .orElseThrow(() -> {
-                            throw new FundanalyzerNotExistException("企業コード");
-                        }),
+                company.getCode().substring(0, 4),
                 company.getCompanyName(),
                 latestDocument.map(Document::getSubmitDate).orElse(null),
                 latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue).orElse(null),

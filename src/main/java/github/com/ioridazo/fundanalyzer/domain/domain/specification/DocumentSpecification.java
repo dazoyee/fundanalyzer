@@ -408,7 +408,7 @@ public class DocumentSpecification {
                         MessageFormat.format(
                                 "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
                                         "\t会社コード:{0}\t書類ID:{1}\t書類種別コード:{2}\t提出日:{3}\t対象年:{4}",
-                                companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).orElse("null"),
+                                companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
                                 document.getDocumentId(),
                                 document.getDocumentTypeCode().toValue(),
                                 document.getSubmitDate(),
@@ -554,7 +554,6 @@ public class DocumentSpecification {
      */
     private boolean isTarget(final Document document) {
         return companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).stream()
-                .filter(company -> company.getCode().isPresent())
                 .anyMatch(company -> industrySpecification.isTarget(company.getIndustryId()));
     }
 }

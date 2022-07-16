@@ -73,7 +73,7 @@ class ValuationSpecificationTest {
         @DisplayName("findAllValuationView : ")
         @Test
         void get() {
-            Mockito.when(companySpecification.allTargetCompanies()).thenReturn(List.of(new Company(
+            Mockito.when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(new Company(
                     "code",
                     null,
                     null,

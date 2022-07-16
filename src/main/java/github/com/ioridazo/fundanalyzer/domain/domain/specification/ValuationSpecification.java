@@ -59,12 +59,9 @@ public class ValuationSpecification {
      */
     public List<ValuationViewModel> findAllValuationView() {
         final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
-        companySpecification.allTargetCompanies().forEach(company -> {
-            final String code = company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("企業コード"));
-            valuationDao.selectByCode(code).stream()
-                    .max(Comparator.comparing(ValuationEntity::getTargetDate))
-                    .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company)));
-        });
+        companySpecification.inquiryAllTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
+                .max(Comparator.comparing(ValuationEntity::getTargetDate))
+                .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
         return viewList;
     }
 

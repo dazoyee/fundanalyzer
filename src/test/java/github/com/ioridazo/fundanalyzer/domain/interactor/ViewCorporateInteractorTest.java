@@ -618,7 +618,7 @@ class ViewCorporateInteractorTest {
         @DisplayName("updateView : すべてのビューを更新する")
         @Test
         void all() {
-            when(companySpecification.allTargetCompanies()).thenReturn(List.of(company));
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
             when(viewSpecification.generateCorporateView(eq(company), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView());

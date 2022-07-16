@@ -266,7 +266,7 @@ class StockSpecificationTest {
         @DisplayName("findTargetCodeForStockScheduler : 最新登録日が古い会社コードを取得する")
         @Test
         void getCode() {
-            when(companySpecification.allTargetCompanies()).thenReturn(List.of(
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(
                     new Company(
                             "code1",
                             null,
