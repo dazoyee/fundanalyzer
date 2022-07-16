@@ -124,7 +124,7 @@ class ValuationSpecificationTest {
                     () -> assertEquals("code", actual.getCompanyCode(), "companyCode"),
                     () -> assertEquals(LocalDate.parse("2022-07-02"), actual.getTargetDate(), "targetDate"),
                     () -> assertEquals(BigDecimal.valueOf(500.0), actual.getStockPrice(), "stockPrice"),
-                    () -> assertNull(actual.getGoalsStock(), "goalsStock"),
+                    () -> assertNull(actual.getGoalsStock().orElse(null), "goalsStock"),
                     () -> assertEquals(20, actual.getDaySinceSubmitDate(), "daySinceSubmitDate"),
                     () -> assertEquals(BigDecimal.valueOf(-100.0), actual.getDifferenceFromSubmitDate(), "differenceFromSubmitDate"),
                     () -> assertEquals(BigDecimal.valueOf(0.83), actual.getSubmitDateRatio(), "submitDateRatio"),

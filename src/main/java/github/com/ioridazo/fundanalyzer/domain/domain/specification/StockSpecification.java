@@ -33,7 +33,6 @@ import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -100,7 +99,7 @@ public class StockSpecification {
 
         final Optional<BigDecimal> latestStock = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
-                .map(StockPriceEntity::getStockPrice)
+                .flatMap(StockPriceEntity::getStockPrice)
                 .map(BigDecimal::valueOf);
 
         final Optional<BigDecimal> averageStockPrice = getAverageStockPriceOfLatestSubmitDate(company, stockPriceList);
@@ -285,7 +284,8 @@ public class StockSpecification {
                 .filter(stockPrice -> submitDate.get().minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> submitDate.get().isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
-                .filter(Objects::nonNull)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
 
         if (certainPeriodList.isEmpty()) {

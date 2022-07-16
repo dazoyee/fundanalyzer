@@ -88,7 +88,8 @@ public class ValuationSpecification {
     ValuationEntity evaluate(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         final String code = stock.getCompanyCode();
         final LocalDate targetDate = stock.getTargetDate();
-        final BigDecimal stockPrice = BigDecimal.valueOf(stock.getStockPrice());
+        final BigDecimal stockPrice = stock.getStockPrice().map(BigDecimal::valueOf)
+                .orElseThrow(() -> new FundanalyzerNotExistException("株価終値"));
         final BigDecimal averageStockPrice = stockSpecification.getAverageStockPriceOfLatestSubmitDate(code)
                 .orElseThrow(() -> new FundanalyzerNotExistException("提出日株価平均"));
 

@@ -17,10 +17,10 @@ public class StockPriceViewModel {
     public static StockPriceViewModel of(final StockPriceEntity entity) {
         return new StockPriceViewModel(
                 entity.getTargetDate(),
-                entity.getStockPrice(),
-                entity.getOpeningPrice(),
-                entity.getHighPrice(),
-                entity.getLowPrice()
+                entity.getStockPrice().orElse(null),
+                entity.getOpeningPrice().orElse(null),
+                entity.getHighPrice().orElse(null),
+                entity.getLowPrice().orElse(null)
         );
     }
 }
