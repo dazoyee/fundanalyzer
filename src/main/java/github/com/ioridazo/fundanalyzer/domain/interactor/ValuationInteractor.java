@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -103,7 +104,7 @@ public class ValuationInteractor implements ValuationUseCase {
                     System.currentTimeMillis() - startTime
             ));
 
-        } catch (final FundanalyzerNotExistException e) {
+        } catch (final FundanalyzerNotExistException | DateTimeException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     "評価できませんでした。",
                     Category.STOCK,
