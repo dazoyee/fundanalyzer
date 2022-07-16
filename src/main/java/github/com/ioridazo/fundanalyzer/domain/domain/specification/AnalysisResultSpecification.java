@@ -82,14 +82,10 @@ public class AnalysisResultSpecification {
      * @param value    企業価値
      */
     public void insert(final Document document, final BigDecimal value) {
-        final String companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
-                .flatMap(Company::getCode)
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException("企業コード");
-                });
+        final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new);
         try {
             analysisResultDao.insert(AnalysisResultEntity.of(
-                    companyCode,
+                    company.getCode(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     value,
                     document.getDocumentTypeCode(),
@@ -98,17 +94,6 @@ public class AnalysisResultSpecification {
                     document.getDocumentId(),
                     nowLocalDateTime()
             ));
-        } catch (final FundanalyzerNotExistException e) {
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
-                            companyCode,
-                            document.getDocumentId()
-                    ),
-                    document,
-                    Category.ANALYSIS,
-                    Process.ANALYSIS
-            ), e);
         } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
@@ -116,7 +101,7 @@ public class AnalysisResultSpecification {
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\tテーブル名:{0}\t会社コード:{1}\t期間:{2}\t書類種別コード:{3}\t提出日:{4}",
                                 "analysis_result",
-                                companyCode,
+                                company.getCode(),
                                 document.getDocumentPeriod(),
                                 document.getDocumentTypeCode().toValue(),
                                 document.getSubmitDate()
@@ -138,7 +123,7 @@ public class AnalysisResultSpecification {
      * @return 最新の企業価値
      */
     public Optional<BigDecimal> latestCorporateValue(final Company company) {
-        return findLatestAnalysisResult(companyCode(company))
+        return findLatestAnalysisResult(company.getCode())
                 // corporate value
                 .map(AnalysisResultEntity::getCorporateValue)
                 // scale
@@ -153,7 +138,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> yearAverageCorporateValue(final Company company, final Integer year) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(companyCode(company), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.getCode(), targetTypeCodes);
         if (targetList.isEmpty() || targetList.size() < year) {
             return Optional.empty();
         } else {
@@ -179,7 +164,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> allYearAverageCorporateValue(final Company company) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(companyCode(company), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.getCode(), targetTypeCodes);
         if (targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -200,7 +185,7 @@ public class AnalysisResultSpecification {
      * @return 標準偏差
      */
     public Optional<BigDecimal> standardDeviation(final Company company, final BigDecimal averageCorporateValue) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(companyCode(company), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.getCode(), targetTypeCodes);
         if (Objects.isNull(averageCorporateValue) || targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -240,7 +225,7 @@ public class AnalysisResultSpecification {
      * @return 分析年数
      */
     public BigDecimal countYear(final Company company) {
-        return BigDecimal.valueOf(analysisTargetList(companyCode(company), targetTypeCodes).size());
+        return BigDecimal.valueOf(analysisTargetList(company.getCode(), targetTypeCodes).size());
     }
 
     /**
@@ -251,8 +236,7 @@ public class AnalysisResultSpecification {
      * @return 企業価値リスト
      */
     public List<AnalysisResultEntity> displayTargetList(final Company company, final List<String> documentTypeCode) {
-        final String code = company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("code"));
-        return analysisResultDao.selectByCompanyCodeAndType(code, documentTypeCode);
+        return analysisResultDao.selectByCompanyCodeAndType(company.getCode(), documentTypeCode);
     }
 
     /**
@@ -267,13 +251,13 @@ public class AnalysisResultSpecification {
             return false;
         }
 
-        final Optional<String> companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode);
-        if (companyCode.isEmpty()) {
+        final Optional<Company> company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode());
+        if (company.isEmpty()) {
             return false;
         }
 
         return analysisResultDao.selectByUniqueKey(
-                companyCode.get(),
+                company.get().getCode(),
                 documentPeriod.get(),
                 document.getDocumentTypeCode().toValue(),
                 document.getSubmitDate()
@@ -302,12 +286,5 @@ public class AnalysisResultSpecification {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
-    }
-
-    private String companyCode(final Company company) {
-        return company.getCode()
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException("企業コード");
-                });
     }
 }

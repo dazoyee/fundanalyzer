@@ -164,10 +164,10 @@ public class StockPriceEntity {
                 null,
                 null,
                 stockPriceEntity.getTargetDate(),
-                stockPriceEntity.getStockPrice(),
-                stockPriceEntity.getOpeningPrice(),
-                stockPriceEntity.getHighPrice(),
-                stockPriceEntity.getLowPrice(),
+                stockPriceEntity.getStockPrice().orElse(null),
+                stockPriceEntity.getOpeningPrice().orElse(null),
+                stockPriceEntity.getHighPrice().orElse(null),
+                stockPriceEntity.getLowPrice().orElse(null),
                 null,
                 null,
                 null,
@@ -179,6 +179,26 @@ public class StockPriceEntity {
                 null,
                 null
         );
+    }
+
+    public Optional<Double> getStockPrice() {
+        return Optional.ofNullable(stockPrice);
+    }
+
+    public Optional<Double> getOpeningPrice() {
+        return Optional.ofNullable(openingPrice);
+    }
+
+    public Optional<Double> getHighPrice() {
+        return Optional.ofNullable(highPrice);
+    }
+
+    public Optional<Double> getLowPrice() {
+        return Optional.ofNullable(lowPrice);
+    }
+
+    public Optional<Integer> getVolume() {
+        return Optional.ofNullable(volume);
     }
 
     public Optional<String> getPer() {
@@ -207,5 +227,9 @@ public class StockPriceEntity {
 
     public Optional<String> getShareholderBenefit() {
         return Optional.ofNullable(shareholderBenefit);
+    }
+
+    public Optional<String> getSourceOf() {
+        return Optional.ofNullable(sourceOf);
     }
 }

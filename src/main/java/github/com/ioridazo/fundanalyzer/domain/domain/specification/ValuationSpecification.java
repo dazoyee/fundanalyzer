@@ -59,12 +59,9 @@ public class ValuationSpecification {
      */
     public List<ValuationViewModel> findAllValuationView() {
         final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
-        companySpecification.allTargetCompanies().forEach(company -> {
-            final String code = company.getCode().orElseThrow(() -> new FundanalyzerNotExistException("企業コード"));
-            valuationDao.selectByCode(code).stream()
-                    .max(Comparator.comparing(ValuationEntity::getTargetDate))
-                    .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company)));
-        });
+        companySpecification.inquiryAllTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
+                .max(Comparator.comparing(ValuationEntity::getTargetDate))
+                .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
         return viewList;
     }
 
@@ -88,7 +85,8 @@ public class ValuationSpecification {
     ValuationEntity evaluate(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         final String code = stock.getCompanyCode();
         final LocalDate targetDate = stock.getTargetDate();
-        final BigDecimal stockPrice = BigDecimal.valueOf(stock.getStockPrice());
+        final BigDecimal stockPrice = stock.getStockPrice().map(BigDecimal::valueOf)
+                .orElseThrow(() -> new FundanalyzerNotExistException("株価終値"));
         final BigDecimal averageStockPrice = stockSpecification.getAverageStockPriceOfLatestSubmitDate(code)
                 .orElseThrow(() -> new FundanalyzerNotExistException("提出日株価平均"));
 

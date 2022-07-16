@@ -6,7 +6,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategori
 import lombok.Value;
 
 import java.util.Objects;
-import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -54,9 +53,5 @@ public class Company {
                 entity.getSettlementDate(),
                 Objects.equals(entity.getFavorite(), "1")
         );
-    }
-
-    public Optional<String> getCode() {
-        return Optional.ofNullable(code);
     }
 }

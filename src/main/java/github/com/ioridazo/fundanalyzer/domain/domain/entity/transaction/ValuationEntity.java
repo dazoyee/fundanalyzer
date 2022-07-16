@@ -11,6 +11,7 @@ import org.seasar.doma.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -83,5 +84,9 @@ public class ValuationEntity {
                 documentId,
                 nowLocalDateTime
         );
+    }
+
+    public Optional<BigDecimal> getGoalsStock() {
+        return Optional.ofNullable(goalsStock);
     }
 }

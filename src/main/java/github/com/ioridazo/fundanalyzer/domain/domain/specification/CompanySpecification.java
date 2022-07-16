@@ -10,6 +10,8 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.CompanyEntit
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class CompanySpecification {
+
+    private static final String CACHE_KEY_ALL_TARGET_COMPANIES = "allTargetCompanies";
 
     private static final Logger log = LogManager.getLogger(CompanySpecification.class);
 
@@ -46,6 +50,7 @@ public class CompanySpecification {
      */
     public Optional<Company> findCompanyByEdinetCode(final String edinetCode) {
         return companyDao.selectByEdinetCode(edinetCode)
+                .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())));
     }
 
@@ -72,24 +77,13 @@ public class CompanySpecification {
     }
 
     /**
-     * 処理対象となる企業情報リストを取得する
-     *
-     * @return 企業情報リスト
-     */
-    public List<Company> allTargetCompanies() {
-        return companyDao.selectByCodeIsNotNull().stream()
-                .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
-                .filter(company -> industrySpecification.isTarget(company.getIndustryId()))
-                .collect(Collectors.toList());
-    }
-
-    /**
      * お気に入りに企業情報リストを取得する
      *
      * @return 企業情報リスト
      */
     public List<Company> findFavoriteCompanies() {
         return companyDao.selectByFavorite().stream()
+                .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
                 .collect(Collectors.toList());
     }
@@ -151,6 +145,28 @@ public class CompanySpecification {
     public boolean updateFavorite(final Company company) {
         companyDao.update(CompanyEntity.ofUpdateFavorite(company, nowLocalDateTime()));
         return !company.isFavorite();
+    }
+
+    /**
+     * 処理対象となる企業情報リストを取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
+     *
+     * @return 企業情報リスト
+     */
+    @Cacheable(CACHE_KEY_ALL_TARGET_COMPANIES)
+    public List<Company> inquiryAllTargetCompanies() {
+        return findAllTargetCompanies();
+    }
+
+    @CachePut(CACHE_KEY_ALL_TARGET_COMPANIES)
+    public List<Company> findAllTargetCompanies() {
+        return companyDao.selectByCodeIsNotNull().stream()
+                .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
+                .filter(company -> industrySpecification.isTarget(company.getIndustryId()))
+                .collect(Collectors.toList());
     }
 
     /**

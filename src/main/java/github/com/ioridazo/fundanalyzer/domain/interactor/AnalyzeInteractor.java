@@ -114,19 +114,13 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      * @param document ドキュメント
      */
     void analyze(final Document document) {
-        final String companyCode = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
-                .flatMap(Company::getCode)
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException("企業コード");
-                });
-
         try {
             analysisResultSpecification.insert(document, calculateFsValue(document));
         } catch (FundanalyzerNotExistException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
-                            companyCode,
+                            companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
                             document.getDocumentId()
                     ),
                     document,
@@ -277,7 +271,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                 "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
                         fs.getName(),
-                        companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).flatMap(Company::getCode).orElse("null"),
+                        companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
                         document.getDocumentId(),
                         subjectName,
                         document.getDocumentPeriod().map(String::valueOf).orElse("null"),
