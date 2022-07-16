@@ -75,8 +75,6 @@ public class StockInteractor implements StockUseCase {
                 .map(document -> companySpecification.findCompanyByEdinetCode(document.getEdinetCode()))
                 .filter(Optional::isPresent)
                 .map(c -> c.get().getCode())
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .map(CodeInputData::of)
                 .distinct()
                 .collect(Collectors.toList());

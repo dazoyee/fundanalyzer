@@ -46,6 +46,7 @@ public class CompanySpecification {
      */
     public Optional<Company> findCompanyByEdinetCode(final String edinetCode) {
         return companyDao.selectByEdinetCode(edinetCode)
+                .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())));
     }
 
@@ -90,6 +91,7 @@ public class CompanySpecification {
      */
     public List<Company> findFavoriteCompanies() {
         return companyDao.selectByFavorite().stream()
+                .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
                 .collect(Collectors.toList());
     }

@@ -163,8 +163,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public List<CorporateViewModel> viewFavorite() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
                 .map(Company::getCode)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .collect(Collectors.toList());
 
         return viewSpecification.findAllCorporateView().stream()
@@ -316,8 +314,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public List<ValuationViewModel> viewFavoriteValuation() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
                 .map(Company::getCode)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .collect(Collectors.toList());
 
         return valuationSpecification.findAllValuationView().stream()

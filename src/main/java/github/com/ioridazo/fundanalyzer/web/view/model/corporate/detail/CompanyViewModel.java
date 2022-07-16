@@ -27,7 +27,7 @@ public class CompanyViewModel {
 
     public static CompanyViewModel of(final Company company, final Stock stock) {
         return new CompanyViewModel(
-                company.getCode().orElse(null),
+                company.getCode(),
                 company.getCompanyName(),
                 company.getIndustryName(),
                 company.getEdinetCode(),
