@@ -127,7 +127,7 @@ public class StockSpecification {
      * @return 会社コードリスト
      */
     public List<String> findTargetCodeForStockScheduler() {
-        return companySpecification.allTargetCompanies().stream()
+        return companySpecification.inquiryAllTargetCompanies().stream()
                 .map(Company::getCode)
                 // 会社毎に最新の登録日を抽出する
                 .map(code -> stockPriceDao.selectByCode(code).stream()

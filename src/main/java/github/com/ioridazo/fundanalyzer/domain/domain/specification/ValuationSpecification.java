@@ -59,7 +59,7 @@ public class ValuationSpecification {
      */
     public List<ValuationViewModel> findAllValuationView() {
         final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
-        companySpecification.allTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
+        companySpecification.inquiryAllTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
                 .max(Comparator.comparing(ValuationEntity::getTargetDate))
                 .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
         return viewList;

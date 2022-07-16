@@ -241,7 +241,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public void updateView() {
         final long startTime = System.currentTimeMillis();
-        final List<CorporateViewModel> viewModelList = companySpecification.allTargetCompanies().stream()
+        final List<CorporateViewModel> viewModelList = companySpecification.inquiryAllTargetCompanies().stream()
                 .map(company -> viewSpecification.generateCorporateView(company, analyzeInteractor.calculateCorporateValue(company)))
                 .collect(Collectors.toList());
 
