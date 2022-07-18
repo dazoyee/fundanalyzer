@@ -822,6 +822,52 @@
                           </form>
                         </div>
                       </div>
+
+                      <div class="row">
+                        <div class="col-1">
+                          <div class="nav flex-column nav-tabs h-100" id="vert-tabs-tab" role="tablist"
+                               aria-orientation="vertical">
+                            <a class="nav-link active" id="one-month-tab" data-toggle="pill" href="#one-month"
+                               role="tab" aria-controls="one-month" aria-selected="true">1ヶ月</a>
+                            <a class="nav-link" id="three-month-tab" data-toggle="pill" href="#three-month"
+                               role="tab" aria-controls="three-month" aria-selected="false">3ヶ月</a>
+                            <a class="nav-link" id="six-month-tab" data-toggle="pill" href="#six-month" role="tab"
+                               aria-controls="six-month" aria-selected="false">6ヶ月</a>
+                            <a class="nav-link" id="one-year-tab" data-toggle="pill" href="#one-year" role="tab"
+                               aria-controls="one-year" aria-selected="false">1年</a>
+                            <a class="nav-link" id="all-tab" data-toggle="pill" href="#all"
+                               role="tab" aria-controls="all" aria-selected="false">全期間</a>
+                          </div>
+                        </div>
+                        <div class="col-11">
+                          <div class="tab-content" id="vert-tabs-tabContent">
+                            <div class="tab-pane text-left fade show active" id="one-month" role="tabpanel"
+                                 aria-labelledby="one-month-tab">
+                              <canvas id="stockChart30"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="three-month" role="tabpanel"
+                                 aria-labelledby="three-month-tab">
+                              <canvas id="stockChart90"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="six-month" role="tabpanel" aria-labelledby="six-month-tab">
+                              <canvas id="stockChart180"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="one-year" role="tabpanel" aria-labelledby="one-year-tab">
+                              <canvas id="stockChart365"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="all" role="tabpanel"
+                                 aria-labelledby="all-tab">
+                              <canvas id="stockChartAll"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div class="row">
                         <div class="col-12">
                           <table class="table table-sm table-hover">
@@ -899,9 +945,144 @@
 <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 
-<!-- Page specific script -->
-<!--<script>-->
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
 
-<!--</script>-->
+<!-- Page specific script -->
+<script type="text/javascript" th:inline="javascript">
+
+    const stockChart30 = document.getElementById("stockChart30");
+    const stockChart90 = document.getElementById("stockChart90");
+    const stockChart180 = document.getElementById("stockChart180");
+    const stockChart365 = document.getElementById("stockChart365");
+    const stockChartAll = document.getElementById("stockChartAll");
+
+    new Chart(stockChart30, {
+        type: 'line',
+        data: {
+            labels: [[ ${label30}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${point30}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChart90, {
+        type: 'line',
+        data: {
+            labels: [[ ${label90}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${point90}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChart180, {
+        type: 'line',
+        data: {
+            labels: [[ ${label180}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${point180}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChart365, {
+        type: 'line',
+        data: {
+            labels: [[ ${label365}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${point365}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChartAll, {
+        type: 'line',
+        data: {
+            labels: [[ ${labelAll}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${pointAll}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+</script>
+
 </body>
 </html>
