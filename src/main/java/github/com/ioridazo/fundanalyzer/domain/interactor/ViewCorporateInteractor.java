@@ -289,7 +289,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public List<ValuationViewModel> viewValuation() {
-        return valuationSpecification.findAllValuationView().stream()
+        return valuationSpecification.inquiryAllValuationView().stream()
                 // 割安度が170%(外部設定値)以上を表示
                 .filter(vvm -> vvm.getDiscountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
                 // 割安度が明らかな誤りは除外
@@ -317,7 +317,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public List<ValuationViewModel> viewAllValuation() {
-        return valuationSpecification.findAllValuationView();
+        return valuationSpecification.inquiryAllValuationView();
     }
 
     /**
@@ -331,7 +331,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .map(Company::getCode)
                 .collect(Collectors.toList());
 
-        return valuationSpecification.findAllValuationView().stream()
+        return valuationSpecification.inquiryAllValuationView().stream()
                 .filter(vvm -> favoriteList.stream().anyMatch(favorite -> vvm.getCode().equals(favorite.substring(0, 4))))
                 .collect(Collectors.toList());
     }
