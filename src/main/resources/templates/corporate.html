@@ -666,31 +666,33 @@
                 <div class="card-header p-0 pt-1">
                   <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
                     <li class="nav-item">
-                      <a class="nav-link active" id="custom-tabs-one-home-tab" data-toggle="pill"
-                         href="#custom-tabs-one-home" role="tab" aria-controls="custom-tabs-one-home"
-                         aria-selected="true">
+                      <a class="nav-link active" id="analysis-tab" data-toggle="pill" href="#analysis" role="tab"
+                         aria-controls="analysis" aria-selected="true">
                         分析情報
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link" id="custom-tabs-one-profile-tab" data-toggle="pill"
-                         href="#custom-tabs-one-profile" role="tab" aria-controls="custom-tabs-one-profile"
-                         aria-selected="false">
+                      <a class="nav-link" id="financial-statement-tab" data-toggle="pill" href="#financial-statement"
+                         role="tab" aria-controls="financial-statement" aria-selected="false">
                         財務諸表
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link" id="custom-tabs-one-messages-tab" data-toggle="pill"
-                         href="#custom-tabs-one-messages" role="tab" aria-controls="custom-tabs-one-messages"
-                         aria-selected="false">
+                      <a class="nav-link" id="goals-stock-tab" data-toggle="pill" href="#goals-stock" role="tab"
+                         aria-controls="goals-stock" aria-selected="false">
                         株価予想
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link" id="custom-tabs-one-settings-tab" data-toggle="pill"
-                         href="#custom-tabs-one-settings" role="tab" aria-controls="custom-tabs-one-settings"
-                         aria-selected="false">
+                      <a class="nav-link" id="stock-price-tab" data-toggle="pill" href="#stock-price" role="tab"
+                         aria-controls="stock-price" aria-selected="false">
                         株価
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="valuation-tab" data-toggle="pill" href="#valuation" role="tab"
+                         aria-controls="valuation" aria-selected="false">
+                        評価
                       </a>
                     </li>
                   </ul>
@@ -698,9 +700,15 @@
                 <div class="card-body">
                   <div class="tab-content" id="custom-tabs-one-tabContent">
 
-                    <div class="tab-pane fade show active" id="custom-tabs-one-home" role="tabpanel"
-                         aria-labelledby="custom-tabs-one-home-tab">
-                      <div class="row">
+                    <div class="tab-pane fade show active" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                      <div class="row mb-3">
+                        <div class="col-12">
+                          <canvas id="analysisChartAll"
+                                  style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                        </div>
+                      </div>
+
+                      <div class="row mb-3">
                         <div class="col-12">
                           <table class="table table-hover">
                             <thead>
@@ -726,8 +734,8 @@
                       </div>
                     </div>
 
-                    <div class="tab-pane fade" id="custom-tabs-one-profile" role="tabpanel"
-                         aria-labelledby="custom-tabs-one-profile-tab">
+                    <div class="tab-pane fade" id="financial-statement" role="tabpanel"
+                         aria-labelledby="financial-statement-tab">
                       <div class="row">
                         <div class="col-12">
                           <div th:each="financialStatement : ${financialStatements}">
@@ -788,9 +796,44 @@
                       </div>
                     </div>
 
-                    <div class="tab-pane fade" id="custom-tabs-one-messages" role="tabpanel"
-                         aria-labelledby="custom-tabs-one-messages-tab">
-                      <div class="row">
+                    <div class="tab-pane fade" id="goals-stock" role="tabpanel" aria-labelledby="goals-stock-tab">
+                      <div class="row mb-3">
+                        <div class="col-1">
+                          <div class="nav flex-column nav-tabs h-100" id="forecast-stock-tabs-tab" role="tablist"
+                               aria-orientation="vertical">
+                            <a class="nav-link active" id="forecast-stock-six-month-tab" data-toggle="pill"
+                               href="#forecast-stock-six-month" role="tab" aria-controls="forecast-stock-six-month"
+                               aria-selected="false">6ヶ月</a>
+                            <a class="nav-link" id="forecast-stock-one-year-tab" data-toggle="pill"
+                               href="#forecast-stock-one-year" role="tab" aria-controls="forecast-stock-one-year"
+                               aria-selected="false">1年</a>
+                            <a class="nav-link" id="forecast-stock-all-tab" data-toggle="pill"
+                               href="#forecast-stock-all"
+                               role="tab" aria-controls="forecast-stock-all" aria-selected="false">全期間</a>
+                          </div>
+                        </div>
+                        <div class="col-11">
+                          <div class="tab-content" id="forecast-stock-tabs-tabContent">
+                            <div class="tab-pane fade" id="forecast-stock-six-month" role="tabpanel"
+                                 aria-labelledby="six-month-tab">
+                              <canvas id="forecastStockChart180"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="forecast-stock-one-year" role="tabpanel"
+                                 aria-labelledby="one-year-tab">
+                              <canvas id="forecastStockChart365"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="forecast-stock-all" role="tabpanel"
+                                 aria-labelledby="all-tab">
+                              <canvas id="forecastStockChartAll"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row mb-3">
                         <div class="col-12">
                           <table class="table table-bordered table-hover">
                             <thead>
@@ -812,9 +855,8 @@
                       </div>
                     </div>
 
-                    <div class="tab-pane fade" id="custom-tabs-one-settings" role="tabpanel"
-                         aria-labelledby="custom-tabs-one-settings-tab">
-                      <div class="row">
+                    <div class="tab-pane fade" id="stock-price" role="tabpanel" aria-labelledby="stock-price-tab">
+                      <div class="row mb-3">
                         <div class="col-12">
                           <form method="post" th:action="@{/fundanalyzer/v1/import/stock/code}">
                             <input type="hidden" name="code" th:value="${corporate.code}"/>
@@ -822,7 +864,57 @@
                           </form>
                         </div>
                       </div>
-                      <div class="row">
+
+                      <div class="row mb-3">
+                        <div class="col-1">
+                          <div class="nav flex-column nav-tabs h-100" id="stock-price-tabs-tab" role="tablist"
+                               aria-orientation="vertical">
+                            <a class="nav-link active" id="stock-price-one-month-tab" data-toggle="pill"
+                               href="#stock-price-one-month" role="tab" aria-controls="one-month" aria-selected="true">1ヶ月</a>
+                            <a class="nav-link" id="stock-price-three-month-tab" data-toggle="pill"
+                               href="#stock-price-three-month" role="tab" aria-controls="three-month"
+                               aria-selected="false">3ヶ月</a>
+                            <a class="nav-link" id="stock-price-six-month-tab" data-toggle="pill"
+                               href="#stock-price-six-month" role="tab" aria-controls="six-month" aria-selected="false">6ヶ月</a>
+                            <a class="nav-link" id="stock-price-one-year-tab" data-toggle="pill"
+                               href="#stock-price-one-year" role="tab" aria-controls="one-year"
+                               aria-selected="false">1年</a>
+                            <a class="nav-link" id="stock-price-all-tab" data-toggle="pill" href="#stock-price-all"
+                               role="tab" aria-controls="all" aria-selected="false">全期間</a>
+                          </div>
+                        </div>
+                        <div class="col-11">
+                          <div class="tab-content" id="stock-price-tabs-tabContent">
+                            <div class="tab-pane text-left fade show active" id="stock-price-one-month" role="tabpanel"
+                                 aria-labelledby="stock-price-one-month-tab">
+                              <canvas id="stockChart30"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="stock-price-three-month" role="tabpanel"
+                                 aria-labelledby="stock-price-three-month-tab">
+                              <canvas id="stockChart90"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="stock-price-six-month" role="tabpanel"
+                                 aria-labelledby="stock-price-six-month-tab">
+                              <canvas id="stockChart180"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="stock-price-one-year" role="tabpanel"
+                                 aria-labelledby="stock-price-one-year-tab">
+                              <canvas id="stockChart365"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="stock-price-all" role="tabpanel"
+                                 aria-labelledby="all-tab">
+                              <canvas id="stockChartAll"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row mb-3">
                         <div class="col-12">
                           <table class="table table-sm table-hover">
                             <thead>
@@ -847,6 +939,87 @@
                         </div>
                       </div>
                     </div>
+
+                    <div class="tab-pane fade" id="valuation" role="tabpanel" aria-labelledby="valuation-tab">
+                      <div class="row mb-3">
+                        <div class="col-1">
+                          <div class="nav flex-column nav-tabs h-100" id="valuation-tabs-tab" role="tablist"
+                               aria-orientation="vertical">
+                            <a class="nav-link active" id="valuation-six-month-tab" data-toggle="pill"
+                               href="#valuation-six-month" role="tab" aria-controls="valuation-six-month"
+                               aria-selected="false">6ヶ月</a>
+                            <a class="nav-link" id="valuation-one-year-tab" data-toggle="pill"
+                               href="#valuation-one-year" role="tab" aria-controls="valuation-one-year"
+                               aria-selected="false">1年</a>
+                            <a class="nav-link" id="valuation-all-tab" data-toggle="pill" href="#valuation-all"
+                               role="tab" aria-controls="valuation-all" aria-selected="false">全期間</a>
+                          </div>
+                        </div>
+                        <div class="col-11">
+                          <div class="tab-content" id="valuation-tabs-tabContent">
+                            <div class="tab-pane fade" id="valuation-six-month" role="tabpanel"
+                                 aria-labelledby="six-month-tab">
+                              <canvas id="valuationChart180"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="valuation-one-year" role="tabpanel"
+                                 aria-labelledby="one-year-tab">
+                              <canvas id="valuationChart365"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="valuation-all" role="tabpanel"
+                                 aria-labelledby="all-tab">
+                              <canvas id="valuationChartAll"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row mb-3">
+                        <div class="col-12">
+                          <table id="example1" class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                              <th>日付</th>
+                              <th>株価</th>
+                              <th>増減値</th>
+                              <th>増減率</th>
+                              <th>提出日</th>
+                              <th>提出日の株価平均</th>
+                              <th>最新企業価値</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="valuation : ${valuations}">
+                              <td th:text="${valuation.targetDate}">対象日付</td>
+                              <td th:text="${valuation.stockPrice}">株価終値</td>
+                              <td>
+                                <div th:if="${valuation.differenceFromSubmitDate} > 0">
+                                  <span class="text-primary"
+                                        th:text="'+'+${valuation.differenceFromSubmitDate}">提出日との差</span>
+                                  <i class="text-primary fa-solid fa-arrow-up"></i>
+                                </div>
+                                <div th:if="${valuation.differenceFromSubmitDate} == 0">
+                                  <span class="text-dark" th:text="${valuation.differenceFromSubmitDate}">提出日との差</span>
+                                  <i class="text-dark fa-solid fa-arrows"></i>
+                                </div>
+                                <div th:if="${valuation.differenceFromSubmitDate} < 0">
+                                  <span class="text-danger"
+                                        th:text="${valuation.differenceFromSubmitDate}">提出日との差</span>
+                                  <i class="text-danger fa-solid fa-arrow-down"></i>
+                                </div>
+                              </td>
+                              <td th:text="${valuation.submitDateRatio}">提出日比率</td>
+                              <td th:text="${valuation.submitDate}">提出日</td>
+                              <td th:text="${valuation.averageStockPrice}">提出日の株価平均</td>
+                              <td th:text="${valuation.latestCorporateValue}">最新企業価値</td>
+                            </tr>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
                 <!-- /.card -->
@@ -899,9 +1072,329 @@
 <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 
-<!-- Page specific script -->
-<!--<script>-->
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
 
-<!--</script>-->
+<!-- Page specific script -->
+<script type="text/javascript" th:inline="javascript">
+
+    const analysisChartAll = document.getElementById("analysisChartAll");
+
+    new Chart(analysisChartAll, {
+        type: 'line',
+        data: {
+            labels: [[ ${analysisLabelAll}]],
+            datasets: [
+                {
+                    label: "分析結果",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${analysisPointAll}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    const stockChart30 = document.getElementById("stockChart30");
+    const stockChart90 = document.getElementById("stockChart90");
+    const stockChart180 = document.getElementById("stockChart180");
+    const stockChart365 = document.getElementById("stockChart365");
+    const stockChartAll = document.getElementById("stockChartAll");
+
+    new Chart(stockChart30, {
+        type: 'line',
+        data: {
+            labels: [[ ${stockLabel30}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${stockPoint30}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChart90, {
+        type: 'line',
+        data: {
+            labels: [[ ${stockLabel90}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${stockPoint90}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChart180, {
+        type: 'line',
+        data: {
+            labels: [[ ${stockLabel180}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${stockPoint180}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChart365, {
+        type: 'line',
+        data: {
+            labels: [[ ${stockLabel365}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${stockPoint365}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(stockChartAll, {
+        type: 'line',
+        data: {
+            labels: [[ ${stockLabelAll}]],
+            datasets: [
+                {
+                    label: "株価終値",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${stockPointAll}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    const forecastStockChart180 = document.getElementById("forecastStockChart180");
+    const forecastStockChart365 = document.getElementById("forecastStockChart365");
+    const forecastStockChartAll = document.getElementById("forecastStockChartAll");
+
+    new Chart(forecastStockChart180, {
+        type: 'line',
+        data: {
+            labels: [[ ${forecastStockLabel180}]],
+            datasets: [
+                {
+                    label: "株価予想",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${forecastStockPoint180}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(forecastStockChart365, {
+        type: 'line',
+        data: {
+            labels: [[ ${forecastStockLabel365}]],
+            datasets: [
+                {
+                    label: "株価予想",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${forecastStockPoint365}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(forecastStockChartAll, {
+        type: 'line',
+        data: {
+            labels: [[ ${forecastStockLabelAll}]],
+            datasets: [
+                {
+                    label: "株価予想",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${forecastStockPointAll}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    const valuationChart180 = document.getElementById("valuationChart180");
+    const valuationChart365 = document.getElementById("valuationChart365");
+    const valuationChartAll = document.getElementById("valuationChartAll");
+
+    new Chart(valuationChart180, {
+        type: 'line',
+        data: {
+            labels: [[ ${valuationLabel180}]],
+            datasets: [
+                {
+                    label: "評価",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${valuationPoint180}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(valuationChart365, {
+        type: 'line',
+        data: {
+            labels: [[ ${valuationLabel365}]],
+            datasets: [
+                {
+                    label: "評価",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${valuationPoint365}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(valuationChartAll, {
+        type: 'line',
+        data: {
+            labels: [[ ${valuationLabelAll}]],
+            datasets: [
+                {
+                    label: "評価",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${valuationPointAll}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+</script>
+
 </body>
 </html>

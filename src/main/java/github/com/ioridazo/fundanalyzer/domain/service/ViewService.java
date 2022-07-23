@@ -170,6 +170,16 @@ public class ViewService {
     }
 
     /**
+     * 株価評価（企業ごと）
+     *
+     * @return 株価評価
+     */
+    @NewSpan
+    public List<ValuationViewModel> getValuationView(final CodeInputData inputData) {
+        return viewCorporateUseCase.viewValuation(inputData);
+    }
+
+    /**
      * 株価評価（オール）
      *
      * @return 株価評価

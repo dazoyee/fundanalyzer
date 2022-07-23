@@ -16,6 +16,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementValueViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +49,7 @@ class ViewCorporateInteractorTest {
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
+    private ValuationSpecification valuationSpecification;
     private ViewSpecification viewSpecification;
     private SlackClient slackClient;
 
@@ -60,6 +62,7 @@ class ViewCorporateInteractorTest {
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
+        valuationSpecification = Mockito.mock(ValuationSpecification.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
         slackClient = Mockito.mock(SlackClient.class);
 
@@ -70,7 +73,7 @@ class ViewCorporateInteractorTest {
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
-                Mockito.mock(ValuationSpecification.class),
+                valuationSpecification,
                 viewSpecification,
                 slackClient
         ));
@@ -636,6 +639,41 @@ class ViewCorporateInteractorTest {
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
             verify(slackClient, times(0)).sendMessage(any());
+        }
+    }
+
+    @Nested
+    class viewValuation {
+
+        private ValuationViewModel valuationEntity(BigDecimal disCountRate) {
+            return ValuationViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    disCountRate
+            );
+        }
+
+        @DisplayName("メインビューのフィルターを確認する")
+        @Test
+        void filter() {
+            Mockito.when(valuationSpecification.inquiryAllValuationView())
+                    .thenReturn(List.of(
+                            valuationEntity(BigDecimal.valueOf(1.1)),
+                            valuationEntity(BigDecimal.valueOf(1.2)),
+                            valuationEntity(BigDecimal.valueOf(1001))
+                    ));
+
+            var actual = viewCorporateInteractor.viewValuation();
+
+            assertEquals(BigDecimal.valueOf(1.2), actual.get(0).getDiscountRate());
+            assertEquals(1, actual.size());
         }
     }
 
