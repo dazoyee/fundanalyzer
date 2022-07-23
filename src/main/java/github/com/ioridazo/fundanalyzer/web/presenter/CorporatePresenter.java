@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.springframework.stereotype.Controller;
@@ -41,55 +42,93 @@ public class CorporatePresenter {
         model.addAttribute("analysisResults", view.getAnalysisResultList());
         model.addAttribute("financialStatements", view.getFinancialStatement());
         model.addAttribute("forecastStocks", view.getMinkabuList());
+        setStockPriceView(view, model);
+        setValuationView(viewService.getValuationView(CodeInputData.of(code)), model);
+        return CORPORATE;
+    }
+
+    private void setStockPriceView(final CorporateDetailViewModel view, final Model model) {
         model.addAttribute("stockPrices", view.getStockPriceList());
 
         final List<StockPriceViewModel> stockPrice = view.getStockPriceList().stream()
                 .sorted(Comparator.comparing(StockPriceViewModel::getTargetDate))
                 .collect(Collectors.toList());
 
-        model.addAttribute("label30", stockPrice.stream()
+        model.addAttribute("stockLabel30", stockPrice.stream()
                 .map(StockPriceViewModel::getTargetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(30)))
                 .collect(Collectors.toList()));
-        model.addAttribute("point30", stockPrice.stream()
-                .filter(spvm -> spvm.getTargetDate().isAfter(LocalDate.now().minusDays(30)))
+        model.addAttribute("stockPoint30", stockPrice.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(30)))
                 .map(StockPriceViewModel::getStockPrice)
                 .collect(Collectors.toList()));
 
-        model.addAttribute("label90", stockPrice.stream()
+        model.addAttribute("stockLabel90", stockPrice.stream()
                 .map(StockPriceViewModel::getTargetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(90)))
                 .collect(Collectors.toList()));
-        model.addAttribute("point90", stockPrice.stream()
-                .filter(spvm -> spvm.getTargetDate().isAfter(LocalDate.now().minusDays(90)))
+        model.addAttribute("stockPoint90", stockPrice.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(90)))
                 .map(StockPriceViewModel::getStockPrice)
                 .collect(Collectors.toList()));
 
-        model.addAttribute("label180", stockPrice.stream()
+        model.addAttribute("stockLabel180", stockPrice.stream()
                 .map(StockPriceViewModel::getTargetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
                 .collect(Collectors.toList()));
-        model.addAttribute("point180", stockPrice.stream()
-                .filter(spvm -> spvm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
+        model.addAttribute("stockPoint180", stockPrice.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
                 .map(StockPriceViewModel::getStockPrice)
                 .collect(Collectors.toList()));
 
-        model.addAttribute("label365", stockPrice.stream()
+        model.addAttribute("stockLabel365", stockPrice.stream()
                 .map(StockPriceViewModel::getTargetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
                 .collect(Collectors.toList()));
-        model.addAttribute("point365", stockPrice.stream()
-                .filter(spvm -> spvm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
+        model.addAttribute("stockPoint365", stockPrice.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
                 .map(StockPriceViewModel::getStockPrice)
                 .collect(Collectors.toList()));
 
-        model.addAttribute("labelAll", stockPrice.stream()
+        model.addAttribute("stockLabelAll", stockPrice.stream()
                 .map(StockPriceViewModel::getTargetDate)
                 .collect(Collectors.toList()));
-        model.addAttribute("pointAll", stockPrice.stream()
+        model.addAttribute("stockPointAll", stockPrice.stream()
                 .map(StockPriceViewModel::getStockPrice)
                 .collect(Collectors.toList()));
+    }
 
-        return CORPORATE;
+    private void setValuationView(final List<ValuationViewModel> viewList, final Model model) {
+        model.addAttribute("valuations", viewList);
+
+
+        final List<ValuationViewModel> valuation = viewList.stream()
+                .sorted(Comparator.comparing(ValuationViewModel::getTargetDate))
+                .collect(Collectors.toList());
+
+        model.addAttribute("valuationLabel180", valuation.stream()
+                .map(ValuationViewModel::getTargetDate)
+                .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
+                .collect(Collectors.toList()));
+        model.addAttribute("valuationPoint180", valuation.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
+                .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                .collect(Collectors.toList()));
+
+        model.addAttribute("valuationLabel365", valuation.stream()
+                .map(ValuationViewModel::getTargetDate)
+                .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
+                .collect(Collectors.toList()));
+        model.addAttribute("valuationPoint365", valuation.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
+                .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                .collect(Collectors.toList()));
+
+        model.addAttribute("valuationLabelAll", valuation.stream()
+                .map(ValuationViewModel::getTargetDate)
+                .collect(Collectors.toList()));
+        model.addAttribute("valuationPointAll", valuation.stream()
+                .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                .collect(Collectors.toList()));
     }
 }

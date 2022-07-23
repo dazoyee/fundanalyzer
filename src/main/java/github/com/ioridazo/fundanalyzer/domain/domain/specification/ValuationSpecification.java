@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class ValuationSpecification {
@@ -63,6 +64,20 @@ public class ValuationSpecification {
                 .max(Comparator.comparing(ValuationEntity::getTargetDate))
                 .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
         return viewList;
+    }
+
+    /**
+     * 評価結果を取得する
+     *
+     * @param companyCode 企業コード
+     * @return 評価結果リスト
+     */
+    public List<ValuationViewModel> findValuationView(final String companyCode) {
+        return companySpecification.findCompanyByCode(companyCode)
+                .map(company -> valuationDao.selectByCode(company.getCode()).stream()
+                        .map(valuationEntity -> ValuationViewModel.of(valuationEntity, company))
+                        .collect(Collectors.toList())
+                ).orElseGet(List::of);
     }
 
     /**

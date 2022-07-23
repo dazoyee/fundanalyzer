@@ -75,6 +75,14 @@ public interface ViewCorporateUseCase {
     List<ValuationViewModel> viewValuation();
 
     /**
+     * 企業ごとのビュー
+     *
+     * @return 株価評価ビュー
+     */
+    @NewSpan
+    List<ValuationViewModel> viewValuation(CodeInputData inputData);
+
+    /**
      * オールビュー
      *
      * @return 株価評価ビュー

@@ -298,6 +298,19 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     }
 
     /**
+     * 企業ごとの評価結果ビュー
+     *
+     * @param inputData 企業コード
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewValuation(final CodeInputData inputData) {
+        return valuationSpecification.findValuationView(inputData.getCode5()).stream()
+                .sorted(Comparator.comparing(ValuationViewModel::getTargetDate).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
      * オールビューを取得する
      *
      * @return 評価結果ビュー
