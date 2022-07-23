@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.springframework.stereotype.Controller;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -39,12 +41,35 @@ public class CorporatePresenter {
         final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
         model.addAttribute(CORPORATE, view.getCompany());
         model.addAttribute("corporateView", view.getCorporate());
-        model.addAttribute("analysisResults", view.getAnalysisResultList());
+        setAnalysisView(view, model);
         model.addAttribute("financialStatements", view.getFinancialStatement());
         model.addAttribute("forecastStocks", view.getMinkabuList());
         setStockPriceView(view, model);
         setValuationView(viewService.getValuationView(CodeInputData.of(code)), model);
         return CORPORATE;
+    }
+
+    private void setAnalysisView(final CorporateDetailViewModel view, final Model model) {
+        model.addAttribute("analysisResults", view.getAnalysisResultList());
+
+        final List<AnalysisResultViewModel> analysis = view.getAnalysisResultList().stream()
+                .map(AnalysisResultViewModel::getDocumentPeriod)
+                .distinct()
+                // 最新の企業価値を取得する
+                .map(dp -> view.getAnalysisResultList().stream()
+                        .filter(viewModel -> dp.equals(viewModel.getDocumentPeriod()))
+                        .max(Comparator.comparing(AnalysisResultViewModel::getSubmitDate)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparing(AnalysisResultViewModel::getSubmitDate))
+                .collect(Collectors.toList());
+
+        model.addAttribute("analysisLabelAll", analysis.stream()
+                .map(AnalysisResultViewModel::getSubmitDate)
+                .collect(Collectors.toList()));
+        model.addAttribute("analysisPointAll", analysis.stream()
+                .map(AnalysisResultViewModel::getCorporateValue)
+                .collect(Collectors.toList()));
     }
 
     private void setStockPriceView(final CorporateDetailViewModel view, final Model model) {
