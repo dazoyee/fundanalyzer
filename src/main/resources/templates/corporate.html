@@ -803,7 +803,7 @@
                                aria-orientation="vertical">
                             <a class="nav-link active" id="forecast-stock-six-month-tab" data-toggle="pill"
                                href="#forecast-stock-six-month" role="tab" aria-controls="forecast-stock-six-month"
-                               aria-selected="false">6ヶ月</a>
+                               aria-selected="true">6ヶ月</a>
                             <a class="nav-link" id="forecast-stock-one-year-tab" data-toggle="pill"
                                href="#forecast-stock-one-year" role="tab" aria-controls="forecast-stock-one-year"
                                aria-selected="false">1年</a>
@@ -814,7 +814,7 @@
                         </div>
                         <div class="col-11">
                           <div class="tab-content" id="forecast-stock-tabs-tabContent">
-                            <div class="tab-pane fade" id="forecast-stock-six-month" role="tabpanel"
+                            <div class="tab-pane text-left fade show active" id="forecast-stock-six-month" role="tabpanel"
                                  aria-labelledby="six-month-tab">
                               <canvas id="forecastStockChart180"
                                       style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
@@ -870,17 +870,19 @@
                           <div class="nav flex-column nav-tabs h-100" id="stock-price-tabs-tab" role="tablist"
                                aria-orientation="vertical">
                             <a class="nav-link active" id="stock-price-one-month-tab" data-toggle="pill"
-                               href="#stock-price-one-month" role="tab" aria-controls="one-month" aria-selected="true">1ヶ月</a>
+                               href="#stock-price-one-month" role="tab" aria-controls="stock-price-one-month"
+                               aria-selected="true">1ヶ月</a>
                             <a class="nav-link" id="stock-price-three-month-tab" data-toggle="pill"
-                               href="#stock-price-three-month" role="tab" aria-controls="three-month"
+                               href="#stock-price-three-month" role="tab" aria-controls="stock-price-three-month"
                                aria-selected="false">3ヶ月</a>
                             <a class="nav-link" id="stock-price-six-month-tab" data-toggle="pill"
-                               href="#stock-price-six-month" role="tab" aria-controls="six-month" aria-selected="false">6ヶ月</a>
+                               href="#stock-price-six-month" role="tab" aria-controls="stock-price-six-month"
+                               aria-selected="false">6ヶ月</a>
                             <a class="nav-link" id="stock-price-one-year-tab" data-toggle="pill"
                                href="#stock-price-one-year" role="tab" aria-controls="one-year"
                                aria-selected="false">1年</a>
                             <a class="nav-link" id="stock-price-all-tab" data-toggle="pill" href="#stock-price-all"
-                               role="tab" aria-controls="all" aria-selected="false">全期間</a>
+                               role="tab" aria-controls="stock-price-all" aria-selected="false">全期間</a>
                           </div>
                         </div>
                         <div class="col-11">
@@ -947,7 +949,7 @@
                                aria-orientation="vertical">
                             <a class="nav-link active" id="valuation-six-month-tab" data-toggle="pill"
                                href="#valuation-six-month" role="tab" aria-controls="valuation-six-month"
-                               aria-selected="false">6ヶ月</a>
+                               aria-selected="true">6ヶ月</a>
                             <a class="nav-link" id="valuation-one-year-tab" data-toggle="pill"
                                href="#valuation-one-year" role="tab" aria-controls="valuation-one-year"
                                aria-selected="false">1年</a>
@@ -957,7 +959,7 @@
                         </div>
                         <div class="col-11">
                           <div class="tab-content" id="valuation-tabs-tabContent">
-                            <div class="tab-pane fade" id="valuation-six-month" role="tabpanel"
+                            <div class="tab-pane text-left fade show active" id="valuation-six-month" role="tabpanel"
                                  aria-labelledby="six-month-tab">
                               <canvas id="valuationChart180"
                                       style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
