@@ -797,7 +797,43 @@
                     </div>
 
                     <div class="tab-pane fade" id="goals-stock" role="tabpanel" aria-labelledby="goals-stock-tab">
-                      <div class="row">
+                      <div class="row mb-3">
+                        <div class="col-1">
+                          <div class="nav flex-column nav-tabs h-100" id="forecast-stock-tabs-tab" role="tablist"
+                               aria-orientation="vertical">
+                            <a class="nav-link active" id="forecast-stock-six-month-tab" data-toggle="pill"
+                               href="#forecast-stock-six-month" role="tab" aria-controls="forecast-stock-six-month"
+                               aria-selected="false">6ヶ月</a>
+                            <a class="nav-link" id="forecast-stock-one-year-tab" data-toggle="pill"
+                               href="#forecast-stock-one-year" role="tab" aria-controls="forecast-stock-one-year"
+                               aria-selected="false">1年</a>
+                            <a class="nav-link" id="forecast-stock-all-tab" data-toggle="pill"
+                               href="#forecast-stock-all"
+                               role="tab" aria-controls="forecast-stock-all" aria-selected="false">全期間</a>
+                          </div>
+                        </div>
+                        <div class="col-11">
+                          <div class="tab-content" id="forecast-stock-tabs-tabContent">
+                            <div class="tab-pane fade" id="forecast-stock-six-month" role="tabpanel"
+                                 aria-labelledby="six-month-tab">
+                              <canvas id="forecastStockChart180"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="forecast-stock-one-year" role="tabpanel"
+                                 aria-labelledby="one-year-tab">
+                              <canvas id="forecastStockChart365"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="forecast-stock-all" role="tabpanel"
+                                 aria-labelledby="all-tab">
+                              <canvas id="forecastStockChartAll"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row mb-3">
                         <div class="col-12">
                           <table class="table table-bordered table-hover">
                             <thead>
@@ -1187,6 +1223,85 @@
                     fill: false,
                     borderWidth: 1,
                     data: [[ ${stockPointAll}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    const forecastStockChart180 = document.getElementById("forecastStockChart180");
+    const forecastStockChart365 = document.getElementById("forecastStockChart365");
+    const forecastStockChartAll = document.getElementById("forecastStockChartAll");
+
+    new Chart(forecastStockChart180, {
+        type: 'line',
+        data: {
+            labels: [[ ${forecastStockLabel180}]],
+            datasets: [
+                {
+                    label: "株価予想",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${forecastStockPoint180}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(forecastStockChart365, {
+        type: 'line',
+        data: {
+            labels: [[ ${forecastStockLabel365}]],
+            datasets: [
+                {
+                    label: "株価予想",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${forecastStockPoint365}]],
+                },
+            ]
+        },
+        options: {
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            responsive: true,
+        }
+    });
+
+    new Chart(forecastStockChartAll, {
+        type: 'line',
+        data: {
+            labels: [[ ${forecastStockLabelAll}]],
+            datasets: [
+                {
+                    label: "株価予想",
+                    borderColor: 'rgb(0, 0, 0)',
+                    lineTension: 0,
+                    fill: false,
+                    borderWidth: 1,
+                    data: [[ ${forecastStockPointAll}]],
                 },
             ]
         },

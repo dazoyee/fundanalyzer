@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,7 +44,7 @@ public class CorporatePresenter {
         model.addAttribute("corporateView", view.getCorporate());
         setAnalysisView(view, model);
         model.addAttribute("financialStatements", view.getFinancialStatement());
-        model.addAttribute("forecastStocks", view.getMinkabuList());
+        setForecastStock(view, model);
         setStockPriceView(view, model);
         setValuationView(viewService.getValuationView(CodeInputData.of(code)), model);
         return CORPORATE;
@@ -69,6 +70,39 @@ public class CorporatePresenter {
                 .collect(Collectors.toList()));
         model.addAttribute("analysisPointAll", analysis.stream()
                 .map(AnalysisResultViewModel::getCorporateValue)
+                .collect(Collectors.toList()));
+    }
+
+    private void setForecastStock(final CorporateDetailViewModel view, final Model model) {
+        model.addAttribute("forecastStocks", view.getMinkabuList());
+
+        final List<MinkabuViewModel> forecastStock = view.getMinkabuList().stream()
+                .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate))
+                .collect(Collectors.toList());
+
+        model.addAttribute("forecastStockLabel180", forecastStock.stream()
+                .map(MinkabuViewModel::getTargetDate)
+                .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
+                .collect(Collectors.toList()));
+        model.addAttribute("forecastStockPoint180", forecastStock.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
+                .map(MinkabuViewModel::getGoalsStock)
+                .collect(Collectors.toList()));
+
+        model.addAttribute("forecastStockLabel365", forecastStock.stream()
+                .map(MinkabuViewModel::getTargetDate)
+                .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
+                .collect(Collectors.toList()));
+        model.addAttribute("forecastStockPoint365", forecastStock.stream()
+                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
+                .map(MinkabuViewModel::getGoalsStock)
+                .collect(Collectors.toList()));
+
+        model.addAttribute("forecastStockLabelAll", forecastStock.stream()
+                .map(MinkabuViewModel::getTargetDate)
+                .collect(Collectors.toList()));
+        model.addAttribute("forecastStockPointAll", forecastStock.stream()
+                .map(MinkabuViewModel::getGoalsStock)
                 .collect(Collectors.toList()));
     }
 
