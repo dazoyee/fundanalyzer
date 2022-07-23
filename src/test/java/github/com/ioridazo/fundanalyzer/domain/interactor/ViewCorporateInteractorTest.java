@@ -663,7 +663,7 @@ class ViewCorporateInteractorTest {
         @DisplayName("メインビューのフィルターを確認する")
         @Test
         void filter() {
-            Mockito.when(valuationSpecification.findAllValuationView())
+            Mockito.when(valuationSpecification.inquiryAllValuationView())
                     .thenReturn(List.of(
                             valuationEntity(BigDecimal.valueOf(1.1)),
                             valuationEntity(BigDecimal.valueOf(1.2)),

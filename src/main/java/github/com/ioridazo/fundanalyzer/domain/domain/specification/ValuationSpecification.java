@@ -6,6 +6,8 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,9 +19,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class ValuationSpecification {
+
+    private static final String CACHE_KEY_ALL_VALUATION_VIEW = "allValuationView";
 
     private static final int SECOND_DECIMAL_PLACE = 2;
 
@@ -54,15 +59,39 @@ public class ValuationSpecification {
 
     /**
      * 評価結果を取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
      *
      * @return 評価結果リスト
      */
+    @Cacheable(CACHE_KEY_ALL_VALUATION_VIEW)
+    public List<ValuationViewModel> inquiryAllValuationView() {
+        return findAllValuationView();
+    }
+
+    @CachePut(CACHE_KEY_ALL_VALUATION_VIEW)
     public List<ValuationViewModel> findAllValuationView() {
         final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
         companySpecification.inquiryAllTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
                 .max(Comparator.comparing(ValuationEntity::getTargetDate))
                 .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
         return viewList;
+    }
+
+    /**
+     * 評価結果を取得する
+     *
+     * @param companyCode 企業コード
+     * @return 評価結果リスト
+     */
+    public List<ValuationViewModel> findValuationView(final String companyCode) {
+        return companySpecification.findCompanyByCode(companyCode)
+                .map(company -> valuationDao.selectByCode(company.getCode()).stream()
+                        .map(valuationEntity -> ValuationViewModel.of(valuationEntity, company))
+                        .collect(Collectors.toList())
+                ).orElseGet(List::of);
     }
 
     /**
