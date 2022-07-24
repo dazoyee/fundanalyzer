@@ -268,6 +268,9 @@
             <!-- /.card -->
           </div>
           <!-- /.col-md-6 -->
+        </div>
+
+        <div class="row">
           <div class="col-12">
             <div class="card">
               <!-- /.card-header -->
@@ -289,7 +292,9 @@
                   <tbody>
                   <tr th:each="company : ${companies}">
                     <td th:text="${company.code}">コード</td>
-                    <td th:text="${company.name}">会社名</td>
+                    <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                      会社名
+                    </a></td>
                     <td th:text="${company.targetDate}">対象日付</td>
                     <td th:text="${company.stockPrice}">株価終値</td>
                     <td>
@@ -311,6 +316,7 @@
                     <td th:text="${company.averageStockPrice}">提出日の株価平均</td>
                     <td th:text="${company.latestCorporateValue}">最新企業価値</td>
                   </tr>
+                  </tbody>
                 </table>
               </div>
               <!-- /.card-body -->

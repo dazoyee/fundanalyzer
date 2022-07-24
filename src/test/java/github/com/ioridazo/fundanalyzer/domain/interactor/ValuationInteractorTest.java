@@ -12,12 +12,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -141,6 +144,33 @@ class ValuationInteractorTest {
 
             assertDoesNotThrow(() -> valuationInteractor.evaluate(CodeInputData.of("code")));
             Mockito.verify(valuationSpecification, Mockito.times(0)).insert(any(), any());
+        }
+    }
+
+    @Nested
+    class generateValuationDate {
+
+        @DisplayName("generateValuationDate : 株価取得日に近似した評価日付を生成する")
+        @ParameterizedTest
+        @CsvSource({
+                "2022-07-24, 2022-07-24, 2022-07-24",
+                "2022-07-24, 2022-07-31, 2022-07-31",
+                "2022-04-24, 2022-07-29, 2022-04-29",
+                "2022-04-24, 2022-07-30, 2022-04-30",
+                "2022-04-24, 2022-07-31, 2022-04-30",
+                "2022-06-24, 2022-07-31, 2022-06-30",
+                "2022-09-24, 2022-07-31, 2022-09-30",
+                "2022-11-24, 2022-07-31, 2022-11-30",
+                "2022-02-24, 2022-07-27, 2022-02-27",
+                "2022-02-24, 2022-07-28, 2022-02-28",
+                "2022-02-24, 2022-07-29, 2022-02-28",
+                "2022-02-24, 2022-07-30, 2022-02-28",
+                "2022-02-24, 2022-07-31, 2022-02-28",
+        })
+        void generate(String targetDate, String submitDate, String expected) {
+            assertEquals(
+                    LocalDate.parse(expected),
+                    valuationInteractor.generateValuationDate(LocalDate.parse(targetDate), LocalDate.parse(submitDate)));
         }
     }
 

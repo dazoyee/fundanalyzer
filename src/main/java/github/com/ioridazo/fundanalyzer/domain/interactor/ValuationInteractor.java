@@ -20,7 +20,9 @@ import org.springframework.stereotype.Component;
 import java.text.MessageFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Component
 public class ValuationInteractor implements ValuationUseCase {
@@ -71,11 +73,7 @@ public class ValuationInteractor implements ValuationUseCase {
                         valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.get().getSubmitDate())
                                 // 最新の評価した対象日を取得
                                 .map(ValuationEntity::getTargetDate)
-                                .map(td -> LocalDate.of(
-                                        td.getYear(),
-                                        td.getMonth(),
-                                        latestAnalysisResult.get().getSubmitDate().getDayOfMonth()
-                                ))
+                                .map(td -> generateValuationDate(td, latestAnalysisResult.get().getSubmitDate()))
                                 // 過去の評価から1ヶ月後を対象日付とする
                                 .map(td -> td.plusMonths(1))
                                 // はじめての評価ならば提出日を対象日付とする
@@ -105,13 +103,52 @@ public class ValuationInteractor implements ValuationUseCase {
             ));
 
         } catch (final FundanalyzerNotExistException | DateTimeException e) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     "評価できませんでした。",
                     Category.STOCK,
                     Process.EVALUATE
             ), e);
         }
         return false;
+    }
+
+    /**
+     * 株価取得日に近似した評価日付を生成する
+     *
+     * @param targetDate 評価日付
+     * @param submitDate 提出日
+     * @return 調整後評価日付
+     */
+    LocalDate generateValuationDate(final LocalDate targetDate, final LocalDate submitDate) {
+        // 提出日が 28, 29, 30, 31 の場合は注意
+        if (Stream.of(28, 29, 30, 31).anyMatch(day -> submitDate.getDayOfMonth() == day)) {
+            // 2月を考慮
+            if (Month.FEBRUARY.equals(targetDate.getMonth())) {
+                return LocalDate.of(
+                        targetDate.getYear(),
+                        targetDate.getMonth(),
+                        28
+                );
+            }
+
+            // 4月, 6月, 9月, 11月 を考慮
+            if (31 == submitDate.getDayOfMonth()
+                    && Stream.of(Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER)
+                    .anyMatch(month -> month.equals(targetDate.getMonth()))) {
+                return LocalDate.of(
+                        targetDate.getYear(),
+                        targetDate.getMonth(),
+                        30
+                );
+            }
+        }
+
+        // デフォルト
+        return LocalDate.of(
+                targetDate.getYear(),
+                targetDate.getMonth(),
+                submitDate.getDayOfMonth()
+        );
     }
 
     /**
