@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.Analysis
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,9 @@ public class CorporatePresenter {
     private static final String CORPORATE = "corporate";
 
     private final ViewService viewService;
+
+    @Value("${app.config.view.document-type-code}")
+    List<String> targetTypeCodes;
 
     public CorporatePresenter(final ViewService viewService) {
         this.viewService = viewService;
@@ -54,10 +58,12 @@ public class CorporatePresenter {
         model.addAttribute("analysisResults", view.getAnalysisResultList());
 
         final List<AnalysisResultViewModel> analysis = view.getAnalysisResultList().stream()
+                .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.getDocumentTypeCode().equals(t)))
                 .map(AnalysisResultViewModel::getDocumentPeriod)
                 .distinct()
                 // 最新の企業価値を取得する
                 .map(dp -> view.getAnalysisResultList().stream()
+                        .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.getDocumentTypeCode().equals(t)))
                         .filter(viewModel -> dp.equals(viewModel.getDocumentPeriod()))
                         .max(Comparator.comparing(AnalysisResultViewModel::getSubmitDate)))
                 .filter(Optional::isPresent)
@@ -66,7 +72,7 @@ public class CorporatePresenter {
                 .collect(Collectors.toList());
 
         model.addAttribute("analysisLabelAll", analysis.stream()
-                .map(AnalysisResultViewModel::getSubmitDate)
+                .map(AnalysisResultViewModel::getDocumentPeriod)
                 .collect(Collectors.toList()));
         model.addAttribute("analysisPointAll", analysis.stream()
                 .map(AnalysisResultViewModel::getCorporateValue)
