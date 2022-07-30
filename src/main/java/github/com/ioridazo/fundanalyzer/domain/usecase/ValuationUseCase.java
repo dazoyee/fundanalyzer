@@ -1,7 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public interface ValuationUseCase {
      * @return 株価評価ビュー
      */
     @NewSpan
-    List<ValuationViewModel> viewValuation();
+    List<CompanyValuationViewModel> viewValuation();
 
     /**
      * 企業ごとのビュー
@@ -36,7 +37,7 @@ public interface ValuationUseCase {
      * @return 株価評価ビュー
      */
     @NewSpan
-    List<ValuationViewModel> viewValuation(CodeInputData inputData);
+    List<CompanyValuationViewModel> viewValuation(CodeInputData inputData);
 
     /**
      * オールビュー
@@ -44,7 +45,7 @@ public interface ValuationUseCase {
      * @return 株価評価ビュー
      */
     @NewSpan
-    List<ValuationViewModel> viewAllValuation();
+    List<CompanyValuationViewModel> viewAllValuation();
 
     /**
      * お気に入りビュー
@@ -52,7 +53,7 @@ public interface ValuationUseCase {
      * @return 株価評価ビュー
      */
     @NewSpan
-    List<ValuationViewModel> viewFavoriteValuation();
+    List<CompanyValuationViewModel> viewFavoriteValuation();
 
     /**
      * 業種ビュー
@@ -60,5 +61,5 @@ public interface ValuationUseCase {
      * @return 株価評価ビュー
      */
     @NewSpan
-    List<ValuationViewModel> viewIndustryValuation();
+    List<IndustryValuationViewModel> viewIndustryValuation();
 }

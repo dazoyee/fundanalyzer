@@ -102,7 +102,8 @@ class ValuationSpecificationTest {
             assertAll(
                     () -> assertEquals("name", actual.getName()),
                     () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
-                    () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio())
+                    () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio()),
+                    () -> assertEquals(2, actual.getCount())
             );
         }
     }

@@ -15,7 +15,8 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -192,7 +193,7 @@ public class ValuationInteractor implements ValuationUseCase {
      * @return 評価結果ビュー
      */
     @Override
-    public List<ValuationViewModel> viewValuation() {
+    public List<CompanyValuationViewModel> viewValuation() {
         return valuationSpecification.inquiryAllValuationView().stream()
                 // 割安度が170%(外部設定値)以上を表示
                 .filter(vvm -> vvm.getDiscountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
@@ -208,9 +209,9 @@ public class ValuationInteractor implements ValuationUseCase {
      * @return 評価結果ビュー
      */
     @Override
-    public List<ValuationViewModel> viewValuation(final CodeInputData inputData) {
+    public List<CompanyValuationViewModel> viewValuation(final CodeInputData inputData) {
         return valuationSpecification.findValuationView(inputData.getCode5()).stream()
-                .sorted(Comparator.comparing(ValuationViewModel::getTargetDate).reversed())
+                .sorted(Comparator.comparing(CompanyValuationViewModel::getTargetDate).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -220,7 +221,7 @@ public class ValuationInteractor implements ValuationUseCase {
      * @return 評価結果ビュー
      */
     @Override
-    public List<ValuationViewModel> viewAllValuation() {
+    public List<CompanyValuationViewModel> viewAllValuation() {
         return valuationSpecification.inquiryAllValuationView();
     }
 
@@ -230,7 +231,7 @@ public class ValuationInteractor implements ValuationUseCase {
      * @return 評価結果ビュー
      */
     @Override
-    public List<ValuationViewModel> viewFavoriteValuation() {
+    public List<CompanyValuationViewModel> viewFavoriteValuation() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
                 .map(Company::getCode)
                 .collect(Collectors.toList());
@@ -246,7 +247,7 @@ public class ValuationInteractor implements ValuationUseCase {
      * @return 評価結果ビュー
      */
     @Override
-    public List<ValuationViewModel> viewIndustryValuation() {
+    public List<IndustryValuationViewModel> viewIndustryValuation() {
         return industrySpecification.inquiryIndustryList().stream()
                 .filter(entity -> industrySpecification.isTarget(entity.getId()))
                 .map(entity -> valuationSpecification.averageValuation(

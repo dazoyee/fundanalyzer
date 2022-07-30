@@ -6,7 +6,8 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
@@ -65,22 +66,23 @@ public class ValuationSpecification {
      * @param companyList  企業リスト
      * @return 業種による平均の評価結果
      */
-    public ValuationViewModel averageValuation(final String industryName, final List<Company> companyList) {
-        final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
+    public IndustryValuationViewModel averageValuation(final String industryName, final List<Company> companyList) {
+        final ArrayList<CompanyValuationViewModel> viewList = new ArrayList<>();
         companyList.forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
                 .max(Comparator.comparing(ValuationEntity::getTargetDate))
-                .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
+                .ifPresent(valuationEntity -> viewList.add(CompanyValuationViewModel.of(valuationEntity, company))));
 
-        return ValuationViewModel.ofIndustry(
+        return IndustryValuationViewModel.of(
                 industryName,
                 viewList.stream()
-                        .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                        .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
                         .mapToDouble(BigDecimal::doubleValue)
                         .average().orElse(0),
                 viewList.stream()
-                        .map(ValuationViewModel::getSubmitDateRatio)
+                        .map(CompanyValuationViewModel::getSubmitDateRatio)
                         .mapToDouble(BigDecimal::doubleValue)
-                        .average().orElse(0)
+                        .average().orElse(0),
+                viewList.size()
         );
     }
 
@@ -94,16 +96,16 @@ public class ValuationSpecification {
      * @return 評価結果リスト
      */
     @Cacheable(CACHE_KEY_ALL_VALUATION_VIEW)
-    public List<ValuationViewModel> inquiryAllValuationView() {
+    public List<CompanyValuationViewModel> inquiryAllValuationView() {
         return findAllValuationView();
     }
 
     @CachePut(CACHE_KEY_ALL_VALUATION_VIEW)
-    public List<ValuationViewModel> findAllValuationView() {
-        final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
+    public List<CompanyValuationViewModel> findAllValuationView() {
+        final ArrayList<CompanyValuationViewModel> viewList = new ArrayList<>();
         companySpecification.inquiryAllTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
                 .max(Comparator.comparing(ValuationEntity::getTargetDate))
-                .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
+                .ifPresent(valuationEntity -> viewList.add(CompanyValuationViewModel.of(valuationEntity, company))));
         return viewList;
     }
 
@@ -113,10 +115,10 @@ public class ValuationSpecification {
      * @param companyCode 企業コード
      * @return 評価結果リスト
      */
-    public List<ValuationViewModel> findValuationView(final String companyCode) {
+    public List<CompanyValuationViewModel> findValuationView(final String companyCode) {
         return companySpecification.findCompanyByCode(companyCode)
                 .map(company -> valuationDao.selectByCode(company.getCode()).stream()
-                        .map(valuationEntity -> ValuationViewModel.of(valuationEntity, company))
+                        .map(valuationEntity -> CompanyValuationViewModel.of(valuationEntity, company))
                         .collect(Collectors.toList())
                 ).orElseGet(List::of);
     }

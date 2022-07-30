@@ -11,7 +11,8 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewMo
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -169,7 +170,7 @@ public class ViewService {
      * @return 株価評価
      */
     @NewSpan
-    public List<ValuationViewModel> getValuationView() {
+    public List<CompanyValuationViewModel> getValuationView() {
         return valuationUseCase.viewValuation();
     }
 
@@ -179,7 +180,7 @@ public class ViewService {
      * @return 株価評価
      */
     @NewSpan
-    public List<ValuationViewModel> getValuationView(final CodeInputData inputData) {
+    public List<CompanyValuationViewModel> getValuationView(final CodeInputData inputData) {
         return valuationUseCase.viewValuation(inputData);
     }
 
@@ -189,7 +190,7 @@ public class ViewService {
      * @return 株価評価
      */
     @NewSpan
-    public List<ValuationViewModel> getAllValuationView() {
+    public List<CompanyValuationViewModel> getAllValuationView() {
         return valuationUseCase.viewAllValuation();
     }
 
@@ -199,7 +200,7 @@ public class ViewService {
      * @return 株価評価
      */
     @NewSpan
-    public List<ValuationViewModel> getFavoriteValuationView() {
+    public List<CompanyValuationViewModel> getFavoriteValuationView() {
         return valuationUseCase.viewFavoriteValuation();
     }
 
@@ -209,7 +210,7 @@ public class ViewService {
      * @return 株価評価
      */
     @NewSpan
-    public List<ValuationViewModel> getIndustryValuationView() {
+    public List<IndustryValuationViewModel> getIndustryValuationView() {
         return valuationUseCase.viewIndustryValuation();
     }
 }

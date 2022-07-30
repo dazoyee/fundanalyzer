@@ -9,7 +9,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -226,8 +226,8 @@ class ValuationInteractorTest {
     @Nested
     class viewValuation {
 
-        private ValuationViewModel valuationEntity(BigDecimal disCountRate) {
-            return ValuationViewModel.of(
+        private CompanyValuationViewModel valuationEntity(BigDecimal disCountRate) {
+            return CompanyValuationViewModel.of(
                     null,
                     null,
                     null,
