@@ -17,15 +17,6 @@ spring:
     sender:
       type: web
 
-  cache:
-    type: caffeine
-    caffeine:
-      spec: expireAfterWrite=5m,recordStats
-
-#logging:
-#  file:
-#    name: ${spring.application.name}
-#    path: C:/${spring.application.name}/log/
 logging:
   level:
     org.seasar.doma:

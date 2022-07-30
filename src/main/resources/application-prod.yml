@@ -27,6 +27,11 @@ spring:
   thymeleaf:
     encoding: UTF-8
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=5m,recordStats
+
 doma:
   dialect: mysql
   naming: snake_upper_case
