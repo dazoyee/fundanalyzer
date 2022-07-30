@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.web.view.model.corporate;
+package github.com.ioridazo.fundanalyzer.web.view.model.valuation;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;

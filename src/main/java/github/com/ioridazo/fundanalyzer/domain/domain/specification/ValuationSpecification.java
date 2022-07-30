@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Analysi
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;

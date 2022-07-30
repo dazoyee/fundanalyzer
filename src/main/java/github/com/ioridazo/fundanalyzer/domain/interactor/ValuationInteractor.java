@@ -11,17 +11,24 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -33,6 +40,9 @@ public class ValuationInteractor implements ValuationUseCase {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final ValuationSpecification valuationSpecification;
+
+    @Value("${app.config.view.discount-rate}")
+    BigDecimal configDiscountRate;
 
     public ValuationInteractor(
             final CompanySpecification companySpecification,
@@ -168,5 +178,65 @@ public class ValuationInteractor implements ValuationUseCase {
             i++;
         }
         return Optional.empty();
+    }
+
+    /**
+     * メインビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewValuation() {
+        return valuationSpecification.inquiryAllValuationView().stream()
+                // 割安度が170%(外部設定値)以上を表示
+                .filter(vvm -> vvm.getDiscountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
+                // 割安度が明らかな誤りは除外
+                .filter(vvm -> vvm.getDiscountRate().compareTo(BigDecimal.valueOf(1000)) < 0)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 企業ごとの評価結果ビュー
+     *
+     * @param inputData 企業コード
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewValuation(final CodeInputData inputData) {
+        return valuationSpecification.findValuationView(inputData.getCode5()).stream()
+                .sorted(Comparator.comparing(ValuationViewModel::getTargetDate).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * オールビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewAllValuation() {
+        return valuationSpecification.inquiryAllValuationView();
+    }
+
+    /**
+     * お気に入りビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
+    @Override
+    public List<ValuationViewModel> viewFavoriteValuation() {
+        final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
+                .map(Company::getCode)
+                .collect(Collectors.toList());
+
+        return valuationSpecification.inquiryAllValuationView().stream()
+                .filter(vvm -> favoriteList.stream().anyMatch(favorite -> vvm.getCode().equals(favorite.substring(0, 4))))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ValuationViewModel> viewIndustryValuation() {
+
+        return null;
     }
 }

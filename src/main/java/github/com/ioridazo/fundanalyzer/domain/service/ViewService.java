@@ -2,15 +2,16 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -22,16 +23,19 @@ public class ViewService {
 
     private final CompanyUseCase companyUseCase;
     private final DocumentUseCase documentUseCase;
+    private final ValuationUseCase valuationUseCase;
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
 
     public ViewService(
             final CompanyUseCase companyUseCase,
             final DocumentUseCase documentUseCase,
+            final ValuationUseCase valuationUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
             final ViewEdinetUseCase viewEdinetUseCase) {
         this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
+        this.valuationUseCase = valuationUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
     }
@@ -166,7 +170,7 @@ public class ViewService {
      */
     @NewSpan
     public List<ValuationViewModel> getValuationView() {
-        return viewCorporateUseCase.viewValuation();
+        return valuationUseCase.viewValuation();
     }
 
     /**
@@ -176,7 +180,7 @@ public class ViewService {
      */
     @NewSpan
     public List<ValuationViewModel> getValuationView(final CodeInputData inputData) {
-        return viewCorporateUseCase.viewValuation(inputData);
+        return valuationUseCase.viewValuation(inputData);
     }
 
     /**
@@ -186,7 +190,7 @@ public class ViewService {
      */
     @NewSpan
     public List<ValuationViewModel> getAllValuationView() {
-        return viewCorporateUseCase.viewAllValuation();
+        return valuationUseCase.viewAllValuation();
     }
 
     /**
@@ -196,6 +200,6 @@ public class ViewService {
      */
     @NewSpan
     public List<ValuationViewModel> getFavoriteValuationView() {
-        return viewCorporateUseCase.viewFavoriteValuation();
+        return valuationUseCase.viewFavoriteValuation();
     }
 }

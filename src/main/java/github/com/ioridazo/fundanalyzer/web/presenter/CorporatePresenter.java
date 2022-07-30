@@ -2,11 +2,11 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
