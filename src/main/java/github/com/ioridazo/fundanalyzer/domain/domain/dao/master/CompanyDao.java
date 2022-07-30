@@ -17,12 +17,6 @@ import java.util.Optional;
 public interface CompanyDao {
 
     @Select
-    List<CompanyEntity> selectByCodeIsNotNull();
-
-    @Select
-    List<CompanyEntity> selectByFavorite();
-
-    @Select
     Optional<CompanyEntity> selectByEdinetCode(String edinetCode);
 
     @Select
@@ -30,6 +24,15 @@ public interface CompanyDao {
 
     @Select
     Optional<LocalDateTime> maxUpdatedAt();
+
+    @Select
+    List<CompanyEntity> selectByCodeIsNotNull();
+
+    @Select
+    List<CompanyEntity> selectByFavorite();
+
+    @Select
+    List<CompanyEntity> selectByIndustryId(Integer industryId);
 
     @Insert
     Result<CompanyEntity> insert(CompanyEntity company);

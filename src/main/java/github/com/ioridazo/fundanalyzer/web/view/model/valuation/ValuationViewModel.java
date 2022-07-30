@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import lombok.Value;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -14,7 +15,7 @@ public class ValuationViewModel {
     // 証券コード
     private final String code;
 
-    // 会社名
+    // 会社（業種）名
     private final String name;
 
     // 対象日
@@ -53,6 +54,24 @@ public class ValuationViewModel {
                 entity.getStockPriceOfSubmitDate(),
                 entity.getCorporateValue(),
                 entity.getDiscountRate()
+        );
+    }
+
+    public static ValuationViewModel ofIndustry(
+            final String industryName,
+            final double differenceFromSubmitDate,
+            final double submitDateRatio) {
+        return new ValuationViewModel(
+                null,
+                industryName,
+                null,
+                null,
+                BigDecimal.valueOf(differenceFromSubmitDate).setScale(2, RoundingMode.HALF_UP),
+                BigDecimal.valueOf(submitDateRatio).setScale(2, RoundingMode.HALF_UP),
+                null,
+                null,
+                null,
+                null
         );
     }
 }

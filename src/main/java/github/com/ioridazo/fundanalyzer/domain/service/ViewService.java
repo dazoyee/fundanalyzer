@@ -202,4 +202,14 @@ public class ViewService {
     public List<ValuationViewModel> getFavoriteValuationView() {
         return valuationUseCase.viewFavoriteValuation();
     }
+
+    /**
+     * 株価評価（業種）
+     *
+     * @return 株価評価
+     */
+    @NewSpan
+    public List<ValuationViewModel> getIndustryValuationView() {
+        return valuationUseCase.viewIndustryValuation();
+    }
 }

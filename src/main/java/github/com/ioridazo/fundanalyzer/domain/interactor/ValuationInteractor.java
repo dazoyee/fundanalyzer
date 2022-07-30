@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
@@ -36,6 +37,7 @@ public class ValuationInteractor implements ValuationUseCase {
 
     private static final Logger log = LogManager.getLogger(ValuationInteractor.class);
 
+    private final IndustrySpecification industrySpecification;
     private final CompanySpecification companySpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
@@ -43,12 +45,16 @@ public class ValuationInteractor implements ValuationUseCase {
 
     @Value("${app.config.view.discount-rate}")
     BigDecimal configDiscountRate;
+    @Value("${app.config.scraping.no-industry}")
+    List<String> noTargetList;
 
     public ValuationInteractor(
+            final IndustrySpecification industrySpecification,
             final CompanySpecification companySpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
             final ValuationSpecification valuationSpecification) {
+        this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
@@ -234,9 +240,19 @@ public class ValuationInteractor implements ValuationUseCase {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 業種ビューを取得する
+     *
+     * @return 評価結果ビュー
+     */
     @Override
     public List<ValuationViewModel> viewIndustryValuation() {
-
-        return null;
+        return industrySpecification.inquiryIndustryList().stream()
+                .filter(entity -> industrySpecification.isTarget(entity.getId()))
+                .map(entity -> valuationSpecification.averageValuation(
+                        entity.getName(),
+                        companySpecification.findCompanyByIndustry(entity.getId()))
+                )
+                .collect(Collectors.toList());
     }
 }

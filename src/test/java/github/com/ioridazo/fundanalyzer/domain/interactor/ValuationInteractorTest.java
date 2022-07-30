@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -42,6 +43,7 @@ class ValuationInteractorTest {
         valuationSpecification = Mockito.mock(ValuationSpecification.class);
 
         valuationInteractor = Mockito.spy(new ValuationInteractor(
+                Mockito.mock(IndustrySpecification.class),
                 Mockito.mock(CompanySpecification.class),
                 analysisResultSpecification,
                 stockSpecification,

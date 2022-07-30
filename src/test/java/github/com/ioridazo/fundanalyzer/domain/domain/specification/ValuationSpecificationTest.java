@@ -48,6 +48,66 @@ class ValuationSpecificationTest {
     }
 
     @Nested
+    class averageValuation {
+
+        private Company company(String code) {
+            return new Company(
+                    code,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+        }
+
+        private ValuationEntity valuationEntity(
+                LocalDate targetDate, BigDecimal differenceFromSubmitDate, BigDecimal submitDateRatio) {
+            return new ValuationEntity(
+                    null,
+                    "code",
+                    targetDate,
+                    null,
+                    null,
+                    null,
+                    differenceFromSubmitDate,
+                    submitDateRatio,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        @DisplayName("averageValuation : 業種による平均の評価結果を取得する")
+        @Test
+        void average() {
+            Mockito.when(valuationDao.selectByCode("code1")).thenReturn(List.of(
+                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1)),
+                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01))
+            ));
+            Mockito.when(valuationDao.selectByCode("code2")).thenReturn(List.of(
+                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01)),
+                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1))
+            ));
+
+            var actual = valuationSpecification.averageValuation("name", List.of(company("code1"), company("code2")));
+            assertAll(
+                    () -> assertEquals("name", actual.getName()),
+                    () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
+                    () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio())
+            );
+        }
+    }
+
+    @Nested
     class findAllValuationView {
 
         private ValuationEntity valuationEntity(LocalDate targetDate) {

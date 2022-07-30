@@ -153,6 +153,12 @@
                   <p>Favorite Dashboard</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Industry Dashboard</p>
+                </a>
+              </li>
             </ul>
           </li>
         </ul>
@@ -304,7 +310,9 @@
                   <div class="info-box bg-light">
                     <div class="info-box-content">
                       <b class="info-box-text text-center text-muted">普通株式数</b>
-                      <p class="info-box-text text-center text-muted" th:text="${corporate.numberOfShares}">普通株式数</p>
+                      <p class="info-box-text text-center text-muted" th:text="${corporate.numberOfShares}">
+                        普通株式数
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -362,7 +370,9 @@
                   <div class="info-box bg-light">
                     <div class="info-box-content">
                       <b class="info-box-text text-center text-muted">予想配当利回り</b>
-                      <p class="info-box-text text-center text-muted" th:text="${corporate.dividendYield}">予想配当利回り</p>
+                      <p class="info-box-text text-center text-muted" th:text="${corporate.dividendYield}">
+                        予想配当利回り
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -370,7 +380,9 @@
                   <div class="info-box bg-light">
                     <div class="info-box-content">
                       <b class="info-box-text text-center text-muted">株式優待</b>
-                      <p class="info-box-text text-center text-muted" th:text="${corporate.shareholderBenefit}">株式優待</p>
+                      <p class="info-box-text text-center text-muted" th:text="${corporate.shareholderBenefit}">
+                        株式優待
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -814,8 +826,8 @@
                         </div>
                         <div class="col-11">
                           <div class="tab-content" id="forecast-stock-tabs-tabContent">
-                            <div class="tab-pane text-left fade show active" id="forecast-stock-six-month" role="tabpanel"
-                                 aria-labelledby="six-month-tab">
+                            <div class="tab-pane text-left fade show active" id="forecast-stock-six-month"
+                                 role="tabpanel" aria-labelledby="six-month-tab">
                               <canvas id="forecastStockChart180"
                                       style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
                             </div>
@@ -1003,7 +1015,8 @@
                                   <i class="text-primary fa-solid fa-arrow-up"></i>
                                 </div>
                                 <div th:if="${valuation.differenceFromSubmitDate} == 0">
-                                  <span class="text-dark" th:text="${valuation.differenceFromSubmitDate}">提出日との差</span>
+                                  <span class="text-dark"
+                                        th:text="${valuation.differenceFromSubmitDate}">提出日との差</span>
                                   <i class="text-dark fa-solid fa-arrows"></i>
                                 </div>
                                 <div th:if="${valuation.differenceFromSubmitDate} < 0">

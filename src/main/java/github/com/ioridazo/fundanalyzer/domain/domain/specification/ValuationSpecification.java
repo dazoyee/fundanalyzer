@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationD
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.ValuationViewModel;
 import org.springframework.cache.annotation.CachePut;
@@ -55,6 +56,32 @@ public class ValuationSpecification {
     public Optional<ValuationEntity> findLatestValuation(final String companyCode, final LocalDate submitDate) {
         return valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate).stream()
                 .max(Comparator.comparing(ValuationEntity::getTargetDate));
+    }
+
+    /**
+     * 業種による平均の評価結果を取得する
+     *
+     * @param industryName 業種名
+     * @param companyList  企業リスト
+     * @return 業種による平均の評価結果
+     */
+    public ValuationViewModel averageValuation(final String industryName, final List<Company> companyList) {
+        final ArrayList<ValuationViewModel> viewList = new ArrayList<>();
+        companyList.forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
+                .max(Comparator.comparing(ValuationEntity::getTargetDate))
+                .ifPresent(valuationEntity -> viewList.add(ValuationViewModel.of(valuationEntity, company))));
+
+        return ValuationViewModel.ofIndustry(
+                industryName,
+                viewList.stream()
+                        .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                        .mapToDouble(BigDecimal::doubleValue)
+                        .average().orElse(0),
+                viewList.stream()
+                        .map(ValuationViewModel::getSubmitDateRatio)
+                        .mapToDouble(BigDecimal::doubleValue)
+                        .average().orElse(0)
+        );
     }
 
     /**
