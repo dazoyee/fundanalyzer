@@ -81,7 +81,9 @@ public class StockSpecification {
      * @return 株価情報
      */
     public Optional<StockPriceEntity> findStock(final String companyCode, final LocalDate targetDate) {
-        return stockPriceDao.selectByCodeAndDate(companyCode, targetDate).stream().findAny();
+        return stockPriceDao.selectByCodeAndDate(companyCode, targetDate).stream()
+                .filter(entity -> entity.getStockPrice().isPresent())
+                .findAny();
     }
 
     /**

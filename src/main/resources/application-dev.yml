@@ -18,6 +18,11 @@ spring:
   flyway:
     locations: classpath:/db/migration, classpath:/db/dataset
 
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=0s,recordStats
+
 doma:
   dialect: h2
   naming: snake_upper_case

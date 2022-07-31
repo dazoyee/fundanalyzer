@@ -2,11 +2,11 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -163,37 +163,37 @@ public class CorporatePresenter {
                 .collect(Collectors.toList()));
     }
 
-    private void setValuationView(final List<ValuationViewModel> viewList, final Model model) {
+    private void setValuationView(final List<CompanyValuationViewModel> viewList, final Model model) {
         model.addAttribute("valuations", viewList);
 
 
-        final List<ValuationViewModel> valuation = viewList.stream()
-                .sorted(Comparator.comparing(ValuationViewModel::getTargetDate))
+        final List<CompanyValuationViewModel> valuation = viewList.stream()
+                .sorted(Comparator.comparing(CompanyValuationViewModel::getTargetDate))
                 .collect(Collectors.toList());
 
         model.addAttribute("valuationLabel180", valuation.stream()
-                .map(ValuationViewModel::getTargetDate)
+                .map(CompanyValuationViewModel::getTargetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
                 .collect(Collectors.toList()));
         model.addAttribute("valuationPoint180", valuation.stream()
                 .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
-                .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
                 .collect(Collectors.toList()));
 
         model.addAttribute("valuationLabel365", valuation.stream()
-                .map(ValuationViewModel::getTargetDate)
+                .map(CompanyValuationViewModel::getTargetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
                 .collect(Collectors.toList()));
         model.addAttribute("valuationPoint365", valuation.stream()
                 .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
-                .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
                 .collect(Collectors.toList()));
 
         model.addAttribute("valuationLabelAll", valuation.stream()
-                .map(ValuationViewModel::getTargetDate)
+                .map(CompanyValuationViewModel::getTargetDate)
                 .collect(Collectors.toList()));
         model.addAttribute("valuationPointAll", valuation.stream()
-                .map(ValuationViewModel::getDifferenceFromSubmitDate)
+                .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
                 .collect(Collectors.toList()));
     }
 }

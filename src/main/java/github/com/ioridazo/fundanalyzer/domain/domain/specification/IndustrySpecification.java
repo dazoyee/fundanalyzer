@@ -1,11 +1,12 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
-import github.com.ioridazo.fundanalyzer.domain.domain.cache.IndustryCache;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -15,21 +16,39 @@ import java.util.Objects;
 @Component
 public class IndustrySpecification {
 
+    private static final String CACHE_KEY_INDUSTRY_LIST = "industryList";
+
     private final IndustryDao industryDao;
-    private final IndustryCache industryCache;
 
     @Value("${app.config.scraping.no-industry}")
     List<String> noTargetList;
 
     public IndustrySpecification(
-            final IndustryDao industryDao,
-            final IndustryCache industryCache) {
+            final IndustryDao industryDao) {
         this.industryDao = industryDao;
-        this.industryCache = industryCache;
     }
 
     LocalDateTime nowLocalDateTime() {
         return LocalDateTime.now();
+    }
+
+    /**
+     * 業種情報を取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
+     *
+     * @return 業種情報
+     */
+    @Cacheable(CACHE_KEY_INDUSTRY_LIST)
+    public List<IndustryEntity> inquiryIndustryList() {
+        return findIndustryList();
+    }
+
+    @CachePut(CACHE_KEY_INDUSTRY_LIST)
+    public List<IndustryEntity> findIndustryList() {
+        return industryDao.selectAll();
     }
 
     /**
@@ -39,7 +58,7 @@ public class IndustrySpecification {
      * @return 業種ID
      */
     public Integer convertFromNameToId(final String industryName) {
-        return industryCache.inquiryIndustryList().stream()
+        return inquiryIndustryList().stream()
                 .filter(industry -> Objects.equals(industryName, industry.getName()))
                 .map(IndustryEntity::getId)
                 .findFirst()
@@ -53,7 +72,7 @@ public class IndustrySpecification {
      * @return 業種名
      */
     public String convertFromIdToName(final Integer id) {
-        return industryCache.inquiryIndustryList().stream()
+        return inquiryIndustryList().stream()
                 .filter(industryEntity -> Objects.equals(id, industryEntity.getId()))
                 .map(IndustryEntity::getName)
                 .findFirst()
@@ -93,7 +112,7 @@ public class IndustrySpecification {
      * @return boolean
      */
     private boolean isEmpty(final String name) {
-        return industryCache.inquiryIndustryList().stream()
+        return inquiryIndustryList().stream()
                 .filter(industryEntity -> Objects.equals(name, industryEntity.getName()))
                 .findFirst()
                 .isEmpty();

@@ -5,9 +5,11 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,7 +18,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -39,11 +43,13 @@ class ValuationInteractorTest {
         valuationSpecification = Mockito.mock(ValuationSpecification.class);
 
         valuationInteractor = Mockito.spy(new ValuationInteractor(
+                Mockito.mock(IndustrySpecification.class),
                 Mockito.mock(CompanySpecification.class),
                 analysisResultSpecification,
                 stockSpecification,
                 valuationSpecification
         ));
+        valuationInteractor.configDiscountRate = BigDecimal.valueOf(120);
     }
 
     @Nested
@@ -214,6 +220,41 @@ class ValuationInteractorTest {
             var actual = valuationInteractor.findPresentStock("code", LocalDate.parse("2022-07-09"));
             assertTrue(actual.isEmpty());
             Mockito.verify(stockSpecification, Mockito.times(5)).findStock(any(), any());
+        }
+    }
+
+    @Nested
+    class viewValuation {
+
+        private CompanyValuationViewModel valuationEntity(BigDecimal disCountRate) {
+            return CompanyValuationViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    disCountRate
+            );
+        }
+
+        @DisplayName("メインビューのフィルターを確認する")
+        @Test
+        void filter() {
+            Mockito.when(valuationSpecification.inquiryAllValuationView())
+                    .thenReturn(List.of(
+                            valuationEntity(BigDecimal.valueOf(1.1)),
+                            valuationEntity(BigDecimal.valueOf(1.2)),
+                            valuationEntity(BigDecimal.valueOf(1001))
+                    ));
+
+            var actual = valuationInteractor.viewValuation();
+
+            assertEquals(BigDecimal.valueOf(1.2), actual.get(0).getDiscountRate());
+            assertEquals(1, actual.size());
         }
     }
 

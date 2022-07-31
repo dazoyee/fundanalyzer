@@ -17,15 +17,6 @@ spring:
     sender:
       type: web
 
-  cache:
-    type: caffeine
-    caffeine:
-      spec: expireAfterWrite=5m,recordStats
-
-#logging:
-#  file:
-#    name: ${spring.application.name}
-#    path: C:/${spring.application.name}/log/
 logging:
   level:
     org.seasar.doma:
@@ -188,7 +179,16 @@ app:
 
     scraping:
       document-type-code: 120,130,140,150  # スクレイピング処理対象
-      no-industry: 銀行業,保険業  # 処理対象外
+      no-industry:  # 処理対象外
+         銀行業
+        ,保険業
+        ,内国法人・組合（有価証券報告書等の提出義務者以外）
+        ,外国法人・組合
+        ,外国法人・組合（有価証券報告書等の提出義務者以外）
+        ,外国政府等
+        ,個人（組合発行者を除く）
+        ,個人（非居住者）（組合発行者を除く）
+        ,その他（仮登録用）
       no-company: E31748
       # 日本郵政株式会社
 

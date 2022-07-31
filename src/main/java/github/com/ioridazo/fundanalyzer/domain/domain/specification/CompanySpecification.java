@@ -77,6 +77,19 @@ public class CompanySpecification {
     }
 
     /**
+     * 企業情報を取得する
+     *
+     * @param industryId 業種ID
+     * @return 企業情報リスト
+     */
+    public List<Company> findCompanyByIndustry(final Integer industryId) {
+        return companyDao.selectByIndustryId(industryId).stream()
+                .filter(entity -> entity.getCode().isPresent())
+                .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * お気に入りに企業情報リストを取得する
      *
      * @return 企業情報リスト
