@@ -78,6 +78,7 @@ class ViewCorporateInteractorTest {
         viewCorporateInteractor.configDiffForecastStock = BigDecimal.valueOf(100);
         viewCorporateInteractor.configCorporateSize = 300;
         viewCorporateInteractor.targetTypeCodes = List.of("120", "130", "140", "150");
+        viewCorporateInteractor.updateViewEnabled = true;
     }
 
     @Nested

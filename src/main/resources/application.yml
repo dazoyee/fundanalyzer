@@ -179,8 +179,8 @@ app:
 
     scraping:
       document-type-code: 120,130,140,150  # スクレイピング処理対象
-      no-industry:  # 処理対象外
-         銀行業
+      no-industry: # 処理対象外
+        銀行業
         ,保険業
         ,内国法人・組合（有価証券報告書等の提出義務者以外）
         ,外国法人・組合
@@ -228,3 +228,10 @@ app:
     stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
     recover-document-period.past-days: 30  # 日間に遡って処理実施
+
+  slack:
+    analysis-result.enabled: true
+    update-view.enabled: false
+    insert-stock.enabled: false
+    delete-stock.enabled: false
+    evaluate.enabled: true

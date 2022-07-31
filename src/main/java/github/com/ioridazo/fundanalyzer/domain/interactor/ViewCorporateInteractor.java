@@ -67,6 +67,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     int configCorporateSize;
     @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
+    @Value("${app.slack.update-view.enabled:true}")
+    boolean updateViewEnabled;
 
     public ViewCorporateInteractor(
             final AnalyzeInteractor analyzeInteractor,
@@ -242,7 +244,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
 
-        slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        if (updateViewEnabled) {
+            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        }
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "表示アップデートが正常に終了しました。",

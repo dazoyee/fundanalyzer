@@ -42,6 +42,7 @@ class NoticeInteractorTest {
                 slackClient
         ));
         noticeInteractor.configDiscountRate = BigDecimal.valueOf(120);
+        noticeInteractor.analysisResultEnabled = true;
     }
 
     @DisplayName("noticeSlack : Slackに通知する")
