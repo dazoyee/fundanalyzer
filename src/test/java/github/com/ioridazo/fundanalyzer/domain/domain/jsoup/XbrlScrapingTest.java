@@ -398,6 +398,54 @@ class XbrlScrapingTest {
             assertThrows(FundanalyzerScrapingException.class, () -> xbrlScraping.scrapeFinancialStatement(file, keyword));
         }
 
+        @DisplayName("scrapeFinancialStatement : `当`や`前`がない場合でも年度を認識できるようにする")
+        @Test
+        void scrapeFinancialStatement_ok_year() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_year.html");
+            var keyword = "jpcrp_cor:BalanceSheetTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("第152期 (2021年３月31日)", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("第153期 (2022年３月31日)", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
+                            () -> assertEquals("149,933", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("62,225", actual.get(1).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(1).getUnit())
+                    )
+            );
+            assertEquals(81, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : `当`や`前`がない場合でも年度を認識できるようにする")
+        @Test
+        void scrapeFinancialStatement_ok_year2() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_year2.html");
+            var keyword = "jpcrp_cor:BalanceSheetTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("2020年度 (2021年3月31日)", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("2021年度 (2022年3月31日)", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("現金及び預金", actual.get(1).getSubject().orElseThrow()),
+                            () -> assertEquals("511,794", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("684,162", actual.get(1).getCurrentValue()),
+                            () -> assertEquals(Unit.MILLIONS_OF_YEN, actual.get(1).getUnit())
+                    )
+            );
+            assertEquals(78, actual.size());
+        }
+
         @DisplayName("unit : ファイルから財務諸表の金額単位（千円）をスクレイピングする")
         @Test
         void unit_thousands_ok() {
@@ -499,6 +547,17 @@ class XbrlScrapingTest {
             var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
 
             assertEquals("15,856,400", actual);
+        }
+
+        @DisplayName("scrapeNumberOfShares : ファイルから株式総数を取得し、その値をスクレイピングする")
+        @Test
+        void scrapeNumberOfShares_ok_4() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_ok_4.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
+
+            assertEquals("1,251,404,367", actual);
         }
     }
 

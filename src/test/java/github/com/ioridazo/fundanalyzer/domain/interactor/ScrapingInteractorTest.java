@@ -360,6 +360,18 @@ class ScrapingInteractorTest {
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
         }
 
+        @DisplayName("ns : スクレイピング結果にスペースが含まれていたとき")
+        @Test
+        void parseValue() {
+            when(xbrlScraping.scrapeNumberOfShares(file, "keyword")).thenReturn("1000　");
+
+            assertDoesNotThrow(() -> scrapingInteractor.ns(document));
+            verify(financialStatementSpecification, times(1))
+                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
+            verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
+            verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
+        }
+
         @DisplayName("ns : キーワードに合致するファイルが存在しないときはエラーにする")
         @Test
         void fundanalyzerFileException() {
