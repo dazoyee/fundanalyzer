@@ -119,9 +119,15 @@ public class ValuationInteractor implements ValuationUseCase {
                     System.currentTimeMillis() - startTime
             ));
 
-        } catch (final FundanalyzerNotExistException | DateTimeException e) {
+        } catch (final FundanalyzerNotExistException e) {
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    "情報が不足していたため、評価できませんでした。",
+                    Category.STOCK,
+                    Process.EVALUATE
+            ), e);
+        } catch (final DateTimeException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                    "評価できませんでした。",
+                    "対象日時の生成に失敗したため、評価できませんでした。",
                     Category.STOCK,
                     Process.EVALUATE
             ), e);
@@ -179,7 +185,7 @@ public class ValuationInteractor implements ValuationUseCase {
         int i = 0;
         while (i < 5) {
             final Optional<StockPriceEntity> stock = stockSpecification.findStock(companyCode, targetDate.plusDays(i));
-            if (stock.isPresent()) {
+            if (stock.map(StockPriceEntity::getStockPrice).isPresent()) {
                 return stock;
             }
             i++;
