@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
@@ -8,12 +11,18 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -29,6 +38,8 @@ public class ValuationSpecification {
     private static final String CACHE_KEY_ALL_VALUATION_VIEW = "allValuationView";
 
     private static final int SECOND_DECIMAL_PLACE = 2;
+
+    private static final Logger log = LogManager.getLogger(ValuationSpecification.class);
 
     private final ValuationDao valuationDao;
     private final CompanySpecification companySpecification;
@@ -130,7 +141,37 @@ public class ValuationSpecification {
      * @param analysisResult 分析結果
      */
     public void insert(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
-        valuationDao.insert(evaluate(stock, analysisResult));
+        try {
+            valuationDao.insert(evaluate(stock, analysisResult));
+        } catch (final NestedRuntimeException e) {
+            if (e.contains(UniqueConstraintException.class)) {
+                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                analysisResult.getCompanyCode(),
+                                stock.getTargetDate(),
+                                stock.getStockPrice().orElse(0.0)
+                        ),
+                        Category.STOCK,
+                        Process.EVALUATE
+                ), e);
+            } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
+                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
+                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                analysisResult.getCompanyCode(),
+                                stock.getTargetDate(),
+                                stock.getStockPrice().orElse(0.0)
+                        ),
+                        Category.STOCK,
+                        Process.EVALUATE
+                ), e);
+            } else {
+                throw e;
+            }
+        }
     }
 
     /**
