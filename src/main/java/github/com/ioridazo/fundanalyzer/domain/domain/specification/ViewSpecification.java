@@ -28,7 +28,6 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -68,13 +67,17 @@ public class ViewSpecification {
     }
 
     /**
-     * 企業情報ビューを取得する
+     * 最新の企業情報ビューを取得する
      *
      * @param inputData 企業コード
      * @return 企業情報ビュー
      */
-    public CorporateViewModel findCorporateView(final CodeInputData inputData) {
-        return CorporateViewModel.of(corporateViewDao.selectByCode(inputData.getCode()));
+    public CorporateViewModel findLatestCorporateView(final CodeInputData inputData) {
+        return corporateViewDao.selectByCode(inputData.getCode()).stream()
+                .filter(viewBean -> viewBean.getSubmitDate().isPresent())
+                .max(Comparator.comparing(viewBean -> viewBean.getSubmitDate().get()))
+                .map(CorporateViewModel::of)
+                .orElseThrow();
     }
 
     /**
@@ -102,9 +105,6 @@ public class ViewSpecification {
                 // 提出日が存在したら表示する
                 .filter(corporateViewBean -> corporateViewBean.getSubmitDate().isPresent())
                 .map(CorporateViewModel::of)
-                .sorted(Comparator
-                        .comparing(CorporateViewModel::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewModel::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -127,7 +127,7 @@ public class ViewSpecification {
      * @param viewModel 企業情報ビュー
      */
     public void upsert(final CorporateViewModel viewModel) {
-        if (isPresent(viewModel.getCode())) {
+        if (isPresent(viewModel.getCode(), viewModel.getLatestDocumentTypeCode())) {
             corporateViewDao.update(CorporateViewBean.of(viewModel, nowLocalDateTime()));
         } else {
             corporateViewDao.insert(CorporateViewBean.of(viewModel, nowLocalDateTime()));
@@ -340,11 +340,12 @@ public class ViewSpecification {
     /**
      * 企業情報ビューがデータベースに存在するか
      *
-     * @param code 企業コード
+     * @param code             企業コード
+     * @param documentTypeCode 書類種別コード
      * @return boolean
      */
-    private boolean isPresent(final String code) {
-        return Objects.nonNull(corporateViewDao.selectByCode(code));
+    private boolean isPresent(final String code, final String documentTypeCode) {
+        return corporateViewDao.selectByCodeAndType(code, documentTypeCode).isPresent();
     }
 
     /**

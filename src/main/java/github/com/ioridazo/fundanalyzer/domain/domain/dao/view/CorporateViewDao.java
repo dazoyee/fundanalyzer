@@ -10,6 +10,7 @@ import org.seasar.doma.jdbc.Result;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
@@ -19,7 +20,10 @@ public interface CorporateViewDao {
     List<CorporateViewBean> selectAll();
 
     @Select
-    CorporateViewBean selectByCode(String code);
+    Optional<CorporateViewBean> selectByCodeAndType(String code, String documentTypeCode);
+
+    @Select
+    List<CorporateViewBean> selectByCode(String code);
 
     @Select
     List<CorporateViewBean> selectBySubmitDate(LocalDate submitDate);

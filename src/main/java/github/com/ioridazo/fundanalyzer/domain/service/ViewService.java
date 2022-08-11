@@ -52,6 +52,16 @@ public class ViewService {
     }
 
     /**
+     * 企業情報（四半期）
+     *
+     * @return 企業一覧
+     */
+    @NewSpan
+    public List<CorporateViewModel> getQuartCorporateView() {
+        return viewCorporateUseCase.viewQuart();
+    }
+
+    /**
      * 企業情報（すべて）
      *
      * @return 企業一覧
@@ -69,16 +79,6 @@ public class ViewService {
     @NewSpan
     public List<CorporateViewModel> getFavoriteCorporateView() {
         return viewCorporateUseCase.viewFavorite();
-    }
-
-    /**
-     * 企業情報（企業価値ソート）
-     *
-     * @return 企業一覧
-     */
-    @NewSpan
-    public List<CorporateViewModel> getSortedCorporateView() {
-        return viewCorporateUseCase.sortByDiscountRate();
     }
 
     /**

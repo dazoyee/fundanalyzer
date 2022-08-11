@@ -277,8 +277,8 @@ CREATE TABLE IF NOT EXISTS `corporate_view`
     `forecast_stock`                 FLOAT                 DEFAULT NULL COMMENT '株価予想',
     `created_at`                     DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     `updated_at`                     DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
-    PRIMARY KEY (`code`),
-    UNIQUE KEY `uk_cv_company_code` (`code`)
+    PRIMARY KEY (`code`, `latest_document_type_code`),
+    UNIQUE KEY `uk_cv` (`code`, `latest_document_type_code`)
 );
 
 -- Table structure for table `edinet_list_view`(EDINET処理一覧)

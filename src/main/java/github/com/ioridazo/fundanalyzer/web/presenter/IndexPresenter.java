@@ -14,6 +14,7 @@ public class IndexPresenter {
 
     private static final String INDEX = "index";
 
+    private static final String TARGET_QUART = "quart";
     private static final String TARGET_ALL = "all";
     private static final String TARGET_FAVORITE = "favorite";
 
@@ -43,7 +44,10 @@ public class IndexPresenter {
             model.addAttribute("message", UriUtils.decode(message, "UTF-8"));
         }
 
-        if (TARGET_ALL.equals(target)) {
+        if (TARGET_QUART.equals(target)) {
+            model.addAttribute(TARGET, TARGET_QUART);
+            model.addAttribute(COMPANIES, viewService.getQuartCorporateView());
+        } else if (TARGET_ALL.equals(target)) {
             model.addAttribute(TARGET, TARGET_ALL);
             model.addAttribute(COMPANIES, viewService.getAllCorporateView());
         } else if (TARGET_FAVORITE.equals(target)) {
@@ -52,18 +56,6 @@ public class IndexPresenter {
         } else {
             model.addAttribute(COMPANIES, viewService.getCorporateView());
         }
-        return INDEX;
-    }
-
-    /**
-     * 割安比率でソートする
-     *
-     * @param model model
-     * @return Index
-     */
-    @GetMapping("fundanalyzer/v1/index/sort/discount-rate")
-    public String sortedCorporateView(final Model model) {
-        model.addAttribute(COMPANIES, viewService.getSortedCorporateView());
         return INDEX;
     }
 }

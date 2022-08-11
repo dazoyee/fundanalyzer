@@ -19,6 +19,14 @@ public interface ViewCorporateUseCase {
     List<CorporateViewModel> viewMain();
 
     /**
+     * 四半期ビュー
+     *
+     * @return 企業情報ビュー
+     */
+    @NewSpan
+    List<CorporateViewModel> viewQuart();
+
+    /**
      * オールビュー
      *
      * @return 企業情報ビュー
@@ -33,14 +41,6 @@ public interface ViewCorporateUseCase {
      */
     @NewSpan
     List<CorporateViewModel> viewFavorite();
-
-    /**
-     * 割安度ソート
-     *
-     * @return 企業情報ビュー
-     */
-    @NewSpan
-    List<CorporateViewModel> sortByDiscountRate();
 
     /**
      * 企業情報詳細ビュー
