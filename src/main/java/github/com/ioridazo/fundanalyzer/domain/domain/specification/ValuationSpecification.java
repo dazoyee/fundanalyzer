@@ -80,7 +80,7 @@ public class ValuationSpecification {
     public IndustryValuationViewModel averageValuation(final String industryName, final List<Company> companyList) {
         final ArrayList<CompanyValuationViewModel> viewList = new ArrayList<>();
         companyList.forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
-                .max(Comparator.comparing(ValuationEntity::getTargetDate))
+                .max(Comparator.comparing(ValuationEntity::getTargetDate).thenComparing(ValuationEntity::getSubmitDate))
                 .ifPresent(valuationEntity -> viewList.add(CompanyValuationViewModel.of(valuationEntity, company))));
 
         return IndustryValuationViewModel.of(
@@ -114,9 +114,10 @@ public class ValuationSpecification {
     @CachePut(CACHE_KEY_ALL_VALUATION_VIEW)
     public List<CompanyValuationViewModel> findAllValuationView() {
         final ArrayList<CompanyValuationViewModel> viewList = new ArrayList<>();
-        companySpecification.inquiryAllTargetCompanies().forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
-                .max(Comparator.comparing(ValuationEntity::getTargetDate))
-                .ifPresent(valuationEntity -> viewList.add(CompanyValuationViewModel.of(valuationEntity, company))));
+        companySpecification.inquiryAllTargetCompanies()
+                .forEach(company -> valuationDao.selectByCode(company.getCode()).stream()
+                        .max(Comparator.comparing(ValuationEntity::getTargetDate).thenComparing(ValuationEntity::getSubmitDate))
+                        .ifPresent(valuationEntity -> viewList.add(CompanyValuationViewModel.of(valuationEntity, company))));
         return viewList;
     }
 
@@ -128,9 +129,20 @@ public class ValuationSpecification {
      */
     public List<CompanyValuationViewModel> findValuationView(final String companyCode) {
         return companySpecification.findCompanyByCode(companyCode)
-                .map(company -> valuationDao.selectByCode(company.getCode()).stream()
-                        .map(valuationEntity -> CompanyValuationViewModel.of(valuationEntity, company))
-                        .collect(Collectors.toList())
+                .map(company -> {
+                            final List<ValuationEntity> entityList = valuationDao.selectByCode(company.getCode());
+                            return entityList.stream()
+                                    .map(ValuationEntity::getTargetDate)
+                                    .distinct()
+                                    // 最新の提出日を取得する
+                                    .map(targetDate -> entityList.stream()
+                                            .filter(e -> targetDate.equals(e.getTargetDate()))
+                                            .max(Comparator.comparing(ValuationEntity::getSubmitDate))
+                                            .orElseThrow()
+                                    )
+                                    .map(e -> CompanyValuationViewModel.of(e, company))
+                                    .collect(Collectors.toList());
+                        }
                 ).orElseGet(List::of);
     }
 
