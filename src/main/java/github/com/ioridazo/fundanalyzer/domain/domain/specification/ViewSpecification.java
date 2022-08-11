@@ -162,7 +162,7 @@ public class ViewSpecification {
                 company.getCode().substring(0, 4),
                 company.getCompanyName(),
                 latestDocument.map(Document::getSubmitDate).orElse(null),
-                latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue).orElse(null),
+                latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue).orElseThrow(),
                 latestDocument.map(Document::getDocumentTypeCode).stream()
                         .anyMatch(dtc -> List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130).contains(dtc)),
                 corporateValue.getLatestCorporateValue().orElse(null),

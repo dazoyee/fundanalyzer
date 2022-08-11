@@ -2,11 +2,13 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
@@ -32,6 +34,7 @@ class ViewSpecificationTest {
 
     private CorporateViewDao corporateViewDao;
     private EdinetListViewDao edinetListViewDao;
+    private DocumentSpecification documentSpecification;
     private StockSpecification stockSpecification;
 
     private ViewSpecification viewSpecification;
@@ -40,12 +43,13 @@ class ViewSpecificationTest {
     void setUp() {
         corporateViewDao = Mockito.mock(CorporateViewDao.class);
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
+        documentSpecification = Mockito.mock(DocumentSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
 
         viewSpecification = Mockito.spy(new ViewSpecification(
                 corporateViewDao,
                 edinetListViewDao,
-                Mockito.mock(DocumentSpecification.class),
+                documentSpecification,
                 stockSpecification
         ));
     }
@@ -155,6 +159,7 @@ class ViewSpecificationTest {
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
             when(stockSpecification.findStock(company)).thenReturn(stock);
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
             assertEquals(BigDecimal.valueOf(1132.05), actual.getAllDiscountValue());
@@ -169,6 +174,7 @@ class ViewSpecificationTest {
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
             when(stockSpecification.findStock(company)).thenReturn(stock);
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
             assertNull(actual.getAllDiscountValue());
@@ -183,6 +189,7 @@ class ViewSpecificationTest {
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
             when(stockSpecification.findStock(company)).thenReturn(stock);
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
             assertEquals(BigDecimal.valueOf(213.205), actual.getAllDiscountRate());
@@ -196,6 +203,7 @@ class ViewSpecificationTest {
             averageInfo.setAverageCorporateValue(null);
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
             var actual = viewSpecification.generateCorporateView(company, corporateValue);
@@ -210,6 +218,28 @@ class ViewSpecificationTest {
                 null,
                 null,
                 "edinetCode",
+                null,
+                null,
+                null,
+                null,
+                false
+        );
+    }
+
+    private Document defaultDocument() {
+        return new Document(
+                null,
+                DocumentTypeCode.DTC_120,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,

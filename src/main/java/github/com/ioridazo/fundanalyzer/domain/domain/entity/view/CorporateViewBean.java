@@ -155,10 +155,6 @@ public class CorporateViewBean {
         return Optional.ofNullable(submitDate);
     }
 
-    public Optional<String> getLatestDocumentTypeCode() {
-        return Optional.ofNullable(latestDocumentTypeCode);
-    }
-
     public Optional<BigDecimal> getLatestCorporateValue() {
         return Optional.ofNullable(latestCorporateValue);
     }
