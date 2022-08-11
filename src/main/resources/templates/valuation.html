@@ -90,6 +90,12 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Quart Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>All Dashboard</p>
@@ -176,6 +182,20 @@
                   <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>Favorite Dashboard</p>
+                  </a>
+                </th:block>
+              </li>
+              <li class="nav-item">
+                <th:block th:if="${target} == 'industry'">
+                  <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Industry Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == 'industry'">
+                  <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Industry Dashboard</p>
                   </a>
                 </th:block>
               </li>
@@ -268,58 +288,113 @@
             <!-- /.card -->
           </div>
           <!-- /.col-md-6 -->
-          <div class="col-12">
-            <div class="card">
-              <!-- /.card-header -->
-              <div class="card-body">
-                <table id="example1" class="table table-bordered table-hover">
-                  <thead>
-                  <tr>
-                    <th>コード</th>
-                    <th>会社名</th>
-                    <th>日付</th>
-                    <th>株価</th>
-                    <th>増減値</th>
-                    <th>増減率</th>
-                    <th>提出日</th>
-                    <th>提出日の株価平均</th>
-                    <th>最新企業価値</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr th:each="company : ${companies}">
-                    <td th:text="${company.code}">コード</td>
-                    <td th:text="${company.name}">会社名</td>
-                    <td th:text="${company.targetDate}">対象日付</td>
-                    <td th:text="${company.stockPrice}">株価終値</td>
-                    <td>
-                      <div th:if="${company.differenceFromSubmitDate} > 0">
-                        <span class="text-primary" th:text="'+'+${company.differenceFromSubmitDate}">提出日との差</span>
-                        <i class="text-primary fa-solid fa-arrow-up"></i>
-                      </div>
-                      <div th:if="${company.differenceFromSubmitDate} == 0">
-                        <span class="text-dark" th:text="${company.differenceFromSubmitDate}">提出日との差</span>
-                        <i class="text-dark fa-solid fa-arrows"></i>
-                      </div>
-                      <div th:if="${company.differenceFromSubmitDate} < 0">
-                        <span class="text-danger" th:text="${company.differenceFromSubmitDate}">提出日との差</span>
-                        <i class="text-danger fa-solid fa-arrow-down"></i>
-                      </div>
-                    </td>
-                    <td th:text="${company.submitDateRatio}">提出日比率</td>
-                    <td th:text="${company.submitDate}">提出日</td>
-                    <td th:text="${company.averageStockPrice}">提出日の株価平均</td>
-                    <td th:text="${company.latestCorporateValue}">最新企業価値</td>
-                  </tr>
-                </table>
-              </div>
-              <!-- /.card-body -->
-            </div>
-            <!-- /.card -->
-          </div>
-          <!-- /.col -->
         </div>
-        <!-- /.row -->
+
+        <th:block th:unless="${target} == 'industry'">
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <!-- /.card-header -->
+                <div class="card-body">
+                  <table id="companyTable" class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                      <th>コード</th>
+                      <th>会社名</th>
+                      <th>日付</th>
+                      <th>株価</th>
+                      <th>増減値</th>
+                      <th>増減率</th>
+                      <th>提出日</th>
+                      <th>提出日の株価平均</th>
+                      <th>最新企業価値</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="company : ${valuations}">
+                      <td th:text="${company.code}">コード</td>
+                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                        会社名
+                      </a></td>
+                      <td th:text="${company.targetDate}">対象日付</td>
+                      <td th:text="${company.stockPrice}">株価終値</td>
+                      <td>
+                        <div th:if="${company.differenceFromSubmitDate} > 0">
+                          <span class="text-primary" th:text="'+'+${company.differenceFromSubmitDate}">提出日との差</span>
+                          <i class="text-primary fa-solid fa-arrow-up"></i>
+                        </div>
+                        <div th:if="${company.differenceFromSubmitDate} == 0">
+                          <span class="text-dark" th:text="${company.differenceFromSubmitDate}">提出日との差</span>
+                          <i class="text-dark fa-solid fa-arrows"></i>
+                        </div>
+                        <div th:if="${company.differenceFromSubmitDate} < 0">
+                          <span class="text-danger" th:text="${company.differenceFromSubmitDate}">提出日との差</span>
+                          <i class="text-danger fa-solid fa-arrow-down"></i>
+                        </div>
+                      </td>
+                      <td th:text="${company.submitDateRatio}">提出日比率</td>
+                      <td th:text="${company.submitDate}">提出日</td>
+                      <td th:text="${company.averageStockPrice}">提出日の株価平均</td>
+                      <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- /.card-body -->
+              </div>
+              <!-- /.card -->
+            </div>
+            <!-- /.col -->
+          </div>
+          <!-- /.row -->
+        </th:block>
+        <th:block th:if="${target} == 'industry'">
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <!-- /.card-header -->
+                <div class="card-body">
+                  <table id="industryTable" class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                      <th>業種名</th>
+                      <th>増減値</th>
+                      <th>増減率</th>
+                      <th>企業数</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="industry : ${valuations}">
+                      <td th:text="${industry.name}">業種名</td>
+                      <td>
+                        <div th:if="${industry.differenceFromSubmitDate} > 0">
+                          <span class="text-primary"
+                                th:text="'+'+${industry.differenceFromSubmitDate}">提出日との差</span>
+                          <i class="text-primary fa-solid fa-arrow-up"></i>
+                        </div>
+                        <div th:if="${industry.differenceFromSubmitDate} == 0">
+                          <span class="text-dark" th:text="${industry.differenceFromSubmitDate}">提出日との差</span>
+                          <i class="text-dark fa-solid fa-arrows"></i>
+                        </div>
+                        <div th:if="${industry.differenceFromSubmitDate} < 0">
+                          <span class="text-danger" th:text="${industry.differenceFromSubmitDate}">提出日との差</span>
+                          <i class="text-danger fa-solid fa-arrow-down"></i>
+                        </div>
+                      </td>
+                      <td th:text="${industry.submitDateRatio}">提出日比率</td>
+                      <td th:text="${industry.count}">企業数</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- /.card-body -->
+              </div>
+              <!-- /.card -->
+            </div>
+            <!-- /.col -->
+          </div>
+          <!-- /.row -->
+        </th:block>
       </div>
       <!-- /.container-fluid -->
     </section>
@@ -375,7 +450,7 @@
         //Date range picker
         $('#calender').daterangepicker()
 
-        $("#example1").DataTable({
+        $("#companyTable").DataTable({
             // @formatter:off
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
@@ -392,7 +467,26 @@
             "stateSave": true,
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
             // @formatter:on
-        }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+        });
+
+        $("#industryTable").DataTable({
+            // @formatter:off
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
+            },
+            "lengthChange": true,
+            "displayLength": 15,
+            "lengthMenu": [ 10, 15, 50 ],
+            "searching": false,
+            "ordering": true,
+            "order": [ [ 2, 'desc' ] ],
+            "info": false,
+            "autoWidth": true,
+            "responsive": true,
+            "stateSave": true,
+            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            // @formatter:on
+        });
 
     });
 </script>

@@ -48,9 +48,70 @@ class ValuationSpecificationTest {
     }
 
     @Nested
+    class averageValuation {
+
+        private Company company(String code) {
+            return new Company(
+                    code,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+        }
+
+        private ValuationEntity valuationEntity(
+                LocalDate targetDate, BigDecimal differenceFromSubmitDate, BigDecimal submitDateRatio) {
+            return new ValuationEntity(
+                    null,
+                    "code",
+                    targetDate,
+                    null,
+                    null,
+                    null,
+                    differenceFromSubmitDate,
+                    submitDateRatio,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        @DisplayName("averageValuation : 業種による平均の評価結果を取得する")
+        @Test
+        void average() {
+            Mockito.when(valuationDao.selectByCode("code1")).thenReturn(List.of(
+                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1)),
+                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01))
+            ));
+            Mockito.when(valuationDao.selectByCode("code2")).thenReturn(List.of(
+                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01)),
+                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1))
+            ));
+
+            var actual = valuationSpecification.averageValuation("name", List.of(company("code1"), company("code2")));
+            assertAll(
+                    () -> assertEquals("name", actual.getName()),
+                    () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
+                    () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio()),
+                    () -> assertEquals(2, actual.getCount())
+            );
+        }
+    }
+
+    @Nested
     class findAllValuationView {
 
-        private ValuationEntity valuationEntity(LocalDate targetDate) {
+        private ValuationEntity valuationEntity(LocalDate targetDate, LocalDate submitDate) {
             return new ValuationEntity(
                     null,
                     "code",
@@ -62,7 +123,7 @@ class ValuationSpecificationTest {
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
-                    LocalDate.EPOCH,
+                    submitDate,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     null,
@@ -70,9 +131,9 @@ class ValuationSpecificationTest {
             );
         }
 
-        @DisplayName("findAllValuationView : ")
+        @DisplayName("findAllValuationView : すべての評価結果を取得する")
         @Test
-        void get() {
+        void targetDate() {
             Mockito.when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(new Company(
                     "code",
                     null,
@@ -86,14 +147,103 @@ class ValuationSpecificationTest {
                     false
             )));
             Mockito.when(valuationDao.selectByCode("code")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-07-09")),
-                    valuationEntity(LocalDate.parse("2022-07-10"))
+                    valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-09")),
+                    valuationEntity(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-09"))
             ));
 
             var actual = valuationSpecification.findAllValuationView();
 
             assertEquals(LocalDate.parse("2022-07-10"), actual.get(0).getTargetDate());
             assertEquals(1, actual.size());
+        }
+
+        @DisplayName("findAllValuationView : すべての評価結果を取得する")
+        @Test
+        void submitDate() {
+            Mockito.when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(new Company(
+                    "code",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            )));
+            Mockito.when(valuationDao.selectByCode("code")).thenReturn(List.of(
+                    valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2021-08-11")),
+                    valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2022-08-11"))
+            ));
+
+            var actual = valuationSpecification.findAllValuationView();
+
+            assertAll(
+                    () -> assertEquals(LocalDate.parse("2022-08-11"), actual.get(0).getTargetDate()),
+                    () -> assertEquals(LocalDate.parse("2022-08-11"), actual.get(0).getSubmitDate())
+            );
+
+            assertEquals(1, actual.size());
+        }
+    }
+
+    @Nested
+    class findValuationView {
+
+        private ValuationEntity valuationEntity(LocalDate targetDate, LocalDate submitDate) {
+            return new ValuationEntity(
+                    null,
+                    "code",
+                    targetDate,
+                    BigDecimal.TEN,
+                    BigDecimal.TEN,
+                    (long) 10,
+                    BigDecimal.TEN,
+                    BigDecimal.TEN,
+                    BigDecimal.TEN,
+                    BigDecimal.TEN,
+                    submitDate,
+                    BigDecimal.TEN,
+                    BigDecimal.TEN,
+                    null,
+                    null
+            );
+        }
+
+        @DisplayName("findAllValuationView : 企業ごとの評価結果を取得する")
+        @Test
+        void get() {
+            Mockito.when(companySpecification.findCompanyByCode("code")).thenReturn(Optional.of(new Company(
+                    "code",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            )));
+            Mockito.when(valuationDao.selectByCode("code")).thenReturn(List.of(
+                    valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-01")),
+                    valuationEntity(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-01")),
+                    valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2021-08-11")),
+                    valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2022-08-11"))
+            ));
+
+            var actual = valuationSpecification.findValuationView("code");
+
+            assertAll(
+                    () -> assertEquals(LocalDate.parse("2022-07-09"), actual.get(0).getTargetDate()),
+                    () -> assertEquals(LocalDate.parse("2022-07-01"), actual.get(0).getSubmitDate()),
+                    () -> assertEquals(LocalDate.parse("2022-07-10"), actual.get(1).getTargetDate()),
+                    () -> assertEquals(LocalDate.parse("2022-07-01"), actual.get(1).getSubmitDate()),
+                    () -> assertEquals(LocalDate.parse("2022-08-11"), actual.get(2).getTargetDate()),
+                    () -> assertEquals(LocalDate.parse("2022-08-11"), actual.get(2).getSubmitDate())
+            );
+            assertEquals(3, actual.size());
         }
     }
 

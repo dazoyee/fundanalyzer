@@ -22,6 +22,8 @@ public class NoticeInteractor implements NoticeUseCase {
 
     @Value("${app.config.view.discount-rate}")
     BigDecimal configDiscountRate;
+    @Value("${app.slack.analysis-result.enabled:true}")
+    boolean analysisResultEnabled;
 
     public NoticeInteractor(
             final AnalysisResultSpecification analysisResultSpecification,
@@ -33,7 +35,7 @@ public class NoticeInteractor implements NoticeUseCase {
     }
 
     /**
-     * Slackに通知する
+     * 分析結果をSlackに通知する
      *
      * @param inputData 提出日
      */
@@ -43,8 +45,10 @@ public class NoticeInteractor implements NoticeUseCase {
         final EdinetListViewModel edinetListView = viewSpecification.findEdinetListView(inputData);
 
         if (!updatedList.isEmpty()) {
-            slackClient.sendMessage("github.com.ioridazo.fundanalyzer.domain.interactor.NoticeInteractor.noticeSlack",
-                    inputData.getDate(), edinetListView.getCountTarget(), updatedList.size());
+            if (analysisResultEnabled) {
+                slackClient.sendMessage("github.com.ioridazo.fundanalyzer.domain.interactor.NoticeInteractor.noticeSlack",
+                        inputData.getDate(), edinetListView.getCountTarget(), updatedList.size());
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ spring:
     driverClassName: com.mysql.jdbc.Driver
     hikari:
       maximum-pool-size: 30
-      connection-timeout: 10000
+      connection-timeout: 15000
       max-lifetime: 180000
       auto-commit: true
 
@@ -26,6 +26,11 @@ spring:
 
   thymeleaf:
     encoding: UTF-8
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=5m,recordStats
 
 doma:
   dialect: mysql

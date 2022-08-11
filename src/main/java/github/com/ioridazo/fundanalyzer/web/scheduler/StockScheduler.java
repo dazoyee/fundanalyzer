@@ -32,6 +32,12 @@ public class StockScheduler {
     int hourOfStock;
     @Value("${app.scheduler.hour.evaluate}")
     int hourOfEvaluate;
+    @Value("${app.slack.insert-stock.enabled:true}")
+    boolean insertStockEnabled;
+    @Value("${app.slack.delete-stock.enabled:true}")
+    boolean deleteStockEnabled;
+    @Value("${app.slack.evaluate.enabled:true}")
+    boolean evaluateEnabled;
 
     public StockScheduler(
             final AnalysisService analysisService,
@@ -90,7 +96,9 @@ public class StockScheduler {
 
                 final int countValuation = analysisService.evaluate();
 
-                slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.evaluate", countValuation);
+                if (evaluateEnabled) {
+                    slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.evaluate", countValuation);
+                }
                 log.info(FundanalyzerLogClient.toAccessLogObject(
                         Category.SCHEDULER,
                         Process.END,
@@ -116,7 +124,9 @@ public class StockScheduler {
                 .map(CodeInputData::of)
                 .forEach(analysisService::importStock);
 
-        slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.insert", targetCodeList.size());
+        if (insertStockEnabled) {
+            slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.insert", targetCodeList.size());
+        }
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
@@ -136,7 +146,9 @@ public class StockScheduler {
 
         final int deleteStock = analysisService.deleteStock();
 
-        slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.delete", deleteStock);
+        if (deleteStockEnabled) {
+            slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.delete", deleteStock);
+        }
 
         final long durationTime = System.currentTimeMillis() - startTime;
 

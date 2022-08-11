@@ -1,4 +1,4 @@
-package github.com.ioridazo.fundanalyzer.web.view.model.corporate;
+package github.com.ioridazo.fundanalyzer.web.view.model.valuation;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value(staticConstructor = "of")
-public class ValuationViewModel {
+public class CompanyValuationViewModel {
 
     // 証券コード
     private final String code;
@@ -41,8 +41,8 @@ public class ValuationViewModel {
     // 割安度
     private final BigDecimal discountRate;
 
-    public static ValuationViewModel of(final ValuationEntity entity, final Company company) {
-        return new ValuationViewModel(
+    public static CompanyValuationViewModel of(final ValuationEntity entity, final Company company) {
+        return new CompanyValuationViewModel(
                 entity.getCompanyCode().length() == 5 ? entity.getCompanyCode().substring(0, 4) : entity.getCompanyCode(),
                 company.getCompanyName(),
                 entity.getTargetDate(),

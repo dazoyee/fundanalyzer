@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 
@@ -20,6 +19,14 @@ public interface ViewCorporateUseCase {
     List<CorporateViewModel> viewMain();
 
     /**
+     * 四半期ビュー
+     *
+     * @return 企業情報ビュー
+     */
+    @NewSpan
+    List<CorporateViewModel> viewQuart();
+
+    /**
      * オールビュー
      *
      * @return 企業情報ビュー
@@ -34,14 +41,6 @@ public interface ViewCorporateUseCase {
      */
     @NewSpan
     List<CorporateViewModel> viewFavorite();
-
-    /**
-     * 割安度ソート
-     *
-     * @return 企業情報ビュー
-     */
-    @NewSpan
-    List<CorporateViewModel> sortByDiscountRate();
 
     /**
      * 企業情報詳細ビュー
@@ -65,36 +64,4 @@ public interface ViewCorporateUseCase {
      */
     @NewSpan
     void updateView(DateInputData inputData);
-
-    /**
-     * メインビュー
-     *
-     * @return 株価評価ビュー
-     */
-    @NewSpan
-    List<ValuationViewModel> viewValuation();
-
-    /**
-     * 企業ごとのビュー
-     *
-     * @return 株価評価ビュー
-     */
-    @NewSpan
-    List<ValuationViewModel> viewValuation(CodeInputData inputData);
-
-    /**
-     * オールビュー
-     *
-     * @return 株価評価ビュー
-     */
-    @NewSpan
-    List<ValuationViewModel> viewAllValuation();
-
-    /**
-     * お気に入りビュー
-     *
-     * @return 株価評価ビュー
-     */
-    @NewSpan
-    List<ValuationViewModel> viewFavoriteValuation();
 }

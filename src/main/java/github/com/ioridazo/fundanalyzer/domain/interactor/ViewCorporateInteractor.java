@@ -4,13 +4,13 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -20,7 +20,6 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.corporate.ValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CompanyViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
@@ -42,6 +41,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class ViewCorporateInteractor implements ViewCorporateUseCase {
@@ -54,7 +54,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final FinancialStatementSpecification financialStatementSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
-    private final ValuationSpecification valuationSpecification;
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
 
@@ -70,6 +69,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     int configCorporateSize;
     @Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
+    @Value("${app.slack.update-view.enabled:true}")
+    boolean updateViewEnabled;
 
     public ViewCorporateInteractor(
             final AnalyzeInteractor analyzeInteractor,
@@ -78,7 +79,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final ValuationSpecification valuationSpecification,
             final ViewSpecification viewSpecification,
             final SlackClient slackClient) {
         this.analyzeInteractor = analyzeInteractor;
@@ -87,7 +87,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
-        this.valuationSpecification = valuationSpecification;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
     }
@@ -103,44 +102,29 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public List<CorporateViewModel> viewMain() {
-        return viewSpecification.findAllCorporateView().stream()
-                // not null
-                .filter(cvm -> Objects.nonNull(cvm.getAllDiscountRate()))
-                .filter(cvm -> Objects.nonNull(cvm.getAllStandardDeviation()))
-                .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
-                // 表示する提出日は一定期間のみ
-                .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(configCorporateSize)))
-                // 割安度が170%(外部設定値)以上を表示
-                .filter(cvm -> cvm.getAllDiscountRate().compareTo(configDiscountRate) >= 0)
-                // 標準偏差が外れ値となっていたら除外
-                .filter(cvm -> cvm.getAllStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
-                // 最新企業価値がマイナスの場合は除外
-                .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
-                // 変動係数
-                .filter(cvm -> {
-                    if (Objects.isNull(cvm.getAllCoefficientOfVariation())) {
-                        // 変動係数が存在しない
-                        return true;
-                    } else {
-                        // 変動係数が0.6未満であること
-                        if (cvm.getAllCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
-                            return true;
-                        } else {
-                            // 変動係数が0.6以上でも最新企業価値が高ければOK
-                            return cvm.getLatestCorporateValue().compareTo(cvm.getAllAverageCorporateValue()) > -1;
-                        }
-                    }
-                })
-                // 予想株価
-                .filter(cvb -> {
-                    if (Objects.nonNull(cvb.getForecastStock())) {
-                        // 株価予想が存在する場合、最新株価より高ければOK
-                        return (cvb.getForecastStock().divide(cvb.getLatestStockPrice(), 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
-                                && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(configDiffForecastStock) >= 0);
-                    } else {
-                        return true;
-                    }
-                })
+        return filter(viewSpecification.findAllCorporateView()).stream()
+                .filter(cvm -> Stream.of(
+                                DocumentTypeCode.DTC_120,
+                                DocumentTypeCode.DTC_130
+                        )
+                        .anyMatch(dtc -> DocumentTypeCode.fromValue(cvm.getLatestDocumentTypeCode()).equals(dtc)))
+                .sorted(Comparator
+                        .comparing(CorporateViewModel::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewModel::getCode))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CorporateViewModel> viewQuart() {
+        return filter(viewSpecification.findAllCorporateView()).stream()
+                .filter(cvm -> Stream.of(
+                                DocumentTypeCode.DTC_140,
+                                DocumentTypeCode.DTC_150
+                        )
+                        .anyMatch(dtc -> DocumentTypeCode.fromValue(cvm.getLatestDocumentTypeCode()).equals(dtc)))
+                .sorted(Comparator
+                        .comparing(CorporateViewModel::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewModel::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -151,7 +135,11 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      */
     @Override
     public List<CorporateViewModel> viewAll() {
-        return viewSpecification.findAllCorporateView();
+        return viewSpecification.findAllCorporateView().stream()
+                .sorted(Comparator
+                        .comparing(CorporateViewModel::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewModel::getCode))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -164,22 +152,19 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
                 .map(Company::getCode)
                 .collect(Collectors.toList());
-
-        return viewSpecification.findAllCorporateView().stream()
+        final List<CorporateViewModel> allCorporateView = viewSpecification.findAllCorporateView();
+        return allCorporateView.stream()
+                .map(CorporateViewModel::getCode)
+                .distinct()
+                .map(code -> allCorporateView.stream()
+                        .filter(cvm -> code.equals(cvm.getCode()))
+                        .max(Comparator.comparing(CorporateViewModel::getSubmitDate))
+                        .orElseThrow()
+                )
                 .filter(cvm -> favoriteList.stream().anyMatch(favorite -> cvm.getCode().equals(favorite.substring(0, 4))))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 割安度でソートする
-     *
-     * @return 企業情報ビュー
-     */
-    @Override
-    public List<CorporateViewModel> sortByDiscountRate() {
-        return viewSpecification.findAllCorporateView().stream()
-                .filter(cvm -> Objects.nonNull(cvm.getAllDiscountRate()))
-                .sorted(Comparator.comparing(CorporateViewModel::getAllDiscountRate).reversed())
+                .sorted(Comparator
+                        .comparing(CorporateViewModel::getSubmitDate).reversed()
+                        .thenComparing(CorporateViewModel::getCode))
                 .collect(Collectors.toList());
     }
 
@@ -221,7 +206,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         return CorporateDetailViewModel.of(
                 CompanyViewModel.of(company, stock),
-                viewSpecification.findCorporateView(inputData),
+                viewSpecification.findLatestCorporateView(inputData),
                 analysisResultList,
                 fsList,
                 stock.getMinkabuEntityList().stream()
@@ -247,7 +232,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
 
-        slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        if (updateViewEnabled) {
+            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
+        }
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "表示アップデートが正常に終了しました。",
@@ -282,57 +269,45 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         ));
     }
 
-    /**
-     * メインビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<ValuationViewModel> viewValuation() {
-        return valuationSpecification.inquiryAllValuationView().stream()
+    List<CorporateViewModel> filter(final List<CorporateViewModel> list) {
+        return list.stream()
+                // not null
+                .filter(cvm -> Objects.nonNull(cvm.getAllDiscountRate()))
+                .filter(cvm -> Objects.nonNull(cvm.getAllStandardDeviation()))
+                .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
+                // 表示する提出日は一定期間のみ
+                .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(configCorporateSize)))
                 // 割安度が170%(外部設定値)以上を表示
-                .filter(vvm -> vvm.getDiscountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
-                // 割安度が明らかな誤りは除外
-                .filter(vvm -> vvm.getDiscountRate().compareTo(BigDecimal.valueOf(1000)) < 0)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 企業ごとの評価結果ビュー
-     *
-     * @param inputData 企業コード
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<ValuationViewModel> viewValuation(final CodeInputData inputData) {
-        return valuationSpecification.findValuationView(inputData.getCode5()).stream()
-                .sorted(Comparator.comparing(ValuationViewModel::getTargetDate).reversed())
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * オールビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<ValuationViewModel> viewAllValuation() {
-        return valuationSpecification.inquiryAllValuationView();
-    }
-
-    /**
-     * お気に入りビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<ValuationViewModel> viewFavoriteValuation() {
-        final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
-                .map(Company::getCode)
-                .collect(Collectors.toList());
-
-        return valuationSpecification.inquiryAllValuationView().stream()
-                .filter(vvm -> favoriteList.stream().anyMatch(favorite -> vvm.getCode().equals(favorite.substring(0, 4))))
+                .filter(cvm -> cvm.getAllDiscountRate().compareTo(configDiscountRate) >= 0)
+                // 標準偏差が外れ値となっていたら除外
+                .filter(cvm -> cvm.getAllStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
+                // 最新企業価値がマイナスの場合は除外
+                .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
+                // 変動係数
+                .filter(cvm -> {
+                    if (Objects.isNull(cvm.getAllCoefficientOfVariation())) {
+                        // 変動係数が存在しない
+                        return true;
+                    } else {
+                        // 変動係数が0.6未満であること
+                        if (cvm.getAllCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
+                            return true;
+                        } else {
+                            // 変動係数が0.6以上でも最新企業価値が高ければOK
+                            return cvm.getLatestCorporateValue().compareTo(cvm.getAllAverageCorporateValue()) > -1;
+                        }
+                    }
+                })
+                // 予想株価
+                .filter(cvb -> {
+                    if (Objects.nonNull(cvb.getForecastStock())) {
+                        // 株価予想が存在する場合、最新株価より高ければOK
+                        return (cvb.getForecastStock().divide(cvb.getLatestStockPrice(), 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
+                                && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(configDiffForecastStock) >= 0);
+                    } else {
+                        return true;
+                    }
+                })
                 .collect(Collectors.toList());
     }
 }

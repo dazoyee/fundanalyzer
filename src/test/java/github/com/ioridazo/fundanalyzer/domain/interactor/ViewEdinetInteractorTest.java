@@ -58,6 +58,7 @@ class ViewEdinetInteractorTest {
                 slackClient
         ));
         viewEdinetInteractor.edinetListSize = 400;
+        viewEdinetInteractor.updateViewEnabled = true;
     }
 
     @Nested
@@ -137,8 +138,6 @@ class ViewEdinetInteractorTest {
     @Nested
     class updateView {
 
-        Company company = defaultCompany();
-        Document document = defaultDocument();
         EdinetListViewModel viewModel = defaultEdinetListViewModel();
 
         @BeforeEach

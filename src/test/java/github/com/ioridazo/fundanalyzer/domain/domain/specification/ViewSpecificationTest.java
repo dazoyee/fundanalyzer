@@ -90,7 +90,7 @@ class ViewSpecificationTest {
         @DisplayName("企業情報ビューを更新する")
         @Test
         void update() {
-            when(corporateViewDao.selectByCode(any())).thenReturn(defaultCorporateViewBean());
+            when(corporateViewDao.selectByCodeAndType(any(), any())).thenReturn(Optional.of(defaultCorporateViewBean()));
 
             assertDoesNotThrow(() -> viewSpecification.upsert(viewModel));
             verify(corporateViewDao, times(1)).update(any());
