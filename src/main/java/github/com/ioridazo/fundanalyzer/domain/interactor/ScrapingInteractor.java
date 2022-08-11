@@ -451,6 +451,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             .replace("-", "0")
                             .replace(" ", "").replace(" ", "")
                             .replace(",", "")
+                            .replace("　", "")
                             .replace("△", "-")
                     ));
         } catch (NumberFormatException e) {

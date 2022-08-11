@@ -6,8 +6,8 @@ import java.util.List;
 
 public enum Unit {
 
-    THOUSANDS_OF_YEN(List.of("単位：千円", "単位　千円", "金額（千円）"), 1000),
-    MILLIONS_OF_YEN(List.of("単位：百万円", "単位　百万円", "金額（百万円）"), 1000000),
+    THOUSANDS_OF_YEN(List.of("単位：千円", "単位　千円", "金額（千円）", "（千万円）"), 1000),
+    MILLIONS_OF_YEN(List.of("単位：百万円", "単位　百万円", "金額（百万円）", "（百万円）"), 1000000),
     ;
 
     private final List<String> name;

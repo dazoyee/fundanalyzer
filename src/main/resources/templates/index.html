@@ -98,6 +98,20 @@
                 </th:block>
               </li>
               <li class="nav-item">
+                <th:block th:if="${target} == 'quart'">
+                  <a href="/fundanalyzer/v2/index?target=quart" class="nav-link active">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Quart Dashboard</p>
+                  </a>
+                </th:block>
+                <th:block th:unless="${target} == 'quart'">
+                  <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Quart Dashboard</p>
+                  </a>
+                </th:block>
+              </li>
+              <li class="nav-item">
                 <th:block th:if="${target} == 'all'">
                   <a href="/fundanalyzer/v2/index?target=all" class="nav-link active">
                     <i class="far fa-circle nav-icon"></i>
@@ -206,7 +220,7 @@
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
-              <li class="breadcrumb-item active">Main Dashboard</li>
+              <li class="breadcrumb-item active">Corporate Dashboard</li>
             </ol>
           </div><!-- /.col -->
         </div><!-- /.row -->

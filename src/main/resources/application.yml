@@ -179,8 +179,8 @@ app:
 
     scraping:
       document-type-code: 120,130,140,150  # スクレイピング処理対象
-      no-industry:  # 処理対象外
-         銀行業
+      no-industry: # 処理対象外
+        銀行業
         ,保険業
         ,内国法人・組合（有価証券報告書等の提出義務者以外）
         ,外国法人・組合
@@ -189,8 +189,8 @@ app:
         ,個人（組合発行者を除く）
         ,個人（非居住者）（組合発行者を除く）
         ,その他（仮登録用）
-      no-company: E31748
-      # 日本郵政株式会社
+      no-company: E31748,E03729
+      # 日本郵政株式会社,信金中央金庫
 
     stock:
       nikkei.enabled: true
@@ -198,14 +198,15 @@ app:
       minkabu.enabled: true
       yahoo-finance.enabled: true
       average-stock-price-for-last-days: 30  # 株価平均値の期間
-      store-stock-price-for-last-days: 400  # 株価の保存期間
+      store-stock-price-for-last-days: 1000  # 株価の保存期間
 
     remove-document:
       document-type-code: 140,150
-      company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840,E05156,E02274
+      company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840,E05156,E02274,E00939,E34177,E27486,E05199,E00991,E05599,E01317,E05523
       # マネックスグループ株式会社,株式会社クレディセゾン,株式会社日立製作所,ポート株式会社,プレミアグループ株式会社,株式会社荏原製作所
       # アルヒ株式会社,Ｊトラスト株式会社,日本ユニシス株式会社,楽天グループ株式会社,日本ハム株式会社,ユニ・チャーム株式会社,ＨＯＹＡ株式会社
-      # 協和キリン株式会社,株式会社リログループ,三井化学株式会社,株式会社デジタルガレージ,キヤノン株式会社
+      # 協和キリン株式会社,株式会社リログループ,三井化学株式会社,株式会社デジタルガレージ,キヤノン株式会社,エーザイ株式会社, 株式会社GAtechnologies
+      # ペプチドリーム株式会社,株式会社ＣＬホールディングス,ライオン株式会社,株式会社アドウェイズ,株式会社ＬＩＸＩＬ,ＩＮＥＳＴ株式会社
 
   settings:
     file:
@@ -220,11 +221,18 @@ app:
     hour:
       company: 3  # 時に処理実施
       stock: 4  # 時に処理実施
-      analysis: 1  # 時に処理実施
+      analysis: 2  # 時に処理実施
       update-view: 7  # 時に処理実施
-      recover-document-period: 2  # 時に処理実施
+      recover-document-period: 3  # 時に処理実施
       evaluate: 6  # 時に処理実施
 
     stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
     recover-document-period.past-days: 30  # 日間に遡って処理実施
+
+  slack:
+    analysis-result.enabled: true
+    update-view.enabled: false
+    insert-stock.enabled: false
+    delete-stock.enabled: false
+    evaluate.enabled: true

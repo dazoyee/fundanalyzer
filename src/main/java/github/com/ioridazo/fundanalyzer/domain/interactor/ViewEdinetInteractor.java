@@ -38,6 +38,8 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
 
     @Value("${app.config.view.edinet-list.size}")
     int edinetListSize;
+    @Value("${app.slack.update-view.enabled:true}")
+    boolean updateViewEnabled;
 
     public ViewEdinetInteractor(
             final CompanySpecification companySpecification,
@@ -118,7 +120,9 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
 
-        slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
+        if (updateViewEnabled) {
+            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
+        }
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "処理状況アップデートが正常に終了しました。",
