@@ -110,11 +110,10 @@ public class CorporateViewModel {
                 viewBean.getCode(),
                 viewBean.getName(),
                 viewBean.getSubmitDate().orElse(null),
-                viewBean.getLatestDocumentTypeCode().orElse(null),
-                viewBean.getLatestDocumentTypeCode().stream()
-                        .anyMatch(dtc -> Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
-                                .map(DocumentTypeCode::toValue)
-                                .anyMatch(dtc::equals)),
+                viewBean.getLatestDocumentTypeCode(),
+                Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
+                        .map(DocumentTypeCode::toValue)
+                        .anyMatch(dtc -> viewBean.getLatestDocumentTypeCode().equals(dtc)),
                 viewBean.getLatestCorporateValue().orElse(null),
                 viewBean.getThreeAverageCorporateValue().orElse(null),
                 viewBean.getThreeStandardDeviation().orElse(null),

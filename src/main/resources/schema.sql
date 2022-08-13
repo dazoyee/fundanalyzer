@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `corporate_view`
     `code`                           CHAR(4)      NOT NULL COMMENT '企業コード',
     `name`                           VARCHAR(100) NOT NULL COMMENT '企業名',
     `submit_date`                    DATE                  DEFAULT NULL COMMENT '提出日',
-    `latest_document_type_code`      CHAR(3)               DEFAULT NULL COMMENT '最新書類種別コード',
+    `latest_document_type_code`      CHAR(3)      NOT NULL COMMENT '最新書類種別コード',
     `latest_corporate_value`         FLOAT                 DEFAULT NULL COMMENT '最新企業価値',
     `three_average_corporate_value`  FLOAT                 DEFAULT NULL COMMENT '3年平均企業価値',
     `three_standard_deviation`       FLOAT                 DEFAULT NULL COMMENT '3年標準偏差',
