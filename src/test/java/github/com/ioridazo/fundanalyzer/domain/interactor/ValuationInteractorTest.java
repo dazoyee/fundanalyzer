@@ -221,6 +221,18 @@ class ValuationInteractorTest {
             assertTrue(actual.isEmpty());
             Mockito.verify(stockSpecification, Mockito.times(5)).findStock(any(), any());
         }
+
+        @DisplayName("findPresentStock : 月を跨がないように取得する")
+        @Test
+        void present_minus() {
+            Mockito.when(stockSpecification.findStock("code", LocalDate.parse("2022-07-31"))).thenReturn(Optional.empty());
+            Mockito.when(stockSpecification.findStock("code", LocalDate.parse("2022-07-30"))).thenReturn(Optional.empty());
+            Mockito.when(stockSpecification.findStock("code", LocalDate.parse("2022-07-29"))).thenReturn(Optional.of(stockPriceEntity()));
+
+            var actual = valuationInteractor.findPresentStock("code", LocalDate.parse("2022-07-31"));
+            assertTrue(actual.isPresent());
+            Mockito.verify(stockSpecification, Mockito.times(3)).findStock(any(), any());
+        }
     }
 
     @Nested
