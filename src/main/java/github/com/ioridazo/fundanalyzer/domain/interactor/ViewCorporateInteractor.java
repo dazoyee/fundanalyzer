@@ -36,6 +36,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -226,11 +227,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public void updateView() {
         final long startTime = System.currentTimeMillis();
-        final List<CorporateViewModel> viewModelList = companySpecification.inquiryAllTargetCompanies().stream()
-                .map(company -> viewSpecification.generateCorporateView(company, analyzeInteractor.calculateCorporateValue(company)))
-                .collect(Collectors.toList());
-
-        viewModelList.parallelStream().forEach(viewSpecification::upsert);
+        parallelUpdateView(companySpecification.inquiryAllTargetCompanies());
 
         if (updateViewEnabled) {
             slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
@@ -252,14 +249,14 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public void updateView(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        final List<CorporateViewModel> viewModelList = documentSpecification.targetList(inputData).stream()
-                .map(Document::getEdinetCode)
-                .map(companySpecification::findCompanyByEdinetCode)
-                .filter(Optional::isPresent)
-                .map(company -> viewSpecification.generateCorporateView(company.get(), analyzeInteractor.calculateCorporateValue(company.get())))
-                .collect(Collectors.toList());
-
-        viewModelList.forEach(viewSpecification::upsert);
+        parallelUpdateView(
+                documentSpecification.targetList(inputData).stream()
+                        .map(Document::getEdinetCode)
+                        .map(companySpecification::findCompanyByEdinetCode)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toList())
+        );
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
@@ -309,5 +306,25 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                     }
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void parallelUpdateView(final List<Company> companyList) {
+        final ArrayList<CorporateViewModel> viewList = new ArrayList<>();
+        companyList.forEach(company -> {
+            try {
+                viewList.add(viewSpecification.generateCorporateView(company, analyzeInteractor.calculateCorporateValue(company)));
+            } catch (final FundanalyzerNotExistException e) {
+                log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "条件を満たさないため、次の企業のビューを更新しませんでした。\t企業コード:{0}",
+                                company.getCode()
+                        ),
+                        Category.VIEW,
+                        Process.UPDATE
+                ), e);
+            }
+        });
+
+        viewList.parallelStream().forEach(viewSpecification::upsert);
     }
 }

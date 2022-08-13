@@ -29,6 +29,7 @@ public class CorporateViewBean {
     private final LocalDate submitDate;
 
     // 最新書類種別コード
+    @Id
     private final String latestDocumentTypeCode;
 
     // 最新企業価値
@@ -153,10 +154,6 @@ public class CorporateViewBean {
 
     public Optional<LocalDate> getSubmitDate() {
         return Optional.ofNullable(submitDate);
-    }
-
-    public Optional<String> getLatestDocumentTypeCode() {
-        return Optional.ofNullable(latestDocumentTypeCode);
     }
 
     public Optional<BigDecimal> getLatestCorporateValue() {

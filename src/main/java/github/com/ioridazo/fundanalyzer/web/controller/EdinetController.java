@@ -55,7 +55,7 @@ public class EdinetController {
      *
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v1/update/edinet/view")
+    @GetMapping("fundanalyzer/v1/update/edinet/view")
     public String updateEdinetView() {
         viewService.updateEdinetView();
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)

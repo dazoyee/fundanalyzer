@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -67,7 +68,7 @@ public class AnalysisController {
      *
      * @return Index
      */
-    @PostMapping("fundanalyzer/v1/update/corporate/view")
+    @GetMapping("fundanalyzer/v1/update/corporate/view")
     public String updateCorporateView() {
         viewService.updateCorporateView();
         return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH)
