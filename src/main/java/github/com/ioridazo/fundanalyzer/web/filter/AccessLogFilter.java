@@ -19,6 +19,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
     private static final Logger log = LogManager.getLogger(AccessLogFilter.class);
 
     private static final String ACTUATOR_URI = "/actuator/prometheus";
+    private static final String FUNDANALYZER_URI = "fundanalyzer";
 
     @Override
     protected void doFilterInternal(
@@ -29,7 +30,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
         final String requestURI = httpServletRequest.getRequestURI();
 
-        if (!ACTUATOR_URI.equals(requestURI)) {
+        if (!ACTUATOR_URI.equals(requestURI) && requestURI.contains(FUNDANALYZER_URI)) {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.ACCESS, Process.BEGINNING, requestURI, 0));
         }
 
@@ -39,7 +40,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
-        if (!ACTUATOR_URI.equals(requestURI)) {
+        if (!ACTUATOR_URI.equals(requestURI) && requestURI.contains(FUNDANALYZER_URI)) {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.ACCESS, Process.END, requestURI, durationTime));
         }
     }
