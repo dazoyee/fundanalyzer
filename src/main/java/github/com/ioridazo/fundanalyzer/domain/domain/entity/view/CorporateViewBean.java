@@ -29,6 +29,7 @@ public class CorporateViewBean {
     private final LocalDate submitDate;
 
     // 最新書類種別コード
+    @Id
     private final String latestDocumentTypeCode;
 
     // 最新企業価値
