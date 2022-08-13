@@ -154,7 +154,8 @@ public class ViewSpecification {
      * @param corporateValue 企業価値
      * @return 企業情報ビュー
      */
-    public CorporateViewModel generateCorporateView(final Company company, final CorporateValue corporateValue) {
+    public CorporateViewModel generateCorporateView(
+            final Company company, final CorporateValue corporateValue) throws FundanalyzerNotExistException {
         final Stock stock = stockSpecification.findStock(company);
         final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
 
@@ -162,7 +163,8 @@ public class ViewSpecification {
                 company.getCode().substring(0, 4),
                 company.getCompanyName(),
                 latestDocument.map(Document::getSubmitDate).orElse(null),
-                latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue).orElseThrow(),
+                latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue)
+                        .orElseThrow(() -> new FundanalyzerNotExistException("書類種別コード")),
                 latestDocument.map(Document::getDocumentTypeCode).stream()
                         .anyMatch(dtc -> List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130).contains(dtc)),
                 corporateValue.getLatestCorporateValue().orElse(null),
