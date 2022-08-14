@@ -201,7 +201,7 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-6">
-            <form method="post" th:action="@{/fundanalyzer/v1/update/edinet/view}">
+            <form method="get" th:action="@{/fundanalyzer/v1/update/edinet/view}">
               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
               <button type="submit" class="btn btn-block btn-outline-secondary">更新して前に戻る</button>
             </form>
