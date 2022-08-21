@@ -129,6 +129,8 @@ resilience4j:
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
+  version: @pom.version@
+
   config:
     rest-client:
       edinet:

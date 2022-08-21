@@ -1,198 +1,136 @@
 <!DOCTYPE html>
-<!--suppress ThymeleafVariablesResolveInspection -->
 <!--suppress HtmlUnknownTarget -->
-<html lang="ja">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="'fundanalyzer | Corporate - ' + ${#strings.substring(corporate.code, 0, 4)}"></title>
-
-  <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
-  <!-- IonIcons -->
-  <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-  <!-- Theme style -->
-  <link rel="stylesheet" href="/dist/css/adminlte.min.css">
-
+  <title layout:title-pattern="$LAYOUT_TITLE | $CONTENT_TITLE"
+         th:text="'Corporate - ' + ${#strings.substring(corporate.code, 0, 4)}"></title>
 </head>
 
-<body class="hold-transition sidebar-mini">
-<div class="wrapper">
-  <!-- Navbar -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" role="button"><i class="fas fa-bars"></i></a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" onClick="history.back()"><i class="fa-solid fa-backward"></i></a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" onClick="history.forward()"><i class="fa-solid fa-forward"></i></a>
-      </li>
-      <li class="nav-item d-none d-sm-inline-block">
-        <a href="/fundanalyzer/v2/index" class="nav-link">Home</a>
-      </li>
-    </ul>
+<body>
+<aside>
+  <div>
+    <nav>
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false"
+          layout:fragment="menu">
+        <li class="nav-item menu-open">
+          <a class="nav-link active">
+            <i class="nav-icon fa-solid fa-building"></i>
+            <p>
+              Corporate
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/index" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Main Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Quart Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>All Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Favorite Dashboard</p>
+              </a>
+            </li>
+          </ul>
+        </li>
 
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="fullscreen" role="button">
-          <i class="fas fa-expand-arrows-alt"></i>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-widget="control-sidebar" data-slide="true" role="button">
-          <i class="fas fa-th-large"></i>
-        </a>
-      </li>
-    </ul>
-  </nav>
-  <!-- /.navbar -->
+        <li class="nav-item">
+          <a class="nav-link">
+            <i class="nav-icon fa-solid fa-list-check"></i>
+            <p>
+              Edinet
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Main Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>All Dashboard</p>
+              </a>
+            </li>
+          </ul>
+        </li>
 
-  <!-- Main Sidebar Container -->
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <!-- Brand Logo -->
-    <a href="/fundanalyzer/v2/index" class="brand-link">
-      <img src="/favicon.ico" alt="fundanalyzer Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-      <span class="brand-text font-weight-light">fundanalyzer</span>
-    </a>
+        <li class="nav-item">
+          <a class="nav-link">
+            <i class="nav-icon fa-solid fa-chart-line"></i>
+            <p>
+              Valuation
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/valuation" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Main Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>All Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Favorite Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Industry Dashboard</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <!-- Sidebar Menu -->
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-          <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-          <li class="nav-item menu-open">
-            <a class="nav-link active">
-              <i class="nav-icon fa-solid fa-building"></i>
-              <p>
-                Corporate
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/index" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Main Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Quart Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>All Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Favorite Dashboard</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link">
-              <i class="nav-icon fa-solid fa-list-check"></i>
-              <p>
-                Edinet
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Main Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>All Dashboard</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link">
-              <i class="nav-icon fa-solid fa-chart-line"></i>
-              <p>
-                Valuation
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/valuation" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Main Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>All Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Favorite Dashboard</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Industry Dashboard</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </nav>
-      <!-- /.sidebar-menu -->
-    </div>
-    <!-- /.sidebar -->
-  </aside>
-
-  <!-- Content Wrapper. Contains page content -->
+<div layout:fragment="contents">
   <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <div class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
             <h1 class="m-0">銘柄詳細</h1>
-          </div><!-- /.col -->
+          </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
               <li class="breadcrumb-item active">Corporate</li>
             </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- /.content-header -->
 
     <div th:if="${isFavorite} != null">
       <div class="alert alert-info alert-dismissible fade show" role="alert">
@@ -214,9 +152,7 @@
       </div>
     </div>
 
-    <!-- Main content -->
     <section class="content">
-
       <div class="row mb-2">
         <div class="col-11">
           <h3 class="m-1" th:text="${#strings.substring(corporate.code, 0, 4)} + ' : '+ ${corporate.name}"></h3>
@@ -1040,382 +976,341 @@
                         </div>
                       </div>
                     </div>
-
                   </div>
                 </div>
-                <!-- /.card -->
               </div>
             </div>
           </div>
         </div>
-        <!-- /.card-body -->
       </div>
-      <!-- /.card -->
     </section>
-    <!-- /.content -->
   </div>
-  <!-- /.content-wrapper -->
-
-  <!-- Control Sidebar -->
-  <aside class="control-sidebar control-sidebar-dark">
-    <!-- Control sidebar content goes here -->
-  </aside>
-  <!-- /.control-sidebar -->
-
-  <!-- Main Footer -->
-  <footer class="main-footer">
-    <strong>Copyright &copy; 2020-2021 fundanalyzer</strong>
-    All rights reserved.
-  </footer>
 </div>
-<!-- ./wrapper -->
 
-<!-- REQUIRED SCRIPTS -->
+<div layout:fragment="script">
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+  <!-- Page specific script -->
+  <script type="text/javascript" th:inline="javascript">
 
-<!-- jQuery -->
-<script src="../../plugins/jquery/jquery.min.js"></script>
-<!-- Bootstrap -->
-<script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="../../dist/js/adminlte.min.js"></script>
+      const analysisChartAll = document.getElementById("analysisChartAll");
 
-<!-- DataTables  & Plugins -->
-<script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
-<script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-<script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-<script src="../../plugins/jszip/jszip.min.js"></script>
-<script src="../../plugins/pdfmake/pdfmake.min.js"></script>
-<script src="../../plugins/pdfmake/vfs_fonts.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+      new Chart(analysisChartAll, {
+          type: 'line',
+          data: {
+              labels: [[ ${analysisLabelAll}]],
+              datasets: [
+                  {
+                      label: "分析結果",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${analysisPointAll}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-<!-- Chart.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+      const stockChart30 = document.getElementById("stockChart30");
+      const stockChart90 = document.getElementById("stockChart90");
+      const stockChart180 = document.getElementById("stockChart180");
+      const stockChart365 = document.getElementById("stockChart365");
+      const stockChartAll = document.getElementById("stockChartAll");
 
-<!-- Page specific script -->
-<script type="text/javascript" th:inline="javascript">
+      new Chart(stockChart30, {
+          type: 'line',
+          data: {
+              labels: [[ ${stockLabel30}]],
+              datasets: [
+                  {
+                      label: "株価終値",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${stockPoint30}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    const analysisChartAll = document.getElementById("analysisChartAll");
+      new Chart(stockChart90, {
+          type: 'line',
+          data: {
+              labels: [[ ${stockLabel90}]],
+              datasets: [
+                  {
+                      label: "株価終値",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${stockPoint90}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(analysisChartAll, {
-        type: 'line',
-        data: {
-            labels: [[ ${analysisLabelAll}]],
-            datasets: [
-                {
-                    label: "分析結果",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${analysisPointAll}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(stockChart180, {
+          type: 'line',
+          data: {
+              labels: [[ ${stockLabel180}]],
+              datasets: [
+                  {
+                      label: "株価終値",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${stockPoint180}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    const stockChart30 = document.getElementById("stockChart30");
-    const stockChart90 = document.getElementById("stockChart90");
-    const stockChart180 = document.getElementById("stockChart180");
-    const stockChart365 = document.getElementById("stockChart365");
-    const stockChartAll = document.getElementById("stockChartAll");
+      new Chart(stockChart365, {
+          type: 'line',
+          data: {
+              labels: [[ ${stockLabel365}]],
+              datasets: [
+                  {
+                      label: "株価終値",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${stockPoint365}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(stockChart30, {
-        type: 'line',
-        data: {
-            labels: [[ ${stockLabel30}]],
-            datasets: [
-                {
-                    label: "株価終値",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${stockPoint30}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(stockChartAll, {
+          type: 'line',
+          data: {
+              labels: [[ ${stockLabelAll}]],
+              datasets: [
+                  {
+                      label: "株価終値",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${stockPointAll}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(stockChart90, {
-        type: 'line',
-        data: {
-            labels: [[ ${stockLabel90}]],
-            datasets: [
-                {
-                    label: "株価終値",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${stockPoint90}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      const forecastStockChart180 = document.getElementById("forecastStockChart180");
+      const forecastStockChart365 = document.getElementById("forecastStockChart365");
+      const forecastStockChartAll = document.getElementById("forecastStockChartAll");
 
-    new Chart(stockChart180, {
-        type: 'line',
-        data: {
-            labels: [[ ${stockLabel180}]],
-            datasets: [
-                {
-                    label: "株価終値",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${stockPoint180}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(forecastStockChart180, {
+          type: 'line',
+          data: {
+              labels: [[ ${forecastStockLabel180}]],
+              datasets: [
+                  {
+                      label: "株価予想",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${forecastStockPoint180}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(stockChart365, {
-        type: 'line',
-        data: {
-            labels: [[ ${stockLabel365}]],
-            datasets: [
-                {
-                    label: "株価終値",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${stockPoint365}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(forecastStockChart365, {
+          type: 'line',
+          data: {
+              labels: [[ ${forecastStockLabel365}]],
+              datasets: [
+                  {
+                      label: "株価予想",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${forecastStockPoint365}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(stockChartAll, {
-        type: 'line',
-        data: {
-            labels: [[ ${stockLabelAll}]],
-            datasets: [
-                {
-                    label: "株価終値",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${stockPointAll}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(forecastStockChartAll, {
+          type: 'line',
+          data: {
+              labels: [[ ${forecastStockLabelAll}]],
+              datasets: [
+                  {
+                      label: "株価予想",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${forecastStockPointAll}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    const forecastStockChart180 = document.getElementById("forecastStockChart180");
-    const forecastStockChart365 = document.getElementById("forecastStockChart365");
-    const forecastStockChartAll = document.getElementById("forecastStockChartAll");
+      const valuationChart180 = document.getElementById("valuationChart180");
+      const valuationChart365 = document.getElementById("valuationChart365");
+      const valuationChartAll = document.getElementById("valuationChartAll");
 
-    new Chart(forecastStockChart180, {
-        type: 'line',
-        data: {
-            labels: [[ ${forecastStockLabel180}]],
-            datasets: [
-                {
-                    label: "株価予想",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${forecastStockPoint180}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(valuationChart180, {
+          type: 'line',
+          data: {
+              labels: [[ ${valuationLabel180}]],
+              datasets: [
+                  {
+                      label: "評価",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${valuationPoint180}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(forecastStockChart365, {
-        type: 'line',
-        data: {
-            labels: [[ ${forecastStockLabel365}]],
-            datasets: [
-                {
-                    label: "株価予想",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${forecastStockPoint365}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(valuationChart365, {
+          type: 'line',
+          data: {
+              labels: [[ ${valuationLabel365}]],
+              datasets: [
+                  {
+                      label: "評価",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${valuationPoint365}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    new Chart(forecastStockChartAll, {
-        type: 'line',
-        data: {
-            labels: [[ ${forecastStockLabelAll}]],
-            datasets: [
-                {
-                    label: "株価予想",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${forecastStockPointAll}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
+      new Chart(valuationChartAll, {
+          type: 'line',
+          data: {
+              labels: [[ ${valuationLabelAll}]],
+              datasets: [
+                  {
+                      label: "評価",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${valuationPointAll}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
 
-    const valuationChart180 = document.getElementById("valuationChart180");
-    const valuationChart365 = document.getElementById("valuationChart365");
-    const valuationChartAll = document.getElementById("valuationChartAll");
-
-    new Chart(valuationChart180, {
-        type: 'line',
-        data: {
-            labels: [[ ${valuationLabel180}]],
-            datasets: [
-                {
-                    label: "評価",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${valuationPoint180}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
-
-    new Chart(valuationChart365, {
-        type: 'line',
-        data: {
-            labels: [[ ${valuationLabel365}]],
-            datasets: [
-                {
-                    label: "評価",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${valuationPoint365}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
-
-    new Chart(valuationChartAll, {
-        type: 'line',
-        data: {
-            labels: [[ ${valuationLabelAll}]],
-            datasets: [
-                {
-                    label: "評価",
-                    borderColor: 'rgb(0, 0, 0)',
-                    lineTension: 0,
-                    fill: false,
-                    borderWidth: 1,
-                    data: [[ ${valuationPointAll}]],
-                },
-            ]
-        },
-        options: {
-            elements: {
-                point: {
-                    radius: 0
-                }
-            },
-            responsive: true,
-        }
-    });
-
-</script>
+  </script>
+</div>
 
 </body>
 </html>
