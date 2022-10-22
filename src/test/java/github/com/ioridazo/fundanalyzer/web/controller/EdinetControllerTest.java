@@ -43,7 +43,7 @@ class EdinetControllerTest {
     void updateCompany() {
         var actual = UriComponentsBuilder.fromUriString(controller.updateCompany()).build();
 
-        assertEquals("/fundanalyzer/v2/edinet-list", actual.getPath());
+        assertEquals("/v2/edinet-list", actual.getPath());
         assertEquals(
                 "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
                 UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
@@ -55,7 +55,7 @@ class EdinetControllerTest {
     void updateEdinetView() {
         var actual = UriComponentsBuilder.fromUriString(controller.updateEdinetView()).build();
 
-        assertEquals("/fundanalyzer/v2/edinet-list", actual.getPath());
+        assertEquals("/v2/edinet-list", actual.getPath());
         assertEquals(
                 "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
                 UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
@@ -65,7 +65,7 @@ class EdinetControllerTest {
     @DisplayName("saveEdinet : EDINETから提出書類一覧を取得する")
     @Test
     void saveEdinet() {
-        assertEquals("redirect:/fundanalyzer/v2/edinet-list", controller.saveEdinet("2021-05-29", "2021-05-29"));
+        assertEquals("redirect:/v2/edinet-list", controller.saveEdinet("2021-05-29", "2021-05-29"));
         Mockito.verify(edinetService, Mockito.times(1))
                 .saveEdinetList(BetweenDateInputData.of(LocalDate.parse("2021-05-29"), LocalDate.parse("2021-05-29")));
     }
@@ -73,7 +73,7 @@ class EdinetControllerTest {
     @DisplayName("updateEdinetList : EDINETリストをアップデートする")
     @Test
     void updateEdinetList() {
-        assertEquals("redirect:/fundanalyzer/v2/edinet-list", controller.updateEdinetList("2021-05-29"));
+        assertEquals("redirect:/v2/edinet-list", controller.updateEdinetList("2021-05-29"));
         Mockito.verify(viewService, Mockito.times(1)).updateEdinetListView(DateInputData.of(LocalDate.parse("2021-05-29")));
     }
 
@@ -89,7 +89,7 @@ class EdinetControllerTest {
         );
         when(analysisService.registerFinancialStatementValue(inputData)).thenReturn(Result.OK);
         assertEquals(
-                "redirect:/fundanalyzer/v2/edinet-list-detail?submitDate=2021-08-22",
+                "redirect:/v2/edinet-list-detail?submitDate=2021-08-22",
                 controller.registerFinancialStatementValue("2021-08-22", inputData)
         );
     }
@@ -102,7 +102,7 @@ class EdinetControllerTest {
         );
         when(edinetService.updateAllDoneStatus(inputData)).thenReturn(Result.OK);
         assertEquals(
-                "redirect:/fundanalyzer/v2/edinet-list-detail?submitDate=2021-08-22",
+                "redirect:/v2/edinet-list-detail?submitDate=2021-08-22",
                 controller.updateAllDoneStatus("2021-08-22", "id")
         );
     }
@@ -112,7 +112,7 @@ class EdinetControllerTest {
     void removeDocument() {
         var actual = UriComponentsBuilder.fromUriString(controller.removeDocument("2021-05-29", "test1234")).build();
 
-        assertEquals("/fundanalyzer/v2/edinet-list-detail", actual.getPath());
+        assertEquals("/v2/edinet-list-detail", actual.getPath());
         assertEquals("2021-05-29", UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("submitDate")), "UTF-8"));
         Mockito.verify(edinetService, Mockito.times(1)).removeDocument(IdInputData.of("test1234"));
     }

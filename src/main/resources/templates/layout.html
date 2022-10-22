@@ -11,13 +11,15 @@
   <link rel="stylesheet"
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/plugins/fontawesome-free/css/all.min.css}">
   <!-- IonIcons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
   <!-- Theme style -->
-  <link rel="stylesheet" href="/dist/css/adminlte.min.css">
+  <link rel="stylesheet" th:href="@{/dist/css/adminlte.min.css}">
+  <!-- Favicon -->
+  <link rel="shortcut icon" th:href="@{/favicon.ico}">
   <!-- Custom Link -->
   <div layout:fragment="link"></div>
 </head>
@@ -36,7 +38,7 @@
         <a class="nav-link" onClick="history.forward()"><i class="fa-solid fa-forward"></i></a>
       </li>
       <li class="nav-item d-none d-sm-inline-block">
-        <a href="/fundanalyzer/v2/index" class="nav-link">Home</a>
+        <a th:href="@{/v2/index}" class="nav-link">Home</a>
       </li>
     </ul>
 
@@ -55,8 +57,9 @@
   </nav>
 
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="/fundanalyzer/v2/index" class="brand-link">
-      <img src="/favicon.ico" alt="fundanalyzer Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+    <a th:href="@{/v2/index}" class="brand-link">
+      <img th:src="@{/favicon.ico}" alt="fundanalyzer Logo" class="brand-image img-circle elevation-3"
+           style="opacity: .8">
       <span class="brand-text font-weight-light">fundanalyzer</span>
     </a>
 
@@ -79,11 +82,11 @@
 </div>
 
 <!-- jQuery -->
-<script src="../../plugins/jquery/jquery.min.js"></script>
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
 <!-- Bootstrap -->
-<script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/plugins/bootstrap/js/bootstrap.bundle.min.js}"></script>
 <!-- AdminLTE App -->
-<script src="../../dist/js/adminlte.min.js"></script>
+<script th:src="@{/dist/js/adminlte.min.js}"></script>
 <!-- Custom Script -->
 <div layout:fragment="script"></div>
 </body>

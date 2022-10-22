@@ -23,25 +23,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index" class="nav-link">
+              <a th:href="@{/v2/index}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+              <a th:href="@{/v2/index(target=${'quart'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Quart Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
+              <a th:href="@{/v2/index(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+              <a th:href="@{/v2/index(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
@@ -59,13 +59,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+              <a th:href="@{/v2/edinet-list}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
+              <a th:href="@{/v2/edinet-list(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
@@ -83,25 +83,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation" class="nav-link">
+              <a th:href="@{/v2/valuation}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'industry'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Industry Dashboard</p>
               </a>
@@ -123,8 +123,8 @@
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
-              <li class="breadcrumb-item"><a href="/fundanalyzer/v2/edinet-list">Edinet Dashboard</a></li>
+              <li class="breadcrumb-item"><a th:href="@{/v2/index}">Home</a></li>
+              <li class="breadcrumb-item"><a th:href="@{/v2/edinet-list}">Edinet Dashboard</a></li>
               <li class="breadcrumb-item active">Edinet-Detail</li>
             </ol>
           </div>
@@ -136,13 +136,13 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-6">
-            <form method="get" th:action="@{/fundanalyzer/v1/update/edinet/view}">
+            <form method="get" th:action="@{/v1/update/edinet/view}">
               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
               <button type="submit" class="btn btn-block btn-outline-secondary">更新して前に戻る</button>
             </form>
           </div>
           <div class="col-6">
-            <form method="post" th:action="@{/fundanalyzer/v1/analyze/date}">
+            <form method="post" th:action="@{/v1/analyze/date}">
               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
               <button type="submit" class="btn btn-block btn-outline-secondary">分析する</button>
             </form>
@@ -231,7 +231,7 @@
                                 <td th:text="${documentDetail.document.scrapedBs}">BS</td>
                                 <td th:text="${documentDetail.document.scrapedPl}">PL</td>
                                 <td>
-                                  <form method="post" th:action="@{/fundanalyzer/v1/remove/document}">
+                                  <form method="post" th:action="@{/v1/remove/document}">
                                     <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                            name="submitDate"/>
                                     <input type="hidden" th:value="${documentDetail.document.documentId}"
@@ -247,14 +247,14 @@
 
                         <div class="row">
                           <div class="col-6">
-                            <form method="post" th:action="@{/fundanalyzer/v1/update/all-done/status}">
+                            <form method="post" th:action="@{/v1/update/all-done/status}">
                               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
                               <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
                               <button type="submit" class="btn btn-block btn-outline-info">ステータス更新：すべて完了</button>
                             </form>
                           </div>
                           <div class="col-6">
-                            <form method="post" th:action="@{/fundanalyzer/v1/analyze/id}">
+                            <form method="post" th:action="@{/v1/analyze/id}">
                               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
                               <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
                               <button type="submit" class="btn btn-block btn-outline-info">分析する</button>
@@ -301,7 +301,7 @@
                                   <dt class="col-sm-6">流動資産合計</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.totalCurrentAssets}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"
@@ -330,7 +330,7 @@
                                   <dt class="col-sm-6">投資その他の資産合計</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"
@@ -359,7 +359,7 @@
                                   <dt class="col-sm-6">投資その他の資産合計</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"
@@ -388,7 +388,7 @@
                                   <dt class="col-sm-6">流動負債合計</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.totalCurrentLiabilities}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"
@@ -417,7 +417,7 @@
                                   <dt class="col-sm-6">固定負債合計</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.totalFixedLiabilities}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"
@@ -446,7 +446,7 @@
                                   <dt class="col-sm-6">営業利益</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.operatingProfit}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"
@@ -475,7 +475,7 @@
                                   <dt class="col-sm-6">株式総数</dt>
                                   <dd class="col-sm-6"
                                       th:if="${documentDetail.fundamentalValue.numberOfShares}==null">
-                                    <form method="post" th:action="@{/fundanalyzer/v1/fix-fundamental-value}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
                                       <input type="hidden" th:value="${documentDetail.document.edinetCode}"

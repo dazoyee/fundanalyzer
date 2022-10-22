@@ -27,9 +27,9 @@ import java.util.stream.Collectors;
 public class AnalysisController {
 
     private static final String REDIRECT = "redirect:";
-    private static final URI V2_INDEX_PATH = URI.create("/fundanalyzer/v2/index");
-    private static final URI V2_CORPORATE_PATH = URI.create("/fundanalyzer/v2/corporate");
-    private static final URI V2_VALUATION_PATH = URI.create("/fundanalyzer/v2/valuation");
+    private static final URI V2_INDEX_PATH = URI.create("/v2/index");
+    private static final URI V2_CORPORATE_PATH = URI.create("/v2/corporate");
+    private static final URI V2_VALUATION_PATH = URI.create("/v2/valuation");
 
     private static final String MESSAGE = "message";
     private static final String DATETIME_FORMAT = "MM/dd/uuuu";
@@ -53,7 +53,7 @@ public class AnalysisController {
      * @param fromToDate 提出日
      * @return Index
      */
-    @PostMapping("fundanalyzer/v1/document/analysis")
+    @PostMapping("/v1/document/analysis")
     public String doMain(final String fromToDate) {
         final LocalDate fromDate = LocalDate.parse(fromToDate.substring(0, 10), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
         final LocalDate toDate = LocalDate.parse(fromToDate.substring(13, 23), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
@@ -68,7 +68,7 @@ public class AnalysisController {
      *
      * @return Index
      */
-    @GetMapping("fundanalyzer/v1/update/corporate/view")
+    @GetMapping("/v1/update/corporate/view")
     public String updateCorporateView() {
         viewService.updateCorporateView();
         return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH)
@@ -82,7 +82,7 @@ public class AnalysisController {
      * @param date 提出日
      * @return Index
      */
-    @PostMapping("fundanalyzer/v1/scrape/date")
+    @PostMapping("/v1/scrape/date")
     public String scrapeByDate(final String date) {
         analysisService.executeByDate(DateInputData.of(LocalDate.parse(date)));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
@@ -95,7 +95,7 @@ public class AnalysisController {
      * @param redirectAttributes redirectAttributes
      * @return Index
      */
-    @PostMapping("fundanalyzer/v1/scrape/id")
+    @PostMapping("/v1/scrape/id")
     public String scrapeById(final String documentId, final RedirectAttributes redirectAttributes) {
         final List<String> idList = Arrays.stream(documentId.split(","))
                 .filter(dId -> dId.length() == 8)
@@ -127,7 +127,7 @@ public class AnalysisController {
      * @param fromToDate 提出日
      * @return Valuation
      */
-    @PostMapping("fundanalyzer/v2/import/stock/date")
+    @PostMapping("/v2/import/stock/date")
     public String importStockBySubmitDate(final String fromToDate, RedirectAttributes redirectAttributes) {
         final LocalDate fromDate = LocalDate.parse(fromToDate.substring(0, 10), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
         final LocalDate toDate = LocalDate.parse(fromToDate.substring(13, 23), DateTimeFormatter.ofPattern(DATETIME_FORMAT));
@@ -150,7 +150,7 @@ public class AnalysisController {
      * @param code 会社コード
      * @return BrandDetail
      */
-    @PostMapping("fundanalyzer/v1/import/stock/code")
+    @PostMapping("/v1/import/stock/code")
     public String importStockByCode(final String code) {
         analysisService.importStock(CodeInputData.of(code));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
@@ -164,7 +164,7 @@ public class AnalysisController {
      * @param redirectAttributes redirectAttributes
      * @return BrandDetail
      */
-    @PostMapping("fundanalyzer/v2/favorite/company")
+    @PostMapping("/v2/favorite/company")
     public String updateFavoriteCompany(final String code, final RedirectAttributes redirectAttributes) {
         final boolean isFavorite = analysisService.updateFavoriteCompany(CodeInputData.of(code));
         redirectAttributes.addFlashAttribute("isFavorite", isFavorite);
@@ -179,7 +179,7 @@ public class AnalysisController {
      * @param redirectAttributes redirectAttributes
      * @return BrandDetail
      */
-    @PostMapping("fundanalyzer/v2/evaluate")
+    @PostMapping("/v2/evaluate")
     public String evaluate(final String code, final RedirectAttributes redirectAttributes) {
         if (Objects.nonNull(code)) {
             final boolean isEvaluated = analysisService.evaluate(CodeInputData.of(code));

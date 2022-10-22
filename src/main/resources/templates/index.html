@@ -7,7 +7,7 @@
   <title layout:title-pattern="$LAYOUT_TITLE | $CONTENT_TITLE">Dashboard</title>
 
   <div layout:fragment="link">
-    <link rel="stylesheet" href="/plugins/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" th:href="@{/plugins/daterangepicker/daterangepicker.css}">
   </div>
 </head>
 
@@ -28,13 +28,13 @@
           <ul class="nav nav-treeview">
             <li class="nav-item">
               <th:block th:if="${target} == null">
-                <a href="/fundanalyzer/v2/index" class="nav-link active">
+                <a th:href="@{/v2/index}" class="nav-link active">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Main Dashboard</p>
                 </a>
               </th:block>
               <th:block th:unless="${target} == null">
-                <a href="/fundanalyzer/v2/index" class="nav-link">
+                <a th:href="@{/v2/index}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Main Dashboard</p>
                 </a>
@@ -42,13 +42,13 @@
             </li>
             <li class="nav-item">
               <th:block th:if="${target} == 'quart'">
-                <a href="/fundanalyzer/v2/index?target=quart" class="nav-link active">
+                <a th:href="@{/v2/index(target=${'quart'})}" class="nav-link active">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Quart Dashboard</p>
                 </a>
               </th:block>
               <th:block th:unless="${target} == 'quart'">
-                <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+                <a th:href="@{/v2/index(target=${'quart'})}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Quart Dashboard</p>
                 </a>
@@ -56,13 +56,13 @@
             </li>
             <li class="nav-item">
               <th:block th:if="${target} == 'all'">
-                <a href="/fundanalyzer/v2/index?target=all" class="nav-link active">
+                <a th:href="@{/v2/index(target=${'all'})}" class="nav-link active">
                   <i class="far fa-circle nav-icon"></i>
                   <p>All Dashboard</p>
                 </a>
               </th:block>
               <th:block th:unless="${target} == 'all'">
-                <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
+                <a th:href="@{/v2/index(target=${'all'})}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>All Dashboard</p>
                 </a>
@@ -70,13 +70,13 @@
             </li>
             <li class="nav-item">
               <th:block th:if="${target} == 'favorite'">
-                <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link active">
+                <a th:href="@{/v2/index(target=${'favorite'})}" class="nav-link active">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Favorite Dashboard</p>
                 </a>
               </th:block>
               <th:block th:unless="${target} == 'favorite'">
-                <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+                <a th:href="@{/v2/index(target=${'favorite'})}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Favorite Dashboard</p>
                 </a>
@@ -95,13 +95,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+              <a th:href="@{/v2/edinet-list}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
+              <a th:href="@{/v2/edinet-list(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
@@ -119,25 +119,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation" class="nav-link">
+              <a th:href="@{/v2/valuation}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'industry'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Industry Dashboard</p>
               </a>
@@ -159,7 +159,7 @@
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
+              <li class="breadcrumb-item"><a th:href="@{/v2/index}">Home</a></li>
               <li class="breadcrumb-item active">Corporate Dashboard</li>
             </ol>
           </div>
@@ -186,7 +186,7 @@
               </div>
               <div class="card-body">
                 <div class="form-group">
-                  <form method="post" th:action="@{/fundanalyzer/v1/document/analysis}">
+                  <form method="post" th:action="@{/v1/document/analysis}">
                     <div class="input-group">
                       <label for="calender">Date range:</label>
                       <div class="input-group-prepend">
@@ -209,7 +209,7 @@
               </div>
               <div class="card-body">
                 <div class="form-group">
-                  <form method="post" th:action="@{/fundanalyzer/v1/scrape/id}">
+                  <form method="post" th:action="@{/v1/scrape/id}">
                     <div class="input-group">
                       <label for="documentId">Document ID:</label>
                       <div class="input-group-prepend">
@@ -249,7 +249,7 @@
                              target="_blank">
                         証券コード
                       </a></td>
-                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                      <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
                         会社名
                       </a></td>
                       <td th:text="${company.submitDate}">提出日</td>
@@ -263,7 +263,7 @@
                     <tr th:unless="${company.isMainReport()}">
                       <td><a th:text="${company.code}" th:href="'https://minkabu.jp/stock/'+${company.code}"
                              target="_blank">証券コード</a></td>
-                      <td><a th:text="${company.name}" th:href="@{'/fundanalyzer/v2/corporate?code='+${company.code}}">
+                      <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
                         会社名
                       </a></td>
                       <td th:text="${company.submitDate}">提出日</td>
@@ -286,23 +286,23 @@
 
 <div layout:fragment="script">
   <!-- InputMask -->
-  <script src="../../plugins/moment/moment.min.js"></script>
-  <script src="../../plugins/inputmask/jquery.inputmask.min.js"></script>
+  <script th:src="@{/plugins/moment/moment.min.js}"></script>
+  <script th:src="@{/plugins/inputmask/jquery.inputmask.min.js}"></script>
   <!-- date-range-picker -->
-  <script src="../../plugins/daterangepicker/daterangepicker.js"></script>
+  <script th:src="@{/plugins/daterangepicker/daterangepicker.js}"></script>
   <!-- Plugins -->
-  <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
-  <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-  <script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-  <script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-  <script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-  <script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-  <script src="../../plugins/jszip/jszip.min.js"></script>
-  <script src="../../plugins/pdfmake/pdfmake.min.js"></script>
-  <script src="../../plugins/pdfmake/vfs_fonts.js"></script>
-  <script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-  <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
-  <script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+  <script th:src="@{/plugins/datatables/jquery.dataTables.min.js}"></script>
+  <script th:src="@{/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js}"></script>
+  <script th:src="@{/plugins/datatables-responsive/js/dataTables.responsive.min.js}"></script>
+  <script th:src="@{/plugins/datatables-responsive/js/responsive.bootstrap4.min.js}"></script>
+  <script th:src="@{/plugins/datatables-buttons/js/dataTables.buttons.min.js}"></script>
+  <script th:src="@{/plugins/datatables-buttons/js/buttons.bootstrap4.min.js}"></script>
+  <script th:src="@{/plugins/jszip/jszip.min.js}"></script>
+  <script th:src="@{/plugins/pdfmake/pdfmake.min.js}"></script>
+  <script th:src="@{/plugins/pdfmake/vfs_fonts.js}"></script>
+  <script th:src="@{/plugins/datatables-buttons/js/buttons.html5.min.js}"></script>
+  <script th:src="@{/plugins/datatables-buttons/js/buttons.print.min.js}"></script>
+  <script th:src="@{/plugins/datatables-buttons/js/buttons.colVis.min.js}"></script>
 
   <!-- Page specific script -->
   <script>

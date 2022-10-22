@@ -31,7 +31,7 @@ public class ValuationPresenter {
      * @param model   model
      * @return Index
      */
-    @GetMapping("fundanalyzer/v2/valuation")
+    @GetMapping("/v2/valuation")
     public String valuationView(
             @RequestParam(name = "target", required = false) final String target,
             @RequestParam(name = "message", required = false) final String message,

@@ -1,9 +1,13 @@
+server:
+  servlet:
+    context-path: /fundanalyzer
+
 spring:
   profiles:
     # dev | prod
     active: dev
   application:
-    name: fundanalyzer
+    name: @pom.artifactId@
 
   sleuth:
     enabled: true

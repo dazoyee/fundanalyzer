@@ -23,25 +23,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index" class="nav-link">
+              <a th:href="@{/v2/index}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+              <a th:href="@{/v2/index(target=${'quart'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Quart Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
+              <a th:href="@{/v2/index(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+              <a th:href="@{/v2/index(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
@@ -59,13 +59,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+              <a th:href="@{/v2/edinet-list}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
+              <a th:href="@{/v2/edinet-list(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
@@ -83,25 +83,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation" class="nav-link">
+              <a th:href="@{/v2/valuation}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'industry'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Industry Dashboard</p>
               </a>
@@ -122,7 +122,7 @@
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
+              <li class="breadcrumb-item"><a th:href="@{/v2/index}">Home</a></li>
               <li class="breadcrumb-item active">Error</li>
             </ol>
           </div>

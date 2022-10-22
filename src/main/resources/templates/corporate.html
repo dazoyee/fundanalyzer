@@ -24,25 +24,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index" class="nav-link">
+              <a th:href="@{/v2/index}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=quart" class="nav-link">
+              <a th:href="@{/v2/index(target=${'quart'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Quart Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=all" class="nav-link">
+              <a th:href="@{/v2/index(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/index?target=favorite" class="nav-link">
+              <a th:href="@{/v2/index(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
@@ -60,13 +60,13 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list" class="nav-link">
+              <a th:href="@{/v2/edinet-list}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/edinet-list?target=all" class="nav-link">
+              <a th:href="@{/v2/edinet-list(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
@@ -84,25 +84,25 @@
           </a>
           <ul class="nav nav-treeview">
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation" class="nav-link">
+              <a th:href="@{/v2/valuation}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Main Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=all" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'all'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>All Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=favorite" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'favorite'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Favorite Dashboard</p>
               </a>
             </li>
             <li class="nav-item">
-              <a href="/fundanalyzer/v2/valuation?target=industry" class="nav-link">
+              <a th:href="@{/v2/valuation(target=${'industry'})}" class="nav-link">
                 <i class="far fa-circle nav-icon"></i>
                 <p>Industry Dashboard</p>
               </a>
@@ -124,7 +124,7 @@
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="/fundanalyzer/v2/index">Home</a></li>
+              <li class="breadcrumb-item"><a th:href="@{/v2/index}">Home</a></li>
               <li class="breadcrumb-item active">Corporate</li>
             </ol>
           </div>
@@ -158,7 +158,7 @@
           <h3 class="m-1" th:text="${#strings.substring(corporate.code, 0, 4)} + ' : '+ ${corporate.name}"></h3>
         </div>
         <div class="col-1">
-          <form method="post" th:action="@{/fundanalyzer/v2/evaluate}">
+          <form method="post" th:action="@{/v2/evaluate}">
             <input type="hidden" th:value="${corporate.code}" name="code">
             <button type="submit" class="btn btn-outline-secondary">評価する</button>
           </form>
@@ -225,7 +225,7 @@
                 <div class="col-12 col-sm-1">
                   <div class="info-box bg-light">
                     <div class="info-box-content info-box-icon">
-                      <form method="post" th:action="@{/fundanalyzer/v2/favorite/company}">
+                      <form method="post" th:action="@{/v2/favorite/company}">
                         <input type="hidden" th:value="${corporate.code}" name="code">
                         <button type="submit" class="btn">
                           <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
@@ -812,7 +812,7 @@
                     <div class="tab-pane fade" id="stock-price" role="tabpanel" aria-labelledby="stock-price-tab">
                       <div class="row mb-3">
                         <div class="col-12">
-                          <form method="post" th:action="@{/fundanalyzer/v1/import/stock/code}">
+                          <form method="post" th:action="@{/v1/import/stock/code}">
                             <input type="hidden" name="code" th:value="${corporate.code}"/>
                             <button type="submit" class="btn btn-block btn-outline-secondary">株価取得</button>
                           </form>

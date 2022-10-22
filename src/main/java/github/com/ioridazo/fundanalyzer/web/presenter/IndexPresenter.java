@@ -35,7 +35,7 @@ public class IndexPresenter {
      * @param model   model
      * @return Index
      */
-    @GetMapping("fundanalyzer/v2/index")
+    @GetMapping("/v2/index")
     public String corporateView(
             @RequestParam(name = "target", required = false) final String target,
             @RequestParam(name = "message", required = false) final String message,
