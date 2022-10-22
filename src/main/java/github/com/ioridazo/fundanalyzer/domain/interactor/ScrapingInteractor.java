@@ -39,9 +39,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 @Component
 public class ScrapingInteractor implements ScrapingUseCase {
@@ -233,9 +235,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
      */
     Pair<File, ScrapingKeywordEntity> findTargetFile(
             final File targetFile, final FinancialStatementEnum fs, final Document document) {
-        final List<ScrapingKeywordEntity> scrapingKeywordList = scrapingKeywordDao.selectByFinancialStatementId(fs.getId());
-
-        for (final ScrapingKeywordEntity scrapingKeyword : scrapingKeywordList) {
+        for (final ScrapingKeywordEntity scrapingKeyword : sortedScrapingKeywordList(scrapingKeywordDao.selectByFinancialStatementId(fs.getId()))) {
             final Optional<File> findFile = xbrlScraping.findFile(targetFile, scrapingKeyword, document);
 
             if (findFile.isPresent()) {
@@ -243,6 +243,18 @@ public class ScrapingInteractor implements ScrapingUseCase {
             }
         }
         throw new FundanalyzerFileException("キーワードに合致するファイルが存在しませんでした。");
+    }
+
+    /**
+     * スクレイピングするためのキーワードを並び替える
+     *
+     * @param list スクレイピングキーワードリスト
+     * @return スクレイピングキーワードリスト
+     */
+    List<ScrapingKeywordEntity> sortedScrapingKeywordList(final List<ScrapingKeywordEntity> list) {
+        return list.stream()
+                .sorted(Comparator.comparing(e -> e.getPriority().orElse(99)))
+                .collect(Collectors.toList());
     }
 
     /**

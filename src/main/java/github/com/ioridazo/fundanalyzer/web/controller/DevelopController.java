@@ -87,6 +87,6 @@ public class DevelopController {
         viewEdinetUseCase.updateView(inputData);
 
         model.addAttribute("companies", viewService.getCorporateView());
-        return "redirect:" + UriComponentsBuilder.fromUriString("/fundanalyzer/v2/index").toUriString();
+        return "redirect:" + UriComponentsBuilder.fromUriString("/v2/index").toUriString();
     }
 }

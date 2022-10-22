@@ -183,10 +183,18 @@ public class ValuationInteractor implements ValuationUseCase {
      */
     Optional<StockPriceEntity> findPresentStock(final String companyCode, final LocalDate targetDate) {
         int i = 0;
+        // 月を跨がないように株価を取得することを理想としている
         while (i < 5) {
-            final Optional<StockPriceEntity> stock = stockSpecification.findStock(companyCode, targetDate.plusDays(i));
-            if (stock.map(StockPriceEntity::getStockPrice).isPresent()) {
-                return stock;
+            if (Stream.of(27, 28, 29, 30, 31).anyMatch(day -> targetDate.getDayOfMonth() == day)) {
+                final Optional<StockPriceEntity> stock = stockSpecification.findStock(companyCode, targetDate.minusDays(i));
+                if (stock.map(StockPriceEntity::getStockPrice).isPresent()) {
+                    return stock;
+                }
+            } else {
+                final Optional<StockPriceEntity> stock = stockSpecification.findStock(companyCode, targetDate.plusDays(i));
+                if (stock.map(StockPriceEntity::getStockPrice).isPresent()) {
+                    return stock;
+                }
             }
             i++;
         }

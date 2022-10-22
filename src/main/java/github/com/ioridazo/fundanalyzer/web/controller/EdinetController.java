@@ -21,8 +21,8 @@ import java.time.LocalDate;
 public class EdinetController {
 
     private static final String REDIRECT = "redirect:";
-    private static final URI V2_EDINET_PATH = URI.create("/fundanalyzer/v2/edinet-list");
-    private static final URI V2_EDINET_DETAIL_PATH = URI.create("/fundanalyzer/v2/edinet-list-detail");
+    private static final URI V2_EDINET_PATH = URI.create("/v2/edinet-list");
+    private static final URI V2_EDINET_DETAIL_PATH = URI.create("/v2/edinet-list-detail");
 
     private final AnalysisService analysisService;
     private final EdinetService edinetService;
@@ -42,7 +42,7 @@ public class EdinetController {
      *
      * @return EdinetList
      */
-    @GetMapping("fundanalyzer/v1/company")
+    @GetMapping("/v1/company")
     public String updateCompany() {
         edinetService.updateCompany();
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)
@@ -55,7 +55,7 @@ public class EdinetController {
      *
      * @return EdinetList
      */
-    @GetMapping("fundanalyzer/v1/update/edinet/view")
+    @GetMapping("/v1/update/edinet/view")
     public String updateEdinetView() {
         viewService.updateEdinetView();
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)
@@ -70,7 +70,7 @@ public class EdinetController {
      * @param toDate   提出日
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v2/edinet-list")
+    @PostMapping("/v2/edinet-list")
     public String saveEdinet(final String fromDate, final String toDate) {
         edinetService.saveEdinetList(BetweenDateInputData.of(LocalDate.parse(fromDate), LocalDate.parse(toDate)));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH).toUriString();
@@ -82,7 +82,7 @@ public class EdinetController {
      * @param date 提出日
      * @return EdinetList
      */
-    @PostMapping("fundanalyzer/v1/update/edinet-list")
+    @PostMapping("/v1/update/edinet-list")
     public String updateEdinetList(final String date) {
         viewService.updateEdinetListView(DateInputData.of(LocalDate.parse(date)));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH).toUriString();
@@ -95,7 +95,7 @@ public class EdinetController {
      * @param inputData 財務諸表の登録情報
      * @return EdinetDetail
      */
-    @PostMapping("fundanalyzer/v1/fix-fundamental-value")
+    @PostMapping("/v1/fix-fundamental-value")
     public String registerFinancialStatementValue(
             @ModelAttribute("submitDate") final String date, final FinancialStatementInputData inputData) {
         final Result result = analysisService.registerFinancialStatementValue(inputData);
@@ -116,7 +116,7 @@ public class EdinetController {
      * @param documentId 書類ID
      * @return EdinetDetail
      */
-    @PostMapping("fundanalyzer/v1/update/all-done/status")
+    @PostMapping("/v1/update/all-done/status")
     public String updateAllDoneStatus(final String date, final String documentId) {
         final Result result = edinetService.updateAllDoneStatus(IdInputData.of(documentId));
         if (Result.OK.equals(result)) {
@@ -135,7 +135,7 @@ public class EdinetController {
      * @param date 提出日
      * @return EdinetDetail
      */
-    @PostMapping("fundanalyzer/v1/analyze/date")
+    @PostMapping("/v1/analyze/date")
     public String analyzeByDate(final String date) {
         analysisService.analyzeByDate(DateInputData.of(LocalDate.parse(date)));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
@@ -149,7 +149,7 @@ public class EdinetController {
      * @param documentId 書類ID
      * @return EdinetDetail
      */
-    @PostMapping("fundanalyzer/v1/analyze/id")
+    @PostMapping("/v1/analyze/id")
     public String analyzeById(final String date, final String documentId) {
         analysisService.analyzeById(IdInputData.of(documentId));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
@@ -163,7 +163,7 @@ public class EdinetController {
      * @param documentId 書類ID
      * @return EdinetDetail
      */
-    @PostMapping("fundanalyzer/v1/remove/document")
+    @PostMapping("/v1/remove/document")
     public String removeDocument(final String submitDate, final String documentId) {
         edinetService.removeDocument(IdInputData.of(documentId));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)

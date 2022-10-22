@@ -31,7 +31,7 @@ public class EdinetPresenter {
      * @param model   model
      * @return EdinetList
      */
-    @GetMapping("fundanalyzer/v2/edinet-list")
+    @GetMapping("/v2/edinet-list")
     public String edinetListView(
             @RequestParam(name = "target", required = false) final String target,
             @RequestParam(name = "message", required = false) final String message,

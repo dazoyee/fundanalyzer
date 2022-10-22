@@ -27,7 +27,7 @@ public class EdinetDetailPresenter {
      * @param model      model
      * @return EdinetDetail
      */
-    @GetMapping("fundanalyzer/v2/edinet-list-detail")
+    @GetMapping("/v2/edinet-list-detail")
     public String edinetListDetail(@RequestParam(name = "submitDate") final String submitDate, final Model model) {
         model.addAttribute("edinetDetail", viewService.getEdinetDetailView(DateInputData.of(LocalDate.parse(submitDate))));
         return EDINET_DETAIL;
