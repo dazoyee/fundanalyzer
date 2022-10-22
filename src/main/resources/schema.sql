@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `scraping_keyword`
     `id`                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `financial_statement_id` VARCHAR(10)     NOT NULL COMMENT '財務諸表ID',
     `keyword`                VARCHAR(256)    NOT NULL COMMENT 'キーワード',
+    `priority`               INT(2)                   DEFAULT NULL COMMENT '優先度',
     `remarks`                VARCHAR(100)             DEFAULT NULL COMMENT '備考',
     `created_at`             DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),

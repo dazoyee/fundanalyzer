@@ -34,6 +34,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -133,7 +134,7 @@ class ScrapingInteractorTest {
         Company company = defaultCompany();
 
         File file = new File("file");
-        ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null);
+        ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null, null);
 
         @BeforeEach
         void setUp() {
@@ -275,7 +276,7 @@ class ScrapingInteractorTest {
         Company company = defaultCompany();
 
         File file = new File("file");
-        ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null);
+        ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null, null);
 
         @BeforeEach
         void setUp() {
@@ -340,7 +341,7 @@ class ScrapingInteractorTest {
         Company company = defaultCompany();
 
         File file = new File("file");
-        ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null);
+        ScrapingKeywordEntity scrapingKeyword = new ScrapingKeywordEntity(null, null, "keyword", null, null, null);
 
         @BeforeEach
         void setUp() {
@@ -400,6 +401,7 @@ class ScrapingInteractorTest {
                 null,
                 null,
                 "keyword",
+                null,
                 "remarks",
                 null
         );
@@ -433,6 +435,48 @@ class ScrapingInteractorTest {
             when(xbrlScraping.findFile(targetFile, scrapingKeyword, document)).thenReturn(Optional.empty());
 
             assertThrows(FundanalyzerFileException.class, () -> scrapingInteractor.findTargetFile(targetFile, FinancialStatementEnum.BALANCE_SHEET, document));
+        }
+    }
+
+    @Nested
+    class sortedScrapingKeywordList {
+
+        @DisplayName("priority : スクレイピングするためのキーワードを並び替える")
+        @Test
+        void priority() {
+            final List<ScrapingKeywordEntity> list = List.of(
+                    new ScrapingKeywordEntity(
+                            1,
+                            null,
+                            "keyword",
+                            null,
+                            "remarks",
+                            null
+                    ),
+                    new ScrapingKeywordEntity(
+                            2,
+                            null,
+                            "keyword",
+                            1,
+                            "remarks",
+                            null
+                    ),
+                    new ScrapingKeywordEntity(
+                            3,
+                            null,
+                            "keyword",
+                            2,
+                            "remarks",
+                            null
+                    )
+            );
+
+            var actual = scrapingInteractor.sortedScrapingKeywordList(list);
+            assertAll(
+                    () -> assertEquals(2, actual.get(0).getId()),
+                    () -> assertEquals(3, actual.get(1).getId()),
+                    () -> assertEquals(1, actual.get(2).getId())
+            );
         }
     }
 

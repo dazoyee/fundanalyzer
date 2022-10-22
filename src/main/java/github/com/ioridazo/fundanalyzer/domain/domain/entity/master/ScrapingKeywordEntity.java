@@ -9,6 +9,7 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -24,8 +25,18 @@ public class ScrapingKeywordEntity {
 
     private final String keyword;
 
+    private final Integer priority;
+
     private final String remarks;
 
     @Column(updatable = false)
     private final LocalDateTime createdAt;
+
+    public Optional<Integer> getPriority() {
+        return Optional.ofNullable(priority);
+    }
+
+    public Optional<String> getRemarks() {
+        return Optional.ofNullable(remarks);
+    }
 }

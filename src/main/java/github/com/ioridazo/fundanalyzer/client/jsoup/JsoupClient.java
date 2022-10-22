@@ -122,7 +122,7 @@ public class JsoupClient {
                 MINKABU,
                 code,
                 UriComponentsBuilder.fromUriString(properties.getRestClient().get(MINKABU).getBaseUri())
-                        .path("/stock/{code}")
+                        .path("/stock/{code}/analysis")
                         .buildAndExpand(code.substring(0, 4))
                         .toUriString()
         ));

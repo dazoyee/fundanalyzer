@@ -39,6 +39,7 @@ class XbrlScrapingTest {
                     null,
                     "1",
                     "jpcrp_cor:BalanceSheetTextBlock",
+                    null,
                     "貸借対照表",
                     null
             );
@@ -59,6 +60,7 @@ class XbrlScrapingTest {
                     null,
                     "1",
                     "jpcrp_cor:BalanceSheetTextBlock",
+                    null,
                     "貸借対照表",
                     null
             );
@@ -76,6 +78,7 @@ class XbrlScrapingTest {
                     null,
                     "1",
                     "jpcrp_cor:BalanceSheetTextBlock",
+                    null,
                     "貸借対照表",
                     null
             );

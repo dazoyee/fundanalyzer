@@ -40,7 +40,7 @@ public class CorporatePresenter {
      * @param model model
      * @return BrandDetail
      */
-    @GetMapping("fundanalyzer/v2/corporate")
+    @GetMapping("/v2/corporate")
     public String corporateDetailView(
             @RequestParam(name = "code") final String code, final Model model) {
         final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
