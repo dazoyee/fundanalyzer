@@ -61,7 +61,8 @@ class ValuationSpecificationTest {
                     null,
                     null,
                     null,
-                    false
+                    false,
+                    true
             );
         }
 
@@ -144,7 +145,8 @@ class ValuationSpecificationTest {
                     null,
                     null,
                     null,
-                    false
+                    false,
+                    true
             )));
             Mockito.when(valuationDao.selectByCode("code")).thenReturn(List.of(
                     valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-09")),
@@ -170,7 +172,8 @@ class ValuationSpecificationTest {
                     null,
                     null,
                     null,
-                    false
+                    false,
+                    true
             )));
             Mockito.when(valuationDao.selectByCode("code")).thenReturn(List.of(
                     valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2021-08-11")),
@@ -224,7 +227,8 @@ class ValuationSpecificationTest {
                     null,
                     null,
                     null,
-                    false
+                    false,
+                    true
             )));
             Mockito.when(valuationDao.selectByCode("code")).thenReturn(List.of(
                     valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-01")),

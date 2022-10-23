@@ -40,6 +40,8 @@ public class Company {
 
     private final boolean favorite;
 
+    private final boolean lived;
+
     public static Company of(final CompanyEntity entity, final String industryName) {
         return new Company(
                 entity.getCode().orElse(null),
@@ -51,7 +53,8 @@ public class Company {
                 Consolidated.fromValue(entity.getConsolidated()),
                 entity.getCapitalStock(),
                 entity.getSettlementDate(),
-                Objects.equals(entity.getFavorite(), "1")
+                Objects.equals(entity.getFavorite(), "1"),
+                Objects.equals(entity.getRemoved(), "0")
         );
     }
 }

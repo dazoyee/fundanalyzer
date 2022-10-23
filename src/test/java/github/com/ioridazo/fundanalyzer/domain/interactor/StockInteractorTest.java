@@ -97,7 +97,8 @@ class StockInteractorTest {
                 null,
                 null,
                 null,
-                false
+                false,
+                true
         );
     }
 

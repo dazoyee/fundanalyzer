@@ -129,6 +129,23 @@ public class JsoupClient {
     }
 
     /**
+     * みんかぶの会社コードによる上場状況を取得する
+     *
+     * @param code 会社コード
+     * @return boolean
+     */
+    public boolean isLivedCompanyFromMinkabu(final String code) {
+        return MinkabuResultBean.isLivedCompany(getForHtml(
+                MINKABU,
+                code,
+                UriComponentsBuilder.fromUriString(properties.getRestClient().get(MINKABU).getBaseUri())
+                        .path("/stock/{code}")
+                        .buildAndExpand(code.substring(0, 4))
+                        .toUriString()
+        ));
+    }
+
+    /**
      * Yahoo!Financeの会社コードによる株価情報予想を取得する
      *
      * @param code 会社コード

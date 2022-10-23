@@ -40,4 +40,12 @@ public interface CompanyUseCase {
      */
     @NewSpan
     boolean updateFavoriteCompany(CodeInputData inputData);
+
+    /**
+     * 企業の除外
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    void updateRemovedCompanyIfNotLived(CodeInputData inputData);
 }
