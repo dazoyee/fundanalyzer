@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
@@ -40,6 +41,7 @@ public class CompanyInteractor implements CompanyUseCase {
     private final FileOperator fileOperator;
     private final CsvCommander csvCommander;
     private final SeleniumClient seleniumClient;
+    private final JsoupClient jsoupClient;
 
     @Value("${app.settings.file.path.company.company}")
     String pathCompany;
@@ -51,12 +53,14 @@ public class CompanyInteractor implements CompanyUseCase {
             final CompanySpecification companySpecification,
             final FileOperator fileOperator,
             final CsvCommander csvCommander,
-            final SeleniumClient seleniumClient) {
+            final SeleniumClient seleniumClient,
+            final JsoupClient jsoupClient) {
         this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.fileOperator = fileOperator;
         this.csvCommander = csvCommander;
         this.seleniumClient = seleniumClient;
+        this.jsoupClient = jsoupClient;
     }
 
     /**
@@ -158,6 +162,39 @@ public class CompanyInteractor implements CompanyUseCase {
                     System.currentTimeMillis() - startTime
             ));
             throw new FundanalyzerNotExistException();
+        }
+    }
+
+    /**
+     * 上場廃止済ならば企業除外する
+     *
+     * @param inputData 企業コード
+     */
+    @Override
+    public void updateRemovedCompanyIfNotLived(final CodeInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+        final boolean isLived = jsoupClient.isLivedCompanyFromMinkabu(inputData.getCode());
+
+        if (!isLived) {
+            final Optional<Company> company = companySpecification.findCompanyByCode(inputData.getCode());
+            if (company.isPresent()) {
+                companySpecification.updateRemoved(company.get());
+
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("対象の企業は上場廃止済みのため除外しました。\t企業コード:{0}", inputData.getCode()),
+                        Category.COMPANY,
+                        Process.UPDATE,
+                        System.currentTimeMillis() - startTime
+                ));
+            } else {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("対象の企業は存在しませんでした。\t企業コード:{0}", inputData.getCode()),
+                        Category.COMPANY,
+                        Process.UPDATE,
+                        System.currentTimeMillis() - startTime
+                ));
+                throw new FundanalyzerNotExistException();
+            }
         }
     }
 

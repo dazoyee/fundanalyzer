@@ -161,6 +161,15 @@ public class CompanySpecification {
     }
 
     /**
+     * 除外フラグを有効にする
+     *
+     * @param company 企業情報
+     */
+    public void updateRemoved(final Company company) {
+        companyDao.update(CompanyEntity.ofUpdateRemoved(company, nowLocalDateTime()));
+    }
+
+    /**
      * 処理対象となる企業情報リストを取得する
      * <ul>
      *    <li>キャッシュがあるときはキャッシュから取得する<li/>

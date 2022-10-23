@@ -76,6 +76,23 @@ public class CompanyEntity {
         );
     }
 
+    public static CompanyEntity ofUpdateRemoved(final Company company, final LocalDateTime updatedAt) {
+        return new CompanyEntity(
+                null,
+                null,
+                null,
+                company.getEdinetCode(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                "1",
+                null,
+                updatedAt
+        );
+    }
+
     public static CompanyEntity ofInsert(
             final Integer industryId,
             final EdinetCsvResultBean resultBean,
