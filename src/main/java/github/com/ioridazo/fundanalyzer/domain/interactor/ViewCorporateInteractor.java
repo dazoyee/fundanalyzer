@@ -325,6 +325,10 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             }
         });
 
-        viewList.parallelStream().forEach(viewSpecification::upsert);
+        if (viewList.size() > 10) {
+            viewList.parallelStream().forEach(viewSpecification::upsert);
+        } else {
+            viewList.forEach(viewSpecification::upsert);
+        }
     }
 }
