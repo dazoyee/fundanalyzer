@@ -148,7 +148,8 @@ class CompanyInteractorTest {
                     null,
                     null,
                     null,
-                    false
+                    false,
+                    true
             );
         }
     }

@@ -86,6 +86,7 @@ public class CompanySpecification {
         return companyDao.selectByIndustryId(industryId).stream()
                 .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
+                .filter(Company::isLived)
                 .collect(Collectors.toList());
     }
 
@@ -187,6 +188,7 @@ public class CompanySpecification {
     public List<Company> findAllTargetCompanies() {
         return companyDao.selectByCodeIsNotNull().stream()
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
+                .filter(Company::isLived)
                 .filter(company -> industrySpecification.isTarget(company.getIndustryId()))
                 .collect(Collectors.toList());
     }

@@ -489,7 +489,8 @@ class AnalyzeInteractorTest {
                 null,
                 null,
                 null,
-                false
+                false,
+                true
         );
     }
 }

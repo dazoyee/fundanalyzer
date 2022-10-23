@@ -649,7 +649,8 @@ class ViewCorporateInteractorTest {
                 null,
                 null,
                 null,
-                false
+                false,
+                true
         );
     }
 

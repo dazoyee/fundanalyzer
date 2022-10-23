@@ -24,7 +24,8 @@ class CompanyEntityTest {
                         null,
                         null,
                         null,
-                        false
+                        false,
+                        true
                 ),
                 LocalDateTime.of(2022, 6, 18, 23, 0)
         );
