@@ -116,6 +116,17 @@ public class ViewService {
      * 企業詳細情報
      *
      * @param inputData 企業コード
+     * @return 企業詳細
+     */
+    @NewSpan
+    public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData) {
+        return viewCorporateUseCase.viewCorporateDetail(inputData);
+    }
+
+    /**
+     * 企業詳細情報
+     *
+     * @param inputData 企業コード
      * @param target    表示種別
      * @return 企業詳細
      */
