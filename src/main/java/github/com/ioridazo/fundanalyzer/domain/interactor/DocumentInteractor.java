@@ -100,7 +100,11 @@ public class DocumentInteractor implements DocumentUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            documentList.parallelStream().forEach(this::scrape);
+            if (documentList.size() > 10) {
+                documentList.parallelStream().forEach(this::scrape);
+            } else {
+                documentList.forEach(this::scrape);
+            }
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
@@ -197,7 +201,11 @@ public class DocumentInteractor implements DocumentUseCase {
                     System.currentTimeMillis() - startTime
             ));
         } else {
-            targetList.parallelStream().forEach(this::scrape);
+            if (targetList.size() > 10) {
+                targetList.parallelStream().forEach(this::scrape);
+            } else {
+                targetList.forEach(this::scrape);
+            }
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(

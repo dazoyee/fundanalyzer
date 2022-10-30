@@ -155,7 +155,14 @@
     <section class="content">
       <div class="row mb-2">
         <div class="col-11">
-          <h3 class="m-1" th:text="${#strings.substring(corporate.code, 0, 4)} + ' : '+ ${corporate.name}"></h3>
+          <a th:if="${backwardCode != null}"
+             th:href="@{/v2/corporate(code=${#strings.substring(backwardCode, 0, 4)},target=${target})}"
+             class="fa-solid fa-angles-left" style="color: grey"></a>
+          <span class="m-1" th:text="${#strings.substring(corporate.code, 0, 4)} + ' : '+ ${corporate.name}"
+                style="font-size: 28px"></span>
+          <a th:if="${forwardCode != null}"
+             th:href="@{/v2/corporate(code=${#strings.substring(forwardCode, 0, 4)},target=${target})}"
+             class="fa-solid fa-angles-right" style="color: grey"></a>
         </div>
         <div class="col-1">
           <form method="post" th:action="@{/v2/evaluate}">

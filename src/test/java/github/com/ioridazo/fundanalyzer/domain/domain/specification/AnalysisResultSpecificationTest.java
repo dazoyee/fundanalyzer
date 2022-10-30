@@ -332,6 +332,7 @@ class AnalysisResultSpecificationTest {
                 null,
                 null,
                 null,
+                false,
                 false
         );
 
@@ -448,6 +449,7 @@ class AnalysisResultSpecificationTest {
             null,
             null,
             null,
-            false
+            false,
+            true
     );
 }

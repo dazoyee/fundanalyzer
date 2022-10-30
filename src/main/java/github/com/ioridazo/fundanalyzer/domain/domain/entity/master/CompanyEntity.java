@@ -9,7 +9,6 @@ import org.seasar.doma.Id;
 import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -46,6 +45,9 @@ public class CompanyEntity {
     // お気に入り
     private final String favorite;
 
+    // 除外フラグ
+    private final String removed;
+
     // 登録日
     @Column(updatable = false)
     private final LocalDateTime createdAt;
@@ -55,22 +57,6 @@ public class CompanyEntity {
 
     public Optional<String> getCode() {
         return Optional.ofNullable(code);
-    }
-
-    public static CompanyEntity ofNull() {
-        return new CompanyEntity(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
     }
 
     public static CompanyEntity ofUpdateFavorite(final Company company, final LocalDateTime updatedAt) {
@@ -84,6 +70,24 @@ public class CompanyEntity {
                 null,
                 null,
                 company.isFavorite() ? "0" : "1",   // 反転させるだけ
+                null,
+                null,
+                updatedAt
+        );
+    }
+
+    public static CompanyEntity ofUpdateRemoved(final Company company, final LocalDateTime updatedAt) {
+        return new CompanyEntity(
+                null,
+                null,
+                null,
+                company.getEdinetCode(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                "1",
                 null,
                 updatedAt
         );
@@ -103,6 +107,7 @@ public class CompanyEntity {
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
                 "0",
+                "0",
                 createdAt,
                 createdAt
         );
@@ -121,6 +126,7 @@ public class CompanyEntity {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                null,
                 null,
                 createdAt,
                 createdAt
@@ -142,6 +148,7 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
+                "0",
                 "0",
                 createdAt,
                 createdAt

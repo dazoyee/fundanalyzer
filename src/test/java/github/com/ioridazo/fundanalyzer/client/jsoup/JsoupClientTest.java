@@ -36,6 +36,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -396,6 +397,56 @@ class JsoupClientTest {
                     .toUriString();
 
             System.out.println(Jsoup.connect(url).get());
+        }
+    }
+
+    @Nested
+    class isLivedCompanyFromMinkabu {
+
+        @DisplayName("isLivedCompanyFromMinkabu : 実際にみんかぶの会社コードによる上場状況を取得する")
+//        @Test
+        void isLivedCompanyFromMinkabu_test() {
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(10000));
+            jsoup.setReadTimeout(Duration.ofMillis(10000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(0));
+            var minkabu = new RestClientProperties.Settings();
+            minkabu.setBaseUri("https://minkabu.jp");
+
+            var properties = new RestClientProperties(Map.of("jsoup", jsoup, "minkabu", minkabu));
+            client = spy(new JsoupClient(
+                    properties,
+                    Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
+            ));
+
+            var code = "9434";
+            var actual = client.isLivedCompanyFromMinkabu(code);
+
+            assertTrue(actual);
+        }
+
+        @DisplayName("isLivedCompanyFromMinkabu : みんかぶの会社コードによる上場状況を取得する")
+        @Test
+        void isLivedCompanyFromMinkabu_ok() throws IOException {
+            var code = "9999";
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/isLivedCompanyFromMinkabu/minkabu_ok.html");
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
+
+            assertTrue(client.isLivedCompanyFromMinkabu(code));
+        }
+
+        @DisplayName("isLivedCompanyFromMinkabu : みんかぶの会社コードによる上場状況を取得する")
+        @Test
+        void isLivedCompanyFromMinkabu_ng() throws IOException {
+            var code = "9999";
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/isLivedCompanyFromMinkabu/minkabu_ng.html");
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
+
+            assertFalse(client.isLivedCompanyFromMinkabu(code));
         }
     }
 

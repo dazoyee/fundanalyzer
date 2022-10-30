@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
@@ -114,16 +115,19 @@ public class ViewService {
     /**
      * 企業詳細情報
      *
+     * @param inputData 企業コード
+     * @param target    表示種別
      * @return 企業詳細
      */
     @NewSpan
-    public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData) {
-        return viewCorporateUseCase.viewCorporateDetail(inputData);
+    public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData, final Target target) {
+        return viewCorporateUseCase.viewCorporateDetail(inputData, target);
     }
 
     /**
      * EDINET詳細リスト
      *
+     * @param inputData 提出日
      * @return 処理詳細情報
      */
     @NewSpan

@@ -4,7 +4,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'openjdk11'
+        jdk 'openjdk17'
     }
 
     options {
@@ -19,7 +19,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 print "===== チェックアウトを開始します ====="
-                 // git url: 'https://github.com/ioridazo/fundanalyzer.git', branch: 'develop'
+                // git url: 'https://github.com/ioridazo/fundanalyzer.git', branch: 'develop'
                 checkout scm
                 print "===== チェックアウトを正常に終了しました ====="
             }
@@ -28,47 +28,48 @@ pipeline {
         stage('Test') {
             steps {
                 print "===== テストを開始します ====="
-                bat "./mvnw clean clover:setup"
-                bat "./mvnw test surefire-report:report pmd:pmd pmd:cpd jacoco:report spotbugs:spotbugs clover:aggregate clover:clover"
+                bat "./mvnw clean"
+//                bat "./mvnw clean clover:setup"
+                bat "./mvnw test surefire-report:report pmd:pmd pmd:cpd jacoco:report spotbugs:spotbugs"
                 print "===== テストを正常に終了しました ====="
             }
         }
 
         stage('Analytics') {
             steps {
-                parallel (
-                    junit: {
-                        junit '**/target/surefire-reports/TEST-*.xml'
-                    },
-                    jacoco: {
-                        jacoco(
-                            execPattern: 'target/*.exec',
-                            classPattern: 'target/classes',
-                            sourcePattern: 'src/main/java',
-                            exclusionPattern: 'src/test*'
-                        )
-                    },
-                    pmd: {
-                        recordIssues(tools: [pmdParser(pattern: 'target/pmd.xml')])
-                    },
-                    cpd: {
-                        recordIssues(tools: [cpd(pattern: 'target/cpd.xml')])
-                    },
-                    spotBugs: {
-                        recordIssues(tools: [spotBugs(pattern: 'target/spotbugsXml.xml', useRankAsPriority: true)])
-                    },
-                    clover: {
-                        clover(
-                            cloverReportDir: 'target/site',
-                            cloverReportFileName: 'clover.xml',
-                            // optional, default is: method=70, conditional=80, statement=80
-                            healthyTarget: [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80],
-                            // optional, default is none
-                            unhealthyTarget: [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50],
-                            // optional, default is none
-                            failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]
-                        )
-                    }
+                parallel(
+                        junit: {
+                            junit '**/target/surefire-reports/TEST-*.xml'
+                        },
+                        jacoco: {
+                            jacoco(
+                                    execPattern: 'target/*.exec',
+                                    classPattern: 'target/classes',
+                                    sourcePattern: 'src/main/java',
+                                    exclusionPattern: 'src/test*'
+                            )
+                        },
+                        pmd: {
+                            recordIssues(tools: [pmdParser(pattern: 'target/pmd.xml')])
+                        },
+                        cpd: {
+                            recordIssues(tools: [cpd(pattern: 'target/cpd.xml')])
+                        },
+                        spotBugs: {
+                            recordIssues(tools: [spotBugs(pattern: 'target/spotbugsXml.xml', useRankAsPriority: true)])
+                        },
+                        clover: {
+                            clover(
+                                    cloverReportDir: 'target/site',
+                                    cloverReportFileName: 'clover.xml',
+                                    // optional, default is: method=70, conditional=80, statement=80
+                                    healthyTarget: [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80],
+                                    // optional, default is none
+                                    unhealthyTarget: [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50],
+                                    // optional, default is none
+                                    failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0]
+                            )
+                        }
                 )
             }
         }
@@ -87,21 +88,21 @@ pipeline {
                 print "===== ビルド成果物をNexusにアップロードします ====="
                 script {
                     def pom = readMavenPom file: 'pom.xml'
-                    nexusArtifactUploader (
-                        nexusVersion: 'nexus3',
-                        credentialsId: 'nexus3',
-                        protocol: 'http',
-                        nexusUrl: 'localhost:8081',
-                        repository: 'maven-snapshots',
-                        groupId: pom.groupId,
-                        version: pom.version,
-                        artifacts: [
-                            [
-                                artifactId: pom.artifactId,
-                                file: 'target/fundanalyzer-' + pom.version + '.jar',
-                                type: 'jar'
+                    nexusArtifactUploader(
+                            nexusVersion: 'nexus3',
+                            credentialsId: 'nexus3',
+                            protocol: 'http',
+                            nexusUrl: 'localhost:8081',
+                            repository: 'maven-snapshots',
+                            groupId: pom.groupId,
+                            version: pom.version,
+                            artifacts: [
+                                    [
+                                            artifactId: pom.artifactId,
+                                            file      : 'target/fundanalyzer-' + pom.version + '.jar',
+                                            type      : 'jar'
+                                    ]
                             ]
-                        ]
                     )
                 }
                 print "===== ビルド成果物を正常にアップロードしました ====="
@@ -120,7 +121,7 @@ pipeline {
                             '&maven.groupId=' + pom.groupId +
                             '&maven.artifactId=' + pom.artifactId +
                             '&maven.baseVersion=' + pom.version
-                            '&maven.extension=jar'
+                    '&maven.extension=jar'
                     env.TMP = 'C:\\fundanalyzer-develop\\bin\\tmp\\' + datetime + '\\'
                     env.JAR = 'fundanalyzer-' + pom.version + '.jar'
                     bat '''
@@ -182,7 +183,7 @@ pipeline {
             }
         }
 
-        stage('Clean'){
+        stage('Clean') {
             steps {
                 print "===== コンプリートを開始します ====="
                 script {
@@ -196,7 +197,7 @@ pipeline {
             }
         }
 
-        stage('Check'){
+        stage('Check') {
             steps {
                 print "===== 動作確認を開始します ====="
                 script {
@@ -218,23 +219,23 @@ pipeline {
     post {
         success {
             slackSend(
-                baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
-                channel: 'UKNK4SZPX',
-                color: 'good',
-                message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} SUCCESS\n${env.BUILD_URL}",
-                notifyCommitters: true,
-                tokenCredentialId: 'Slack Jenkins Bot'
+                    baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
+                    channel: 'UKNK4SZPX',
+                    color: 'good',
+                    message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} SUCCESS\n${env.BUILD_URL}",
+                    notifyCommitters: true,
+                    tokenCredentialId: 'Slack Jenkins Bot'
             )
         }
 
         failure {
             slackSend(
-                baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
-                channel: 'UKNK4SZPX',
-                color: 'danger',
-                message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} FAILED\n${env.BUILD_URL}",
-                notifyCommitters: true,
-                tokenCredentialId: 'Slack Jenkins Bot'
+                    baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
+                    channel: 'UKNK4SZPX',
+                    color: 'danger',
+                    message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} FAILED\n${env.BUILD_URL}",
+                    notifyCommitters: true,
+                    tokenCredentialId: 'Slack Jenkins Bot'
             )
         }
     }

@@ -14,10 +14,6 @@ public class IndexPresenter {
 
     private static final String INDEX = "index";
 
-    private static final String TARGET_QUART = "quart";
-    private static final String TARGET_ALL = "all";
-    private static final String TARGET_FAVORITE = "favorite";
-
     private static final String TARGET = "target";
     private static final String COMPANIES = "companies";
 
@@ -44,14 +40,14 @@ public class IndexPresenter {
             model.addAttribute("message", UriUtils.decode(message, "UTF-8"));
         }
 
-        if (TARGET_QUART.equals(target)) {
-            model.addAttribute(TARGET, TARGET_QUART);
+        if (Target.QUART.toValue().equals(target)) {
+            model.addAttribute(TARGET, Target.QUART.toValue());
             model.addAttribute(COMPANIES, viewService.getQuartCorporateView());
-        } else if (TARGET_ALL.equals(target)) {
-            model.addAttribute(TARGET, TARGET_ALL);
+        } else if (Target.ALL.toValue().equals(target)) {
+            model.addAttribute(TARGET, Target.ALL.toValue());
             model.addAttribute(COMPANIES, viewService.getAllCorporateView());
-        } else if (TARGET_FAVORITE.equals(target)) {
-            model.addAttribute(TARGET, TARGET_FAVORITE);
+        } else if (Target.FAVORITE.toValue().equals(target)) {
+            model.addAttribute(TARGET, Target.FAVORITE.toValue());
             model.addAttribute(COMPANIES, viewService.getFavoriteCorporateView());
         } else {
             model.addAttribute(COMPANIES, viewService.getCorporateView());

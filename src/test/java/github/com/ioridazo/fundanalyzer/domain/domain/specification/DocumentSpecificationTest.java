@@ -65,7 +65,8 @@ class DocumentSpecificationTest {
                 null,
                 null,
                 null,
-                false
+                false,
+                true
         );
         var document1 = defaultDocumentEntity(LocalDate.parse("2021-05-08"));
 

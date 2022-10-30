@@ -60,6 +60,7 @@ class StockSpecificationTest {
                 null,
                 null,
                 null,
+                false,
                 false
         );
 
@@ -277,7 +278,8 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
-                            false
+                            false,
+                            true
                     ),
                     new Company(
                             "code2",
@@ -289,7 +291,8 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
-                            false
+                            false,
+                            true
                     )));
             when(stockPriceDao.selectByCode("code1")).thenReturn(List.of(
                     new StockPriceEntity(

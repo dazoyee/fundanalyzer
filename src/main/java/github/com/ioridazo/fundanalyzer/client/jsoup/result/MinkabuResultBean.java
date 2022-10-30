@@ -5,6 +5,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.Objects;
+
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
 public class MinkabuResultBean {
@@ -62,5 +64,18 @@ public class MinkabuResultBean {
                                 .findFirst().orElse(null)
                 )
         );
+    }
+
+    public static boolean isLivedCompany(final Document document) {
+        return document
+                .select("div.md_stockBoard")
+                .select("div.md_stockBoard_header")
+                .select("div.notice-stock-status")
+                .select("em.fsl")
+                .stream()
+                .map(Element::text)
+                .findFirst()
+                .map(v -> !Objects.equals("上場廃止", v))
+                .orElse(true);
     }
 }

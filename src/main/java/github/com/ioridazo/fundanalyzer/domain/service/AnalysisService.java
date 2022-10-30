@@ -199,6 +199,8 @@ public class AnalysisService {
      */
     @NewSpan
     public void importStock(final CodeInputData inputData) {
+        // is lived?
+        companyUseCase.updateRemovedCompanyIfNotLived(inputData);
         // stock
         stockUseCase.importStockPrice(inputData, StockUseCase.Place.NIKKEI);
         stockUseCase.importStockPrice(inputData, StockUseCase.Place.KABUOJI3);

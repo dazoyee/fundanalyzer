@@ -2,11 +2,14 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
+import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
 import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +34,7 @@ class CompanyInteractorTest {
     private CompanySpecification companySpecification;
     private FileOperator fileOperator;
     private SeleniumClient seleniumClient;
+    private JsoupClient jsoupClient;
 
     private CompanyInteractor companyInteractor;
 
@@ -39,13 +43,15 @@ class CompanyInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
         seleniumClient = Mockito.mock(SeleniumClient.class);
+        jsoupClient = Mockito.mock(JsoupClient.class);
 
         companyInteractor = Mockito.spy(new CompanyInteractor(
                 Mockito.mock(IndustrySpecification.class),
                 companySpecification,
                 fileOperator,
                 Mockito.mock(CsvCommander.class),
-                seleniumClient
+                seleniumClient,
+                jsoupClient
         ));
         companyInteractor.pathCompany = "pathCompany";
         companyInteractor.pathCompanyZip = "pathCompanyZip";
@@ -103,6 +109,48 @@ class CompanyInteractorTest {
             when(seleniumClient.edinetCodeList(any())).thenReturn("fileName");
             doThrow(IOException.class).when(fileOperator).decodeZipFile(any(), any());
             assertThrows(FundanalyzerFileException.class, () -> companyInteractor.importCompanyInfo());
+        }
+    }
+
+    @Nested
+    class updateRemovedCompany {
+
+        @DisplayName("updateRemovedCompany : 除外フラグを有効にする")
+        @Test
+        void removed() {
+            var inputData = CodeInputData.of("99999");
+            when(jsoupClient.isLivedCompanyFromMinkabu("99999")).thenReturn(false);
+            when(companySpecification.findCompanyByCode("99999")).thenReturn(Optional.of(company()));
+
+            assertDoesNotThrow(() -> companyInteractor.updateRemovedCompanyIfNotLived(inputData));
+            verify(companySpecification, times(1)).updateRemoved(any());
+        }
+
+        @DisplayName("updateRemovedCompany : 除外フラグを有効にしない")
+        @Test
+        void not_removed() {
+            var inputData = CodeInputData.of("99999");
+            when(jsoupClient.isLivedCompanyFromMinkabu("99999")).thenReturn(true);
+            when(companySpecification.findCompanyByCode("99999")).thenReturn(Optional.of(company()));
+
+            assertDoesNotThrow(() -> companyInteractor.updateRemovedCompanyIfNotLived(inputData));
+            verify(companySpecification, times(0)).updateRemoved(any());
+        }
+
+        private Company company() {
+            return new Company(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    true
+            );
         }
     }
 }
