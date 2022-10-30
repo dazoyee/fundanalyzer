@@ -280,6 +280,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .filter(cvm -> cvm.getAllStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
                 // 最新企業価値がマイナスの場合は除外
                 .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
+                // 最新企業価値が平均より低い場合は除外
+                .filter(cvm -> cvm.getLatestCorporateValue().compareTo(cvm.getAllAverageCorporateValue()) > 0)
                 // 変動係数
                 .filter(cvm -> {
                     if (Objects.isNull(cvm.getAllCoefficientOfVariation())) {

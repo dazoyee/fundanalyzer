@@ -437,6 +437,46 @@ class ViewCorporateInteractorTest {
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
 
+        @DisplayName("filter : 最新企業価値が平均より低い場合は除外する")
+        @Test
+        void corporateValue_isAboveAverage() {
+            var list = List.of(CorporateViewModel.of(
+                    null,
+                    null,
+                    LocalDate.parse("2021-07-04"),
+                    null,
+                    true,
+                    BigDecimal.valueOf(1000),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    BigDecimal.valueOf(10000),
+                    BigDecimal.valueOf(100),
+                    BigDecimal.valueOf(0.5),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    BigDecimal.valueOf(120),
+                    null,
+                    null
+            ));
+
+            assertEquals(0, viewCorporateInteractor.filter(list).size());
+        }
+
         @DisplayName("filter : 変動係数が0.6未満であること")
         @Test
         void configCoefficientOfVariation1() {
@@ -456,7 +496,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
-                    null,
+                    BigDecimal.valueOf(10),
                     BigDecimal.valueOf(100),
                     BigDecimal.valueOf(0.5),
                     null,
@@ -616,7 +656,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
-                    null,
+                    BigDecimal.valueOf(10),
                     BigDecimal.valueOf(100),
                     null,
                     null,
