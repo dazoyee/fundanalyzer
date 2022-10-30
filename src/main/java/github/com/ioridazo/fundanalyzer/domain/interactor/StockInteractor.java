@@ -25,7 +25,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class StockInteractor implements StockUseCase {
@@ -77,11 +76,15 @@ public class StockInteractor implements StockUseCase {
                 .map(c -> c.get().getCode())
                 .map(CodeInputData::of)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
         List.of(Place.NIKKEI, Place.KABUOJI3, Place.MINKABU, Place.YAHOO_FINANCE).forEach(place -> {
             try {
-                inputDataList.parallelStream().forEach(code -> importStockPrice(code, place));
+                if (inputDataList.size() > 10) {
+                    inputDataList.parallelStream().forEach(code -> importStockPrice(code, place));
+                } else {
+                    inputDataList.forEach(code -> importStockPrice(code, place));
+                }
             } catch (final FundanalyzerShortCircuitException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         e.getMessage(),

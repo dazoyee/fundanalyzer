@@ -116,7 +116,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
                 .filter(submitDate -> submitDate.isAfter(nowLocalDate().minusDays(edinetListSize)))
                 .map(DateInputData::of)
                 .map(viewSpecification::generateEdinetListView)
-                .collect(Collectors.toList());
+                .toList();
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
 

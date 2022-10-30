@@ -11,6 +11,10 @@ public class CorporateDetailViewModel {
 
     private final CompanyViewModel company;
 
+    private final String backwardCode;
+
+    private final String forwardCode;
+
     private final CorporateViewModel corporate;
 
     private final List<AnalysisResultViewModel> analysisResultList;
@@ -20,4 +24,18 @@ public class CorporateDetailViewModel {
     private final List<MinkabuViewModel> minkabuList;
 
     private final List<StockPriceViewModel> stockPriceList;
+
+    public static CorporateDetailViewModel of(
+            final CorporateDetailViewModel viewModel, final String backwardCode, final String forwardCode) {
+        return new CorporateDetailViewModel(
+                viewModel.getCompany(),
+                backwardCode,
+                forwardCode,
+                viewModel.getCorporate(),
+                viewModel.getAnalysisResultList(),
+                viewModel.getFinancialStatement(),
+                viewModel.getMinkabuList(),
+                viewModel.getStockPriceList()
+        );
+    }
 }
