@@ -16,7 +16,7 @@ pipeline {
                             '&maven.groupId=' + pom.groupId +
                             '&maven.artifactId=' + pom.artifactId +
                             '&maven.baseVersion=' + pom.version
-                            '&maven.extension=jar'
+                    '&maven.extension=jar'
                     env.TMP = 'C:\\fundanalyzer\\bin\\tmp\\' + datetime + '\\'
                     env.JAR = 'fundanalyzer-' + pom.version + '.jar'
                     bat '''
@@ -78,19 +78,19 @@ pipeline {
             }
         }
 
-        stage('Clean'){
+        stage('Clean') {
             steps {
                 script {
                     timeout(time: 5, unit: "MINUTES") {
                         RELEASE_SCOPE = input message: 'rollback or complete ?', ok: 'Submit!', parameters: [
-                            choice(
-                                name: 'RELEASE_SCOPE',
-                                choices: 'rollback\ncomplete'
-                            )
+                                choice(
+                                        name: 'RELEASE_SCOPE',
+                                        choices: 'rollback\ncomplete'
+                                )
                         ]
                     }
 
-                    switch(RELEASE_SCOPE) {
+                    switch (RELEASE_SCOPE) {
                         case "rollback":
                             print "===== ロールバックを開始します ====="
                             bat '''
@@ -138,7 +138,7 @@ pipeline {
                             bat "sc.exe query fundanalyzer"
 
                             print "===== ロールバックを正常に終了しました ====="
-                        break
+                            break
 
                         case "complete":
                             print "===== コンプリートを開始します ====="
@@ -150,13 +150,13 @@ pipeline {
                             '''
 
                             print "===== コンプリートを正常に終了しました ====="
-                        break
+                            break
                     }
                 }
             }
         }
 
-        stage('Check'){
+        stage('Check') {
             steps {
                 print "===== 動作確認を開始します ====="
                 script {
@@ -166,9 +166,9 @@ pipeline {
                 }
 
                 slackUploadFile(
-                    filePath: 'fundanalyzer_v2_index.png',
-                    channel: 'UKNK4SZPX',
-                    credentialId: 'Slack Jenkins Bot'
+                        filePath: 'fundanalyzer_v2_index.png',
+                        channel: 'UKNK4SZPX',
+                        credentialId: 'Slack Jenkins Bot'
                 )
                 print "===== 動作確認を正常に終了しました ====="
             }
@@ -178,23 +178,23 @@ pipeline {
     post {
         success {
             slackSend(
-                baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
-                channel: 'UKNK4SZPX',
-                color: 'good',
-                message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} SUCCESS\n${env.BUILD_URL}",
-                notifyCommitters: true,
-                tokenCredentialId: 'Slack Jenkins Bot'
+                    baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
+                    channel: 'UKNK4SZPX',
+                    color: 'good',
+                    message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} SUCCESS\n${env.BUILD_URL}",
+                    notifyCommitters: true,
+                    tokenCredentialId: 'Slack Jenkins Bot'
             )
         }
 
         failure {
             slackSend(
-                baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
-                channel: 'UKNK4SZPX',
-                color: 'danger',
-                message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} FAILED\n${env.BUILD_URL}",
-                notifyCommitters: true,
-                tokenCredentialId: 'Slack Jenkins Bot'
+                    baseUrl: 'https://pj-share-knowledges.slack.com/services/hooks/jenkins/',
+                    channel: 'UKNK4SZPX',
+                    color: 'danger',
+                    message: "${env.JOB_NAME} - ${env.BUILD_NUMBER} FAILED\n${env.BUILD_URL}",
+                    notifyCommitters: true,
+                    tokenCredentialId: 'Slack Jenkins Bot'
             )
         }
     }
