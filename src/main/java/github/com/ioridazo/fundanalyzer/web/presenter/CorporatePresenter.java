@@ -42,9 +42,14 @@ public class CorporatePresenter {
      */
     @GetMapping("/v2/corporate")
     public String corporateDetailView(
-            @RequestParam(name = "code") final String code, final Model model) {
-        final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
+            @RequestParam(name = "code") final String code,
+            @RequestParam(name = "target", required = false) final String target,
+            final Model model) {
+        final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code), Target.fromValue(target));
+        model.addAttribute("target", Target.fromValue(target).toValue());
         model.addAttribute(CORPORATE, view.getCompany());
+        model.addAttribute("backwardCode", view.getBackwardCode());
+        model.addAttribute("forwardCode", view.getForwardCode());
         model.addAttribute("corporateView", view.getCorporate());
         setAnalysisView(view, model);
         model.addAttribute("financialStatements", view.getFinancialStatement());
@@ -69,7 +74,7 @@ public class CorporatePresenter {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .sorted(Comparator.comparing(AnalysisResultViewModel::getSubmitDate))
-                .collect(Collectors.toList());
+                .toList();
 
         model.addAttribute("analysisLabelAll", analysis.stream()
                 .map(AnalysisResultViewModel::getDocumentPeriod)

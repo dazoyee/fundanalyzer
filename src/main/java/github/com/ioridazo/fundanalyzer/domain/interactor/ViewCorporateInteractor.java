@@ -19,6 +19,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CompanyViewModel;
@@ -152,7 +153,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public List<CorporateViewModel> viewFavorite() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
                 .map(Company::getCode)
-                .collect(Collectors.toList());
+                .toList();
         final List<CorporateViewModel> allCorporateView = viewSpecification.findAllCorporateView();
         return allCorporateView.stream()
                 .map(CorporateViewModel::getCode)
@@ -207,6 +208,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         return CorporateDetailViewModel.of(
                 CompanyViewModel.of(company, stock),
+                null,
+                null,
                 viewSpecification.findLatestCorporateView(inputData),
                 analysisResultList,
                 fsList,
@@ -219,6 +222,34 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .sorted(Comparator.comparing(StockPriceViewModel::getTargetDate).reversed())
                         .collect(Collectors.toList())
         );
+    }
+
+    @Override
+    public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData, final Target target) {
+        final CorporateDetailViewModel viewModel = viewCorporateDetail(inputData);
+        List<String> codeList = List.of();
+
+        switch (target) {
+            case MAIN -> codeList = viewMain().stream().map(CorporateViewModel::getCode).toList();
+            case QUART -> codeList = viewQuart().stream().map(CorporateViewModel::getCode).toList();
+            case ALL -> codeList = viewAll().stream().map(CorporateViewModel::getCode).toList();
+        }
+
+        if (codeList.isEmpty()) {
+            return viewModel;
+        } else {
+            final int index = codeList.indexOf(inputData.getCode());
+            String backwardCode = null;
+            String forwardCode = null;
+            if (index != 0) {
+                backwardCode = codeList.get(index - 1);
+            }
+            if (index + 1 != codeList.size()) {
+                forwardCode = codeList.get(index + 1);
+            }
+
+            return CorporateDetailViewModel.of(viewModel, backwardCode, forwardCode);
+        }
     }
 
     /**

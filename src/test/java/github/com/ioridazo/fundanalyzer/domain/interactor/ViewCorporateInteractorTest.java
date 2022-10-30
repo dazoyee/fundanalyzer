@@ -14,7 +14,9 @@ import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
+import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementValueViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -194,6 +196,102 @@ class ViewCorporateInteractorTest {
                     () -> assertEquals(0, actual.getStockPriceList().size())
             );
             verify(financialStatementSpecification, times(1)).findByKeyPerCompany(eq(company), any());
+        }
+
+        @DisplayName("viewCorporateDetail : backward と forward の値を確認する")
+        @Test
+        void target() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            doReturn(List.of(
+                    defaultCorporateViewModel("code-1"),
+                    defaultCorporateViewModel("code"),
+                    defaultCorporateViewModel("code+1")
+            )).when(viewCorporateInteractor).viewMain();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+
+            assertEquals("code-1", actual.getBackwardCode());
+            assertEquals("code+1", actual.getForwardCode());
+        }
+
+        @DisplayName("viewCorporateDetail : backward が null になることを確認する")
+        @Test
+        void target_backward_is_null() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            doReturn(List.of(
+                    defaultCorporateViewModel("code"),
+                    defaultCorporateViewModel("code+1")
+            )).when(viewCorporateInteractor).viewMain();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+
+            assertNull(actual.getBackwardCode());
+            assertEquals("code+1", actual.getForwardCode());
+        }
+
+        @DisplayName("viewCorporateDetail : forward が null になることを確認する")
+        @Test
+        void target_forward_is_null() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            doReturn(List.of(
+                    defaultCorporateViewModel("code-1"),
+                    defaultCorporateViewModel("code")
+            )).when(viewCorporateInteractor).viewMain();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+
+            assertEquals("code-1", actual.getBackwardCode());
+            assertNull(actual.getForwardCode());
+        }
+
+        @DisplayName("viewCorporateDetail : backward と forward が null になることを確認する")
+        @Test
+        void target_backward_and_forward_is_null() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            doReturn(List.of(
+                    defaultCorporateViewModel("code")
+            )).when(viewCorporateInteractor).viewMain();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+
+            assertNull(actual.getBackwardCode());
+            assertNull(actual.getForwardCode());
         }
     }
 
@@ -731,6 +829,42 @@ class ViewCorporateInteractorTest {
     private CorporateViewModel defaultCorporateViewModel() {
         return CorporateViewModel.of(
                 "code",
+                "name",
+                null,
+                null,
+                true,
+                BigDecimal.TEN,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                null,
+                null
+        );
+    }
+
+    private CorporateViewModel defaultCorporateViewModel(String code) {
+        return CorporateViewModel.of(
+                code,
                 "name",
                 null,
                 null,
