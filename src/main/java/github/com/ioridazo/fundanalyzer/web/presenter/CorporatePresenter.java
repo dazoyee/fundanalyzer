@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -45,8 +46,15 @@ public class CorporatePresenter {
             @RequestParam(name = "code") final String code,
             @RequestParam(name = "target", required = false) final String target,
             final Model model) {
-        final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code), Target.fromValue(target));
-        model.addAttribute("target", Target.fromValue(target).toValue());
+        CorporateDetailViewModel view;
+
+        if (Objects.isNull(target)) {
+            view = viewService.getCorporateDetailView(CodeInputData.of(code));
+        } else {
+            view = viewService.getCorporateDetailView(CodeInputData.of(code), Target.fromValue(target));
+            model.addAttribute("target", Target.fromValue(target).toValue());
+        }
+
         model.addAttribute(CORPORATE, view.getCompany());
         model.addAttribute("backwardCode", view.getBackwardCode());
         model.addAttribute("forwardCode", view.getForwardCode());
