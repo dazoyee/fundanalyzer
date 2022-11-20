@@ -86,14 +86,14 @@ public class ValuationInteractor implements ValuationUseCase {
 
             if (latestAnalysisResult.isPresent()) {
                 final LocalDate targetDate =
-                        valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.get().submitDate())
+                        valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.get().getSubmitDate())
                                 // 最新の評価した対象日を取得
                                 .map(ValuationEntity::getTargetDate)
-                                .map(td -> generateValuationDate(td, latestAnalysisResult.get().submitDate()))
+                                .map(td -> generateValuationDate(td, latestAnalysisResult.get().getSubmitDate()))
                                 // 過去の評価から1ヶ月後を対象日付とする
                                 .map(td -> td.plusMonths(1))
                                 // はじめての評価ならば提出日を対象日付とする
-                                .orElseGet(() -> latestAnalysisResult.get().submitDate());
+                                .orElseGet(() -> latestAnalysisResult.get().getSubmitDate());
 
                 final Optional<StockPriceEntity> targetStock = findPresentStock(companyCode, targetDate);
 

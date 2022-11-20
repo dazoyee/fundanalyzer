@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
@@ -12,40 +13,42 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
+@Value
 @Entity(immutable = true)
 @Table(name = "analysis_result")
-public record AnalysisResultEntity(
+public class AnalysisResultEntity {
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        Integer id,
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private final Integer id;
 
-        String companyCode,
+    private final String companyCode;
 
-        LocalDate documentPeriod,
+    private final LocalDate documentPeriod;
 
-        BigDecimal corporateValue,
+    private final BigDecimal corporateValue;
 
-        BigDecimal bps,
+    private final BigDecimal bps;
 
-        BigDecimal eps,
+    private final BigDecimal eps;
 
-        BigDecimal roe,
+    private final BigDecimal roe;
 
-        BigDecimal roa,
+    private final BigDecimal roa;
 
-        String documentTypeCode,
+    private final String documentTypeCode;
 
-        String quarterType,
+    private final String quarterType;
 
-        LocalDate submitDate,
+    private final LocalDate submitDate;
 
-        String documentId,
+    private final String documentId;
 
-        @Column(updatable = false)
-        LocalDateTime createdAt
-) {
+    @Column(updatable = false)
+    private final LocalDateTime createdAt;
 
     public static AnalysisResultEntity of(
             final String companyCode,
@@ -79,5 +82,21 @@ public record AnalysisResultEntity(
                 documentId,
                 createdAt
         );
+    }
+
+    public Optional<BigDecimal> getBps() {
+        return Optional.ofNullable(bps);
+    }
+
+    public Optional<BigDecimal> getEps() {
+        return Optional.ofNullable(eps);
+    }
+
+    public Optional<BigDecimal> getRoe() {
+        return Optional.ofNullable(roe);
+    }
+
+    public Optional<BigDecimal> getRoa() {
+        return Optional.ofNullable(roa);
     }
 }

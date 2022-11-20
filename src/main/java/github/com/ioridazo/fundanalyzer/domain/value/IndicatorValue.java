@@ -44,19 +44,18 @@ public class IndicatorValue {
 
     BigDecimal calculatePriceCorporateValueRatio(
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        return stockPrice.divide(analysisResultEntity.corporateValue(), TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
+        return stockPrice.divide(analysisResultEntity.getCorporateValue(), TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 
     Optional<BigDecimal> calculatePer(
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        // TODO optional
-        return Optional.ofNullable(analysisResultEntity.eps())
+        return analysisResultEntity.getEps()
                 .map(eps -> stockPrice.divide(eps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
     Optional<BigDecimal> calculatePbr(
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        return Optional.ofNullable(analysisResultEntity.bps())
+        return analysisResultEntity.getBps()
                 .map(bps -> stockPrice.divide(bps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 }

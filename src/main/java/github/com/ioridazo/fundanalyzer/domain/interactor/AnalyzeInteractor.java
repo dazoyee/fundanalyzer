@@ -225,7 +225,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         analysisResultSpecification.findAnalysisResult(document.getDocumentId())
                 .ifPresent(analysisResult ->
                         // find stock
-                        stockSpecification.findStock(analysisResult.companyCode(), analysisResult.submitDate())
+                        stockSpecification.findStock(analysisResult.getCompanyCode(), analysisResult.getSubmitDate())
                                 .ifPresent(stockPrice -> {
                                     if (stockPrice.getStockPrice().isPresent()) {
                                         // indicate

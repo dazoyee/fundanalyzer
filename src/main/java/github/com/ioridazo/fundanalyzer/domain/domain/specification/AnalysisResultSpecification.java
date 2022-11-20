@@ -61,8 +61,8 @@ public class AnalysisResultSpecification {
     public Optional<AnalysisResultEntity> findLatestAnalysisResult(final String companyCode) {
         return analysisTargetList(companyCode, targetTypeCodes).stream()
                 // latest
-                .max(Comparator.comparing(AnalysisResultEntity::documentPeriod)
-                        .thenComparing(AnalysisResultEntity::submitDate));
+                .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod)
+                        .thenComparing(AnalysisResultEntity::getSubmitDate));
     }
 
     /**
@@ -139,7 +139,7 @@ public class AnalysisResultSpecification {
     public Optional<BigDecimal> latestCorporateValue(final Company company) {
         return findLatestAnalysisResult(company.getCode())
                 // corporate value
-                .map(AnalysisResultEntity::corporateValue)
+                .map(AnalysisResultEntity::getCorporateValue)
                 // scale
                 .map(bigDecimal -> bigDecimal.setScale(SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
@@ -159,11 +159,11 @@ public class AnalysisResultSpecification {
 
             return Optional.of(targetList.stream()
                     // sort
-                    .sorted(Comparator.comparing(AnalysisResultEntity::documentPeriod).reversed())
+                    .sorted(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod).reversed())
                     .toList()
                     // filter
                     .subList(0, year).stream()
-                    .map(AnalysisResultEntity::corporateValue)
+                    .map(AnalysisResultEntity::getCorporateValue)
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
@@ -183,7 +183,7 @@ public class AnalysisResultSpecification {
             return Optional.empty();
         } else {
             return Optional.of(targetList.stream()
-                    .map(AnalysisResultEntity::corporateValue)
+                    .map(AnalysisResultEntity::getCorporateValue)
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
@@ -204,7 +204,7 @@ public class AnalysisResultSpecification {
             return Optional.empty();
         } else {
             return Optional.of(targetList.stream()
-                    .map(AnalysisResultEntity::corporateValue)
+                    .map(AnalysisResultEntity::getCorporateValue)
                     // (value - average) ^2
                     .map(value -> value.subtract(averageCorporateValue).pow(2))
                     // sum
@@ -289,14 +289,14 @@ public class AnalysisResultSpecification {
         final List<AnalysisResultEntity> analysisTargetList = analysisResultDao.selectByCompanyCodeAndType(companyCode, documentTypeCode);
 
         return analysisTargetList.stream()
-                .map(AnalysisResultEntity::documentPeriod)
+                .map(AnalysisResultEntity::getDocumentPeriod)
                 // null のときはEPOCHとなるため、除外する
                 .filter(period -> !LocalDate.EPOCH.isEqual(period))
                 .distinct()
                 // 最新の企業価値を取得する
                 .map(dp -> analysisTargetList.stream()
-                        .filter(e -> dp.equals(e.documentPeriod()))
-                        .max(Comparator.comparing(AnalysisResultEntity::submitDate)))
+                        .filter(e -> dp.equals(e.getDocumentPeriod()))
+                        .max(Comparator.comparing(AnalysisResultEntity::getSubmitDate)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
