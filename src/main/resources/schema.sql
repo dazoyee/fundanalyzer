@@ -247,6 +247,27 @@ CREATE TABLE IF NOT EXISTS `valuation`
     CONSTRAINT `fk_v_document_id` FOREIGN KEY (`document_id`) REFERENCES `document` (`document_id`)
 );
 
+-- Table structure for table `investment_indicator`(投資指標)
+-- DROP TABLE IF EXISTS `investment_indicator`;
+CREATE TABLE IF NOT EXISTS `investment_indicator`
+(
+    `id`                          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `stock_id`                    BIGINT UNSIGNED NOT NULL COMMENT '株価ID',
+    `analysis_result_id`          BIGINT UNSIGNED NOT NULL COMMENT '企業価値ID',
+    `company_code`                CHAR(5)         NOT NULL COMMENT '企業コード',
+    `target_date`                 DATE            NOT NULL COMMENT '対象日付',
+    `price_corporate_value_ratio` FLOAT           NOT NULL COMMENT '株価企業価値率',
+    `per`                         FLOAT                    DEFAULT NULL COMMENT '株価収益率',
+    `pbr`                         FLOAT                    DEFAULT NULL COMMENT '株価純資産倍率',
+    `document_id`                 CHAR(8)         NOT NULL COMMENT '書類ID',
+    `created_at`                  DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_ii` (`company_code`, `target_date`),
+    CONSTRAINT `fk_ii_stock_id` FOREIGN KEY (`stock_id`) REFERENCES `stock_price` (`id`),
+    CONSTRAINT `fk_ii_analysis_result_id` FOREIGN KEY (`analysis_result_id`) REFERENCES `analysis_result` (`id`),
+    CONSTRAINT `fk_ii_document_id` FOREIGN KEY (`document_id`) REFERENCES `document` (`document_id`)
+);
+
 -- Table structure for table `corporate_view`(企業一覧)
 -- DROP TABLE IF EXISTS `corporate_view`;
 CREATE TABLE IF NOT EXISTS `corporate_view`

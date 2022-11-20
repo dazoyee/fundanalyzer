@@ -66,6 +66,16 @@ public class AnalysisResultSpecification {
     }
 
     /**
+     * 分析結果を取得する
+     *
+     * @param documentId ドキュメントID
+     * @return 分析結果
+     */
+    public Optional<AnalysisResultEntity> findAnalysisResult(final String documentId) {
+        return analysisResultDao.selectByDocumentId(documentId);
+    }
+
+    /**
      * 本日にテーブルに登録されたリストを取得する
      *
      * @param submitDate 提出日

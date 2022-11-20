@@ -65,10 +65,10 @@ public class AnalysisService {
                     documentUseCase.allProcess(date);
                     // remove
                     documentUseCase.removeDocument(date);
-                    // analysis
-                    analyzeUseCase.analyze(date);
                     // stock
                     stockUseCase.importStockPrice(date);
+                    // analysis
+                    analyzeUseCase.analyze(date);
                     // view corporate
                     viewCorporateUseCase.updateView(date);
                     // view edinet

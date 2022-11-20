@@ -8,6 +8,8 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResu
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
@@ -33,24 +35,27 @@ import java.util.Optional;
 public class AnalyzeInteractor implements AnalyzeUseCase {
 
     private static final Logger log = LogManager.getLogger(AnalyzeInteractor.class);
-    private static final int WEIGHTING_BUSINESS_VALUE = 10;
-    private static final double AVERAGE_CURRENT_RATIO = 1.2;
-    private static final int WEIGHTING_QUARTER_VALUE = 4;
 
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
     private final FinancialStatementSpecification financialStatementSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
+    private final StockSpecification stockSpecification;
+    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
     public AnalyzeInteractor(
             final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
             final FinancialStatementSpecification financialStatementSpecification,
-            final AnalysisResultSpecification analysisResultSpecification) {
+            final AnalysisResultSpecification analysisResultSpecification,
+            final StockSpecification stockSpecification,
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
+        this.stockSpecification = stockSpecification;
+        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
     }
 
     /**
@@ -122,6 +127,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
 
             analysisResultSpecification.insert(document, analysisResult);
+            this.indicate(document);
 
         } catch (final FundanalyzerNotExistException e) {
             final FinancialStatementEnum fs = e.getFs().orElseThrow(FundanalyzerRuntimeException::new);
@@ -207,5 +213,25 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         corporateValue.setCountYear(countYear);
 
         return corporateValue;
+    }
+
+    /**
+     * 投資指標を算出する
+     *
+     * @param document ドキュメント
+     */
+    void indicate(final Document document) {
+        // find analysis result
+        analysisResultSpecification.findAnalysisResult(document.getDocumentId())
+                .ifPresent(analysisResult ->
+                        // find stock
+                        stockSpecification.findStock(analysisResult.companyCode(), analysisResult.submitDate())
+                                .ifPresent(stockPrice -> {
+                                    if (stockPrice.getStockPrice().isPresent()) {
+                                        // indicate
+                                        investmentIndicatorSpecification.insert(analysisResult, stockPrice);
+                                    }
+                                })
+                );
     }
 }

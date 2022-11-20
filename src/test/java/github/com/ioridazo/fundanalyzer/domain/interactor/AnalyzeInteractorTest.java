@@ -1,9 +1,13 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -28,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +42,8 @@ class AnalyzeInteractorTest {
     private DocumentSpecification documentSpecification;
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
+    private StockSpecification stockSpecification;
+    private InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
     private AnalyzeInteractor analyzeInteractor;
 
@@ -45,12 +52,16 @@ class AnalyzeInteractorTest {
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
+        stockSpecification = mock(StockSpecification.class);
+        investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
 
         analyzeInteractor = Mockito.spy(new AnalyzeInteractor(
                 Mockito.mock(CompanySpecification.class),
                 documentSpecification,
                 financialStatementSpecification,
-                analysisResultSpecification
+                analysisResultSpecification,
+                stockSpecification,
+                investmentIndicatorSpecification
         ));
     }
 
@@ -309,6 +320,55 @@ class AnalyzeInteractorTest {
         }
     }
 
+    @Nested
+    class indicate {
+
+        Document document = defaultDocument();
+
+        @DisplayName("indicate : 投資指標を算出する")
+        @Test
+        void present() {
+            when(analysisResultSpecification.findAnalysisResult("documentId"))
+                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findStock("code", LocalDate.parse("2022-11-19")))
+                    .thenReturn(Optional.of(stockPriceEntity(1000.0)));
+
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
+            verify(investmentIndicatorSpecification, times(1)).insert(any(), any());
+        }
+
+        @DisplayName("indicate : 株価が存在しないとき")
+        @Test
+        void stockPrice_isEmpty() {
+            when(analysisResultSpecification.findAnalysisResult("documentId"))
+                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findStock("code", LocalDate.parse("2022-11-19")))
+                    .thenReturn(Optional.of(stockPriceEntity(null)));
+
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+        }
+
+        @DisplayName("indicate : 株価が存在しないとき")
+        @Test
+        void stockPriceEntity_isEmpty() {
+            when(analysisResultSpecification.findAnalysisResult("documentId"))
+                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findStock("code", LocalDate.parse("2022-11-19")))
+                    .thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+        }
+
+        @DisplayName("indicate : 企業価値が存在しないとき")
+        @Test
+        void analysisResultEntity_isEmpty() {
+            when(analysisResultSpecification.findAnalysisResult("documentId")).thenReturn(Optional.empty());
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+        }
+    }
 
     private Document defaultDocument() {
         return new Document(
@@ -345,6 +405,46 @@ class AnalyzeInteractorTest {
                 null,
                 false,
                 true
+        );
+    }
+
+    private AnalysisResultEntity analysisResultEntity(LocalDate submitDate) {
+        return new AnalysisResultEntity(
+                null,
+                "code",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                submitDate,
+                null,
+                null
+        );
+    }
+
+    private StockPriceEntity stockPriceEntity(Double stockPrice) {
+        return new StockPriceEntity(
+                null,
+                null,
+                null,
+                stockPrice,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
         );
     }
 }
