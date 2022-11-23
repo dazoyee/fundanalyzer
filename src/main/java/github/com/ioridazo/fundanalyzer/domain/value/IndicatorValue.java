@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Getter
@@ -25,15 +26,23 @@ public class IndicatorValue {
      */
     private final BigDecimal pbr;
 
+    /*
+     * グレアム指数 = PER * PBR
+     * ベンジャミン・グレアムが提唱した割安さを測る指数
+     */
+    private final BigDecimal grahamIndex;
+
     private static final int TENTH_DECIMAL_PLACE = 10;
 
     public IndicatorValue(
             final BigDecimal priceCorporateValueRatio,
             final BigDecimal per,
-            final BigDecimal pbr) {
+            final BigDecimal pbr,
+            final BigDecimal grahamIndex) {
         this.priceCorporateValueRatio = priceCorporateValueRatio;
         this.per = per;
         this.pbr = pbr;
+        this.grahamIndex = grahamIndex;
     }
 
     public IndicatorValue(
@@ -41,10 +50,12 @@ public class IndicatorValue {
         this.priceCorporateValueRatio = calculatePriceCorporateValueRatio(stockPrice, analysisResultEntity);
         this.per = calculatePer(stockPrice, analysisResultEntity).orElse(null);
         this.pbr = calculatePbr(stockPrice, analysisResultEntity).orElse(null);
+        this.grahamIndex = calculateGrahamIndex(this.per, this.pbr).orElse(null);
     }
 
     public static IndicatorValue of() {
         return new IndicatorValue(
+                null,
                 null,
                 null,
                 null
@@ -55,7 +66,8 @@ public class IndicatorValue {
         return new IndicatorValue(
                 entity.getPriceCorporateValueRatio(),
                 entity.getPer().orElse(null),
-                entity.getPbr().orElse(null)
+                entity.getPbr().orElse(null),
+                entity.getGrahamIndex().orElse(null)
         );
     }
 
@@ -65,6 +77,10 @@ public class IndicatorValue {
 
     public Optional<BigDecimal> getPbr() {
         return Optional.ofNullable(pbr);
+    }
+
+    public Optional<BigDecimal> getGrahamIndex() {
+        return Optional.ofNullable(grahamIndex);
     }
 
     BigDecimal calculatePriceCorporateValueRatio(
@@ -82,5 +98,13 @@ public class IndicatorValue {
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
         return analysisResultEntity.getBps()
                 .map(bps -> stockPrice.divide(bps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
+    }
+
+    Optional<BigDecimal> calculateGrahamIndex(final BigDecimal per, final BigDecimal pbr) {
+        if (Objects.nonNull(per) && Objects.nonNull(pbr)) {
+            return Optional.of(per.multiply(pbr));
+        } else {
+            return Optional.empty();
+        }
     }
 }

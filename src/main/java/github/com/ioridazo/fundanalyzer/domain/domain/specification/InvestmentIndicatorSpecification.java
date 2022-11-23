@@ -70,6 +70,7 @@ public class InvestmentIndicatorSpecification {
                     indicatorValue.getPriceCorporateValueRatio(),
                     indicatorValue.getPer().orElse(null),
                     indicatorValue.getPbr().orElse(null),
+                    indicatorValue.getGrahamIndex().orElse(null),
                     analysisResultEntity.getDocumentId(),
                     nowLocalDateTime()
             ));

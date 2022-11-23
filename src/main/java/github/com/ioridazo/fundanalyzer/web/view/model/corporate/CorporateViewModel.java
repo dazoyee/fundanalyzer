@@ -126,6 +126,9 @@ public class CorporateViewModel {
     // ROA
     private final BigDecimal roa;
 
+    // グレアム指数
+    private final BigDecimal grahamIndex;
+
     public static CorporateViewModel of(final CorporateViewBean viewBean) {
         return new CorporateViewModel(
                 viewBean.getCode(),
@@ -167,7 +170,8 @@ public class CorporateViewModel {
                 viewBean.getBps().orElse(null),
                 viewBean.getEps().orElse(null),
                 viewBean.getRoe().orElse(null),
-                viewBean.getRoa().orElse(null)
+                viewBean.getRoa().orElse(null),
+                viewBean.getGrahamIndex().orElse(null)
         );
     }
 }

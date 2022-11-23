@@ -131,6 +131,9 @@ public class CorporateViewBean {
     // ROA
     private final BigDecimal roa;
 
+    // グレアム指数
+    private final BigDecimal grahamIndex;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -175,6 +178,7 @@ public class CorporateViewBean {
                 viewModel.getEps(),
                 viewModel.getRoe(),
                 viewModel.getRoa(),
+                viewModel.getGrahamIndex(),
                 nowLocalDateTime,
                 nowLocalDateTime
         );
@@ -314,5 +318,9 @@ public class CorporateViewBean {
 
     public Optional<BigDecimal> getRoa() {
         return Optional.ofNullable(roa);
+    }
+
+    public Optional<BigDecimal> getGrahamIndex() {
+        return Optional.ofNullable(grahamIndex);
     }
 }

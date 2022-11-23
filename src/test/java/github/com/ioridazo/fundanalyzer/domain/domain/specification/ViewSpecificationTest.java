@@ -97,6 +97,7 @@ class ViewSpecificationTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -292,12 +293,14 @@ class ViewSpecificationTest {
         return new IndicatorValue(
                 null,
                 null,
+                null,
                 null
         );
     }
 
     private CorporateViewBean defaultCorporateViewBean() {
         return new CorporateViewBean(
+                null,
                 null,
                 null,
                 null,

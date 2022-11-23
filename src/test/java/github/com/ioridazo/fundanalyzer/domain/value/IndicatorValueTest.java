@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class IndicatorValueTest {
 
-    private final IndicatorValue indicatorValue = new IndicatorValue(null, null, null);
+    private final IndicatorValue indicatorValue = new IndicatorValue(null, null, null, null);
 
     @Nested
     class calculatePriceCorporateValueRatio {
@@ -145,6 +145,34 @@ class IndicatorValueTest {
             );
 
             assertNull(indicatorValue.calculatePbr(stockPrice, analysisResultEntity).orElse(null));
+        }
+    }
+
+    @Nested
+    class grahamIndex {
+        @DisplayName("grahamIndex : 各値を取得して計算する")
+        @Test
+        void present() {
+            var per = BigDecimal.valueOf(6.33);
+            var pbr = BigDecimal.valueOf(0.14);
+
+            var expected = per.multiply(pbr);
+            var actual = indicatorValue.calculateGrahamIndex(per, pbr).orElseThrow();
+            assertEquals(expected, actual);
+        }
+
+        @DisplayName("grahamIndex : PERが存在しないとき")
+        @Test
+        void per_isEmpty() {
+            var per = BigDecimal.valueOf(6.33);
+            assertNull(indicatorValue.calculateGrahamIndex(per, null).orElse(null));
+        }
+
+        @DisplayName("grahamIndex : PBRが存在しないとき")
+        @Test
+        void pbr_isEmpty() {
+            var pbr = BigDecimal.valueOf(6.33);
+            assertNull(indicatorValue.calculateGrahamIndex(null, pbr).orElse(null));
         }
     }
 }

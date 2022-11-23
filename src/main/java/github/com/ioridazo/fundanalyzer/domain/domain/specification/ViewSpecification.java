@@ -255,7 +255,8 @@ public class ViewSpecification {
                 analysisResult.getBps().orElse(null),
                 analysisResult.getEps().orElse(null),
                 analysisResult.getRoe().orElse(null),
-                analysisResult.getRoa().orElse(null)
+                analysisResult.getRoa().orElse(null),
+                indicatorValue.getGrahamIndex().orElse(null)
         );
     }
 

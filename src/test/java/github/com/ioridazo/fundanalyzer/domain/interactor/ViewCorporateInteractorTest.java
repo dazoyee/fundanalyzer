@@ -382,6 +382,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -397,6 +398,7 @@ class ViewCorporateInteractorTest {
                     LocalDate.parse("2020-07-04"),
                     null,
                     true,
+                    null,
                     null,
                     null,
                     null,
@@ -476,6 +478,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -515,6 +518,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
                     null,
                     null,
                     null,
@@ -570,6 +574,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -609,6 +614,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
                     null,
                     null,
                     null,
@@ -664,6 +670,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -703,6 +710,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
                     null,
                     null,
                     null,
@@ -758,6 +766,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -805,6 +814,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ));
 
@@ -844,6 +854,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
                     null,
                     null,
                     null,
@@ -948,6 +959,7 @@ class ViewCorporateInteractorTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -983,6 +995,7 @@ class ViewCorporateInteractorTest {
                 null,
                 BigDecimal.TEN,
                 BigDecimal.TEN,
+                null,
                 null,
                 null,
                 null,

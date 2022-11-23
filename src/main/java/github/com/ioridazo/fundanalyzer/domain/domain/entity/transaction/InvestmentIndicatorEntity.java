@@ -37,6 +37,8 @@ public class InvestmentIndicatorEntity {
 
     private final BigDecimal pbr;
 
+    private final BigDecimal grahamIndex;
+
     private final String documentId;
 
     @Column(updatable = false)
@@ -50,6 +52,7 @@ public class InvestmentIndicatorEntity {
             final BigDecimal priceCorporateValueRatio,
             final BigDecimal per,
             final BigDecimal pbr,
+            final BigDecimal grahamIndex,
             final String documentId,
             final LocalDateTime createdAt
     ) {
@@ -62,6 +65,7 @@ public class InvestmentIndicatorEntity {
                 priceCorporateValueRatio,
                 per,
                 pbr,
+                grahamIndex,
                 documentId,
                 createdAt
         );
@@ -73,5 +77,9 @@ public class InvestmentIndicatorEntity {
 
     public Optional<BigDecimal> getPbr() {
         return Optional.ofNullable(pbr);
+    }
+
+    public Optional<BigDecimal> getGrahamIndex() {
+        return Optional.ofNullable(grahamIndex);
     }
 }
