@@ -69,6 +69,10 @@ class NoticeInteractorTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
                 null
         );
         when(viewSpecification.findEdinetListView(inputData)).thenReturn(viewModel);

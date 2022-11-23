@@ -30,7 +30,6 @@ import java.time.Month;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -87,14 +86,14 @@ public class ValuationInteractor implements ValuationUseCase {
 
             if (latestAnalysisResult.isPresent()) {
                 final LocalDate targetDate =
-                        valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.get().getSubmitDate())
+                        valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.get().submitDate())
                                 // 最新の評価した対象日を取得
                                 .map(ValuationEntity::getTargetDate)
-                                .map(td -> generateValuationDate(td, latestAnalysisResult.get().getSubmitDate()))
+                                .map(td -> generateValuationDate(td, latestAnalysisResult.get().submitDate()))
                                 // 過去の評価から1ヶ月後を対象日付とする
                                 .map(td -> td.plusMonths(1))
                                 // はじめての評価ならば提出日を対象日付とする
-                                .orElseGet(() -> latestAnalysisResult.get().getSubmitDate());
+                                .orElseGet(() -> latestAnalysisResult.get().submitDate());
 
                 final Optional<StockPriceEntity> targetStock = findPresentStock(companyCode, targetDate);
 
@@ -213,7 +212,7 @@ public class ValuationInteractor implements ValuationUseCase {
                 .filter(vvm -> vvm.getDiscountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
                 // 割安度が明らかな誤りは除外
                 .filter(vvm -> vvm.getDiscountRate().compareTo(BigDecimal.valueOf(1000)) < 0)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -226,7 +225,7 @@ public class ValuationInteractor implements ValuationUseCase {
     public List<CompanyValuationViewModel> viewValuation(final CodeInputData inputData) {
         return valuationSpecification.findValuationView(inputData.getCode5()).stream()
                 .sorted(Comparator.comparing(CompanyValuationViewModel::getTargetDate).reversed())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -248,11 +247,11 @@ public class ValuationInteractor implements ValuationUseCase {
     public List<CompanyValuationViewModel> viewFavoriteValuation() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
                 .map(Company::getCode)
-                .collect(Collectors.toList());
+                .toList();
 
         return valuationSpecification.inquiryAllValuationView().stream()
                 .filter(vvm -> favoriteList.stream().anyMatch(favorite -> vvm.getCode().equals(favorite.substring(0, 4))))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -268,6 +267,6 @@ public class ValuationInteractor implements ValuationUseCase {
                         entity.getName(),
                         companySpecification.findCompanyByIndustry(entity.getId()))
                 )
-                .collect(Collectors.toList());
+                .toList();
     }
 }

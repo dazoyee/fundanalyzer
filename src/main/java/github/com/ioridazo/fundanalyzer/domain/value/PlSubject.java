@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.PlSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import lombok.AllArgsConstructor;
 
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public class PlSubject extends Subject {
 //    ("その他営業費用"),
 //    ("営業費用合計"),
         OPERATING_PROFIT("3", "1", "営業利益"),
-//    ("受取利息"),
+        //    ("受取利息"),
 //    ("未払分配金戻入"),
 //    ("還付加算金"),
 //    ("その他"),
@@ -76,7 +76,7 @@ public class PlSubject extends Subject {
 //    ("税引前当期純利益"),
 //    ("法人税、住民税及び事業税"),
 //    ("法人税等合計"),
-//    ("当期純利益"),
+        NET_INCOME("11", "1", "当期純利益"),
 //    ("前期繰越利益"),
 //    ("当期未処分利益又は当期未処理損失（△）"),
         ;

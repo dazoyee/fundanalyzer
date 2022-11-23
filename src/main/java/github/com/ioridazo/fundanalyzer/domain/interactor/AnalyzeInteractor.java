@@ -4,20 +4,19 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
-import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
-import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
@@ -119,18 +118,31 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      */
     void analyze(final Document document) {
         try {
-            analysisResultSpecification.insert(document, calculateFsValue(document));
-        } catch (FundanalyzerNotExistException e) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+            final FinanceValue financeValue = financialStatementSpecification.getFinanceValue(document);
+            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
+
+            analysisResultSpecification.insert(document, analysisResult);
+
+        } catch (final FundanalyzerNotExistException e) {
+            final FinancialStatementEnum fs = e.getFs().orElseThrow(FundanalyzerRuntimeException::new);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
+                            "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                                    "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
+                            fs.getName(),
                             companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
-                            document.getDocumentId()
+                            document.getDocumentId(),
+                            e.getSubjectName().orElse("null"),
+                            document.getDocumentPeriod().map(String::valueOf).orElse("null"),
+                            document.getFsDocumentPath(fs).orElse("null")
                     ),
                     document,
                     Category.ANALYSIS,
-                    Process.ANALYSIS
-            ), e);
+                    Process.of(fs)
+            ));
+
+            // ステータスをHALF_WAY（途中）に更新する
+            documentSpecification.updateFsToHalfWay(document, fs);
         }
     }
 
@@ -195,100 +207,5 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         corporateValue.setCountYear(countYear);
 
         return corporateValue;
-    }
-
-    /**
-     * 企業価値の算出する
-     *
-     * @param document ドキュメント
-     * @return 企業価値
-     * @throws FundanalyzerNotExistException 値が存在しないとき
-     */
-    BigDecimal calculateFsValue(final Document document) throws FundanalyzerNotExistException {
-        final FinanceValue financeValue = financialStatementSpecification.getFinanceValue(document);
-        // 流動資産合計
-        final Long totalCurrentAssets = financeValue.getTotalCurrentAssets().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_CURRENT_ASSETS.getSubject(),
-                document
-        ));
-        // 投資その他の資産合計
-        final Long totalInvestmentsAndOtherAssets = financeValue.getTotalInvestmentsAndOtherAssets().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.getSubject(),
-                document
-        ));
-        // 流動負債合計
-        final Long totalCurrentLiabilities = financeValue.getTotalCurrentLiabilities().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES.getSubject(),
-                document
-        ));
-        // 固定負債合計
-        final Long totalFixedLiabilities = financeValue.getTotalFixedLiabilities().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES.getSubject(),
-                document
-        ));
-        // 営業利益
-        final Long operatingProfit = financeValue.getOperatingProfit().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
-                PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
-                document
-        ));
-        // 四半期種別の重みづけ
-        final Integer weightingQuarterType = Optional.of(document)
-                .map(Document::getQuarterType)
-                .map(QuarterType::getWeight)
-                .orElse(WEIGHTING_QUARTER_VALUE);
-        // 株式総数
-        final Long numberOfShares = financeValue.getNumberOfShares()
-                .orElseThrow(() -> fsValueThrow(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "株式総数", document));
-
-        return BigDecimal.valueOf(
-                (
-                        (
-                                (
-                                        operatingProfit * WEIGHTING_BUSINESS_VALUE
-                                                + totalCurrentAssets - (totalCurrentLiabilities * AVERAGE_CURRENT_RATIO) + totalInvestmentsAndOtherAssets
-                                                - totalFixedLiabilities
-                                )
-                                        / weightingQuarterType
-                        ) * WEIGHTING_QUARTER_VALUE
-                )
-                        / numberOfShares
-        );
-    }
-
-    /**
-     * 処理状況を処理途中に更新する
-     *
-     * @param fs          財務諸表種別
-     * @param subjectName 科目名
-     * @param document    ドキュメント
-     * @return FundanalyzerNotExistException
-     */
-    private FundanalyzerNotExistException fsValueThrow(
-            final FinancialStatementEnum fs, final String subjectName, final Document document) {
-        log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                MessageFormat.format(
-                        "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                                "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
-                        fs.getName(),
-                        companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
-                        document.getDocumentId(),
-                        subjectName,
-                        document.getDocumentPeriod().map(String::valueOf).orElse("null"),
-                        document.getFsDocumentPath(fs).orElse("null")
-                ),
-                document,
-                Category.ANALYSIS,
-                Process.of(fs)
-        ));
-
-        // ステータスをHALF_WAY（途中）に更新する
-        documentSpecification.updateFsToHalfWay(document, fs);
-
-        throw new FundanalyzerNotExistException(fs.getName(), subjectName);
     }
 }

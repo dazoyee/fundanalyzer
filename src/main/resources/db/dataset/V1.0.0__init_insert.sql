@@ -44,19 +44,23 @@ VALUES (1, '水産・農林業'),
 
 -- scraping_keyword
 insert into `scraping_keyword` (`financial_statement_id`, `keyword`, `remarks`)
+-- @formatter:off
 values ('1', 'jpcrp_cor:ConsolidatedBalanceSheetTextBlock', '連結貸借対照表'),
        ('1', 'jpcrp_cor:BalanceSheetTextBlock', '貸借対照表'),
        ('2', 'jpcrp_cor:ConsolidatedStatementOfIncomeTextBlock', '連結損益計算書'),
        ('2', 'jpcrp_cor:StatementOfIncomeTextBlock', '損益計算書'),
        ('4', 'jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock', '株式総数'),
        ('1', 'jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock', '四半期連結貸借対照表'),
-       ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfComprehensiveIncomeSingleStatementTextBlock',
-        '四半期連結損益及び包括利益計算書'),
+       ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfComprehensiveIncomeSingleStatementTextBlock', '四半期連結損益及び包括利益計算書'),
        ('2', 'jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock', '四半期連結損益計算書及び四半期連結包括利益計算書'),
        ('1', 'jpcrp_cor:QuarterlyBalanceSheetTextBlock', '四半期財務諸表'),
        ('2', 'jpcrp_cor:YearToQuarterEndStatementOfIncomeTextBlock', '四半期損益計算書'),
        ('1', 'jpigp_cor:CondensedQuarterlyConsolidatedStatementOfFinancialPositionIFRSTextBlock', '要約四半期連結財務諸表'),
-       ('2', 'jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfProfitOrLossIFRSTextBlock', '要約四半期連結損益計算書')
+       ('2', 'jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfProfitOrLossIFRSTextBlock', '要約四半期連結損益計算書'),
+       ('2', 'jpigp_cor:CondensedYearToQuarterEndConsolidatedStatementOfComprehensiveIncomeSingleStatementIFRSTextBlock', '要約四半期連結包括利益計算書'),
+       ('1', 'jpigp_cor:ConsolidatedStatementOfFinancialPositionIFRSTextBlock', '連結財政状態計算書'),
+       ('2', 'jpigp_cor:ConsolidatedStatementOfProfitOrLossIFRSTextBlock', '連結損益計算書')
+-- @formatter:on
 ;
 
 -- bs_subject
@@ -84,7 +88,8 @@ values ('1', '3', '流動資産'),
        ('5', '2', '固定資産計'),
        ('8', '2', '流動負債計'),
        ('9', '2', '固定負債計'),
-       ('9', '4', '非流動負債合計')
+       ('9', '4', '非流動負債合計'),
+       ('16', NULL, '新株予約権')
 ;
 
 -- pl_subject
@@ -105,6 +110,7 @@ values ('1', null, '営業収益'),
        ('3', '12', '営業利益又は損失（△）'),
        ('3', '13', '営業利益(△は損失)'),
        ('3', '14', '営業損失（△)'),
+       ('3', '15', '営業利益又は営業損失(△）'),
        ('4', null, '営業外収益'),
        ('5', null, '営業外費用'),
        ('6', null, '経常利益'),
@@ -112,7 +118,11 @@ values ('1', null, '営業収益'),
        ('8', null, '税引前当期純利益'),
        ('9', null, '法人税、住民税及び事業税'),
        ('10', null, '法人税等合計'),
-       ('11', null, '当期純利益'),
+       ('11', '1', '当期純利益'),
        ('12', null, '前期繰越利益'),
-       ('13', null, '当期未処分利益又は当期未処理損失（△）')
+       ('13', null, '当期未処分利益又は当期未処理損失（△）'),
+       ('11', '2', '当期純利益又は当期純損失（△）'),
+       ('11', '3', '当期純損失（△）'),
+       ('11', '4', '当期純利益又は当期純損失(△)'),
+       ('11', '5', '当期純損失(△)')
 ;

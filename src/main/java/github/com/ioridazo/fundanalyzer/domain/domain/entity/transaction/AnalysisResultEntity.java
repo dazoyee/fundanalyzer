@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
@@ -14,37 +13,48 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
 @Entity(immutable = true)
 @Table(name = "analysis_result")
-public class AnalysisResultEntity {
+public record AnalysisResultEntity(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private final Integer id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        Integer id,
 
-    private final String companyCode;
+        String companyCode,
 
-    private final LocalDate documentPeriod;
+        LocalDate documentPeriod,
 
-    private final BigDecimal corporateValue;
+        BigDecimal corporateValue,
 
-    private final String documentTypeCode;
+        BigDecimal bps,
 
-    private final String quarterType;
+        BigDecimal eps,
 
-    private final LocalDate submitDate;
+        BigDecimal roe,
 
-    private final String documentId;
+        BigDecimal roa,
 
-    @Column(updatable = false)
-    private final LocalDateTime createdAt;
+        String documentTypeCode,
+
+        String quarterType,
+
+        LocalDate submitDate,
+
+        String documentId,
+
+        @Column(updatable = false)
+        LocalDateTime createdAt
+) {
 
     public static AnalysisResultEntity of(
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
+            final BigDecimal bps,
+            final BigDecimal eps,
+            final BigDecimal roe,
+            final BigDecimal roa,
             final DocumentTypeCode documentTypeCode,
             final QuarterType quarterType,
             final LocalDate submitDate,
@@ -59,6 +69,10 @@ public class AnalysisResultEntity {
                 companyCode,
                 period,
                 corporateValue,
+                bps,
+                eps,
+                roe,
+                roa,
                 documentTypeCode.toValue(),
                 quarterType.toValue(),
                 submitDate,

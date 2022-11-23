@@ -17,11 +17,11 @@ public class AnalysisResultViewModel {
 
     public static AnalysisResultViewModel of(final AnalysisResultEntity entity) {
         return new AnalysisResultViewModel(
-                entity.getSubmitDate(),
-                entity.getDocumentPeriod(),
-                entity.getCorporateValue(),
-                entity.getDocumentTypeCode(),
-                entity.getQuarterType()
+                entity.submitDate(),
+                entity.documentPeriod(),
+                entity.corporateValue(),
+                entity.documentTypeCode(),
+                entity.quarterType()
         );
     }
 }

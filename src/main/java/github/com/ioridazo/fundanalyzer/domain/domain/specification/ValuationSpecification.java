@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class ValuationSpecification {
@@ -141,7 +140,7 @@ public class ValuationSpecification {
                                             .orElseThrow()
                                     )
                                     .map(e -> CompanyValuationViewModel.of(e, company))
-                                    .collect(Collectors.toList());
+                                    .toList();
                         }
                 ).orElseGet(List::of);
     }
@@ -161,7 +160,7 @@ public class ValuationSpecification {
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
-                                analysisResult.getCompanyCode(),
+                                analysisResult.companyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
@@ -173,7 +172,7 @@ public class ValuationSpecification {
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
                                         "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
-                                analysisResult.getCompanyCode(),
+                                analysisResult.companyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
@@ -201,8 +200,8 @@ public class ValuationSpecification {
         final BigDecimal averageStockPrice = stockSpecification.getAverageStockPriceOfLatestSubmitDate(code)
                 .orElseThrow(() -> new FundanalyzerNotExistException("提出日株価平均"));
 
-        final LocalDate submitDate = analysisResult.getSubmitDate();
-        final BigDecimal corporateValue = analysisResult.getCorporateValue();
+        final LocalDate submitDate = analysisResult.submitDate();
+        final BigDecimal corporateValue = analysisResult.corporateValue();
 
         return ValuationEntity.of(
                 code,
@@ -217,7 +216,7 @@ public class ValuationSpecification {
                 submitDate,
                 corporateValue,
                 averageStockPrice,
-                analysisResult.getDocumentId(),
+                analysisResult.documentId(),
                 nowLocalDateTime()
         );
     }
