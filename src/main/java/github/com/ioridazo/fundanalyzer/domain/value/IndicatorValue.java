@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -40,6 +41,30 @@ public class IndicatorValue {
         this.priceCorporateValueRatio = calculatePriceCorporateValueRatio(stockPrice, analysisResultEntity);
         this.per = calculatePer(stockPrice, analysisResultEntity).orElse(null);
         this.pbr = calculatePbr(stockPrice, analysisResultEntity).orElse(null);
+    }
+
+    public static IndicatorValue of() {
+        return new IndicatorValue(
+                null,
+                null,
+                null
+        );
+    }
+
+    public static IndicatorValue of(final InvestmentIndicatorEntity entity) {
+        return new IndicatorValue(
+                entity.getPriceCorporateValueRatio(),
+                entity.getPer().orElse(null),
+                entity.getPbr().orElse(null)
+        );
+    }
+
+    public Optional<BigDecimal> getPer() {
+        return Optional.ofNullable(per);
+    }
+
+    public Optional<BigDecimal> getPbr() {
+        return Optional.ofNullable(pbr);
     }
 
     BigDecimal calculatePriceCorporateValueRatio(

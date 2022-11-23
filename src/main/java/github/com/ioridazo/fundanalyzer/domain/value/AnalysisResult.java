@@ -60,6 +60,18 @@ public class AnalysisResult {
         this.documentId = document.getDocumentId();
     }
 
+    public static AnalysisResult of() {
+        return new AnalysisResult(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
     public static AnalysisResult of(final AnalysisResultEntity entity) {
         return new AnalysisResult(
                 entity.getCorporateValue(),

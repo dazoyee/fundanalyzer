@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
+import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
@@ -10,34 +11,36 @@ import org.seasar.doma.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+@SuppressWarnings("RedundantModifiersValueLombok")
+@Value
 @Entity(immutable = true)
 @Table(name = "investment_indicator")
-public record InvestmentIndicatorEntity(
+public class InvestmentIndicatorEntity {
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        Integer id,
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private final Integer id;
 
-        Integer stockId,
+    private final Integer stockId;
 
-        Integer analysisResultId,
+    private final Integer analysisResultId;
 
-        String companyCode,
+    private final String companyCode;
 
-        LocalDate targetDate,
+    private final LocalDate targetDate;
 
-        BigDecimal priceCorporateValueRatio,
+    private final BigDecimal priceCorporateValueRatio;
 
-        BigDecimal per,
+    private final BigDecimal per;
 
-        BigDecimal pbr,
+    private final BigDecimal pbr;
 
-        String documentId,
+    private final String documentId;
 
-        @Column(updatable = false)
-        LocalDateTime createdAt
-) {
+    @Column(updatable = false)
+    private final LocalDateTime createdAt;
 
     public static InvestmentIndicatorEntity of(
             final Integer stockId,
@@ -62,5 +65,13 @@ public record InvestmentIndicatorEntity(
                 documentId,
                 createdAt
         );
+    }
+
+    public Optional<BigDecimal> getPer() {
+        return Optional.ofNullable(per);
+    }
+
+    public Optional<BigDecimal> getPbr() {
+        return Optional.ofNullable(pbr);
     }
 }

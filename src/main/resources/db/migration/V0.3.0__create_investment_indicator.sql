@@ -23,3 +23,11 @@ CREATE TABLE IF NOT EXISTS `investment_indicator`
     CONSTRAINT `fk_ii_document_id` FOREIGN KEY (`document_id`) REFERENCES `document` (`document_id`)
 );
 -- @formatter:on
+
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `price_corporate_value_ratio` FLOAT DEFAULT NULL COMMENT '株価企業価値率' AFTER `forecast_stock`;
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `per` FLOAT DEFAULT NULL COMMENT '株価収益率' AFTER `price_corporate_value_ratio`;
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `pbr` FLOAT DEFAULT NULL COMMENT '株価純資産倍率' AFTER `per`;
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `bps` FLOAT DEFAULT NULL COMMENT '1株当たり純資産' AFTER `pbr`;
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `eps` FLOAT DEFAULT NULL COMMENT '1株当たり当期純利益' AFTER `bps`;
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `roe` FLOAT DEFAULT NULL COMMENT '自己資本利益率' AFTER `eps`;
+ALTER TABLE IF EXISTS `corporate_view` ADD COLUMN `roa` FLOAT DEFAULT NULL COMMENT '総資産利益率' AFTER `roe`;

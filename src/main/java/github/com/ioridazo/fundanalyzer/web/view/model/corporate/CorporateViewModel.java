@@ -105,6 +105,27 @@ public class CorporateViewModel {
     // みんかぶ株価予想
     private final BigDecimal forecastStock;
 
+    // 株価企業価値率
+    private final BigDecimal priceCorporateValueRatio;
+
+    // PER
+    private final BigDecimal per;
+
+    // PBR
+    private final BigDecimal pbr;
+
+    // BPS
+    private final BigDecimal bps;
+
+    // EPS
+    private final BigDecimal eps;
+
+    // ROE
+    private final BigDecimal roe;
+
+    // ROA
+    private final BigDecimal roa;
+
     public static CorporateViewModel of(final CorporateViewBean viewBean) {
         return new CorporateViewModel(
                 viewBean.getCode(),
@@ -139,7 +160,14 @@ public class CorporateViewModel {
                 viewBean.getAllDiscountValue().orElse(null),
                 viewBean.getAllDiscountRate().orElse(null),
                 viewBean.getCountYear().orElse(null),
-                viewBean.getForecastStock().orElse(null)
+                viewBean.getForecastStock().orElse(null),
+                viewBean.getPriceCorporateValueRatio().orElse(null),
+                viewBean.getPer().orElse(null),
+                viewBean.getPbr().orElse(null),
+                viewBean.getBps().orElse(null),
+                viewBean.getEps().orElse(null),
+                viewBean.getRoe().orElse(null),
+                viewBean.getRoa().orElse(null)
         );
     }
 }

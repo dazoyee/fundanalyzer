@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResu
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -71,6 +72,7 @@ class ViewCorporateInteractorTest {
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
+                Mockito.mock(InvestmentIndicatorSpecification.class),
                 viewSpecification,
                 slackClient
         ));
@@ -311,7 +313,7 @@ class ViewCorporateInteractorTest {
         @Test
         void all() {
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
-            when(viewSpecification.generateCorporateView(eq(company), any())).thenReturn(corporateViewModel);
+            when(viewSpecification.generateCorporateView(eq(company), any(), any(), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
@@ -323,7 +325,7 @@ class ViewCorporateInteractorTest {
         void inputData() {
             when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(viewSpecification.generateCorporateView(eq(company), any())).thenReturn(corporateViewModel);
+            when(viewSpecification.generateCorporateView(eq(company), any(), any(), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
@@ -348,6 +350,13 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     true,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null,
                     null,
                     null,
@@ -413,6 +422,13 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null
             ));
 
@@ -452,6 +468,13 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(119),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null,
                     null
             ));
@@ -493,6 +516,13 @@ class ViewCorporateInteractorTest {
                     null,
                     BigDecimal.valueOf(120),
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null
             ));
 
@@ -532,6 +562,13 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null,
                     null
             ));
@@ -573,6 +610,13 @@ class ViewCorporateInteractorTest {
                     null,
                     BigDecimal.valueOf(120),
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null
             ));
 
@@ -612,6 +656,13 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null,
                     null
             ));
@@ -653,6 +704,13 @@ class ViewCorporateInteractorTest {
                     null,
                     BigDecimal.valueOf(120),
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null
             ));
 
@@ -693,7 +751,14 @@ class ViewCorporateInteractorTest {
                     null,
                     BigDecimal.valueOf(120),
                     null,
-                    BigDecimal.valueOf(200)
+                    BigDecimal.valueOf(200),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
             ));
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
@@ -733,7 +798,14 @@ class ViewCorporateInteractorTest {
                     null,
                     BigDecimal.valueOf(120),
                     null,
-                    BigDecimal.valueOf(100)
+                    BigDecimal.valueOf(100),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
             ));
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
@@ -772,6 +844,13 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     BigDecimal.valueOf(120),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null,
                     null
             ));
@@ -862,6 +941,13 @@ class ViewCorporateInteractorTest {
                 BigDecimal.TEN,
                 BigDecimal.TEN,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null
         );
     }
@@ -897,6 +983,13 @@ class ViewCorporateInteractorTest {
                 null,
                 BigDecimal.TEN,
                 BigDecimal.TEN,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null
         );

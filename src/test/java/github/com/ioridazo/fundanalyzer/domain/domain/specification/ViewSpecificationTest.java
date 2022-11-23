@@ -5,10 +5,12 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
@@ -63,6 +65,13 @@ class ViewSpecificationTest {
                 null,
                 null,
                 true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -148,7 +157,9 @@ class ViewSpecificationTest {
 
         Company company = defaultCompany();
         Stock stock = defaultStock();
+        AnalysisResult analysisResult = analysisResult();
         CorporateValue corporateValue = defaultCorporateValue();
+        IndicatorValue indicatorValue = indicatorValue();
 
         @DisplayName("generateCorporateView : 割安値を算出する")
         @Test
@@ -161,7 +172,7 @@ class ViewSpecificationTest {
             when(stockSpecification.findStock(company)).thenReturn(stock);
             when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
-            var actual = viewSpecification.generateCorporateView(company, corporateValue);
+            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
             assertEquals(BigDecimal.valueOf(1132.05), actual.getAllDiscountValue());
         }
 
@@ -176,7 +187,7 @@ class ViewSpecificationTest {
             when(stockSpecification.findStock(company)).thenReturn(stock);
             when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
-            var actual = viewSpecification.generateCorporateView(company, corporateValue);
+            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
             assertNull(actual.getAllDiscountValue());
         }
 
@@ -191,7 +202,7 @@ class ViewSpecificationTest {
             when(stockSpecification.findStock(company)).thenReturn(stock);
             when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
-            var actual = viewSpecification.generateCorporateView(company, corporateValue);
+            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
             assertEquals(BigDecimal.valueOf(213.205), actual.getAllDiscountRate());
         }
 
@@ -206,7 +217,7 @@ class ViewSpecificationTest {
             when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
-            var actual = viewSpecification.generateCorporateView(company, corporateValue);
+            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
             assertNull(actual.getAllDiscountRate());
         }
     }
@@ -249,6 +260,18 @@ class ViewSpecificationTest {
         );
     }
 
+    private AnalysisResult analysisResult() {
+        return new AnalysisResult(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
     private CorporateValue defaultCorporateValue() {
         return CorporateValue.of();
     }
@@ -265,8 +288,23 @@ class ViewSpecificationTest {
         );
     }
 
+    private IndicatorValue indicatorValue() {
+        return new IndicatorValue(
+                null,
+                null,
+                null
+        );
+    }
+
     private CorporateViewBean defaultCorporateViewBean() {
         return new CorporateViewBean(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,

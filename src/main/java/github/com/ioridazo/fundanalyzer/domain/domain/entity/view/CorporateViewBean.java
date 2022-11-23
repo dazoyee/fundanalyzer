@@ -110,6 +110,27 @@ public class CorporateViewBean {
     // みんかぶ株価予想
     private final BigDecimal forecastStock;
 
+    // 株価企業価値率
+    private final BigDecimal priceCorporateValueRatio;
+
+    // PER
+    private final BigDecimal per;
+
+    // PBR
+    private final BigDecimal pbr;
+
+    // BPS
+    private final BigDecimal bps;
+
+    // EPS
+    private final BigDecimal eps;
+
+    // ROE
+    private final BigDecimal roe;
+
+    // ROA
+    private final BigDecimal roa;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -147,6 +168,13 @@ public class CorporateViewBean {
                 viewModel.getAllDiscountRate(),
                 viewModel.getCountYear(),
                 viewModel.getForecastStock(),
+                viewModel.getPriceCorporateValueRatio(),
+                viewModel.getPer(),
+                viewModel.getPbr(),
+                viewModel.getBps(),
+                viewModel.getEps(),
+                viewModel.getRoe(),
+                viewModel.getRoa(),
                 nowLocalDateTime,
                 nowLocalDateTime
         );
@@ -258,5 +286,33 @@ public class CorporateViewBean {
 
     public Optional<BigDecimal> getForecastStock() {
         return Optional.ofNullable(forecastStock);
+    }
+
+    public Optional<BigDecimal> getPriceCorporateValueRatio() {
+        return Optional.ofNullable(priceCorporateValueRatio);
+    }
+
+    public Optional<BigDecimal> getPer() {
+        return Optional.ofNullable(per);
+    }
+
+    public Optional<BigDecimal> getPbr() {
+        return Optional.ofNullable(pbr);
+    }
+
+    public Optional<BigDecimal> getBps() {
+        return Optional.ofNullable(bps);
+    }
+
+    public Optional<BigDecimal> getEps() {
+        return Optional.ofNullable(eps);
+    }
+
+    public Optional<BigDecimal> getRoe() {
+        return Optional.ofNullable(roe);
+    }
+
+    public Optional<BigDecimal> getRoa() {
+        return Optional.ofNullable(roa);
     }
 }

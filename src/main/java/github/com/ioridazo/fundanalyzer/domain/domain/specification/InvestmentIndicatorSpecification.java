@@ -19,6 +19,8 @@ import java.math.BigDecimal;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.Optional;
 
 @Component
 public class InvestmentIndicatorSpecification {
@@ -34,6 +36,19 @@ public class InvestmentIndicatorSpecification {
 
     LocalDateTime nowLocalDateTime() {
         return LocalDateTime.now();
+    }
+
+    /**
+     * 最新の投資指標を取得する
+     *
+     * @param companyCode 企業コード
+     * @return 投資指標
+     */
+    public Optional<IndicatorValue> findLatestIndicatorValue(final String companyCode) {
+        return investmentIndicatorDao.selectByCode(companyCode).stream()
+                // latest
+                .max(Comparator.comparing(InvestmentIndicatorEntity::getTargetDate))
+                .map(IndicatorValue::of);
     }
 
     /**
@@ -53,8 +68,8 @@ public class InvestmentIndicatorSpecification {
                     analysisResultEntity.getCompanyCode(),
                     analysisResultEntity.getSubmitDate(),
                     indicatorValue.getPriceCorporateValueRatio(),
-                    indicatorValue.getPer(),
-                    indicatorValue.getPbr(),
+                    indicatorValue.getPer().orElse(null),
+                    indicatorValue.getPbr().orElse(null),
                     analysisResultEntity.getDocumentId(),
                     nowLocalDateTime()
             ));

@@ -5,10 +5,12 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -105,7 +107,7 @@ public class ViewSpecification {
                 // 提出日が存在したら表示する
                 .filter(corporateViewBean -> corporateViewBean.getSubmitDate().isPresent())
                 .map(CorporateViewModel::of)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -118,7 +120,7 @@ public class ViewSpecification {
                 .map(EdinetListViewModel::of)
                 .filter(viewModel -> viewModel.getSubmitDate().isAfter(nowLocalDate().minusDays(edinetListSize)))
                 .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -151,11 +153,17 @@ public class ViewSpecification {
      * 企業情報ビューを生成する
      *
      * @param company        企業情報
+     * @param analysisResult 分析結果
      * @param corporateValue 企業価値
+     * @param indicatorValue 投資指標
      * @return 企業情報ビュー
+     * @throws FundanalyzerNotExistException 値が存在しないとき
      */
     public CorporateViewModel generateCorporateView(
-            final Company company, final CorporateValue corporateValue) throws FundanalyzerNotExistException {
+            final Company company,
+            final AnalysisResult analysisResult,
+            final CorporateValue corporateValue,
+            final IndicatorValue indicatorValue) throws FundanalyzerNotExistException {
         final Stock stock = stockSpecification.findStock(company);
         final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
 
@@ -240,7 +248,14 @@ public class ViewSpecification {
                 calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.ALL, Optional.empty()).orElse(null),
                 calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.ALL, Optional.empty()).orElse(null),
                 corporateValue.getCountYear().orElse(null),
-                stock.getLatestForecastStock().orElse(null)
+                stock.getLatestForecastStock().orElse(null),
+                indicatorValue.getPriceCorporateValueRatio(),
+                indicatorValue.getPer().orElse(null),
+                indicatorValue.getPbr().orElse(null),
+                analysisResult.getBps().orElse(null),
+                analysisResult.getEps().orElse(null),
+                analysisResult.getRoe().orElse(null),
+                analysisResult.getRoa().orElse(null)
         );
     }
 
