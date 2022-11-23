@@ -163,7 +163,9 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         final CorporateValue corporateValue = CorporateValue.of();
 
         // 最新企業価値
-        final Optional<BigDecimal> latestCorporateValue = analysisResultSpecification.latestCorporateValue(company);
+        final Optional<BigDecimal> latestCorporateValue =
+                analysisResultSpecification.findLatestAnalysisResult(company.getCode())
+                        .map(AnalysisResult::getCorporateValue);
         if (latestCorporateValue.isEmpty()) {
             return corporateValue;
         } else {

@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
@@ -8,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,20 +55,14 @@ class ValuationInteractorTest {
     @Nested
     class evaluate {
 
-        private AnalysisResultEntity analysisResultEntity(LocalDate submitDate) {
-            return new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
+        private AnalysisResult analysisResult(LocalDate submitDate) {
+            return new AnalysisResult(
                     null,
                     null,
                     null,
                     null,
                     null,
                     submitDate,
-                    null,
                     null
             );
         }
@@ -106,7 +100,7 @@ class ValuationInteractorTest {
         @Test
         void evaluate_when_past_evaluation_and_stock_is_present() {
             Mockito.when(analysisResultSpecification.findLatestAnalysisResult("code"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-07-09"))));
+                    .thenReturn(Optional.of(analysisResult(LocalDate.parse("2022-07-09"))));
             Mockito.when(valuationSpecification.findLatestValuation("code", LocalDate.parse("2022-07-09")))
                     .thenReturn(Optional.of(valuationEntity(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-09"))));
             Mockito.doReturn(Optional.of(stockPriceEntity()))
@@ -120,7 +114,7 @@ class ValuationInteractorTest {
         @Test
         void evaluate_when_past_evaluation_is_present_but_stock_is_nothing() {
             Mockito.when(analysisResultSpecification.findLatestAnalysisResult("code"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-07-09"))));
+                    .thenReturn(Optional.of(analysisResult(LocalDate.parse("2022-07-09"))));
             Mockito.when(valuationSpecification.findLatestValuation("code", LocalDate.parse("2022-07-09")))
                     .thenReturn(Optional.of(valuationEntity(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-09"))));
             Mockito.doReturn(Optional.empty())
@@ -134,7 +128,7 @@ class ValuationInteractorTest {
         @Test
         void evaluate_when_past_evaluation_is_nothing_but_stock_is_present() {
             Mockito.when(analysisResultSpecification.findLatestAnalysisResult("code"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-07-09"))));
+                    .thenReturn(Optional.of(analysisResult(LocalDate.parse("2022-07-09"))));
             Mockito.when(valuationSpecification.findLatestValuation("code", LocalDate.parse("2022-07-09"))).thenReturn(Optional.empty());
             Mockito.doReturn(Optional.of(stockPriceEntity()))
                     .when(valuationInteractor).findPresentStock("code", LocalDate.parse("2022-07-09"));
@@ -147,7 +141,7 @@ class ValuationInteractorTest {
         @Test
         void evaluate_when_past_evaluation_and_stock_is_nothing() {
             Mockito.when(analysisResultSpecification.findLatestAnalysisResult("code"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-07-09"))));
+                    .thenReturn(Optional.of(analysisResult(LocalDate.parse("2022-07-09"))));
             Mockito.when(valuationSpecification.findLatestValuation("code", LocalDate.parse("2022-07-09"))).thenReturn(Optional.empty());
             Mockito.doReturn(Optional.empty())
                     .when(valuationInteractor).findPresentStock("code", LocalDate.parse("2022-08-09"));

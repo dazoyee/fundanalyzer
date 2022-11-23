@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AnalysisResultTest {
 
-    private final AnalysisResult analysisResult = new AnalysisResult(null, null, null, null, null);
+    private final AnalysisResult analysisResult = new AnalysisResult(null, null, null, null, null, null, null);
 
     @Nested
     class calculateCorporateValue {

@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -137,11 +138,20 @@ class AnalyzeInteractorTest {
     class calculateCorporateValue {
 
         Company company = defaultCompany();
+        AnalysisResult analysisResult = new AnalysisResult(
+                BigDecimal.TEN,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
 
         @DisplayName("calculateCorporateValue : 最新企業価値が存在しないとき")
         @Test
         void latestCorporateValue_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.empty());
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
             assertAll(
@@ -155,7 +165,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void averageCorporateValue_year_isEmpty(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
@@ -174,7 +184,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : 平均企業価値が存在しないとき")
         @Test
         void averageCorporateValue_allYear_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
@@ -194,7 +204,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void standardDeviation_year_isEmpty(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
@@ -214,7 +224,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : 標準偏差が存在しないとき")
         @Test
         void standardDeviation_allYear_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
@@ -235,7 +245,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void coefficientOfVariation_year_isEmpty(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.empty());
@@ -256,7 +266,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : 変動係数が存在しないとき")
         @Test
         void coefficientOfVariation_allYear_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.empty());
@@ -278,7 +288,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void present_year(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
@@ -300,7 +310,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : すべて存在する")
         @Test
         void present_allYear() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));

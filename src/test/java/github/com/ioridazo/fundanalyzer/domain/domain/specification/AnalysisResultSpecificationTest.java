@@ -47,65 +47,6 @@ class AnalysisResultSpecificationTest {
     }
 
     @Nested
-    class latestCorporateValue {
-
-        @DisplayName("latestCorporateValue : 最新の企業価値を取得する")
-        @Test
-        void present_period() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
-
-            var actual = analysisResultSpecification.latestCorporateValue(company);
-            assertEquals(BigDecimal.valueOf(110000, 2), actual.orElseThrow());
-        }
-
-        @DisplayName("latestCorporateValue : 最新の企業価値を取得する")
-        @Test
-        void present_submitDate() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), null, null, null, null, "120", "4", LocalDate.parse("2020-09-01"), null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", LocalDate.parse("2020-10-01"), null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
-
-            var actual = analysisResultSpecification.latestCorporateValue(company);
-            assertEquals(BigDecimal.valueOf(110000, 2), actual.orElseThrow());
-        }
-
-        @DisplayName("latestCorporateValue : 企業価値がないときは空で返却する")
-        @Test
-        void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
-
-            var actual = analysisResultSpecification.latestCorporateValue(company);
-            assertNull(actual.orElse(null));
-        }
-
-        @DisplayName("latestCorporateValue : 小数点以下表示を確認する")
-        @Test
-        void scale() {
-            var analysisResult1 = new AnalysisResultEntity(
-                    1,
-                    "code",
-                    LocalDate.parse("2020-06-30"),
-                    BigDecimal.valueOf(500.250515),
-                    null,
-                    null,
-                    null,
-                    null,
-                    DocumentTypeCode.DTC_120.toValue(),
-                    QuarterType.QT_4.toValue(),
-                    LocalDate.parse("2020-09-30"),
-                    null,
-                    null
-            );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
-
-            var actual = analysisResultSpecification.latestCorporateValue(company);
-            assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
-        }
-    }
-
-    @Nested
     class yearAverageCorporateValue {
 
         private final Integer THREE = 3;

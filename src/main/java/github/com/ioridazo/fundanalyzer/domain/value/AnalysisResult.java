@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
@@ -7,6 +8,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Getter
@@ -22,6 +24,10 @@ public class AnalysisResult {
 
     private final BigDecimal roa;
 
+    private final LocalDate submitDate;
+
+    private final String documentId;
+
     private static final BigDecimal WEIGHTING_BUSINESS_VALUE = BigDecimal.TEN;
     private static final BigDecimal AVERAGE_CURRENT_RATIO = BigDecimal.valueOf(1.2);
     private static final BigDecimal WEIGHTING_QUARTER_VALUE = BigDecimal.valueOf(4);
@@ -32,12 +38,16 @@ public class AnalysisResult {
             final BigDecimal bps,
             final BigDecimal eps,
             final BigDecimal roe,
-            final BigDecimal roa) {
+            final BigDecimal roa,
+            final LocalDate submitDate,
+            final String documentId) {
         this.corporateValue = corporateValue;
         this.bps = bps;
         this.eps = eps;
         this.roe = roe;
         this.roa = roa;
+        this.submitDate = submitDate;
+        this.documentId = documentId;
     }
 
     public AnalysisResult(final FinanceValue financeValue, final Document document) {
@@ -46,6 +56,36 @@ public class AnalysisResult {
         this.eps = calculateEps(financeValue, document).orElse(null);
         this.roe = calculateRoe(financeValue, document).orElse(null);
         this.roa = calculateRoa(financeValue, document).orElse(null);
+        this.submitDate = document.getSubmitDate();
+        this.documentId = document.getDocumentId();
+    }
+
+    public static AnalysisResult of(final AnalysisResultEntity entity) {
+        return new AnalysisResult(
+                entity.getCorporateValue(),
+                entity.getBps().orElse(null),
+                entity.getEps().orElse(null),
+                entity.getRoe().orElse(null),
+                entity.getRoa().orElse(null),
+                entity.getSubmitDate(),
+                entity.getDocumentId()
+        );
+    }
+
+    public Optional<BigDecimal> getBps() {
+        return Optional.ofNullable(bps);
+    }
+
+    public Optional<BigDecimal> getEps() {
+        return Optional.ofNullable(eps);
+    }
+
+    public Optional<BigDecimal> getRoe() {
+        return Optional.ofNullable(roe);
+    }
+
+    public Optional<BigDecimal> getRoa() {
+        return Optional.ofNullable(roa);
     }
 
     /**

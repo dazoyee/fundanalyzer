@@ -58,11 +58,12 @@ public class AnalysisResultSpecification {
      * @param companyCode 企業コード
      * @return 最新の分析結果
      */
-    public Optional<AnalysisResultEntity> findLatestAnalysisResult(final String companyCode) {
+    public Optional<AnalysisResult> findLatestAnalysisResult(final String companyCode) {
         return analysisTargetList(companyCode, targetTypeCodes).stream()
                 // latest
                 .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod)
-                        .thenComparing(AnalysisResultEntity::getSubmitDate));
+                        .thenComparing(AnalysisResultEntity::getSubmitDate))
+                .map(AnalysisResult::of);
     }
 
     /**
@@ -98,10 +99,10 @@ public class AnalysisResultSpecification {
                     company.getCode(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     analysisResult.getCorporateValue(),
-                    analysisResult.getBps(),
-                    analysisResult.getEps(),
-                    analysisResult.getRoe(),
-                    analysisResult.getRoa(),
+                    analysisResult.getBps().orElse(null),
+                    analysisResult.getEps().orElse(null),
+                    analysisResult.getRoe().orElse(null),
+                    analysisResult.getRoa().orElse(null),
                     document.getDocumentTypeCode(),
                     document.getQuarterType(),
                     document.getSubmitDate(),
@@ -128,20 +129,6 @@ public class AnalysisResultSpecification {
                 throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
             }
         }
-    }
-
-    /**
-     * 最新の企業価値を取得する
-     *
-     * @param company 企業情報
-     * @return 最新の企業価値
-     */
-    public Optional<BigDecimal> latestCorporateValue(final Company company) {
-        return findLatestAnalysisResult(company.getCode())
-                // corporate value
-                .map(AnalysisResultEntity::getCorporateValue)
-                // scale
-                .map(bigDecimal -> bigDecimal.setScale(SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
     /**
