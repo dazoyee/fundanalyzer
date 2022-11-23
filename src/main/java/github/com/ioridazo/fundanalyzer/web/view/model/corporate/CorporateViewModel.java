@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.stream.Stream;
 
@@ -132,6 +133,8 @@ public class CorporateViewModel {
     // グレアム指数
     private BigDecimal grahamIndex;
 
+    private static final int THIRD_DECIMAL_PLACE = 3;
+
     public static CorporateViewModel of(
             final String code,
             final String name,
@@ -224,40 +227,40 @@ public class CorporateViewModel {
                 Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
                         .map(DocumentTypeCode::toValue)
                         .anyMatch(dtc -> viewBean.getLatestDocumentTypeCode().equals(dtc)),
-                viewBean.getLatestCorporateValue().orElse(null),
-                viewBean.getThreeAverageCorporateValue().orElse(null),
-                viewBean.getThreeStandardDeviation().orElse(null),
-                viewBean.getThreeCoefficientOfVariation().orElse(null),
-                viewBean.getFiveAverageCorporateValue().orElse(null),
-                viewBean.getFiveStandardDeviation().orElse(null),
-                viewBean.getFiveCoefficientOfVariation().orElse(null),
-                viewBean.getTenAverageCorporateValue().orElse(null),
-                viewBean.getTenStandardDeviation().orElse(null),
-                viewBean.getTenCoefficientOfVariation().orElse(null),
-                viewBean.getAllAverageCorporateValue().orElse(null),
-                viewBean.getAllStandardDeviation().orElse(null),
-                viewBean.getAllCoefficientOfVariation().orElse(null),
+                viewBean.getLatestCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getThreeAverageCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getThreeStandardDeviation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getThreeCoefficientOfVariation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getFiveAverageCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getFiveStandardDeviation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getFiveCoefficientOfVariation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getTenAverageCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getTenStandardDeviation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getTenCoefficientOfVariation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getAllAverageCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getAllStandardDeviation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getAllCoefficientOfVariation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getAverageStockPrice().orElse(null),
                 viewBean.getImportDate().orElse(null),
                 viewBean.getLatestStockPrice().orElse(null),
                 viewBean.getThreeDiscountValue().orElse(null),
-                viewBean.getThreeDiscountRate().orElse(null),
+                viewBean.getThreeDiscountRate().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getFiveDiscountValue().orElse(null),
-                viewBean.getFiveDiscountRate().orElse(null),
+                viewBean.getFiveDiscountRate().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getTenDiscountValue().orElse(null),
-                viewBean.getTenDiscountRate().orElse(null),
+                viewBean.getTenDiscountRate().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getAllDiscountValue().orElse(null),
-                viewBean.getAllDiscountRate().orElse(null),
+                viewBean.getAllDiscountRate().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getCountYear().orElse(null),
                 viewBean.getForecastStock().orElse(null),
-                viewBean.getPriceCorporateValueRatio().orElse(null),
-                viewBean.getPer().orElse(null),
-                viewBean.getPbr().orElse(null),
-                viewBean.getBps().orElse(null),
-                viewBean.getEps().orElse(null),
-                viewBean.getRoe().orElse(null),
-                viewBean.getRoa().orElse(null),
-                viewBean.getGrahamIndex().orElse(null)
+                viewBean.getPriceCorporateValueRatio().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getPer().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getPbr().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getBps().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getEps().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getRoe().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getRoa().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getGrahamIndex().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null)
         );
     }
 }
