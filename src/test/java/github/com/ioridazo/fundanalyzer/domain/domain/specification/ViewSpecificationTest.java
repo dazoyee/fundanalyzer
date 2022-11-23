@@ -59,47 +59,7 @@ class ViewSpecificationTest {
     @Nested
     class upsert_CorporateViewModel {
 
-        CorporateViewModel viewModel = CorporateViewModel.of(
-                null,
-                null,
-                null,
-                null,
-                true,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CorporateViewModel viewModel = new CorporateViewModel();
 
         @DisplayName("企業情報ビューを更新する")
         @Test
@@ -299,48 +259,7 @@ class ViewSpecificationTest {
     }
 
     private CorporateViewBean defaultCorporateViewBean() {
-        return new CorporateViewBean(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        return CorporateViewBean.of();
     }
 
     private EdinetListViewBean defaultEdinetListViewBean() {

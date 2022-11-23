@@ -139,6 +139,51 @@ public class CorporateViewBean {
 
     private final LocalDateTime updatedAt;
 
+    public static CorporateViewBean of() {
+        return new CorporateViewBean(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
     public static CorporateViewBean of(final CorporateViewModel viewModel, final LocalDateTime nowLocalDateTime) {
         return new CorporateViewBean(
                 viewModel.getCode(),

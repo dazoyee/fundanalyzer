@@ -344,95 +344,16 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 割安度が存在しないときは表示対象外とする")
         @Test
         void discountRate_isEmpty() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    null,
-                    null,
-                    true,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
-
+            var list = List.of(new CorporateViewModel());
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
 
         @DisplayName("filter : 300日以前の提出日のみを表示する")
         @Test
         void configCorporateSize() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2020-07-04"),
-                    null,
-                    true,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2020-07-04"));
+            var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
@@ -440,47 +361,10 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 割安度が120%以上を表示する")
         @Test
         void configDiscountRate() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(119),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2020-07-04"));
+            model.setAllDiscountRate(BigDecimal.valueOf(119));
+            var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
@@ -488,47 +372,11 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 標準偏差が外れ値となっていたら除外する")
         @Test
         void configOutlierOfStandardDeviation() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(10000),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2020-07-04"));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(10000));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
@@ -536,47 +384,13 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 最新企業価値がマイナスの場合は除外する")
         @Test
         void corporateValue_isMinus() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(-1),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(100),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2020-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(-1));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(100));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
@@ -584,47 +398,15 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 最新企業価値が平均より低い場合は除外する")
         @Test
         void corporateValue_isAboveAverage() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(1000),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(10000),
-                    BigDecimal.valueOf(100),
-                    BigDecimal.valueOf(0.5),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2020-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(1000));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(10000));
+            model.setAllStandardDeviation(BigDecimal.valueOf(100));
+            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.5));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
@@ -632,47 +414,15 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 変動係数が0.6未満であること")
         @Test
         void configCoefficientOfVariation1() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(100),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(10),
-                    BigDecimal.valueOf(100),
-                    BigDecimal.valueOf(0.5),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2021-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(100));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(10));
+            model.setAllStandardDeviation(BigDecimal.valueOf(100));
+            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.5));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
         }
@@ -680,47 +430,15 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 変動係数が0.6以上でも最新企業価値が高ければOK")
         @Test
         void configCoefficientOfVariation2() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(10000),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(5000),
-                    BigDecimal.valueOf(100),
-                    BigDecimal.valueOf(0.7),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2021-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(10000));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(5000));
+            model.setAllStandardDeviation(BigDecimal.valueOf(100));
+            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.7));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
         }
@@ -728,47 +446,17 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 株価予想が存在する場合、最新株価より高ければOK")
         @Test
         void forecastStock1() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(10000),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(5000),
-                    BigDecimal.valueOf(100),
-                    BigDecimal.valueOf(0.7),
-                    null,
-                    null,
-                    BigDecimal.valueOf(100),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    BigDecimal.valueOf(200),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2021-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(10000));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(5000));
+            model.setAllStandardDeviation(BigDecimal.valueOf(100));
+            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.7));
+            model.setLatestStockPrice(BigDecimal.valueOf(100));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setForecastStock(BigDecimal.valueOf(200));
+            var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
         }
@@ -776,47 +464,17 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 株価予想が存在する場合、株価予想と最新株価との差が100以上であればOK")
         @Test
         void forecastStock2() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(10000),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(5000),
-                    BigDecimal.valueOf(100),
-                    BigDecimal.valueOf(0.7),
-                    null,
-                    null,
-                    BigDecimal.valueOf(10),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    BigDecimal.valueOf(100),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2021-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(10000));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(5000));
+            model.setAllStandardDeviation(BigDecimal.valueOf(100));
+            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.7));
+            model.setLatestStockPrice(BigDecimal.valueOf(10));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setForecastStock(BigDecimal.valueOf(100));
+            var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
         }
@@ -824,47 +482,14 @@ class ViewCorporateInteractorTest {
         @DisplayName("filter : 表示に必要な最低限の情報があるもののみ表示する")
         @Test
         void present() {
-            var list = List.of(CorporateViewModel.of(
-                    null,
-                    null,
-                    LocalDate.parse("2021-07-04"),
-                    null,
-                    true,
-                    BigDecimal.valueOf(10000),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(10),
-                    BigDecimal.valueOf(100),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(120),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            ));
+            var model = new CorporateViewModel();
+            model.setSubmitDate(LocalDate.parse("2021-07-04"));
+            model.setMainReport(true);
+            model.setLatestCorporateValue(BigDecimal.valueOf(10000));
+            model.setAllAverageCorporateValue(BigDecimal.valueOf(10));
+            model.setAllStandardDeviation(BigDecimal.valueOf(100));
+            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
         }
@@ -921,90 +546,29 @@ class ViewCorporateInteractorTest {
     }
 
     private CorporateViewModel defaultCorporateViewModel() {
-        return CorporateViewModel.of(
-                "code",
-                "name",
-                null,
-                null,
-                true,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var model = new CorporateViewModel();
+        model.setCode("code");
+        model.setName("name");
+        model.setLatestCorporateValue(BigDecimal.TEN);
+        model.setAllAverageCorporateValue(BigDecimal.TEN);
+        model.setAllStandardDeviation(BigDecimal.TEN);
+        model.setAllCoefficientOfVariation(BigDecimal.TEN);
+        model.setAllDiscountValue(BigDecimal.TEN);
+        model.setAllDiscountRate(BigDecimal.TEN);
+        return model;
     }
 
     private CorporateViewModel defaultCorporateViewModel(String code) {
-        return CorporateViewModel.of(
-                code,
-                "name",
-                null,
-                null,
-                true,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                BigDecimal.TEN,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        var model = new CorporateViewModel();
+        model.setCode(code);
+        model.setName("name");
+        model.setLatestCorporateValue(BigDecimal.TEN);
+        model.setAllAverageCorporateValue(BigDecimal.TEN);
+        model.setAllStandardDeviation(BigDecimal.TEN);
+        model.setAllCoefficientOfVariation(BigDecimal.TEN);
+        model.setAllDiscountValue(BigDecimal.TEN);
+        model.setAllDiscountRate(BigDecimal.TEN);
+        return model;
+
     }
 }
