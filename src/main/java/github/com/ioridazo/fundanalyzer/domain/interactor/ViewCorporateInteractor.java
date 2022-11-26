@@ -351,7 +351,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             try {
                 viewList.add(viewSpecification.generateCorporateView(
                         company,
-                        analysisResultSpecification.findLatestAnalysisResult(company.getCode()).orElse(AnalysisResult.of()),
+                        analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
                         investmentIndicatorSpecification.findLatestIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
                 ));

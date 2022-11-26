@@ -254,6 +254,7 @@ class ViewSpecificationTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }

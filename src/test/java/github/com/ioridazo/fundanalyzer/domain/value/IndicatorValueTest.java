@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class IndicatorValueTest {
 
-    private final IndicatorValue indicatorValue = new IndicatorValue(null, null, null, null);
+    private final IndicatorValue indicatorValue = new IndicatorValue(null, null, null, null, null);
 
     @Nested
     class calculatePriceCorporateValueRatio {

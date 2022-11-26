@@ -34,7 +34,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class StockSpecification {
@@ -84,6 +83,19 @@ public class StockSpecification {
         return stockPriceDao.selectByCodeAndDate(companyCode, targetDate).stream()
                 .filter(entity -> entity.getStockPrice().isPresent())
                 .findAny();
+    }
+
+    /**
+     * 最新の株価情報を取得する
+     *
+     * @param companyCode 企業コード
+     * @return 株価情報
+     */
+    public Optional<StockPriceEntity> findLatestStock(final String companyCode) {
+        return stockPriceDao.selectByCode(companyCode).stream()
+                .filter(entity -> entity.getStockPrice().isPresent())
+                // latest
+                .max(Comparator.comparing(StockPriceEntity::getTargetDate));
     }
 
     /**
@@ -139,7 +151,7 @@ public class StockSpecification {
                 .sorted(Comparator.comparing(StockPriceEntity::getCreatedAt))
                 .limit(targetCompanyNumber)
                 .map(StockPriceEntity::getCompanyCode)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -150,7 +162,7 @@ public class StockSpecification {
     public List<LocalDate> findTargetDateToDelete() {
         return stockPriceDao.selectDistinctTargetDate().stream()
                 .filter(targetDate -> targetDate.isBefore(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -286,7 +298,7 @@ public class StockSpecification {
                 .map(StockPriceEntity::getStockPrice)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         if (certainPeriodList.isEmpty()) {
             return Optional.empty();

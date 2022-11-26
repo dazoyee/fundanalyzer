@@ -8,11 +8,12 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
-import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -64,12 +66,34 @@ class AnalyzeInteractorTest {
                 stockSpecification,
                 investmentIndicatorSpecification
         ));
+        analyzeInteractor.targetTypeCodes = List.of("120", "130");
     }
 
     @Nested
     class analyze {
 
-        Document document = defaultDocument();
+        Document document = new Document(
+                "documentId",
+                null,
+                null,
+                "edinetCode",
+                null,
+                LocalDate.now(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false
+        );
+
+        AnalysisResultEntity analysisResult = analysisResultEntity();
+
         DateInputData inputData = DateInputData.of(LocalDate.parse("2021-05-15"));
 
         @DisplayName("analyze : 企業価値を算出する")
@@ -132,21 +156,51 @@ class AnalyzeInteractorTest {
             assertDoesNotThrow(() -> analyzeInteractor.analyze(inputData));
             verify(analyzeInteractor, times(0)).analyze(document);
         }
+
+        @DisplayName("analyze : 投資指標を算出する")
+        @Test
+        void indicate() {
+            var financeValue = FinanceValue.of(
+                    100L,
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(analysisResultSpecification.findAnalysisResult("documentId"))
+                    .thenReturn(Optional.of(analysisResult));
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+            verify(analysisResultSpecification, times(1)).insert(any(), any());
+            verify(analyzeInteractor, times(1)).indicate(analysisResult);
+        }
     }
 
     @Nested
     class calculateCorporateValue {
 
-        Company company = defaultCompany();
-        AnalysisResult analysisResult = new AnalysisResult(
-                BigDecimal.TEN,
+        Company company = new Company(
+                "code",
+                null,
+                null,
+                "edinetCode",
                 null,
                 null,
                 null,
                 null,
                 null,
-                null
+                false,
+                true
         );
+
+        AnalysisResultEntity analysisResult = analysisResultEntity();
 
         @DisplayName("calculateCorporateValue : 最新企業価値が存在しないとき")
         @Test
@@ -333,127 +387,157 @@ class AnalyzeInteractorTest {
     @Nested
     class indicate {
 
-        Document document = defaultDocument();
+        private AnalysisResultEntity analysisResultEntity(LocalDate submitDate) {
+            return new AnalysisResultEntity(
+                    1,
+                    "code",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "120",
+                    null,
+                    submitDate,
+                    "documentId",
+                    null
+            );
+        }
+
+        private IndicatorValue indicatorValue(LocalDate targetDate) {
+            return new IndicatorValue(
+                    null,
+                    null,
+                    null,
+                    null,
+                    targetDate
+            );
+        }
+
+        private StockPriceEntity stockPriceEntity(LocalDate targetDate) {
+            return new StockPriceEntity(
+                    null,
+                    null,
+                    targetDate,
+                    1000.0,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        @BeforeEach
+        void setUp() {
+            when(stockSpecification.findStock(eq("code"), any()))
+                    .thenReturn(Optional.of(stockPriceEntity(null)));
+
+        }
+
+        @DisplayName("indicate : 企業コードから投資指標を算出する")
+        @Test
+        void inputData_code() {
+            var analysisResultEntity = analysisResultEntity(null);
+
+            when(analysisResultSpecification.findLatestAnalysisResult("code"))
+                    .thenReturn(Optional.of(analysisResultEntity));
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(CodeInputData.of("code")));
+            verify(analyzeInteractor, times(1)).indicate(analysisResultEntity);
+
+        }
 
         @DisplayName("indicate : 投資指標を算出する")
         @Test
         void present() {
-            when(analysisResultSpecification.findAnalysisResult("documentId"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-11-19"))));
-            when(stockSpecification.findStock("code", LocalDate.parse("2022-11-19")))
-                    .thenReturn(Optional.of(stockPriceEntity(1000.0)));
+            when(investmentIndicatorSpecification.findIndicatorValueList(1))
+                    .thenReturn(List.of(indicatorValue(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
 
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
-            verify(investmentIndicatorSpecification, times(1)).insert(any(), any());
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
+            verify(investmentIndicatorSpecification, times(7)).insert(any(), any());
+        }
+
+        @DisplayName("indicate : 書類種別コードが対象外のとき")
+        @Test
+        void documentTypeCode_isNotTarget() {
+            var analysisResultEntity = new AnalysisResultEntity(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "140",
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
         }
 
         @DisplayName("indicate : 株価が存在しないとき")
         @Test
         void stockPrice_isEmpty() {
-            when(analysisResultSpecification.findAnalysisResult("documentId"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-11-19"))));
-            when(stockSpecification.findStock("code", LocalDate.parse("2022-11-19")))
-                    .thenReturn(Optional.of(stockPriceEntity(null)));
-
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
             verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
         }
 
-        @DisplayName("indicate : 株価が存在しないとき")
+        @DisplayName("indicate : 投資指標が存在しないとき")
         @Test
-        void stockPriceEntity_isEmpty() {
-            when(analysisResultSpecification.findAnalysisResult("documentId"))
-                    .thenReturn(Optional.of(analysisResultEntity(LocalDate.parse("2022-11-19"))));
-            when(stockSpecification.findStock("code", LocalDate.parse("2022-11-19")))
-                    .thenReturn(Optional.empty());
+        void indicatorValue_isEmpty() {
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
 
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
+            verify(investmentIndicatorSpecification, times(26)).insert(any(), any());
         }
 
-        @DisplayName("indicate : 企業価値が存在しないとき")
-        @Test
-        void analysisResultEntity_isEmpty() {
-            when(analysisResultSpecification.findAnalysisResult("documentId")).thenReturn(Optional.empty());
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(document));
+        @DisplayName("indicate : 処理対象日付が正しくないとき")
+        @ParameterizedTest
+        @CsvSource({
+                "2022-11-01, 2022-10-31",
+                "2021-11-01, 2022-11-02"
+        })
+        void date_ng(String submitDate, String latestDate) {
+            when(investmentIndicatorSpecification.findIndicatorValueList(1))
+                    .thenReturn(List.of(indicatorValue(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
+
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
             verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
         }
     }
 
-    private Document defaultDocument() {
-        return new Document(
-                "documentId",
-                null,
-                null,
-                "edinetCode",
-                null,
-                LocalDate.now(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false
-        );
-    }
-
-    private Company defaultCompany() {
-        return new Company(
-                "code",
-                null,
-                null,
-                "edinetCode",
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                true
-        );
-    }
-
-    private AnalysisResultEntity analysisResultEntity(LocalDate submitDate) {
+    private AnalysisResultEntity analysisResultEntity() {
         return new AnalysisResultEntity(
                 null,
-                "code",
+                null,
+                null,
+                BigDecimal.TEN,
                 null,
                 null,
                 null,
                 null,
+                "120",
                 null,
                 null,
-                null,
-                null,
-                submitDate,
-                null,
-                null
-        );
-    }
-
-    private StockPriceEntity stockPriceEntity(Double stockPrice) {
-        return new StockPriceEntity(
-                null,
-                null,
-                null,
-                stockPrice,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
+                "documentId",
                 null
         );
     }

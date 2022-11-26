@@ -238,9 +238,26 @@ public class AnalysisService {
         return valuationUseCase.evaluate();
     }
 
+    /**
+     * 株価の評価
+     *
+     * @param inputData 企業コード
+     * @return 評価件数
+     */
     @NewSpan
     public boolean evaluate(final CodeInputData inputData) {
         // evaluate
         return valuationUseCase.evaluate(inputData);
+    }
+
+    /**
+     * 投資指標の算出
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    public void indicate(final CodeInputData inputData) {
+        // indicate
+        analyzeUseCase.indicate(inputData);
     }
 }

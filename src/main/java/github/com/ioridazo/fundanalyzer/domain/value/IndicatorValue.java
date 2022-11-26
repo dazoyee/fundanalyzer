@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,17 +33,21 @@ public class IndicatorValue {
      */
     private final BigDecimal grahamIndex;
 
+    private final LocalDate targetDate;
+
     private static final int TENTH_DECIMAL_PLACE = 10;
 
     public IndicatorValue(
             final BigDecimal priceCorporateValueRatio,
             final BigDecimal per,
             final BigDecimal pbr,
-            final BigDecimal grahamIndex) {
+            final BigDecimal grahamIndex,
+            final LocalDate targetDate) {
         this.priceCorporateValueRatio = priceCorporateValueRatio;
         this.per = per;
         this.pbr = pbr;
         this.grahamIndex = grahamIndex;
+        this.targetDate = targetDate;
     }
 
     public IndicatorValue(
@@ -51,10 +56,12 @@ public class IndicatorValue {
         this.per = calculatePer(stockPrice, analysisResultEntity).orElse(null);
         this.pbr = calculatePbr(stockPrice, analysisResultEntity).orElse(null);
         this.grahamIndex = calculateGrahamIndex(this.per, this.pbr).orElse(null);
+        this.targetDate = analysisResultEntity.getSubmitDate();
     }
 
     public static IndicatorValue of() {
         return new IndicatorValue(
+                null,
                 null,
                 null,
                 null,
@@ -67,7 +74,8 @@ public class IndicatorValue {
                 entity.getPriceCorporateValueRatio(),
                 entity.getPer().orElse(null),
                 entity.getPbr().orElse(null),
-                entity.getGrahamIndex().orElse(null)
+                entity.getGrahamIndex().orElse(null),
+                entity.getTargetDate()
         );
     }
 

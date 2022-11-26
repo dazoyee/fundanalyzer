@@ -16,6 +16,9 @@ public interface InvestmentIndicatorDao {
     @Select
     List<InvestmentIndicatorEntity> selectByCode(String code);
 
+    @Select
+    List<InvestmentIndicatorEntity> selectByAnalysisResultId(Integer analysisResultId);
+
     @Insert
     Result<InvestmentIndicatorEntity> insert(InvestmentIndicatorEntity investmentIndicatorEntity);
 }

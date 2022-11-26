@@ -4,9 +4,9 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
-import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
@@ -151,7 +151,7 @@ public class ValuationSpecification {
      * @param stock          株価
      * @param analysisResult 分析結果
      */
-    public void insert(final StockPriceEntity stock, final AnalysisResult analysisResult) {
+    public void insert(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         try {
             valuationDao.insert(evaluate(stock, analysisResult));
         } catch (final NestedRuntimeException e) {
@@ -192,7 +192,7 @@ public class ValuationSpecification {
      * @param analysisResult 分析結果
      * @return 評価結果
      */
-    ValuationEntity evaluate(final StockPriceEntity stock, final AnalysisResult analysisResult) {
+    ValuationEntity evaluate(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         final String code = stock.getCompanyCode();
         final LocalDate targetDate = stock.getTargetDate();
         final BigDecimal stockPrice = stock.getStockPrice().map(BigDecimal::valueOf)

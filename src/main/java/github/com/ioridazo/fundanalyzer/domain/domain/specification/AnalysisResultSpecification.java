@@ -58,12 +58,11 @@ public class AnalysisResultSpecification {
      * @param companyCode 企業コード
      * @return 最新の分析結果
      */
-    public Optional<AnalysisResult> findLatestAnalysisResult(final String companyCode) {
+    public Optional<AnalysisResultEntity> findLatestAnalysisResult(final String companyCode) {
         return analysisTargetList(companyCode, targetTypeCodes).stream()
                 // latest
                 .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod)
-                        .thenComparing(AnalysisResultEntity::getSubmitDate))
-                .map(AnalysisResult::of);
+                        .thenComparing(AnalysisResultEntity::getSubmitDate));
     }
 
     /**

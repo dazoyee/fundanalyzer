@@ -20,6 +20,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -52,6 +53,18 @@ public class InvestmentIndicatorSpecification {
     }
 
     /**
+     * 分析結果に紐づく投資指標を取得する
+     *
+     * @param analysisResultId 分析結果ID
+     * @return 投資指標
+     */
+    public List<IndicatorValue> findIndicatorValueList(final Integer analysisResultId) {
+        return investmentIndicatorDao.selectByAnalysisResultId(analysisResultId).stream()
+                .map(IndicatorValue::of)
+                .toList();
+    }
+
+    /**
      * 投資指標を登録する
      *
      * @param analysisResultEntity 企業価値エンティティ
@@ -66,7 +79,7 @@ public class InvestmentIndicatorSpecification {
                     stockPriceEntity.getId(),
                     analysisResultEntity.getId(),
                     analysisResultEntity.getCompanyCode(),
-                    analysisResultEntity.getSubmitDate(),
+                    stockPriceEntity.getTargetDate(),
                     indicatorValue.getPriceCorporateValueRatio(),
                     indicatorValue.getPer().orElse(null),
                     indicatorValue.getPbr().orElse(null),

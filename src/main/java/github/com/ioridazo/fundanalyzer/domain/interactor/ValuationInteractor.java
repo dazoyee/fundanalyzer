@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
@@ -11,7 +12,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
-import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -82,7 +82,7 @@ public class ValuationInteractor implements ValuationUseCase {
         final long startTime = System.currentTimeMillis();
         try {
             final String companyCode = inputData.getCode();
-            final Optional<AnalysisResult> latestAnalysisResult = analysisResultSpecification.findLatestAnalysisResult(companyCode);
+            final Optional<AnalysisResultEntity> latestAnalysisResult = analysisResultSpecification.findLatestAnalysisResult(companyCode);
 
             if (latestAnalysisResult.isPresent()) {
                 final LocalDate targetDate =

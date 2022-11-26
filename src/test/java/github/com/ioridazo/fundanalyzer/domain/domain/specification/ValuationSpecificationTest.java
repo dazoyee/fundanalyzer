@@ -1,9 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
-import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -262,14 +262,20 @@ class ValuationSpecificationTest {
 
             var actual = valuationSpecification.evaluate(
                     stockPrice(LocalDate.parse("2022-07-02"), 500.0),
-                    new AnalysisResult(
+                    new AnalysisResultEntity(
+                            null,
+                            "code",
+                            null,
                             BigDecimal.valueOf(2000),
                             null,
                             null,
                             null,
                             null,
+                            null,
+                            null,
                             LocalDate.parse("2022-06-12"),
-                            "documentId"
+                            "documentId",
+                            null
                     ));
 
             assertAll(
@@ -299,13 +305,19 @@ class ValuationSpecificationTest {
         void daySinceSubmitDate(String targetDate, String submitDate, String day) {
             var actual = valuationSpecification.evaluate(
                     stockPrice(LocalDate.parse(targetDate), 500.0),
-                    new AnalysisResult(
+                    new AnalysisResultEntity(
+                            null,
+                            null,
+                            null,
                             BigDecimal.valueOf(2000),
                             null,
                             null,
                             null,
                             null,
+                            null,
+                            null,
                             LocalDate.parse(submitDate),
+                            null,
                             null
                     )
             );
@@ -327,13 +339,19 @@ class ValuationSpecificationTest {
 
             var actual = valuationSpecification.evaluate(
                     stockPrice(LocalDate.parse("2022-07-02"), stockPrice),
-                    new AnalysisResult(
+                    new AnalysisResultEntity(
+                            null,
+                            null,
+                            null,
                             BigDecimal.valueOf(2000),
                             null,
                             null,
                             null,
                             null,
+                            null,
+                            null,
                             LocalDate.parse("2022-06-12"),
+                            null,
                             null
                     )
             );
@@ -355,13 +373,19 @@ class ValuationSpecificationTest {
 
             var actual = valuationSpecification.evaluate(
                     stockPrice(LocalDate.parse("2022-07-02"), stockPrice),
-                    new AnalysisResult(
+                    new AnalysisResultEntity(
+                            null,
+                            null,
+                            null,
                             BigDecimal.valueOf(2000),
                             null,
                             null,
                             null,
                             null,
+                            null,
+                            null,
                             LocalDate.parse("2022-06-12"),
+                            null,
                             null
                     )
             );
@@ -380,13 +404,19 @@ class ValuationSpecificationTest {
         void discountValue(Double stockPrice, Double latestCorporateValue, Double discountValue) {
             var actual = valuationSpecification.evaluate(
                     stockPrice(LocalDate.parse("2022-07-02"), stockPrice),
-                    new AnalysisResult(
+                    new AnalysisResultEntity(
+                            null,
+                            null,
+                            null,
                             BigDecimal.valueOf(latestCorporateValue),
                             null,
                             null,
                             null,
                             null,
+                            null,
+                            null,
                             LocalDate.parse("2022-06-12"),
+                            null,
                             null
                     )
             );
@@ -405,13 +435,19 @@ class ValuationSpecificationTest {
         void discountRate(Double stockPrice, Double latestCorporateValue, Long discountRate) {
             var actual = valuationSpecification.evaluate(
                     stockPrice(LocalDate.parse("2022-07-02"), stockPrice),
-                    new AnalysisResult(
+                    new AnalysisResultEntity(
+                            null,
+                            null,
+                            null,
                             BigDecimal.valueOf(latestCorporateValue),
                             null,
                             null,
                             null,
                             null,
+                            null,
+                            null,
                             LocalDate.parse("2022-06-12"),
+                            null,
                             null
                     )
             );

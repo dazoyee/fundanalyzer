@@ -3,7 +3,9 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
@@ -17,17 +19,22 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +49,9 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+
+    @Value("${app.config.view.document-type-code}")
+    List<String> targetTypeCodes;
 
     public AnalyzeInteractor(
             final CompanySpecification companySpecification,
@@ -127,7 +137,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
 
             analysisResultSpecification.insert(document, analysisResult);
-            this.indicate(document);
+            analysisResultSpecification.findAnalysisResult(document.getDocumentId()).ifPresent(this::indicate);
 
         } catch (final FundanalyzerNotExistException e) {
             final FinancialStatementEnum fs = e.getFs().orElseThrow(FundanalyzerRuntimeException::new);
@@ -165,7 +175,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         // 最新企業価値
         final Optional<BigDecimal> latestCorporateValue =
                 analysisResultSpecification.findLatestAnalysisResult(company.getCode())
-                        .map(AnalysisResult::getCorporateValue);
+                        .map(AnalysisResultEntity::getCorporateValue);
         if (latestCorporateValue.isEmpty()) {
             return corporateValue;
         } else {
@@ -220,20 +230,91 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     /**
      * 投資指標を算出する
      *
-     * @param document ドキュメント
+     * @param inputData 企業コード
      */
-    void indicate(final Document document) {
-        // find analysis result
-        analysisResultSpecification.findAnalysisResult(document.getDocumentId())
-                .ifPresent(analysisResult ->
+    @Override
+    public void indicate(final CodeInputData inputData) {
+        analysisResultSpecification.findLatestAnalysisResult(inputData.getCode()).ifPresent(this::indicate);
+    }
+
+    /**
+     * 投資指標を算出する
+     *
+     * @param analysisResult 分析結果
+     */
+    void indicate(final AnalysisResultEntity analysisResult) {
+        if (targetTypeCodes.stream().noneMatch(target -> analysisResult.getDocumentTypeCode().equals(target))) {
+            // 120,130 以外は処理対象外
+            return;
+        }
+
+        final long startTime = System.currentTimeMillis();
+        final List<IndicatorValue> indicatorValueList = investmentIndicatorSpecification.findIndicatorValueList(analysisResult.getId());
+        final Optional<StockPriceEntity> latestStock = stockSpecification.findLatestStock(analysisResult.getCompanyCode());
+
+        if (latestStock.isPresent()) {
+            final LocalDate executedDate = indicatorValueList.stream()
+                    // latest indicator
+                    .max(Comparator.comparing(IndicatorValue::getTargetDate))
+                    .map(IndicatorValue::getTargetDate)
+                    // default
+                    .orElse(analysisResult.getSubmitDate().minusDays(1));
+            final LocalDate latestDate = latestStock.get().getTargetDate();
+
+            // 提出日 <= 株価取得日 && 株価取得日 <= 提出日+1年
+            if (latestDate.isAfter(analysisResult.getSubmitDate())
+                    && latestDate.isBefore(analysisResult.getSubmitDate().plusYears(1))) {
+                // executedDate -> latestDate
+                executedDate.plusDays(1).datesUntil(latestDate.plusDays(1)).forEach(date ->
                         // find stock
-                        stockSpecification.findStock(analysisResult.getCompanyCode(), analysisResult.getSubmitDate())
-                                .ifPresent(stockPrice -> {
-                                    if (stockPrice.getStockPrice().isPresent()) {
-                                        // indicate
-                                        investmentIndicatorSpecification.insert(analysisResult, stockPrice);
-                                    }
-                                })
+                        stockSpecification.findStock(analysisResult.getCompanyCode(), date)
+                                .ifPresent(spe -> {
+                                            if (spe.getStockPrice().isPresent()) {
+                                                // indicate
+                                                investmentIndicatorSpecification.insert(analysisResult, spe);
+                                            }
+                                        }
+                                )
                 );
+
+                log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "投資指標を算出しました。\t企業コード:{0}\t処理対象日:{1} -> {2}",
+                                analysisResult.getCompanyCode(),
+                                executedDate.plusDays(1),
+                                latestDate
+                        ),
+                        analysisResult.getDocumentId(),
+                        Category.ANALYSIS,
+                        Process.INDICATE,
+                        System.currentTimeMillis() - startTime
+                ));
+            } else {
+                log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "提出日または株価取得日が正しくないため、投資指標を算出しませんでした。" +
+                                        "\t企業コード:{0}\t提出日:{1}\t株価取得日:{2}",
+                                analysisResult.getCompanyCode(),
+                                analysisResult.getSubmitDate(),
+                                latestDate
+                        ),
+                        analysisResult.getDocumentId(),
+                        Category.ANALYSIS,
+                        Process.INDICATE,
+                        System.currentTimeMillis() - startTime
+                ));
+            }
+        } else {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "株価が存在しないため、投資指標を算出できませんでした。\t企業コード:{0}",
+                            analysisResult.getCompanyCode()
+                    ),
+                    analysisResult.getDocumentId(),
+                    Category.ANALYSIS,
+                    Process.INDICATE,
+                    System.currentTimeMillis() - startTime
+            ));
+        }
     }
 }
