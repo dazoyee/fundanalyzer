@@ -53,6 +53,18 @@ public class InvestmentIndicatorSpecification {
     }
 
     /**
+     * 投資指標を取得する
+     *
+     * @param companyCode 企業コード
+     * @return 投資指標
+     */
+    public List<IndicatorValue> findIndicatorValueList(final String companyCode) {
+        return investmentIndicatorDao.selectByCode(companyCode).stream()
+                .map(IndicatorValue::of)
+                .toList();
+    }
+
+    /**
      * 分析結果に紐づく投資指標を取得する
      *
      * @param analysisResultId 分析結果ID

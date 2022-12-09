@@ -668,6 +668,12 @@
                       </a>
                     </li>
                     <li class="nav-item">
+                      <a class="nav-link" id="indicator-tab" data-toggle="pill" href="#indicator"
+                         role="tab" aria-controls="indicator" aria-selected="false">
+                        投資指標
+                      </a>
+                    </li>
+                    <li class="nav-item">
                       <a class="nav-link" id="financial-statement-tab" data-toggle="pill" href="#financial-statement"
                          role="tab" aria-controls="financial-statement" aria-selected="false">
                         財務諸表
@@ -723,6 +729,77 @@
                               <td th:text="${analysisResult.corporateValue}">企業価値</td>
                               <td th:text="${analysisResult.documentTypeCode}">書類種別コード</td>
                               <td th:text="${analysisResult.quarterType}">四半期種別</td>
+                            </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="indicator" role="tabpanel" aria-labelledby="indicator-tab">
+                      <div class="row mb-3">
+                        <div class="col-1">
+                          <div class="nav flex-column nav-tabs h-100" id="indicator-tabs-tab" role="tablist"
+                               aria-orientation="vertical">
+                            <a class="nav-link" id="indicator-one-month-tab" data-toggle="pill"
+                               href="#indicator-one-month" role="tab" aria-controls="indicator-one-month"
+                               aria-selected="false">1ヶ月</a>
+                            <a class="nav-link active" id="indicator-six-month-tab" data-toggle="pill"
+                               href="#indicator-six-month" role="tab" aria-controls="indicator-six-month"
+                               aria-selected="true">6ヶ月</a>
+                            <a class="nav-link" id="indicator-one-year-tab" data-toggle="pill"
+                               href="#indicator-one-year" role="tab" aria-controls="indicator-one-year"
+                               aria-selected="false">1年</a>
+                            <a class="nav-link" id="indicator-all-tab" data-toggle="pill"
+                               href="#indicator-all"
+                               role="tab" aria-controls="indicator-all" aria-selected="false">全期間</a>
+                          </div>
+                        </div>
+                        <div class="col-11">
+                          <div class="tab-content" id="indicator-tabs-tabContent">
+                            <div class="tab-pane fade" id="indicator-one-month" role="tabpanel"
+                                 aria-labelledby="one-month-tab">
+                              <canvas id="indicatorChart30"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane text-left fade show active" id="indicator-six-month"
+                                 role="tabpanel" aria-labelledby="six-month-tab">
+                              <canvas id="indicatorChart180"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="indicator-one-year" role="tabpanel"
+                                 aria-labelledby="one-year-tab">
+                              <canvas id="indicatorChart365"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="indicator-all" role="tabpanel"
+                                 aria-labelledby="all-tab">
+                              <canvas id="indicatorChartAll"
+                                      style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row mb-3">
+                        <div class="col-12">
+                          <table class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                              <th>対象日付</th>
+                              <th>株価企業価値率</th>
+                              <th>PER</th>
+                              <th>PBR</th>
+                              <th>グレアム指数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="indicator : ${indicators}">
+                              <td th:text="${indicator.targetDate}">対象日付</td>
+                              <td th:text="${indicator.priceCorporateValueRatio}">株価企業価値率</td>
+                              <td th:text="${indicator.per}">PER</td>
+                              <td th:text="${indicator.pbr}">PBR</td>
+                              <td th:text="${indicator.grahamIndex}">グレアム指数</td>
                             </tr>
                             </tbody>
                           </table>
@@ -1034,7 +1111,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
   <!-- Page specific script -->
   <script type="text/javascript" th:inline="javascript">
-
       const analysisChartAll = document.getElementById("analysisChartAll");
 
       new Chart(analysisChartAll, {
@@ -1061,7 +1137,217 @@
               responsive: true,
           }
       });
+  </script>
 
+  <script type="text/javascript" th:inline="javascript">
+      const indicatorChart30 = document.getElementById("indicatorChart30");
+      const indicatorChart180 = document.getElementById("indicatorChart180");
+      const indicatorChart365 = document.getElementById("indicatorChart365");
+      const indicatorChartAll = document.getElementById("indicatorChartAll");
+
+      new Chart(indicatorChart30, {
+          type: 'line',
+          data: {
+              labels: [[ ${indicatorLabel30}]],
+              datasets: [
+                  {
+                      label: "グレアム指数",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${indicatorPoint180}]],
+                  },
+              ]
+          },
+          options: {
+              scales: {
+                  y: {
+                      reverse: true
+                  }
+              },
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+
+      new Chart(indicatorChart180, {
+          type: 'line',
+          data: {
+              labels: [[ ${indicatorLabel180}]],
+              datasets: [
+                  {
+                      label: "グレアム指数",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${indicatorPoint180}]],
+                  },
+              ]
+          },
+          options: {
+              scales: {
+                  y: {
+                      reverse: true
+                  }
+              },
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+
+      new Chart(indicatorChart365, {
+          type: 'line',
+          data: {
+              labels: [[ ${indicatorLabel365}]],
+              datasets: [
+                  {
+                      label: "グレアム指数",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${indicatorPoint365}]],
+                  },
+              ]
+          },
+          options: {
+              scales: {
+                  y: {
+                      reverse: true
+                  }
+              },
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+
+      new Chart(indicatorChartAll, {
+          type: 'line',
+          data: {
+              labels: [[ ${indicatorLabelAll}]],
+              datasets: [
+                  {
+                      label: "グレアム指数",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${indicatorPointAll}]],
+                  },
+              ]
+          },
+          options: {
+              scales: {
+                  y: {
+                      reverse: true
+                  }
+              },
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+  </script>
+
+  <script type="text/javascript" th:inline="javascript">
+      const forecastStockChart180 = document.getElementById("forecastStockChart180");
+      const forecastStockChart365 = document.getElementById("forecastStockChart365");
+      const forecastStockChartAll = document.getElementById("forecastStockChartAll");
+
+      new Chart(forecastStockChart180, {
+          type: 'line',
+          data: {
+              labels: [[ ${forecastStockLabel180}]],
+              datasets: [
+                  {
+                      label: "株価予想",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${forecastStockPoint180}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+
+      new Chart(forecastStockChart365, {
+          type: 'line',
+          data: {
+              labels: [[ ${forecastStockLabel365}]],
+              datasets: [
+                  {
+                      label: "株価予想",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${forecastStockPoint365}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+
+      new Chart(forecastStockChartAll, {
+          type: 'line',
+          data: {
+              labels: [[ ${forecastStockLabelAll}]],
+              datasets: [
+                  {
+                      label: "株価予想",
+                      borderColor: 'rgb(0, 0, 0)',
+                      lineTension: 0,
+                      fill: false,
+                      borderWidth: 1,
+                      data: [[ ${forecastStockPointAll}]],
+                  },
+              ]
+          },
+          options: {
+              elements: {
+                  point: {
+                      radius: 0
+                  }
+              },
+              responsive: true,
+          }
+      });
+  </script>
+
+  <script type="text/javascript" th:inline="javascript">
       const stockChart30 = document.getElementById("stockChart30");
       const stockChart90 = document.getElementById("stockChart90");
       const stockChart180 = document.getElementById("stockChart180");
@@ -1192,86 +1478,9 @@
               responsive: true,
           }
       });
+  </script>
 
-      const forecastStockChart180 = document.getElementById("forecastStockChart180");
-      const forecastStockChart365 = document.getElementById("forecastStockChart365");
-      const forecastStockChartAll = document.getElementById("forecastStockChartAll");
-
-      new Chart(forecastStockChart180, {
-          type: 'line',
-          data: {
-              labels: [[ ${forecastStockLabel180}]],
-              datasets: [
-                  {
-                      label: "株価予想",
-                      borderColor: 'rgb(0, 0, 0)',
-                      lineTension: 0,
-                      fill: false,
-                      borderWidth: 1,
-                      data: [[ ${forecastStockPoint180}]],
-                  },
-              ]
-          },
-          options: {
-              elements: {
-                  point: {
-                      radius: 0
-                  }
-              },
-              responsive: true,
-          }
-      });
-
-      new Chart(forecastStockChart365, {
-          type: 'line',
-          data: {
-              labels: [[ ${forecastStockLabel365}]],
-              datasets: [
-                  {
-                      label: "株価予想",
-                      borderColor: 'rgb(0, 0, 0)',
-                      lineTension: 0,
-                      fill: false,
-                      borderWidth: 1,
-                      data: [[ ${forecastStockPoint365}]],
-                  },
-              ]
-          },
-          options: {
-              elements: {
-                  point: {
-                      radius: 0
-                  }
-              },
-              responsive: true,
-          }
-      });
-
-      new Chart(forecastStockChartAll, {
-          type: 'line',
-          data: {
-              labels: [[ ${forecastStockLabelAll}]],
-              datasets: [
-                  {
-                      label: "株価予想",
-                      borderColor: 'rgb(0, 0, 0)',
-                      lineTension: 0,
-                      fill: false,
-                      borderWidth: 1,
-                      data: [[ ${forecastStockPointAll}]],
-                  },
-              ]
-          },
-          options: {
-              elements: {
-                  point: {
-                      radius: 0
-                  }
-              },
-              responsive: true,
-          }
-      });
-
+  <script type="text/javascript" th:inline="javascript">
       const valuationChart180 = document.getElementById("valuationChart180");
       const valuationChart365 = document.getElementById("valuationChart365");
       const valuationChartAll = document.getElementById("valuationChartAll");
@@ -1350,7 +1559,6 @@
               responsive: true,
           }
       });
-
   </script>
 </div>
 

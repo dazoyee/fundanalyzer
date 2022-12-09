@@ -29,6 +29,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CompanyV
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementKeyViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.IndicatorViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.apache.logging.log4j.LogManager;
@@ -196,6 +197,11 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .reversed())
                 .toList();
 
+        final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.getCode()).stream()
+                .map(IndicatorViewModel::of)
+                .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
+                .toList();
+
         final List<FinancialStatementViewModel> fsList = financialStatementSpecification.findByCompany(company).stream()
                 .map(FinancialStatementKeyViewModel::of)
                 .distinct()
@@ -217,6 +223,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 null,
                 viewSpecification.findLatestCorporateView(inputData),
                 analysisResultList,
+                indicatorList,
                 fsList,
                 stock.getMinkabuEntityList().stream()
                         .map(MinkabuViewModel::of)

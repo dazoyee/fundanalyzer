@@ -215,6 +215,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
             doReturn(List.of(
@@ -233,6 +234,7 @@ class ViewCorporateInteractorTest {
         @Test
         void target_backward_is_null() {
             doReturn(CorporateDetailViewModel.of(
+                    null,
                     null,
                     null,
                     null,
@@ -264,6 +266,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
             doReturn(List.of(
@@ -281,6 +284,7 @@ class ViewCorporateInteractorTest {
         @Test
         void target_backward_and_forward_is_null() {
             doReturn(CorporateDetailViewModel.of(
+                    null,
                     null,
                     null,
                     null,
