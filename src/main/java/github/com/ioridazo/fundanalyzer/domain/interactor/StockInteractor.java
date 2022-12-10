@@ -66,9 +66,10 @@ public class StockInteractor implements StockUseCase {
      * 株価を取得する
      *
      * @param inputData 提出日
+     * @param place     取得先
      */
     @Override
-    public void importStockPrice(final DateInputData inputData) {
+    public void importStockPrice(final DateInputData inputData, final Place place) {
         final long startTime = System.currentTimeMillis();
         final List<CodeInputData> inputDataList = documentSpecification.targetList(inputData).stream()
                 .map(document -> companySpecification.findCompanyByEdinetCode(document.getEdinetCode()))
@@ -78,21 +79,19 @@ public class StockInteractor implements StockUseCase {
                 .distinct()
                 .toList();
 
-        List.of(Place.NIKKEI, Place.KABUOJI3, Place.MINKABU, Place.YAHOO_FINANCE).forEach(place -> {
-            try {
-                if (inputDataList.size() > 10) {
-                    inputDataList.parallelStream().forEach(code -> importStockPrice(code, place));
-                } else {
-                    inputDataList.forEach(code -> importStockPrice(code, place));
-                }
-            } catch (final FundanalyzerShortCircuitException e) {
-                log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                        e.getMessage(),
-                        Category.STOCK,
-                        Process.IMPORT
-                ));
+        try {
+            if (inputDataList.size() > 10) {
+                inputDataList.parallelStream().forEach(code -> importStockPrice(code, place));
+            } else {
+                inputDataList.forEach(code -> importStockPrice(code, place));
             }
-        });
+        } catch (final FundanalyzerShortCircuitException e) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    e.getMessage(),
+                    Category.STOCK,
+                    Process.IMPORT
+            ));
+        }
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format(
@@ -146,6 +145,11 @@ public class StockInteractor implements StockUseCase {
                 case MINKABU -> {
                     if (isMinkabu) {
                         // みんかぶ
+                        jsoupClient.minkabuForStock(inputData.getCode5()).stream()
+                                // 保存する株価を絞る
+                                .filter(minkabu -> LocalDate.parse(minkabu.targetDate(), DateTimeFormatter.ofPattern("uuuu/MM/dd"))
+                                        .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
+                                .forEach(minkabu -> stockSpecification.insertOfMinkabu(inputData.getCode5(), minkabu));
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
                         log.info(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("みんかぶ から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),

@@ -78,7 +78,8 @@ public class DevelopController {
         // remove
         documentUseCase.removeDocument(inputData);
         // stock
-        stockUseCase.importStockPrice(inputData);
+        stockUseCase.importStockPrice(inputData, StockUseCase.Place.NIKKEI);
+        stockUseCase.importStockPrice(inputData, StockUseCase.Place.MINKABU);
         // analysis
         analyzeUseCase.analyze(inputData);
         // view corporate

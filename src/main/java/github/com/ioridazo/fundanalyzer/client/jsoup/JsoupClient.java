@@ -144,6 +144,30 @@ public class JsoupClient {
     }
 
     /**
+     * minkabuの会社コードによる株価情報を取得する
+     *
+     * @param code 会社コード
+     * @return 株価情報
+     */
+    public List<StockPriceResultBean> minkabuForStock(final String code) {
+        final String url = UriComponentsBuilder.fromUriString(properties.getRestClient().get(MINKABU).getBaseUri())
+                .path("/stock/{code}/daily_bar")
+                .buildAndExpand(code.substring(0, 4))
+                .toUriString();
+
+        final Document document = getForHtml(MINKABU, code, url);
+        final Map<String, Integer> thOrder = readMinkabuThOrder(document);
+
+        return document.select(".md_table_wrapper table").select("tr").stream()
+                .map(tr -> tr.select("td").stream()
+                        .map(Element::text)
+                        .toList())
+                .filter(tdList -> tdList.size() == 7)
+                .map(tdList -> StockPriceResultBean.ofMinkabu(thOrder, tdList))
+                .toList();
+    }
+
+    /**
      * Yahoo!Financeの会社コードによる株価情報予想を取得する
      *
      * @param code 会社コード
@@ -271,6 +295,35 @@ public class JsoupClient {
             );
         } catch (Throwable t) {
             log.warn("kabuoji3の表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
+            throw new FundanalyzerScrapingException(t);
+        }
+    }
+
+    /**
+     * みんかぶのスクレイピング結果からタイトル行を識別する
+     *
+     * @param document スクレイピング結果
+     * @return <ul><li>日時</li><li>始値</li><li>高値</li><li>安値</li><li>終値</li><li>出来高(株)</li><li>調整後終値</li></ul>
+     */
+    private Map<String, Integer> readMinkabuThOrder(final Document document) {
+        final List<String> thList = document
+                .select(".md_table_wrapper table")
+                .select("tr")
+                .select("th").stream()
+                .map(Element::text)
+                .toList();
+        try {
+            return Map.of(
+                    "日時", thList.indexOf("日時"),
+                    "始値", thList.indexOf("始値"),
+                    "高値", thList.indexOf("高値"),
+                    "安値", thList.indexOf("安値"),
+                    "終値", thList.indexOf("終値"),
+                    "出来高(株)", thList.indexOf("出来高(株)"),
+                    "調整後終値", thList.indexOf("調整後終値")
+            );
+        } catch (Throwable t) {
+            log.warn("minkabuの表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
             throw new FundanalyzerScrapingException(t);
         }
     }

@@ -31,6 +31,18 @@ public record StockPriceResultBean(
         );
     }
 
+    public static StockPriceResultBean ofMinkabu(final Map<String, Integer> thOrder, final List<String> tdList) {
+        return new StockPriceResultBean(
+                tdList.get(thOrder.get("日時")),
+                tdList.get(thOrder.get("始値")),
+                tdList.get(thOrder.get("高値")),
+                tdList.get(thOrder.get("安値")),
+                tdList.get(thOrder.get("終値")),
+                tdList.get(thOrder.get("出来高(株)")),
+                tdList.get(thOrder.get("調整後終値"))
+        );
+    }
+
     public static StockPriceResultBean ofYahooFinance(final Map<String, Integer> thOrder, final List<String> tdList) {
         return new StockPriceResultBean(
                 tdList.get(thOrder.get("日付")),

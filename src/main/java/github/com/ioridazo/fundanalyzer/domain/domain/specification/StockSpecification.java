@@ -216,6 +216,33 @@ public class StockSpecification {
     }
 
     /**
+     * minkabuから取得した株価情報を登録する
+     *
+     * @param code    企業コード
+     * @param minkabu minkabuから取得した株価情報
+     */
+    public void insertOfMinkabu(final String code, final StockPriceResultBean minkabu) {
+        if (isEmptyStockPrice(code, minkabu.targetDate())) {
+            try {
+                stockPriceDao.insert(StockPriceEntity.ofMinkabu(code, minkabu, nowLocalDateTime()));
+            } catch (NestedRuntimeException e) {
+                if (e.contains(UniqueConstraintException.class)) {
+                    log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                            MessageFormat.format(
+                                    "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
+                                            "\t企業コード:{0}\t対象日:{1}", code, minkabu.targetDate()
+                            ),
+                            Category.STOCK,
+                            Process.REGISTER
+                    ));
+                } else {
+                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+                }
+            }
+        }
+    }
+
+    /**
      * yahoo-financeから取得した株価情報を登録する
      *
      * @param code         企業コード

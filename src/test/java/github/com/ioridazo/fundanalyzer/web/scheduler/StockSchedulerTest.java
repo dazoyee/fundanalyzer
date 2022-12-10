@@ -5,7 +5,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecifi
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -88,7 +87,6 @@ class StockSchedulerTest {
             doReturn(LocalDateTime.of(2021, 5, 29, 15, 0)).when(scheduler).nowLocalDateTime();
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
-            verify(analysisService, times(0)).importStock((DateInputData) any());
             verify(analysisService, times(0)).deleteStock();
         }
     }

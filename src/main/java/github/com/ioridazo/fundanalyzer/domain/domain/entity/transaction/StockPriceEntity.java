@@ -122,6 +122,37 @@ public class StockPriceEntity {
     }
 
     /**
+     * みんかぶのスクレイピング結果からデータベース登録するためにマッピングする
+     *
+     * @param code      会社コード
+     * @param minkabu   minkabuのスクレイピング結果
+     * @param createdAt 登録日
+     * @return StockPrice
+     */
+    public static StockPriceEntity ofMinkabu(
+            final String code, final StockPriceResultBean minkabu, final LocalDateTime createdAt) {
+        return new StockPriceEntity(
+                null,
+                code,
+                LocalDate.parse(minkabu.targetDate(), DateTimeFormatter.ofPattern("uuuu/MM/dd")),
+                Parser.parseDoubleYahooFinance(minkabu.closingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(minkabu.openingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(minkabu.highPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(minkabu.lowPrice()).orElse(null),
+                Parser.parseIntegerVolume(minkabu.volume()).orElse(null),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "4",
+                createdAt
+        );
+    }
+
+    /**
      * yahoo-financeのスクレイピング結果からデータベース登録するためにマッピングする
      *
      * @param code         会社コード
