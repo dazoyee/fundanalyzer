@@ -16,6 +16,9 @@ import java.util.Optional;
 public interface AnalysisResultDao {
 
     @Select
+    Optional<AnalysisResultEntity> selectByDocumentId(String documentId);
+
+    @Select
     Optional<AnalysisResultEntity> selectByUniqueKey(
             String companyCode,
             LocalDate documentPeriod,

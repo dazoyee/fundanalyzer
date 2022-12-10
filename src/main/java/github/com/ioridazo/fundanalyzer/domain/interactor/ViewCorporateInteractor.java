@@ -10,11 +10,14 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResu
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -26,6 +29,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CompanyV
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementKeyViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.IndicatorViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +46,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -56,6 +59,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final FinancialStatementSpecification financialStatementSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
+    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
 
@@ -81,6 +85,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
             final ViewSpecification viewSpecification,
             final SlackClient slackClient) {
         this.analyzeInteractor = analyzeInteractor;
@@ -89,6 +94,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
+        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
     }
@@ -113,7 +119,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator
                         .comparing(CorporateViewModel::getSubmitDate).reversed()
                         .thenComparing(CorporateViewModel::getCode))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -127,7 +133,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator
                         .comparing(CorporateViewModel::getSubmitDate).reversed()
                         .thenComparing(CorporateViewModel::getCode))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -141,7 +147,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator
                         .comparing(CorporateViewModel::getSubmitDate).reversed()
                         .thenComparing(CorporateViewModel::getCode))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -167,7 +173,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator
                         .comparing(CorporateViewModel::getSubmitDate).reversed()
                         .thenComparing(CorporateViewModel::getCode))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -189,7 +195,12 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod)
                         .thenComparing(AnalysisResultViewModel::getSubmitDate)
                         .reversed())
-                .collect(Collectors.toList());
+                .toList();
+
+        final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.getCode()).stream()
+                .map(IndicatorViewModel::of)
+                .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
+                .toList();
 
         final List<FinancialStatementViewModel> fsList = financialStatementSpecification.findByCompany(company).stream()
                 .map(FinancialStatementKeyViewModel::of)
@@ -204,7 +215,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                     );
                 })
                 .sorted(Comparator.comparing(FinancialStatementViewModel::getSubmitDate).reversed())
-                .collect(Collectors.toList());
+                .toList();
 
         return CorporateDetailViewModel.of(
                 CompanyViewModel.of(company, stock),
@@ -212,28 +223,28 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 null,
                 viewSpecification.findLatestCorporateView(inputData),
                 analysisResultList,
+                indicatorList,
                 fsList,
                 stock.getMinkabuEntityList().stream()
                         .map(MinkabuViewModel::of)
                         .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate).reversed())
-                        .collect(Collectors.toList()),
+                        .toList(),
                 stock.getStockPriceEntityList().stream()
                         .map(StockPriceViewModel::of)
                         .sorted(Comparator.comparing(StockPriceViewModel::getTargetDate).reversed())
-                        .collect(Collectors.toList())
+                        .toList()
         );
     }
 
     @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData, final Target target) {
         final CorporateDetailViewModel viewModel = viewCorporateDetail(inputData);
-        List<String> codeList = List.of();
-
-        switch (target) {
-            case MAIN -> codeList = viewMain().stream().map(CorporateViewModel::getCode).toList();
-            case QUART -> codeList = viewQuart().stream().map(CorporateViewModel::getCode).toList();
-            case ALL -> codeList = viewAll().stream().map(CorporateViewModel::getCode).toList();
-        }
+        final List<String> codeList = switch (target) {
+            case MAIN -> viewMain().stream().map(CorporateViewModel::getCode).toList();
+            case QUART -> viewQuart().stream().map(CorporateViewModel::getCode).toList();
+            case ALL -> viewAll().stream().map(CorporateViewModel::getCode).toList();
+            default -> List.of();
+        };
 
         if (codeList.isEmpty()) {
             return viewModel;
@@ -286,7 +297,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .map(companySpecification::findCompanyByEdinetCode)
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .collect(Collectors.toList())
+                        .toList()
         );
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
@@ -338,16 +349,21 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         return true;
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private void parallelUpdateView(final List<Company> companyList) {
         final ArrayList<CorporateViewModel> viewList = new ArrayList<>();
         companyList.forEach(company -> {
             try {
-                viewList.add(viewSpecification.generateCorporateView(company, analyzeInteractor.calculateCorporateValue(company)));
+                viewList.add(viewSpecification.generateCorporateView(
+                        company,
+                        analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
+                        analyzeInteractor.calculateCorporateValue(company),
+                        investmentIndicatorSpecification.findLatestIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
+                ));
             } catch (final FundanalyzerNotExistException e) {
-                log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
                                 "条件を満たさないため、次の企業のビューを更新しませんでした。\t企業コード:{0}",
                                 company.getCode()

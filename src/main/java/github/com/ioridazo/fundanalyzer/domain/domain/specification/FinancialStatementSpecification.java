@@ -210,6 +210,12 @@ public class FinancialStatementSpecification {
                         document,
                         subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)
                 ).orElse(null),
+                // 総資産
+                findValue(
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        document,
+                        subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_ASSETS)
+                ).orElse(null),
                 // 流動負債合計
                 findValue(
                         FinancialStatementEnum.BALANCE_SHEET,
@@ -222,11 +228,29 @@ public class FinancialStatementSpecification {
                         document,
                         subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)
                 ).orElse(null),
+                // 新株予約権
+                findValue(
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        document,
+                        subjectSpecification.findBsSubjectList(BsSubject.BsEnum.SUBSCRIPTION_WARRANT)
+                ).orElse(null),
+                // 純資産
+                findValue(
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        document,
+                        subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_NET_ASSETS)
+                ).orElse(null),
                 // 営業利益
                 findValue(
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
                         document,
                         subjectSpecification.findPlSubjectList(PlSubject.PlEnum.OPERATING_PROFIT)
+                ).orElse(null),
+                // 当期純利益
+                findValue(
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                        document,
+                        subjectSpecification.findPlSubjectList(PlSubject.PlEnum.NET_INCOME)
                 ).orElse(null),
                 // 株式総数
                 findNsValue(document).orElse(null)

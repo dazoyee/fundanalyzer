@@ -1,16 +1,19 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,61 +32,111 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AnalyzeInteractorTest {
 
-    private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
+    private StockSpecification stockSpecification;
+    private InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
     private AnalyzeInteractor analyzeInteractor;
 
     @BeforeEach
     void setUp() {
-        companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
+        stockSpecification = mock(StockSpecification.class);
+        investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
 
         analyzeInteractor = Mockito.spy(new AnalyzeInteractor(
-                companySpecification,
+                Mockito.mock(CompanySpecification.class),
                 documentSpecification,
                 financialStatementSpecification,
-                analysisResultSpecification
+                analysisResultSpecification,
+                stockSpecification,
+                investmentIndicatorSpecification
         ));
+        analyzeInteractor.targetTypeCodes = List.of("120", "130");
     }
 
     @Nested
     class analyze {
 
-        Document document = defaultDocument();
-        Company company = defaultCompany();
+        Document document = new Document(
+                "documentId",
+                null,
+                null,
+                "edinetCode",
+                null,
+                LocalDate.now(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false
+        );
+
+        AnalysisResultEntity analysisResult = analysisResultEntity();
+
         DateInputData inputData = DateInputData.of(LocalDate.parse("2021-05-15"));
 
         @DisplayName("analyze : 企業価値を算出する")
         @Test
         void document() {
-            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            doReturn(BigDecimal.valueOf(1000)).when(analyzeInteractor).calculateFsValue(document);
+            var financeValue = FinanceValue.of(
+                    100L,
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
             assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
-            verify(analysisResultSpecification, times(1)).insert(document, BigDecimal.valueOf(1000));
+            verify(analysisResultSpecification, times(1)).insert(any(), any());
         }
 
         @DisplayName("analyze : 分析時にエラーが発生したときの処理を確認する")
         @Test
         void exception() {
-            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            doThrow(new FundanalyzerNotExistException()).when(analyzeInteractor).calculateFsValue(document);
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
             assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
-            verify(analysisResultSpecification, times(0)).insert(document, BigDecimal.valueOf(1000));
+            verify(analysisResultSpecification, times(0)).insert(any(), any());
+            verify(documentSpecification, times(1)).updateFsToHalfWay(any(), any());
         }
 
         @DisplayName("analyze : 提出日の企業価値を算出する")
@@ -103,17 +156,56 @@ class AnalyzeInteractorTest {
             assertDoesNotThrow(() -> analyzeInteractor.analyze(inputData));
             verify(analyzeInteractor, times(0)).analyze(document);
         }
+
+        @DisplayName("analyze : 投資指標を算出する")
+        @Test
+        void indicate() {
+            var financeValue = FinanceValue.of(
+                    100L,
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(analysisResultSpecification.findAnalysisResult("documentId"))
+                    .thenReturn(Optional.of(analysisResult));
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+            verify(analysisResultSpecification, times(1)).insert(any(), any());
+            verify(analyzeInteractor, times(1)).indicate(analysisResult);
+        }
     }
 
     @Nested
     class calculateCorporateValue {
 
-        Company company = defaultCompany();
+        Company company = new Company(
+                "code",
+                null,
+                null,
+                "edinetCode",
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                true
+        );
+
+        AnalysisResultEntity analysisResult = analysisResultEntity();
 
         @DisplayName("calculateCorporateValue : 最新企業価値が存在しないとき")
         @Test
         void latestCorporateValue_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.empty());
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
             assertAll(
@@ -127,7 +219,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void averageCorporateValue_year_isEmpty(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
@@ -146,7 +238,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : 平均企業価値が存在しないとき")
         @Test
         void averageCorporateValue_allYear_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
 
@@ -166,7 +258,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void standardDeviation_year_isEmpty(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
@@ -186,7 +278,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : 標準偏差が存在しないとき")
         @Test
         void standardDeviation_allYear_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.empty());
             var actual = analyzeInteractor.calculateCorporateValue(company);
@@ -207,7 +299,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void coefficientOfVariation_year_isEmpty(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.empty());
@@ -228,7 +320,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : 変動係数が存在しないとき")
         @Test
         void coefficientOfVariation_allYear_isEmpty() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.empty());
@@ -250,7 +342,7 @@ class AnalyzeInteractorTest {
         @ParameterizedTest
         @CsvSource({"0,3", "1,5", "2,10"})
         void present_year(int index, int year) {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.yearAverageCorporateValue(company, year)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
@@ -272,7 +364,7 @@ class AnalyzeInteractorTest {
         @DisplayName("calculateCorporateValue : すべて存在する")
         @Test
         void present_allYear() {
-            when(analysisResultSpecification.latestCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(analysisResult));
             when(analysisResultSpecification.allYearAverageCorporateValue(company)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.standardDeviation(company, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
             when(analysisResultSpecification.coefficientOfVariation(BigDecimal.TEN, BigDecimal.TEN)).thenReturn(Optional.of(BigDecimal.TEN));
@@ -293,38 +385,93 @@ class AnalyzeInteractorTest {
     }
 
     @Nested
-    class calculateFsValue {
+    class indicate {
 
-        Document document = defaultDocument();
+        private AnalysisResultEntity analysisResultEntity(LocalDate submitDate) {
+            return new AnalysisResultEntity(
+                    1,
+                    "code",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "120",
+                    null,
+                    submitDate,
+                    "documentId",
+                    null
+            );
+        }
 
-        @DisplayName("calculateFsValue : 各値を取得して計算する")
+        private IndicatorValue indicatorValue(LocalDate targetDate) {
+            return new IndicatorValue(
+                    null,
+                    null,
+                    null,
+                    null,
+                    targetDate
+            );
+        }
+
+        private StockPriceEntity stockPriceEntity(LocalDate targetDate) {
+            return new StockPriceEntity(
+                    null,
+                    null,
+                    targetDate,
+                    1000.0,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        @BeforeEach
+        void setUp() {
+            when(stockSpecification.findStock(eq("code"), any()))
+                    .thenReturn(Optional.of(stockPriceEntity(null)));
+
+        }
+
+        @DisplayName("indicate : 企業コードから投資指標を算出する")
+        @Test
+        void inputData_code() {
+            var analysisResultEntity = analysisResultEntity(null);
+
+            when(analysisResultSpecification.findLatestAnalysisResult("code"))
+                    .thenReturn(Optional.of(analysisResultEntity));
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(CodeInputData.of("code")));
+            verify(analyzeInteractor, times(1)).indicate(analysisResultEntity);
+
+        }
+
+        @DisplayName("indicate : 投資指標を算出する")
         @Test
         void present() {
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    1000L,
-                    1000L,
-                    1000L,
-                    10000L,
-                    1000L
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(investmentIndicatorSpecification.findIndicatorValueList(1))
+                    .thenReturn(List.of(indicatorValue(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
 
-            var expected = BigDecimal.valueOf((10000L * 10 + 1000 - (1000 * 1.2) + 1000 - 1000) / 1000);
-            var actual = analyzeInteractor.calculateFsValue(document);
-            assertEquals(expected, actual);
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
+            verify(investmentIndicatorSpecification, times(7)).insert(any(), any());
         }
 
-        @DisplayName("calculateFsValue : 四半期報告書の各値を取得して計算する")
+        @DisplayName("indicate : 書類種別コードが対象外のとき")
         @Test
-        void quarter() {
-            var document = new Document(
-                    null,
-                    null,
-                    QuarterType.QT_3,
-                    "edinetCode",
-                    null,
-                    LocalDate.now(),
+        void documentTypeCode_isNotTarget() {
+            var analysisResultEntity = new AnalysisResultEntity(
                     null,
                     null,
                     null,
@@ -333,164 +480,65 @@ class AnalyzeInteractorTest {
                     null,
                     null,
                     null,
-                    null,
-                    null,
-                    false
-            );
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    1000L,
-                    1000L,
-                    1000L,
-                    10000L,
-                    1000L
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-
-            var expected = BigDecimal.valueOf((((10000L * 10 + 1000 - (1000 * 1.2) + 1000 - 1000) / 3) * 4) / 1000);
-            var actual = analyzeInteractor.calculateFsValue(document);
-            assertEquals(expected, actual);
-        }
-
-        @DisplayName("calculateFsValue : 流動資産合計が存在しないとき")
-        @Test
-        void totalCurrentAssets_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    null,
-                    null,
+                    "140",
                     null,
                     null,
                     null,
                     null
             );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-
-            assertThrows(FundanalyzerNotExistException.class, () -> analyzeInteractor.calculateFsValue(document));
-            verify(documentSpecification, times(1)).updateFsToHalfWay(document, FinancialStatementEnum.BALANCE_SHEET);
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
         }
 
-        @DisplayName("calculateFsValue : 投資その他の資産合計が存在しないとき")
+        @DisplayName("indicate : 株価が存在しないとき")
         @Test
-        void totalInvestmentsAndOtherAssets_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-
-            assertThrows(FundanalyzerNotExistException.class, () -> analyzeInteractor.calculateFsValue(document));
-            verify(documentSpecification, times(1)).updateFsToHalfWay(document, FinancialStatementEnum.BALANCE_SHEET);
+        void stockPrice_isEmpty() {
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
         }
 
-
-        @DisplayName("calculateFsValue : 流動負債合計が存在しないとき")
+        @DisplayName("indicate : 投資指標が存在しないとき")
         @Test
-        void totalCurrentLiabilities_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    1000L,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+        void indicatorValue_isEmpty() {
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
 
-            assertThrows(FundanalyzerNotExistException.class, () -> analyzeInteractor.calculateFsValue(document));
-            verify(documentSpecification, times(1)).updateFsToHalfWay(document, FinancialStatementEnum.BALANCE_SHEET);
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
+            verify(investmentIndicatorSpecification, times(26)).insert(any(), any());
         }
 
-        @DisplayName("calculateFsValue : 固定負債合計が存在しないとき")
-        @Test
-        void totalFixedLiabilities_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    1000L,
-                    1000L,
-                    null,
-                    null,
-                    null
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+        @DisplayName("indicate : 処理対象日付が正しくないとき")
+        @ParameterizedTest
+        @CsvSource({
+                "2022-11-01, 2022-10-31",
+                "2021-11-01, 2022-11-02"
+        })
+        void date_ng(String submitDate, String latestDate) {
+            when(investmentIndicatorSpecification.findIndicatorValueList(1))
+                    .thenReturn(List.of(indicatorValue(LocalDate.parse("2022-11-19"))));
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
 
-            assertThrows(FundanalyzerNotExistException.class, () -> analyzeInteractor.calculateFsValue(document));
-            verify(documentSpecification, times(1)).updateFsToHalfWay(document, FinancialStatementEnum.BALANCE_SHEET);
-        }
-
-        @DisplayName("calculateFsValue : 営業利益が存在しないとき")
-        @Test
-        void operatingProfit_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    1000L,
-                    1000L,
-                    1000L,
-                    null,
-                    null
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-
-            assertThrows(FundanalyzerNotExistException.class, () -> analyzeInteractor.calculateFsValue(document));
-            verify(documentSpecification, times(1)).updateFsToHalfWay(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT);
-        }
-
-        @DisplayName("calculateFsValue : 株式総数が存在しないとき")
-        @Test
-        void numberOfShares_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    1000L,
-                    1000L,
-                    1000L,
-                    1000L,
-                    1000L,
-                    null
-            );
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-
-            assertThrows(FundanalyzerNotExistException.class, () -> analyzeInteractor.calculateFsValue(document));
-            verify(documentSpecification, times(1)).updateFsToHalfWay(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
         }
     }
 
-    private Document defaultDocument() {
-        return new Document(
+    private AnalysisResultEntity analysisResultEntity() {
+        return new AnalysisResultEntity(
+                null,
+                null,
+                null,
+                BigDecimal.TEN,
+                null,
+                null,
+                null,
+                null,
+                "120",
+                null,
+                null,
                 "documentId",
-                null,
-                null,
-                "edinetCode",
-                null,
-                LocalDate.now(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false
-        );
-    }
-
-    private Company defaultCompany() {
-        return new Company(
-                "code",
-                null,
-                null,
-                "edinetCode",
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                true
+                null
         );
     }
 }

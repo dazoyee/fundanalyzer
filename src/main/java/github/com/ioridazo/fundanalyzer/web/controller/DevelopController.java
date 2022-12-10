@@ -77,10 +77,10 @@ public class DevelopController {
         documentUseCase.allProcess(inputData);
         // remove
         documentUseCase.removeDocument(inputData);
-        // analysis
-        analyzeUseCase.analyze(inputData);
         // stock
         stockUseCase.importStockPrice(inputData);
+        // analysis
+        analyzeUseCase.analyze(inputData);
         // view corporate
         viewCorporateUseCase.updateView(inputData);
         // view edinet

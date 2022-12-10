@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.PlSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import lombok.AllArgsConstructor;
 
 import java.util.Arrays;
@@ -58,8 +58,8 @@ public class PlSubject extends Subject {
 //    ("会計監査人報酬"),
 //    ("その他営業費用"),
 //    ("営業費用合計"),
-        OPERATING_PROFIT("3", "1", "営業利益"),
-//    ("受取利息"),
+        OPERATING_PROFIT("3", "営業利益"),
+        //    ("受取利息"),
 //    ("未払分配金戻入"),
 //    ("還付加算金"),
 //    ("その他"),
@@ -76,18 +76,16 @@ public class PlSubject extends Subject {
 //    ("税引前当期純利益"),
 //    ("法人税、住民税及び事業税"),
 //    ("法人税等合計"),
-//    ("当期純利益"),
+        NET_INCOME("11", "当期純利益"),
 //    ("前期繰越利益"),
 //    ("当期未処分利益又は当期未処理損失（△）"),
         ;
 
         private final String outlineSubjectId;
-        private final String detailSubjectId;
         private final String subject;
 
-        PlEnum(final String outlineSubjectId, final String detailSubjectId, final String subject) {
+        PlEnum(final String outlineSubjectId, final String subject) {
             this.outlineSubjectId = outlineSubjectId;
-            this.detailSubjectId = detailSubjectId;
             this.subject = subject;
         }
 
@@ -100,10 +98,6 @@ public class PlSubject extends Subject {
 
         public String getOutlineSubjectId() {
             return this.outlineSubjectId;
-        }
-
-        public String getDetailSubjectId() {
-            return this.detailSubjectId;
         }
 
         public String getSubject() {

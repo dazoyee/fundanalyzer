@@ -24,6 +24,7 @@ public enum Process {
     UPDATE("update"),
     SLACK("slack"),
     EVALUATE("evaluate"),
+    INDICATE("indicate"),
     ;
 
     private final String value;

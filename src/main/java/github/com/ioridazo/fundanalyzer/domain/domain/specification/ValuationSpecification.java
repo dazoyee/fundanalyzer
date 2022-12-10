@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class ValuationSpecification {
@@ -141,7 +140,7 @@ public class ValuationSpecification {
                                             .orElseThrow()
                                     )
                                     .map(e -> CompanyValuationViewModel.of(e, company))
-                                    .collect(Collectors.toList());
+                                    .toList();
                         }
                 ).orElseGet(List::of);
     }
@@ -161,7 +160,7 @@ public class ValuationSpecification {
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
-                                analysisResult.getCompanyCode(),
+                                stock.getCompanyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
@@ -173,7 +172,7 @@ public class ValuationSpecification {
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
                                         "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
-                                analysisResult.getCompanyCode(),
+                                stock.getCompanyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
