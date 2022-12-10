@@ -1,10 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
@@ -135,7 +134,7 @@ class StockInteractorTest {
             CodeInputData inputData = CodeInputData.of("code0");
 
             when(jsoupClient.kabuoji3("code0")).thenReturn(List.of(
-                    Kabuoji3ResultBean.of(
+                    new StockPriceResultBean(
                             "2019-06-05",
                             "1000",
                             "1000",
@@ -144,7 +143,7 @@ class StockInteractorTest {
                             "1000",
                             "1000"
                     ),
-                    Kabuoji3ResultBean.of(
+                    new StockPriceResultBean(
                             "2021-06-05",
                             "1000",
                             "1000",
@@ -154,7 +153,7 @@ class StockInteractorTest {
                             "1000"
                     )));
             when(jsoupClient.yahooFinance("code0")).thenReturn(List.of(
-                    YahooFinanceResultBean.of(
+                    new StockPriceResultBean(
                             "2019年06月05日",
                             "1,000",
                             "1,000",
@@ -163,7 +162,7 @@ class StockInteractorTest {
                             "1,000",
                             "1,000"
                     ),
-                    YahooFinanceResultBean.of(
+                    new StockPriceResultBean(
                             "2021年06月05日",
                             "1,000.5",
                             "1,000.5",
@@ -175,18 +174,10 @@ class StockInteractorTest {
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
             switch (place) {
-                case NIKKEI:
-                    verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
-                    break;
-                case KABUOJI3:
-                    verify(stockSpecification, times(1)).insert(eq("code0"), (Kabuoji3ResultBean) any());
-                    break;
-                case MINKABU:
-                    verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
-                    break;
-                case YAHOO_FINANCE:
-                    verify(stockSpecification, times(1)).insert(eq("code0"), (YahooFinanceResultBean) any());
-                    break;
+                case NIKKEI -> verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
+                case KABUOJI3 -> verify(stockSpecification, times(1)).insertOfKabuoji3(eq("code0"), any());
+                case MINKABU -> verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
+                case YAHOO_FINANCE -> verify(stockSpecification, times(1)).insertOfYahooFinance(eq("code0"), any());
             }
         }
 
@@ -203,18 +194,10 @@ class StockInteractorTest {
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
             switch (place) {
-                case NIKKEI:
-                    verify(stockSpecification, times(0)).insert(eq("code0"), (NikkeiResultBean) any());
-                    break;
-                case KABUOJI3:
-                    verify(stockSpecification, times(0)).insert(eq("code0"), (Kabuoji3ResultBean) any());
-                    break;
-                case MINKABU:
-                    verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
-                    break;
-                case YAHOO_FINANCE:
-                    verify(stockSpecification, times(0)).insert(eq("code0"), (YahooFinanceResultBean) any());
-                    break;
+                case NIKKEI -> verify(stockSpecification, times(0)).insert(eq("code0"), (NikkeiResultBean) any());
+                case KABUOJI3 -> verify(stockSpecification, times(0)).insertOfKabuoji3(eq("code0"), any());
+                case MINKABU -> verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
+                case YAHOO_FINANCE -> verify(stockSpecification, times(0)).insertOfYahooFinance(eq("code0"), any());
             }
         }
     }

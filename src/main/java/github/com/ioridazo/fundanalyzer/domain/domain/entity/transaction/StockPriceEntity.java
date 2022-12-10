@@ -1,8 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Parser;
 import lombok.Value;
 import org.seasar.doma.Column;
@@ -99,17 +98,17 @@ public class StockPriceEntity {
      * @param createdAt 登録日
      * @return StockPrice
      */
-    public static StockPriceEntity ofKabuoji3ResultBean(
-            final String code, final Kabuoji3ResultBean kabuoji3, final LocalDateTime createdAt) {
+    public static StockPriceEntity ofKabuoji3(
+            final String code, final StockPriceResultBean kabuoji3, final LocalDateTime createdAt) {
         return new StockPriceEntity(
                 null,
                 code,
-                LocalDate.parse(kabuoji3.getTargetDate()),
-                Parser.parseDoubleKabuoji3(kabuoji3.getClosingPrice()).orElse(null),
-                Parser.parseDoubleKabuoji3(kabuoji3.getOpeningPrice()).orElse(null),
-                Parser.parseDoubleKabuoji3(kabuoji3.getHighPrice()).orElse(null),
-                Parser.parseDoubleKabuoji3(kabuoji3.getLowPrice()).orElse(null),
-                Parser.parseIntegerVolume(kabuoji3.getVolume()).orElse(null),
+                LocalDate.parse(kabuoji3.targetDate()),
+                Parser.parseDoubleKabuoji3(kabuoji3.closingPrice()).orElse(null),
+                Parser.parseDoubleKabuoji3(kabuoji3.openingPrice()).orElse(null),
+                Parser.parseDoubleKabuoji3(kabuoji3.highPrice()).orElse(null),
+                Parser.parseDoubleKabuoji3(kabuoji3.lowPrice()).orElse(null),
+                Parser.parseIntegerVolume(kabuoji3.volume()).orElse(null),
                 null,
                 null,
                 null,
@@ -131,16 +130,16 @@ public class StockPriceEntity {
      * @return StockPrice
      */
     public static StockPriceEntity ofYahooFinanceResultBean(
-            final String code, final YahooFinanceResultBean yahooFinance, final LocalDateTime createdAt) {
+            final String code, final StockPriceResultBean yahooFinance, final LocalDateTime createdAt) {
         return new StockPriceEntity(
                 null,
                 code,
-                LocalDate.parse(yahooFinance.getTargetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日")),
-                Parser.parseDoubleYahooFinance(yahooFinance.getClosingPrice()).orElse(null),
-                Parser.parseDoubleYahooFinance(yahooFinance.getOpeningPrice()).orElse(null),
-                Parser.parseDoubleYahooFinance(yahooFinance.getHighPrice()).orElse(null),
-                Parser.parseDoubleYahooFinance(yahooFinance.getLowPrice()).orElse(null),
-                Parser.parseIntegerVolume(yahooFinance.getVolume()).orElse(null),
+                LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日")),
+                Parser.parseDoubleYahooFinance(yahooFinance.closingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(yahooFinance.openingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(yahooFinance.highPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(yahooFinance.lowPrice()).orElse(null),
+                Parser.parseIntegerVolume(yahooFinance.volume()).orElse(null),
                 null,
                 null,
                 null,
@@ -150,34 +149,6 @@ public class StockPriceEntity {
                 null,
                 "3",
                 createdAt
-        );
-    }
-
-    /**
-     * データベースに登録されている株価情報から銘柄詳細画面表示するためにマッピングする
-     *
-     * @param stockPriceEntity データベースに登録されている株価情報から
-     * @return StockPrice
-     */
-    public static StockPriceEntity ofBrandDetail(final StockPriceEntity stockPriceEntity) {
-        return new StockPriceEntity(
-                null,
-                null,
-                stockPriceEntity.getTargetDate(),
-                stockPriceEntity.getStockPrice().orElse(null),
-                stockPriceEntity.getOpeningPrice().orElse(null),
-                stockPriceEntity.getHighPrice().orElse(null),
-                stockPriceEntity.getLowPrice().orElse(null),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
         );
     }
 
@@ -229,6 +200,7 @@ public class StockPriceEntity {
         return Optional.ofNullable(shareholderBenefit);
     }
 
+    @SuppressWarnings("unused")
     public Optional<String> getSourceOf() {
         return Optional.ofNullable(sourceOf);
     }

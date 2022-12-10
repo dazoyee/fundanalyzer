@@ -1,9 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
@@ -183,16 +182,16 @@ public class StockSpecification {
      * @param code     企業コード
      * @param kabuoji3 kabuoji3から取得した株価情報
      */
-    public void insert(final String code, final Kabuoji3ResultBean kabuoji3) {
-        if (isEmptyStockPrice(code, kabuoji3.getTargetDate())) {
+    public void insertOfKabuoji3(final String code, final StockPriceResultBean kabuoji3) {
+        if (isEmptyStockPrice(code, kabuoji3.targetDate())) {
             try {
-                stockPriceDao.insert(StockPriceEntity.ofKabuoji3ResultBean(code, kabuoji3, nowLocalDateTime()));
+                stockPriceDao.insert(StockPriceEntity.ofKabuoji3(code, kabuoji3, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
                 if (e.contains(UniqueConstraintException.class)) {
                     log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                             MessageFormat.format(
                                     "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                            "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.getTargetDate()
+                                            "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.targetDate()
                             ),
                             Category.STOCK,
                             Process.REGISTER
@@ -222,8 +221,8 @@ public class StockSpecification {
      * @param code         企業コード
      * @param yahooFinance yahoo-financeから取得した株価情報
      */
-    public void insert(final String code, final YahooFinanceResultBean yahooFinance) {
-        if (isEmptyStockPrice(code, yahooFinance.getTargetDate())) {
+    public void insertOfYahooFinance(final String code, final StockPriceResultBean yahooFinance) {
+        if (isEmptyStockPrice(code, yahooFinance.targetDate())) {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofYahooFinanceResultBean(code, yahooFinance, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
@@ -231,7 +230,7 @@ public class StockSpecification {
                     log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                             MessageFormat.format(
                                     "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                            "\t企業コード:{0}\t対象日:{1}", code, yahooFinance.getTargetDate()
+                                            "\t企業コード:{0}\t対象日:{1}", code, yahooFinance.targetDate()
                             ),
                             Category.STOCK,
                             Process.REGISTER

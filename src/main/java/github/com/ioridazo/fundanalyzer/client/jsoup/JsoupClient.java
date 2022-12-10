@@ -1,9 +1,8 @@
 package github.com.ioridazo.fundanalyzer.client.jsoup;
 
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
@@ -34,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Component
 public class JsoupClient {
@@ -93,7 +91,7 @@ public class JsoupClient {
      * @param code 会社コード
      * @return 株価情報
      */
-    public List<Kabuoji3ResultBean> kabuoji3(final String code) {
+    public List<StockPriceResultBean> kabuoji3(final String code) {
         final String url = UriComponentsBuilder.fromUriString(properties.getRestClient().get(KABUOJI3).getBaseUri())
                 .path("/stock/{code}/")
                 .buildAndExpand(code.substring(0, 4))
@@ -105,10 +103,10 @@ public class JsoupClient {
         return document.select(".table_wrap table").select("tr").stream()
                 .map(tr -> tr.select("td").stream()
                         .map(Element::text)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .filter(tdList -> tdList.size() == 7)
-                .map(tdList -> Kabuoji3ResultBean.ofJsoup(thOrder, tdList))
-                .collect(Collectors.toList());
+                .map(tdList -> StockPriceResultBean.ofKabuoji3(thOrder, tdList))
+                .toList();
     }
 
     /**
@@ -151,8 +149,8 @@ public class JsoupClient {
      * @param code 会社コード
      * @return 株価情報予想
      */
-    public List<YahooFinanceResultBean> yahooFinance(final String code) {
-        final ArrayList<YahooFinanceResultBean> yahooFinanceList = new ArrayList<>();
+    public List<StockPriceResultBean> yahooFinance(final String code) {
+        final ArrayList<StockPriceResultBean> yahooFinanceList = new ArrayList<>();
 
         int page = 1;
         while (page <= yahooPages) {     // 13ページまでを取得
@@ -179,7 +177,7 @@ public class JsoupClient {
                         return valueList;
                     })
                     .filter(tdList -> tdList.size() == 7)
-                    .map(tdList -> YahooFinanceResultBean.ofJsoup(thOrder, tdList))
+                    .map(tdList -> StockPriceResultBean.ofYahooFinance(thOrder, tdList))
                     .forEach(yahooFinanceList::add);
 
             page++;
@@ -260,7 +258,7 @@ public class JsoupClient {
                 .select("tr")
                 .select("th").stream()
                 .map(Element::text)
-                .collect(Collectors.toList());
+                .toList();
         try {
             return Map.of(
                     "日付", thList.indexOf("日付"),
@@ -289,7 +287,7 @@ public class JsoupClient {
                 .select("tr")
                 .select("th").stream()
                 .map(Element::text)
-                .collect(Collectors.toList());
+                .toList();
 
         try {
             return Map.of(

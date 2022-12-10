@@ -117,7 +117,7 @@ public class StockInteractor implements StockUseCase {
             final CodeInputData inputData, final Place place) throws FundanalyzerShortCircuitException {
         try {
             switch (place) {
-                case NIKKEI:
+                case NIKKEI -> {
                     if (isNikkei) {
                         // 日経
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
@@ -127,23 +127,23 @@ public class StockInteractor implements StockUseCase {
                                 Process.IMPORT
                         ));
                     }
-                    break;
-                case KABUOJI3:
+                }
+                case KABUOJI3 -> {
                     if (isKabuoji3) {
                         // kabuoji3
                         jsoupClient.kabuoji3(inputData.getCode5()).stream()
                                 // 保存する株価を絞る
-                                .filter(kabuoji3 -> LocalDate.parse(kabuoji3.getTargetDate())
+                                .filter(kabuoji3 -> LocalDate.parse(kabuoji3.targetDate())
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(kabuoji3 -> stockSpecification.insert(inputData.getCode5(), kabuoji3));
+                                .forEach(kabuoji3 -> stockSpecification.insertOfKabuoji3(inputData.getCode5(), kabuoji3));
                         log.info(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("kabuoji3 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
                                 Category.STOCK,
                                 Process.IMPORT
                         ));
                     }
-                    break;
-                case MINKABU:
+                }
+                case MINKABU -> {
                     if (isMinkabu) {
                         // みんかぶ
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
@@ -153,24 +153,23 @@ public class StockInteractor implements StockUseCase {
                                 Process.IMPORT
                         ));
                     }
-                    break;
-                case YAHOO_FINANCE:
+                }
+                case YAHOO_FINANCE -> {
                     if (isYahooFinance) {
                         // Yahoo! ファイナンス
                         jsoupClient.yahooFinance(inputData.getCode5()).stream()
                                 // 保存する株価を絞る
-                                .filter(yahooFinance -> LocalDate.parse(yahooFinance.getTargetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
+                                .filter(yahooFinance -> LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(yahooFinance -> stockSpecification.insert(inputData.getCode5(), yahooFinance));
+                                .forEach(yahooFinance -> stockSpecification.insertOfYahooFinance(inputData.getCode5(), yahooFinance));
                         log.info(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("Yahoo!ファイナンス から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
                                 Category.STOCK,
                                 Process.IMPORT
                         ));
                     }
-                    break;
-                default:
-                    throw new FundanalyzerRuntimeException();
+                }
+                default -> throw new FundanalyzerRuntimeException();
             }
         } catch (final FundanalyzerCircuitBreakerRecordException | FundanalyzerRateLimiterException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
