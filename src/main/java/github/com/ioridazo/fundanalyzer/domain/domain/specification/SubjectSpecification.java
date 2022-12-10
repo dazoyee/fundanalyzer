@@ -46,7 +46,6 @@ public class SubjectSpecification {
     public Subject findBsSubject(final BsSubject.BsEnum bsEnum) {
         return subjectCache.inquiryBsSubjectList().stream()
                 .filter(bsSubject -> Objects.equals(bsEnum.getOutlineSubjectId(), bsSubject.getOutlineSubjectId()))
-                .filter(bsSubject -> Objects.equals(bsEnum.getDetailSubjectId(), bsSubject.getDetailSubjectId().orElse(null)))
                 .map(BsSubject::of)
                 .findFirst()
                 .orElseThrow(() -> new FundanalyzerRuntimeException("貸借対照表の科目が存在しません"));

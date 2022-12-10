@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.AnalysisResultDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
@@ -26,7 +27,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class AnalysisResultSpecification {
@@ -66,6 +66,16 @@ public class AnalysisResultSpecification {
     }
 
     /**
+     * 分析結果を取得する
+     *
+     * @param documentId ドキュメントID
+     * @return 分析結果
+     */
+    public Optional<AnalysisResultEntity> findAnalysisResult(final String documentId) {
+        return analysisResultDao.selectByDocumentId(documentId);
+    }
+
+    /**
      * 本日にテーブルに登録されたリストを取得する
      *
      * @param submitDate 提出日
@@ -78,16 +88,20 @@ public class AnalysisResultSpecification {
     /**
      * 企業価値を登録する
      *
-     * @param document ドキュメント
-     * @param value    企業価値
+     * @param document       ドキュメント
+     * @param analysisResult 分析結果
      */
-    public void insert(final Document document, final BigDecimal value) {
+    public void insert(final Document document, final AnalysisResult analysisResult) {
         final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new);
         try {
             analysisResultDao.insert(AnalysisResultEntity.of(
                     company.getCode(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
-                    value,
+                    analysisResult.getCorporateValue(),
+                    analysisResult.getBps().orElse(null),
+                    analysisResult.getEps().orElse(null),
+                    analysisResult.getRoe().orElse(null),
+                    analysisResult.getRoa().orElse(null),
                     document.getDocumentTypeCode(),
                     document.getQuarterType(),
                     document.getSubmitDate(),
@@ -117,20 +131,6 @@ public class AnalysisResultSpecification {
     }
 
     /**
-     * 最新の企業価値を取得する
-     *
-     * @param company 企業情報
-     * @return 最新の企業価値
-     */
-    public Optional<BigDecimal> latestCorporateValue(final Company company) {
-        return findLatestAnalysisResult(company.getCode())
-                // corporate value
-                .map(AnalysisResultEntity::getCorporateValue)
-                // scale
-                .map(bigDecimal -> bigDecimal.setScale(SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
-    }
-
-    /**
      * 指定年数平均の企業価値を取得する
      *
      * @param company 企業情報
@@ -146,7 +146,7 @@ public class AnalysisResultSpecification {
             return Optional.of(targetList.stream()
                     // sort
                     .sorted(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod).reversed())
-                    .collect(Collectors.toList())
+                    .toList()
                     // filter
                     .subList(0, year).stream()
                     .map(AnalysisResultEntity::getCorporateValue)
@@ -285,6 +285,6 @@ public class AnalysisResultSpecification {
                         .max(Comparator.comparing(AnalysisResultEntity::getSubmitDate)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

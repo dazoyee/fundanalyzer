@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -32,4 +33,12 @@ public interface AnalyzeUseCase {
      */
     @NewSpan
     CorporateValue calculateCorporateValue(Company company);
+
+    /**
+     * 投資指標の算出
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    void indicate(CodeInputData inputData);
 }

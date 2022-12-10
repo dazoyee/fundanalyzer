@@ -3,30 +3,38 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
-import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
-import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,24 +42,30 @@ import java.util.Optional;
 public class AnalyzeInteractor implements AnalyzeUseCase {
 
     private static final Logger log = LogManager.getLogger(AnalyzeInteractor.class);
-    private static final int WEIGHTING_BUSINESS_VALUE = 10;
-    private static final double AVERAGE_CURRENT_RATIO = 1.2;
-    private static final int WEIGHTING_QUARTER_VALUE = 4;
 
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
     private final FinancialStatementSpecification financialStatementSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
+    private final StockSpecification stockSpecification;
+    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+
+    @Value("${app.config.view.document-type-code}")
+    List<String> targetTypeCodes;
 
     public AnalyzeInteractor(
             final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
             final FinancialStatementSpecification financialStatementSpecification,
-            final AnalysisResultSpecification analysisResultSpecification) {
+            final AnalysisResultSpecification analysisResultSpecification,
+            final StockSpecification stockSpecification,
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
+        this.stockSpecification = stockSpecification;
+        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
     }
 
     /**
@@ -119,18 +133,32 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
      */
     void analyze(final Document document) {
         try {
-            analysisResultSpecification.insert(document, calculateFsValue(document));
-        } catch (FundanalyzerNotExistException e) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+            final FinanceValue financeValue = financialStatementSpecification.getFinanceValue(document);
+            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
+
+            analysisResultSpecification.insert(document, analysisResult);
+            analysisResultSpecification.findAnalysisResult(document.getDocumentId()).ifPresent(this::indicate);
+
+        } catch (final FundanalyzerNotExistException e) {
+            final FinancialStatementEnum fs = e.getFs().orElseThrow(FundanalyzerRuntimeException::new);
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "エラー発生により、企業価値を算出できませんでした。\t証券コード:{0}\t書類ID:{1}",
+                            "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
+                                    "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
+                            fs.getName(),
                             companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
-                            document.getDocumentId()
+                            document.getDocumentId(),
+                            e.getSubjectName().orElse("null"),
+                            document.getDocumentPeriod().map(String::valueOf).orElse("null"),
+                            document.getFsDocumentPath(fs).orElse("null")
                     ),
                     document,
                     Category.ANALYSIS,
-                    Process.ANALYSIS
-            ), e);
+                    Process.of(fs)
+            ));
+
+            // ステータスをHALF_WAY（途中）に更新する
+            documentSpecification.updateFsToHalfWay(document, fs);
         }
     }
 
@@ -145,7 +173,9 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         final CorporateValue corporateValue = CorporateValue.of();
 
         // 最新企業価値
-        final Optional<BigDecimal> latestCorporateValue = analysisResultSpecification.latestCorporateValue(company);
+        final Optional<BigDecimal> latestCorporateValue =
+                analysisResultSpecification.findLatestAnalysisResult(company.getCode())
+                        .map(AnalysisResultEntity::getCorporateValue);
         if (latestCorporateValue.isEmpty()) {
             return corporateValue;
         } else {
@@ -198,97 +228,93 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     }
 
     /**
-     * 企業価値の算出する
+     * 投資指標を算出する
      *
-     * @param document ドキュメント
-     * @return 企業価値
-     * @throws FundanalyzerNotExistException 値が存在しないとき
+     * @param inputData 企業コード
      */
-    BigDecimal calculateFsValue(final Document document) throws FundanalyzerNotExistException {
-        final FinanceValue financeValue = financialStatementSpecification.getFinanceValue(document);
-        // 流動資産合計
-        final Long totalCurrentAssets = financeValue.getTotalCurrentAssets().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_CURRENT_ASSETS.getSubject(),
-                document
-        ));
-        // 投資その他の資産合計
-        final Long totalInvestmentsAndOtherAssets = financeValue.getTotalInvestmentsAndOtherAssets().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.getSubject(),
-                document
-        ));
-        // 流動負債合計
-        final Long totalCurrentLiabilities = financeValue.getTotalCurrentLiabilities().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES.getSubject(),
-                document
-        ));
-        // 固定負債合計
-        final Long totalFixedLiabilities = financeValue.getTotalFixedLiabilities().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.BALANCE_SHEET,
-                BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES.getSubject(),
-                document
-        ));
-        // 営業利益
-        final Long operatingProfit = financeValue.getOperatingProfit().orElseThrow(() -> fsValueThrow(
-                FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
-                PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
-                document
-        ));
-        // 四半期種別の重みづけ
-        final Integer weightingQuarterType = Optional.of(document)
-                .map(Document::getQuarterType)
-                .map(QuarterType::getWeight)
-                .orElse(WEIGHTING_QUARTER_VALUE);
-        // 株式総数
-        final Long numberOfShares = financeValue.getNumberOfShares()
-                .orElseThrow(() -> fsValueThrow(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "株式総数", document));
-
-        return BigDecimal.valueOf(
-                (
-                        (
-                                (
-                                        operatingProfit * WEIGHTING_BUSINESS_VALUE
-                                                + totalCurrentAssets - (totalCurrentLiabilities * AVERAGE_CURRENT_RATIO) + totalInvestmentsAndOtherAssets
-                                                - totalFixedLiabilities
-                                )
-                                        / weightingQuarterType
-                        ) * WEIGHTING_QUARTER_VALUE
-                )
-                        / numberOfShares
-        );
+    @Override
+    public void indicate(final CodeInputData inputData) {
+        analysisResultSpecification.findLatestAnalysisResult(inputData.getCode()).ifPresent(this::indicate);
     }
 
     /**
-     * 処理状況を処理途中に更新する
+     * 投資指標を算出する
      *
-     * @param fs          財務諸表種別
-     * @param subjectName 科目名
-     * @param document    ドキュメント
-     * @return FundanalyzerNotExistException
+     * @param analysisResult 分析結果
      */
-    private FundanalyzerNotExistException fsValueThrow(
-            final FinancialStatementEnum fs, final String subjectName, final Document document) {
-        log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                MessageFormat.format(
-                        "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                                "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
-                        fs.getName(),
-                        companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
-                        document.getDocumentId(),
-                        subjectName,
-                        document.getDocumentPeriod().map(String::valueOf).orElse("null"),
-                        document.getFsDocumentPath(fs).orElse("null")
-                ),
-                document,
-                Category.ANALYSIS,
-                Process.of(fs)
-        ));
+    void indicate(final AnalysisResultEntity analysisResult) {
+        if (targetTypeCodes.stream().noneMatch(target -> analysisResult.getDocumentTypeCode().equals(target))) {
+            // 120,130 以外は処理対象外
+            return;
+        }
 
-        // ステータスをHALF_WAY（途中）に更新する
-        documentSpecification.updateFsToHalfWay(document, fs);
+        final long startTime = System.currentTimeMillis();
+        final List<IndicatorValue> indicatorValueList = investmentIndicatorSpecification.findIndicatorValueList(analysisResult.getId());
+        final Optional<StockPriceEntity> latestStock = stockSpecification.findLatestStock(analysisResult.getCompanyCode());
 
-        throw new FundanalyzerNotExistException(fs.getName(), subjectName);
+        if (latestStock.isPresent()) {
+            final LocalDate executedDate = indicatorValueList.stream()
+                    // latest indicator
+                    .max(Comparator.comparing(IndicatorValue::getTargetDate))
+                    .map(IndicatorValue::getTargetDate)
+                    // default
+                    .orElse(analysisResult.getSubmitDate().minusDays(1));
+            final LocalDate latestDate = latestStock.get().getTargetDate();
+
+            // 提出日 <= 株価取得日 && 株価取得日 <= 提出日+1年
+            if (latestDate.isAfter(analysisResult.getSubmitDate())
+                    && latestDate.isBefore(analysisResult.getSubmitDate().plusYears(1))) {
+                // executedDate -> latestDate
+                executedDate.plusDays(1).datesUntil(latestDate.plusDays(1)).forEach(date ->
+                        // find stock
+                        stockSpecification.findStock(analysisResult.getCompanyCode(), date)
+                                .ifPresent(spe -> {
+                                            if (spe.getStockPrice().isPresent()) {
+                                                // indicate
+                                                investmentIndicatorSpecification.insert(analysisResult, spe);
+                                            }
+                                        }
+                                )
+                );
+
+                log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "投資指標を算出しました。\t企業コード:{0}\t処理対象日:{1} -> {2}",
+                                analysisResult.getCompanyCode(),
+                                executedDate.plusDays(1),
+                                latestDate
+                        ),
+                        analysisResult.getDocumentId(),
+                        Category.ANALYSIS,
+                        Process.INDICATE,
+                        System.currentTimeMillis() - startTime
+                ));
+            } else {
+                log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "提出日または株価取得日が正しくないため、投資指標を算出しませんでした。" +
+                                        "\t企業コード:{0}\t提出日:{1}\t株価取得日:{2}",
+                                analysisResult.getCompanyCode(),
+                                analysisResult.getSubmitDate(),
+                                latestDate
+                        ),
+                        analysisResult.getDocumentId(),
+                        Category.ANALYSIS,
+                        Process.INDICATE,
+                        System.currentTimeMillis() - startTime
+                ));
+            }
+        } else {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "株価が存在しないため、投資指標を算出できませんでした。\t企業コード:{0}",
+                            analysisResult.getCompanyCode()
+                    ),
+                    analysisResult.getDocumentId(),
+                    Category.ANALYSIS,
+                    Process.INDICATE,
+                    System.currentTimeMillis() - startTime
+            ));
+        }
     }
 }

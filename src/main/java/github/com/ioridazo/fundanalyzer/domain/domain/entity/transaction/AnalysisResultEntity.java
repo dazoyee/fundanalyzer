@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -30,6 +31,14 @@ public class AnalysisResultEntity {
 
     private final BigDecimal corporateValue;
 
+    private final BigDecimal bps;
+
+    private final BigDecimal eps;
+
+    private final BigDecimal roe;
+
+    private final BigDecimal roa;
+
     private final String documentTypeCode;
 
     private final String quarterType;
@@ -45,6 +54,10 @@ public class AnalysisResultEntity {
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
+            final BigDecimal bps,
+            final BigDecimal eps,
+            final BigDecimal roe,
+            final BigDecimal roa,
             final DocumentTypeCode documentTypeCode,
             final QuarterType quarterType,
             final LocalDate submitDate,
@@ -59,11 +72,31 @@ public class AnalysisResultEntity {
                 companyCode,
                 period,
                 corporateValue,
+                bps,
+                eps,
+                roe,
+                roa,
                 documentTypeCode.toValue(),
                 quarterType.toValue(),
                 submitDate,
                 documentId,
                 createdAt
         );
+    }
+
+    public Optional<BigDecimal> getBps() {
+        return Optional.ofNullable(bps);
+    }
+
+    public Optional<BigDecimal> getEps() {
+        return Optional.ofNullable(eps);
+    }
+
+    public Optional<BigDecimal> getRoe() {
+        return Optional.ofNullable(roe);
+    }
+
+    public Optional<BigDecimal> getRoa() {
+        return Optional.ofNullable(roa);
     }
 }

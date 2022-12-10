@@ -19,6 +19,8 @@ public class CorporateDetailViewModel {
 
     private final List<AnalysisResultViewModel> analysisResultList;
 
+    private final List<IndicatorViewModel> indicatorList;
+
     private final List<FinancialStatementViewModel> financialStatement;
 
     private final List<MinkabuViewModel> minkabuList;
@@ -33,6 +35,7 @@ public class CorporateDetailViewModel {
                 forwardCode,
                 viewModel.getCorporate(),
                 viewModel.getAnalysisResultList(),
+                viewModel.getIndicatorList(),
                 viewModel.getFinancialStatement(),
                 viewModel.getMinkabuList(),
                 viewModel.getStockPriceList()

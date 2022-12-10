@@ -54,7 +54,7 @@ public class BsSubject extends Subject {
 //    ("前払費用"),
 //    ("その他"),
 //    ("貸倒引当金"),
-        TOTAL_CURRENT_ASSETS("1", "1", "流動資産合計"),
+        TOTAL_CURRENT_ASSETS("1", "流動資産合計"),
         //    BUILDINGS("建物"),
 //    ("減価償却累計額"),
 //    ("建物（純額）"),
@@ -98,12 +98,12 @@ public class BsSubject extends Subject {
 //    ("敷金及び保証金"),
 //    ("信託差入敷金及び保証金"),
 //    ("長期前払費用"),
-        TOTAL_INVESTMENTS_AND_OTHER_ASSETS("4", "1", "投資その他の資産合計"),
+        TOTAL_INVESTMENTS_AND_OTHER_ASSETS("4", "投資その他の資産合計"),
         //    ("固定資産合計"),
 //    ("投資法人債発行費"),
 //    ("繰延資産合計"),
-//    ("資産合計"),
-//    ("営業未払金"),
+        TOTAL_ASSETS("7", "資産合計"),
+        //    ("営業未払金"),
 //    ("短期借入金"),
 //    ("1年内返済予定の長期借入金"),
 //    ("1年内償還予定の投資法人債"),
@@ -113,30 +113,29 @@ public class BsSubject extends Subject {
 //    ("未払消費税等"),
 //    ("前受金"),
 //    ("その他"),
-        TOTAL_CURRENT_LIABILITIES("8", "1", "流動負債合計"),
+        TOTAL_CURRENT_LIABILITIES("8", "流動負債合計"),
         //    ("投資法人債"),
 //    ("長期借入金"),
 //    ("預り敷金及び保証金"),
 //    ("資産除去債務"),
-        TOTAL_FIXED_LIABILITIES("9", "1", "固定負債合計"),
-        TOTAL_LIABILITIES("10", null, "負債合計"),
-//    ("出資総額"),
+        TOTAL_FIXED_LIABILITIES("9", "固定負債合計"),
+        TOTAL_LIABILITIES("10", "負債合計"),
+        //    ("出資総額"),
 //    ("圧縮積立金"),
 //    ("任意積立金合計"),
 //    ("当期未処分利益又は当期未処理損失（△）"),
 //    ("剰余金合計"),
 //    ("投資主資本合計"),
-//    ("純資産合計"),
+        SUBSCRIPTION_WARRANT("16", "新株予約権"),
+        TOTAL_NET_ASSETS("14", "純資産合計"),
 //    ("負債純資産合計"),
         ;
 
         private final String outlineSubjectId;
-        private final String detailSubjectId;
         private final String subject;
 
-        BsEnum(final String outlineSubjectId, final String detailSubjectId, final String subject) {
+        BsEnum(final String outlineSubjectId, final String subject) {
             this.outlineSubjectId = outlineSubjectId;
-            this.detailSubjectId = detailSubjectId;
             this.subject = subject;
         }
 
@@ -151,13 +150,8 @@ public class BsSubject extends Subject {
             return this.outlineSubjectId;
         }
 
-        public String getDetailSubjectId() {
-            return this.detailSubjectId;
-        }
-
         public String getSubject() {
             return this.subject;
         }
     }
-
 }
