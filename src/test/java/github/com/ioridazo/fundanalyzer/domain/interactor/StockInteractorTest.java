@@ -110,7 +110,7 @@ class StockInteractorTest {
         void date(StockUseCase.Place place) {
             DateInputData inputData = DateInputData.of(LocalDate.parse("2021-05-15"));
 
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             doNothing().when(stockInteractor).importStockPrice(eq(CodeInputData.of("code")), any());
 

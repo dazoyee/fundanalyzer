@@ -71,7 +71,7 @@ public class StockInteractor implements StockUseCase {
     @Override
     public void importStockPrice(final DateInputData inputData, final Place place) {
         final long startTime = System.currentTimeMillis();
-        final List<CodeInputData> inputDataList = documentSpecification.targetList(inputData).stream()
+        final List<CodeInputData> inputDataList = documentSpecification.inquiryTargetDocuments(inputData).stream()
                 .map(document -> companySpecification.findCompanyByEdinetCode(document.getEdinetCode()))
                 .filter(Optional::isPresent)
                 .map(c -> c.get().getCode())

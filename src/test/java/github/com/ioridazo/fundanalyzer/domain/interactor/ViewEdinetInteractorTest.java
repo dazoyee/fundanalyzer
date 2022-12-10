@@ -116,7 +116,7 @@ class ViewEdinetInteractorTest {
         @DisplayName("viewEdinetDetail : EDINETリスト詳細ビューを取得する")
         @Test
         void of() {
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             when(documentSpecification.allStatusDone(document)).thenReturn(false);
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);

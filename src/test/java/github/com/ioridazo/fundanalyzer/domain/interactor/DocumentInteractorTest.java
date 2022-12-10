@@ -86,7 +86,7 @@ class DocumentInteractorTest {
         void present() {
             doNothing().when(documentInteractor).saveEdinetList(inputData);
             doNothing().when(documentInteractor).scrape((Document) any());
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(defaultDocument()));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(defaultDocument()));
 
             assertDoesNotThrow(() -> documentInteractor.allProcess(inputData));
             verify(documentInteractor, times(1)).saveEdinetList(inputData);
@@ -194,7 +194,7 @@ class DocumentInteractorTest {
         void dateInputData_present() {
             var inputData = DateInputData.of(LocalDate.parse("2021-05-09"));
 
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(defaultDocument()));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(defaultDocument()));
             doNothing().when(documentInteractor).scrape((Document) any());
 
             assertDoesNotThrow(() -> documentInteractor.scrape(inputData));
@@ -642,7 +642,7 @@ class DocumentInteractorTest {
                     false
             );
 
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
             verify(documentSpecification, times(1)).updateRemoved(document);
         }
@@ -671,7 +671,7 @@ class DocumentInteractorTest {
                     false
             );
 
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
             verify(documentSpecification, times(1)).updateRemoved(document);
         }
@@ -700,7 +700,7 @@ class DocumentInteractorTest {
                     false
             );
 
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
             verify(documentSpecification, times(0)).updateRemoved(document);
         }
