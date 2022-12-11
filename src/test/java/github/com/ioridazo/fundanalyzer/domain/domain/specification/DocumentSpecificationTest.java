@@ -110,7 +110,7 @@ class DocumentSpecificationTest {
                     null,
                     false
             );
-            doReturn(List.of(document)).when(documentSpecification).targetList(any());
+            doReturn(List.of(document)).when(documentSpecification).inquiryTargetDocuments(any());
 
             var actual = documentSpecification.analysisTargetList(inputData);
 
@@ -139,7 +139,7 @@ class DocumentSpecificationTest {
                     null,
                     false
             );
-            doReturn(List.of(document)).when(documentSpecification).targetList(any());
+            doReturn(List.of(document)).when(documentSpecification).inquiryTargetDocuments(any());
 
             var actual = documentSpecification.analysisTargetList(inputData);
 

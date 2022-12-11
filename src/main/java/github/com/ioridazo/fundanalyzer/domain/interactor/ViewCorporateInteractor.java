@@ -292,7 +292,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public void updateView(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
         parallelUpdateView(
-                documentSpecification.targetList(inputData).stream()
+                documentSpecification.inquiryTargetDocuments(inputData).stream()
                         .map(Document::getEdinetCode)
                         .map(companySpecification::findCompanyByEdinetCode)
                         .filter(Optional::isPresent)

@@ -1,9 +1,8 @@
 package github.com.ioridazo.fundanalyzer.client.jsoup;
 
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.Kabuoji3ResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.YahooFinanceResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
@@ -34,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Component
 public class JsoupClient {
@@ -93,7 +91,7 @@ public class JsoupClient {
      * @param code 会社コード
      * @return 株価情報
      */
-    public List<Kabuoji3ResultBean> kabuoji3(final String code) {
+    public List<StockPriceResultBean> kabuoji3(final String code) {
         final String url = UriComponentsBuilder.fromUriString(properties.getRestClient().get(KABUOJI3).getBaseUri())
                 .path("/stock/{code}/")
                 .buildAndExpand(code.substring(0, 4))
@@ -105,10 +103,10 @@ public class JsoupClient {
         return document.select(".table_wrap table").select("tr").stream()
                 .map(tr -> tr.select("td").stream()
                         .map(Element::text)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .filter(tdList -> tdList.size() == 7)
-                .map(tdList -> Kabuoji3ResultBean.ofJsoup(thOrder, tdList))
-                .collect(Collectors.toList());
+                .map(tdList -> StockPriceResultBean.ofKabuoji3(thOrder, tdList))
+                .toList();
     }
 
     /**
@@ -146,13 +144,37 @@ public class JsoupClient {
     }
 
     /**
+     * minkabuの会社コードによる株価情報を取得する
+     *
+     * @param code 会社コード
+     * @return 株価情報
+     */
+    public List<StockPriceResultBean> minkabuForStock(final String code) {
+        final String url = UriComponentsBuilder.fromUriString(properties.getRestClient().get(MINKABU).getBaseUri())
+                .path("/stock/{code}/daily_bar")
+                .buildAndExpand(code.substring(0, 4))
+                .toUriString();
+
+        final Document document = getForHtml(MINKABU, code, url);
+        final Map<String, Integer> thOrder = readMinkabuThOrder(document);
+
+        return document.select(".md_table_wrapper table").select("tr").stream()
+                .map(tr -> tr.select("td").stream()
+                        .map(Element::text)
+                        .toList())
+                .filter(tdList -> tdList.size() == 7)
+                .map(tdList -> StockPriceResultBean.ofMinkabu(thOrder, tdList))
+                .toList();
+    }
+
+    /**
      * Yahoo!Financeの会社コードによる株価情報予想を取得する
      *
      * @param code 会社コード
      * @return 株価情報予想
      */
-    public List<YahooFinanceResultBean> yahooFinance(final String code) {
-        final ArrayList<YahooFinanceResultBean> yahooFinanceList = new ArrayList<>();
+    public List<StockPriceResultBean> yahooFinance(final String code) {
+        final ArrayList<StockPriceResultBean> yahooFinanceList = new ArrayList<>();
 
         int page = 1;
         while (page <= yahooPages) {     // 13ページまでを取得
@@ -179,7 +201,7 @@ public class JsoupClient {
                         return valueList;
                     })
                     .filter(tdList -> tdList.size() == 7)
-                    .map(tdList -> YahooFinanceResultBean.ofJsoup(thOrder, tdList))
+                    .map(tdList -> StockPriceResultBean.ofYahooFinance(thOrder, tdList))
                     .forEach(yahooFinanceList::add);
 
             page++;
@@ -260,7 +282,7 @@ public class JsoupClient {
                 .select("tr")
                 .select("th").stream()
                 .map(Element::text)
-                .collect(Collectors.toList());
+                .toList();
         try {
             return Map.of(
                     "日付", thList.indexOf("日付"),
@@ -278,6 +300,35 @@ public class JsoupClient {
     }
 
     /**
+     * みんかぶのスクレイピング結果からタイトル行を識別する
+     *
+     * @param document スクレイピング結果
+     * @return <ul><li>日時</li><li>始値</li><li>高値</li><li>安値</li><li>終値</li><li>出来高(株)</li><li>調整後終値</li></ul>
+     */
+    private Map<String, Integer> readMinkabuThOrder(final Document document) {
+        final List<String> thList = document
+                .select(".md_table_wrapper table")
+                .select("tr")
+                .select("th").stream()
+                .map(Element::text)
+                .toList();
+        try {
+            return Map.of(
+                    "日時", thList.indexOf("日時"),
+                    "始値", thList.indexOf("始値"),
+                    "高値", thList.indexOf("高値"),
+                    "安値", thList.indexOf("安値"),
+                    "終値", thList.indexOf("終値"),
+                    "出来高(株)", thList.indexOf("出来高(株)"),
+                    "調整後終値", thList.indexOf("調整後終値")
+            );
+        } catch (Throwable t) {
+            log.warn("minkabuの表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
+            throw new FundanalyzerScrapingException(t);
+        }
+    }
+
+    /**
      * yahoo-financeのスクレイピング結果からタイトル行を識別する
      *
      * @param document スクレイピング結果
@@ -289,7 +340,7 @@ public class JsoupClient {
                 .select("tr")
                 .select("th").stream()
                 .map(Element::text)
-                .collect(Collectors.toList());
+                .toList();
 
         try {
             return Map.of(

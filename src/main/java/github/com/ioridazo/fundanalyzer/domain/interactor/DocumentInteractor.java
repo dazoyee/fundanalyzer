@@ -86,7 +86,7 @@ public class DocumentInteractor implements DocumentUseCase {
         saveEdinetList(inputData);
 
         // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentList = documentSpecification.targetList(inputData);
+        final var documentList = documentSpecification.inquiryTargetDocuments(inputData);
 
         if (documentList.isEmpty()) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
@@ -189,7 +189,7 @@ public class DocumentInteractor implements DocumentUseCase {
     public void scrape(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
 
-        final List<Document> targetList = documentSpecification.targetList(inputData);
+        final List<Document> targetList = documentSpecification.inquiryTargetDocuments(inputData);
         if (targetList.isEmpty()) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
@@ -403,7 +403,7 @@ public class DocumentInteractor implements DocumentUseCase {
     @Override
     public void removeDocument(final DateInputData inputData) {
         // 会社単位
-        documentSpecification.targetList(inputData).stream()
+        documentSpecification.inquiryTargetDocuments(inputData).stream()
                 .filter(document -> {
                     // 特定の会社を除外する
                     if (noTargetEdinetCodes.stream().anyMatch(noTarget -> document.getEdinetCode().equals(noTarget))) {

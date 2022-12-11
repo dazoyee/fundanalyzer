@@ -23,7 +23,6 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class ViewEdinetInteractor implements ViewEdinetUseCase {
@@ -68,7 +67,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
         return viewSpecification.findAllEdinetListView().stream()
                 .filter(viewModel -> !viewModel.isAllDone())
                 .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -80,7 +79,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
     public List<EdinetListViewModel> viewAll() {
         return viewSpecification.findAllEdinetListView().stream()
                 .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -91,14 +90,14 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
      */
     @Override
     public EdinetDetailViewModel viewEdinetDetail(final DateInputData inputData) {
-        final List<DocumentViewModel> documentView = documentSpecification.targetList(inputData).stream()
+        final List<DocumentViewModel> documentView = documentSpecification.inquiryTargetDocuments(inputData).stream()
                 .filter(document -> !documentSpecification.allStatusDone(document))
                 .map(document -> DocumentViewModel.of(
                         companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerRuntimeException::new),
                         document,
                         financialStatementSpecification.getFinanceValue(document)
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         return EdinetDetailViewModel.of(
                 viewSpecification.findEdinetListView(inputData),

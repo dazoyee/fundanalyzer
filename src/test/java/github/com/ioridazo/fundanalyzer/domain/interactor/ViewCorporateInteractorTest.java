@@ -327,7 +327,7 @@ class ViewCorporateInteractorTest {
         @DisplayName("updateView : ビューを更新する")
         @Test
         void inputData() {
-            when(documentSpecification.targetList(inputData)).thenReturn(List.of(document));
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             when(viewSpecification.generateCorporateView(eq(company), any(), any(), any())).thenReturn(corporateViewModel);
 

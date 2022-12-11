@@ -66,7 +66,9 @@ public class AnalysisService {
                     // remove
                     documentUseCase.removeDocument(date);
                     // stock
-                    stockUseCase.importStockPrice(date);
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.NIKKEI);
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.KABUOJI3);
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.MINKABU);
                     // analysis
                     analyzeUseCase.analyze(date);
                     // view corporate
@@ -178,18 +180,12 @@ public class AnalysisService {
                 .datesUntil(inputData.getToDate().plusDays(1))
                 .map(DateInputData::of)
                 // stock
-                .forEach(stockUseCase::importStockPrice);
-    }
-
-    /**
-     * 提出日の株価取得
-     *
-     * @param inputData 提出日
-     */
-    @NewSpan
-    public void importStock(final DateInputData inputData) {
-        // stock
-        stockUseCase.importStockPrice(inputData);
+                .forEach(date -> {
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.NIKKEI);
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.KABUOJI3);
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.MINKABU);
+                    stockUseCase.importStockPrice(date, StockUseCase.Place.YAHOO_FINANCE);
+                });
     }
 
     /**
