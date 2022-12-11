@@ -114,22 +114,22 @@ resilience4j:
     nikkei:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 10              # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     kabuoji3:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 10              # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     minkabu:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 15              # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     yahoo-finance:
       registerHealthIndicator: true
-      limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitRefreshPeriod: 5s          # 計測する期間
+      limitForPeriod: 7               # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
@@ -176,9 +176,9 @@ app:
 
     view:
       document-type-code: 120,130  # 分析表示処理対象
-      discount-rate: 170  # 以上を表示
+      discount-rate: 120  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
-      coefficient-of-variation: 0.6  # 以下を表示
+      coefficient-of-variation: 0.5  # 以下を表示
       diff-forecast-stock: 100  # 株価予想と最新株価との差が100以上を表示
       corporate.size: 300  # 日間を表示
       edinet-list.size: 400  # 日間を表示
@@ -225,12 +225,12 @@ app:
 
   scheduler:
     hour:
-      company: 3  # 時に処理実施
-      stock: 4  # 時に処理実施
+      company: 1  # 時に処理実施
+      stock: 5,6,7,12,13,14,15,16,17,18,19,20,21,22,23,0  # 時に処理実施
       analysis: 2  # 時に処理実施
-      update-view: 7  # 時に処理実施
+      update-view: 3  # 時に処理実施
       recover-document-period: 3  # 時に処理実施
-      evaluate: 6  # 時に処理実施
+      evaluate: 4  # 時に処理実施
 
     stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施

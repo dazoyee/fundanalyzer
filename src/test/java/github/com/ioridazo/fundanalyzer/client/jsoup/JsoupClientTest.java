@@ -49,7 +49,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Timeout(10)
-@SuppressWarnings("NewClassNamingConvention")
 class JsoupClientTest {
 
     private static MockWebServer server;
@@ -262,31 +261,31 @@ class JsoupClientTest {
 
             assertAll("Kabuoji3ResultBean",
                     () -> assertAll(
-                            () -> assertEquals("2020-11-27", actual.get(0).getTargetDate()),
-                            () -> assertEquals("1284.5", actual.get(0).getOpeningPrice()),
-                            () -> assertEquals("1290", actual.get(0).getHighPrice()),
-                            () -> assertEquals("1274.5", actual.get(0).getLowPrice()),
-                            () -> assertEquals("1287", actual.get(0).getClosingPrice()),
-                            () -> assertEquals("18203600", actual.get(0).getVolume()),
-                            () -> assertEquals("1287", actual.get(0).getClosingPriceAdjustment())
+                            () -> assertEquals("2020-11-27", actual.get(0).targetDate()),
+                            () -> assertEquals("1284.5", actual.get(0).openingPrice()),
+                            () -> assertEquals("1290", actual.get(0).highPrice()),
+                            () -> assertEquals("1274.5", actual.get(0).lowPrice()),
+                            () -> assertEquals("1287", actual.get(0).closingPrice()),
+                            () -> assertEquals("18203600", actual.get(0).volume()),
+                            () -> assertEquals("1287", actual.get(0).closingPriceAdjustment())
                     ),
                     () -> assertAll(
-                            () -> assertEquals("2020-11-26", actual.get(1).getTargetDate()),
-                            () -> assertEquals("1288.5", actual.get(1).getOpeningPrice()),
-                            () -> assertEquals("1294.5", actual.get(1).getHighPrice()),
-                            () -> assertEquals("1282", actual.get(1).getLowPrice()),
-                            () -> assertEquals("1285", actual.get(1).getClosingPrice()),
-                            () -> assertEquals("15760400", actual.get(1).getVolume()),
-                            () -> assertEquals("1285", actual.get(1).getClosingPriceAdjustment())
+                            () -> assertEquals("2020-11-26", actual.get(1).targetDate()),
+                            () -> assertEquals("1288.5", actual.get(1).openingPrice()),
+                            () -> assertEquals("1294.5", actual.get(1).highPrice()),
+                            () -> assertEquals("1282", actual.get(1).lowPrice()),
+                            () -> assertEquals("1285", actual.get(1).closingPrice()),
+                            () -> assertEquals("15760400", actual.get(1).volume()),
+                            () -> assertEquals("1285", actual.get(1).closingPriceAdjustment())
                     ),
                     () -> assertAll(
-                            () -> assertEquals("2019-08-16", actual.get(299).getTargetDate()),
-                            () -> assertEquals("1499.5", actual.get(299).getOpeningPrice()),
-                            () -> assertEquals("1505", actual.get(299).getHighPrice()),
-                            () -> assertEquals("1498.5", actual.get(299).getLowPrice()),
-                            () -> assertEquals("1501", actual.get(299).getClosingPrice()),
-                            () -> assertEquals("9807700", actual.get(299).getVolume()),
-                            () -> assertEquals("1501", actual.get(299).getClosingPriceAdjustment())
+                            () -> assertEquals("2019-08-16", actual.get(299).targetDate()),
+                            () -> assertEquals("1499.5", actual.get(299).openingPrice()),
+                            () -> assertEquals("1505", actual.get(299).highPrice()),
+                            () -> assertEquals("1498.5", actual.get(299).lowPrice()),
+                            () -> assertEquals("1501", actual.get(299).closingPrice()),
+                            () -> assertEquals("9807700", actual.get(299).volume()),
+                            () -> assertEquals("1501", actual.get(299).closingPriceAdjustment())
                     )
             );
             assertEquals(300, actual.size());
@@ -451,6 +450,78 @@ class JsoupClientTest {
     }
 
     @Nested
+    class minkabuForStock {
+
+        @DisplayName("minkabuForStock : 実際にminkabuの会社コードによる株価情報を取得する")
+            // @Test
+        void minkabuForStock_test() {
+            var jsoup = new RestClientProperties.Settings();
+            jsoup.setConnectTimeout(Duration.ofMillis(10000));
+            jsoup.setReadTimeout(Duration.ofMillis(10000));
+            jsoup.setMaxAttempts(2);
+            jsoup.setBackOff(Duration.ofMillis(0));
+            var minkabu = new RestClientProperties.Settings();
+            minkabu.setBaseUri("https://minkabu.jp");
+
+            var properties = new RestClientProperties(Map.of("jsoup", jsoup, "minkabu", minkabu));
+            client = spy(new JsoupClient(
+                    properties,
+                    Mockito.spy(new AppConfig().restTemplateJsoup(properties)),
+                    retryTemplate,
+                    circuitBreakerRegistry,
+                    rateLimiterRegistry
+            ));
+
+            var code = "9434";
+            var actual = client.minkabuForStock(code);
+
+            assertNotNull(actual);
+            actual.forEach(System.out::println);
+            assertEquals(20, actual.size());
+        }
+
+        @DisplayName("minkabuForStock : minkabuの会社コードによる株価情報を取得する")
+        @Test
+        void minkabuForStock_ok() throws IOException {
+            var code = "9999";
+            var htmlFile = new File("src/test/resources/github/com/ioridazo/fundanalyzer/client/jsoup/minkabu/minkabuForStock.html");
+            doReturn(jsoupParser(htmlFile)).when(client).getForHtml(any(), any(), any());
+            var actual = client.minkabuForStock(code);
+
+            assertAll(
+                    () -> assertAll(
+                            () -> assertEquals("2022/12/09", actual.get(0).targetDate()),
+                            () -> assertEquals("1,468.0", actual.get(0).openingPrice()),
+                            () -> assertEquals("1,487.5", actual.get(0).highPrice()),
+                            () -> assertEquals("1,467.5", actual.get(0).lowPrice()),
+                            () -> assertEquals("1,481.5", actual.get(0).closingPrice()),
+                            () -> assertEquals("7,594,600", actual.get(0).volume()),
+                            () -> assertEquals("1,481.5", actual.get(0).closingPriceAdjustment())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("2022/12/08", actual.get(1).targetDate()),
+                            () -> assertEquals("1,469.5", actual.get(1).openingPrice()),
+                            () -> assertEquals("1,476.5", actual.get(1).highPrice()),
+                            () -> assertEquals("1,466.0", actual.get(1).lowPrice()),
+                            () -> assertEquals("1,473.0", actual.get(1).closingPrice()),
+                            () -> assertEquals("7,023,000", actual.get(1).volume()),
+                            () -> assertEquals("1,473.0", actual.get(1).closingPriceAdjustment())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("2022/11/11", actual.get(19).targetDate()),
+                            () -> assertEquals("1,492.5", actual.get(19).openingPrice()),
+                            () -> assertEquals("1,493.0", actual.get(19).highPrice()),
+                            () -> assertEquals("1,480.5", actual.get(19).lowPrice()),
+                            () -> assertEquals("1,486.0", actual.get(19).closingPrice()),
+                            () -> assertEquals("7,404,600", actual.get(19).volume()),
+                            () -> assertEquals("1,486.0", actual.get(19).closingPriceAdjustment())
+                    )
+            );
+            assertEquals(20, actual.size());
+        }
+    }
+
+    @Nested
     class yahooFinance {
 
         @DisplayName("yahoo-finance : 実際にyahoo-financeの会社コードによる株価情報を取得する")
@@ -491,31 +562,31 @@ class JsoupClientTest {
             actual.forEach(System.out::println);
             assertAll("YahooFinanceResultBean",
                     () -> assertAll(
-                            () -> assertEquals("2022年4月27日", actual.get(0).getTargetDate()),
-                            () -> assertEquals("1,484.5", actual.get(0).getOpeningPrice()),
-                            () -> assertEquals("1,503", actual.get(0).getHighPrice()),
-                            () -> assertEquals("1,474", actual.get(0).getLowPrice()),
-                            () -> assertEquals("1,501", actual.get(0).getClosingPrice()),
-                            () -> assertEquals("17,847,600", actual.get(0).getVolume()),
-                            () -> assertEquals("1,501", actual.get(0).getClosingPriceAdjustment())
+                            () -> assertEquals("2022年4月27日", actual.get(0).targetDate()),
+                            () -> assertEquals("1,484.5", actual.get(0).openingPrice()),
+                            () -> assertEquals("1,503", actual.get(0).highPrice()),
+                            () -> assertEquals("1,474", actual.get(0).lowPrice()),
+                            () -> assertEquals("1,501", actual.get(0).closingPrice()),
+                            () -> assertEquals("17,847,600", actual.get(0).volume()),
+                            () -> assertEquals("1,501", actual.get(0).closingPriceAdjustment())
                     ),
                     () -> assertAll(
-                            () -> assertEquals("2022年4月26日", actual.get(1).getTargetDate()),
-                            () -> assertEquals("1,487.5", actual.get(1).getOpeningPrice()),
-                            () -> assertEquals("1,489", actual.get(1).getHighPrice()),
-                            () -> assertEquals("1,479", actual.get(1).getLowPrice()),
-                            () -> assertEquals("1,480.5", actual.get(1).getClosingPrice()),
-                            () -> assertEquals("6,474,600", actual.get(1).getVolume()),
-                            () -> assertEquals("1,480.5", actual.get(1).getClosingPriceAdjustment())
+                            () -> assertEquals("2022年4月26日", actual.get(1).targetDate()),
+                            () -> assertEquals("1,487.5", actual.get(1).openingPrice()),
+                            () -> assertEquals("1,489", actual.get(1).highPrice()),
+                            () -> assertEquals("1,479", actual.get(1).lowPrice()),
+                            () -> assertEquals("1,480.5", actual.get(1).closingPrice()),
+                            () -> assertEquals("6,474,600", actual.get(1).volume()),
+                            () -> assertEquals("1,480.5", actual.get(1).closingPriceAdjustment())
                     ),
                     () -> assertAll(
-                            () -> assertEquals("2022年3月31日", actual.get(19).getTargetDate()),
-                            () -> assertEquals("1,432", actual.get(19).getOpeningPrice()),
-                            () -> assertEquals("1,440.5", actual.get(19).getHighPrice()),
-                            () -> assertEquals("1,425.5", actual.get(19).getLowPrice()),
-                            () -> assertEquals("1,428", actual.get(19).getClosingPrice()),
-                            () -> assertEquals("13,433,600", actual.get(19).getVolume()),
-                            () -> assertEquals("1,428", actual.get(19).getClosingPriceAdjustment())
+                            () -> assertEquals("2022年3月31日", actual.get(19).targetDate()),
+                            () -> assertEquals("1,432", actual.get(19).openingPrice()),
+                            () -> assertEquals("1,440.5", actual.get(19).highPrice()),
+                            () -> assertEquals("1,425.5", actual.get(19).lowPrice()),
+                            () -> assertEquals("1,428", actual.get(19).closingPrice()),
+                            () -> assertEquals("13,433,600", actual.get(19).volume()),
+                            () -> assertEquals("1,428", actual.get(19).closingPriceAdjustment())
                     )
             );
             assertEquals(20, actual.size());

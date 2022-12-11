@@ -469,8 +469,8 @@
             <div class="col-lg-3 col-md-6 col-sm-12">
               <dl class="row">
                 <dt class="col-6">株価取得日</dt>
-                <dd class="col-6" th:if="${corporateView.importDate != null}"> -</dd>
-                <dd class="col-6" th:if="${corporateView.importDate == null}"
+                <dd class="col-6" th:if="${corporateView.importDate == null}"> -</dd>
+                <dd class="col-6" th:if="${corporateView.importDate != null}"
                     th:text="${corporateView.importDate}">株価取得日
                 </dd>
                 <dt class="col-6">最新株価</dt>

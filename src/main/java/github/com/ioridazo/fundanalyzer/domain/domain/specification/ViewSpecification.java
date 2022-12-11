@@ -270,7 +270,7 @@ public class ViewSpecification {
         // 総書類
         final List<Document> documentList = documentSpecification.documentList(inputData);
         // 処理対象書類
-        final List<Document> targetList = documentSpecification.targetList(inputData);
+        final List<Document> targetList = documentSpecification.inquiryTargetDocuments(inputData);
         // 処理済書類/未処理書類
         final Pair<List<Document>, List<Document>> scrapedList = documentSpecification.extractScrapedList(targetList);
         // 分析済書類/未分析書類

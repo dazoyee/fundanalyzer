@@ -10,9 +10,10 @@ public interface StockUseCase {
      * 株価取得
      *
      * @param inputData 提出日
+     * @param place     通信先
      */
     @NewSpan
-    void importStockPrice(DateInputData inputData);
+    void importStockPrice(DateInputData inputData, Place place);
 
     /**
      * 株価取得

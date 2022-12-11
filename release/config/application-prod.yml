@@ -7,22 +7,22 @@ resilience4j:
     nikkei:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 10              # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     kabuoji3:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 10              # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     minkabu:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 15              # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     yahoo-finance:
       registerHealthIndicator: true
-      limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 10               # 指定した期間の間に呼び出し可能な回数
+      limitRefreshPeriod: 5s          # 計測する期間
+      limitForPeriod: 7               # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
@@ -72,7 +72,7 @@ app:
         x: x # 任意の値を設定
 
     view:
-      discount-rate: 190  # 以上を表示
+      discount-rate: 120  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.5  # 以下を表示
       diff-forecast-stock: 100  # 株価予想と最新株価との差が100以上を表示
@@ -94,14 +94,11 @@ app:
     remove-document:
       document-type-code: 140,150
       company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,
-        E00840,E05156,E02274,E00939,E34177,E27486,E05199,E00991,E05599,E01317,E05523,E02529,E01121,E01267,E02126,E02958,
-        E05304,E05513,E02127,E04850,E33615
+        E00840,E05156,E02274,E00939,E34177,E27486,E05199,E00991,E05599,E01317,E05523
       # マネックスグループ株式会社,株式会社クレディセゾン,株式会社日立製作所,ポート株式会社,プレミアグループ株式会社,株式会社荏原製作所
       # アルヒ株式会社,Ｊトラスト株式会社,日本ユニシス株式会社,楽天グループ株式会社,日本ハム株式会社,ユニ・チャーム株式会社,ＨＯＹＡ株式会社
       # 協和キリン株式会社,株式会社リログループ,三井化学株式会社,株式会社デジタルガレージ,キヤノン株式会社,エーザイ株式会社, 株式会社GAtechnologies
-      # ペプチドリーム株式会社,株式会社ＣＬホールディングス,ライオン株式会社,株式会社アドウェイズ,株式会社ＬＩＸＩＬ,ＩＮＥＳＴ株式会社,三菱商事株式会社
-      # 日本板硝子株式会社,株式会社クボタ,三菱重工業株式会社,双日株式会社,日鉄ソリューションズ株式会社,株式会社ＷＯＷ ＷＯＲＬＤ,川崎重工業株式会社
-      # 株式会社ジーニー
+      # ペプチドリーム株式会社,株式会社ＣＬホールディングス,ライオン株式会社,株式会社アドウェイズ,株式会社ＬＩＸＩＬ,ＩＮＥＳＴ株式会社
 
   settings:
     file:
@@ -114,12 +111,12 @@ app:
 
   scheduler:
     hour:
-      company: 3  # 時に処理実施
-      stock: 4  # 時に処理実施
+      company: 1  # 時に処理実施
+      stock: 5,6,7,12,13,14,15,16,17,18,19,20,21,22,23,0  # 時に処理実施
       analysis: 2  # 時に処理実施
-      update-view: 7  # 時に処理実施
+      update-view: 3  # 時に処理実施
       recover-document-period: 3  # 時に処理実施
-      evaluate: 6  # 時に処理実施
+      evaluate: 4  # 時に処理実施
 
     stock.target-company.number: 500  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施

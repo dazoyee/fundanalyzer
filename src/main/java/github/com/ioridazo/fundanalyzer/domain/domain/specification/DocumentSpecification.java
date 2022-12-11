@@ -21,6 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.NonUniqueResultException;
 import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -34,11 +36,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
 public class DocumentSpecification {
+
+    private static final String CACHE_KEY_TARGET_DOCUMENTS = "targetDocuments";
 
     private static final Logger log = LogManager.getLogger(DocumentSpecification.class);
 
@@ -118,22 +121,7 @@ public class DocumentSpecification {
         return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
                 .filter(entity -> entity.getEdinetCode().isPresent())
                 .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 処理対象となるドキュメント情報リストを取得する
-     *
-     * @param inputData 提出日
-     * @return ドキュメント情報リスト
-     */
-    public List<Document> targetList(final DateInputData inputData) {
-        return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
-                .filter(entity -> entity.getEdinetCode().isPresent())
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
-                .filter(this::isTarget)
-                .filter(Document::isTarget)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -143,14 +131,14 @@ public class DocumentSpecification {
      * @return ドキュメント情報リスト
      */
     public List<Document> analysisTargetList(final DateInputData inputData) {
-        return targetList(inputData).stream()
+        return inquiryTargetDocuments(inputData).stream()
                 // all match status done
                 .filter(this::allStatusDone)
                 // documentPeriod is present
                 .filter(document -> document.getDocumentPeriod().isPresent())
                 // only not analyze
                 .filter(document -> !analysisResultSpecification.isAnalyzed(document))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<Document> noDocumentPeriodList(final DateInputData inputData) {
@@ -158,7 +146,7 @@ public class DocumentSpecification {
                 .filter(entity -> entity.getEdinetCode().isPresent())
                 .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .filter(Document::isTarget)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -173,7 +161,7 @@ public class DocumentSpecification {
                 .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
                 .filter(this::isTarget)
                 .filter(Document::isTarget)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -493,6 +481,31 @@ public class DocumentSpecification {
                     edinetDocument.getParentDocId().orElse(null)
             );
         }
+    }
+
+    /**
+     * 処理対象となるドキュメント情報リストを取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
+     *
+     * @param inputData 提出日
+     * @return ドキュメント情報リスト
+     */
+    @Cacheable(CACHE_KEY_TARGET_DOCUMENTS)
+    public List<Document> inquiryTargetDocuments(final DateInputData inputData) {
+        return findTargetList(inputData);
+    }
+
+    @CachePut(CACHE_KEY_TARGET_DOCUMENTS)
+    public List<Document> findTargetList(final DateInputData inputData) {
+        return documentDao.selectByTypeAndSubmitDate(targetTypeCodes, inputData.getDate()).stream()
+                .filter(entity -> entity.getEdinetCode().isPresent())
+                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
+                .filter(this::isTarget)
+                .filter(Document::isTarget)
+                .toList();
     }
 
     /**
