@@ -507,6 +507,22 @@ class AnalyzeInteractorTest {
             verify(investmentIndicatorSpecification, times(26)).insert(any(), any());
         }
 
+        @DisplayName("indicate : 処理対象日付が正しいとき")
+        @ParameterizedTest
+        @CsvSource({
+                "2022-12-01, 2022-12-01",
+                "2022-12-01, 2022-12-02",
+                "2021-12-01, 2022-12-01"
+        })
+        void date_ok(String submitDate, String latestDate) {
+            when(stockSpecification.findLatestStock("code"))
+                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
+
+            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
+            verify(investmentIndicatorSpecification, Mockito.atLeastOnce()).insert(any(), any());
+            verify(investmentIndicatorSpecification, Mockito.atMost(366)).insert(any(), any());
+        }
+
         @DisplayName("indicate : 処理対象日付が正しくないとき")
         @ParameterizedTest
         @CsvSource({

@@ -262,8 +262,13 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             final LocalDate latestDate = latestStock.get().getTargetDate();
 
             // 提出日 <= 株価取得日 && 株価取得日 <= 提出日+1年
-            if (latestDate.isAfter(analysisResult.getSubmitDate())
-                    && latestDate.isBefore(analysisResult.getSubmitDate().plusYears(1))) {
+            if (
+                    (latestDate.isEqual(analysisResult.getSubmitDate())
+                            || latestDate.isAfter(analysisResult.getSubmitDate()))
+                            &&
+                            (latestDate.isEqual(analysisResult.getSubmitDate().plusYears(1))
+                                    || (latestDate.isBefore(analysisResult.getSubmitDate().plusYears(1))))
+            ) {
                 // executedDate -> latestDate
                 executedDate.plusDays(1).datesUntil(latestDate.plusDays(1)).forEach(date ->
                         // find stock
