@@ -39,7 +39,7 @@ class StockSchedulerTest {
         this.slackClient = Mockito.mock(SlackClient.class);
 
         this.scheduler = Mockito.spy(new StockScheduler(analysisService, stockSpecification, slackClient));
-        scheduler.hourOfStock = 13;
+        scheduler.hourOfStock = List.of(13);
         scheduler.hourOfEvaluate = 13;
         scheduler.insertStockEnabled = true;
         scheduler.deleteStockEnabled = true;

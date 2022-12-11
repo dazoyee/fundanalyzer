@@ -29,7 +29,7 @@ public class StockScheduler {
     private final SlackClient slackClient;
 
     @Value("${app.scheduler.hour.stock}")
-    int hourOfStock;
+    List<Integer> hourOfStock;
     @Value("${app.scheduler.hour.evaluate}")
     int hourOfEvaluate;
     @Value("${app.slack.insert-stock.enabled:true}")
@@ -57,7 +57,7 @@ public class StockScheduler {
      */
     @Scheduled(cron = "0 0 * * * *", zone = "Asia/Tokyo")
     public void stockScheduler() {
-        if (nowLocalDateTime().getHour() == hourOfStock) {
+        if (hourOfStock.stream().anyMatch(integer -> nowLocalDateTime().getHour() == integer)) {
 
             log.info(FundanalyzerLogClient.toAccessLogObject(
                     Category.SCHEDULER,
