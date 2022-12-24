@@ -356,12 +356,15 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         final ArrayList<CorporateViewModel> viewList = new ArrayList<>();
         companyList.forEach(company -> {
             try {
-                viewList.add(viewSpecification.generateCorporateView(
+                final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
+
+                latestDocument.ifPresent(document -> viewList.add(viewSpecification.generateCorporateView(
                         company,
+                        document,
                         analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
                         investmentIndicatorSpecification.findLatestIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
-                ));
+                )));
             } catch (final FundanalyzerNotExistException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(

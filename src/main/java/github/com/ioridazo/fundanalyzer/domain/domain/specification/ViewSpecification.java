@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class ViewSpecification {
@@ -153,6 +154,7 @@ public class ViewSpecification {
      * 企業情報ビューを生成する
      *
      * @param company        企業情報
+     * @param document       ドキュメント
      * @param analysisResult 分析結果
      * @param corporateValue 企業価値
      * @param indicatorValue 投資指標
@@ -161,20 +163,19 @@ public class ViewSpecification {
      */
     public CorporateViewModel generateCorporateView(
             final Company company,
+            final Document document,
             final AnalysisResult analysisResult,
             final CorporateValue corporateValue,
             final IndicatorValue indicatorValue) throws FundanalyzerNotExistException {
         final Stock stock = stockSpecification.findStock(company);
-        final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
 
         return CorporateViewModel.of(
                 company.getCode().substring(0, 4),
                 company.getCompanyName(),
-                latestDocument.map(Document::getSubmitDate).orElse(null),
-                latestDocument.map(Document::getDocumentTypeCode).map(DocumentTypeCode::toValue)
-                        .orElseThrow(() -> new FundanalyzerNotExistException("書類種別コード")),
-                latestDocument.map(Document::getDocumentTypeCode).stream()
-                        .anyMatch(dtc -> List.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130).contains(dtc)),
+                document.getSubmitDate(),
+                document.getDocumentTypeCode().toValue(),
+                Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
+                        .anyMatch(dtc -> document.getDocumentTypeCode().equals(dtc)),
                 corporateValue.getLatestCorporateValue().orElse(null),
                 corporateValue.getAverageInfoList().stream()
                         .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))

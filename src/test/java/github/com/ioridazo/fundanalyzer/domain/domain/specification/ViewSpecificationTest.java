@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -36,7 +37,6 @@ class ViewSpecificationTest {
 
     private CorporateViewDao corporateViewDao;
     private EdinetListViewDao edinetListViewDao;
-    private DocumentSpecification documentSpecification;
     private StockSpecification stockSpecification;
 
     private ViewSpecification viewSpecification;
@@ -45,13 +45,12 @@ class ViewSpecificationTest {
     void setUp() {
         corporateViewDao = Mockito.mock(CorporateViewDao.class);
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
-        documentSpecification = Mockito.mock(DocumentSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
 
         viewSpecification = Mockito.spy(new ViewSpecification(
                 corporateViewDao,
                 edinetListViewDao,
-                documentSpecification,
+                Mockito.mock(DocumentSpecification.class),
                 stockSpecification
         ));
     }
@@ -117,10 +116,19 @@ class ViewSpecificationTest {
     class generateCorporateView {
 
         Company company = defaultCompany();
+        Document document = defaultDocument();
         Stock stock = defaultStock();
         AnalysisResult analysisResult = analysisResult();
         CorporateValue corporateValue = defaultCorporateValue();
         IndicatorValue indicatorValue = indicatorValue();
+
+        @DisplayName("generateCorporateView : 有価証券報告書フラグを算出する")
+        @Test
+        void isMainReport_isTrue() {
+            when(stockSpecification.findStock(company)).thenReturn(stock);
+            var actual = viewSpecification.generateCorporateView(company, document, analysisResult, corporateValue, indicatorValue);
+            assertTrue(actual.isMainReport());
+        }
 
         @DisplayName("generateCorporateView : 割安値を算出する")
         @Test
@@ -131,9 +139,8 @@ class ViewSpecificationTest {
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
             when(stockSpecification.findStock(company)).thenReturn(stock);
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
-            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
+            var actual = viewSpecification.generateCorporateView(company, document, analysisResult, corporateValue, indicatorValue);
             assertEquals(BigDecimal.valueOf(1132.05), actual.getAllDiscountValue());
         }
 
@@ -146,9 +153,8 @@ class ViewSpecificationTest {
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
             when(stockSpecification.findStock(company)).thenReturn(stock);
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
-            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
+            var actual = viewSpecification.generateCorporateView(company, document, analysisResult, corporateValue, indicatorValue);
             assertNull(actual.getAllDiscountValue());
         }
 
@@ -161,9 +167,8 @@ class ViewSpecificationTest {
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
             when(stockSpecification.findStock(company)).thenReturn(stock);
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
 
-            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
+            var actual = viewSpecification.generateCorporateView(company, document, analysisResult, corporateValue, indicatorValue);
             assertEquals(BigDecimal.valueOf(213.205), actual.getAllDiscountRate());
         }
 
@@ -175,10 +180,9 @@ class ViewSpecificationTest {
             averageInfo.setAverageCorporateValue(null);
             corporateValue.setAverageInfoList(List.of(averageInfo));
 
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(defaultDocument()));
             when(stockSpecification.findStock(company)).thenReturn(stock);
 
-            var actual = viewSpecification.generateCorporateView(company, analysisResult, corporateValue, indicatorValue);
+            var actual = viewSpecification.generateCorporateView(company, document, analysisResult, corporateValue, indicatorValue);
             assertNull(actual.getAllDiscountRate());
         }
     }

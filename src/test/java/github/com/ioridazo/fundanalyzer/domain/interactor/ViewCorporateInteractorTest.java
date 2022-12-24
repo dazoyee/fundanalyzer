@@ -317,7 +317,8 @@ class ViewCorporateInteractorTest {
         @Test
         void all() {
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
-            when(viewSpecification.generateCorporateView(eq(company), any(), any(), any())).thenReturn(corporateViewModel);
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(document));
+            when(viewSpecification.generateCorporateView(eq(company), eq(document), any(), any(), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
@@ -329,11 +330,23 @@ class ViewCorporateInteractorTest {
         void inputData() {
             when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(viewSpecification.generateCorporateView(eq(company), any(), any(), any())).thenReturn(corporateViewModel);
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(document));
+            when(viewSpecification.generateCorporateView(eq(company), eq(document), any(), any(), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
             verify(viewSpecification, times(1)).upsert(corporateViewModel);
             verify(slackClient, times(0)).sendMessage(any());
+        }
+
+        @DisplayName("updateView : 書類が存在しないときはビューを更新しない")
+        @Test
+        void document_isEmpty() {
+            when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
+            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
+            when(documentSpecification.latestDocument(company)).thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
+            verify(viewSpecification, times(0)).upsert(corporateViewModel);
         }
     }
 
