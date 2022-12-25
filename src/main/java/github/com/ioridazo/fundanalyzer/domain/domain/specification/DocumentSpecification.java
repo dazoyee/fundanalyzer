@@ -107,7 +107,17 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Optional<Document> findLatestDocument(final Company company) {
-        final List<DocumentEntity> documentList = documentDao.selectByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes);
+        return findLatestDocument(company.getEdinetCode());
+    }
+
+    /**
+     * 直近提出日のドキュメント情報を取得する
+     *
+     * @param edinetCode EDINETコード
+     * @return ドキュメント情報
+     */
+    public Optional<Document> findLatestDocument(final String edinetCode) {
+        final List<DocumentEntity> documentList = documentDao.selectByEdinetCodeAndType(edinetCode, targetTypeCodes);
 
         return documentList.stream()
                 .filter(entity -> entity.getDocumentPeriod().isPresent())
