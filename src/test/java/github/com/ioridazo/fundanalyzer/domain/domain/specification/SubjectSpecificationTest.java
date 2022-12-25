@@ -65,10 +65,10 @@ class SubjectSpecificationTest {
         void ok_bsEnum() {
             var actual = subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_CURRENT_ASSETS);
             assertAll(
-                    () -> assertEquals("2", actual.getId()),
-                    () -> assertEquals("1", actual.getOutlineSubjectId()),
-                    () -> assertEquals("1", actual.getDetailSubjectId()),
-                    () -> assertEquals("流動資産合計", actual.getName())
+                    () -> assertEquals("2", actual.get(0).getId()),
+                    () -> assertEquals("1", actual.get(0).getOutlineSubjectId()),
+                    () -> assertEquals("1", actual.get(0).getDetailSubjectId()),
+                    () -> assertEquals("流動資産合計", actual.get(0).getName())
             );
         }
 

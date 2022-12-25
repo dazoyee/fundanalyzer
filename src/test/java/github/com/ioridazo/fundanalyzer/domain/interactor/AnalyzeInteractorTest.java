@@ -159,7 +159,7 @@ class AnalyzeInteractorTest {
 
         @DisplayName("analyze : 投資指標を算出する")
         @Test
-        void indicate() {
+        void indicate_ok() {
             var financeValue = FinanceValue.of(
                     100L,
                     101L,
@@ -174,12 +174,80 @@ class AnalyzeInteractorTest {
             );
 
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(documentSpecification.findLatestDocument("edinetCode")).thenReturn(Optional.of(document));
             when(analysisResultSpecification.findAnalysisResult("documentId"))
                     .thenReturn(Optional.of(analysisResult));
 
             assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
             verify(analysisResultSpecification, times(1)).insert(any(), any());
             verify(analyzeInteractor, times(1)).indicate(analysisResult);
+        }
+
+        @DisplayName("analyze : 最新ドキュメントが存在しないときは投資指標を算出しない")
+        @Test
+        void indicate_latest_isEmpty() {
+            var financeValue = FinanceValue.of(
+                    100L,
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(documentSpecification.findLatestDocument("edinetCode")).thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+            verify(analysisResultSpecification, times(1)).insert(any(), any());
+            verify(analyzeInteractor, times(0)).indicate((AnalysisResultEntity) any());
+        }
+
+        @DisplayName("analyze : 処理対象が最新でないときは投資指標を算出しない")
+        @Test
+        void indicate_noLatest() {
+            var financeValue = FinanceValue.of(
+                    100L,
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(documentSpecification.findLatestDocument("edinetCode"))
+                    .thenReturn(Optional.of(new Document(
+                            "documentId2",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            false
+                    )));
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+            verify(analysisResultSpecification, times(1)).insert(any(), any());
+            verify(analyzeInteractor, times(0)).indicate((AnalysisResultEntity) any());
         }
     }
 

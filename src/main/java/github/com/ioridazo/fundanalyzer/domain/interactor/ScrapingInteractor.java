@@ -43,7 +43,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 @Component
 public class ScrapingInteractor implements ScrapingUseCase {
@@ -254,7 +253,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
     List<ScrapingKeywordEntity> sortedScrapingKeywordList(final List<ScrapingKeywordEntity> list) {
         return list.stream()
                 .sorted(Comparator.comparing(e -> e.getPriority().orElse(99)))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -280,7 +279,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             financialStatementSpecification.insert(
                     company,
                     FinancialStatementEnum.BALANCE_SHEET,
-                    subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES).getId(),
+                    subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES).get(0).getId(),
                     document,
                     0L,
                     CreatedType.AUTO
@@ -314,7 +313,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             financialStatementSpecification.insert(
                     company,
                     FinancialStatementEnum.BALANCE_SHEET,
-                    subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS).getId(),
+                    subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS).get(0).getId(),
                     document,
                     0L,
                     CreatedType.AUTO

@@ -198,6 +198,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .toList();
 
         final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.getCode()).stream()
+                .filter(indicatorValue -> indicatorValue.getGrahamIndex().isPresent())
                 .map(IndicatorViewModel::of)
                 .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
                 .toList();
@@ -226,6 +227,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 indicatorList,
                 fsList,
                 stock.getMinkabuEntityList().stream()
+                        .filter(minkabuEntity -> minkabuEntity.getGoalsStock().isPresent())
                         .map(MinkabuViewModel::of)
                         .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate).reversed())
                         .toList(),
@@ -356,12 +358,15 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         final ArrayList<CorporateViewModel> viewList = new ArrayList<>();
         companyList.forEach(company -> {
             try {
-                viewList.add(viewSpecification.generateCorporateView(
+                final Optional<Document> latestDocument = documentSpecification.findLatestDocument(company);
+
+                latestDocument.ifPresent(document -> viewList.add(viewSpecification.generateCorporateView(
                         company,
+                        document,
                         analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
                         investmentIndicatorSpecification.findLatestIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
-                ));
+                )));
             } catch (final FundanalyzerNotExistException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(

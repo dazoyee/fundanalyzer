@@ -36,6 +36,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -137,7 +138,14 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
 
             analysisResultSpecification.insert(document, analysisResult);
-            analysisResultSpecification.findAnalysisResult(document.getDocumentId()).ifPresent(this::indicate);
+
+            documentSpecification.findLatestDocument(document.getEdinetCode()).ifPresent(ld -> {
+                // this document == latest document
+                if (Objects.equals(document.getDocumentId(), ld.getDocumentId())) {
+                    // indicate
+                    analysisResultSpecification.findAnalysisResult(document.getDocumentId()).ifPresent(this::indicate);
+                }
+            });
 
         } catch (final FundanalyzerNotExistException e) {
             final FinancialStatementEnum fs = e.getFs().orElseThrow(FundanalyzerRuntimeException::new);
