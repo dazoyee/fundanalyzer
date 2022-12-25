@@ -482,6 +482,17 @@ class XbrlScrapingTest {
             assertEquals(Unit.MILLIONS_OF_YEN, actual);
         }
 
+        @DisplayName("unit : ファイルから財務諸表の金額単位(単位:百万円）をスクレイピングする")
+        @Test
+        void unit_millions_3_ok() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_millions_3.html");
+            var keyword = "jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock";
+
+            var actual = xbrlScraping.unit(file, keyword);
+
+            assertEquals(Unit.MILLIONS_OF_YEN, actual);
+        }
+
         @DisplayName("unit : ファイルから財務諸表の金額単位をスクレイピングに失敗したときの挙動を確認する")
         @Test
         void unit_millions_FundanalyzerFileException() {

@@ -43,12 +43,17 @@ public class SubjectSpecification {
      * @param bsEnum 貸借対照表の科目
      * @return 貸借対照表の科目情報
      */
-    public Subject findBsSubject(final BsSubject.BsEnum bsEnum) {
-        return subjectCache.inquiryBsSubjectList().stream()
+    public List<Subject> findBsSubject(final BsSubject.BsEnum bsEnum) {
+        final List<Subject> subjectList = subjectCache.inquiryBsSubjectList().stream()
                 .filter(bsSubject -> Objects.equals(bsEnum.getOutlineSubjectId(), bsSubject.getOutlineSubjectId()))
                 .map(BsSubject::of)
-                .findFirst()
-                .orElseThrow(() -> new FundanalyzerRuntimeException("貸借対照表の科目が存在しません"));
+                .collect(Collectors.toList());
+
+        if (subjectList.isEmpty()) {
+            throw new FundanalyzerRuntimeException("貸借対照表の科目が存在しません");
+        } else {
+            return subjectList;
+        }
     }
 
     /**
@@ -72,22 +77,19 @@ public class SubjectSpecification {
      * @return 科目情報
      */
     public Subject findSubject(final FinancialStatementEnum fs, final String subjectId) {
-        switch (fs) {
-            case BALANCE_SHEET:
-                return subjectCache.inquiryBsSubjectList().stream()
-                        .filter(bsSubject -> Objects.equals(subjectId, bsSubject.getId()))
-                        .map(BsSubject::of)
-                        .findFirst()
-                        .orElseThrow(() -> new FundanalyzerRuntimeException("貸借対照表の科目が存在しません"));
-            case PROFIT_AND_LESS_STATEMENT:
-                return subjectCache.inquiryPlSubjectList().stream()
-                        .filter(plSubject -> Objects.equals(subjectId, plSubject.getId()))
-                        .map(PlSubject::of)
-                        .findFirst()
-                        .orElseThrow(() -> new FundanalyzerRuntimeException("損益計算書の科目が存在しません"));
-            default:
-                throw new FundanalyzerRuntimeException("存在しない財務諸表");
-        }
+        return switch (fs) {
+            case BALANCE_SHEET -> subjectCache.inquiryBsSubjectList().stream()
+                    .filter(bsSubject -> Objects.equals(subjectId, bsSubject.getId()))
+                    .map(BsSubject::of)
+                    .findFirst()
+                    .orElseThrow(() -> new FundanalyzerRuntimeException("貸借対照表の科目が存在しません"));
+            case PROFIT_AND_LESS_STATEMENT -> subjectCache.inquiryPlSubjectList().stream()
+                    .filter(plSubject -> Objects.equals(subjectId, plSubject.getId()))
+                    .map(PlSubject::of)
+                    .findFirst()
+                    .orElseThrow(() -> new FundanalyzerRuntimeException("損益計算書の科目が存在しません"));
+            default -> throw new FundanalyzerRuntimeException("存在しない財務諸表");
+        };
     }
 
     /**
