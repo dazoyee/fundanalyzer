@@ -312,7 +312,7 @@ public class StockSpecification {
      */
     private Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(
             final Company company, final List<StockPriceEntity> stockPriceList) {
-        final Optional<LocalDate> submitDate = documentSpecification.latestDocument(company).map(Document::getSubmitDate);
+        final Optional<LocalDate> submitDate = documentSpecification.findLatestDocument(company).map(Document::getSubmitDate);
 
         if (submitDate.isEmpty()) {
             return Optional.empty();

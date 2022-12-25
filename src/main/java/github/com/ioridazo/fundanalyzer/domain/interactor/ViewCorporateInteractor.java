@@ -356,7 +356,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         final ArrayList<CorporateViewModel> viewList = new ArrayList<>();
         companyList.forEach(company -> {
             try {
-                final Optional<Document> latestDocument = documentSpecification.latestDocument(company);
+                final Optional<Document> latestDocument = documentSpecification.findLatestDocument(company);
 
                 latestDocument.ifPresent(document -> viewList.add(viewSpecification.generateCorporateView(
                         company,

@@ -317,7 +317,7 @@ class ViewCorporateInteractorTest {
         @Test
         void all() {
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(document));
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(document));
             when(viewSpecification.generateCorporateView(eq(company), eq(document), any(), any(), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
@@ -330,7 +330,7 @@ class ViewCorporateInteractorTest {
         void inputData() {
             when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(document));
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(document));
             when(viewSpecification.generateCorporateView(eq(company), eq(document), any(), any(), any())).thenReturn(corporateViewModel);
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
@@ -343,7 +343,7 @@ class ViewCorporateInteractorTest {
         void document_isEmpty() {
             when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.empty());
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.empty());
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
             verify(viewSpecification, times(0)).upsert(corporateViewModel);

@@ -17,8 +17,8 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -52,10 +52,10 @@ class DocumentSpecificationTest {
         documentSpecification.targetTypeCodes = List.of("120", "130", "140", "150");
     }
 
-    @DisplayName("latestDocument : 直近提出日のドキュメント情報を取得する")
-    @Test
-    void latestDocument() {
-        var company = new Company(
+    @Nested
+    class findLatestDocument {
+
+        private final Company company = new Company(
                 null,
                 null,
                 null,
@@ -68,14 +68,63 @@ class DocumentSpecificationTest {
                 false,
                 true
         );
-        var document1 = defaultDocumentEntity(LocalDate.parse("2021-05-08"));
 
-        when(documentDao.maxSubmitDateByEdinetCodeAndType(any(), any())).thenReturn(Optional.of(document1));
-        when(edinetDocumentSpecification.inquiryLimitedEdinetDocument(any())).thenReturn(new EdinetDocument());
+        @DisplayName("findLatestDocument : 最新のドキュメント情報を取得する")
+        @Test
+        void ok() {
+            var document1 = DocumentEntity.builder()
+                    .documentTypeCode("120")
+                    .documentPeriod(LocalDate.parse("2022-01-01"))
+                    .submitDate(LocalDate.parse("2022-05-08"))
+                    .downloaded("0")
+                    .decoded("0")
+                    .scrapedNumberOfShares("0")
+                    .scrapedBs("0")
+                    .scrapedPl("0")
+                    .removed("0")
+                    .build();
+            var document2 = DocumentEntity.builder()
+                    .documentTypeCode("120")
+                    .documentPeriod(LocalDate.parse("2022-01-01"))
+                    .submitDate(LocalDate.parse("2022-12-08"))
+                    .downloaded("0")
+                    .decoded("0")
+                    .scrapedNumberOfShares("0")
+                    .scrapedBs("0")
+                    .scrapedPl("0")
+                    .removed("0")
+                    .build();
+            var document3 = DocumentEntity.builder()
+                    .documentTypeCode("120")
+                    .documentPeriod(LocalDate.parse("2020-01-01"))
+                    .submitDate(LocalDate.parse("2022-12-25"))
+                    .downloaded("0")
+                    .decoded("0")
+                    .scrapedNumberOfShares("0")
+                    .scrapedBs("0")
+                    .scrapedPl("0")
+                    .removed("0")
+                    .build();
 
-        var actual = documentSpecification.latestDocument(company);
+            when(documentDao.selectByEdinetCodeAndType(any(), any())).thenReturn(List.of(document1, document2, document3));
+            when(edinetDocumentSpecification.inquiryLimitedEdinetDocument(any())).thenReturn(new EdinetDocument());
 
-        assertEquals(LocalDate.parse("2021-05-08"), actual.map(Document::getSubmitDate).orElseThrow());
+            var actual = documentSpecification.findLatestDocument(company);
+
+            assertAll(
+                    () -> assertEquals(LocalDate.parse("2022-01-01"), actual.flatMap(Document::getDocumentPeriod).orElseThrow()),
+                    () -> assertEquals(LocalDate.parse("2022-12-08"), actual.map(Document::getSubmitDate).orElseThrow())
+            );
+        }
+
+        @DisplayName("findLatestDocument : ドキュメント情報が存在しないとき")
+        @Test
+        void isEmpty() {
+            when(documentDao.selectByEdinetCodeAndType(any(), any())).thenReturn(List.of());
+            when(edinetDocumentSpecification.inquiryLimitedEdinetDocument(any())).thenReturn(new EdinetDocument());
+            var actual = documentSpecification.findLatestDocument(company);
+            assertNull(actual.orElse(null));
+        }
     }
 
     @Nested
@@ -451,21 +500,5 @@ class DocumentSpecificationTest {
 
             assertNull(actual.orElse(null));
         }
-    }
-
-    private DocumentEntity defaultDocumentEntity(LocalDate submitDate) {
-        return DocumentEntity.builder()
-                .id(1)
-                .documentId("documentId1")
-                .documentTypeCode("120")
-                .edinetCode("E00001")
-                .submitDate(submitDate)
-                .downloaded("0")
-                .decoded("0")
-                .scrapedNumberOfShares("0")
-                .scrapedBs("0")
-                .scrapedPl("0")
-                .removed("0")
-                .build();
     }
 }
