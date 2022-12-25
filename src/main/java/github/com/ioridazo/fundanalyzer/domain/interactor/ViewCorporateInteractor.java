@@ -198,6 +198,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .toList();
 
         final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.getCode()).stream()
+                .filter(indicatorValue -> indicatorValue.getGrahamIndex().isPresent())
                 .map(IndicatorViewModel::of)
                 .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
                 .toList();
@@ -226,6 +227,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 indicatorList,
                 fsList,
                 stock.getMinkabuEntityList().stream()
+                        .filter(minkabuEntity -> minkabuEntity.getGoalsStock().isPresent())
                         .map(MinkabuViewModel::of)
                         .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate).reversed())
                         .toList(),

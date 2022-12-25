@@ -120,7 +120,7 @@ public class StockSpecification {
         final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.getCode());
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
-                .map(MinkabuEntity::getGoalsStock)
+                .flatMap(MinkabuEntity::getGoalsStock)
                 .map(BigDecimal::new);
 
         return Stock.of(
@@ -300,7 +300,7 @@ public class StockSpecification {
      * @return 予想株価
      */
     public Optional<Double> findForecastStock(final String companyCode, final LocalDate targetDate) {
-        return minkabuDao.selectByCodeAndDate(companyCode, targetDate).map(MinkabuEntity::getGoalsStock);
+        return minkabuDao.selectByCodeAndDate(companyCode, targetDate).flatMap(MinkabuEntity::getGoalsStock);
     }
 
     /**

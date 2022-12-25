@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
@@ -61,5 +62,25 @@ public class MinkabuEntity {
                 Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getSecuritiesAnalyst()).orElse(null),
                 createdAt
         );
+    }
+
+    public Optional<Double> getStockPrice() {
+        return Optional.ofNullable(stockPrice);
+    }
+
+    public Optional<Double> getGoalsStock() {
+        return Optional.ofNullable(goalsStock);
+    }
+
+    public Optional<Double> getTheoreticalStock() {
+        return Optional.ofNullable(theoreticalStock);
+    }
+
+    public Optional<Double> getIndividualInvestorsStock() {
+        return Optional.ofNullable(individualInvestorsStock);
+    }
+
+    public Optional<Double> getSecuritiesAnalystStock() {
+        return Optional.ofNullable(securitiesAnalystStock);
     }
 }
