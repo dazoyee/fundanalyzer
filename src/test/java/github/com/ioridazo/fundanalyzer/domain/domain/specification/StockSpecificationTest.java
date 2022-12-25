@@ -149,7 +149,7 @@ class StockSpecificationTest {
         @DisplayName("importDate : 株価取得日を取得する")
         @Test
         void importDate() {
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(new Document(
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
                     null,
                     null,
                     null,
@@ -178,7 +178,7 @@ class StockSpecificationTest {
         @DisplayName("latestStock : 株価取得日を取得する")
         @Test
         void latestStock() {
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(new Document(
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
                     null,
                     null,
                     null,
@@ -207,7 +207,7 @@ class StockSpecificationTest {
         @DisplayName("averageStockPrice : 特定期間における平均の株価を取得する")
         @Test
         void averageStockPrice() {
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(new Document(
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
                     null,
                     null,
                     null,
@@ -235,7 +235,7 @@ class StockSpecificationTest {
         @DisplayName("averageStockPrice : 特定期間がないときは空で返す")
         @Test
         void averageStockPrice_isNull() {
-            when(documentSpecification.latestDocument(company)).thenReturn(Optional.of(new Document(
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
                     null,
                     null,
                     null,

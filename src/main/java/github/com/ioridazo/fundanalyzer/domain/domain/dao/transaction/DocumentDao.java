@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
@@ -20,12 +19,8 @@ public interface DocumentDao {
     @Select
     DocumentEntity selectByDocumentId(String documentId);
 
-    // 検索結果が1件以上存在することを保証する
-    @Select(ensureResult = true)
-    DocumentEntity selectDocumentBy(String edinetCode, String documentTypeCode, LocalDate submitDate, String yearOfPeriod);
-
     @Select
-    Optional<DocumentEntity> maxSubmitDateByEdinetCodeAndType(String edinetCode, List<String> documentTypeCode);
+    List<DocumentEntity> selectByEdinetCodeAndType(String edinetCode, List<String> documentTypeCode);
 
     @Select
     List<DocumentEntity> selectBySubmitDate(LocalDate submitDate);
@@ -38,9 +33,6 @@ public interface DocumentDao {
 
     @Select
     List<DocumentEntity> selectByTypeAndSubmitDate(List<String> documentTypeCode, LocalDate submitDate);
-
-    @Select
-    List<DocumentEntity> selectByDayOfSubmitDate(String day);
 
     @Transactional
     @Insert(excludeNull = true)

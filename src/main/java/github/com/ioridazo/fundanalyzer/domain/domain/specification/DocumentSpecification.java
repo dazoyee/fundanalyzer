@@ -33,6 +33,7 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -105,10 +106,32 @@ public class DocumentSpecification {
      * @param company 企業情報
      * @return ドキュメント情報
      */
-    public Optional<Document> latestDocument(final Company company) {
-        return documentDao.maxSubmitDateByEdinetCodeAndType(company.getEdinetCode(), targetTypeCodes).stream()
-                .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
-                .findFirst();
+    public Optional<Document> findLatestDocument(final Company company) {
+        return findLatestDocument(company.getEdinetCode());
+    }
+
+    /**
+     * 直近提出日のドキュメント情報を取得する
+     *
+     * @param edinetCode EDINETコード
+     * @return ドキュメント情報
+     */
+    public Optional<Document> findLatestDocument(final String edinetCode) {
+        final List<DocumentEntity> documentList = documentDao.selectByEdinetCodeAndType(edinetCode, targetTypeCodes);
+
+        return documentList.stream()
+                .filter(entity -> entity.getDocumentPeriod().isPresent())
+                .map(entity -> entity.getDocumentPeriod().get())
+                .distinct()
+                // get latest document period
+                .max(LocalDate::compareTo)
+                .flatMap(latestDocumentPeriod -> documentList.stream()
+                        .filter(entity -> entity.getDocumentPeriod().isPresent())
+                        .filter(entity -> latestDocumentPeriod.equals(entity.getDocumentPeriod().get()))
+                        // latest submit date
+                        .max(Comparator.comparing(DocumentEntity::getSubmitDate))
+                        .map(entity -> Document.of(entity, edinetDocumentSpecification.inquiryLimitedEdinetDocument(entity.getDocumentId())))
+                );
     }
 
     /**
@@ -354,7 +377,7 @@ public class DocumentSpecification {
     public void updateFsToHalfWay(final Document document, final FinancialStatementEnum fs) {
         try {
             switch (fs) {
-                case BALANCE_SHEET:
+                case BALANCE_SHEET -> {
                     if (DocumentStatus.DONE == document.getScrapedBs()) {
                         documentDao.update(DocumentEntity.ofUpdateSwitchFs(
                                 fs,
@@ -364,8 +387,8 @@ public class DocumentSpecification {
                                 nowLocalDateTime()
                         ));
                     }
-                    break;
-                case PROFIT_AND_LESS_STATEMENT:
+                }
+                case PROFIT_AND_LESS_STATEMENT -> {
                     if (DocumentStatus.DONE == document.getScrapedPl()) {
                         documentDao.update(DocumentEntity.ofUpdateSwitchFs(
                                 fs,
@@ -375,8 +398,8 @@ public class DocumentSpecification {
                                 nowLocalDateTime()
                         ));
                     }
-                    break;
-                case TOTAL_NUMBER_OF_SHARES:
+                }
+                case TOTAL_NUMBER_OF_SHARES -> {
                     if (DocumentStatus.DONE == document.getScrapedNumberOfShares()) {
                         documentDao.update(DocumentEntity.ofUpdateSwitchFs(
                                 fs,
@@ -386,9 +409,8 @@ public class DocumentSpecification {
                                 nowLocalDateTime()
                         ));
                     }
-                    break;
-                default:
-                    throw new FundanalyzerRuntimeException();
+                }
+                default -> throw new FundanalyzerRuntimeException();
             }
         } catch (NestedRuntimeException e) {
             if (e.contains(NonUniqueResultException.class)) {

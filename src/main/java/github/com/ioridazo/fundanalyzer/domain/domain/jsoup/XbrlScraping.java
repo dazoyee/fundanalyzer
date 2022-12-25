@@ -50,7 +50,7 @@ public class XbrlScraping {
                 .map(file -> new File(filePath, file.getName()))
                 // キーワードが存在するものを見つける
                 .filter(filePathName -> elementsByKeyMatch(filePathName, KeyMatch.of("name", scrapingKeywordEntity.getKeyword())).hasText())
-                .collect(Collectors.toList());
+                .toList();
 
         if (filePathList.size() == 1) {
             // ファイルが一つ見つかったとき
@@ -105,7 +105,43 @@ public class XbrlScraping {
     public List<FinancialTableResultBean> scrapeFinancialStatement(final File targetFile, final String keyWord) {
         final var unit = unit(targetFile, keyWord);
 
-        final List<List<String>> scrapingList = elementsByKeyMatch(targetFile, KeyMatch.of("name", keyWord))
+        // "売上原価明細書"を除外する
+        final List<List<String>> ignoreList = getScrapingList(targetFile, "jpcrp_cor:DetailedScheduleOfCostOfSalesTextBlock").stream()
+                // 年度項目は除外リストから除外
+                .filter(list -> !(list.stream().anyMatch(s -> s.contains("前")) && list.stream().anyMatch(s -> s.contains("当"))))
+                .toList();
+
+        final List<List<String>> scrapingList = ignoreList.isEmpty() ?
+                getScrapingList(targetFile, keyWord)
+                :
+                getScrapingList(targetFile, keyWord).stream()
+                        .filter(sl -> ignoreList.stream().noneMatch(sl::equals))
+                        .toList();
+
+        // 年度以外の情報を取り除く
+        scrapingList.get(1).removeIf(s -> s.contains("注記"));
+
+        if (scrapingList.stream().allMatch(list -> list.size() <= 2)) {
+            // 当期のみの場合
+            return scrapingList.stream()
+                    .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit))
+                    .filter(Objects::nonNull)
+                    .toList();
+        } else if (scrapingList.stream().allMatch(list -> list.size() <= 4)) {
+            // 前期と当期がある場合
+            final boolean isMain = isMainOrderOfYear(scrapingList, targetFile);
+            return scrapingList.stream()
+                    .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit, isMain))
+                    .filter(Objects::nonNull)
+                    .toList();
+        } else {
+            throw new FundanalyzerScrapingException(
+                    "定形外の財務諸表でした。詳細を確認してください。\nファイルパス:" + targetFile);
+        }
+    }
+
+    private List<List<String>> getScrapingList(final File targetFile, final String keyWord) {
+        return elementsByKeyMatch(targetFile, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())
                 .select(Tag.TR.getName()).stream()
                 // tdの要素をリストにする
@@ -117,27 +153,6 @@ public class XbrlScraping {
                 // 不要なエレメントを削除
                 .filter(list -> 0 != list.size())
                 .collect(Collectors.toList());
-
-        // 年度以外の情報を取り除く
-        scrapingList.get(1).removeIf(s -> s.contains("注記"));
-
-        if (scrapingList.stream().allMatch(list -> list.size() <= 2)) {
-            // 当期のみの場合
-            return scrapingList.stream()
-                    .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        } else if (scrapingList.stream().allMatch(list -> list.size() <= 4)) {
-            // 前期と当期がある場合
-            final boolean isMain = isMainOrderOfYear(scrapingList, targetFile);
-            return scrapingList.stream()
-                    .map(tdList -> FinancialTableResultBean.ofTdList(tdList, unit, isMain))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        } else {
-            throw new FundanalyzerScrapingException(
-                    "定形外の財務諸表でした。詳細を確認してください。\nファイルパス:" + targetFile);
-        }
     }
 
     /**
@@ -316,9 +331,9 @@ public class XbrlScraping {
                 // tdの要素をリストにする
                 .map(tr -> tr.select(Tag.TD.getName()).stream()
                         .map(Element::text)
-                        .collect(Collectors.toList())
+                        .toList()
                 )
-                .collect(Collectors.toList());
+                .toList();
 
         if (scrapingList.isEmpty()) {
             throw new FundanalyzerScrapingException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
@@ -405,7 +420,7 @@ public class XbrlScraping {
 
         return targetFileList.stream()
                 .filter(file -> file.getName().contains(keyword))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @SuppressWarnings("RedundantModifiersValueLombok")

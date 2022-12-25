@@ -90,7 +90,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
      */
     @Override
     public EdinetDetailViewModel viewEdinetDetail(final DateInputData inputData) {
-        final List<DocumentViewModel> documentView = documentSpecification.inquiryTargetDocuments(inputData).stream()
+        final List<DocumentViewModel> documentView = documentSpecification.findTargetList(inputData).stream()
                 .filter(document -> !documentSpecification.allStatusDone(document))
                 .map(document -> DocumentViewModel.of(
                         companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerRuntimeException::new),

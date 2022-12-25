@@ -200,11 +200,11 @@ class ScrapingInteractorTest {
             var bsSubject2 = new BsSubject("2", null, null, "TOTAL_LIABILITIES");
             var bsSubject3 = new BsSubject("3", null, null, "TOTAL_FIXED_LIABILITIES");
 
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES)).thenReturn(bsSubject1);
-            when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, bsSubject1)).thenReturn(Optional.of(1000L));
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_LIABILITIES)).thenReturn(bsSubject2);
-            when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, bsSubject2)).thenReturn(Optional.of(1000L));
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)).thenReturn(bsSubject3);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES)).thenReturn(List.of(bsSubject1));
+            when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, List.of(bsSubject1))).thenReturn(Optional.of(1000L));
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_LIABILITIES)).thenReturn(List.of(bsSubject2));
+            when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, List.of(bsSubject2))).thenReturn(Optional.of(1000L));
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)).thenReturn(List.of(bsSubject3));
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document));
             verify(financialStatementSpecification, times(1))
@@ -218,11 +218,11 @@ class ScrapingInteractorTest {
             var bsSubject2 = new BsSubject("2", null, null, "TOTAL_LIABILITIES");
             var bsSubject3 = new BsSubject("3", null, null, "TOTAL_FIXED_LIABILITIES");
 
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES)).thenReturn(bsSubject1);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES)).thenReturn(List.of(bsSubject1));
             when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, bsSubject1)).thenReturn(Optional.of(1000L));
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_LIABILITIES)).thenReturn(bsSubject2);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_LIABILITIES)).thenReturn(List.of(bsSubject2));
             when(financialStatementSpecification.findValue(FinancialStatementEnum.BALANCE_SHEET, document, bsSubject2)).thenReturn(Optional.of(100L));
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)).thenReturn(bsSubject3);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES)).thenReturn(List.of(bsSubject3));
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document));
             verify(financialStatementSpecification, times(0))
@@ -235,7 +235,7 @@ class ScrapingInteractorTest {
             var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
 
             when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(documentOfDTC140)).thenReturn(false);
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(bsSubject1);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(List.of(bsSubject1));
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC140));
             verify(financialStatementSpecification, times(1))
@@ -248,7 +248,7 @@ class ScrapingInteractorTest {
             var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
 
             when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(documentOfDTC140)).thenReturn(true);
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(bsSubject1);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(List.of(bsSubject1));
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC140));
             verify(financialStatementSpecification, times(0))
@@ -261,7 +261,7 @@ class ScrapingInteractorTest {
             var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
 
             when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)).thenReturn(true);
-            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(bsSubject1);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(List.of(bsSubject1));
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, document));
             verify(financialStatementSpecification, times(0))

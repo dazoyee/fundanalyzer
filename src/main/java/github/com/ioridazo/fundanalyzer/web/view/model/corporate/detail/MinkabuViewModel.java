@@ -15,8 +15,8 @@ public class MinkabuViewModel {
     public static MinkabuViewModel of(final MinkabuEntity entity) {
         return new MinkabuViewModel(
                 entity.getTargetDate(),
-                entity.getGoalsStock(),
-                entity.getTheoreticalStock()
+                entity.getGoalsStock().orElse(null),
+                entity.getTheoreticalStock().orElse(null)
         );
     }
 }

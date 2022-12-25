@@ -128,6 +128,80 @@ class XbrlScrapingTest {
             assertEquals(85, actual.size());
         }
 
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（除外キーワードあり）")
+        @Test
+        void scrapeFinancialStatement_ok_main2() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_main2.html");
+            var keyword = "jpcrp_cor:StatementOfIncomeTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("前事業年度 (自 2020年10月１日 　至 2021年９月30日)", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("当事業年度 (自 2021年10月１日 　至 2022年９月30日)", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("売上高", actual.get(1).getSubject().orElseThrow()),
+                            () -> assertEquals("2,336,176", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("2,633,197", actual.get(1).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("営業利益", actual.get(5).getSubject().orElseThrow()),
+                            () -> assertEquals("199,058", actual.get(5).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("185,187", actual.get(5).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(5).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("当期純利益", actual.get(21).getSubject().orElseThrow()),
+                            () -> assertEquals("127,784", actual.get(21).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("147,963", actual.get(21).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(21).getUnit())
+                    )
+            );
+            assertEquals(24, actual.size());
+        }
+
+        @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（除外キーワードあり）")
+        @Test
+        void scrapeFinancialStatement_ok_main3() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_main3.html");
+            var keyword = "jpcrp_cor:StatementOfIncomeTextBlock";
+
+            var actual = xbrlScraping.scrapeFinancialStatement(file, keyword);
+
+            assertAll("FinancialTableResultBean",
+                    () -> assertAll(
+                            () -> assertEquals("前事業年度 （自　2020年10月１日 至　2021年９月30日）", actual.get(0).getSubject().orElseThrow()),
+                            () -> assertNull(actual.get(0).getPreviousValue().orElse(null)),
+                            () -> assertEquals("当事業年度 （自　2021年10月１日 至　2022年９月30日）", actual.get(0).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(0).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("売上高", actual.get(1).getSubject().orElseThrow()),
+                            () -> assertEquals("1,251,472", actual.get(1).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("※１ 1,446,310", actual.get(1).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(1).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("営業利益", actual.get(5).getSubject().orElseThrow()),
+                            () -> assertEquals("485,417", actual.get(5).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("555,978", actual.get(5).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(5).getUnit())
+                    ),
+                    () -> assertAll(
+                            () -> assertEquals("当期純利益", actual.get(24).getSubject().orElseThrow()),
+                            () -> assertEquals("321,899", actual.get(24).getPreviousValue().orElseThrow()),
+                            () -> assertEquals("358,338", actual.get(24).getCurrentValue()),
+                            () -> assertEquals(Unit.THOUSANDS_OF_YEN, actual.get(24).getUnit())
+                    )
+            );
+            assertEquals(25, actual.size());
+        }
+
         @DisplayName("scrapeFinancialStatement : ファイルからキーワードに合致する財務諸表テーブルの科目とその値をスクレイピングする（年度の順序が逆の想定）")
         @Test
         void scrapeFinancialStatement_ok_no_main() {
@@ -476,6 +550,17 @@ class XbrlScrapingTest {
         void unit_millions_2_ok() {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_millions_2.html");
             var keyword = "jpcrp_cor:QuarterlyConsolidatedBalanceSheetTextBlock";
+
+            var actual = xbrlScraping.unit(file, keyword);
+
+            assertEquals(Unit.MILLIONS_OF_YEN, actual);
+        }
+
+        @DisplayName("unit : ファイルから財務諸表の金額単位(単位:百万円）をスクレイピングする")
+        @Test
+        void unit_millions_3_ok() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_millions_3.html");
+            var keyword = "jpcrp_cor:YearToQuarterEndConsolidatedStatementOfIncomeTextBlock";
 
             var actual = xbrlScraping.unit(file, keyword);
 
