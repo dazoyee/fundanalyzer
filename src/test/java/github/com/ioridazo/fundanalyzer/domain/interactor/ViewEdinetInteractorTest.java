@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
@@ -10,9 +11,9 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialSta
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.FinanceValueViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -110,7 +111,7 @@ class ViewEdinetInteractorTest {
 
         Company company = defaultCompany();
         Document document = defaultDocument();
-        FinanceValue financeValue = defaultFinanceValue();
+        FinanceValueViewModel financeValueViewModel = financeValueViewModel();
         DateInputData inputData = DateInputData.of(LocalDate.parse("2021-05-16"));
 
         @DisplayName("viewEdinetDetail : EDINETリスト詳細ビューを取得する")
@@ -119,7 +120,7 @@ class ViewEdinetInteractorTest {
             when(documentSpecification.findTargetList(inputData)).thenReturn(List.of(document));
             when(documentSpecification.allStatusDone(document)).thenReturn(false);
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(financialStatementSpecification.getFinanceValueViewModel(document)).thenReturn(financeValueViewModel);
 
             var actual = viewEdinetInteractor.viewEdinetDetail(inputData);
             assertAll(
@@ -128,7 +129,7 @@ class ViewEdinetInteractorTest {
                             () -> assertEquals("id", actual.getDocumentDetailList().get(0).getDocument().getDocumentId())
                     ),
                     () -> assertAll(
-                            () -> assertEquals(100L, actual.getDocumentDetailList().get(0).getFundamentalValue().getNumberOfShares())
+                            () -> assertEquals(100L, actual.getDocumentDetailList().get(0).getFinanceValue().numberOfShares().value())
                     )
             );
 
@@ -219,8 +220,8 @@ class ViewEdinetInteractorTest {
         );
     }
 
-    private FinanceValue defaultFinanceValue() {
-        return FinanceValue.of(
+    private FinanceValueViewModel financeValueViewModel() {
+        return new FinanceValueViewModel(
                 null,
                 null,
                 null,
@@ -230,7 +231,12 @@ class ViewEdinetInteractorTest {
                 null,
                 null,
                 null,
-                100L
+                new FinanceValueViewModel.IdValue(
+                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getId(),
+                        "1",
+                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getName(),
+                        100L
+                )
         );
     }
 

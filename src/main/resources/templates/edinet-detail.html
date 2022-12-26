@@ -298,9 +298,12 @@
                               <div class="callout callout-info">
                                 <dl class="row">
 
-                                  <dt class="col-sm-6">流動資産合計</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.totalCurrentAssets.name}">
+                                    流動資産合計
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalCurrentAssets}==null">
+                                      th:if="${documentDetail.financeValue.totalCurrentAssets.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -308,8 +311,12 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="1" name="financialStatementId"/>
-                                      <input type="hidden" value="2" name="subjectId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalCurrentAssets.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalCurrentAssets.subjectId}"
+                                             name="subjectId"/>
                                       <label for="totalCurrentAssets">
                                         <input type="number" id="totalCurrentAssets" name="value"/>
                                       </label>
@@ -317,19 +324,17 @@
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalCurrentAssets}"
-                                      th:text="${documentDetail.fundamentalValue.totalCurrentAssets}">
-                                    流動資産合計
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalCurrentAssets}==0"
-                                      th:text="${documentDetail.fundamentalValue.totalCurrentAssets}">
+                                      th:if="${documentDetail.financeValue.totalCurrentAssets.value != null}"
+                                      th:text="${documentDetail.financeValue.totalCurrentAssets.value}">
                                     流動資産合計
                                   </dd>
 
-                                  <dt class="col-sm-6">投資その他の資産合計</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.totalInvestmentsAndOtherAssets.name}">
+                                    投資その他の資産合計
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}==null">
+                                      th:if="${documentDetail.financeValue.totalInvestmentsAndOtherAssets.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -337,28 +342,31 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="1" name="financialStatementId"/>
-                                      <input type="hidden" value="6" name="subjectId"/>
-                                      <label for="totalInvestmentsAndOtherAssets1">
-                                        <input type="number" id="totalInvestmentsAndOtherAssets1" name="value"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalInvestmentsAndOtherAssets.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalInvestmentsAndOtherAssets.subjectId}"
+                                             name="subjectId"/>
+                                      <label for="totalInvestmentsAndOtherAssets">
+                                        <input type="number" id="totalInvestmentsAndOtherAssets" name="value"/>
                                       </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}"
-                                      th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">
-                                    投資その他の資産合計
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}==0"
-                                      th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">
+                                      th:if="${documentDetail.financeValue.totalInvestmentsAndOtherAssets.value != null}"
+                                      th:text="${documentDetail.financeValue.totalInvestmentsAndOtherAssets.value}">
                                     投資その他の資産合計
                                   </dd>
 
-                                  <dt class="col-sm-6">投資その他の資産合計</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.totalAssets.name == '資産合計'?
+                                       '総資産' : documentDetail.financeValue.totalAssets.name}">
+                                    総資産
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}==null">
+                                      th:if="${documentDetail.financeValue.totalAssets.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -366,28 +374,30 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="1" name="financialStatementId"/>
-                                      <input type="hidden" value="6" name="subjectId"/>
-                                      <label for="totalInvestmentsAndOtherAssets2">
-                                        <input type="number" id="totalInvestmentsAndOtherAssets2" name="value"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalAssets.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalAssets.subjectId}"
+                                             name="subjectId"/>
+                                      <label for="totalAssets">
+                                        <input type="number" id="totalAssets" name="value"/>
                                       </label>
                                       <button type="submit" class="btn btn-default">登録</button>
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}"
-                                      th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">
-                                    投資その他の資産合計
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}==0"
-                                      th:text="${documentDetail.fundamentalValue.totalInvestmentsAndOtherAssets}">
-                                    投資その他の資産合計
+                                      th:if="${documentDetail.financeValue.totalAssets.value != null}"
+                                      th:text="${documentDetail.financeValue.totalAssets.value}">
+                                    総資産
                                   </dd>
 
-                                  <dt class="col-sm-6">流動負債合計</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.totalCurrentLiabilities.name}">
+                                    流動負債合計
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalCurrentLiabilities}==null">
+                                      th:if="${documentDetail.financeValue.totalCurrentLiabilities.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -395,8 +405,12 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="1" name="financialStatementId"/>
-                                      <input type="hidden" value="11" name="subjectId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalCurrentLiabilities.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalCurrentLiabilities.subjectId}"
+                                             name="subjectId"/>
                                       <label for="totalCurrentLiabilities">
                                         <input type="number" id="totalCurrentLiabilities" name="value"/>
                                       </label>
@@ -404,19 +418,17 @@
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalCurrentLiabilities}"
-                                      th:text="${documentDetail.fundamentalValue.totalCurrentLiabilities}">
-                                    流動負債合計
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalCurrentLiabilities}==0"
-                                      th:text="${documentDetail.fundamentalValue.totalCurrentLiabilities}">
+                                      th:if="${documentDetail.financeValue.totalCurrentLiabilities.value != null}"
+                                      th:text="${documentDetail.financeValue.totalCurrentLiabilities.value}">
                                     流動負債合計
                                   </dd>
 
-                                  <dt class="col-sm-6">固定負債合計</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.totalFixedLiabilities.name}">
+                                    固定負債合計
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalFixedLiabilities}==null">
+                                      th:if="${documentDetail.financeValue.totalFixedLiabilities.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -424,8 +436,12 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="1" name="financialStatementId"/>
-                                      <input type="hidden" value="13" name="subjectId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalFixedLiabilities.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.totalFixedLiabilities.subjectId}"
+                                             name="subjectId"/>
                                       <label for="totalFixedLiabilities">
                                         <input type="number" id="totalFixedLiabilities" name="value"/>
                                       </label>
@@ -433,19 +449,17 @@
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalFixedLiabilities}"
-                                      th:text="${documentDetail.fundamentalValue.totalFixedLiabilities}">
-                                    固定負債合計
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.totalFixedLiabilities}==0"
-                                      th:text="${documentDetail.fundamentalValue.totalFixedLiabilities}">
+                                      th:if="${documentDetail.financeValue.totalFixedLiabilities.value != null}"
+                                      th:text="${documentDetail.financeValue.totalFixedLiabilities.value}">
                                     固定負債合計
                                   </dd>
 
-                                  <dt class="col-sm-6">営業利益</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.subscriptionWarrant.name}">
+                                    新株予約権
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.operatingProfit}==null">
+                                      th:if="${documentDetail.financeValue.subscriptionWarrant.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -453,8 +467,75 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="2" name="financialStatementId"/>
-                                      <input type="hidden" value="3" name="subjectId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.subscriptionWarrant.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.subscriptionWarrant.subjectId}"
+                                             name="subjectId"/>
+                                      <label for="subscriptionWarrant">
+                                        <input type="number" id="subscriptionWarrant" name="value"/>
+                                      </label>
+                                      <button type="submit" class="btn btn-default">登録</button>
+                                    </form>
+                                  </dd>
+                                  <dd class="col-sm-6"
+                                      th:if="${documentDetail.financeValue.subscriptionWarrant.value != null}"
+                                      th:text="${documentDetail.financeValue.subscriptionWarrant.value}">
+                                    新株予約権
+                                  </dd>
+
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.netAssets.name == '純資産合計'?
+                                       '純資産' : documentDetail.financeValue.netAssets.name}">
+                                    純資産
+                                  </dt>
+                                  <dd class="col-sm-6"
+                                      th:if="${documentDetail.financeValue.netAssets.value == null}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
+                                      <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
+                                             name="submitDate"/>
+                                      <input type="hidden" th:value="${documentDetail.document.edinetCode}"
+                                             name="edinetCode"/>
+                                      <input type="hidden" th:value="${documentDetail.document.documentId}"
+                                             name="documentId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.netAssets.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.netAssets.subjectId}"
+                                             name="subjectId"/>
+                                      <label for="netAssets">
+                                        <input type="number" id="netAssets" name="value"/>
+                                      </label>
+                                      <button type="submit" class="btn btn-default">登録</button>
+                                    </form>
+                                  </dd>
+                                  <dd class="col-sm-6"
+                                      th:if="${documentDetail.financeValue.netAssets.value != null}"
+                                      th:text="${documentDetail.financeValue.netAssets.value}">
+                                    純資産
+                                  </dd>
+
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.operatingProfit.name}">
+                                    営業利益
+                                  </dt>
+                                  <dd class="col-sm-6"
+                                      th:if="${documentDetail.financeValue.operatingProfit.value == null}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
+                                      <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
+                                             name="submitDate"/>
+                                      <input type="hidden" th:value="${documentDetail.document.edinetCode}"
+                                             name="edinetCode"/>
+                                      <input type="hidden" th:value="${documentDetail.document.documentId}"
+                                             name="documentId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.operatingProfit.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.operatingProfit.subjectId}"
+                                             name="subjectId"/>
                                       <label for="operatingProfit">
                                         <input type="number" id="operatingProfit" name="value"/>
                                       </label>
@@ -462,19 +543,17 @@
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.operatingProfit}"
-                                      th:text="${documentDetail.fundamentalValue.operatingProfit}">
-                                    営業利益
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.operatingProfit}==0"
-                                      th:text="${documentDetail.fundamentalValue.operatingProfit}">
+                                      th:if="${documentDetail.financeValue.operatingProfit.value != null}"
+                                      th:text="${documentDetail.financeValue.operatingProfit.value}">
                                     営業利益
                                   </dd>
 
-                                  <dt class="col-sm-6">株式総数</dt>
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.netIncome.name}">
+                                    当期純利益
+                                  </dt>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.numberOfShares}==null">
+                                      th:if="${documentDetail.financeValue.netIncome.value == null}">
                                     <form method="post" th:action="@{/v1/fix-fundamental-value}">
                                       <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
                                              name="submitDate"/>
@@ -482,8 +561,43 @@
                                              name="edinetCode"/>
                                       <input type="hidden" th:value="${documentDetail.document.documentId}"
                                              name="documentId"/>
-                                      <input type="hidden" value="4" name="financialStatementId"/>
-                                      <input type="hidden" value="0" name="subjectId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.netIncome.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.netIncome.subjectId}"
+                                             name="subjectId"/>
+                                      <label for="netIncome">
+                                        <input type="number" id="netIncome" name="value"/>
+                                      </label>
+                                      <button type="submit" class="btn btn-default">登録</button>
+                                    </form>
+                                  </dd>
+                                  <dd class="col-sm-6"
+                                      th:if="${documentDetail.financeValue.netIncome.value != null}"
+                                      th:text="${documentDetail.financeValue.netIncome.value}">
+                                    当期純利益
+                                  </dd>
+
+                                  <dt class="col-sm-6"
+                                      th:text="${documentDetail.financeValue.numberOfShares.name}">
+                                    株式総数
+                                  </dt>
+                                  <dd class="col-sm-6"
+                                      th:if="${documentDetail.financeValue.numberOfShares.value == null}">
+                                    <form method="post" th:action="@{/v1/fix-fundamental-value}">
+                                      <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}"
+                                             name="submitDate"/>
+                                      <input type="hidden" th:value="${documentDetail.document.edinetCode}"
+                                             name="edinetCode"/>
+                                      <input type="hidden" th:value="${documentDetail.document.documentId}"
+                                             name="documentId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.numberOfShares.financialStatementId}"
+                                             name="financialStatementId"/>
+                                      <input type="hidden"
+                                             th:value="${documentDetail.financeValue.numberOfShares.subjectId}"
+                                             name="subjectId"/>
                                       <label for="numberOfShares">
                                         <input type="number" id="numberOfShares" name="value"/>
                                       </label>
@@ -491,13 +605,8 @@
                                     </form>
                                   </dd>
                                   <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.numberOfShares}"
-                                      th:text="${documentDetail.fundamentalValue.numberOfShares}">
-                                    株式総数
-                                  </dd>
-                                  <dd class="col-sm-6"
-                                      th:if="${documentDetail.fundamentalValue.numberOfShares}==0"
-                                      th:text="${documentDetail.fundamentalValue.numberOfShares}">
+                                      th:if="${documentDetail.financeValue.numberOfShares.value != null}"
+                                      th:text="${documentDetail.financeValue.numberOfShares.value}">
                                     株式総数
                                   </dd>
                                 </dl>
