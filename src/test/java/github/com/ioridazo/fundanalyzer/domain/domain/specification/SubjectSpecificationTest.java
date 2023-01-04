@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.cache.SubjectCache;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.BsSubjectDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.PlSubjectDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.BsSubjectEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.PlSubjectEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
@@ -23,15 +24,14 @@ import static org.mockito.Mockito.when;
 
 class SubjectSpecificationTest {
 
-    private SubjectCache subjectCache;
-
     private SubjectSpecification subjectSpecification;
 
     @BeforeEach
     void setUp() {
-        subjectCache = Mockito.mock(SubjectCache.class);
-
-        subjectSpecification = Mockito.spy(new SubjectSpecification(subjectCache));
+        subjectSpecification = Mockito.spy(new SubjectSpecification(
+                Mockito.mock(BsSubjectDao.class),
+                Mockito.mock(PlSubjectDao.class)
+        ));
     }
 
     @Nested
@@ -39,7 +39,7 @@ class SubjectSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(subjectCache.inquiryBsSubjectList()).thenReturn(List.of(new BsSubjectEntity("2", "1", "1", "流動資産合計")));
+            when(subjectSpecification.inquiryBsSubjectList()).thenReturn(List.of(new BsSubjectEntity("2", "1", "1", "流動資産合計")));
         }
 
         @DisplayName("findBsSubject : 貸借対照表の科目を取得する")
@@ -84,7 +84,7 @@ class SubjectSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(subjectCache.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("3", "3", "1", "営業利益")));
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("3", "3", "1", "営業利益")));
         }
 
         @DisplayName("findPlSubject : 損益計算書の科目を取得する")
@@ -111,8 +111,8 @@ class SubjectSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(subjectCache.inquiryBsSubjectList()).thenReturn(List.of(new BsSubjectEntity("1", "1", "1", "name")));
-            when(subjectCache.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("1", "1", "1", "name")));
+            when(subjectSpecification.inquiryBsSubjectList()).thenReturn(List.of(new BsSubjectEntity("1", "1", "1", "name")));
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("1", "1", "1", "name")));
         }
 
         @DisplayName("findSubject : BSの科目情報を取得する")
@@ -169,7 +169,7 @@ class SubjectSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(subjectCache.inquiryBsSubjectList()).thenReturn(List.of(
+            when(subjectSpecification.inquiryBsSubjectList()).thenReturn(List.of(
                     new BsSubjectEntity("2", "1", "1", "流動資産合計"),
                     new BsSubjectEntity("20", "1", "2", "流動資産計")));
         }
@@ -202,7 +202,7 @@ class SubjectSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(subjectCache.inquiryPlSubjectList()).thenReturn(List.of(
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(
                     new PlSubjectEntity("3", "3", "1", "営業利益"),
                     new PlSubjectEntity("4", "3", "2", "営業利益又は営業損失（△）")));
         }

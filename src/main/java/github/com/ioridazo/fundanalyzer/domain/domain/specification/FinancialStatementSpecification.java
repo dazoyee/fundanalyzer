@@ -16,6 +16,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementKeyViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.FinancialStatementValueViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.FinanceValueViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -27,7 +28,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class FinancialStatementSpecification {
@@ -288,7 +288,7 @@ public class FinancialStatementSpecification {
                             entity.getValue().orElse(null)
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -308,6 +308,14 @@ public class FinancialStatementSpecification {
                             entity.getValue().orElse(null)
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public FinanceValueViewModel getFinanceValueViewModel(final Document document) {
+        return FinanceValueViewModel.of(
+                subjectSpecification.inquiryBsSubjectList(),
+                subjectSpecification.inquiryPlSubjectList(),
+                getFinanceValue(document)
+        );
     }
 }

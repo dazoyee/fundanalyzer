@@ -1,7 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -9,22 +11,31 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.MonthDay;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class StockSpecificationTest {
 
     private StockPriceDao stockPriceDao;
+    private MinkabuDao minkabuDao;
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
 
@@ -33,12 +44,13 @@ class StockSpecificationTest {
     @BeforeEach
     void setUp() {
         stockPriceDao = Mockito.mock(StockPriceDao.class);
+        minkabuDao = Mockito.mock(MinkabuDao.class);
         companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
 
         stockSpecification = Mockito.spy(new StockSpecification(
                 stockPriceDao,
-                Mockito.mock(MinkabuDao.class),
+                minkabuDao,
                 companySpecification,
                 documentSpecification
         ));
@@ -381,6 +393,107 @@ class StockSpecificationTest {
             var actual = stockSpecification.findTargetDateToDelete();
             assertEquals(LocalDate.parse("2019-06-06"), actual.get(0));
             assertEquals(1, actual.size());
+        }
+    }
+
+    @Nested
+    class insert {
+
+        LocalDateTime nowLocalDateTime = LocalDateTime.of(2022, 12, 26, 19, 0);
+
+        @BeforeEach
+        void setUp() {
+            when(stockSpecification.nowLocalDateTime()).thenReturn(nowLocalDateTime);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"01/01", "12/26", "12/31"})
+        void targetDate_MMdd_ok(String targetDate) {
+            var code = "code";
+            var minkabuResultBean = new MinkabuResultBean(
+                    null,
+                    targetDate,
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+
+            var nowLocalDate = MonthDay.parse(targetDate, DateTimeFormatter.ofPattern("MM/dd")).atYear(2022);
+            doReturn(nowLocalDate).when(stockSpecification).nowLocalDate();
+            when(minkabuDao.selectByCodeAndDate(code, nowLocalDate)).thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> stockSpecification.insert(code, minkabuResultBean));
+            verify(minkabuDao, times(1))
+                    .insert(MinkabuEntity.ofMinkabuResultBean(code, nowLocalDate, minkabuResultBean, nowLocalDateTime));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"00:00", "15:00", "23:59"})
+        void targetDate_HHmm_ok(String targetDate) {
+            var code = "code";
+            var minkabuResultBean = new MinkabuResultBean(
+                    null,
+                    targetDate,
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+
+            var nowLocalDate = LocalDate.parse("2022-12-26");
+            doReturn(nowLocalDate).when(stockSpecification).nowLocalDate();
+            when(minkabuDao.selectByCodeAndDate(code, nowLocalDate)).thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> stockSpecification.insert(code, minkabuResultBean));
+            verify(minkabuDao, times(1))
+                    .insert(MinkabuEntity.ofMinkabuResultBean(code, nowLocalDate, minkabuResultBean, nowLocalDateTime));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"1/", "22/26", "12/131"})
+        void targetDate_MMdd_ng(String targetDate) {
+            var code = "code";
+            var minkabuResultBean = new MinkabuResultBean(
+                    null,
+                    targetDate,
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+
+            when(minkabuDao.selectByCodeAndDate(any(), any())).thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> stockSpecification.insert(code, minkabuResultBean));
+            verify(minkabuDao, times(0)).insert(any());
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"0:0", "25:00", "23/59"})
+        void targetDate_HHmm_ng(String targetDate) {
+            var code = "code";
+            var minkabuResultBean = new MinkabuResultBean(
+                    null,
+                    targetDate,
+                    new MinkabuResultBean.ExpectedStockPrice(
+                            null,
+                            null,
+                            null,
+                            null
+                    )
+            );
+
+            when(minkabuDao.selectByCodeAndDate(any(), any())).thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> stockSpecification.insert(code, minkabuResultBean));
+            verify(minkabuDao, times(0)).insert(any());
         }
     }
 }

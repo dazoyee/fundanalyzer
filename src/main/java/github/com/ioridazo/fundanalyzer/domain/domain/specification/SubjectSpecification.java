@@ -1,11 +1,16 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.cache.SubjectCache;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.BsSubjectDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.PlSubjectDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.BsSubjectEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.PlSubjectEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -17,11 +22,16 @@ import java.util.stream.Collectors;
 @Component
 public class SubjectSpecification {
 
-    private final SubjectCache subjectCache;
+    private static final String CACHE_KEY_BS_SUBJECT_LIST = "bsSubjectList";
+    private static final String CACHE_KEY_PL_SUBJECT_LIST = "plSubjectList";
 
-    public SubjectSpecification(
-            final SubjectCache subjectCache) {
-        this.subjectCache = subjectCache;
+
+    private final BsSubjectDao bsSubjectDao;
+    private final PlSubjectDao plSubjectDao;
+
+    public SubjectSpecification(final BsSubjectDao bsSubjectDao, final PlSubjectDao plSubjectDao) {
+        this.bsSubjectDao = bsSubjectDao;
+        this.plSubjectDao = plSubjectDao;
     }
 
     /**
@@ -31,7 +41,7 @@ public class SubjectSpecification {
      * @return 貸借対照表の科目
      */
     public Optional<BsSubject> findBsSubject(final String subjectName) {
-        return subjectCache.inquiryBsSubjectList().stream()
+        return inquiryBsSubjectList().stream()
                 .map(BsSubject::of)
                 .filter(bsSubject -> subjectName.equals(bsSubject.getName()))
                 .findAny();
@@ -44,7 +54,7 @@ public class SubjectSpecification {
      * @return 貸借対照表の科目情報
      */
     public List<Subject> findBsSubject(final BsSubject.BsEnum bsEnum) {
-        final List<Subject> subjectList = subjectCache.inquiryBsSubjectList().stream()
+        final List<Subject> subjectList = inquiryBsSubjectList().stream()
                 .filter(bsSubject -> Objects.equals(bsEnum.getOutlineSubjectId(), bsSubject.getOutlineSubjectId()))
                 .map(BsSubject::of)
                 .collect(Collectors.toList());
@@ -63,7 +73,7 @@ public class SubjectSpecification {
      * @return 損益計算書の科目
      */
     public Optional<PlSubject> findPlSubject(final String subjectName) {
-        return subjectCache.inquiryPlSubjectList().stream()
+        return inquiryPlSubjectList().stream()
                 .map(PlSubject::of)
                 .filter(plSubject -> subjectName.equals(plSubject.getName()))
                 .findAny();
@@ -78,12 +88,12 @@ public class SubjectSpecification {
      */
     public Subject findSubject(final FinancialStatementEnum fs, final String subjectId) {
         return switch (fs) {
-            case BALANCE_SHEET -> subjectCache.inquiryBsSubjectList().stream()
+            case BALANCE_SHEET -> inquiryBsSubjectList().stream()
                     .filter(bsSubject -> Objects.equals(subjectId, bsSubject.getId()))
                     .map(BsSubject::of)
                     .findFirst()
                     .orElseThrow(() -> new FundanalyzerRuntimeException("貸借対照表の科目が存在しません"));
-            case PROFIT_AND_LESS_STATEMENT -> subjectCache.inquiryPlSubjectList().stream()
+            case PROFIT_AND_LESS_STATEMENT -> inquiryPlSubjectList().stream()
                     .filter(plSubject -> Objects.equals(subjectId, plSubject.getId()))
                     .map(PlSubject::of)
                     .findFirst()
@@ -99,7 +109,7 @@ public class SubjectSpecification {
      * @return 貸借対照表の科目情報リスト
      */
     public List<Subject> findBsSubjectList(final BsSubject.BsEnum bsEnum) {
-        return subjectCache.inquiryBsSubjectList().stream()
+        return inquiryBsSubjectList().stream()
                 .filter(bsSubject -> Objects.equals(bsEnum.getOutlineSubjectId(), bsSubject.getOutlineSubjectId()))
                 .map(BsSubject::of)
                 .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
@@ -113,10 +123,48 @@ public class SubjectSpecification {
      * @return 損益計算書の科目情報リスト
      */
     public List<Subject> findPlSubjectList(final PlSubject.PlEnum plEnum) {
-        return subjectCache.inquiryPlSubjectList().stream()
+        return inquiryPlSubjectList().stream()
                 .filter(plSubject -> Objects.equals(plEnum.getOutlineSubjectId(), plSubject.getOutlineSubjectId()))
                 .map(PlSubject::of)
                 .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 貸借対照表の科目情報を取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
+     *
+     * @return 貸借対照表の科目情報
+     */
+    @Cacheable(CACHE_KEY_BS_SUBJECT_LIST)
+    public List<BsSubjectEntity> inquiryBsSubjectList() {
+        return findBsSubjectList();
+    }
+
+    @CachePut(CACHE_KEY_BS_SUBJECT_LIST)
+    public List<BsSubjectEntity> findBsSubjectList() {
+        return bsSubjectDao.selectAll();
+    }
+
+    /**
+     * 損益計算書の科目情報を取得する
+     * <ul>
+     *    <li>キャッシュがあるときはキャッシュから取得する<li/>
+     *    <li>キャッシュがないときはデータベースから取得する<li/>
+     * </>
+     *
+     * @return 損益計算書の科目情報
+     */
+    @Cacheable(CACHE_KEY_PL_SUBJECT_LIST)
+    public List<PlSubjectEntity> inquiryPlSubjectList() {
+        return findPlSubjectList();
+    }
+
+    @CachePut(CACHE_KEY_PL_SUBJECT_LIST)
+    public List<PlSubjectEntity> findPlSubjectList() {
+        return plSubjectDao.selectAll();
     }
 }

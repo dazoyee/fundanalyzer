@@ -95,7 +95,7 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
                 .map(document -> DocumentViewModel.of(
                         companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerRuntimeException::new),
                         document,
-                        financialStatementSpecification.getFinanceValue(document)
+                        financialStatementSpecification.getFinanceValueViewModel(document)
                 ))
                 .toList();
 
