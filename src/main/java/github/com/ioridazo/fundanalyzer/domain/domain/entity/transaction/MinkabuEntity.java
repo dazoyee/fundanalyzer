@@ -12,9 +12,6 @@ import org.seasar.doma.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.MonthDay;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -44,13 +41,11 @@ public class MinkabuEntity {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
-    public static MinkabuEntity ofMinkabuResultBean(final String code, final MinkabuResultBean minkabu, final LocalDateTime createdAt) {
-        LocalDate targetDate;
-        try {
-            targetDate = MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(LocalDate.now().getYear());
-        } catch (DateTimeParseException e) {
-            targetDate = LocalDate.now();
-        }
+    public static MinkabuEntity ofMinkabuResultBean(
+            final String code,
+            final LocalDate targetDate,
+            final MinkabuResultBean minkabu,
+            final LocalDateTime createdAt) {
         return new MinkabuEntity(
                 null,
                 code,
@@ -76,10 +71,12 @@ public class MinkabuEntity {
         return Optional.ofNullable(theoreticalStock);
     }
 
+    @SuppressWarnings("unused")
     public Optional<Double> getIndividualInvestorsStock() {
         return Optional.ofNullable(individualInvestorsStock);
     }
 
+    @SuppressWarnings("unused")
     public Optional<Double> getSecuritiesAnalystStock() {
         return Optional.ofNullable(securitiesAnalystStock);
     }
