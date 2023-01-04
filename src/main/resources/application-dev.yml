@@ -28,7 +28,8 @@ doma:
   naming: snake_upper_case
 
 logging:
-  level: debug
+  level:
+    github.com.ioridazo.fundanalyzer: debug
   config: classpath:log4j2-spring-dev.xml
 
 management:
