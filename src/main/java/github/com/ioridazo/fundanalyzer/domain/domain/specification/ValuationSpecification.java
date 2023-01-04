@@ -153,7 +153,9 @@ public class ValuationSpecification {
      */
     public void insert(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         try {
-            valuationDao.insert(evaluate(stock, analysisResult));
+            if (isPresentValuation(stock.getCompanyCode(), stock.getTargetDate(), analysisResult.getSubmitDate())) {
+                valuationDao.insert(evaluate(stock, analysisResult));
+            }
         } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.warn(FundanalyzerLogClient.toSpecificationLogObject(
@@ -219,5 +221,9 @@ public class ValuationSpecification {
                 analysisResult.getDocumentId(),
                 nowLocalDateTime()
         );
+    }
+
+    private boolean isPresentValuation(final String code, final LocalDate targetDate, final LocalDate submitDate) {
+        return valuationDao.selectByUnique(code, targetDate, submitDate).isPresent();
     }
 }

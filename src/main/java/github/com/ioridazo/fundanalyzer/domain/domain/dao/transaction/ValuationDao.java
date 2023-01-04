@@ -9,10 +9,14 @@ import org.seasar.doma.jdbc.Result;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
 public interface ValuationDao {
+
+    @Select
+    Optional<ValuationEntity> selectByUnique(String code, LocalDate targetDate, LocalDate submitDate);
 
     @Select
     List<ValuationEntity> selectByCode(String code);
