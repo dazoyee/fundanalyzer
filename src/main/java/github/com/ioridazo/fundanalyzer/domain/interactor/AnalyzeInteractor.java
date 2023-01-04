@@ -256,6 +256,11 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             return;
         }
 
+        if (analysisResult.getBps().isEmpty() && analysisResult.getEps().isEmpty()){
+            // 指標に関する値が存在しない場合は対象外
+            return;
+        }
+
         final long startTime = System.currentTimeMillis();
         final List<IndicatorValue> indicatorValueList = investmentIndicatorSpecification.findIndicatorValueList(analysisResult.getId());
         final Optional<StockPriceEntity> latestStock = stockSpecification.findLatestStock(analysisResult.getCompanyCode());

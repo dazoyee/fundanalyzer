@@ -25,14 +25,15 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
-import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.MonthDay;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Component
 public class StockSpecification {
@@ -204,19 +205,41 @@ public class StockSpecification {
     }
 
     /**
-     * みんかぶから取得した株価情報を登録する
+     * みんかぶから取得した予想株価を登録する
      *
      * @param code    企業コード
-     * @param minkabu みんかぶから取得した株価情報
+     * @param minkabu みんかぶから取得した予想株価
      */
     public void insert(final String code, final MinkabuResultBean minkabu) {
-        if (!isPresentMinkabu(code, minkabu.getTargetDate())) {
-            minkabuDao.insert(MinkabuEntity.ofMinkabuResultBean(code, minkabu, nowLocalDateTime()));
+        LocalDate targetDate;
+        try {
+            targetDate = MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(nowLocalDate().getYear());
+        } catch (DateTimeParseException e) {
+            if (Pattern.compile("^([0-1]\\d|2[0-3]):[0-5]\\d$").matcher(minkabu.getTargetDate()).find()) {
+                targetDate = nowLocalDate();
+            } else {
+                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
+                                        "\t企業コード:{0}\tスクレイピング結果:{1}",
+                                code,
+                                minkabu.getTargetDate()
+                        ),
+                        Category.STOCK,
+                        Process.REGISTER
+                ), e);
+
+                return;
+            }
+        }
+
+        if (!isPresentMinkabu(code, targetDate)) {
+            minkabuDao.insert(MinkabuEntity.ofMinkabuResultBean(code, targetDate, minkabu, nowLocalDateTime()));
         }
     }
 
     /**
-     * minkabuから取得した株価情報を登録する
+     * みんかぶから取得した株価情報を登録する
      *
      * @param code    企業コード
      * @param minkabu minkabuから取得した株価情報
@@ -370,29 +393,13 @@ public class StockSpecification {
     }
 
     /**
-     * みんかぶ情報がデータベースに存在するか
+     * みんかぶ予想株価がデータベースに存在するか
      *
-     * @param code               企業コード
-     * @param targetDateAsString 対象日
+     * @param code       企業コード
+     * @param targetDate 対象日
      * @return boolean
      */
-    private boolean isPresentMinkabu(final String code, final String targetDateAsString) {
-        LocalDate targetDate = LocalDate.now();
-        try {
-            targetDate = MonthDay.parse(targetDateAsString, DateTimeFormatter.ofPattern("MM/dd")).atYear(targetDate.getYear());
-        } catch (final DateTimeException e) {
-            log.info(FundanalyzerLogClient.toSpecificationLogObject(
-                    MessageFormat.format(
-                            "みんかぶのスクレイピング処理で期待の対象日が得られませんでした。本日日付で処理を継続します。" +
-                                    "\t企業コード:{0}\tスクレイピング結果:{1}\t登録対象日:{2}",
-                            code,
-                            targetDateAsString,
-                            targetDate
-                    ),
-                    Category.STOCK,
-                    Process.REGISTER
-            ), e);
-        }
+    private boolean isPresentMinkabu(final String code, final LocalDate targetDate) {
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
     }
 }

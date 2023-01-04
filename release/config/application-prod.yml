@@ -1,6 +1,8 @@
 server.port: 8890
 
-logging.level: info
+logging:
+  level:
+    github.com.ioridazo.fundanalyzer: info
 
 resilience4j:
   ratelimiter.instances:

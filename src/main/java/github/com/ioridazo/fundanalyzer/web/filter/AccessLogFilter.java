@@ -13,24 +13,31 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 public class AccessLogFilter extends OncePerRequestFilter {
 
     private static final Logger log = LogManager.getLogger(AccessLogFilter.class);
 
-    private static final String ACTUATOR_URI = "/actuator/prometheus";
-    private static final String FUNDANALYZER_URI = "fundanalyzer";
-
     @Override
     protected void doFilterInternal(
             @NotNull final HttpServletRequest httpServletRequest,
             @NotNull final HttpServletResponse httpServletResponse,
-            final FilterChain filterChain) throws ServletException, IOException {
+            @NotNull final FilterChain filterChain) throws ServletException, IOException {
         final long startTime = System.currentTimeMillis();
 
         final String requestURI = httpServletRequest.getRequestURI();
 
-        if (!ACTUATOR_URI.equals(requestURI) && requestURI.contains(FUNDANALYZER_URI)) {
+        final List<String> removedList = List.of(
+                "/actuator/prometheus",
+                "/dist/css",
+                "/dist/img",
+                "/dist/js",
+                "/plugins",
+                "/favicon.ico"
+        );
+
+        if (removedList.stream().noneMatch(requestURI::contains)) {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.ACCESS, Process.BEGINNING, requestURI, 0));
         }
 
@@ -40,7 +47,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
         final long durationTime = System.currentTimeMillis() - startTime;
 
-        if (!ACTUATOR_URI.equals(requestURI) && requestURI.contains(FUNDANALYZER_URI)) {
+        if (removedList.stream().noneMatch(requestURI::contains)) {
             log.info(FundanalyzerLogClient.toAccessLogObject(Category.ACCESS, Process.END, requestURI, durationTime));
         }
     }

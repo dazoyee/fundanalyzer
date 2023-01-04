@@ -37,7 +37,8 @@ doma:
   naming: snake_upper_case
 
 logging:
-  level: info
+  level:
+    github.com.ioridazo.fundanalyzer: info
 
 management:
   server:
