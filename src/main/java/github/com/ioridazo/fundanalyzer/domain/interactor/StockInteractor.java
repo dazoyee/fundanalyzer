@@ -95,7 +95,8 @@ public class StockInteractor implements StockUseCase {
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format(
-                        "最新の株価を正常に取り込みました。\t対象書類提出日:{0}\t株価取得企業数:{1}",
+                        "最新の株価を正常に取り込みました。\t取得先:{0}\t対象書類提出日:{1}\t株価取得企業数:{2}",
+                        place.name(),
                         inputData.getDate(),
                         inputDataList.stream().distinct().count()),
                 Category.STOCK,
