@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
@@ -41,24 +42,16 @@ class EdinetControllerTest {
     @DisplayName("updateCompany : 会社情報を更新する")
     @Test
     void updateCompany() {
-        var actual = UriComponentsBuilder.fromUriString(controller.updateCompany()).build();
-
+        var actual = UriComponentsBuilder.fromUriString(controller.updateCompany(new RedirectAttributesModelMap())).build();
         assertEquals("/v2/edinet-list", actual.getPath());
-        assertEquals(
-                "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
-                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
         Mockito.verify(edinetService, Mockito.times(1)).updateCompany();
     }
 
     @DisplayName("updateEdinetView : 処理状況を更新する")
     @Test
     void updateEdinetView() {
-        var actual = UriComponentsBuilder.fromUriString(controller.updateEdinetView()).build();
-
+        var actual = UriComponentsBuilder.fromUriString(controller.updateEdinetView(new RedirectAttributesModelMap())).build();
         assertEquals("/v2/edinet-list", actual.getPath());
-        assertEquals(
-                "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
-                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
         Mockito.verify(viewService, Mockito.times(1)).updateEdinetView();
     }
 
