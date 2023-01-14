@@ -83,34 +83,33 @@ public class EdinetClient {
             ));
         }
 
-
-        // retry
-        final EdinetResponse edinetResponse = retryTemplate.execute(context -> {
-            if (context.getRetryCount() > 0) {
-                if (ListType.DEFAULT.equals(parameter.getType())) {
-                    log.info(FundanalyzerLogClient.toClientLogObject(
-                            MessageFormat.format(
-                                    "通信できなかったため、{0}回目の書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{1}",
-                                    context.getRetryCount() + 1,
-                                    parameter.getDate()
-                            ),
-                            Category.DOCUMENT,
-                            Process.EDINET
-                    ));
-                } else {
-                    log.info(FundanalyzerLogClient.toClientLogObject(
-                            MessageFormat.format(
-                                    "通信できなかったため、{0}回目の書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{1}",
-                                    context.getRetryCount() + 1,
-                                    parameter.getDate()
-                            ),
-                            Category.DOCUMENT,
-                            Process.EDINET
-                    ));
+        try {
+            // retry
+            final EdinetResponse edinetResponse = retryTemplate.execute(context -> {
+                if (context.getRetryCount() > 0) {
+                    if (ListType.DEFAULT.equals(parameter.getType())) {
+                        log.info(FundanalyzerLogClient.toClientLogObject(
+                                MessageFormat.format(
+                                        "通信に失敗したため、{0}回目の書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{1}",
+                                        context.getRetryCount() + 1,
+                                        parameter.getDate()
+                                ),
+                                Category.DOCUMENT,
+                                Process.EDINET
+                        ));
+                    } else {
+                        log.info(FundanalyzerLogClient.toClientLogObject(
+                                MessageFormat.format(
+                                        "通信に失敗したため、{0}回目の書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{1}",
+                                        context.getRetryCount() + 1,
+                                        parameter.getDate()
+                                ),
+                                Category.DOCUMENT,
+                                Process.EDINET
+                        ));
+                    }
                 }
-            }
 
-            try {
                 // circuitBreaker
                 return circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET)
                         .executeSupplier(() -> {
@@ -122,7 +121,7 @@ public class EdinetClient {
                                         Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
                                 );
                             } catch (final RestClientResponseException e) {
-                                log.error(FundanalyzerLogClient.toClientLogObject(
+                                log.warn(FundanalyzerLogClient.toClientLogObject(
                                         MessageFormat.format(
                                                 "EDINETから200以外のHTTPステータスコードが返却されました。" +
                                                         "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
@@ -156,34 +155,37 @@ public class EdinetClient {
                                 );
                             }
                         });
-            } catch (final CallNotPermittedException e) {
-                throw new FundanalyzerRestClientException(CIRCUIT_BREAKER_EDINET + "との通信でサーキットブレーカーがオープンしました。");
+            });
+
+            if (ListType.DEFAULT.equals(parameter.getType())) {
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        MessageFormat.format(
+                                "書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
+                                parameter.getDate(),
+                                Optional.ofNullable(edinetResponse)
+                                        .map(EdinetResponse::getMetadata)
+                                        .map(Metadata::getResultset)
+                                        .map(Metadata.ResultSet::getCount)
+                                        .orElse("0")
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
+            } else {
+                log.info(FundanalyzerLogClient.toClientLogObject(
+                        "書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。",
+                        Category.DOCUMENT,
+                        Process.EDINET
+                ));
             }
-        });
 
-        if (ListType.DEFAULT.equals(parameter.getType())) {
-            log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format(
-                            "書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
-                            parameter.getDate(),
-                            Optional.ofNullable(edinetResponse)
-                                    .map(EdinetResponse::getMetadata)
-                                    .map(Metadata::getResultset)
-                                    .map(Metadata.ResultSet::getCount)
-                                    .orElse("0")
-                    ),
-                    Category.DOCUMENT,
-                    Process.EDINET
-            ));
-        } else {
-            log.info(FundanalyzerLogClient.toClientLogObject(
-                    "書類一覧（提出書類一覧及びメタデータ）を正常に取得しました。データベースへの登録作業を開始します。",
-                    Category.DOCUMENT,
-                    Process.EDINET
-            ));
+            return edinetResponse;
+
+        } catch (final CallNotPermittedException e) {
+            throw new FundanalyzerRestClientException(CIRCUIT_BREAKER_EDINET + "との通信でサーキットブレーカーがオープンしました。");
+        } catch (final Exception e) {
+            throw new FundanalyzerRestClientException(e.getMessage(), e.getCause());
         }
-
-        return edinetResponse;
     }
 
     /**
@@ -196,29 +198,29 @@ public class EdinetClient {
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
 
-        // retry
-        retryTemplate.execute(retryContext -> {
-            if (retryContext.getRetryCount() == 0) {
-                log.info(FundanalyzerLogClient.toClientLogObject(
-                        MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
-                        parameter.getDocId(),
-                        Category.DOCUMENT,
-                        Process.DOWNLOAD
-                ));
-            } else {
-                log.info(FundanalyzerLogClient.toClientLogObject(
-                        MessageFormat.format(
-                                "通信できなかったため、{0}回目の書類のダウンロード処理を実行します。\t書類管理番号:{1}",
-                                retryContext.getRetryCount(),
-                                parameter.getDocId()
-                        ),
-                        parameter.getDocId(),
-                        Category.DOCUMENT,
-                        Process.DOWNLOAD
-                ));
-            }
+        try {
+            // retry
+            retryTemplate.execute(retryContext -> {
+                if (retryContext.getRetryCount() == 0) {
+                    log.info(FundanalyzerLogClient.toClientLogObject(
+                            MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
+                            parameter.getDocId(),
+                            Category.DOCUMENT,
+                            Process.DOWNLOAD
+                    ));
+                } else {
+                    log.info(FundanalyzerLogClient.toClientLogObject(
+                            MessageFormat.format(
+                                    "通信に失敗したため、{0}回目の書類のダウンロード処理を実行します。\t書類管理番号:{1}",
+                                    retryContext.getRetryCount(),
+                                    parameter.getDocId()
+                            ),
+                            parameter.getDocId(),
+                            Category.DOCUMENT,
+                            Process.DOWNLOAD
+                    ));
+                }
 
-            try {
                 // circuitBreaker
                 return circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET)
                         .executeSupplier(() -> {
@@ -234,7 +236,7 @@ public class EdinetClient {
                                         Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
                                 );
                             } catch (final RestClientResponseException e) {
-                                log.error(FundanalyzerLogClient.toClientLogObject(
+                                log.warn(FundanalyzerLogClient.toClientLogObject(
                                         MessageFormat.format(
                                                 "EDINETから200以外のHTTPステータスコードが返却されました。" +
                                                         "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
@@ -252,6 +254,10 @@ public class EdinetClient {
                                 } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
                                     throw new FundanalyzerCircuitBreakerRecordException(
                                             "データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", e);
+                                } else if (HttpStatus.FORBIDDEN.value() == e.getRawStatusCode()
+                                        && "The request is blocked.".contains(e.getResponseBodyAsString())) {
+                                    throw new FundanalyzerCircuitBreakerRecordException(
+                                            "リクエストがブロックされました。対象の書類を確認してください。", e);
                                 } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
                                     throw new FundanalyzerCircuitBreakerRecordException(
                                             "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
@@ -269,17 +275,19 @@ public class EdinetClient {
                                 }
                             }
                         });
-            } catch (final CallNotPermittedException e) {
-                throw new FundanalyzerRestClientException(CIRCUIT_BREAKER_EDINET + "との通信でサーキットブレーカーがオープンしました。");
-            }
-        });
+            });
 
-        log.info(FundanalyzerLogClient.toClientLogObject(
-                MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.getDocId()),
-                parameter.getDocId(),
-                Category.DOCUMENT,
-                Process.DOWNLOAD
-        ));
+            log.info(FundanalyzerLogClient.toClientLogObject(
+                    MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.getDocId()),
+                    parameter.getDocId(),
+                    Category.DOCUMENT,
+                    Process.DOWNLOAD
+            ));
+        } catch (final CallNotPermittedException e) {
+            throw new FundanalyzerRestClientException(CIRCUIT_BREAKER_EDINET + "との通信でサーキットブレーカーがオープンしました。");
+        } catch (final Exception e) {
+            throw new FundanalyzerRestClientException(e.getMessage(), e.getCause());
+        }
     }
 
     /**

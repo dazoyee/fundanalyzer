@@ -473,7 +473,7 @@ public class DocumentInteractor implements DocumentUseCase {
                 scraping.download(document);
             }
         } else if (DocumentStatus.ERROR == document.getDownloaded()) {
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "書類のダウンロードが完了していません。詳細を確認してください。\t書類ID:{0}",
                             document.getDocumentId()
