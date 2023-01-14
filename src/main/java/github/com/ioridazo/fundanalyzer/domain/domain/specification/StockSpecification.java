@@ -217,6 +217,19 @@ public class StockSpecification {
         } catch (DateTimeParseException e) {
             if (Pattern.compile("^([0-1]\\d|2[0-3]):[0-5]\\d$").matcher(minkabu.getTargetDate()).find()) {
                 targetDate = nowLocalDate();
+            } else if("--:--".equals(minkabu.getTargetDate())){
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
+                                        "\t企業コード:{0}\tスクレイピング結果:{1}",
+                                code,
+                                minkabu.getTargetDate()
+                        ),
+                        Category.STOCK,
+                        Process.REGISTER
+                ), e);
+
+                return;
             } else {
                 log.warn(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
