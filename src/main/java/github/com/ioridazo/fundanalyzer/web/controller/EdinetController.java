@@ -143,15 +143,15 @@ public class EdinetController {
     }
 
     /**
-     * 財務諸表の分析する
+     * 指定書類IDをスクレイピング/分析する
      *
      * @param date       提出日
      * @param documentId 書類ID
      * @return EdinetDetail
      */
-    @PostMapping("/v1/analyze/id")
-    public String analyzeById(final String date, final String documentId) {
-        analysisService.analyzeById(IdInputData.of(documentId));
+    @PostMapping("/v2/scrape/id")
+    public String scrapeById(final String date, final String documentId) {
+        analysisService.executeById(IdInputData.of(documentId));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                 .queryParam("submitDate", date).build().encode().toUriString();
     }
