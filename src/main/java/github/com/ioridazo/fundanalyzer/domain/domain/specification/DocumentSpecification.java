@@ -278,12 +278,16 @@ public class DocumentSpecification {
                                 results.getFilerName(),
                                 results.getDocTypeCode().orElse("null")
                         ),
+                        results.getDocId(),
+                        results.getEdinetCode().orElse("null"),
                         Category.DOCUMENT,
                         Process.REGISTER
                 ));
             } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
                 log.error(FundanalyzerLogClient.toSpecificationLogObject(
                         "参照整合性制約違反が発生しました。スタックトレースを参考に原因を確認してください。",
+                        results.getDocId(),
+                        results.getEdinetCode().orElse("null"),
                         Category.DOCUMENT,
                         Process.REGISTER
                 ), e.getRootCause());
@@ -424,6 +428,7 @@ public class DocumentSpecification {
                                         "\t会社コード:{0}\t書類ID:{1}\t書類種別コード:{2}\t提出日:{3}\t対象年:{4}",
                                 companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
                                 document.getDocumentId(),
+                                document.getEdinetCode(),
                                 document.getDocumentTypeCode().toValue(),
                                 document.getSubmitDate(),
                                 document.getDocumentPeriod().map(String::valueOf).orElse("null")

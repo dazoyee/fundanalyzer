@@ -373,6 +373,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                                 "条件を満たさないため、次の企業のビューを更新しませんでした。\t企業コード:{0}",
                                 company.getCode()
                         ),
+                        companySpecification.findCompanyByCode(company.getCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.VIEW,
                         Process.UPDATE
                 ), e);

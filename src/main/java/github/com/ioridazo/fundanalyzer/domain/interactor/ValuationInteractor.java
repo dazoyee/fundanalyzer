@@ -102,6 +102,7 @@ public class ValuationInteractor implements ValuationUseCase {
 
                     log.trace(FundanalyzerLogClient.toInteractorLogObject(
                             MessageFormat.format("株価を評価しました。\t企業コード:{0}", inputData.getCode()),
+                            companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                             Category.STOCK,
                             Process.EVALUATE,
                             System.currentTimeMillis() - startTime
@@ -113,6 +114,7 @@ public class ValuationInteractor implements ValuationUseCase {
 
             log.trace(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("評価対象の株価が存在しませんでした。\t企業コード:{0}", inputData.getCode()),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                     Category.STOCK,
                     Process.EVALUATE,
                     System.currentTimeMillis() - startTime
@@ -121,12 +123,14 @@ public class ValuationInteractor implements ValuationUseCase {
         } catch (final FundanalyzerNotExistException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     "情報が不足していたため、評価できませんでした。",
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                     Category.STOCK,
                     Process.EVALUATE
             ), e);
         } catch (final DateTimeException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     "対象日時の生成に失敗したため、評価できませんでした。",
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                     Category.STOCK,
                     Process.EVALUATE
             ), e);

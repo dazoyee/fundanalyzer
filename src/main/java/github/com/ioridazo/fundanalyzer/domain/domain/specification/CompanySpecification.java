@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 public class CompanySpecification {
@@ -87,7 +86,7 @@ public class CompanySpecification {
                 .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
                 .filter(Company::isLived)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -99,7 +98,7 @@ public class CompanySpecification {
         return companyDao.selectByFavorite().stream()
                 .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -190,7 +189,7 @@ public class CompanySpecification {
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
                 .filter(Company::isLived)
                 .filter(company -> industrySpecification.isTarget(company.getIndustryId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

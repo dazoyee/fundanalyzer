@@ -175,6 +175,8 @@ public class EdinetDocumentSpecification {
                                 results.getFilerName(),
                                 results.getDocTypeCode().orElse("null")
                         ),
+                        results.getDocId(),
+                        results.getEdinetCode().orElse("null"),
                         Category.DOCUMENT,
                         Process.REGISTER
                 ));

@@ -228,14 +228,16 @@ public class DocumentInteractor implements DocumentUseCase {
     public void scrape(final IdInputData inputData) {
         final long startTime = System.currentTimeMillis();
 
-        scrape(documentSpecification.findDocument(inputData));
+        final Document document = documentSpecification.findDocument(inputData);
+        scrape(document);
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format(
                         "次のドキュメントに対してスクレイピング処理を正常に終了しました。\t書類ID:{0}",
                         inputData.getId()
                 ),
-                inputData.getId(),
+                document.getDocumentId(),
+                document.getEdinetCode(),
                 Category.DOCUMENT,
                 Process.SCRAPING,
                 System.currentTimeMillis() - startTime
@@ -325,6 +327,7 @@ public class DocumentInteractor implements DocumentUseCase {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("すべての処理ステータスを完了に更新しました。\t書類ID:{0}", inputData.getId()),
                     inputData.getId(),
+                    documentSpecification.findDocument(inputData).getEdinetCode(),
                     Category.DOCUMENT,
                     Process.UPDATE,
                     System.currentTimeMillis() - startTime
@@ -339,6 +342,7 @@ public class DocumentInteractor implements DocumentUseCase {
                             inputData.getId()
                     ),
                     inputData.getId(),
+                    documentSpecification.findDocument(inputData).getEdinetCode(),
                     Category.DOCUMENT,
                     Process.UPDATE,
                     System.currentTimeMillis() - startTime
@@ -389,6 +393,7 @@ public class DocumentInteractor implements DocumentUseCase {
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("ドキュメントを処理対象外にしました。\t書類ID:{0}", inputData.getId()),
                 inputData.getId(),
+                documentSpecification.findDocument(inputData).getEdinetCode(),
                 Category.DOCUMENT,
                 Process.REMOVE,
                 System.currentTimeMillis() - startTime

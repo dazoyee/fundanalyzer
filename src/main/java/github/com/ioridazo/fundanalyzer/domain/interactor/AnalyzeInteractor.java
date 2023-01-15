@@ -77,11 +77,13 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     @Override
     public void analyze(final IdInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        this.analyze(documentSpecification.findDocument(inputData));
+        final Document document = documentSpecification.findDocument(inputData);
+        this.analyze(document);
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("書類ID[{0}]の分析が正常に終了しました。", inputData.getId()),
-                inputData.getId(),
+                document.getDocumentId(),
+                document.getEdinetCode(),
                 Category.ANALYSIS,
                 Process.ANALYSIS,
                 System.currentTimeMillis() - startTime
@@ -256,7 +258,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             return;
         }
 
-        if (analysisResult.getBps().isEmpty() && analysisResult.getEps().isEmpty()){
+        if (analysisResult.getBps().isEmpty() && analysisResult.getEps().isEmpty()) {
             // 指標に関する値が存在しない場合は対象外
             return;
         }
@@ -303,6 +305,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                                 latestDate
                         ),
                         analysisResult.getDocumentId(),
+                        companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.INDICATE,
                         System.currentTimeMillis() - startTime
@@ -317,6 +320,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                                 latestDate
                         ),
                         analysisResult.getDocumentId(),
+                        companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.INDICATE,
                         System.currentTimeMillis() - startTime
@@ -329,6 +333,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                             analysisResult.getCompanyCode()
                     ),
                     analysisResult.getDocumentId(),
+                    companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                     Category.ANALYSIS,
                     Process.INDICATE,
                     System.currentTimeMillis() - startTime
