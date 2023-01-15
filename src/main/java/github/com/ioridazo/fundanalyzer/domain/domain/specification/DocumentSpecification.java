@@ -12,6 +12,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Financi
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.EdinetDocument;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerSqlForeignKeyException;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -81,10 +82,15 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Document findDocument(final String documentId) {
-        return Document.of(
-                documentDao.selectByDocumentId(documentId),
-                edinetDocumentSpecification.inquiryLimitedEdinetDocument(documentId)
-        );
+        final Optional<DocumentEntity> document = documentDao.selectByDocumentId(documentId);
+        if (document.isPresent()) {
+            return Document.of(
+                    document.get(),
+                    edinetDocumentSpecification.inquiryLimitedEdinetDocument(documentId)
+            );
+        } else {
+            throw new FundanalyzerNotExistException(documentId);
+        }
     }
 
     /**
@@ -94,10 +100,7 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Document findDocument(final IdInputData inputData) {
-        return Document.of(
-                documentDao.selectByDocumentId(inputData.getId()),
-                edinetDocumentSpecification.inquiryLimitedEdinetDocument(inputData.getId())
-        );
+        return findDocument(inputData.getId());
     }
 
     /**
@@ -250,6 +253,7 @@ public class DocumentSpecification {
                 .filter(results -> insertedList.stream()
                         .map(DocumentEntity::getDocumentId)
                         .noneMatch(inserted -> results.getDocId().equals(inserted)))
+                .filter(results -> documentDao.selectByDocumentId(results.getDocId()).isEmpty())
                 .forEach(results -> insert(submitDate, results));
     }
 
@@ -566,10 +570,10 @@ public class DocumentSpecification {
             return LocalDate.of(Integer.parseInt(periodEnd.substring(0, 4)), 1, 1);
         } else {
             if (Objects.nonNull(parentDocId)) {
-                final DocumentEntity documentEntity = documentDao.selectByDocumentId(parentDocId);
-                if (Objects.nonNull(documentEntity) && documentEntity.getDocumentPeriod().isPresent()) {
+                final Optional<DocumentEntity> documentEntity = documentDao.selectByDocumentId(parentDocId);
+                if (documentEntity.isPresent() && documentEntity.flatMap(DocumentEntity::getDocumentPeriod).isPresent()) {
                     // parent document is present
-                    return documentEntity.getDocumentPeriod().orElseThrow();
+                    return documentEntity.flatMap(DocumentEntity::getDocumentPeriod).orElseThrow();
                 } else {
                     // parent document is null
                     return LocalDate.EPOCH;

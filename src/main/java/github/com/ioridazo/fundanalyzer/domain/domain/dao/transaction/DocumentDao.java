@@ -11,13 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
 public interface DocumentDao {
 
     @Select
-    DocumentEntity selectByDocumentId(String documentId);
+    Optional<DocumentEntity> selectByDocumentId(String documentId);
 
     @Select
     List<DocumentEntity> selectByEdinetCodeAndType(String edinetCode, List<String> documentTypeCode);
