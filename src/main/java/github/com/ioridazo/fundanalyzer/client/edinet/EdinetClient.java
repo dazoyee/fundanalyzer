@@ -12,6 +12,8 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerReco
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,24 +46,27 @@ public class EdinetClient {
 
     private static final Logger log = LogManager.getLogger(EdinetClient.class);
 
-    private static final String CIRCUIT_BREAKER_EDINET = "edinet";
+    private static final String EDINET = "edinet";
 
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
     private final CircuitBreakerRegistry circuitBreaker;
+    private final RateLimiterRegistry rateLimiterRegistry;
 
     public EdinetClient(
             @Qualifier("rest-edinet") final RestTemplate restTemplate,
             @Qualifier("retry-edinet") final RetryTemplate retryTemplate,
-            final CircuitBreakerRegistry circuitBreaker) {
+            final CircuitBreakerRegistry circuitBreaker,
+            final RateLimiterRegistry rateLimiterRegistry) {
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
         this.circuitBreaker = circuitBreaker;
+        this.rateLimiterRegistry = rateLimiterRegistry;
     }
 
     /**
      * EDINETの書類一覧API<br/>
-     * 「メタデータのみ」または「提出書類一覧及びメタデータ」を取得することができる
+     * 「メタデータのみ」または「提出書類一覧及びメタデータ」を取得できる
      *
      * @param parameter パラメータ
      * @return EdinetResponse
@@ -111,49 +116,55 @@ public class EdinetClient {
                 }
 
                 // circuitBreaker
-                return circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET)
+                return circuitBreaker.circuitBreaker(EDINET)
                         .executeSupplier(() -> {
-                            try {
-                                // send
-                                return restTemplate.getForObject(
-                                        "/api/v1/documents.json?date={date}&type={type}",
-                                        EdinetResponse.class,
-                                        Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
-                                );
-                            } catch (final RestClientResponseException e) {
-                                log.warn(FundanalyzerLogClient.toClientLogObject(
-                                        MessageFormat.format(
-                                                "EDINETから200以外のHTTPステータスコードが返却されました。" +
-                                                        "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
-                                                e.getRawStatusCode(),
-                                                e.getResponseBodyAsString()
-                                        ),
-                                        Category.DOCUMENT,
-                                        Process.EDINET
-                                ));
 
-                                if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
-                                    throw new FundanalyzerRestClientException(
-                                            "リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。", e);
-                                } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "データが取得できません。パラメータの設定値を見直してください。", e);
-                                } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
-                                } else {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", e);
-                                }
-                            } catch (final ResourceAccessException e) {
-                                throw new FundanalyzerCircuitBreakerRecordException(
-                                        "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
-                            } catch (final UnknownContentTypeException e) {
-                                throw new FundanalyzerCircuitBreakerRecordException(
-                                        "HttpMessageConverter応答を抽出するのに適したものが見つかりませんでした。" +
-                                                "外部機関のサービス稼働状況を確認してください。※システムメンテナンスの疑いあり", e
-                                );
-                            }
+                            // rateLimiter
+                            return rateLimiterRegistry.rateLimiter(EDINET)
+                                    .executeSupplier(() -> {
+
+                                        try {
+                                            // send
+                                            return restTemplate.getForObject(
+                                                    "/api/v1/documents.json?date={date}&type={type}",
+                                                    EdinetResponse.class,
+                                                    Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
+                                            );
+                                        } catch (final RestClientResponseException e) {
+                                            log.warn(FundanalyzerLogClient.toClientLogObject(
+                                                    MessageFormat.format(
+                                                            "EDINETから200以外のHTTPステータスコードが返却されました。" +
+                                                                    "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                            e.getRawStatusCode(),
+                                                            e.getResponseBodyAsString()
+                                                    ),
+                                                    Category.DOCUMENT,
+                                                    Process.EDINET
+                                            ));
+
+                                            if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
+                                                throw new FundanalyzerRestClientException(
+                                                        "リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。", e);
+                                            } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "データが取得できません。パラメータの設定値を見直してください。", e);
+                                            } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
+                                            } else {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", e);
+                                            }
+                                        } catch (final ResourceAccessException e) {
+                                            throw new FundanalyzerCircuitBreakerRecordException(
+                                                    "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+                                        } catch (final UnknownContentTypeException e) {
+                                            throw new FundanalyzerCircuitBreakerRecordException(
+                                                    "HttpMessageConverter応答を抽出するのに適したものが見つかりませんでした。" +
+                                                            "外部機関のサービス稼働状況を確認してください。※システムメンテナンスの疑いあり", e
+                                            );
+                                        }
+                                    });
                         });
             });
 
@@ -181,8 +192,10 @@ public class EdinetClient {
 
             return edinetResponse;
 
+        } catch (final RequestNotPermitted e) {
+            throw new FundanalyzerRestClientException(EDINET + "との通信でレートリミッターが作動しました。");
         } catch (final CallNotPermittedException e) {
-            throw new FundanalyzerRestClientException(CIRCUIT_BREAKER_EDINET + "との通信でサーキットブレーカーがオープンしました。");
+            throw new FundanalyzerRestClientException(EDINET + "との通信でサーキットブレーカーがオープンしました。");
         } catch (final Exception e) {
             throw new FundanalyzerRestClientException(e.getMessage(), e.getCause());
         }
@@ -222,58 +235,64 @@ public class EdinetClient {
                 }
 
                 // circuitBreaker
-                return circuitBreaker.circuitBreaker(CIRCUIT_BREAKER_EDINET)
+                return circuitBreaker.circuitBreaker(EDINET)
                         .executeSupplier(() -> {
-                            try {
-                                // send
-                                return restTemplate.execute(
-                                        "/api/v1/documents/{docId}?type={type}",
-                                        HttpMethod.GET,
-                                        request -> request
-                                                .getHeaders()
-                                                .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
-                                        response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
-                                        Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
-                                );
-                            } catch (final RestClientResponseException e) {
-                                log.warn(FundanalyzerLogClient.toClientLogObject(
-                                        MessageFormat.format(
-                                                "EDINETから200以外のHTTPステータスコードが返却されました。" +
-                                                        "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
-                                                e.getRawStatusCode(),
-                                                e.getResponseBodyAsString()
-                                        ),
-                                        parameter.getDocId(),
-                                        Category.DOCUMENT,
-                                        Process.DOWNLOAD
-                                ));
 
-                                if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
-                                    throw new FundanalyzerRestClientException(
-                                            "リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。", e);
-                                } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", e);
-                                } else if (HttpStatus.FORBIDDEN.value() == e.getRawStatusCode()
-                                        && "The request is blocked.".contains(e.getResponseBodyAsString())) {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "リクエストがブロックされました。対象の書類を確認してください。", e);
-                                } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
-                                } else {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", e);
-                                }
-                            } catch (final ResourceAccessException e) {
-                                if (e.getCause() instanceof FileAlreadyExistsException) {
-                                    // ファイルが既に存在していた場合、throwしない
-                                    return null;
-                                } else {
-                                    throw new FundanalyzerCircuitBreakerRecordException(
-                                            "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
-                                }
-                            }
+                            // rateLimiter
+                            return rateLimiterRegistry.rateLimiter(EDINET)
+                                    .executeSupplier(() -> {
+
+                                        try {
+                                            // send
+                                            return restTemplate.execute(
+                                                    "/api/v1/documents/{docId}?type={type}",
+                                                    HttpMethod.GET,
+                                                    request -> request
+                                                            .getHeaders()
+                                                            .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
+                                                    response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
+                                                    Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
+                                            );
+                                        } catch (final RestClientResponseException e) {
+                                            log.warn(FundanalyzerLogClient.toClientLogObject(
+                                                    MessageFormat.format(
+                                                            "EDINETから200以外のHTTPステータスコードが返却されました。" +
+                                                                    "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                            e.getRawStatusCode(),
+                                                            e.getResponseBodyAsString()
+                                                    ),
+                                                    parameter.getDocId(),
+                                                    Category.DOCUMENT,
+                                                    Process.DOWNLOAD
+                                            ));
+
+                                            if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
+                                                throw new FundanalyzerRestClientException(
+                                                        "リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。", e);
+                                            } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", e);
+                                            } else if (HttpStatus.FORBIDDEN.value() == e.getRawStatusCode()
+                                                    && "The request is blocked.".contains(e.getResponseBodyAsString())) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "リクエストがブロックされました。対象の書類を確認してください。", e);
+                                            } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
+                                            } else {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", e);
+                                            }
+                                        } catch (final ResourceAccessException e) {
+                                            if (e.getCause() instanceof FileAlreadyExistsException) {
+                                                // ファイルが既に存在していた場合、throwしない
+                                                return null;
+                                            } else {
+                                                throw new FundanalyzerCircuitBreakerRecordException(
+                                                        "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
+                                            }
+                                        }
+                                    });
                         });
             });
 
@@ -283,8 +302,10 @@ public class EdinetClient {
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             ));
+        } catch (final RequestNotPermitted e) {
+            throw new FundanalyzerRestClientException(EDINET + "との通信でレートリミッターが作動しました。");
         } catch (final CallNotPermittedException e) {
-            throw new FundanalyzerRestClientException(CIRCUIT_BREAKER_EDINET + "との通信でサーキットブレーカーがオープンしました。");
+            throw new FundanalyzerRestClientException(EDINET + "との通信でサーキットブレーカーがオープンしました。");
         } catch (final Exception e) {
             throw new FundanalyzerRestClientException(e.getMessage(), e.getCause());
         }
