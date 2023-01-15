@@ -136,7 +136,7 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-6">
-            <form method="get" th:action="@{/v1/update/edinet/view}">
+            <form method="post" th:action="@{/v1/update/edinet-list}">
               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
               <button type="submit" class="btn btn-block btn-outline-secondary">更新して前に戻る</button>
             </form>
@@ -221,8 +221,7 @@
                               <tbody>
                               <tr>
                                 <td th:text="${documentDetail.document.documentId}">書類ID</td>
-                                <td th:text="${documentDetail.document.edinetCode}">EDINETコード
-                                </td>
+                                <td th:text="${documentDetail.document.edinetCode}">EDINETコード</td>
                                 <td th:text="${documentDetail.document.documentTypeName}">書類種別</td>
                                 <td th:text="${documentDetail.document.documentPeriod}">対象年</td>
                                 <td th:text="${documentDetail.document.downloaded}">ダウンロード</td>
@@ -247,17 +246,17 @@
 
                         <div class="row">
                           <div class="col-6">
+                            <form method="post" th:action="@{/v2/scrape/id}">
+                              <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
+                              <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                              <button type="submit" class="btn btn-block btn-outline-info">スクレイピング/分析する</button>
+                            </form>
+                          </div>
+                          <div class="col-6">
                             <form method="post" th:action="@{/v1/update/all-done/status}">
                               <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
                               <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
                               <button type="submit" class="btn btn-block btn-outline-info">ステータス更新：すべて完了</button>
-                            </form>
-                          </div>
-                          <div class="col-6">
-                            <form method="post" th:action="@{/v1/analyze/id}">
-                              <input type="hidden" th:value="${edinetDetail.edinetList.submitDate}" name="date"/>
-                              <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
-                              <button type="submit" class="btn btn-block btn-outline-info">分析する</button>
                             </form>
                           </div>
                         </div>

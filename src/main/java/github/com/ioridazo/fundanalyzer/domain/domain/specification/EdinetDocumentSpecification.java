@@ -151,6 +151,7 @@ public class EdinetDocumentSpecification {
                 .filter(results -> insertedList.stream()
                         .map(EdinetDocumentEntity::getDocId)
                         .noneMatch(inserted -> results.getDocId().equals(inserted)))
+                .filter(results -> edinetDocumentDao.selectByDocId(results.getDocId()).isEmpty())
                 .forEach(this::insert);
     }
 
@@ -170,10 +171,12 @@ public class EdinetDocumentSpecification {
                                         "\tテーブル名:{0}\t書類ID:{1}\tEDINETコード:{2}\t提出者名:{3}\t書類種別コード:{4}",
                                 "edinet_document",
                                 results.getDocId(),
-                                results.getEdinetCode(),
+                                results.getEdinetCode().orElse("null"),
                                 results.getFilerName(),
-                                results.getDocTypeCode()
+                                results.getDocTypeCode().orElse("null")
                         ),
+                        results.getDocId(),
+                        results.getEdinetCode().orElse("null"),
                         Category.DOCUMENT,
                         Process.REGISTER
                 ));

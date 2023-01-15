@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.Investment
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
@@ -29,10 +30,13 @@ public class InvestmentIndicatorSpecification {
     private static final Logger log = LogManager.getLogger(InvestmentIndicatorSpecification.class);
 
     private final InvestmentIndicatorDao investmentIndicatorDao;
+    private final CompanySpecification companySpecification;
 
     public InvestmentIndicatorSpecification(
-            final InvestmentIndicatorDao investmentIndicatorDao) {
+            final InvestmentIndicatorDao investmentIndicatorDao,
+            final CompanySpecification companySpecification) {
         this.investmentIndicatorDao = investmentIndicatorDao;
+        this.companySpecification = companySpecification;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -109,6 +113,7 @@ public class InvestmentIndicatorSpecification {
                                 analysisResultEntity.getSubmitDate(),
                                 stockPrice
                         ),
+                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);
@@ -121,6 +126,7 @@ public class InvestmentIndicatorSpecification {
                                 analysisResultEntity.getSubmitDate(),
                                 stockPrice
                         ),
+                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);

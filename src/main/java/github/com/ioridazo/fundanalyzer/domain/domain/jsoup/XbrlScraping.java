@@ -57,7 +57,7 @@ public class XbrlScraping {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次のキーワードにてファイルを確認しました。\t財務諸表名:{0}\tキーワード:{1}",
-                            scrapingKeywordEntity.getRemarks(),
+                            scrapingKeywordEntity.getRemarks().orElse("null"),
                             scrapingKeywordEntity.getKeyword()
                     ),
                     document,
@@ -70,7 +70,7 @@ public class XbrlScraping {
             log.debug(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次のキーワードに合致するファイルは存在しませんでした。\t財務諸表名:{0}\tキーワード:{1}",
-                            scrapingKeywordEntity.getRemarks(),
+                            scrapingKeywordEntity.getRemarks().orElse("null"),
                             scrapingKeywordEntity.getKeyword()
                     ),
                     document,

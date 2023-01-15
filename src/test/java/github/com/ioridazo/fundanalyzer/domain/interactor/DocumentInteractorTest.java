@@ -214,7 +214,7 @@ class DocumentInteractorTest {
         void idInputData() {
             var inputData = IdInputData.of("id");
 
-            when(documentSpecification.findDocument("id")).thenReturn(defaultDocument());
+            when(documentSpecification.findDocument(inputData)).thenReturn(defaultDocument());
             doNothing().when(documentInteractor).scrape((Document) any());
 
             assertDoesNotThrow(() -> documentInteractor.scrape(inputData));
@@ -566,6 +566,7 @@ class DocumentInteractorTest {
             inputData = IdInputData.of(
                     "id"
             );
+            when(documentSpecification.findDocument(inputData)).thenReturn(defaultDocument());
         }
 
         @DisplayName("updateAllDoneStatus : 処理ステータスを更新する")
@@ -615,6 +616,7 @@ class DocumentInteractorTest {
         @Test
         void id_ok() {
             var inputData = IdInputData.of("documentId");
+            when(documentSpecification.findDocument(inputData)).thenReturn(defaultDocument());
             assertDoesNotThrow(() -> documentInteractor.removeDocument(inputData));
         }
 

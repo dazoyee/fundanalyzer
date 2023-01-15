@@ -6,10 +6,11 @@ import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListRequest
 import github.com.ioridazo.fundanalyzer.client.edinet.entity.request.ListType;
 import github.com.ioridazo.fundanalyzer.config.AppConfig;
 import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -46,14 +48,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Timeout(10)
-@SuppressWarnings("NewClassNamingConvention")
 class EdinetClientTest {
 
     private static final String CIRCUIT_BREAKER_EDINET = "edinet";
 
     private static MockWebServer server;
     private RestTemplate restTemplate;
+    private RetryTemplate retryTemplate;
     private CircuitBreakerRegistry circuitBreakerRegistry;
+    private RateLimiterRegistry rateLimiterRegistry;
+
     private EdinetClient client;
 
     @BeforeEach
@@ -62,11 +66,14 @@ class EdinetClientTest {
         server.start();
 
         this.restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(properties()));
+        this.retryTemplate = new AppConfig().retryTemplateEdinet(properties());
         this.circuitBreakerRegistry = new CircuitBreakerRegistry.Builder().build();
+        this.rateLimiterRegistry = new RateLimiterRegistry.Builder().build();
         this.client = Mockito.spy(new EdinetClient(
                 restTemplate,
-                new AppConfig().retryTemplateEdinet(properties()),
-                circuitBreakerRegistry
+                retryTemplate,
+                circuitBreakerRegistry,
+                rateLimiterRegistry
         ));
 
         Mockito.clearInvocations(client);
@@ -259,7 +266,7 @@ class EdinetClientTest {
 
             server.enqueue(new MockResponse().setResponseCode(httpStatus));
 
-            var actual = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
+            var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -296,8 +303,9 @@ class EdinetClientTest {
                         .build();
                 this.client = Mockito.spy(new EdinetClient(
                         restTemplate,
-                        new AppConfig().retryTemplateEdinet(properties()),
-                        circuitBreakerRegistry
+                        retryTemplate,
+                        circuitBreakerRegistry,
+                        rateLimiterRegistry
                 ));
 
                 Mockito.clearInvocations(client);
@@ -312,8 +320,8 @@ class EdinetClientTest {
                 server.enqueue(new MockResponse().setResponseCode(404));
                 server.enqueue(new MockResponse().setResponseCode(404));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
-                assertEquals("データが取得できません。パラメータの設定値を見直してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("データが取得できません。パラメータの設定値を見直してください。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
@@ -331,8 +339,8 @@ class EdinetClientTest {
                 server.enqueue(new MockResponse().setResponseCode(500));
                 server.enqueue(new MockResponse().setResponseCode(500));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
-                assertEquals("EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
@@ -350,8 +358,8 @@ class EdinetClientTest {
                 server.enqueue(new MockResponse().setResponseCode(502));
                 server.enqueue(new MockResponse().setResponseCode(502));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
-                assertEquals("EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
@@ -369,8 +377,8 @@ class EdinetClientTest {
                 server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
                 server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
-                assertEquals("IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
@@ -403,13 +411,79 @@ class EdinetClientTest {
             }
         }
 
+        @Nested
+        class rateLimiter {
+
+            private RateLimiterRegistry rateLimiterRegistry;
+            private EdinetClient client;
+
+            @DisplayName("list : レートリミッターが作動すること")
+            @Test
+            void rateLimiter_do() {
+                rateLimiterRegistry = new RateLimiterRegistry.Builder()
+                        .withRateLimiterConfig(
+                                new RateLimiterConfig.Builder()
+                                        .limitRefreshPeriod(Duration.ofMillis(10000))
+                                        .limitForPeriod(1)
+                                        .timeoutDuration(Duration.ofMillis(0))
+                                        .build()
+                        )
+                        .build();
+                client = Mockito.spy(new EdinetClient(
+                        restTemplate,
+                        retryTemplate,
+                        circuitBreakerRegistry,
+                        rateLimiterRegistry
+                ));
+
+                var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
+
+                server.enqueue(new MockResponse().setResponseCode(200));
+
+                assertDoesNotThrow(() -> client.list(parameter));
+                var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+                assertTrue(Objects.requireNonNull(actual.getMessage()).contains("との通信でレートリミッターが作動しました。"));
+                assertEquals("edinet", rateLimiterRegistry.rateLimiter("edinet").getName());
+
+                verify(restTemplate, times(1)).getForObject(anyString(), any(), anyMap());
+            }
+
+            @DisplayName("list : レートリミッターが作動しないこと")
+            @Test
+            void rateLimiter_dont() {
+                rateLimiterRegistry = new RateLimiterRegistry.Builder()
+                        .withRateLimiterConfig(
+                                new RateLimiterConfig.Builder()
+                                        .limitRefreshPeriod(Duration.ofMillis(10000))
+                                        .limitForPeriod(10)
+                                        .timeoutDuration(Duration.ofMillis(0))
+                                        .build()
+                        )
+                        .build();
+                client = Mockito.spy(new EdinetClient(
+                        restTemplate,
+                        retryTemplate,
+                        circuitBreakerRegistry,
+                        rateLimiterRegistry
+                ));
+
+                var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
+
+                server.enqueue(new MockResponse().setResponseCode(200));
+                server.enqueue(new MockResponse().setResponseCode(200));
+
+                assertDoesNotThrow(() -> client.list(parameter));
+                assertDoesNotThrow(() -> client.list(parameter));
+                verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
+            }
+        }
 
         @DisplayName("list : 通信をリトライする")
         @Test
         void retryable() throws InterruptedException {
             var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
-            assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.list(parameter));
+            assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -424,6 +498,12 @@ class EdinetClientTest {
     @Nested
     class acquisition {
 
+        @BeforeEach
+        void setUp() throws IOException {
+            doNothing().when(client).makeDirectory(any());
+            doReturn(new Object()).when(client).copyFile(any(), any());
+        }
+
         @DisplayName("acquisition : EDINETの書類取得APIでファイルをダウンロードする")
         @Test
         void acquisition_ok() throws InterruptedException, IOException {
@@ -431,7 +511,6 @@ class EdinetClientTest {
             var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
             server.enqueue(new MockResponse().setResponseCode(200));
-            doNothing().when(client).makeDirectory(storagePath);
             doReturn(null).when(client).copyFile(any(), any());
 
             assertDoesNotThrow(() -> client.acquisition(storagePath, parameter));
@@ -451,10 +530,9 @@ class EdinetClientTest {
             var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
             server.enqueue(new MockResponse().setResponseCode(httpStatus));
-            doNothing().when(client).makeDirectory(storagePath);
             doReturn(null).when(client).copyFile(any(), any());
 
-            var actual = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
+            var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
@@ -491,8 +569,9 @@ class EdinetClientTest {
                         .build();
                 this.client = Mockito.spy(new EdinetClient(
                         restTemplate,
-                        new AppConfig().retryTemplateEdinet(properties()),
-                        circuitBreakerRegistry
+                        retryTemplate,
+                        circuitBreakerRegistry,
+                        rateLimiterRegistry
                 ));
 
                 Mockito.clearInvocations(client);
@@ -501,15 +580,18 @@ class EdinetClientTest {
 
             @DisplayName("acquisition : HTTPステータス404のときにサーキットブレーカーがオープンすること")
             @Test
-            void not_found() {
+            void not_found() throws IOException {
                 var storagePath = new File("path1");
                 var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
+
                 server.enqueue(new MockResponse().setResponseCode(404));
                 server.enqueue(new MockResponse().setResponseCode(404));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
-                assertEquals("データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
@@ -521,15 +603,18 @@ class EdinetClientTest {
 
             @DisplayName("acquisition : HTTPステータス500のときにサーキットブレーカーがオープンすること")
             @Test
-            void internal_server_error() {
+            void internal_server_error() throws IOException {
                 var storagePath = new File("path1");
                 var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
+
                 server.enqueue(new MockResponse().setResponseCode(500));
                 server.enqueue(new MockResponse().setResponseCode(500));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
-                assertEquals("EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
@@ -541,15 +626,18 @@ class EdinetClientTest {
 
             @DisplayName("acquisition : HTTPステータス502のときにサーキットブレーカーがオープンすること")
             @Test
-            void other_error() {
+            void other_error() throws IOException {
                 var storagePath = new File("path1");
                 var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
+
                 server.enqueue(new MockResponse().setResponseCode(502));
                 server.enqueue(new MockResponse().setResponseCode(502));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
-                assertEquals("EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("EDINET API仕様書に規定されていないHTTPステータスコードが返却されました。スタックトレースを参考に詳細を確認してください。"));
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
@@ -561,15 +649,19 @@ class EdinetClientTest {
 
             @DisplayName("acquisition : 通信タイムアウトのときにサーキットブレーカーがオープンすること")
             @Test
-            void timeout() {
+            void timeout() throws IOException {
                 var storagePath = new File("path1");
                 var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
 
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
+
                 server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
                 server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
 
-                var actual1 = assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
-                assertEquals("IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", actual1.getMessage());
+                var actual1 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
+                assertTrue(Objects.requireNonNull(actual1.getMessage()).contains("IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。"));
+
                 assertEquals("OPEN", circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getState().name());
 
                 var actual2 = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
@@ -581,9 +673,12 @@ class EdinetClientTest {
 
             @DisplayName("acquisition : サーキットブレーカーがオープンしないこと")
             @Test
-            void bad_request() {
+            void bad_request() throws IOException {
                 var storagePath = new File("path1");
                 var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
 
                 server.enqueue(new MockResponse().setResponseCode(400));
                 server.enqueue(new MockResponse().setResponseCode(400));
@@ -603,6 +698,82 @@ class EdinetClientTest {
             }
         }
 
+        @Nested
+        class rateLimiter {
+
+            private RestTemplate restTemplate;
+            private RateLimiterRegistry rateLimiterRegistry;
+            private EdinetClient client;
+
+            @DisplayName("acquisition : レートリミッターが作動すること")
+            @Test
+            void rateLimiter_do() throws IOException {
+                restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(properties()));
+                rateLimiterRegistry = new RateLimiterRegistry.Builder()
+                        .withRateLimiterConfig(
+                                new RateLimiterConfig.Builder()
+                                        .limitRefreshPeriod(Duration.ofMillis(10000))
+                                        .limitForPeriod(1)
+                                        .timeoutDuration(Duration.ofMillis(0))
+                                        .build()
+                        )
+                        .build();
+                client = Mockito.spy(new EdinetClient(
+                        restTemplate,
+                        retryTemplate,
+                        circuitBreakerRegistry,
+                        rateLimiterRegistry
+                ));
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
+
+                var storagePath = new File("path1");
+                var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+
+                server.enqueue(new MockResponse().setResponseCode(200));
+
+                assertDoesNotThrow(() -> client.acquisition(storagePath, parameter));
+                var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
+                assertTrue(Objects.requireNonNull(actual.getMessage()).contains("との通信でレートリミッターが作動しました。"));
+                assertEquals("edinet", rateLimiterRegistry.rateLimiter("edinet").getName());
+
+                verify(restTemplate, times(1)).execute(anyString(), any(), any(), any(), anyMap());
+            }
+
+            @DisplayName("acquisition : レートリミッターが作動しないこと")
+            @Test
+            void rateLimiter_dont() throws IOException {
+                restTemplate = Mockito.spy(new AppConfig().restTemplateEdinet(properties()));
+                rateLimiterRegistry = new RateLimiterRegistry.Builder()
+                        .withRateLimiterConfig(
+                                new RateLimiterConfig.Builder()
+                                        .limitRefreshPeriod(Duration.ofMillis(10000))
+                                        .limitForPeriod(10)
+                                        .timeoutDuration(Duration.ofMillis(0))
+                                        .build()
+                        )
+                        .build();
+                client = Mockito.spy(new EdinetClient(
+                        restTemplate,
+                        retryTemplate,
+                        circuitBreakerRegistry,
+                        rateLimiterRegistry
+                ));
+                doNothing().when(client).makeDirectory(any());
+                doReturn(new Object()).when(client).copyFile(any(), any());
+
+                var storagePath = new File("path");
+                var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+
+                server.enqueue(new MockResponse().setResponseCode(200));
+                server.enqueue(new MockResponse().setResponseCode(200));
+
+                assertDoesNotThrow(() -> client.acquisition(storagePath, parameter));
+                assertDoesNotThrow(() -> client.acquisition(storagePath, parameter));
+                verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
+            }
+        }
+
         @DisplayName("acquisition : 通信をリトライする")
         @Test
         void retryable() throws InterruptedException {
@@ -612,7 +783,7 @@ class EdinetClientTest {
             server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
             server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
 
-            assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> client.acquisition(storagePath, parameter));
+            assertThrows(FundanalyzerRestClientException.class, () -> client.acquisition(storagePath, parameter));
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
