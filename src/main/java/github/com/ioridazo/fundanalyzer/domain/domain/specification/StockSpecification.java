@@ -194,6 +194,7 @@ public class StockSpecification {
                                     "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
                                             "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.targetDate()
                             ),
+                            companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
                             Category.STOCK,
                             Process.REGISTER
                     ));
@@ -217,6 +218,20 @@ public class StockSpecification {
         } catch (DateTimeParseException e) {
             if (Pattern.compile("^([0-1]\\d|2[0-3]):[0-5]\\d$").matcher(minkabu.getTargetDate()).find()) {
                 targetDate = nowLocalDate();
+            } else if ("--:--".equals(minkabu.getTargetDate())) {
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
+                                        "\t企業コード:{0}\tスクレイピング結果:{1}",
+                                code,
+                                minkabu.getTargetDate()
+                        ),
+                        companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                        Category.STOCK,
+                        Process.REGISTER
+                ), e);
+
+                return;
             } else {
                 log.warn(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
@@ -225,6 +240,7 @@ public class StockSpecification {
                                 code,
                                 minkabu.getTargetDate()
                         ),
+                        companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
                         Category.STOCK,
                         Process.REGISTER
                 ), e);
@@ -255,6 +271,7 @@ public class StockSpecification {
                                     "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
                                             "\t企業コード:{0}\t対象日:{1}", code, minkabu.targetDate()
                             ),
+                            companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
                             Category.STOCK,
                             Process.REGISTER
                     ));
@@ -282,6 +299,7 @@ public class StockSpecification {
                                     "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
                                             "\t企業コード:{0}\t対象日:{1}", code, yahooFinance.targetDate()
                             ),
+                            companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
                             Category.STOCK,
                             Process.REGISTER
                     ));
@@ -385,6 +403,7 @@ public class StockSpecification {
                             "{0} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。"
                             , code
                     ),
+                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER
             ), e);

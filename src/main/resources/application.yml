@@ -64,8 +64,8 @@ resilience4j:
       failureRateThreshold: 100                           # OPENへの閾値
       permittedNumberOfCallsInHalfOpenState: 1            # HALF_OPENの時に許可する呼び出し回数
       slidingWindowType: COUNT_BASED                      # COUNT_BASED | TIME_BASED
-      slidingWindowSize: 10                               # OPENするかを計算する母数
-      minimumNumberOfCalls: 10                            # 最低エラー回数
+      slidingWindowSize: 20                               # OPENするかを計算する母数
+      minimumNumberOfCalls: 20                            # 最低エラー回数
       waitDurationInOpenState: 300s                       # OPENからHALF_OPENに移行するまでの時間
       automaticTransitionFromOpenToHalfOpenEnabled: false # 自動でHALF_OPENにするか
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.edinet.EdinetClient.RecordFailurePredicate
@@ -111,6 +111,11 @@ resilience4j:
       recordFailurePredicate: github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient.RecordFailurePredicate
 
   ratelimiter.instances:
+    edinet:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 20              # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     nikkei:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間

@@ -6,6 +6,11 @@ logging:
 
 resilience4j:
   ratelimiter.instances:
+    edinet:
+      registerHealthIndicator: true
+      limitRefreshPeriod: 1s          # 計測する期間
+      limitForPeriod: 20              # 指定した期間の間に呼び出し可能な回数
+      timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     nikkei:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間

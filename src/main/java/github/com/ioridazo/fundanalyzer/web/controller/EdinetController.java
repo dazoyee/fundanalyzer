@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -40,27 +41,27 @@ public class EdinetController {
     /**
      * 会社情報を更新する
      *
+     * @param redirectAttributes redirectAttributes
      * @return EdinetList
      */
     @GetMapping("/v1/company")
-    public String updateCompany() {
+    public String updateCompany(final RedirectAttributes redirectAttributes) {
         edinetService.updateCompany();
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)
-                .queryParam("message", "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
-                .build().encode().toUriString();
+        redirectAttributes.addFlashAttribute("message", "会社情報アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。");
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH).toUriString();
     }
 
     /**
      * 処理状況を更新する
      *
+     * @param redirectAttributes redirectAttributes
      * @return EdinetList
      */
     @GetMapping("/v1/update/edinet/view")
-    public String updateEdinetView() {
+    public String updateEdinetView(final RedirectAttributes redirectAttributes) {
         viewService.updateEdinetView();
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH)
-                .queryParam("message", "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
-                .build().encode().toUriString();
+        redirectAttributes.addFlashAttribute("message", "処理状況アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。");
+        return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_PATH).toUriString();
     }
 
     /**
@@ -143,15 +144,15 @@ public class EdinetController {
     }
 
     /**
-     * 財務諸表の分析する
+     * 指定書類IDをスクレイピング/分析する
      *
      * @param date       提出日
      * @param documentId 書類ID
      * @return EdinetDetail
      */
-    @PostMapping("/v1/analyze/id")
-    public String analyzeById(final String date, final String documentId) {
-        analysisService.analyzeById(IdInputData.of(documentId));
+    @PostMapping("/v2/scrape/id")
+    public String scrapeById(final String date, final String documentId) {
+        analysisService.executeById(IdInputData.of(documentId));
         return REDIRECT + UriComponentsBuilder.fromUri(V2_EDINET_DETAIL_PATH)
                 .queryParam("submitDate", date).build().encode().toUriString();
     }

@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -121,8 +122,9 @@ public class StockInteractor implements StockUseCase {
                     if (isNikkei) {
                         // 日経
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("日経 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
+                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                                 Category.STOCK,
                                 Process.IMPORT
                         ));
@@ -136,8 +138,9 @@ public class StockInteractor implements StockUseCase {
                                 .filter(kabuoji3 -> LocalDate.parse(kabuoji3.targetDate())
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
                                 .forEach(kabuoji3 -> stockSpecification.insertOfKabuoji3(inputData.getCode5(), kabuoji3));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("kabuoji3 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
+                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                                 Category.STOCK,
                                 Process.IMPORT
                         ));
@@ -152,8 +155,9 @@ public class StockInteractor implements StockUseCase {
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
                                 .forEach(minkabu -> stockSpecification.insertOfMinkabu(inputData.getCode5(), minkabu));
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("みんかぶ から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
+                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                                 Category.STOCK,
                                 Process.IMPORT
                         ));
@@ -167,8 +171,9 @@ public class StockInteractor implements StockUseCase {
                                 .filter(yahooFinance -> LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
                                 .forEach(yahooFinance -> stockSpecification.insertOfYahooFinance(inputData.getCode5(), yahooFinance));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("Yahoo!ファイナンス から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
+                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                                 Category.STOCK,
                                 Process.IMPORT
                         ));
@@ -179,6 +184,7 @@ public class StockInteractor implements StockUseCase {
         } catch (final FundanalyzerCircuitBreakerRecordException | FundanalyzerRateLimiterException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("株価取得の通信に失敗しました。\t企業コード:{0}", inputData.getCode5()),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                     Category.STOCK,
                     Process.IMPORT
             ), e);
@@ -188,6 +194,7 @@ public class StockInteractor implements StockUseCase {
                             "株価取得できなかったため、DBに登録できませんでした。\t企業コード:{0}",
                             inputData.getCode5()
                     ),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
                     Category.STOCK,
                     Process.IMPORT
             ), e);

@@ -107,7 +107,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             documentSpecification.updateDecodeToDone(document);
 
         } catch (FundanalyzerRestClientException e) {
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
                                     "\t処理対象日:{0}\t書類管理番号:{1}",
@@ -121,7 +121,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             ), e);
             documentSpecification.updateDownloadToError(document);
         } catch (IOException e) {
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
                                     "\t処理対象日:{0}\t書類管理番号:{1}",

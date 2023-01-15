@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -427,10 +428,10 @@ class DocumentSpecificationTest {
 
             when(edinetDocumentSpecification.inquiryLimitedEdinetDocument("documentId")).thenReturn(edinetDocument);
             when(documentDao.selectByDocumentId("parentDocId")).thenReturn(
-                    DocumentEntity.builder()
+                    Optional.of(DocumentEntity.builder()
                             .documentPeriod(LocalDate.parse("2019-01-01"))
                             .build()
-            );
+                    ));
             var actual = documentSpecification.recoverDocumentPeriod(document);
             assertEquals(LocalDate.parse("2019-01-01"), actual);
         }
@@ -442,7 +443,7 @@ class DocumentSpecificationTest {
             edinetDocument.setParentDocId("parentDocId");
 
             when(edinetDocumentSpecification.inquiryLimitedEdinetDocument("documentId")).thenReturn(edinetDocument);
-            when(documentDao.selectByDocumentId("parentDocId")).thenReturn(DocumentEntity.builder().build());
+            when(documentDao.selectByDocumentId("parentDocId")).thenReturn(Optional.of(DocumentEntity.builder().build()));
             var actual = documentSpecification.recoverDocumentPeriod(document);
             assertEquals(LocalDate.parse("1970-01-01"), actual);
         }
@@ -471,7 +472,7 @@ class DocumentSpecificationTest {
             results.setParentDocID("docId");
 
             when(documentDao.selectByDocumentId("docId"))
-                    .thenReturn(DocumentEntity.builder().documentPeriod(LocalDate.parse("2020-01-01")).build());
+                    .thenReturn(Optional.of(DocumentEntity.builder().documentPeriod(LocalDate.parse("2020-01-01")).build()));
 
             var actual = documentSpecification.parseDocumentPeriod(results);
 
