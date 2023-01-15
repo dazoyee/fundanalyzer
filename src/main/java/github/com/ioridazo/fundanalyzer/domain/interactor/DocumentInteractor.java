@@ -512,7 +512,7 @@ public class DocumentInteractor implements DocumentUseCase {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "処理ステータスがすべて [9（ERROR）] となったため、除外フラグをONにしました。\t書類ID:{0}",
-                            document
+                            document.getDocumentId()
                     ),
                     document,
                     Category.DOCUMENT,
