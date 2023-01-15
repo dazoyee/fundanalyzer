@@ -100,7 +100,7 @@ public class ValuationInteractor implements ValuationUseCase {
                 if (targetStock.isPresent()) {
                     valuationSpecification.insert(targetStock.get(), latestAnalysisResult.get());
 
-                    log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                    log.trace(FundanalyzerLogClient.toInteractorLogObject(
                             MessageFormat.format("株価を評価しました。\t企業コード:{0}", inputData.getCode()),
                             Category.STOCK,
                             Process.EVALUATE,
@@ -111,7 +111,7 @@ public class ValuationInteractor implements ValuationUseCase {
                 }
             }
 
-            log.debug(FundanalyzerLogClient.toInteractorLogObject(
+            log.trace(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("評価対象の株価が存在しませんでした。\t企業コード:{0}", inputData.getCode()),
                     Category.STOCK,
                     Process.EVALUATE,

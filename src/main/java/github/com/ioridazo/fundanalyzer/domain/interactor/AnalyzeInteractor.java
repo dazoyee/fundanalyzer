@@ -295,7 +295,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                                 )
                 );
 
-                log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                log.trace(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
                                 "投資指標を算出しました。\t企業コード:{0}\t処理対象日:{1} -> {2}",
                                 analysisResult.getCompanyCode(),

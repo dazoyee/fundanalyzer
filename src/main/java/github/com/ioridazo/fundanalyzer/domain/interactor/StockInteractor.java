@@ -121,7 +121,7 @@ public class StockInteractor implements StockUseCase {
                     if (isNikkei) {
                         // 日経
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("日経 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
                                 Category.STOCK,
                                 Process.IMPORT
@@ -136,7 +136,7 @@ public class StockInteractor implements StockUseCase {
                                 .filter(kabuoji3 -> LocalDate.parse(kabuoji3.targetDate())
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
                                 .forEach(kabuoji3 -> stockSpecification.insertOfKabuoji3(inputData.getCode5(), kabuoji3));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("kabuoji3 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
                                 Category.STOCK,
                                 Process.IMPORT
@@ -152,7 +152,7 @@ public class StockInteractor implements StockUseCase {
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
                                 .forEach(minkabu -> stockSpecification.insertOfMinkabu(inputData.getCode5(), minkabu));
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("みんかぶ から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
                                 Category.STOCK,
                                 Process.IMPORT
@@ -167,7 +167,7 @@ public class StockInteractor implements StockUseCase {
                                 .filter(yahooFinance -> LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
                                 .forEach(yahooFinance -> stockSpecification.insertOfYahooFinance(inputData.getCode5(), yahooFinance));
-                        log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
                                 MessageFormat.format("Yahoo!ファイナンス から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
                                 Category.STOCK,
                                 Process.IMPORT
