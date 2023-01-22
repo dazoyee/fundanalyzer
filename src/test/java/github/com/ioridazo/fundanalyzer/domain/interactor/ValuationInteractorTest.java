@@ -85,7 +85,9 @@ class ValuationInteractorTest {
                     null,
                     null,
                     null,
+                    null,
                     submitDate,
+                    null,
                     null,
                     null,
                     null,
@@ -244,6 +246,8 @@ class ValuationInteractorTest {
 
         private CompanyValuationViewModel valuationEntity(BigDecimal disCountRate) {
             return CompanyValuationViewModel.of(
+                    null,
+                    null,
                     null,
                     null,
                     null,

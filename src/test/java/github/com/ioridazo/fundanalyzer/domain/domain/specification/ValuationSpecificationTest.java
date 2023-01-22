@@ -39,7 +39,8 @@ class ValuationSpecificationTest {
         valuationSpecification = new ValuationSpecification(
                 valuationDao,
                 companySpecification,
-                stockSpecification
+                stockSpecification,
+                Mockito.mock(InvestmentIndicatorSpecification.class)
         );
 
         Mockito.when(stockSpecification.getAverageStockPriceOfLatestSubmitDate("code"))
@@ -67,16 +68,18 @@ class ValuationSpecificationTest {
         }
 
         private ValuationEntity valuationEntity(
-                LocalDate targetDate, BigDecimal differenceFromSubmitDate, BigDecimal submitDateRatio) {
+                LocalDate targetDate, BigDecimal differenceFromSubmitDate, BigDecimal submitDateRatio, BigDecimal grahamIndex) {
             return new ValuationEntity(
                     null,
                     "code",
                     targetDate,
                     null,
                     null,
+                    grahamIndex,
                     null,
                     differenceFromSubmitDate,
                     submitDateRatio,
+                    null,
                     null,
                     null,
                     null,
@@ -91,12 +94,12 @@ class ValuationSpecificationTest {
         @Test
         void average() {
             Mockito.when(valuationDao.selectByCode("code1")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1)),
-                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01))
+                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1), null),
+                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01), BigDecimal.valueOf(2.05))
             ));
             Mockito.when(valuationDao.selectByCode("code2")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01)),
-                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1))
+                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01), BigDecimal.valueOf(2.05)),
+                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1), null)
             ));
 
             var actual = valuationSpecification.averageValuation("name", List.of(company("code1"), company("code2")));
@@ -104,6 +107,7 @@ class ValuationSpecificationTest {
                     () -> assertEquals("name", actual.getName()),
                     () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
                     () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio()),
+                    () -> assertEquals(BigDecimal.valueOf(205, 2), actual.getGrahamIndex()),
                     () -> assertEquals(2, actual.getCount())
             );
         }
@@ -119,12 +123,14 @@ class ValuationSpecificationTest {
                     targetDate,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
+                    BigDecimal.TEN,
                     (long) 10,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     submitDate,
+                    BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     null,
@@ -201,12 +207,14 @@ class ValuationSpecificationTest {
                     targetDate,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
+                    BigDecimal.TEN,
                     (long) 10,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     submitDate,
+                    BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     null,
@@ -283,6 +291,7 @@ class ValuationSpecificationTest {
                     () -> assertEquals(LocalDate.parse("2022-07-02"), actual.getTargetDate(), "targetDate"),
                     () -> assertEquals(BigDecimal.valueOf(500.0), actual.getStockPrice(), "stockPrice"),
                     () -> assertNull(actual.getGoalsStock().orElse(null), "goalsStock"),
+                    () -> assertNull(actual.getGrahamIndex().orElse(null), "grahamIndex"),
                     () -> assertEquals(20, actual.getDaySinceSubmitDate(), "daySinceSubmitDate"),
                     () -> assertEquals(BigDecimal.valueOf(-100.0), actual.getDifferenceFromSubmitDate(), "differenceFromSubmitDate"),
                     () -> assertEquals(BigDecimal.valueOf(0.83), actual.getSubmitDateRatio(), "submitDateRatio"),
@@ -291,6 +300,7 @@ class ValuationSpecificationTest {
                     () -> assertEquals(LocalDate.parse("2022-06-12"), actual.getSubmitDate(), "submitDate"),
                     () -> assertEquals(BigDecimal.valueOf(2000), actual.getCorporateValue(), "corporateValue"),
                     () -> assertEquals(BigDecimal.valueOf(600), actual.getStockPriceOfSubmitDate(), "stockPriceOfSubmitDate"),
+                    () -> assertNull(actual.getGrahamIndexOfSubmitDate().orElse(null), "grahamIndexOfSubmitDate"),
                     () -> assertEquals("documentId", actual.getDocumentId(), "documentId")
             );
         }

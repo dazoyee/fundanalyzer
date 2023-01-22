@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -49,10 +50,22 @@ public class InvestmentIndicatorSpecification {
      * @param companyCode 企業コード
      * @return 投資指標
      */
-    public Optional<IndicatorValue> findLatestIndicatorValue(final String companyCode) {
+    public Optional<IndicatorValue> findIndicatorValue(final String companyCode) {
         return investmentIndicatorDao.selectByCode(companyCode).stream()
                 // latest
                 .max(Comparator.comparing(InvestmentIndicatorEntity::getTargetDate))
+                .map(IndicatorValue::of);
+    }
+
+    /**
+     * 投資指標を取得する
+     *
+     * @param companyCode 企業コード
+     * @param targetDate  対象日
+     * @return 投資指標
+     */
+    public Optional<IndicatorValue> findIndicatorValue(final String companyCode, final LocalDate targetDate) {
+        return investmentIndicatorDao.selectByCodeAndTargetDate(companyCode, targetDate)
                 .map(IndicatorValue::of);
     }
 
@@ -105,26 +118,26 @@ public class InvestmentIndicatorSpecification {
             ));
         } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
+                                "investment_indicator",
                                 analysisResultEntity.getCompanyCode(),
-                                analysisResultEntity.getSubmitDate(),
-                                stockPrice
+                                analysisResultEntity.getSubmitDate()
                         ),
                         companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);
             } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
+                                "investment_indicator",
                                 analysisResultEntity.getCompanyCode(),
-                                analysisResultEntity.getSubmitDate(),
-                                stockPrice
+                                analysisResultEntity.getSubmitDate()
                         ),
                         companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,

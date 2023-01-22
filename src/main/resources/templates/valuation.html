@@ -230,10 +230,12 @@
                       <th>会社名</th>
                       <th>日付</th>
                       <th>株価</th>
+                      <th>グレアム指数</th>
                       <th>増減値</th>
                       <th>増減率</th>
                       <th>提出日</th>
                       <th>提出日の株価平均</th>
+                      <th>提出日のグレアム指数</th>
                       <th>最新企業価値</th>
                     </tr>
                     </thead>
@@ -245,6 +247,7 @@
                       </a></td>
                       <td th:text="${company.targetDate}">対象日付</td>
                       <td th:text="${company.stockPrice}">株価終値</td>
+                      <td th:text="${company.grahamIndex}">株価終値</td>
                       <td>
                         <div th:if="${company.differenceFromSubmitDate} > 0">
                           <span class="text-primary" th:text="'+'+${company.differenceFromSubmitDate}">提出日との差</span>
@@ -262,6 +265,7 @@
                       <td th:text="${company.submitDateRatio}">提出日比率</td>
                       <td th:text="${company.submitDate}">提出日</td>
                       <td th:text="${company.averageStockPrice}">提出日の株価平均</td>
+                      <td th:text="${company.grahamIndexOfSubmitDate}">提出日のグレアム指数</td>
                       <td th:text="${company.latestCorporateValue}">最新企業価値</td>
                     </tr>
                     </tbody>
@@ -283,6 +287,7 @@
                       <th>業種名</th>
                       <th>増減値</th>
                       <th>増減率</th>
+                      <th>グレアム指数</th>
                       <th>企業数</th>
                     </tr>
                     </thead>
@@ -305,6 +310,8 @@
                         </div>
                       </td>
                       <td th:text="${industry.submitDateRatio}">提出日比率</td>
+                      <td th:text="${industry.grahamIndex}">グレアム指数</td>
+                      <!--suppress ThymeleafVariablesResolveInspection -->
                       <td th:text="${industry.count}">企業数</td>
                     </tr>
                     </tbody>

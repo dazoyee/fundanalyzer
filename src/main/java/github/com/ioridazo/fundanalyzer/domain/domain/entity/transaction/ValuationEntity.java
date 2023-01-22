@@ -31,6 +31,8 @@ public class ValuationEntity {
 
     private final BigDecimal goalsStock;
 
+    private final BigDecimal grahamIndex;
+
     private final Long daySinceSubmitDate;
 
     private final BigDecimal differenceFromSubmitDate;
@@ -47,6 +49,8 @@ public class ValuationEntity {
 
     private final BigDecimal stockPriceOfSubmitDate;
 
+    private final BigDecimal grahamIndexOfSubmitDate;
+
     private final String documentId;
 
     @Column(updatable = false)
@@ -57,6 +61,7 @@ public class ValuationEntity {
             final LocalDate targetDate,
             final BigDecimal stockPrice,
             final BigDecimal goalsStock,
+            final BigDecimal grahamIndex,
             final Long monthSinceSubmitDate,
             final BigDecimal differenceFromSubmitDate,
             final BigDecimal submitDateRatio,
@@ -65,6 +70,7 @@ public class ValuationEntity {
             final LocalDate submitDate,
             final BigDecimal corporateValue,
             final BigDecimal stockPriceOfSubmitDate,
+            final BigDecimal grahamIndexOfSubmitDate,
             final String documentId,
             final LocalDateTime nowLocalDateTime) {
         return new ValuationEntity(
@@ -73,6 +79,7 @@ public class ValuationEntity {
                 targetDate,
                 stockPrice,
                 goalsStock,
+                grahamIndex,
                 monthSinceSubmitDate,
                 differenceFromSubmitDate,
                 submitDateRatio,
@@ -81,6 +88,7 @@ public class ValuationEntity {
                 submitDate,
                 corporateValue,
                 stockPriceOfSubmitDate,
+                grahamIndexOfSubmitDate,
                 documentId,
                 nowLocalDateTime
         );
@@ -88,5 +96,13 @@ public class ValuationEntity {
 
     public Optional<BigDecimal> getGoalsStock() {
         return Optional.ofNullable(goalsStock);
+    }
+
+    public Optional<BigDecimal> getGrahamIndex() {
+        return Optional.ofNullable(grahamIndex);
+    }
+
+    public Optional<BigDecimal> getGrahamIndexOfSubmitDate() {
+        return Optional.ofNullable(grahamIndexOfSubmitDate);
     }
 }

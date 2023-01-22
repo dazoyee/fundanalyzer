@@ -6,7 +6,7 @@ spring:
     url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=Asia/Tokyo
     username: fundanalyzer
     password: fundanalyzer
-    driverClassName: com.mysql.jdbc.Driver
+    driverClassName: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 30
       connection-timeout: 15000
