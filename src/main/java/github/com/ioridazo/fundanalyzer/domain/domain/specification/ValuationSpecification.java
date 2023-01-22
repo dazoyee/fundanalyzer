@@ -158,10 +158,11 @@ public class ValuationSpecification {
             }
         } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}\t株価:{3}",
+                                "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
@@ -171,10 +172,11 @@ public class ValuationSpecification {
                         Process.EVALUATE
                 ), e);
             } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)

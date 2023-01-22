@@ -105,26 +105,26 @@ public class InvestmentIndicatorSpecification {
             ));
         } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
+                                "investment_indicator",
                                 analysisResultEntity.getCompanyCode(),
-                                analysisResultEntity.getSubmitDate(),
-                                stockPrice
+                                analysisResultEntity.getSubmitDate()
                         ),
                         companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);
             } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
+                                "investment_indicator",
                                 analysisResultEntity.getCompanyCode(),
-                                analysisResultEntity.getSubmitDate(),
-                                stockPrice
+                                analysisResultEntity.getSubmitDate()
                         ),
                         companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
                         Category.ANALYSIS,

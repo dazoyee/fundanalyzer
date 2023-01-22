@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -173,7 +174,22 @@ public class StockSpecification {
      */
     public void insert(final String code, final NikkeiResultBean nikkei) {
         if (isEmptyStockPrice(code, nikkei.getTargetDate())) {
-            stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
+            try {
+                stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
+            } catch (NestedRuntimeException e) {
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
+                                "stock_price",
+                                code,
+                                nikkei.getTargetDate(),
+                                SourceOfStockPrice.NIKKEI.getMemo()
+                        ),
+                        code
+                );
+            }
         }
     }
 
@@ -188,19 +204,18 @@ public class StockSpecification {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofKabuoji3(code, kabuoji3, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
-                if (e.contains(UniqueConstraintException.class)) {
-                    log.debug(FundanalyzerLogClient.toSpecificationLogObject(
-                            MessageFormat.format(
-                                    "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                            "\t企業コード:{0}\t対象日:{1}", code, kabuoji3.targetDate()
-                            ),
-                            companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
-                            Category.STOCK,
-                            Process.REGISTER
-                    ));
-                } else {
-                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
-                }
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
+                                "stock_price",
+                                code,
+                                kabuoji3.targetDate(),
+                                SourceOfStockPrice.KABUOJI3.getMemo()
+                        ),
+                        code
+                );
             }
         }
     }
@@ -250,7 +265,21 @@ public class StockSpecification {
         }
 
         if (!isPresentMinkabu(code, targetDate)) {
-            minkabuDao.insert(MinkabuEntity.ofMinkabuResultBean(code, targetDate, minkabu, nowLocalDateTime()));
+            try {
+                minkabuDao.insert(MinkabuEntity.ofMinkabuResultBean(code, targetDate, minkabu, nowLocalDateTime()));
+            } catch (NestedRuntimeException e) {
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}",
+                                "minkabu",
+                                code,
+                                minkabu.getTargetDate()
+                        ),
+                        code
+                );
+            }
         }
     }
 
@@ -265,19 +294,18 @@ public class StockSpecification {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofMinkabu(code, minkabu, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
-                if (e.contains(UniqueConstraintException.class)) {
-                    log.debug(FundanalyzerLogClient.toSpecificationLogObject(
-                            MessageFormat.format(
-                                    "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                            "\t企業コード:{0}\t対象日:{1}", code, minkabu.targetDate()
-                            ),
-                            companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
-                            Category.STOCK,
-                            Process.REGISTER
-                    ));
-                } else {
-                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
-                }
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
+                                "stock_price",
+                                code,
+                                minkabu.targetDate(),
+                                SourceOfStockPrice.MINKABU.getMemo()
+                        ),
+                        code
+                );
             }
         }
     }
@@ -293,19 +321,18 @@ public class StockSpecification {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofYahooFinanceResultBean(code, yahooFinance, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
-                if (e.contains(UniqueConstraintException.class)) {
-                    log.debug(FundanalyzerLogClient.toSpecificationLogObject(
-                            MessageFormat.format(
-                                    "一意制約違反のため、株価情報のデータベース登録をスキップします。" +
-                                            "\t企業コード:{0}\t対象日:{1}", code, yahooFinance.targetDate()
-                            ),
-                            companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
-                            Category.STOCK,
-                            Process.REGISTER
-                    ));
-                } else {
-                    throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
-                }
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
+                                "stock_price",
+                                code,
+                                yahooFinance.targetDate(),
+                                SourceOfStockPrice.YAHOO_FINANCE.getMemo()
+                        ),
+                        code
+                );
             }
         }
     }
@@ -420,5 +447,18 @@ public class StockSpecification {
      */
     private boolean isPresentMinkabu(final String code, final LocalDate targetDate) {
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
+    }
+
+    private void handleDaoError(final NestedRuntimeException e, final String message, final String code) {
+        if (e.contains(UniqueConstraintException.class)) {
+            log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                    message,
+                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                    Category.STOCK,
+                    Process.REGISTER
+            ));
+        } else {
+            throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+        }
     }
 }

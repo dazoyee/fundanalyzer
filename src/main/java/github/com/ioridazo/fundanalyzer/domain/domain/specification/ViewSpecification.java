@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
@@ -13,17 +16,23 @@ import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.seasar.doma.jdbc.UniqueConstraintException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.NestedRuntimeException;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -36,6 +45,8 @@ import java.util.stream.Stream;
 
 @Component
 public class ViewSpecification {
+
+    private static final Logger log = LogManager.getLogger(ViewSpecification.class);
 
     private static final int DIGIT_NUMBER_OF_DISCOUNT_VALUE = 6;
     private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
@@ -133,7 +144,21 @@ public class ViewSpecification {
         if (isPresent(viewModel.getCode(), viewModel.getLatestDocumentTypeCode())) {
             corporateViewDao.update(CorporateViewBean.of(viewModel, nowLocalDateTime()));
         } else {
-            corporateViewDao.insert(CorporateViewBean.of(viewModel, nowLocalDateTime()));
+            try {
+                corporateViewDao.insert(CorporateViewBean.of(viewModel, nowLocalDateTime()));
+            } catch (final NestedRuntimeException e) {
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t会社コード:{1}\t書類種別コード:{2}\t提出日:{3}",
+                                "corporate_view",
+                                viewModel.getCode(),
+                                viewModel.getLatestDocumentTypeCode(),
+                                viewModel.getSubmitDate()
+                        )
+                );
+            }
         }
     }
 
@@ -146,7 +171,19 @@ public class ViewSpecification {
         if (isPresent(viewModel.getSubmitDate())) {
             edinetListViewDao.update(EdinetListViewBean.of(viewModel, nowLocalDateTime()));
         } else {
-            edinetListViewDao.insert(EdinetListViewBean.of(viewModel, nowLocalDateTime()));
+            try {
+                edinetListViewDao.insert(EdinetListViewBean.of(viewModel, nowLocalDateTime()));
+            } catch (final NestedRuntimeException e) {
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。" +
+                                        "\tテーブル名:{0}\t提出日:{1}",
+                                "edinet_list_view",
+                                viewModel.getSubmitDate()
+                        )
+                );
+            }
         }
     }
 
@@ -375,5 +412,17 @@ public class ViewSpecification {
      */
     private boolean isPresent(final LocalDate submitDate) {
         return edinetListViewDao.selectBySubmitDate(submitDate).isPresent();
+    }
+
+    private void handleDaoError(final NestedRuntimeException e, final String message) {
+        if (e.contains(UniqueConstraintException.class)) {
+            log.debug(FundanalyzerLogClient.toSpecificationLogObject(
+                    message,
+                    Category.VIEW,
+                    Process.REGISTER
+            ));
+        } else {
+            throw new FundanalyzerRuntimeException("想定外のエラーが発生しました。", e);
+        }
     }
 }
