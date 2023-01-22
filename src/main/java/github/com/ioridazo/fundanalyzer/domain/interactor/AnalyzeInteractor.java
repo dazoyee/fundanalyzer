@@ -98,34 +98,45 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     @Override
     public void analyze(DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        final List<Document> targetList = documentSpecification.analysisTargetList(inputData);
 
-        if (targetList.isEmpty()) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "次の提出日に関する書類は分析済みかまたはデータベースに存在しませんでした。\t対象提出日:{0}",
-                            inputData.getDate()
-                    ),
-                    Category.ANALYSIS,
-                    Process.ANALYSIS,
-                    System.currentTimeMillis() - startTime
-            ));
-        } else {
-            if (targetList.size() > 10) {
-                targetList.parallelStream().forEach(this::analyze);
+        try {
+            final List<Document> targetList = documentSpecification.analysisTargetList(inputData);
+            if (targetList.isEmpty()) {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "次の提出日に関する書類は分析済みかまたはデータベースに存在しませんでした。\t対象提出日:{0}",
+                                inputData.getDate()
+                        ),
+                        Category.ANALYSIS,
+                        Process.ANALYSIS,
+                        System.currentTimeMillis() - startTime
+                ));
             } else {
-                targetList.forEach(this::analyze);
-            }
+                if (targetList.size() > 10) {
+                    targetList.parallelStream().forEach(this::analyze);
+                } else {
+                    targetList.forEach(this::analyze);
+                }
 
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "次の提出日に関する書類に対して分析を正常に終了しました。\t対象提出日:{0}",
+                                inputData.getDate()
+                        ),
+                        Category.ANALYSIS,
+                        Process.ANALYSIS,
+                        System.currentTimeMillis() - startTime
+                ));
+            }
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "次の提出日に関する書類に対して分析を正常に終了しました。\t対象提出日:{0}",
+                            "{0}付のドキュメントに対して想定外のエラーが発生しました。",
                             inputData.getDate()
                     ),
-                    Category.ANALYSIS,
-                    Process.ANALYSIS,
-                    System.currentTimeMillis() - startTime
-            ));
+                    Category.DOCUMENT,
+                    Process.ANALYSIS
+            ), e);
         }
     }
 

@@ -139,13 +139,25 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
     @Override
     public void updateView(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        viewSpecification.upsert(viewSpecification.generateEdinetListView(inputData));
 
-        log.info(FundanalyzerLogClient.toInteractorLogObject(
-                MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
-                Category.VIEW,
-                Process.UPDATE,
-                System.currentTimeMillis() - startTime
-        ));
+        try {
+            viewSpecification.upsert(viewSpecification.generateEdinetListView(inputData));
+
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("処理状況アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
+                    Category.VIEW,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "{0}付のビューに対して想定外のエラーが発生しました。",
+                            inputData.getDate()
+                    ),
+                    Category.VIEW,
+                    Process.UPDATE
+            ), e);
+        }
     }
 }
