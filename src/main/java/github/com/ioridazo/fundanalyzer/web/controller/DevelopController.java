@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
@@ -78,8 +79,8 @@ public class DevelopController {
         // remove
         documentUseCase.removeDocument(inputData);
         // stock
-        stockUseCase.importStockPrice(inputData, StockUseCase.Place.NIKKEI);
-        stockUseCase.importStockPrice(inputData, StockUseCase.Place.MINKABU);
+        stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
+        stockUseCase.importStockPrice(inputData, SourceOfStockPrice.MINKABU);
         // analysis
         analyzeUseCase.analyze(inputData);
         // view corporate
