@@ -82,40 +82,51 @@ public class DocumentInteractor implements DocumentUseCase {
     public void allProcess(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
 
-        // 書類リストをデータベースに登録する
-        saveEdinetList(inputData);
+        try {
+            // 書類リストをデータベースに登録する
+            saveEdinetList(inputData);
 
-        // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
-        final var documentList = documentSpecification.inquiryTargetDocuments(inputData);
+            // 対象ファイルリスト取得（CompanyCodeがnullではないドキュメントを対象とする）
+            final var documentList = documentSpecification.inquiryTargetDocuments(inputData);
 
-        if (documentList.isEmpty()) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}",
-                            inputData.getDate(),
-                            String.join(",", targetTypeCodes)
-                    ),
-                    Category.DOCUMENT,
-                    Process.EDINET,
-                    System.currentTimeMillis() - startTime
-            ));
-        } else {
-            if (documentList.size() > 10) {
-                documentList.parallelStream().forEach(this::scrape);
+            if (documentList.isEmpty()) {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "{0}付の処理対象ドキュメントは存在しませんでした。\t書類種別コード:{1}",
+                                inputData.getDate(),
+                                String.join(",", targetTypeCodes)
+                        ),
+                        Category.DOCUMENT,
+                        Process.EDINET,
+                        System.currentTimeMillis() - startTime
+                ));
             } else {
-                documentList.forEach(this::scrape);
-            }
+                if (documentList.size() > 10) {
+                    documentList.parallelStream().forEach(this::scrape);
+                } else {
+                    documentList.forEach(this::scrape);
+                }
 
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
+                                inputData.getDate(),
+                                String.join(",", targetTypeCodes)
+                        ),
+                        Category.DOCUMENT,
+                        Process.SCRAPING,
+                        System.currentTimeMillis() - startTime
+                ));
+            }
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "{0}付のドキュメントに対してすべての処理が完了しました。\t書類種別コード:{1}",
-                            inputData.getDate(),
-                            String.join(",", targetTypeCodes)
+                            "{0}付のドキュメントに対して想定外のエラーが発生しました。",
+                            inputData.getDate()
                     ),
                     Category.DOCUMENT,
-                    Process.SCRAPING,
-                    System.currentTimeMillis() - startTime
-            ));
+                    Process.SCRAPING
+            ), e);
         }
     }
 
@@ -128,25 +139,15 @@ public class DocumentInteractor implements DocumentUseCase {
     public void saveEdinetList(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
 
-        // EDINETに提出書類の問い合わせ
-        final int count = Integer.parseInt(edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.DEFAULT))
-                .getMetadata().getResultset().getCount());
+        try {
+            // EDINETに提出書類の問い合わせ
+            final int count = Integer.parseInt(edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.DEFAULT))
+                    .getMetadata().getResultset().getCount());
 
-        if (0 == count) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}",
-                            inputData.getDate()
-                    ),
-                    Category.DOCUMENT,
-                    Process.EDINET,
-                    System.currentTimeMillis() - startTime
-            ));
-        } else {
-            if (count == edinetDocumentSpecification.count(inputData)) {
+            if (0 == count) {
                 log.info(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
-                                "データベースへ登録済みの書類件数と一致するため、登録をスキップしました。\t指定ファイル日付:{0}",
+                                "データベースへ登録する書類一覧は存在しませんでした。\t指定ファイル日付:{0}",
                                 inputData.getDate()
                         ),
                         Category.DOCUMENT,
@@ -154,29 +155,49 @@ public class DocumentInteractor implements DocumentUseCase {
                         System.currentTimeMillis() - startTime
                 ));
             } else {
-                // 書類が0件ではないときは書類リストを取得してデータベースに登録する
-                final EdinetResponse edinetResponse = edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
+                if (count == edinetDocumentSpecification.count(inputData)) {
+                    log.info(FundanalyzerLogClient.toInteractorLogObject(
+                            MessageFormat.format(
+                                    "データベースへ登録済みの書類件数と一致するため、登録をスキップしました。\t指定ファイル日付:{0}",
+                                    inputData.getDate()
+                            ),
+                            Category.DOCUMENT,
+                            Process.EDINET,
+                            System.currentTimeMillis() - startTime
+                    ));
+                } else {
+                    // 書類が0件ではないときは書類リストを取得してデータベースに登録する
+                    final EdinetResponse edinetResponse = edinetClient.list(new ListRequestParameter(inputData.getDate(), ListType.GET_LIST));
 
-                // edinet document
-                edinetDocumentSpecification.insert(inputData.getDate(), edinetResponse);
+                    // edinet document
+                    edinetDocumentSpecification.insert(inputData.getDate(), edinetResponse);
 
-                // company
-                edinetResponse.getResults().forEach(companySpecification::insertIfNotExist);
+                    // company
+                    edinetResponse.getResults().forEach(companySpecification::insertIfNotExist);
 
-                // document
-                documentSpecification.insert(inputData.getDate(), edinetResponse);
+                    // document
+                    documentSpecification.insert(inputData.getDate(), edinetResponse);
 
-                log.info(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format(
-                                "データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}",
-                                inputData.getDate()
-                        ),
-                        Category.DOCUMENT,
-                        Process.EDINET,
-                        System.currentTimeMillis() - startTime
-                ));
-
+                    log.info(FundanalyzerLogClient.toInteractorLogObject(
+                            MessageFormat.format(
+                                    "データベースへの書類一覧登録作業が正常に終了しました。\t指定ファイル日付:{0}",
+                                    inputData.getDate()
+                            ),
+                            Category.DOCUMENT,
+                            Process.EDINET,
+                            System.currentTimeMillis() - startTime
+                    ));
+                }
             }
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "{0}付のドキュメントに対して想定外のエラーが発生しました。",
+                            inputData.getDate()
+                    ),
+                    Category.DOCUMENT,
+                    Process.SCRAPING
+            ), e);
         }
     }
 
@@ -189,33 +210,44 @@ public class DocumentInteractor implements DocumentUseCase {
     public void scrape(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
 
-        final List<Document> targetList = documentSpecification.inquiryTargetDocuments(inputData);
-        if (targetList.isEmpty()) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "次の提出日におけるドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}",
-                            inputData.getDate()
-                    ),
-                    Category.DOCUMENT,
-                    Process.SCRAPING,
-                    System.currentTimeMillis() - startTime
-            ));
-        } else {
-            if (targetList.size() > 10) {
-                targetList.parallelStream().forEach(this::scrape);
+        try {
+            final List<Document> targetList = documentSpecification.inquiryTargetDocuments(inputData);
+            if (targetList.isEmpty()) {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "次の提出日におけるドキュメントはデータベースに存在しませんでした。\t対象提出日:{0}",
+                                inputData.getDate()
+                        ),
+                        Category.DOCUMENT,
+                        Process.SCRAPING,
+                        System.currentTimeMillis() - startTime
+                ));
             } else {
-                targetList.forEach(this::scrape);
-            }
+                if (targetList.size() > 10) {
+                    targetList.parallelStream().forEach(this::scrape);
+                } else {
+                    targetList.forEach(this::scrape);
+                }
 
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "次の提出日におけるドキュメントに対してスクレイピング処理が終了しました。\t対象提出日:{0}",
+                                inputData.getDate()
+                        ),
+                        Category.DOCUMENT,
+                        Process.SCRAPING,
+                        System.currentTimeMillis() - startTime
+                ));
+            }
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "次の提出日におけるドキュメントに対してスクレイピング処理が終了しました。\t対象提出日:{0}",
+                            "{0}付のドキュメントに対して想定外のエラーが発生しました。",
                             inputData.getDate()
                     ),
                     Category.DOCUMENT,
-                    Process.SCRAPING,
-                    System.currentTimeMillis() - startTime
-            ));
+                    Process.SCRAPING
+            ), e);
         }
     }
 
@@ -338,7 +370,7 @@ public class DocumentInteractor implements DocumentUseCase {
         } catch (final FundanalyzerRuntimeException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
-                            "エラーが発生したため、処理ステータスを完了の更新に失敗しました。。\t書類ID:{0}",
+                            "エラーが発生したため、処理ステータスを完了の更新に失敗しました。\t書類ID:{0}",
                             inputData.getId()
                     ),
                     inputData.getId(),

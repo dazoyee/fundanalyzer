@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Analysi
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
@@ -29,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -43,14 +45,17 @@ public class ValuationSpecification {
     private final ValuationDao valuationDao;
     private final CompanySpecification companySpecification;
     private final StockSpecification stockSpecification;
+    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
     public ValuationSpecification(
             final ValuationDao valuationDao,
             final CompanySpecification companySpecification,
-            final StockSpecification stockSpecification) {
+            final StockSpecification stockSpecification,
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
         this.valuationDao = valuationDao;
         this.companySpecification = companySpecification;
         this.stockSpecification = stockSpecification;
+        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -90,6 +95,11 @@ public class ValuationSpecification {
                         .average().orElse(0),
                 viewList.stream()
                         .map(CompanyValuationViewModel::getSubmitDateRatio)
+                        .mapToDouble(BigDecimal::doubleValue)
+                        .average().orElse(0),
+                viewList.stream()
+                        .map(CompanyValuationViewModel::getGrahamIndex)
+                        .filter(Objects::nonNull)
                         .mapToDouble(BigDecimal::doubleValue)
                         .average().orElse(0),
                 viewList.size()
@@ -153,15 +163,14 @@ public class ValuationSpecification {
      */
     public void insert(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         try {
-            if (isPresentValuation(stock.getCompanyCode(), stock.getTargetDate(), analysisResult.getSubmitDate())) {
-                valuationDao.insert(evaluate(stock, analysisResult));
-            }
+            valuationDao.insert(evaluate(stock, analysisResult));
         } catch (final NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}\t株価:{3}",
+                                "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
@@ -171,10 +180,11 @@ public class ValuationSpecification {
                         Process.EVALUATE
                 ), e);
             } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
-                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                        "\tテーブル名:{0}\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
@@ -212,6 +222,7 @@ public class ValuationSpecification {
                 targetDate,
                 stockPrice,
                 stockSpecification.findForecastStock(code, targetDate).map(BigDecimal::valueOf).orElse(null),
+                investmentIndicatorSpecification.findIndicatorValue(code, targetDate).flatMap(IndicatorValue::getGrahamIndex).orElse(null),
                 ChronoUnit.DAYS.between(submitDate, targetDate),
                 stockPrice.subtract(averageStockPrice),
                 stockPrice.divide(averageStockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
@@ -220,12 +231,9 @@ public class ValuationSpecification {
                 submitDate,
                 corporateValue,
                 averageStockPrice,
+                investmentIndicatorSpecification.findIndicatorValue(code, submitDate).flatMap(IndicatorValue::getGrahamIndex).orElse(null),
                 analysisResult.getDocumentId(),
                 nowLocalDateTime()
         );
-    }
-
-    private boolean isPresentValuation(final String code, final LocalDate targetDate, final LocalDate submitDate) {
-        return valuationDao.selectByUnique(code, targetDate, submitDate).isPresent();
     }
 }

@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
@@ -70,7 +71,7 @@ public class StockInteractor implements StockUseCase {
      * @param place     取得先
      */
     @Override
-    public void importStockPrice(final DateInputData inputData, final Place place) {
+    public void importStockPrice(final DateInputData inputData, final SourceOfStockPrice place) {
         final long startTime = System.currentTimeMillis();
         final List<CodeInputData> inputDataList = documentSpecification.inquiryTargetDocuments(inputData).stream()
                 .map(document -> companySpecification.findCompanyByEdinetCode(document.getEdinetCode()))
@@ -115,7 +116,7 @@ public class StockInteractor implements StockUseCase {
      */
     @Override
     public void importStockPrice(
-            final CodeInputData inputData, final Place place) throws FundanalyzerShortCircuitException {
+            final CodeInputData inputData, final SourceOfStockPrice place) throws FundanalyzerShortCircuitException {
         try {
             switch (place) {
                 case NIKKEI -> {

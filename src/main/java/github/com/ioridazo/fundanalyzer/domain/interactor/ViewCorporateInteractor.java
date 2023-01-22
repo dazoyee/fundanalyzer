@@ -293,21 +293,33 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public void updateView(final DateInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        parallelUpdateView(
-                documentSpecification.inquiryTargetDocuments(inputData).stream()
-                        .map(Document::getEdinetCode)
-                        .map(companySpecification::findCompanyByEdinetCode)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .toList()
-        );
 
-        log.info(FundanalyzerLogClient.toInteractorLogObject(
-                MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
-                Category.VIEW,
-                Process.UPDATE,
-                System.currentTimeMillis() - startTime
-        ));
+        try {
+            parallelUpdateView(
+                    documentSpecification.inquiryTargetDocuments(inputData).stream()
+                            .map(Document::getEdinetCode)
+                            .map(companySpecification::findCompanyByEdinetCode)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .toList()
+            );
+
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("表示アップデートが正常に終了しました。対象提出日:{0}", inputData.getDate()),
+                    Category.VIEW,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "{0}付のビューに対して想定外のエラーが発生しました。",
+                            inputData.getDate()
+                    ),
+                    Category.VIEW,
+                    Process.UPDATE
+            ), e);
+        }
     }
 
     List<CorporateViewModel> filter(final List<CorporateViewModel> list) {
@@ -365,7 +377,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         document,
                         analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
-                        investmentIndicatorSpecification.findLatestIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
+                        investmentIndicatorSpecification.findIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
                 )));
             } catch (final FundanalyzerNotExistException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(

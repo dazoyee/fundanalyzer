@@ -5,7 +5,8 @@
             <EcsLayout serviceName="fundanalyzer"/>
         </Console>
         <RollingFile name="RollingFile" fileName="../logs/fundanalyzer.log" filePattern="../logs/fundanalyzer-%d{yyyy-MM-dd}.zip">
-            <EcsLayout serviceName="fundanalyzer" spaceName="prod">
+            <EcsLayout>
+                <KeyValuePair key="service.name" value="fundanalyzer"/>
                 <KeyValuePair key="space.name" value="production"/>
             </EcsLayout>
             <Policies>

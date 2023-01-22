@@ -174,7 +174,8 @@ public class FinancialStatementSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\t企業コード:{0}\t財務諸表名:{1}\t科目ID:{2}\t対象年:{3}",
+                                        "\tテーブル名:{0}\t企業コード:{1}\t財務諸表名:{2}\t科目ID:{3}\t対象年:{4}",
+                                "financial_statement",
                                 company.getCode(),
                                 fs.getName(),
                                 dId,

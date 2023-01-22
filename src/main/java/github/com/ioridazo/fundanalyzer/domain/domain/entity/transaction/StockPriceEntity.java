@@ -85,7 +85,7 @@ public class StockPriceEntity {
                 Parser.parseStringNikkei(nikkei.getMarketCapitalization()),
                 Parser.parseStringNikkei(nikkei.getDividendYield()),
                 nikkei.getShareholderBenefit().replace("株主優待 ", ""),
-                "1",
+                SourceOfStockPrice.NIKKEI.toValue(),
                 createdAt
         );
     }
@@ -116,7 +116,7 @@ public class StockPriceEntity {
                 null,
                 null,
                 null,
-                "2",
+                SourceOfStockPrice.KABUOJI3.toValue(),
                 createdAt
         );
     }
@@ -147,7 +147,7 @@ public class StockPriceEntity {
                 null,
                 null,
                 null,
-                "4",
+                SourceOfStockPrice.MINKABU.toValue(),
                 createdAt
         );
     }
@@ -178,7 +178,7 @@ public class StockPriceEntity {
                 null,
                 null,
                 null,
-                "3",
+                SourceOfStockPrice.YAHOO_FINANCE.toValue(),
                 createdAt
         );
     }

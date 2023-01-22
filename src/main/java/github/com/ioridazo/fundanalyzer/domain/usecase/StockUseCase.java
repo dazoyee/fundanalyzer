@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
@@ -13,7 +14,7 @@ public interface StockUseCase {
      * @param place     通信先
      */
     @NewSpan
-    void importStockPrice(DateInputData inputData, Place place);
+    void importStockPrice(DateInputData inputData, SourceOfStockPrice place);
 
     /**
      * 株価取得
@@ -22,7 +23,7 @@ public interface StockUseCase {
      * @param place     通信先
      */
     @NewSpan
-    void importStockPrice(CodeInputData inputData, Place place);
+    void importStockPrice(CodeInputData inputData, SourceOfStockPrice place);
 
     /**
      * 株価削除
@@ -31,11 +32,4 @@ public interface StockUseCase {
      */
     @NewSpan
     int deleteStockPrice();
-
-    enum Place {
-        NIKKEI,
-        KABUOJI3,
-        MINKABU,
-        YAHOO_FINANCE,
-    }
 }

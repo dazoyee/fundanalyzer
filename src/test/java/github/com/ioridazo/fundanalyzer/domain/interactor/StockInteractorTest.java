@@ -4,10 +4,10 @@ import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
-import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -106,8 +106,8 @@ class StockInteractorTest {
 
         @DisplayName("importStockPrice : 株価を取得する（提出日）")
         @ParameterizedTest
-        @EnumSource(StockUseCase.Place.class)
-        void date(StockUseCase.Place place) {
+        @EnumSource(SourceOfStockPrice.class)
+        void date(SourceOfStockPrice place) {
             DateInputData inputData = DateInputData.of(LocalDate.parse("2021-05-15"));
 
             when(documentSpecification.inquiryTargetDocuments(inputData)).thenReturn(List.of(document));
@@ -120,8 +120,8 @@ class StockInteractorTest {
 
         @DisplayName("importStockPrice : 株価を取得する（企業コード）")
         @ParameterizedTest
-        @EnumSource(StockUseCase.Place.class)
-        void code(StockUseCase.Place place) {
+        @EnumSource(SourceOfStockPrice.class)
+        void code(SourceOfStockPrice place) {
             CodeInputData inputData = CodeInputData.of("code0");
 
             when(jsoupClient.kabuoji3("code0")).thenReturn(List.of(
@@ -196,8 +196,8 @@ class StockInteractorTest {
 
         @DisplayName("importStockPrice : 株価を取得しない")
         @ParameterizedTest
-        @EnumSource(StockUseCase.Place.class)
-        void code_nothing(StockUseCase.Place place) {
+        @EnumSource(SourceOfStockPrice.class)
+        void code_nothing(SourceOfStockPrice place) {
             stockInteractor.isNikkei = false;
             stockInteractor.isKabuoji3 = false;
             stockInteractor.isMinkabu = false;

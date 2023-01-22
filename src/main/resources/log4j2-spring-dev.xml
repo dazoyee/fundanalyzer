@@ -6,7 +6,8 @@
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c : %msg%n"/>
         </Console>
         <RollingFile name="RollingFile" fileName="./logs/fundanalyzer.log" filePattern="./logs/fundanalyzer-%d{yyyy-MM-dd}.zip">
-            <EcsLayout serviceName="fundanalyzer" spaceName="dev">
+            <EcsLayout>
+                <KeyValuePair key="service.name" value="fundanalyzer"/>
                 <KeyValuePair key="space.name" value="develop"/>
             </EcsLayout>
             <Policies>

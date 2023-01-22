@@ -23,6 +23,9 @@ public class CompanyValuationViewModel {
     // 株価終値
     private final BigDecimal stockPrice;
 
+    // グレアム指数
+    private final BigDecimal grahamIndex;
+
     // 提出日との差
     private final BigDecimal differenceFromSubmitDate;
 
@@ -34,6 +37,9 @@ public class CompanyValuationViewModel {
 
     // 提出日株価平均
     private final BigDecimal averageStockPrice;
+
+    // 提出日グレアム指数
+    private final BigDecimal grahamIndexOfSubmitDate;
 
     // 最新企業価値
     private final BigDecimal latestCorporateValue;
@@ -47,10 +53,12 @@ public class CompanyValuationViewModel {
                 company.getCompanyName(),
                 entity.getTargetDate(),
                 entity.getStockPrice(),
+                entity.getGrahamIndex().orElse(null),
                 entity.getDifferenceFromSubmitDate(),
                 entity.getSubmitDateRatio(),
                 entity.getSubmitDate(),
                 entity.getStockPriceOfSubmitDate(),
+                entity.getGrahamIndexOfSubmitDate().orElse(null),
                 entity.getCorporateValue(),
                 entity.getDiscountRate()
         );
