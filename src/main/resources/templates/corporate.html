@@ -415,10 +415,12 @@
             </div>
             <div class="col-lg-3 col-md-6 col-sm-12">
               <div class="info-box mb-3">
-                <span class="info-box-icon bg-danger elevation-1" th:if="${0 < corporateView.grahamIndex && corporateView.grahamIndex < 5.625}">
+                <span class="info-box-icon bg-danger elevation-1"
+                      th:if="${0 < corporateView.grahamIndex && corporateView.grahamIndex < 5.625}">
                   <i class="fas fa-thumbs-up"></i>
                 </span>
-                <span class="info-box-icon bg-primary elevation-1" th:unless="${0 < corporateView.grahamIndex && corporateView.grahamIndex < 5.625}">
+                <span class="info-box-icon bg-primary elevation-1"
+                      th:unless="${0 < corporateView.grahamIndex && corporateView.grahamIndex < 5.625}">
                   <i class="fas fa-thumbs-down"></i>
                 </span>
                 <div class="info-box-content">
@@ -1058,10 +1060,12 @@
                             <tr>
                               <th>日付</th>
                               <th>株価</th>
+                              <th>グレアム指数</th>
                               <th>増減値</th>
                               <th>増減率</th>
                               <th>提出日</th>
                               <th>提出日の株価平均</th>
+                              <th>提出日のグレアム指数</th>
                               <th>最新企業価値</th>
                             </tr>
                             </thead>
@@ -1069,6 +1073,7 @@
                             <tr th:each="valuation : ${valuations}">
                               <td th:text="${valuation.targetDate}">対象日付</td>
                               <td th:text="${valuation.stockPrice}">株価終値</td>
+                              <td th:text="${valuation.grahamIndex}">グレアム指数</td>
                               <td>
                                 <div th:if="${valuation.differenceFromSubmitDate} > 0">
                                   <span class="text-primary"
@@ -1089,6 +1094,7 @@
                               <td th:text="${valuation.submitDateRatio}">提出日比率</td>
                               <td th:text="${valuation.submitDate}">提出日</td>
                               <td th:text="${valuation.averageStockPrice}">提出日の株価平均</td>
+                              <td th:text="${valuation.grahamIndexOfSubmitDate}">提出日のグレアム指数</td>
                               <td th:text="${valuation.latestCorporateValue}">最新企業価値</td>
                             </tr>
                           </table>

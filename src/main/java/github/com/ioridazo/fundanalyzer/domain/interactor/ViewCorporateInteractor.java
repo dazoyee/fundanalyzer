@@ -377,7 +377,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         document,
                         analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
-                        investmentIndicatorSpecification.findLatestIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
+                        investmentIndicatorSpecification.findIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
                 )));
             } catch (final FundanalyzerNotExistException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(

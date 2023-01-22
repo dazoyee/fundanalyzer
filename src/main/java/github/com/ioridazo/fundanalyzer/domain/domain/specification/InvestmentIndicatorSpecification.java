@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -49,10 +50,22 @@ public class InvestmentIndicatorSpecification {
      * @param companyCode 企業コード
      * @return 投資指標
      */
-    public Optional<IndicatorValue> findLatestIndicatorValue(final String companyCode) {
+    public Optional<IndicatorValue> findIndicatorValue(final String companyCode) {
         return investmentIndicatorDao.selectByCode(companyCode).stream()
                 // latest
                 .max(Comparator.comparing(InvestmentIndicatorEntity::getTargetDate))
+                .map(IndicatorValue::of);
+    }
+
+    /**
+     * 投資指標を取得する
+     *
+     * @param companyCode 企業コード
+     * @param targetDate  対象日
+     * @return 投資指標
+     */
+    public Optional<IndicatorValue> findIndicatorValue(final String companyCode, final LocalDate targetDate) {
+        return investmentIndicatorDao.selectByCodeAndTargetDate(companyCode, targetDate)
                 .map(IndicatorValue::of);
     }
 
