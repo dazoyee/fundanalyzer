@@ -139,19 +139,19 @@ class JsoupClientTest {
             var actual = assertDoesNotThrow(() -> client.nikkei(code));
 
             assertAll("NikkeiResultBean",
-                    () -> assertNotNull(actual.getStockPrice()),
-                    () -> assertNotNull(actual.getTargetDate()),
-                    () -> assertNotNull(actual.getOpeningPrice()),
-                    () -> assertNotNull(actual.getHighPrice()),
-                    () -> assertNotNull(actual.getLowPrice()),
-                    () -> assertNotNull(actual.getVolume()),
-                    () -> assertNotNull(actual.getPer()),
-                    () -> assertNotNull(actual.getPbr()),
-                    () -> assertNotNull(actual.getRoe()),
-                    () -> assertNotNull(actual.getNumberOfShares()),
-                    () -> assertNotNull(actual.getMarketCapitalization()),
-                    () -> assertNotNull(actual.getDividendYield()),
-                    () -> assertNotNull(actual.getShareholderBenefit())
+                    () -> assertNotNull(actual.stockPrice()),
+                    () -> assertNotNull(actual.targetDate()),
+                    () -> assertNotNull(actual.openingPrice()),
+                    () -> assertNotNull(actual.highPrice()),
+                    () -> assertNotNull(actual.lowPrice()),
+                    () -> assertNotNull(actual.volume()),
+                    () -> assertNotNull(actual.per()),
+                    () -> assertNotNull(actual.pbr()),
+                    () -> assertNotNull(actual.roe()),
+                    () -> assertNotNull(actual.numberOfShares()),
+                    () -> assertNotNull(actual.marketCapitalization()),
+                    () -> assertNotNull(actual.dividendYield()),
+                    () -> assertNotNull(actual.shareholderBenefit())
             );
             System.out.println(actual);
         }
@@ -165,19 +165,19 @@ class JsoupClientTest {
             var actual = client.nikkei(code);
 
             assertAll("NikkeiResultBean",
-                    () -> assertEquals("1,047 円", actual.getStockPrice()),
-                    () -> assertEquals("2020/11/27", actual.getTargetDate()),
-                    () -> assertEquals("始値 (15:00) 1,047 円", actual.getOpeningPrice()),
-                    () -> assertEquals("高値 (15:00) 1,047 円", actual.getHighPrice()),
-                    () -> assertEquals("安値 (15:00) 1,047 円", actual.getLowPrice()),
-                    () -> assertEquals("売買高 134,400 株", actual.getVolume()),
-                    () -> assertEquals("予想PER（解説） -- 倍", actual.getPer()),
-                    () -> assertEquals("PBR（実績）（解説） 1.02 倍", actual.getPbr()),
-                    () -> assertEquals("ROE（予想） （解説） N/A", actual.getRoe()),
-                    () -> assertEquals("普通株式数（解説） 95,857,420 株", actual.getNumberOfShares()),
-                    () -> assertEquals("時価総額（解説） 100,362 百万円", actual.getMarketCapitalization()),
-                    () -> assertEquals("株式益回り（予想）（解説） N/A", actual.getDividendYield()),
-                    () -> assertEquals("株主優待 ギフト券 レジャー 招待券", actual.getShareholderBenefit())
+                    () -> assertEquals("1,047 円", actual.stockPrice()),
+                    () -> assertEquals("2020/11/27", actual.targetDate()),
+                    () -> assertEquals("始値 (15:00) 1,047 円", actual.openingPrice()),
+                    () -> assertEquals("高値 (15:00) 1,047 円", actual.highPrice()),
+                    () -> assertEquals("安値 (15:00) 1,047 円", actual.lowPrice()),
+                    () -> assertEquals("売買高 134,400 株", actual.volume()),
+                    () -> assertEquals("予想PER（解説） -- 倍", actual.per()),
+                    () -> assertEquals("PBR（実績）（解説） 1.02 倍", actual.pbr()),
+                    () -> assertEquals("ROE（予想） （解説） N/A", actual.roe()),
+                    () -> assertEquals("普通株式数（解説） 95,857,420 株", actual.numberOfShares()),
+                    () -> assertEquals("時価総額（解説） 100,362 百万円", actual.marketCapitalization()),
+                    () -> assertEquals("予想配当利回り（解説） 1.14 ％", actual.dividendYield()),
+                    () -> assertEquals("株主優待 ギフト券 レジャー 招待券", actual.shareholderBenefit())
             );
         }
 
@@ -203,19 +203,19 @@ class JsoupClientTest {
             var actual = client.nikkei(code);
 
             assertAll("NikkeiResultBean",
-                    () -> assertNull(actual.getStockPrice()),
-                    () -> assertNull(actual.getTargetDate()),
-                    () -> assertNull(actual.getOpeningPrice()),
-                    () -> assertNull(actual.getHighPrice()),
-                    () -> assertNull(actual.getLowPrice()),
-                    () -> assertNull(actual.getVolume()),
-                    () -> assertNull(actual.getPer()),
-                    () -> assertNull(actual.getPbr()),
-                    () -> assertNull(actual.getRoe()),
-                    () -> assertNull(actual.getNumberOfShares()),
-                    () -> assertNull(actual.getMarketCapitalization()),
-                    () -> assertNull(actual.getDividendYield()),
-                    () -> assertNull(actual.getShareholderBenefit())
+                    () -> assertNull(actual.stockPrice()),
+                    () -> assertNull(actual.targetDate()),
+                    () -> assertNull(actual.openingPrice()),
+                    () -> assertNull(actual.highPrice()),
+                    () -> assertNull(actual.lowPrice()),
+                    () -> assertNull(actual.volume()),
+                    () -> assertNull(actual.per()),
+                    () -> assertNull(actual.pbr()),
+                    () -> assertNull(actual.roe()),
+                    () -> assertNull(actual.numberOfShares()),
+                    () -> assertNull(actual.marketCapitalization()),
+                    () -> assertNull(actual.dividendYield()),
+                    () -> assertNull(actual.shareholderBenefit())
             );
         }
     }

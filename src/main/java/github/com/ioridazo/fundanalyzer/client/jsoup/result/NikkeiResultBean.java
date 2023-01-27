@@ -1,65 +1,110 @@
 package github.com.ioridazo.fundanalyzer.client.jsoup.result;
 
-import lombok.Value;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
-public class NikkeiResultBean {
+public record NikkeiResultBean(
 
-    private final String stockPrice;
+        String stockPrice,
 
-    private final String targetDate;
+        String targetDate,
 
-    private final String openingPrice;
+        String openingPrice,
 
-    private final String highPrice;
+        String highPrice,
 
-    private final String lowPrice;
+        String lowPrice,
 
-    private final String volume;
+        String volume,
 
-    private final String per;
+        String per,
 
-    private final String pbr;
+        String pbr,
 
-    private final String roe;
+        String roe,
 
-    private final String numberOfShares;
+        String numberOfShares,
 
-    private final String marketCapitalization;
+        String marketCapitalization,
 
-    private final String dividendYield;
+        String dividendYield,
 
-    private final String shareholderBenefit;
+        String shareholderBenefit
+) {
 
     public static NikkeiResultBean ofJsoup(final Document document) {
         return new NikkeiResultBean(
-                document.select(".m-stockPriceElm dd").stream().map(Element::text).findFirst().orElse(null),
-                document.select(".m-stockInfo_date").stream().map(Element::text).findFirst().orElse(null),
+                document.select(".m-stockPriceElm dd").stream()
+                        .map(Element::text)
+                        .findFirst()
+                        .map(NikkeiResultBean::parse).orElse(null),
+                document.select(".m-stockInfo_date").stream()
+                        .map(Element::text)
+                        .findFirst()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("始値")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("始値"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("高値")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("高値"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("安値")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("安値"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_right li").stream()
-                        .map(Element::text).filter(text -> text.contains("売買高")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("売買高"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_right li").stream()
-                        .map(Element::text).filter(text -> text.contains("PER")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("PER"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("PBR")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("PBR"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("ROE")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("ROE"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("普通株式数")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("普通株式数"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("時価総額")).findAny().orElse(null),
+                        .map(Element::text)
+                        .filter(text -> text.contains("時価総額"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
+                document.select(".m-stockInfo_detail_right li").stream()
+                        .map(Element::text)
+                        .filter(text -> text.contains("予想配当利回り"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null),
                 document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("株式益回り")).findAny().orElse(null),
-                document.select(".m-stockInfo_detail_left li").stream()
-                        .map(Element::text).filter(text -> text.contains("株主優待")).findAny().orElse(null)
+                        .map(Element::text)
+                        .filter(text -> text.contains("株主優待"))
+                        .findAny()
+                        .map(NikkeiResultBean::parse).orElse(null)
         );
+    }
+
+    private static String parse(final String value) {
+        if ("N/A".equals(value)) {
+            return null;
+        } else {
+            return value;
+        }
     }
 }

@@ -173,7 +173,7 @@ public class StockSpecification {
      * @param nikkei 日経から取得した株価情報
      */
     public void insert(final String code, final NikkeiResultBean nikkei) {
-        if (isEmptyStockPrice(code, nikkei.getTargetDate())) {
+        if (isEmptyStockPrice(code, nikkei.targetDate())) {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
@@ -184,7 +184,7 @@ public class StockSpecification {
                                         "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
                                 "stock_price",
                                 code,
-                                nikkei.getTargetDate(),
+                                nikkei.targetDate(),
                                 SourceOfStockPrice.NIKKEI.getMemo()
                         ),
                         code
