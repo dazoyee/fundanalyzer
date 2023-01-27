@@ -155,24 +155,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Check') {
-            steps {
-                print "===== 動作確認を開始します ====="
-                script {
-                    bat '''
-                    "C:\\Users\\iorid\\scoop\\apps\\nodejs\\current\\node.exe" "C:\\fundanalyzer\\puppeteer\\page-screenshot.js"
-                    '''
-                }
-
-                slackUploadFile(
-                        filePath: 'fundanalyzer_v2_index.png',
-                        channel: 'UKNK4SZPX',
-                        credentialId: 'Slack Jenkins Bot'
-                )
-                print "===== 動作確認を正常に終了しました ====="
-            }
-        }
     }
 
     post {
