@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS `stock_price`
     `market_capitalization` VARCHAR(50)              DEFAULT NULL COMMENT '時価総額',
     `dividend_yield`        VARCHAR(10)              DEFAULT NULL COMMENT '予想配当利回り',
     `shareholder_benefit`   VARCHAR(100)             DEFAULT NULL COMMENT '株式優待',
-    `source_of`             CHAR(1)                  DEFAULT NULL COMMENT '取得元',
+    `source_of`             CHAR(1)         NOT NULL COMMENT '取得元',
     `created_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_sp` (`company_code`, `target_date`, `source_of`)

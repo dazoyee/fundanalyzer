@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS `stock_price` MODIFY COLUMN `source_of` CHAR (1) NOT NULL COMMENT '取得元',;

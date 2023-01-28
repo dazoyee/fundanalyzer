@@ -230,9 +230,4 @@ public class StockPriceEntity {
     public Optional<String> getShareholderBenefit() {
         return Optional.ofNullable(shareholderBenefit);
     }
-
-    @SuppressWarnings("unused")
-    public Optional<String> getSourceOf() {
-        return Optional.ofNullable(sourceOf);
-    }
 }
