@@ -219,6 +219,7 @@ public class ValuationSpecification {
 
         return ValuationEntity.of(
                 code,
+                submitDate,
                 targetDate,
                 stockPrice,
                 stockSpecification.findForecastStock(code, targetDate).map(BigDecimal::valueOf).orElse(null),
@@ -228,7 +229,6 @@ public class ValuationSpecification {
                 stockPrice.divide(averageStockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
                 corporateValue.subtract(stockPrice),
                 corporateValue.divide(stockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
-                submitDate,
                 corporateValue,
                 averageStockPrice,
                 investmentIndicatorSpecification.findIndicatorValue(code, submitDate).flatMap(IndicatorValue::getGrahamIndex).orElse(null),

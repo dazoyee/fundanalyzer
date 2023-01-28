@@ -25,11 +25,19 @@ public class ValuationEntity {
 
     private final String companyCode;
 
+    private final LocalDate submitDate;
+
     private final LocalDate targetDate;
+
+    private final Integer stockPriceId;
 
     private final BigDecimal stockPrice;
 
+    private final BigDecimal dividendYield;
+
     private final BigDecimal goalsStock;
+
+    private final Integer investmentIndicatorId;
 
     private final BigDecimal grahamIndex;
 
@@ -43,21 +51,25 @@ public class ValuationEntity {
 
     private final BigDecimal discountRate;
 
-    private final LocalDate submitDate;
-
     private final BigDecimal corporateValue;
+
+    private final Integer valuationIdOfSubmitDate;
 
     private final BigDecimal stockPriceOfSubmitDate;
 
     private final BigDecimal grahamIndexOfSubmitDate;
+
+    private final Integer analysisResultId;
 
     private final String documentId;
 
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
+    // TODO
     public static ValuationEntity of(
             final String companyCode,
+            final LocalDate submitDate,
             final LocalDate targetDate,
             final BigDecimal stockPrice,
             final BigDecimal goalsStock,
@@ -67,7 +79,6 @@ public class ValuationEntity {
             final BigDecimal submitDateRatio,
             final BigDecimal discountValue,
             final BigDecimal discountRate,
-            final LocalDate submitDate,
             final BigDecimal corporateValue,
             final BigDecimal stockPriceOfSubmitDate,
             final BigDecimal grahamIndexOfSubmitDate,
@@ -76,33 +87,59 @@ public class ValuationEntity {
         return new ValuationEntity(
                 null,
                 companyCode,
+                submitDate,
                 targetDate,
+                null,
                 stockPrice,
+                null,
                 goalsStock,
+                null,
                 grahamIndex,
                 monthSinceSubmitDate,
                 differenceFromSubmitDate,
                 submitDateRatio,
                 discountValue,
                 discountRate,
-                submitDate,
                 corporateValue,
+                null,
                 stockPriceOfSubmitDate,
                 grahamIndexOfSubmitDate,
+                null,
                 documentId,
                 nowLocalDateTime
         );
+    }
+
+    public Optional<Integer> getStockPriceId() {
+        return Optional.ofNullable(stockPriceId);
+    }
+
+    public Optional<BigDecimal> getDividendYield() {
+        return Optional.ofNullable(dividendYield);
     }
 
     public Optional<BigDecimal> getGoalsStock() {
         return Optional.ofNullable(goalsStock);
     }
 
+    public Optional<Integer> getInvestmentIndicatorId() {
+        return Optional.ofNullable(investmentIndicatorId);
+    }
+
     public Optional<BigDecimal> getGrahamIndex() {
         return Optional.ofNullable(grahamIndex);
     }
 
+    public Optional<Integer> getValuationIdOfSubmitDate() {
+        return Optional.ofNullable(valuationIdOfSubmitDate);
+    }
+
     public Optional<BigDecimal> getGrahamIndexOfSubmitDate() {
         return Optional.ofNullable(grahamIndexOfSubmitDate);
+    }
+
+    // TODO
+    public Optional<Integer> getAnalysisResultId() {
+        return Optional.ofNullable(analysisResultId);
     }
 }
