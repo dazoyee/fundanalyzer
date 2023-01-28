@@ -5,10 +5,10 @@ import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
-import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
@@ -193,6 +193,16 @@ public class ValuationSpecification {
                         Category.STOCK,
                         Process.EVALUATE
                 ), e);
+                // TODO
+            } else if (e.contains(NumberFormatException.class)) {
+                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                        MessageFormat.format(
+                                "予想配当利回りを数値に変換できませんでした。\t値:{0}", stock.getDividendYield().orElse(null)
+                        ),
+                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        Category.STOCK,
+                        Process.EVALUATE
+                ), e.getCause());
             } else {
                 throw e;
             }
@@ -211,28 +221,30 @@ public class ValuationSpecification {
         final LocalDate targetDate = stock.getTargetDate();
         final BigDecimal stockPrice = stock.getStockPrice().map(BigDecimal::valueOf)
                 .orElseThrow(() -> new FundanalyzerNotExistException("株価終値"));
-        final BigDecimal averageStockPrice = stockSpecification.getAverageStockPriceOfLatestSubmitDate(code)
-                .orElseThrow(() -> new FundanalyzerNotExistException("提出日株価平均"));
-
+        final Optional<InvestmentIndicatorEntity> investmentIndicatorEntity = investmentIndicatorSpecification.findEntity(code, targetDate);
         final LocalDate submitDate = analysisResult.getSubmitDate();
-        final BigDecimal corporateValue = analysisResult.getCorporateValue();
+        final BigDecimal stockPriceOfSubmitDate = stockSpecification.findStock(code, submitDate)
+                .flatMap(StockPriceEntity::getStockPrice)
+                .map(BigDecimal::valueOf).orElseThrow(() -> new FundanalyzerNotExistException("提出日株価終値"));
 
         return ValuationEntity.of(
                 code,
                 submitDate,
                 targetDate,
+                stock.getId(),
                 stockPrice,
-                stockSpecification.findForecastStock(code, targetDate).map(BigDecimal::valueOf).orElse(null),
-                investmentIndicatorSpecification.findIndicatorValue(code, targetDate).flatMap(IndicatorValue::getGrahamIndex).orElse(null),
+// TODO
+//                stock.getDividendYield().map(v -> new BigDecimal(v
+//                        .replace("%", "").replace("％", "")
+//                        .replace(" ", "").replace("　", "")
+//                )).orElse(null),
+                investmentIndicatorEntity.map(InvestmentIndicatorEntity::getId).orElse(null),
+                investmentIndicatorEntity.flatMap(InvestmentIndicatorEntity::getGrahamIndex).orElse(null),
                 ChronoUnit.DAYS.between(submitDate, targetDate),
-                stockPrice.subtract(averageStockPrice),
-                stockPrice.divide(averageStockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
-                corporateValue.subtract(stockPrice),
-                corporateValue.divide(stockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
-                corporateValue,
-                averageStockPrice,
-                investmentIndicatorSpecification.findIndicatorValue(code, submitDate).flatMap(IndicatorValue::getGrahamIndex).orElse(null),
-                analysisResult.getDocumentId(),
+                stockPrice.subtract(stockPriceOfSubmitDate),
+                stockPrice.divide(stockPriceOfSubmitDate, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
+                analysisResult.getCorporateValue().subtract(stockPrice),
+                analysisResult.getCorporateValue().divide(stockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
                 nowLocalDateTime()
         );
     }

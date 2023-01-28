@@ -57,9 +57,13 @@ public class CompanyValuationViewModel {
                 entity.getDifferenceFromSubmitDate(),
                 entity.getSubmitDateRatio(),
                 entity.getSubmitDate(),
-                entity.getStockPriceOfSubmitDate(),
-                entity.getGrahamIndexOfSubmitDate().orElse(null),
-                entity.getCorporateValue(),
+                // TODO
+                null,
+                null,
+                null,
+//                entity.getStockPriceOfSubmitDate(),
+//                entity.getGrahamIndexOfSubmitDate().orElse(null),
+//                entity.getCorporateValue(),
                 entity.getDiscountRate()
         );
     }

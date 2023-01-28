@@ -88,14 +88,6 @@ class ValuationInteractorTest {
                     null,
                     null,
                     null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
                     null
             );
         }
