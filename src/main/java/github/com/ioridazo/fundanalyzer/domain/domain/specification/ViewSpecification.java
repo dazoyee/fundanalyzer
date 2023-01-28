@@ -5,7 +5,12 @@ import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.ValuationViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
@@ -21,6 +26,8 @@ import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -39,6 +46,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,8 +63,12 @@ public class ViewSpecification {
 
     private final CorporateViewDao corporateViewDao;
     private final EdinetListViewDao edinetListViewDao;
+    private final ValuationViewDao valuationViewDao;
+    private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
+    private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
+    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
     @Value("${app.config.view.edinet-list.size}")
     int edinetListSize;
@@ -64,12 +76,20 @@ public class ViewSpecification {
     public ViewSpecification(
             final CorporateViewDao corporateViewDao,
             final EdinetListViewDao edinetListViewDao,
+            final ValuationViewDao valuationViewDao,
+            final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
-            final StockSpecification stockSpecification) {
+            final AnalysisResultSpecification analysisResultSpecification,
+            final StockSpecification stockSpecification,
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
+        this.valuationViewDao = valuationViewDao;
+        this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
+        this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
+        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
     }
 
     LocalDate nowLocalDate() {
@@ -132,6 +152,32 @@ public class ViewSpecification {
                 .map(EdinetListViewModel::of)
                 .filter(viewModel -> viewModel.getSubmitDate().isAfter(nowLocalDate().minusDays(edinetListSize)))
                 .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
+                .toList();
+    }
+
+    /**
+     * すべての会社評価ビューを取得する
+     *
+     * @return 会社評価ビュー
+     */
+    public List<CompanyValuationViewModel> findAllCompanyValuationView() {
+        return valuationViewDao.selectAll().stream()
+                .map(CompanyValuationViewModel::of)
+                .toList();
+    }
+
+    /**
+     * 産業毎の評価ビューを取得する
+     *
+     * @return 産業毎の評価ビュー
+     */
+    public List<CompanyValuationViewModel> findCompanyValuationViewList(final Integer industryId) {
+        return companySpecification.findCompanyByIndustry(industryId).stream()
+                .map(Company::getCode)
+                .map(valuationViewDao::selectByCode)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(CompanyValuationViewModel::of)
                 .toList();
     }
 
@@ -330,6 +376,79 @@ public class ViewSpecification {
                 notAnalyzedId.length() > 998 ? notAnalyzedId.substring(0, 998) : notAnalyzedId,
                 cantScrapedId.length() > 998 ? cantScrapedId.substring(0, 998) : cantScrapedId,
                 scrapedList.getSecond().size()
+        );
+    }
+
+    public CompanyValuationViewModel generateCompanyValuationView(final ValuationEntity entity) {
+        final Optional<Company> company = companySpecification.findCompanyByCode(entity.getCompanyCode());
+        final Optional<StockPriceEntity> stockPriceOfSubmitDate = stockSpecification.findStock(entity.getCompanyCode(), entity.getSubmitDate());
+        final Optional<InvestmentIndicatorEntity> investmentIndicatorOfSubmitDate = investmentIndicatorSpecification.findEntity(entity.getCompanyCode(), entity.getSubmitDate());
+        final Optional<AnalysisResultEntity> analysisResult = analysisResultSpecification.findAnalysisResult(entity.getAnalysisResultId());
+
+        return new CompanyValuationViewModel(
+                entity.getCompanyCode(),
+                company.map(Company::getCompanyName).orElseThrow(),
+                entity.getTargetDate(),
+                entity.getStockPrice(),
+                entity.getGrahamIndex().orElse(null),
+                entity.getDiscountRate(),
+                entity.getSubmitDate(),
+                stockPriceOfSubmitDate.flatMap(StockPriceEntity::getStockPrice).map(BigDecimal::valueOf).orElseThrow(),
+                entity.getDifferenceFromSubmitDate(),
+                entity.getSubmitDateRatio(),
+                investmentIndicatorOfSubmitDate.flatMap(InvestmentIndicatorEntity::getGrahamIndex).orElse(null),
+                analysisResult.map(AnalysisResultEntity::getCorporateValue).orElseThrow(),
+                stockSpecification.findEntityList(entity.getCompanyCode()).stream()
+                        .filter(stockPriceEntity -> stockPriceEntity.getDividendYield().isPresent())
+                        .max(Comparator.comparing(StockPriceEntity::getTargetDate))
+                        .flatMap(StockPriceEntity::getDividendYield)
+                        .map(v -> {
+                            try {
+                                return new BigDecimal(v
+                                        .replace("%", "").replace("％", "")
+                                        .replace(" ", "").replace("　", "")
+                                );
+                            } catch (final NumberFormatException e) {
+                                log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                                        MessageFormat.format(
+                                                "予想配当利回りを数値に変換できませんでした。\t値:{0}", v
+                                        ),
+                                        companySpecification.findCompanyByCode(entity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                                        Category.STOCK,
+                                        Process.EVALUATE
+                                ), e.getCause());
+                                return null;
+                            }
+                        })
+                        .orElse(null)
+        );
+    }
+
+    /**
+     * 業種による平均の評価結果を取得する
+     *
+     * @param industryName         業種名
+     * @param companyValuationList 会社評価ビューリスト
+     * @return 業種による平均の評価結果
+     */
+    public IndustryValuationViewModel generateIndustryValuationView(
+            final String industryName, final List<CompanyValuationViewModel> companyValuationList) {
+        return IndustryValuationViewModel.of(
+                industryName,
+                companyValuationList.stream()
+                        .map(CompanyValuationViewModel::differenceFromSubmitDate)
+                        .mapToDouble(BigDecimal::doubleValue)
+                        .average().orElse(0),
+                companyValuationList.stream()
+                        .map(CompanyValuationViewModel::submitDateRatio)
+                        .mapToDouble(BigDecimal::doubleValue)
+                        .average().orElse(0),
+                companyValuationList.stream()
+                        .map(CompanyValuationViewModel::grahamIndex)
+                        .filter(Objects::nonNull)
+                        .mapToDouble(BigDecimal::doubleValue)
+                        .average().orElse(0),
+                companyValuationList.size()
         );
     }
 

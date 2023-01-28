@@ -1,70 +1,67 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.valuation;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
-import github.com.ioridazo.fundanalyzer.domain.value.Company;
-import lombok.Value;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.ValuationViewBean;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value(staticConstructor = "of")
-public class CompanyValuationViewModel {
+public record CompanyValuationViewModel(
 
-    // 証券コード
-    private final String code;
+        // 証券コード
+        String code,
 
-    // 会社名
-    private final String name;
+        // 会社名
+        String name,
 
-    // 対象日
-    private final LocalDate targetDate;
+        // 対象日
+        LocalDate targetDate,
 
-    // 株価終値
-    private final BigDecimal stockPrice;
+        // 株価終値
+        BigDecimal stockPrice,
 
-    // グレアム指数
-    private final BigDecimal grahamIndex;
+        // グレアム指数
+        BigDecimal grahamIndex,
 
-    // 提出日との差
-    private final BigDecimal differenceFromSubmitDate;
+        // 割安度
+        BigDecimal discountRate,
 
-    // 提出日比率
-    private final BigDecimal submitDateRatio;
+        // 提出日
+        LocalDate submitDate,
 
-    // 提出日
-    private final LocalDate submitDate;
+        // 提出日の株価終値
+        BigDecimal stockPriceOfSubmitDate,
 
-    // 提出日株価平均
-    private final BigDecimal averageStockPrice;
+        // 提出日との株価の差
+        BigDecimal differenceFromSubmitDate,
 
-    // 提出日グレアム指数
-    private final BigDecimal grahamIndexOfSubmitDate;
+        // 提出日との株価比率
+        BigDecimal submitDateRatio,
 
-    // 最新企業価値
-    private final BigDecimal latestCorporateValue;
+        // 提出日のグレアム指数
+        BigDecimal grahamIndexOfSubmitDate,
 
-    // 割安度
-    private final BigDecimal discountRate;
+        // 企業価値
+        BigDecimal corporateValue,
 
-    public static CompanyValuationViewModel of(final ValuationEntity entity, final Company company) {
+        // 予想配当利回り
+        BigDecimal dividendYield
+) {
+
+    public static CompanyValuationViewModel of(final ValuationViewBean viewBean) {
         return new CompanyValuationViewModel(
-                entity.getCompanyCode().length() == 5 ? entity.getCompanyCode().substring(0, 4) : entity.getCompanyCode(),
-                company.getCompanyName(),
-                entity.getTargetDate(),
-                entity.getStockPrice(),
-                entity.getGrahamIndex().orElse(null),
-                entity.getDifferenceFromSubmitDate(),
-                entity.getSubmitDateRatio(),
-                entity.getSubmitDate(),
-                // TODO
-                null,
-                null,
-                null,
-//                entity.getStockPriceOfSubmitDate(),
-//                entity.getGrahamIndexOfSubmitDate().orElse(null),
-//                entity.getCorporateValue(),
-                entity.getDiscountRate()
+                viewBean.getCode(),
+                viewBean.getName(),
+                viewBean.getTargetDate(),
+                viewBean.getStockPrice(),
+                viewBean.getGrahamIndex().orElse(null),
+                viewBean.getDiscountRate(),
+                viewBean.getSubmitDate(),
+                viewBean.getStockPriceOfSubmitDate(),
+                viewBean.getDifferenceFromSubmitDate(),
+                viewBean.getSubmitDateRatio(),
+                viewBean.getGrahamIndexOfSubmitDate().orElse(null),
+                viewBean.getCorporateValue(),
+                viewBean.getDividendYield().orElse(null)
         );
     }
 }

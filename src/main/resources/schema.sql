@@ -262,11 +262,13 @@ CREATE TABLE IF NOT EXISTS `valuation`
     `submit_date_ratio`           FLOAT           NOT NULL COMMENT '提出日との株価比率',
     `discount_value`              FLOAT           NOT NULL COMMENT '割安値',
     `discount_rate`               FLOAT           NOT NULL COMMENT '割安度',
+    `analysis_result_id`          BIGINT UNSIGNED NOT NULL COMMENT '企業価値ID',
     `created_at`                  DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_v` (`company_code`, `submit_date`, `target_date`),
     CONSTRAINT `fk_v_stock_price` FOREIGN KEY (`stock_price_id`) REFERENCES `stock_price` (`id`) ON DELETE SET NULL,
-    CONSTRAINT `fk_v_investment_indicator` FOREIGN KEY (`investment_indicator_id`) REFERENCES `investment_indicator` (`id`) ON DELETE SET NULL
+    CONSTRAINT `fk_v_investment_indicator` FOREIGN KEY (`investment_indicator_id`) REFERENCES `investment_indicator` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_v_analysis_result` FOREIGN KEY (`analysis_result_id`) REFERENCES `analysis_result` (`id`)
 );
 
 -- Table structure for table `corporate_view`(企業一覧)
@@ -334,4 +336,28 @@ CREATE TABLE IF NOT EXISTS edinet_list_view
     `updated_at`        DATETIME NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
     PRIMARY KEY (`submit_date`),
     UNIQUE KEY `uk_elv_submit_date` (`submit_date`)
+);
+
+-- Table structure for table `valuation_view`(企業評価一覧)
+-- DROP TABLE IF EXISTS `valuation_view`;
+CREATE TABLE IF NOT EXISTS `valuation_view`
+(
+    `code`                        CHAR(4)      NOT NULL COMMENT '企業コード',
+    `name`                        VARCHAR(100) NOT NULL COMMENT '企業名',
+    `target_date`                 DATE         NOT NULL COMMENT '対象日付',
+    `stock_price`                 FLOAT        NOT NULL COMMENT '株価終値',
+    `graham_index`                FLOAT                 DEFAULT NULL COMMENT 'グレアム指数',
+    `discount_value`              FLOAT        NOT NULL COMMENT '割安値',
+    `discount_rate`               FLOAT        NOT NULL COMMENT '割安度',
+    `submit_date`                 DATE         NOT NULL COMMENT '提出日',
+    `stock_price_of_submit_date`  FLOAT        NOT NULL COMMENT '提出日の株価終値',
+    `day_since_submit_date`       INT(11)      NOT NULL COMMENT '提出日からの日数',
+    `difference_from_submit_date` FLOAT        NOT NULL COMMENT '提出日との株価の差',
+    `submit_date_ratio`           FLOAT        NOT NULL COMMENT '提出日との株価比率',
+    `graham_index_of_submit_date` FLOAT                 DEFAULT NULL COMMENT '提出日のグレアム指数',
+    `corporate_value`             FLOAT        NOT NULL COMMENT '企業価値',
+    `dividend_yield`              FLOAT                 DEFAULT NULL COMMENT '予想配当利回り',
+    `created_at`                  DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
+    `updated_at`                  DATETIME     NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
+    PRIMARY KEY (`code`)
 );

@@ -47,6 +47,8 @@ public class ValuationEntity {
 
     private final BigDecimal discountRate;
 
+    private final Integer analysisResultId;
+
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
@@ -63,6 +65,7 @@ public class ValuationEntity {
             final BigDecimal submitDateRatio,
             final BigDecimal discountValue,
             final BigDecimal discountRate,
+            final Integer analysisResultId,
             final LocalDateTime nowLocalDateTime) {
         return new ValuationEntity(
                 null,
@@ -78,6 +81,7 @@ public class ValuationEntity {
                 submitDateRatio,
                 discountValue,
                 discountRate,
+                analysisResultId,
                 nowLocalDateTime
         );
     }

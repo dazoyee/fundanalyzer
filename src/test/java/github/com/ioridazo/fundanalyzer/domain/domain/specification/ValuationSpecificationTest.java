@@ -5,13 +5,10 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Analysi
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
-import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -23,14 +20,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ValuationSpecificationTest {
 
     private ValuationDao valuationDao;
-    private CompanySpecification companySpecification;
     private StockSpecification stockSpecification;
     private InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
@@ -39,159 +34,15 @@ class ValuationSpecificationTest {
     @BeforeEach
     void setUp() {
         valuationDao = mock(ValuationDao.class);
-        companySpecification = mock(CompanySpecification.class);
         stockSpecification = mock(StockSpecification.class);
         investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
 
         valuationSpecification = new ValuationSpecification(
                 valuationDao,
-                companySpecification,
+                mock(CompanySpecification.class),
                 stockSpecification,
                 investmentIndicatorSpecification
         );
-    }
-
-    @Nested
-    class averageValuation {
-
-        private Company company(String code) {
-            return new Company(
-                    code,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                    true
-            );
-        }
-
-        private ValuationEntity valuationEntity(
-                LocalDate targetDate, BigDecimal differenceFromSubmitDate, BigDecimal submitDateRatio, BigDecimal grahamIndex) {
-            return new ValuationEntity(
-                    null,
-                    "code",
-                    null,
-                    targetDate,
-                    null,
-                    null,
-                    null,
-                    grahamIndex,
-                    null,
-                    differenceFromSubmitDate,
-                    submitDateRatio,
-                    null,
-                    null,
-                    null
-            );
-        }
-
-        @DisplayName("averageValuation : 業種による平均の評価結果を取得する")
-        @Test
-        void average() {
-            when(valuationDao.selectByCode("code1")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1), null),
-                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01), BigDecimal.valueOf(2.05))
-            ));
-            when(valuationDao.selectByCode("code2")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01), BigDecimal.valueOf(2.05)),
-                    valuationEntity(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1), null)
-            ));
-
-            var actual = valuationSpecification.averageValuation("name", List.of(company("code1"), company("code2")));
-            assertAll(
-                    () -> assertEquals("name", actual.getName()),
-                    () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
-                    () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio()),
-                    () -> assertEquals(BigDecimal.valueOf(205, 2), actual.getGrahamIndex()),
-                    () -> assertEquals(2, actual.getCount())
-            );
-        }
-    }
-
-    @Nested
-    class findAllValuationView {
-
-        private ValuationEntity valuationEntity(LocalDate targetDate, LocalDate submitDate) {
-            return new ValuationEntity(
-                    null,
-                    "code",
-                    submitDate,
-                    targetDate,
-                    null,
-                    BigDecimal.TEN,
-                    null,
-                    BigDecimal.TEN,
-                    (long) 10,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    null
-            );
-        }
-
-        @DisplayName("findAllValuationView : すべての評価結果を取得する")
-        @Test
-        void targetDate() {
-            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(new Company(
-                    "code",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                    true
-            )));
-            when(valuationDao.selectByCode("code")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-09")),
-                    valuationEntity(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-09"))
-            ));
-
-            var actual = valuationSpecification.findAllValuationView();
-
-            assertEquals(LocalDate.parse("2022-07-10"), actual.get(0).getTargetDate());
-            assertEquals(1, actual.size());
-        }
-
-        @DisplayName("findAllValuationView : すべての評価結果を取得する")
-        @Test
-        void submitDate() {
-            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(new Company(
-                    "code",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                    true
-            )));
-            when(valuationDao.selectByCode("code")).thenReturn(List.of(
-                    valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2021-08-11")),
-                    valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2022-08-11"))
-            ));
-
-            var actual = valuationSpecification.findAllValuationView();
-
-            assertAll(
-                    () -> assertEquals(LocalDate.parse("2022-08-11"), actual.get(0).getTargetDate()),
-                    () -> assertEquals(LocalDate.parse("2022-08-11"), actual.get(0).getSubmitDate())
-            );
-
-            assertEquals(1, actual.size());
-        }
     }
 
     @Nested
@@ -212,6 +63,7 @@ class ValuationSpecificationTest {
                     BigDecimal.TEN,
                     BigDecimal.TEN,
                     BigDecimal.TEN,
+                    null,
                     null
             );
         }
@@ -219,27 +71,15 @@ class ValuationSpecificationTest {
         @DisplayName("findAllValuationView : 企業ごとの評価結果を取得する")
         @Test
         void get() {
-            when(companySpecification.findCompanyByCode("code")).thenReturn(Optional.of(new Company(
-                    "code",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                    true
-            )));
-            when(valuationDao.selectByCode("code")).thenReturn(List.of(
+            var code = "code";
+            when(valuationDao.selectByCode(code)).thenReturn(List.of(
                     valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-01")),
                     valuationEntity(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-01")),
                     valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2021-08-11")),
                     valuationEntity(LocalDate.parse("2022-08-11"), LocalDate.parse("2022-08-11"))
             ));
 
-            var actual = valuationSpecification.findValuationView("code");
+            var actual = valuationSpecification.findValuation(code);
 
             assertAll(
                     () -> assertEquals(LocalDate.parse("2022-07-09"), actual.get(0).getTargetDate()),
@@ -485,52 +325,6 @@ class ValuationSpecificationTest {
             );
 
             assertEquals(BigDecimal.valueOf(discountRate, 2), actual.getDiscountRate());
-        }
-
-        //TODO
-        @Disabled
-        @DisplayName("evaluate : 予想配当利回りを数値に変換できないとき")
-        @Test
-        void dividendYield() {
-            when(stockSpecification.findStock(companyCode, submitDate))
-                    .thenReturn(Optional.of(stockPrice(submitDate, 600.0)));
-
-            Executable executable = () -> valuationSpecification.evaluate(
-                    new StockPriceEntity(
-                            1,
-                            "code",
-                            targetDate,
-                            600.0,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            "(4.01%)",
-                            null,
-                            null,
-                            null
-                    ),
-                    new AnalysisResultEntity(
-                            4,
-                            companyCode,
-                            null,
-                            BigDecimal.valueOf(2000),
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            submitDate,
-                            "documentId",
-                            null
-                    ));
-            assertThrows(NumberFormatException.class, executable);
         }
 
         private StockPriceEntity stockPrice(LocalDate targetDate, Double stockPrice) {
