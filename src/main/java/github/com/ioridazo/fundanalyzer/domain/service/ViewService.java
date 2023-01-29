@@ -2,9 +2,9 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
-import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewValuationUseCase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.presenter.Target;
@@ -25,19 +25,19 @@ public class ViewService {
 
     private final CompanyUseCase companyUseCase;
     private final DocumentUseCase documentUseCase;
-    private final ValuationUseCase valuationUseCase;
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
+    private final ViewValuationUseCase viewValuationUseCase;
 
     public ViewService(
             final CompanyUseCase companyUseCase,
             final DocumentUseCase documentUseCase,
-            final ValuationUseCase valuationUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
-            final ViewEdinetUseCase viewEdinetUseCase) {
+            final ViewEdinetUseCase viewEdinetUseCase,
+            final ViewValuationUseCase viewValuationUseCase) {
         this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
-        this.valuationUseCase = valuationUseCase;
+        this.viewValuationUseCase = viewValuationUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
     }
@@ -180,13 +180,35 @@ public class ViewService {
     }
 
     /**
+     * 企業評価アップデート
+     */
+    @NewSpan
+    @Async
+    public void updateValuationView() {
+        // view edinet
+        viewValuationUseCase.updateView();
+    }
+
+    /**
+     * 企業評価アップデート
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    @Async
+    public void updateValuationView(final CodeInputData inputData) {
+        // view valuation
+        viewValuationUseCase.updateView(inputData);
+    }
+
+    /**
      * 株価評価（メイン）
      *
      * @return 株価評価
      */
     @NewSpan
     public List<CompanyValuationViewModel> getValuationView() {
-        return valuationUseCase.viewValuation();
+        return viewValuationUseCase.viewValuation();
     }
 
     /**
@@ -196,7 +218,7 @@ public class ViewService {
      */
     @NewSpan
     public List<CompanyValuationViewModel> getValuationView(final CodeInputData inputData) {
-        return valuationUseCase.viewValuation(inputData);
+        return viewValuationUseCase.viewValuation(inputData);
     }
 
     /**
@@ -206,7 +228,7 @@ public class ViewService {
      */
     @NewSpan
     public List<CompanyValuationViewModel> getAllValuationView() {
-        return valuationUseCase.viewAllValuation();
+        return viewValuationUseCase.viewAllValuation();
     }
 
     /**
@@ -216,7 +238,7 @@ public class ViewService {
      */
     @NewSpan
     public List<CompanyValuationViewModel> getFavoriteValuationView() {
-        return valuationUseCase.viewFavoriteValuation();
+        return viewValuationUseCase.viewFavoriteValuation();
     }
 
     /**
@@ -226,6 +248,6 @@ public class ViewService {
      */
     @NewSpan
     public List<IndustryValuationViewModel> getIndustryValuationView() {
-        return valuationUseCase.viewIndustryValuation();
+        return viewValuationUseCase.viewIndustryValuation();
     }
 }

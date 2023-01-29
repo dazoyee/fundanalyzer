@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import brave.internal.Nullable;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
@@ -21,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Controller
 public class AnalysisController {
@@ -99,7 +99,7 @@ public class AnalysisController {
     public String scrapeById(final String documentId, final RedirectAttributes redirectAttributes) {
         final List<String> idList = Arrays.stream(documentId.split(","))
                 .filter(dId -> dId.length() == 8)
-                .collect(Collectors.toList());
+                .toList();
         if (idList.isEmpty()) {
             redirectAttributes.addFlashAttribute(
                     MESSAGE,
@@ -181,14 +181,18 @@ public class AnalysisController {
      * @return BrandDetail
      */
     @PostMapping("/v2/evaluate")
-    public String evaluate(final String code, final RedirectAttributes redirectAttributes) {
+    public String evaluate(@Nullable final String code, final RedirectAttributes redirectAttributes) {
         if (Objects.nonNull(code)) {
             final boolean isEvaluated = analysisService.evaluate(CodeInputData.of(code));
+            if (isEvaluated) {
+                viewService.updateValuationView(CodeInputData.of(code));
+            }
             redirectAttributes.addFlashAttribute("isEvaluated", isEvaluated);
             return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
                     .queryParam("code", code.substring(0, 4)).toUriString();
         } else {
             final int countValuation = analysisService.evaluate();
+            viewService.updateValuationView();
             redirectAttributes.addFlashAttribute(
                     MESSAGE,
                     messageSource.getMessage(

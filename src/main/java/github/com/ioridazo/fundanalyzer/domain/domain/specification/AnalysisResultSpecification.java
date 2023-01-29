@@ -53,6 +53,16 @@ public class AnalysisResultSpecification {
     }
 
     /**
+     * 分析結果を取得する
+     *
+     * @param id ID
+     * @return 分析結果
+     */
+    public Optional<AnalysisResultEntity> findAnalysisResult(final Integer id) {
+        return analysisResultDao.selectById(id);
+    }
+
+    /**
      * 最新の分析結果を取得する
      *
      * @param companyCode 企業コード
@@ -252,6 +262,7 @@ public class AnalysisResultSpecification {
         }
 
         final Optional<Company> company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode());
+        //noinspection OptionalIsPresent
         if (company.isEmpty()) {
             return false;
         }

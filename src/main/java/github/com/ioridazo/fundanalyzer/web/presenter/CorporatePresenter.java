@@ -223,32 +223,32 @@ public class CorporatePresenter {
         model.addAttribute("valuations", viewList);
 
         final List<CompanyValuationViewModel> valuation = viewList.stream()
-                .sorted(Comparator.comparing(CompanyValuationViewModel::getTargetDate))
+                .sorted(Comparator.comparing(CompanyValuationViewModel::targetDate))
                 .toList();
 
         model.addAttribute("valuationLabel180", valuation.stream()
-                .map(CompanyValuationViewModel::getTargetDate)
+                .map(CompanyValuationViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
                 .toList());
         model.addAttribute("valuationPoint180", valuation.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
-                .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(180)))
+                .map(CompanyValuationViewModel::differenceFromSubmitDate)
                 .toList());
 
         model.addAttribute("valuationLabel365", valuation.stream()
-                .map(CompanyValuationViewModel::getTargetDate)
+                .map(CompanyValuationViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
                 .toList());
         model.addAttribute("valuationPoint365", valuation.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
-                .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(365)))
+                .map(CompanyValuationViewModel::differenceFromSubmitDate)
                 .toList());
 
         model.addAttribute("valuationLabelAll", valuation.stream()
-                .map(CompanyValuationViewModel::getTargetDate)
+                .map(CompanyValuationViewModel::targetDate)
                 .toList());
         model.addAttribute("valuationPointAll", valuation.stream()
-                .map(CompanyValuationViewModel::getDifferenceFromSubmitDate)
+                .map(CompanyValuationViewModel::differenceFromSubmitDate)
                 .toList());
     }
 }

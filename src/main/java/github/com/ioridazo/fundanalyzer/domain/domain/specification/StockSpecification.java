@@ -14,7 +14,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -102,6 +101,16 @@ public class StockSpecification {
     /**
      * 株価情報を取得する
      *
+     * @param companyCode 企業コード
+     * @return 株価情報
+     */
+    public List<StockPriceEntity> findEntityList(final String companyCode) {
+        return stockPriceDao.selectByCode(companyCode);
+    }
+
+    /**
+     * 株価情報を取得する
+     *
      * @param company 企業情報
      * @return 株価情報
      */
@@ -173,7 +182,7 @@ public class StockSpecification {
      * @param nikkei 日経から取得した株価情報
      */
     public void insert(final String code, final NikkeiResultBean nikkei) {
-        if (isEmptyStockPrice(code, nikkei.getTargetDate())) {
+        if (isEmptyStockPrice(code, nikkei.targetDate())) {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
@@ -184,7 +193,7 @@ public class StockSpecification {
                                         "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
                                 "stock_price",
                                 code,
-                                nikkei.getTargetDate(),
+                                nikkei.targetDate(),
                                 SourceOfStockPrice.NIKKEI.getMemo()
                         ),
                         code
@@ -344,31 +353,6 @@ public class StockSpecification {
      */
     public int delete(final LocalDate targetDate) {
         return stockPriceDao.delete(targetDate);
-    }
-
-    /**
-     * 特定期間における平均の株価を取得する
-     *
-     * @param companyCode 企業コード
-     * @return 平均の株価
-     */
-    public Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(final String companyCode) {
-        final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
-        return getAverageStockPriceOfLatestSubmitDate(
-                company,
-                stockPriceDao.selectByCode(company.getCode())
-        );
-    }
-
-    /**
-     * 予想株価を取得する
-     *
-     * @param companyCode 企業コード
-     * @param targetDate  対象日付
-     * @return 予想株価
-     */
-    public Optional<Double> findForecastStock(final String companyCode, final LocalDate targetDate) {
-        return minkabuDao.selectByCodeAndDate(companyCode, targetDate).flatMap(MinkabuEntity::getGoalsStock);
     }
 
     /**

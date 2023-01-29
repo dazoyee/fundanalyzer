@@ -2,7 +2,11 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.CorporateViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.ValuationViewDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
@@ -14,6 +18,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,9 +26,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -37,6 +44,8 @@ class ViewSpecificationTest {
 
     private CorporateViewDao corporateViewDao;
     private EdinetListViewDao edinetListViewDao;
+    private CompanySpecification companySpecification;
+    private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
 
     private ViewSpecification viewSpecification;
@@ -45,13 +54,19 @@ class ViewSpecificationTest {
     void setUp() {
         corporateViewDao = Mockito.mock(CorporateViewDao.class);
         edinetListViewDao = Mockito.mock(EdinetListViewDao.class);
+        companySpecification = Mockito.mock(CompanySpecification.class);
+        analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
 
         viewSpecification = Mockito.spy(new ViewSpecification(
                 corporateViewDao,
                 edinetListViewDao,
+                Mockito.mock(ValuationViewDao.class),
+                companySpecification,
                 Mockito.mock(DocumentSpecification.class),
-                stockSpecification
+                analysisResultSpecification,
+                stockSpecification,
+                Mockito.mock(InvestmentIndicatorSpecification.class)
         ));
     }
 
@@ -187,6 +202,92 @@ class ViewSpecificationTest {
         }
     }
 
+    @DisplayName("generateCorporateView : 予想配当利回りを数値に変換できないとき")
+    @Test
+    void dividendYield() {
+        var code = "code";
+        var submitDate = LocalDate.parse("2022-01-29");
+        var stockPriceEntity = new StockPriceEntity(
+                null,
+                code,
+                submitDate,
+                600.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "(4.01%)",
+                null,
+                null,
+                null
+        );
+
+        when(companySpecification.findCompanyByCode(code)).thenReturn(Optional.of(defaultCompany()));
+        when(stockSpecification.findStock(code, submitDate)).thenReturn(Optional.of(stockPriceEntity));
+        when(stockSpecification.findEntityList(code)).thenReturn(List.of(stockPriceEntity));
+        when(analysisResultSpecification.findAnalysisResult(1))
+                .thenReturn(Optional.of(new AnalysisResultEntity(
+                        null,
+                        null,
+                        null,
+                        BigDecimal.TEN,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                )));
+
+        var actual = viewSpecification.generateCompanyValuationView(
+                new ValuationEntity(
+                        null,
+                        code,
+                        submitDate,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        1,
+                        null
+                )
+        );
+        assertNull(actual.dividendYield());
+    }
+
+    @DisplayName("generateIndustryValuationView : 業種による平均の評価結果を取得する")
+    @Test
+    void generateIndustryValuationView() {
+        var actual = viewSpecification.generateIndustryValuationView(
+                "name",
+                List.of(
+                        companyValuationViewModel(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1), null),
+                        companyValuationViewModel(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01), BigDecimal.valueOf(2.05))
+                )
+        );
+        assertAll(
+                () -> assertEquals("name", actual.getName()),
+                () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
+                () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio()),
+                () -> assertEquals(BigDecimal.valueOf(205, 2), actual.getGrahamIndex()),
+                () -> assertEquals(2, actual.getCount())
+        );
+    }
+
     private Company defaultCompany() {
         return new Company(
                 "code",
@@ -277,6 +378,27 @@ class ViewSpecificationTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null
+        );
+    }
+
+    private CompanyValuationViewModel companyValuationViewModel(
+            LocalDate targetDate, BigDecimal differenceFromSubmitDate, BigDecimal submitDateRatio, BigDecimal grahamIndex) {
+        return new CompanyValuationViewModel(
+                "code",
+                null,
+                targetDate,
+                null,
+                grahamIndex,
+                null,
+                null,
+                null,
+                null,
+                null,
+                differenceFromSubmitDate,
+                submitDateRatio,
                 null,
                 null,
                 null
