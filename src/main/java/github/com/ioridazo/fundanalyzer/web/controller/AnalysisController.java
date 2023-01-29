@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import brave.internal.Nullable;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
@@ -180,7 +181,7 @@ public class AnalysisController {
      * @return BrandDetail
      */
     @PostMapping("/v2/evaluate")
-    public String evaluate(final String code, final RedirectAttributes redirectAttributes) {
+    public String evaluate(@Nullable final String code, final RedirectAttributes redirectAttributes) {
         if (Objects.nonNull(code)) {
             final boolean isEvaluated = analysisService.evaluate(CodeInputData.of(code));
             if (isEvaluated) {
@@ -191,6 +192,7 @@ public class AnalysisController {
                     .queryParam("code", code.substring(0, 4)).toUriString();
         } else {
             final int countValuation = analysisService.evaluate();
+            viewService.updateValuationView();
             redirectAttributes.addFlashAttribute(
                     MESSAGE,
                     messageSource.getMessage(

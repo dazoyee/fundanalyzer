@@ -264,9 +264,9 @@
                       </td>
                       <td th:text="${company.submitDateRatio}">提出日比率</td>
                       <td th:text="${company.submitDate}">提出日</td>
-                      <td th:text="${company.averageStockPrice}">提出日の株価平均</td>
+                      <td th:text="${company.stockPriceOfSubmitDate}">提出日の株価</td>
                       <td th:text="${company.grahamIndexOfSubmitDate}">提出日のグレアム指数</td>
-                      <td th:text="${company.latestCorporateValue}">最新企業価値</td>
+                      <td th:text="${company.corporateValue}">最新企業価値</td>
                     </tr>
                     </tbody>
                   </table>
@@ -362,7 +362,7 @@
             "lengthMenu": [ 10, 15, 25, 50, 100 ],
             "searching": true,
             "ordering": true,
-            "order": [ [ 2, 'desc' ], [ 4, 'desc' ] ],
+            "order": [ [ 2, 'desc' ], [ 5, 'desc' ] ],
             "info": true,
             "autoWidth": true,
             "responsive": true,

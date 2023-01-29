@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,8 +78,9 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
      */
     @Override
     public List<CompanyValuationViewModel> viewValuation(final CodeInputData inputData) {
-        return valuationSpecification.findValuation(inputData.getCode()).stream()
+        return valuationSpecification.findValuation(inputData.getCode5()).stream()
                 .map(viewSpecification::generateCompanyValuationView)
+                .sorted(Comparator.comparing(CompanyValuationViewModel::targetDate).reversed())
                 .toList();
     }
 
