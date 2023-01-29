@@ -5,7 +5,9 @@ ALTER TABLE IF EXISTS `valuation` DROP COLUMN `dividend_yield`;
 ALTER TABLE IF EXISTS `valuation` DROP COLUMN `corporate_value`;
 ALTER TABLE IF EXISTS `valuation` DROP COLUMN `stock_price_of_submit_date`;
 ALTER TABLE IF EXISTS `valuation` DROP COLUMN `graham_index_of_submit_date`;
+ALTER TABLE IF EXISTS `valuation` DROP FOREIGN KEY `fk_v_document_id`;
 ALTER TABLE IF EXISTS `valuation` DROP COLUMN `document_id`;
+ALTER TABLE IF EXISTS `valuation` DROP FOREIGN KEY `fk_v_id`;
 ALTER TABLE IF EXISTS `valuation` DROP COLUMN `valuation_id_of_submit_date`;
 
 ALTER TABLE IF EXISTS `valuation` MODIFY COLUMN `analysis_result_id` BIGINT UNSIGNED NOT NULL COMMENT '企業価値ID';
