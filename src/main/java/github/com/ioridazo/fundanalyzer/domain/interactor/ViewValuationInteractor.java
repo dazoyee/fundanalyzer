@@ -1,5 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
@@ -9,34 +13,45 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class ViewValuationInteractor implements ViewValuationUseCase {
 
-    private final ViewSpecification viewSpecification;
+    private static final Logger log = LogManager.getLogger(ViewValuationInteractor.class);
+
     private final IndustrySpecification industrySpecification;
     private final CompanySpecification companySpecification;
     private final ValuationSpecification valuationSpecification;
+    private final ViewSpecification viewSpecification;
+    private final SlackClient slackClient;
 
     @Value("${app.config.view.discount-rate}")
     BigDecimal configDiscountRate;
     @Value("${app.config.scraping.no-industry}")
     List<String> noTargetList;
+    @Value("${app.slack.update-view.enabled:true}")
+    boolean updateViewEnabled;
 
     public ViewValuationInteractor(
-            final ViewSpecification viewSpecification,
             final IndustrySpecification industrySpecification,
             final CompanySpecification companySpecification,
-            final ValuationSpecification valuationSpecification) {
-        this.viewSpecification = viewSpecification;
+            final ValuationSpecification valuationSpecification,
+            final ViewSpecification viewSpecification,
+            final SlackClient slackClient) {
         this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.valuationSpecification = valuationSpecification;
+        this.viewSpecification = viewSpecification;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -107,5 +122,55 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
                         viewSpecification.findCompanyValuationViewList(entity.getId())
                 ))
                 .toList();
+    }
+
+    @Override
+    public void updateView() {
+        final long startTime = System.currentTimeMillis();
+        companySpecification.inquiryAllTargetCompanies().stream()
+                .map(Company::getCode)
+                .map(valuationSpecification::findLatestValuation)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(viewSpecification::generateCompanyValuationView)
+                .forEach(viewSpecification::upsert);
+
+        if (updateViewEnabled) {
+            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.valuation");
+        }
+
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
+                "評価アップデートが正常に終了しました。",
+                Category.VIEW,
+                Process.UPDATE,
+                System.currentTimeMillis() - startTime
+        ));
+    }
+
+    @Override
+    public void updateView(final CodeInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+
+        try {
+            valuationSpecification.findLatestValuation(inputData.getCode())
+                    .map(viewSpecification::generateCompanyValuationView)
+                    .ifPresent(viewSpecification::upsert);
+
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("評価アップデートが正常に終了しました。企業コード:{0}", inputData.getCode()),
+                    Category.VIEW,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+        } catch (final Exception e) {
+            log.error(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "{0}の企業評価ビューに対して想定外のエラーが発生しました。",
+                            inputData.getCode()
+                    ),
+                    Category.VIEW,
+                    Process.UPDATE
+            ), e);
+        }
     }
 }

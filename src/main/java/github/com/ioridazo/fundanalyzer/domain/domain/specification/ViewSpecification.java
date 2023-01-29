@@ -13,6 +13,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.ValuationViewBean;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -234,6 +235,30 @@ public class ViewSpecification {
     }
 
     /**
+     * 企業評価ビューを登録・更新する
+     *
+     * @param viewModel 企業評価ビュー
+     */
+    public void upsert(final CompanyValuationViewModel viewModel) {
+        if (isPresent(viewModel.code())) {
+            valuationViewDao.update(ValuationViewBean.of(viewModel, nowLocalDateTime()));
+        } else {
+            try {
+                valuationViewDao.insert(ValuationViewBean.of(viewModel, nowLocalDateTime()));
+            } catch (final NestedRuntimeException e) {
+                handleDaoError(
+                        e,
+                        MessageFormat.format(
+                                "一意制約違反のため、データベースへの登録をスキップします。\tテーブル名:{0}\t会社コード:{1}",
+                                "valuation_view",
+                                viewModel.code()
+                        )
+                );
+            }
+        }
+    }
+
+    /**
      * 企業情報ビューを生成する
      *
      * @param company        企業情報
@@ -386,14 +411,16 @@ public class ViewSpecification {
         final Optional<AnalysisResultEntity> analysisResult = analysisResultSpecification.findAnalysisResult(entity.getAnalysisResultId());
 
         return new CompanyValuationViewModel(
-                entity.getCompanyCode(),
+                entity.getCompanyCode().substring(0, 4),
                 company.map(Company::getCompanyName).orElseThrow(),
                 entity.getTargetDate(),
                 entity.getStockPrice(),
                 entity.getGrahamIndex().orElse(null),
+                entity.getDiscountValue(),
                 entity.getDiscountRate(),
                 entity.getSubmitDate(),
                 stockPriceOfSubmitDate.flatMap(StockPriceEntity::getStockPrice).map(BigDecimal::valueOf).orElseThrow(),
+                entity.getDaySinceSubmitDate(),
                 entity.getDifferenceFromSubmitDate(),
                 entity.getSubmitDateRatio(),
                 investmentIndicatorOfSubmitDate.flatMap(InvestmentIndicatorEntity::getGrahamIndex).orElse(null),
@@ -531,6 +558,16 @@ public class ViewSpecification {
      */
     private boolean isPresent(final LocalDate submitDate) {
         return edinetListViewDao.selectBySubmitDate(submitDate).isPresent();
+    }
+
+    /**
+     * 企業評価ビューがデータベースに存在するか
+     *
+     * @param code 企業コード
+     * @return boolean
+     */
+    private boolean isPresent(final String code) {
+        return valuationViewDao.selectByCode(code).isPresent();
     }
 
     private void handleDaoError(final NestedRuntimeException e, final String message) {

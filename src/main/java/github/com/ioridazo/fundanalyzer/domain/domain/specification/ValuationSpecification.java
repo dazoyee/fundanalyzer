@@ -67,6 +67,25 @@ public class ValuationSpecification {
     }
 
     /**
+     * 最新の評価結果を取得する
+     *
+     * @param companyCode 企業コード
+     * @return 最新の評価結果
+     */
+    public Optional<ValuationEntity> findLatestValuation(final String companyCode) {
+        final List<ValuationEntity> valuationList = valuationDao.selectByCode(companyCode);
+        // 最新の提出日を取得する
+        final LocalDate latestSubmitDate = valuationList.stream()
+                .max(Comparator.comparing(ValuationEntity::getSubmitDate))
+                .map(ValuationEntity::getSubmitDate)
+                .orElse(LocalDate.EPOCH);
+        // 最新の提出日かつ最新の対象日を取得する
+        return valuationList.stream()
+                .filter(entity -> latestSubmitDate.equals(entity.getSubmitDate()))
+                .max(Comparator.comparing(ValuationEntity::getTargetDate));
+    }
+
+    /**
      * 評価結果を取得する
      *
      * @param companyCode 企業コード

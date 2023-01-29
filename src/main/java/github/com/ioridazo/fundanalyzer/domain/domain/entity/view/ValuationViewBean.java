@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.view;
 
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -67,6 +68,28 @@ public class ValuationViewBean {
     private final LocalDateTime createdAt;
 
     private final LocalDateTime updatedAt;
+
+    public static ValuationViewBean of(final CompanyValuationViewModel viewModel, final LocalDateTime nowLocalDateTime) {
+        return new ValuationViewBean(
+                viewModel.code(),
+                viewModel.name(),
+                viewModel.targetDate(),
+                viewModel.stockPrice(),
+                viewModel.grahamIndex(),
+                viewModel.discountValue(),
+                viewModel.discountRate(),
+                viewModel.submitDate(),
+                viewModel.stockPriceOfSubmitDate(),
+                viewModel.daySinceSubmitDate(),
+                viewModel.differenceFromSubmitDate(),
+                viewModel.submitDateRatio(),
+                viewModel.grahamIndexOfSubmitDate(),
+                viewModel.corporateValue(),
+                viewModel.dividendYield(),
+                nowLocalDateTime,
+                nowLocalDateTime
+        );
+    }
 
     public Optional<BigDecimal> getGrahamIndex() {
         return Optional.ofNullable(grahamIndex);

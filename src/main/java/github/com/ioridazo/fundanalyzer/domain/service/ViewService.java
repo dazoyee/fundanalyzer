@@ -180,6 +180,28 @@ public class ViewService {
     }
 
     /**
+     * 企業評価アップデート
+     */
+    @NewSpan
+    @Async
+    public void updateValuationView() {
+        // view edinet
+        viewValuationUseCase.updateView();
+    }
+
+    /**
+     * 企業評価アップデート
+     *
+     * @param inputData 企業コード
+     */
+    @NewSpan
+    @Async
+    public void updateValuationView(final CodeInputData inputData) {
+        // view valuation
+        viewValuationUseCase.updateView(inputData);
+    }
+
+    /**
      * 株価評価（メイン）
      *
      * @return 株価評価

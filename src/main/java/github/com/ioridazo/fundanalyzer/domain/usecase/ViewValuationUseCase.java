@@ -48,18 +48,18 @@ public interface ViewValuationUseCase {
      */
     @NewSpan
     List<IndustryValuationViewModel> viewIndustryValuation();
-//
-//    /**
-//     * ビュー更新
-//     */
-//    @NewSpan
-//    void updateView();
-//
-//    /**
-//     * ビュー更新
-//     *
-//     * @param inputData 提出日
-//     */
-//    @NewSpan
-//    void updateView(DateInputData inputData);
+
+    /**
+     * ビュー更新
+     */
+    @NewSpan
+    void updateView();
+
+    /**
+     * ビュー更新
+     *
+     * @param inputData 提出日
+     */
+    @NewSpan
+    void updateView(CodeInputData inputData);
 }

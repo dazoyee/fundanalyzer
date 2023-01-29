@@ -22,6 +22,9 @@ public record CompanyValuationViewModel(
         // グレアム指数
         BigDecimal grahamIndex,
 
+        // 割安値
+        BigDecimal discountValue,
+
         // 割安度
         BigDecimal discountRate,
 
@@ -30,6 +33,9 @@ public record CompanyValuationViewModel(
 
         // 提出日の株価終値
         BigDecimal stockPriceOfSubmitDate,
+
+        // 提出日からの日数
+        Long daySinceSubmitDate,
 
         // 提出日との株価の差
         BigDecimal differenceFromSubmitDate,
@@ -54,9 +60,11 @@ public record CompanyValuationViewModel(
                 viewBean.getTargetDate(),
                 viewBean.getStockPrice(),
                 viewBean.getGrahamIndex().orElse(null),
+                viewBean.getDiscountValue(),
                 viewBean.getDiscountRate(),
                 viewBean.getSubmitDate(),
                 viewBean.getStockPriceOfSubmitDate(),
+                viewBean.getDaySinceSubmitDate(),
                 viewBean.getDifferenceFromSubmitDate(),
                 viewBean.getSubmitDateRatio(),
                 viewBean.getGrahamIndexOfSubmitDate().orElse(null),
