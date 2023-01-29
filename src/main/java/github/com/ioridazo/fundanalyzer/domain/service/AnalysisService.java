@@ -164,6 +164,7 @@ public class AnalysisService {
      *
      * @param inputData 書類ID
      */
+    @SuppressWarnings("unused")
     @NewSpan
     public void analyzeById(final IdInputData inputData) {
         // analyze
@@ -197,12 +198,16 @@ public class AnalysisService {
     @NewSpan
     public void importStock(final CodeInputData inputData) {
         // is lived?
-        companyUseCase.updateRemovedCompanyIfNotLived(inputData);
-        // stock
-        stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
-        stockUseCase.importStockPrice(inputData, SourceOfStockPrice.KABUOJI3);
-        stockUseCase.importStockPrice(inputData, SourceOfStockPrice.MINKABU);
-        stockUseCase.importStockPrice(inputData, SourceOfStockPrice.YAHOO_FINANCE);
+        if (companyUseCase.isLived(inputData)) {
+            // stock
+            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
+            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.KABUOJI3);
+            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.MINKABU);
+            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.YAHOO_FINANCE);
+        } else {
+            // remove company
+            companyUseCase.updateRemovedCompany(inputData);
+        }
     }
 
     /**

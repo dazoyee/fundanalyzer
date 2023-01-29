@@ -42,10 +42,19 @@ public interface CompanyUseCase {
     boolean updateFavoriteCompany(CodeInputData inputData);
 
     /**
+     * 上場中かどうか
+     *
+     * @param inputData 企業コード
+     * @return boolean
+     */
+    @NewSpan
+    boolean isLived(CodeInputData inputData);
+
+    /**
      * 企業の除外
      *
      * @param inputData 企業コード
      */
     @NewSpan
-    void updateRemovedCompanyIfNotLived(CodeInputData inputData);
+    void updateRemovedCompany(CodeInputData inputData);
 }
