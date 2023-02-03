@@ -14,6 +14,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -126,7 +127,9 @@ public class StockSpecification {
                 .flatMap(StockPriceEntity::getStockPrice)
                 .map(BigDecimal::valueOf);
 
-        final Optional<BigDecimal> averageStockPrice = getAverageStockPriceOfLatestSubmitDate(company, stockPriceList);
+        final Optional<BigDecimal> averageStockPrice = documentSpecification.findLatestDocument(company)
+                .map(Document::getSubmitDate)
+                .flatMap(sd -> getAverageStockPriceOfLatestSubmitDate(sd, stockPriceList));
 
         final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.getCode());
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
@@ -356,23 +359,32 @@ public class StockSpecification {
     }
 
     /**
+     * 対象日から前の特定期間における平均の株価を取得する
+     *
+     * @param companyCode 企業コード
+     * @param targetDate  対象日
+     * @return 平均の株価
+     */
+    public Optional<BigDecimal> getAverageStockPrice(final String companyCode, final LocalDate targetDate) {
+        final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
+        return getAverageStockPriceOfLatestSubmitDate(
+                targetDate,
+                stockPriceDao.selectByCode(company.getCode())
+        );
+    }
+
+    /**
      * 特定期間における平均の株価を取得する
      *
-     * @param company        企業情報
+     * @param targetDate     対象日
      * @param stockPriceList 株価情報リスト
      * @return 平均の株価
      */
     private Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(
-            final Company company, final List<StockPriceEntity> stockPriceList) {
-        final Optional<LocalDate> submitDate = documentSpecification.findLatestDocument(company).map(Document::getSubmitDate);
-
-        if (submitDate.isEmpty()) {
-            return Optional.empty();
-        }
-
+            final LocalDate targetDate, final List<StockPriceEntity> stockPriceList) {
         final List<Double> certainPeriodList = stockPriceList.stream()
-                .filter(stockPrice -> submitDate.get().minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
-                .filter(stockPrice -> submitDate.get().isAfter(stockPrice.getTargetDate()))
+                .filter(stockPrice -> targetDate.minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
+                .filter(stockPrice -> targetDate.isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
                 .filter(Optional::isPresent)
                 .map(Optional::get)

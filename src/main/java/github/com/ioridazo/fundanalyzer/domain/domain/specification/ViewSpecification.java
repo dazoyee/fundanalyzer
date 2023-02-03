@@ -70,6 +70,7 @@ public class ViewSpecification {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final ValuationSpecification valuationSpecification;
 
     @Value("${app.config.view.edinet-list.size}")
     int edinetListSize;
@@ -82,7 +83,8 @@ public class ViewSpecification {
             final DocumentSpecification documentSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final ValuationSpecification valuationSpecification) {
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
         this.valuationViewDao = valuationViewDao;
@@ -91,6 +93,7 @@ public class ViewSpecification {
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
         this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.valuationSpecification = valuationSpecification;
     }
 
     LocalDate nowLocalDate() {
@@ -404,9 +407,14 @@ public class ViewSpecification {
         );
     }
 
+    /**
+     * 株価評価ビューを生成する
+     *
+     * @param entity 株価評価
+     * @return 株価評価ビュー
+     */
     public CompanyValuationViewModel generateCompanyValuationView(final ValuationEntity entity) {
         final Optional<Company> company = companySpecification.findCompanyByCode(entity.getCompanyCode());
-        final Optional<StockPriceEntity> stockPriceOfSubmitDate = stockSpecification.findStock(entity.getCompanyCode(), entity.getSubmitDate());
         final Optional<InvestmentIndicatorEntity> investmentIndicatorOfSubmitDate = investmentIndicatorSpecification.findEntity(entity.getCompanyCode(), entity.getSubmitDate());
         final Optional<AnalysisResultEntity> analysisResult = analysisResultSpecification.findAnalysisResult(entity.getAnalysisResultId());
 
@@ -419,7 +427,8 @@ public class ViewSpecification {
                 entity.getDiscountValue(),
                 entity.getDiscountRate(),
                 entity.getSubmitDate(),
-                stockPriceOfSubmitDate.flatMap(StockPriceEntity::getStockPrice).map(BigDecimal::valueOf).orElseThrow(),
+                valuationSpecification.findValuationOfSubmitDate(entity.getCompanyCode(), entity.getSubmitDate())
+                        .map(ValuationEntity::getStockPrice).orElseThrow(),
                 entity.getDaySinceSubmitDate(),
                 entity.getDifferenceFromSubmitDate(),
                 entity.getSubmitDateRatio(),

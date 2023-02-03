@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +48,7 @@ class ViewSpecificationTest {
     private CompanySpecification companySpecification;
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
+    private ValuationSpecification valuationSpecification;
 
     private ViewSpecification viewSpecification;
 
@@ -57,6 +59,7 @@ class ViewSpecificationTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
+        valuationSpecification = mock(ValuationSpecification.class);
 
         viewSpecification = Mockito.spy(new ViewSpecification(
                 corporateViewDao,
@@ -66,7 +69,8 @@ class ViewSpecificationTest {
                 Mockito.mock(DocumentSpecification.class),
                 analysisResultSpecification,
                 stockSpecification,
-                Mockito.mock(InvestmentIndicatorSpecification.class)
+                Mockito.mock(InvestmentIndicatorSpecification.class),
+                valuationSpecification
         ));
     }
 
@@ -226,9 +230,26 @@ class ViewSpecificationTest {
                 null,
                 null
         );
+        var valuation = new ValuationEntity(
+                null,
+                code,
+                submitDate,
+                null,
+                null,
+                BigDecimal.valueOf(500),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                1,
+                null
+        );
 
         when(companySpecification.findCompanyByCode(code)).thenReturn(Optional.of(defaultCompany()));
-        when(stockSpecification.findStock(code, submitDate)).thenReturn(Optional.of(stockPriceEntity));
+        when(valuationSpecification.findValuationOfSubmitDate(code, submitDate)).thenReturn(Optional.of(valuation));
         when(stockSpecification.findEntityList(code)).thenReturn(List.of(stockPriceEntity));
         when(analysisResultSpecification.findAnalysisResult(1))
                 .thenReturn(Optional.of(new AnalysisResultEntity(
@@ -247,25 +268,8 @@ class ViewSpecificationTest {
                         null
                 )));
 
-        var actual = viewSpecification.generateCompanyValuationView(
-                new ValuationEntity(
-                        null,
-                        code,
-                        submitDate,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        1,
-                        null
-                )
-        );
+
+        var actual = viewSpecification.generateCompanyValuationView(valuation);
         assertNull(actual.dividendYield());
     }
 
