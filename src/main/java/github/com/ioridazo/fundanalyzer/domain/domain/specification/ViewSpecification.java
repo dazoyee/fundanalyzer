@@ -438,6 +438,7 @@ public class ViewSpecification {
                         .filter(stockPriceEntity -> stockPriceEntity.getDividendYield().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getDividendYield)
+                        .filter(dividendYield -> !"N/A".equals(dividendYield))
                         .map(v -> {
                             try {
                                 return new BigDecimal(v
