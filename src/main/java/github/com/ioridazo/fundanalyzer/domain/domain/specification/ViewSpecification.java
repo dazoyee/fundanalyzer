@@ -177,7 +177,7 @@ public class ViewSpecification {
      */
     public List<CompanyValuationViewModel> findCompanyValuationViewList(final Integer industryId) {
         return companySpecification.findCompanyByIndustry(industryId).stream()
-                .map(Company::code)
+                .map(Company::getCode4)
                 .map(valuationViewDao::selectByCode)
                 .filter(Optional::isPresent)
                 .map(Optional::get)

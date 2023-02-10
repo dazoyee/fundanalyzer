@@ -34,6 +34,7 @@ public record Company(
         Consolidated consolidated,
 
         Integer capitalStock,
+
         String settlementDate,
 
         boolean favorite,
@@ -55,5 +56,9 @@ public record Company(
                 Objects.equals(entity.getFavorite(), "1"),
                 Objects.equals(entity.getRemoved(), "0")
         );
+    }
+
+    public String getCode4() {
+        return code.substring(0, 4);
     }
 }
