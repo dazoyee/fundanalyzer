@@ -102,7 +102,7 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     @Override
     public List<CompanyValuationViewModel> viewFavoriteValuation() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
-                .map(Company::getCode)
+                .map(Company::code)
                 .toList();
 
         return viewAllValuation().stream()
@@ -130,7 +130,7 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     public void updateView() {
         final long startTime = System.currentTimeMillis();
         companySpecification.inquiryAllTargetCompanies().stream()
-                .map(Company::getCode)
+                .map(Company::code)
                 .map(valuationSpecification::findLatestValuation)
                 .filter(Optional::isPresent)
                 .map(Optional::get)

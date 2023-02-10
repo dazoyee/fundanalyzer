@@ -125,7 +125,7 @@ public class InvestmentIndicatorSpecification {
                                 analysisResultEntity.getCompanyCode(),
                                 analysisResultEntity.getSubmitDate()
                         ),
-                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);
@@ -138,7 +138,7 @@ public class InvestmentIndicatorSpecification {
                                 analysisResultEntity.getCompanyCode(),
                                 analysisResultEntity.getSubmitDate()
                         ),
-                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);

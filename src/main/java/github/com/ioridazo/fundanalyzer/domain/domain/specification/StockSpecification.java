@@ -116,7 +116,7 @@ public class StockSpecification {
      * @return 株価情報
      */
     public Stock findStock(final Company company) {
-        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.getCode());
+        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.code());
 
         final Optional<LocalDate> importDate = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -131,7 +131,7 @@ public class StockSpecification {
                 .map(Document::getSubmitDate)
                 .flatMap(sd -> getAverageStockPriceOfLatestSubmitDate(sd, stockPriceList));
 
-        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.getCode());
+        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.code());
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
                 .flatMap(MinkabuEntity::getGoalsStock)
@@ -155,7 +155,7 @@ public class StockSpecification {
      */
     public List<String> findTargetCodeForStockScheduler() {
         return companySpecification.inquiryAllTargetCompanies().stream()
-                .map(Company::getCode)
+                .map(Company::code)
                 // 会社毎に最新の登録日を抽出する
                 .map(code -> stockPriceDao.selectByCode(code).stream()
                         .max(Comparator.comparing(StockPriceEntity::getCreatedAt)))
@@ -251,7 +251,7 @@ public class StockSpecification {
                             code,
                             minkabu.getTargetDate()
                     ),
-                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER
             ));
@@ -268,7 +268,7 @@ public class StockSpecification {
                                 code,
                                 minkabu.getTargetDate()
                         ),
-                        companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
                         Process.REGISTER
                 ), e);
@@ -370,7 +370,7 @@ public class StockSpecification {
         final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
         return getAverageStockPriceOfLatestSubmitDate(
                 targetDate,
-                stockPriceDao.selectByCode(company.getCode())
+                stockPriceDao.selectByCode(company.code())
         );
     }
 
@@ -427,7 +427,7 @@ public class StockSpecification {
                             "{0} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。"
                             , code
                     ),
-                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER
             ), e);
@@ -450,7 +450,7 @@ public class StockSpecification {
         if (e.contains(UniqueConstraintException.class)) {
             log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                     message,
-                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER
             ));

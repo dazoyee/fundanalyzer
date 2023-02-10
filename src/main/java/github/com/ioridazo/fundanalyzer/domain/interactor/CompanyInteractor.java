@@ -191,7 +191,7 @@ public class CompanyInteractor implements CompanyUseCase {
 
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("対象の企業は上場廃止済みのため除外しました。\t企業コード:{0}", inputData.getCode()),
-                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
                     Category.COMPANY,
                     Process.UPDATE,
                     System.currentTimeMillis() - startTime
@@ -199,7 +199,7 @@ public class CompanyInteractor implements CompanyUseCase {
         } else {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("対象の企業は存在しませんでした。\t企業コード:{0}", inputData.getCode()),
-                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
                     Category.COMPANY,
                     Process.UPDATE,
                     System.currentTimeMillis() - startTime

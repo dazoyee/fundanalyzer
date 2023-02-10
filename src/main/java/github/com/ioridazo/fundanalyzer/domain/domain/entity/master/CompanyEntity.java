@@ -64,12 +64,12 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
-                company.getEdinetCode(),
+                company.edinetCode(),
                 null,
                 null,
                 null,
                 null,
-                company.isFavorite() ? "0" : "1",   // 反転させるだけ
+                company.favorite() ? "0" : "1",   // 反転させるだけ
                 null,
                 null,
                 updatedAt
@@ -81,7 +81,7 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
-                company.getEdinetCode(),
+                company.edinetCode(),
                 null,
                 null,
                 null,

@@ -177,7 +177,7 @@ public class ViewSpecification {
      */
     public List<CompanyValuationViewModel> findCompanyValuationViewList(final Integer industryId) {
         return companySpecification.findCompanyByIndustry(industryId).stream()
-                .map(Company::getCode)
+                .map(Company::code)
                 .map(valuationViewDao::selectByCode)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -281,8 +281,8 @@ public class ViewSpecification {
         final Stock stock = stockSpecification.findStock(company);
 
         return CorporateViewModel.of(
-                company.getCode().substring(0, 4),
-                company.getCompanyName(),
+                company.code().substring(0, 4),
+                company.companyName(),
                 document.getSubmitDate(),
                 document.getDocumentTypeCode().toValue(),
                 Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
@@ -420,7 +420,7 @@ public class ViewSpecification {
 
         return new CompanyValuationViewModel(
                 entity.getCompanyCode().substring(0, 4),
-                company.map(Company::getCompanyName).orElseThrow(),
+                company.map(Company::companyName).orElseThrow(),
                 entity.getTargetDate(),
                 entity.getStockPrice(),
                 entity.getGrahamIndex().orElse(null),
@@ -450,7 +450,7 @@ public class ViewSpecification {
                                         MessageFormat.format(
                                                 "予想配当利回りを数値に変換できませんでした。\t値:{0}", v
                                         ),
-                                        companySpecification.findCompanyByCode(entity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                                        companySpecification.findCompanyByCode(entity.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                                         Category.STOCK,
                                         Process.EVALUATE
                                 ), e.getCause());

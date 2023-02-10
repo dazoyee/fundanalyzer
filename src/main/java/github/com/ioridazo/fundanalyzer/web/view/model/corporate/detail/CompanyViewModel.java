@@ -27,13 +27,13 @@ public class CompanyViewModel {
 
     public static CompanyViewModel of(final Company company, final Stock stock) {
         return new CompanyViewModel(
-                company.getCode(),
-                company.getCompanyName(),
-                company.getIndustryName(),
-                company.getEdinetCode(),
-                company.isFavorite(),
-                company.getCapitalStock(),
-                company.getSettlementDate(),
+                company.code(),
+                company.companyName(),
+                company.industryName(),
+                company.edinetCode(),
+                company.favorite(),
+                company.capitalStock(),
+                company.settlementDate(),
                 stock.getStockPriceEntityList().stream()
                         .filter(stockPrice -> stockPrice.getPer().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))

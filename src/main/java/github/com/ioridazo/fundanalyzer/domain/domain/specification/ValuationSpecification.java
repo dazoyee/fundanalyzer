@@ -137,7 +137,7 @@ public class ValuationSpecification {
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
-                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
                         Process.EVALUATE
                 ), e);
@@ -151,7 +151,7 @@ public class ValuationSpecification {
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
-                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
                         Process.EVALUATE
                 ), e);
