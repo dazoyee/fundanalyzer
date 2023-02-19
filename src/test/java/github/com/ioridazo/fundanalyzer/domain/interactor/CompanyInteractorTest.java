@@ -34,7 +34,6 @@ class CompanyInteractorTest {
     private CompanySpecification companySpecification;
     private FileOperator fileOperator;
     private SeleniumClient seleniumClient;
-    private JsoupClient jsoupClient;
 
     private CompanyInteractor companyInteractor;
 
@@ -43,7 +42,6 @@ class CompanyInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
         seleniumClient = Mockito.mock(SeleniumClient.class);
-        jsoupClient = Mockito.mock(JsoupClient.class);
 
         companyInteractor = Mockito.spy(new CompanyInteractor(
                 Mockito.mock(IndustrySpecification.class),
@@ -51,7 +49,7 @@ class CompanyInteractorTest {
                 fileOperator,
                 Mockito.mock(CsvCommander.class),
                 seleniumClient,
-                jsoupClient
+                Mockito.mock(JsoupClient.class)
         ));
         companyInteractor.pathCompany = "pathCompany";
         companyInteractor.pathCompanyZip = "pathCompanyZip";
@@ -119,22 +117,9 @@ class CompanyInteractorTest {
         @Test
         void removed() {
             var inputData = CodeInputData.of("99999");
-            when(jsoupClient.isLivedCompanyFromMinkabu("99999")).thenReturn(false);
             when(companySpecification.findCompanyByCode("99999")).thenReturn(Optional.of(company()));
-
-            assertDoesNotThrow(() -> companyInteractor.updateRemovedCompanyIfNotLived(inputData));
+            assertDoesNotThrow(() -> companyInteractor.updateRemovedCompany(inputData));
             verify(companySpecification, times(1)).updateRemoved(any());
-        }
-
-        @DisplayName("updateRemovedCompany : 除外フラグを有効にしない")
-        @Test
-        void not_removed() {
-            var inputData = CodeInputData.of("99999");
-            when(jsoupClient.isLivedCompanyFromMinkabu("99999")).thenReturn(true);
-            when(companySpecification.findCompanyByCode("99999")).thenReturn(Optional.of(company()));
-
-            assertDoesNotThrow(() -> companyInteractor.updateRemovedCompanyIfNotLived(inputData));
-            verify(companySpecification, times(0)).updateRemoved(any());
         }
 
         private Company company() {

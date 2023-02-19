@@ -119,7 +119,7 @@ public class FinancialStatementSpecification {
      * @return 財務諸表の値リスト
      */
     public List<FinancialStatementEntity> findByCompany(final Company company) {
-        return financialStatementDao.selectByCode(company.getEdinetCode());
+        return financialStatementDao.selectByCode(company.edinetCode());
     }
 
     /**
@@ -133,7 +133,7 @@ public class FinancialStatementSpecification {
             final Company company, final FinancialStatementKeyViewModel key) {
 
         return financialStatementDao.selectByCodeAndPeriod(
-                company.getEdinetCode(), key.getPeriodEnd(), key.getDocumentTypeCode(), key.getSubmitDate());
+                company.edinetCode(), key.getPeriodEnd(), key.getDocumentTypeCode(), key.getSubmitDate());
     }
 
     /**
@@ -155,8 +155,8 @@ public class FinancialStatementSpecification {
             final CreatedType createdType) {
         try {
             financialStatementDao.insert(FinancialStatementEntity.of(
-                    company.getCode(),
-                    company.getEdinetCode(),
+                    company.code(),
+                    company.edinetCode(),
                     fs.getId(),
                     dId,
                     document.getPeriodStart(),
@@ -176,7 +176,7 @@ public class FinancialStatementSpecification {
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\tテーブル名:{0}\t企業コード:{1}\t財務諸表名:{2}\t科目ID:{3}\t対象年:{4}",
                                 "financial_statement",
-                                company.getCode(),
+                                company.code(),
                                 fs.getName(),
                                 dId,
                                 document.getDocumentPeriod().map(LocalDate::getYear).map(String::valueOf).orElse("null")

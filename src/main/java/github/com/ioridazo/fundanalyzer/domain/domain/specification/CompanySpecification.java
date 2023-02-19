@@ -85,7 +85,7 @@ public class CompanySpecification {
         return companyDao.selectByIndustryId(industryId).stream()
                 .filter(entity -> entity.getCode().isPresent())
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
-                .filter(Company::isLived)
+                .filter(Company::lived)
                 .toList();
     }
 
@@ -157,7 +157,7 @@ public class CompanySpecification {
      */
     public boolean updateFavorite(final Company company) {
         companyDao.update(CompanyEntity.ofUpdateFavorite(company, nowLocalDateTime()));
-        return !company.isFavorite();
+        return !company.favorite();
     }
 
     /**
@@ -187,8 +187,8 @@ public class CompanySpecification {
     public List<Company> findAllTargetCompanies() {
         return companyDao.selectByCodeIsNotNull().stream()
                 .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
-                .filter(Company::isLived)
-                .filter(company -> industrySpecification.isTarget(company.getIndustryId()))
+                .filter(Company::lived)
+                .filter(company -> industrySpecification.isTarget(company.industryId()))
                 .toList();
     }
 

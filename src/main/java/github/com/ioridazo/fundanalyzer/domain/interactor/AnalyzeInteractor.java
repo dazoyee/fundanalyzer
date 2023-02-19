@@ -167,7 +167,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                             "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
                                     "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
                             fs.getName(),
-                            companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
+                            companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::code).orElse("null"),
                             document.getDocumentId(),
                             e.getSubjectName().orElse("null"),
                             document.getDocumentPeriod().map(String::valueOf).orElse("null"),
@@ -195,7 +195,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
 
         // 最新企業価値
         final Optional<BigDecimal> latestCorporateValue =
-                analysisResultSpecification.findLatestAnalysisResult(company.getCode())
+                analysisResultSpecification.findLatestAnalysisResult(company.code())
                         .map(AnalysisResultEntity::getCorporateValue);
         if (latestCorporateValue.isEmpty()) {
             return corporateValue;
@@ -316,7 +316,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                                 latestDate
                         ),
                         analysisResult.getDocumentId(),
-                        companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.INDICATE,
                         System.currentTimeMillis() - startTime
@@ -331,7 +331,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                                 latestDate
                         ),
                         analysisResult.getDocumentId(),
-                        companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.INDICATE,
                         System.currentTimeMillis() - startTime
@@ -344,7 +344,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                             analysisResult.getCompanyCode()
                     ),
                     analysisResult.getDocumentId(),
-                    companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(analysisResult.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                     Category.ANALYSIS,
                     Process.INDICATE,
                     System.currentTimeMillis() - startTime

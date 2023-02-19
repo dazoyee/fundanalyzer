@@ -158,7 +158,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public List<CorporateViewModel> viewFavorite() {
         final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
-                .map(Company::getCode)
+                .map(Company::code)
                 .toList();
         final List<CorporateViewModel> allCorporateView = viewSpecification.findAllCorporateView();
         return allCorporateView.stream()
@@ -197,7 +197,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .reversed())
                 .toList();
 
-        final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.getCode()).stream()
+        final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.code()).stream()
                 .filter(indicatorValue -> indicatorValue.getGrahamIndex().isPresent())
                 .map(IndicatorViewModel::of)
                 .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
@@ -375,17 +375,17 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 latestDocument.ifPresent(document -> viewList.add(viewSpecification.generateCorporateView(
                         company,
                         document,
-                        analysisResultSpecification.findLatestAnalysisResult(company.getCode()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
+                        analysisResultSpecification.findLatestAnalysisResult(company.code()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
-                        investmentIndicatorSpecification.findIndicatorValue(company.getCode()).orElse(IndicatorValue.of())
+                        investmentIndicatorSpecification.findIndicatorValue(company.code()).orElse(IndicatorValue.of())
                 )));
             } catch (final FundanalyzerNotExistException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
                                 "条件を満たさないため、次の企業のビューを更新しませんでした。\t企業コード:{0}",
-                                company.getCode()
+                                company.code()
                         ),
-                        companySpecification.findCompanyByCode(company.getCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(company.code()).map(Company::edinetCode).orElse("null"),
                         Category.VIEW,
                         Process.UPDATE
                 ), e);

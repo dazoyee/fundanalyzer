@@ -62,11 +62,10 @@ public class InvestmentIndicatorSpecification {
      *
      * @param companyCode 企業コード
      * @param targetDate  対象日
-     * @return 投資指標
+     * @return 投資指標エンティティ
      */
-    public Optional<IndicatorValue> findIndicatorValue(final String companyCode, final LocalDate targetDate) {
-        return investmentIndicatorDao.selectByCodeAndTargetDate(companyCode, targetDate)
-                .map(IndicatorValue::of);
+    public Optional<InvestmentIndicatorEntity> findEntity(final String companyCode, final LocalDate targetDate) {
+        return investmentIndicatorDao.selectByCodeAndTargetDate(companyCode, targetDate);
     }
 
     /**
@@ -126,7 +125,7 @@ public class InvestmentIndicatorSpecification {
                                 analysisResultEntity.getCompanyCode(),
                                 analysisResultEntity.getSubmitDate()
                         ),
-                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);
@@ -139,7 +138,7 @@ public class InvestmentIndicatorSpecification {
                                 analysisResultEntity.getCompanyCode(),
                                 analysisResultEntity.getSubmitDate()
                         ),
-                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(analysisResultEntity.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);

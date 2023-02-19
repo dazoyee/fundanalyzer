@@ -499,7 +499,10 @@ public class DocumentInteractor implements DocumentUseCase {
      */
     void scrape(final Document document) {
         // 書類取得
-        if (DocumentStatus.NOT_YET == document.getDownloaded()) {
+        if (Stream.of(
+                DocumentStatus.NOT_YET,
+                DocumentStatus.HALF_WAY
+        ).anyMatch(ds -> ds == document.getDownloaded())) {
             final boolean isPresent = fileOperator.findDecodedFile(document.getSubmitDate()).stream()
                     .anyMatch(folderList -> folderList.stream().anyMatch(document.getDocumentId()::equals));
 
@@ -510,7 +513,7 @@ public class DocumentInteractor implements DocumentUseCase {
                 scraping.download(document);
             }
         } else if (DocumentStatus.ERROR == document.getDownloaded()) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "書類のダウンロードが完了していません。詳細を確認してください。\t書類ID:{0}",
                             document.getDocumentId()

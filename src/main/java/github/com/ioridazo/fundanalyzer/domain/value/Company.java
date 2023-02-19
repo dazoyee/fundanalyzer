@@ -3,44 +3,44 @@ package github.com.ioridazo.fundanalyzer.domain.value;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.CompanyEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Consolidated;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategories;
-import lombok.Value;
 
 import java.util.Objects;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
-public class Company {
+/**
+ * @param code           証券コード
+ * @param companyName    銘柄名
+ * @param industryId     業種ID
+ * @param industryName   業種名
+ * @param edinetCode     EDINETコード
+ * @param listCategories 上場区分
+ * @param consolidated   連結の有無
+ * @param capitalStock   資本金
+ * @param settlementDate 決算日
+ */
+public record Company(
 
-    // 証券コード
-    private final String code;
+        String code,
 
-    // 銘柄名
-    private final String companyName;
+        String companyName,
 
-    // 業種ID
-    private final Integer industryId;
+        Integer industryId,
 
-    // 業種名
-    private final String industryName;
+        String industryName,
 
-    // EDINETコード
-    private final String edinetCode;
+        String edinetCode,
 
-    // 上場区分
-    private final ListCategories listCategories;
+        ListCategories listCategories,
 
-    // 連結の有無
-    private final Consolidated consolidated;
+        Consolidated consolidated,
 
-    // 資本金
-    private final Integer capitalStock;
+        Integer capitalStock,
 
-    // 決算日
-    private final String settlementDate;
+        String settlementDate,
 
-    private final boolean favorite;
+        boolean favorite,
 
-    private final boolean lived;
+        boolean lived
+) {
 
     public static Company of(final CompanyEntity entity, final String industryName) {
         return new Company(
@@ -56,5 +56,9 @@ public class Company {
                 Objects.equals(entity.getFavorite(), "1"),
                 Objects.equals(entity.getRemoved(), "0")
         );
+    }
+
+    public String getCode4() {
+        return code.substring(0, 4);
     }
 }

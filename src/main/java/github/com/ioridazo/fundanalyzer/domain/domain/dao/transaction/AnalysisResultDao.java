@@ -16,6 +16,9 @@ import java.util.Optional;
 public interface AnalysisResultDao {
 
     @Select
+    Optional<AnalysisResultEntity> selectById(Integer id);
+
+    @Select
     Optional<AnalysisResultEntity> selectByDocumentId(String documentId);
 
     @Select

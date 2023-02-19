@@ -102,11 +102,21 @@ public class StockSpecification {
     /**
      * 株価情報を取得する
      *
+     * @param companyCode 企業コード
+     * @return 株価情報
+     */
+    public List<StockPriceEntity> findEntityList(final String companyCode) {
+        return stockPriceDao.selectByCode(companyCode);
+    }
+
+    /**
+     * 株価情報を取得する
+     *
      * @param company 企業情報
      * @return 株価情報
      */
     public Stock findStock(final Company company) {
-        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.getCode());
+        final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.code());
 
         final Optional<LocalDate> importDate = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -117,9 +127,11 @@ public class StockSpecification {
                 .flatMap(StockPriceEntity::getStockPrice)
                 .map(BigDecimal::valueOf);
 
-        final Optional<BigDecimal> averageStockPrice = getAverageStockPriceOfLatestSubmitDate(company, stockPriceList);
+        final Optional<BigDecimal> averageStockPrice = documentSpecification.findLatestDocument(company)
+                .map(Document::getSubmitDate)
+                .flatMap(sd -> getAverageStockPriceOfLatestSubmitDate(sd, stockPriceList));
 
-        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.getCode());
+        final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.code());
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
                 .max(Comparator.comparing(MinkabuEntity::getTargetDate))
                 .flatMap(MinkabuEntity::getGoalsStock)
@@ -143,7 +155,7 @@ public class StockSpecification {
      */
     public List<String> findTargetCodeForStockScheduler() {
         return companySpecification.inquiryAllTargetCompanies().stream()
-                .map(Company::getCode)
+                .map(Company::code)
                 // 会社毎に最新の登録日を抽出する
                 .map(code -> stockPriceDao.selectByCode(code).stream()
                         .max(Comparator.comparing(StockPriceEntity::getCreatedAt)))
@@ -173,7 +185,7 @@ public class StockSpecification {
      * @param nikkei 日経から取得した株価情報
      */
     public void insert(final String code, final NikkeiResultBean nikkei) {
-        if (isEmptyStockPrice(code, nikkei.getTargetDate())) {
+        if (isEmptyStockPrice(code, nikkei.targetDate())) {
             try {
                 stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
             } catch (NestedRuntimeException e) {
@@ -184,7 +196,7 @@ public class StockSpecification {
                                         "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
                                 "stock_price",
                                 code,
-                                nikkei.getTargetDate(),
+                                nikkei.targetDate(),
                                 SourceOfStockPrice.NIKKEI.getMemo()
                         ),
                         code
@@ -228,26 +240,27 @@ public class StockSpecification {
      */
     public void insert(final String code, final MinkabuResultBean minkabu) {
         LocalDate targetDate;
-        try {
-            targetDate = MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(nowLocalDate().getYear());
-        } catch (DateTimeParseException e) {
-            if (Pattern.compile("^([0-1]\\d|2[0-3]):[0-5]\\d$").matcher(minkabu.getTargetDate()).find()) {
-                targetDate = nowLocalDate();
-            } else if ("--:--".equals(minkabu.getTargetDate())) {
-                log.debug(FundanalyzerLogClient.toSpecificationLogObject(
-                        MessageFormat.format(
-                                "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
-                                        "\t企業コード:{0}\tスクレイピング結果:{1}",
-                                code,
-                                minkabu.getTargetDate()
-                        ),
-                        companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
-                        Category.STOCK,
-                        Process.REGISTER
-                ), e);
 
-                return;
-            } else {
+        if (Pattern.compile("^([0-1]\\d|2[0-3]):[0-5]\\d$").matcher(minkabu.getTargetDate()).find()) {
+            targetDate = nowLocalDate();
+        } else if ("--:--".equals(minkabu.getTargetDate())) {
+            log.trace(FundanalyzerLogClient.toSpecificationLogObject(
+                    MessageFormat.format(
+                            "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
+                                    "\t企業コード:{0}\tスクレイピング結果:{1}",
+                            code,
+                            minkabu.getTargetDate()
+                    ),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
+                    Category.STOCK,
+                    Process.REGISTER
+            ));
+
+            return;
+        } else {
+            try {
+                targetDate = MonthDay.parse(minkabu.getTargetDate(), DateTimeFormatter.ofPattern("MM/dd")).atYear(nowLocalDate().getYear());
+            } catch (final DateTimeParseException e) {
                 log.warn(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
@@ -255,7 +268,7 @@ public class StockSpecification {
                                 code,
                                 minkabu.getTargetDate()
                         ),
-                        companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
                         Process.REGISTER
                 ), e);
@@ -347,48 +360,32 @@ public class StockSpecification {
     }
 
     /**
-     * 特定期間における平均の株価を取得する
+     * 対象日から前の特定期間における平均の株価を取得する
      *
      * @param companyCode 企業コード
+     * @param targetDate  対象日
      * @return 平均の株価
      */
-    public Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(final String companyCode) {
+    public Optional<BigDecimal> getAverageStockPrice(final String companyCode, final LocalDate targetDate) {
         final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
         return getAverageStockPriceOfLatestSubmitDate(
-                company,
-                stockPriceDao.selectByCode(company.getCode())
+                targetDate,
+                stockPriceDao.selectByCode(company.code())
         );
     }
 
     /**
-     * 予想株価を取得する
-     *
-     * @param companyCode 企業コード
-     * @param targetDate  対象日付
-     * @return 予想株価
-     */
-    public Optional<Double> findForecastStock(final String companyCode, final LocalDate targetDate) {
-        return minkabuDao.selectByCodeAndDate(companyCode, targetDate).flatMap(MinkabuEntity::getGoalsStock);
-    }
-
-    /**
      * 特定期間における平均の株価を取得する
      *
-     * @param company        企業情報
+     * @param targetDate     対象日
      * @param stockPriceList 株価情報リスト
      * @return 平均の株価
      */
     private Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(
-            final Company company, final List<StockPriceEntity> stockPriceList) {
-        final Optional<LocalDate> submitDate = documentSpecification.findLatestDocument(company).map(Document::getSubmitDate);
-
-        if (submitDate.isEmpty()) {
-            return Optional.empty();
-        }
-
+            final LocalDate targetDate, final List<StockPriceEntity> stockPriceList) {
         final List<Double> certainPeriodList = stockPriceList.stream()
-                .filter(stockPrice -> submitDate.get().minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
-                .filter(stockPrice -> submitDate.get().isAfter(stockPrice.getTargetDate()))
+                .filter(stockPrice -> targetDate.minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
+                .filter(stockPrice -> targetDate.isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -430,7 +427,7 @@ public class StockSpecification {
                             "{0} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。"
                             , code
                     ),
-                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER
             ), e);
@@ -453,7 +450,7 @@ public class StockSpecification {
         if (e.contains(UniqueConstraintException.class)) {
             log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                     message,
-                    companySpecification.findCompanyByCode(code).map(Company::getEdinetCode).orElse("null"),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER
             ));

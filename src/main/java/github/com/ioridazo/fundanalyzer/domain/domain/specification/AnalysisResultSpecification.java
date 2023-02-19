@@ -53,6 +53,16 @@ public class AnalysisResultSpecification {
     }
 
     /**
+     * 分析結果を取得する
+     *
+     * @param id ID
+     * @return 分析結果
+     */
+    public Optional<AnalysisResultEntity> findAnalysisResult(final Integer id) {
+        return analysisResultDao.selectById(id);
+    }
+
+    /**
      * 最新の分析結果を取得する
      *
      * @param companyCode 企業コード
@@ -95,7 +105,7 @@ public class AnalysisResultSpecification {
         final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new);
         try {
             analysisResultDao.insert(AnalysisResultEntity.of(
-                    company.getCode(),
+                    company.code(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     analysisResult.getCorporateValue(),
                     analysisResult.getBps().orElse(null),
@@ -115,7 +125,7 @@ public class AnalysisResultSpecification {
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\tテーブル名:{0}\t会社コード:{1}\t期間:{2}\t書類種別コード:{3}\t提出日:{4}",
                                 "analysis_result",
-                                company.getCode(),
+                                company.code(),
                                 document.getDocumentPeriod().map(LocalDate::toString).orElse("null"),
                                 document.getDocumentTypeCode().toValue(),
                                 document.getSubmitDate()
@@ -138,7 +148,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> yearAverageCorporateValue(final Company company, final Integer year) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(company.getCode(), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), targetTypeCodes);
         if (targetList.isEmpty() || targetList.size() < year) {
             return Optional.empty();
         } else {
@@ -164,7 +174,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> allYearAverageCorporateValue(final Company company) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(company.getCode(), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), targetTypeCodes);
         if (targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -185,7 +195,7 @@ public class AnalysisResultSpecification {
      * @return 標準偏差
      */
     public Optional<BigDecimal> standardDeviation(final Company company, final BigDecimal averageCorporateValue) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(company.getCode(), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), targetTypeCodes);
         if (Objects.isNull(averageCorporateValue) || targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -225,7 +235,7 @@ public class AnalysisResultSpecification {
      * @return 分析年数
      */
     public BigDecimal countYear(final Company company) {
-        return BigDecimal.valueOf(analysisTargetList(company.getCode(), targetTypeCodes).size());
+        return BigDecimal.valueOf(analysisTargetList(company.code(), targetTypeCodes).size());
     }
 
     /**
@@ -236,7 +246,7 @@ public class AnalysisResultSpecification {
      * @return 企業価値リスト
      */
     public List<AnalysisResultEntity> displayTargetList(final Company company, final List<String> documentTypeCode) {
-        return analysisResultDao.selectByCompanyCodeAndType(company.getCode(), documentTypeCode);
+        return analysisResultDao.selectByCompanyCodeAndType(company.code(), documentTypeCode);
     }
 
     /**
@@ -252,12 +262,13 @@ public class AnalysisResultSpecification {
         }
 
         final Optional<Company> company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode());
+        //noinspection OptionalIsPresent
         if (company.isEmpty()) {
             return false;
         }
 
         return analysisResultDao.selectByUniqueKey(
-                company.get().getCode(),
+                company.get().code(),
                 documentPeriod.get(),
                 document.getDocumentTypeCode().toValue(),
                 document.getSubmitDate()

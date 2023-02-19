@@ -98,6 +98,7 @@ public class AnalysisScheduler {
             try {
                 viewService.updateCorporateView();
                 viewService.updateEdinetView();
+                viewService.updateValuationView();
 
                 final long durationTime = System.currentTimeMillis() - startTime;
 

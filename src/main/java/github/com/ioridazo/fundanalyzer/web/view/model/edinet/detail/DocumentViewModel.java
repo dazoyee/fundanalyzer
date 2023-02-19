@@ -13,7 +13,7 @@ public class DocumentViewModel {
 
     public static DocumentViewModel of(final Company company, final Document document, final FinanceValueViewModel fundamentalValueViewModel) {
         return new DocumentViewModel(
-                company.getCompanyName(),
+                company.companyName(),
                 DocumentDetailViewModel.of(document),
                 fundamentalValueViewModel
         );

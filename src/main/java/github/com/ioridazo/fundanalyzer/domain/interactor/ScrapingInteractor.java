@@ -110,23 +110,29 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
-                                    "\t処理対象日:{0}\t書類管理番号:{1}",
+                                    "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
                             document.getSubmitDate(),
-                            document.getDocumentId()
+                            document.getDocumentId(),
+                            e.getMessage()
                     ),
                     document,
                     Category.SCRAPING,
                     Process.DOWNLOAD,
                     System.currentTimeMillis() - startTime
             ), e);
-            documentSpecification.updateDownloadToError(document);
+            if (e.isRetry()) {
+                documentSpecification.updateDownloadToHalfWay(document);
+            } else {
+                documentSpecification.updateDownloadToError(document);
+            }
         } catch (IOException e) {
             log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
-                                    "\t処理対象日:{0}\t書類管理番号:{1}",
+                                    "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
                             document.getSubmitDate(),
-                            document.getDocumentId()
+                            document.getDocumentId(),
+                            e.getMessage()
                     ),
                     document,
                     Category.SCRAPING,
@@ -289,7 +295,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     MessageFormat.format(
                             "[貸借対照表] の \"固定負債合計\" が存在しなかったため、\"0\" にてデータベースに登録しました。" +
                                     "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
-                            company.getCode(),
+                            company.code(),
                             document.getDocumentId(),
                             totalCurrentLiabilities.get(),
                             totalLiabilities.get()
@@ -323,7 +329,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     MessageFormat.format(
                             "[貸借対照表] の \"投資その他の資産合計\" が存在しなかったため、\"0\" にてデータベースに登録しました。" +
                                     "\t企業コード:{0}\t書類ID:{1}\t書類種別コード:{2}",
-                            company.getCode(),
+                            company.code(),
                             document.getDocumentId(),
                             document.getDocumentTypeCode().toValue() + "（" + document.getDocumentTypeCode().getName() + "）"
                     ),
@@ -369,8 +375,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     MessageFormat.format(
                             "次のスクレイピング情報を正常に登録しました。" +
                                     "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
-                            company.getCode(),
-                            company.getEdinetCode(),
+                            company.code(),
+                            company.edinetCode(),
                             fs.getName(),
                             targetFile.getFirst().getPath()
                     ),
@@ -387,8 +393,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     MessageFormat.format(
                             "スクレイピング処理の過程でエラー発生しました。キーワードに合致するファイルが存在しませんでした。" +
                                     "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
-                            company.getCode(),
-                            company.getEdinetCode(),
+                            company.code(),
+                            company.edinetCode(),
                             fs.getName(),
                             targetDirectory.getPath()),
                     document,
@@ -402,8 +408,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     MessageFormat.format(
                             "スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
                                     "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
-                            company.getCode(),
-                            company.getEdinetCode(),
+                            company.code(),
+                            company.edinetCode(),
                             fs.getName(),
                             targetDirectory.getPath()),
                     document,
