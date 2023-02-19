@@ -166,35 +166,45 @@ public class CompanyInteractor implements CompanyUseCase {
     }
 
     /**
+     * 上場しているか確認する
+     *
+     * @param inputData 企業コード
+     * @return boolean
+     */
+    @Override
+    public boolean isLived(final CodeInputData inputData) {
+        return jsoupClient.isLivedCompanyFromMinkabu(inputData.getCode());
+    }
+
+    /**
      * 上場廃止済ならば企業除外する
      *
      * @param inputData 企業コード
      */
     @Override
-    public void updateRemovedCompanyIfNotLived(final CodeInputData inputData) {
+    public void updateRemovedCompany(final CodeInputData inputData) {
         final long startTime = System.currentTimeMillis();
-        final boolean isLived = jsoupClient.isLivedCompanyFromMinkabu(inputData.getCode());
 
-        if (!isLived) {
-            final Optional<Company> company = companySpecification.findCompanyByCode(inputData.getCode());
-            if (company.isPresent()) {
-                companySpecification.updateRemoved(company.get());
+        final Optional<Company> company = companySpecification.findCompanyByCode(inputData.getCode());
+        if (company.isPresent()) {
+            companySpecification.updateRemoved(company.get());
 
-                log.info(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format("対象の企業は上場廃止済みのため除外しました。\t企業コード:{0}", inputData.getCode()),
-                        Category.COMPANY,
-                        Process.UPDATE,
-                        System.currentTimeMillis() - startTime
-                ));
-            } else {
-                log.info(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format("対象の企業は存在しませんでした。\t企業コード:{0}", inputData.getCode()),
-                        Category.COMPANY,
-                        Process.UPDATE,
-                        System.currentTimeMillis() - startTime
-                ));
-                throw new FundanalyzerNotExistException();
-            }
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("対象の企業は上場廃止済みのため除外しました。\t企業コード:{0}", inputData.getCode()),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
+                    Category.COMPANY,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+        } else {
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("対象の企業は存在しませんでした。\t企業コード:{0}", inputData.getCode()),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
+                    Category.COMPANY,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+            throw new FundanalyzerNotExistException();
         }
     }
 

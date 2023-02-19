@@ -62,19 +62,7 @@ class StockSpecificationTest {
     @Nested
     class findStock {
 
-        Company company = new Company(
-                "code",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                false
-        );
+        private final Company company = company();
 
         @BeforeEach
         void setUp() {
@@ -495,5 +483,125 @@ class StockSpecificationTest {
             assertDoesNotThrow(() -> stockSpecification.insert(code, minkabuResultBean));
             verify(minkabuDao, times(0)).insert(any());
         }
+    }
+
+    @Nested
+    class getAverageStockPrice {
+
+        private final String companyCode = "code";
+
+        @BeforeEach
+        void setUp() {
+            when(companySpecification.findCompanyByCode(companyCode)).thenReturn(Optional.of(company()));
+        }
+
+        @DisplayName("getAverageStockPrice : 特定期間における平均の株価を取得する")
+        @Test
+        void averageStockPrice() {
+            var stockPrice1 = new StockPriceEntity(
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-06"),
+                    (double) 700,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var stockPrice2 = new StockPriceEntity(
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-07"),
+                    (double) 800,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var stockPrice3 = new StockPriceEntity(
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-08"),
+                    (double) 900,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            var latestStockPrice = new StockPriceEntity(
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-09"),
+                    (double) 1000,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(stockPriceDao.selectByCode(companyCode)).thenReturn(List.of(stockPrice1, stockPrice2, stockPrice3, latestStockPrice));
+
+            var actual = stockSpecification.getAverageStockPrice(companyCode, LocalDate.parse("2020-10-08"));
+            assertEquals(BigDecimal.valueOf(75000, 2), actual.orElseThrow());
+        }
+
+        @DisplayName("getAverageStockPrice : 特定期間がないときは空で返す")
+        @Test
+        void averageStockPrice_isNull() {
+            var actual = stockSpecification.getAverageStockPrice(companyCode, LocalDate.parse("2020-10-08"));
+            assertNull(actual.orElse(null));
+        }
+    }
+
+    private Company company() {
+        return new Company(
+                "code",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false
+        );
     }
 }

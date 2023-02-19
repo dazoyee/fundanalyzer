@@ -67,6 +67,18 @@ public class ValuationSpecification {
     }
 
     /**
+     * 提出日の評価結果を取得する
+     *
+     * @param companyCode 企業コード
+     * @param submitDate  提出日
+     * @return 最新の評価結果
+     */
+    public Optional<ValuationEntity> findValuationOfSubmitDate(final String companyCode, final LocalDate submitDate) {
+        return valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate).stream()
+                .min(Comparator.comparing(ValuationEntity::getDaySinceSubmitDate));
+    }
+
+    /**
      * 最新の評価結果を取得する
      *
      * @param companyCode 企業コード
@@ -125,7 +137,7 @@ public class ValuationSpecification {
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
-                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
                         Process.EVALUATE
                 ), e);
@@ -139,7 +151,7 @@ public class ValuationSpecification {
                                 stock.getTargetDate(),
                                 stock.getStockPrice().orElse(0.0)
                         ),
-                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                        companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
                         Process.EVALUATE
                 ), e);
@@ -163,9 +175,7 @@ public class ValuationSpecification {
                 .orElseThrow(() -> new FundanalyzerNotExistException("株価終値"));
         final Optional<InvestmentIndicatorEntity> investmentIndicatorEntity = investmentIndicatorSpecification.findEntity(code, targetDate);
         final LocalDate submitDate = analysisResult.getSubmitDate();
-        final BigDecimal stockPriceOfSubmitDate = stockSpecification.findStock(code, submitDate)
-                .flatMap(StockPriceEntity::getStockPrice)
-                .map(BigDecimal::valueOf).orElseThrow(() -> new FundanalyzerNotExistException("提出日株価終値"));
+        final BigDecimal stockPriceOfSubmitDate = getStockPriceOfSubmitDate(code, submitDate);
 
         return ValuationEntity.of(
                 code,
@@ -183,5 +193,28 @@ public class ValuationSpecification {
                 analysisResult.getId(),
                 nowLocalDateTime()
         );
+    }
+
+    private BigDecimal getStockPriceOfSubmitDate(final String companyCode, final LocalDate submitDate) {
+        // 過去のvaluationレコードから取得する
+        final Optional<ValuationEntity> valuation = valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate).stream()
+                .min(Comparator.comparing(ValuationEntity::getDaySinceSubmitDate));
+        if (valuation.isPresent()) {
+            return valuation.get().getStockPrice();
+        }
+
+        // 上記になければ提出日の株価を取得する
+        final Optional<Double> stock = stockSpecification.findStock(companyCode, submitDate).flatMap(StockPriceEntity::getStockPrice);
+        if (stock.isPresent()) {
+            return BigDecimal.valueOf(stock.get());
+        }
+
+        // 上記になければ提出日より以前の平均株価を取得する
+        final Optional<BigDecimal> averageStockPrice = stockSpecification.getAverageStockPrice(companyCode, submitDate);
+        if (averageStockPrice.isPresent()) {
+            return averageStockPrice.get();
+        }
+
+        throw new FundanalyzerNotExistException("提出日株価終値");
     }
 }

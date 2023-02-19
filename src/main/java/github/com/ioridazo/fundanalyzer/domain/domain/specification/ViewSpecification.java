@@ -70,6 +70,7 @@ public class ViewSpecification {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final ValuationSpecification valuationSpecification;
 
     @Value("${app.config.view.edinet-list.size}")
     int edinetListSize;
@@ -82,7 +83,8 @@ public class ViewSpecification {
             final DocumentSpecification documentSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final ValuationSpecification valuationSpecification) {
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
         this.valuationViewDao = valuationViewDao;
@@ -91,6 +93,7 @@ public class ViewSpecification {
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
         this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.valuationSpecification = valuationSpecification;
     }
 
     LocalDate nowLocalDate() {
@@ -174,7 +177,7 @@ public class ViewSpecification {
      */
     public List<CompanyValuationViewModel> findCompanyValuationViewList(final Integer industryId) {
         return companySpecification.findCompanyByIndustry(industryId).stream()
-                .map(Company::getCode)
+                .map(Company::getCode4)
                 .map(valuationViewDao::selectByCode)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -278,8 +281,8 @@ public class ViewSpecification {
         final Stock stock = stockSpecification.findStock(company);
 
         return CorporateViewModel.of(
-                company.getCode().substring(0, 4),
-                company.getCompanyName(),
+                company.code().substring(0, 4),
+                company.companyName(),
                 document.getSubmitDate(),
                 document.getDocumentTypeCode().toValue(),
                 Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
@@ -404,22 +407,28 @@ public class ViewSpecification {
         );
     }
 
+    /**
+     * 株価評価ビューを生成する
+     *
+     * @param entity 株価評価
+     * @return 株価評価ビュー
+     */
     public CompanyValuationViewModel generateCompanyValuationView(final ValuationEntity entity) {
         final Optional<Company> company = companySpecification.findCompanyByCode(entity.getCompanyCode());
-        final Optional<StockPriceEntity> stockPriceOfSubmitDate = stockSpecification.findStock(entity.getCompanyCode(), entity.getSubmitDate());
         final Optional<InvestmentIndicatorEntity> investmentIndicatorOfSubmitDate = investmentIndicatorSpecification.findEntity(entity.getCompanyCode(), entity.getSubmitDate());
         final Optional<AnalysisResultEntity> analysisResult = analysisResultSpecification.findAnalysisResult(entity.getAnalysisResultId());
 
         return new CompanyValuationViewModel(
                 entity.getCompanyCode().substring(0, 4),
-                company.map(Company::getCompanyName).orElseThrow(),
+                company.map(Company::companyName).orElseThrow(),
                 entity.getTargetDate(),
                 entity.getStockPrice(),
                 entity.getGrahamIndex().orElse(null),
                 entity.getDiscountValue(),
                 entity.getDiscountRate(),
                 entity.getSubmitDate(),
-                stockPriceOfSubmitDate.flatMap(StockPriceEntity::getStockPrice).map(BigDecimal::valueOf).orElseThrow(),
+                valuationSpecification.findValuationOfSubmitDate(entity.getCompanyCode(), entity.getSubmitDate())
+                        .map(ValuationEntity::getStockPrice).orElseThrow(),
                 entity.getDaySinceSubmitDate(),
                 entity.getDifferenceFromSubmitDate(),
                 entity.getSubmitDateRatio(),
@@ -429,6 +438,7 @@ public class ViewSpecification {
                         .filter(stockPriceEntity -> stockPriceEntity.getDividendYield().isPresent())
                         .max(Comparator.comparing(StockPriceEntity::getTargetDate))
                         .flatMap(StockPriceEntity::getDividendYield)
+                        .filter(dividendYield -> !"N/A".equals(dividendYield))
                         .map(v -> {
                             try {
                                 return new BigDecimal(v
@@ -440,7 +450,7 @@ public class ViewSpecification {
                                         MessageFormat.format(
                                                 "予想配当利回りを数値に変換できませんでした。\t値:{0}", v
                                         ),
-                                        companySpecification.findCompanyByCode(entity.getCompanyCode()).map(Company::getEdinetCode).orElse("null"),
+                                        companySpecification.findCompanyByCode(entity.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                                         Category.STOCK,
                                         Process.EVALUATE
                                 ), e.getCause());

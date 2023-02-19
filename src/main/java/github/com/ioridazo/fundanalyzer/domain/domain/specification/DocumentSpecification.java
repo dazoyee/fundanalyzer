@@ -110,7 +110,7 @@ public class DocumentSpecification {
      * @return ドキュメント情報
      */
     public Optional<Document> findLatestDocument(final Company company) {
-        return findLatestDocument(company.getEdinetCode());
+        return findLatestDocument(company.edinetCode());
     }
 
     /**
@@ -317,6 +317,15 @@ public class DocumentSpecification {
     }
 
     /**
+     * ダウンロード処理を処理途中に更新する
+     *
+     * @param document ドキュメント情報
+     */
+    public void updateDownloadToHalfWay(final Document document) {
+        documentDao.update(DocumentEntity.ofUpdateDownloadToHalfWay(document, nowLocalDateTime()));
+    }
+
+    /**
      * ダウンロード処理をエラーに更新する
      *
      * @param document ドキュメント情報
@@ -426,7 +435,7 @@ public class DocumentSpecification {
                         MessageFormat.format(
                                 "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
                                         "\t会社コード:{0}\t書類ID:{1}\t書類種別コード:{2}\t提出日:{3}\t対象年:{4}",
-                                companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::getCode).orElse("null"),
+                                companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::code).orElse("null"),
                                 document.getDocumentId(),
                                 document.getEdinetCode(),
                                 document.getDocumentTypeCode().toValue(),
@@ -598,6 +607,6 @@ public class DocumentSpecification {
      */
     private boolean isTarget(final Document document) {
         return companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).stream()
-                .anyMatch(company -> industrySpecification.isTarget(company.getIndustryId()));
+                .anyMatch(company -> industrySpecification.isTarget(company.industryId()));
     }
 }
