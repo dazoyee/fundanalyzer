@@ -98,6 +98,14 @@ public class DocumentEntity {
                 .build();
     }
 
+    public static DocumentEntity ofUpdateDownloadToHalfWay(final Document document, final LocalDateTime updatedAt) {
+        return DocumentEntity.builder()
+                .documentId(document.getDocumentId())
+                .downloaded(DocumentStatus.HALF_WAY.toValue())
+                .updatedAt(updatedAt)
+                .build();
+    }
+
     public static DocumentEntity ofUpdateDownloadToError(final Document document, final LocalDateTime updatedAt) {
         return DocumentEntity.builder()
                 .documentId(document.getDocumentId())
@@ -157,31 +165,27 @@ public class DocumentEntity {
             final DocumentStatus status,
             final String path,
             final LocalDateTime updatedAt) {
-        switch (fs) {
-            case BALANCE_SHEET:
-                return DocumentEntity.builder()
-                        .documentId(documentId)
-                        .scrapedBs(status.toValue())
-                        .bsDocumentPath(path)
-                        .updatedAt(updatedAt)
-                        .build();
-            case PROFIT_AND_LESS_STATEMENT:
-                return DocumentEntity.builder()
-                        .documentId(documentId)
-                        .scrapedPl(status.toValue())
-                        .plDocumentPath(path)
-                        .updatedAt(updatedAt)
-                        .build();
-            case TOTAL_NUMBER_OF_SHARES:
-                return DocumentEntity.builder()
-                        .documentId(documentId)
-                        .scrapedNumberOfShares(status.toValue())
-                        .numberOfSharesDocumentPath(path)
-                        .updatedAt(updatedAt)
-                        .build();
-            default:
-                throw new FundanalyzerRuntimeException();
-        }
+        return switch (fs) {
+            case BALANCE_SHEET -> DocumentEntity.builder()
+                    .documentId(documentId)
+                    .scrapedBs(status.toValue())
+                    .bsDocumentPath(path)
+                    .updatedAt(updatedAt)
+                    .build();
+            case PROFIT_AND_LESS_STATEMENT -> DocumentEntity.builder()
+                    .documentId(documentId)
+                    .scrapedPl(status.toValue())
+                    .plDocumentPath(path)
+                    .updatedAt(updatedAt)
+                    .build();
+            case TOTAL_NUMBER_OF_SHARES -> DocumentEntity.builder()
+                    .documentId(documentId)
+                    .scrapedNumberOfShares(status.toValue())
+                    .numberOfSharesDocumentPath(path)
+                    .updatedAt(updatedAt)
+                    .build();
+            default -> throw new FundanalyzerRuntimeException();
+        };
     }
 
     public Optional<String> getDocumentTypeCode() {

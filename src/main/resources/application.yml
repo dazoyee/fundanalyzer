@@ -113,8 +113,8 @@ resilience4j:
   ratelimiter.instances:
     edinet:
       registerHealthIndicator: true
-      limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 20              # 指定した期間の間に呼び出し可能な回数
+      limitRefreshPeriod: 3s          # 計測する期間
+      limitForPeriod: 6               # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     nikkei:
       registerHealthIndicator: true
@@ -145,9 +145,9 @@ app:
       edinet:
         base-uri: https://disclosure.edinet-fsa.go.jp
         connect-timeout: 5s
-        read-timeout: 60s
-        max-attempts: 3
-        back-off: 10s
+        read-timeout: 30s
+        max-attempts: 5
+        back-off: 30s
       selenium:
         base-uri: http://localhost:9001
         connect-timeout: 5s

@@ -95,7 +95,7 @@ public class EdinetClient {
                     if (ListType.DEFAULT.equals(parameter.getType())) {
                         log.info(FundanalyzerLogClient.toClientLogObject(
                                 MessageFormat.format(
-                                        "通信に失敗したため、{0}回目の書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{1}",
+                                        "通信に失敗したため、リトライ{0}回目の書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{1}",
                                         context.getRetryCount() + 1,
                                         parameter.getDate()
                                 ),
@@ -105,7 +105,7 @@ public class EdinetClient {
                     } else {
                         log.info(FundanalyzerLogClient.toClientLogObject(
                                 MessageFormat.format(
-                                        "通信に失敗したため、{0}回目の書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{1}",
+                                        "通信に失敗したため、リトライ{0}回目の書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{1}",
                                         context.getRetryCount() + 1,
                                         parameter.getDate()
                                 ),
@@ -193,9 +193,9 @@ public class EdinetClient {
             return edinetResponse;
 
         } catch (final RequestNotPermitted e) {
-            throw new FundanalyzerRestClientException(EDINET + "との通信でレートリミッターが作動しました。");
+            throw new FundanalyzerRestClientException(EDINET + "との通信でレートリミッターが作動しました。", true);
         } catch (final CallNotPermittedException e) {
-            throw new FundanalyzerRestClientException(EDINET + "との通信でサーキットブレーカーがオープンしました。");
+            throw new FundanalyzerRestClientException(EDINET + "との通信でサーキットブレーカーがオープンしました。", true);
         } catch (final Exception e) {
             throw new FundanalyzerRestClientException(e.getMessage(), e.getCause());
         }
@@ -224,7 +224,7 @@ public class EdinetClient {
                 } else {
                     log.info(FundanalyzerLogClient.toClientLogObject(
                             MessageFormat.format(
-                                    "通信に失敗したため、{0}回目の書類のダウンロード処理を実行します。\t書類管理番号:{1}",
+                                    "通信に失敗したため、リトライ{0}回目の書類のダウンロード処理を実行します。\t書類管理番号:{1}",
                                     retryContext.getRetryCount(),
                                     parameter.getDocId()
                             ),
@@ -254,17 +254,31 @@ public class EdinetClient {
                                                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
                                             );
                                         } catch (final RestClientResponseException e) {
-                                            log.warn(FundanalyzerLogClient.toClientLogObject(
-                                                    MessageFormat.format(
-                                                            "EDINETから200以外のHTTPステータスコードが返却されました。" +
-                                                                    "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
-                                                            e.getRawStatusCode(),
-                                                            e.getResponseBodyAsString()
-                                                    ),
-                                                    parameter.getDocId(),
-                                                    Category.DOCUMENT,
-                                                    Process.DOWNLOAD
-                                            ));
+                                            if (403 == e.getRawStatusCode()) {
+                                                log.info(FundanalyzerLogClient.toClientLogObject(
+                                                        MessageFormat.format(
+                                                                "EDINETから200以外のHTTPステータスコードが返却されました。" +
+                                                                        "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                                e.getRawStatusCode(),
+                                                                e.getResponseBodyAsString()
+                                                        ),
+                                                        parameter.getDocId(),
+                                                        Category.DOCUMENT,
+                                                        Process.DOWNLOAD
+                                                ));
+                                            } else {
+                                                log.warn(FundanalyzerLogClient.toClientLogObject(
+                                                        MessageFormat.format(
+                                                                "EDINETから200以外のHTTPステータスコードが返却されました。" +
+                                                                        "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                                e.getRawStatusCode(),
+                                                                e.getResponseBodyAsString()
+                                                        ),
+                                                        parameter.getDocId(),
+                                                        Category.DOCUMENT,
+                                                        Process.DOWNLOAD
+                                                ));
+                                            }
 
                                             if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
                                                 throw new FundanalyzerRestClientException(
@@ -303,9 +317,9 @@ public class EdinetClient {
                     Process.DOWNLOAD
             ));
         } catch (final RequestNotPermitted e) {
-            throw new FundanalyzerRestClientException(EDINET + "との通信でレートリミッターが作動しました。");
+            throw new FundanalyzerRestClientException(EDINET + "との通信でレートリミッターが作動しました。", true);
         } catch (final CallNotPermittedException e) {
-            throw new FundanalyzerRestClientException(EDINET + "との通信でサーキットブレーカーがオープンしました。");
+            throw new FundanalyzerRestClientException(EDINET + "との通信でサーキットブレーカーがオープンしました。", true);
         } catch (final Exception e) {
             throw new FundanalyzerRestClientException(e.getMessage(), e.getCause());
         }

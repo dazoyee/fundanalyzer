@@ -317,6 +317,15 @@ public class DocumentSpecification {
     }
 
     /**
+     * ダウンロード処理を処理途中に更新する
+     *
+     * @param document ドキュメント情報
+     */
+    public void updateDownloadToHalfWay(final Document document) {
+        documentDao.update(DocumentEntity.ofUpdateDownloadToHalfWay(document, nowLocalDateTime()));
+    }
+
+    /**
      * ダウンロード処理をエラーに更新する
      *
      * @param document ドキュメント情報

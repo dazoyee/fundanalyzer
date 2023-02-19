@@ -110,23 +110,29 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
-                                    "\t処理対象日:{0}\t書類管理番号:{1}",
+                                    "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
                             document.getSubmitDate(),
-                            document.getDocumentId()
+                            document.getDocumentId(),
+                            e.getMessage()
                     ),
                     document,
                     Category.SCRAPING,
                     Process.DOWNLOAD,
                     System.currentTimeMillis() - startTime
             ), e);
-            documentSpecification.updateDownloadToError(document);
+            if (e.isRetry()) {
+                documentSpecification.updateDownloadToHalfWay(document);
+            } else {
+                documentSpecification.updateDownloadToError(document);
+            }
         } catch (IOException e) {
             log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
-                                    "\t処理対象日:{0}\t書類管理番号:{1}",
+                                    "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
                             document.getSubmitDate(),
-                            document.getDocumentId()
+                            document.getDocumentId(),
+                            e.getMessage()
                     ),
                     document,
                     Category.SCRAPING,
