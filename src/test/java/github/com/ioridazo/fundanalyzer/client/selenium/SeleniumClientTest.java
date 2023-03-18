@@ -29,7 +29,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Timeout(10)
-@SuppressWarnings("NewClassNamingConvention")
 class SeleniumClientTest {
 
     private static MockWebServer server;
@@ -66,7 +65,15 @@ class SeleniumClientTest {
 
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
-                    .setBody("EdinetcodeDInfo.zip"));
+                    .setHeader("Content-Type", "application/json")
+                    .setBody("""
+                            {
+                                "status":"ok",
+                                "content":{
+                                    "filename":"EdinetcodeDInfo"
+                                }
+                            }
+                            """));
 
             var actual = assertDoesNotThrow(() -> client.edinetCodeList(inputFilePath));
 
@@ -76,7 +83,7 @@ class SeleniumClientTest {
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
 
-            assertEquals("EdinetcodeDInfo.zip", actual);
+            assertEquals("EdinetcodeDInfo", actual);
         }
 
         @DisplayName("edinetCodeList : 通信をリトライする")
