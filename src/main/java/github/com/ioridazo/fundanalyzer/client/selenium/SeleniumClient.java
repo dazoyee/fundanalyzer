@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.client.selenium;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
@@ -41,7 +42,7 @@ public class SeleniumClient {
         final String endpoint = String.format("/selenium/v1/edinetcode?path=%s", inputFilePath.replace("/", "\\"));
 
         try {
-            final String fileName = retryTemplate.execute(context -> {
+            final SeleniumResponse response = retryTemplate.execute(context -> {
                 log.info(FundanalyzerLogClient.toClientLogObject(
                         MessageFormat.format(
                                 "{0}回目のSeleniumへの通信を開始します。\tURL:{1}",
@@ -52,18 +53,28 @@ public class SeleniumClient {
                         Process.EDINET
                 ));
 
-                return restTemplate.getForObject(endpoint, String.class);
+                return restTemplate.getForObject(endpoint, SeleniumResponse.class);
             });
 
             log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format("Seleniumの通信を正常終了します。\tURL:{0}", endpoint),
+                    MessageFormat.format(
+                            "Seleniumの通信を正常終了します。\tURL:{0}\tBODY:{1}",
+                            endpoint,
+                            response
+                    ),
                     Category.COMPANY,
                     Process.EDINET
             ));
 
-            return fileName;
+            return response.content().filename();
         } catch (final RestClientException e) {
             throw new FundanalyzerRestClientException("Selenium通信がリトライ上限に達しました。エラー内容を確認してください。", e);
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record SeleniumResponse(String status, Content content, Error error){
+        record Content(String filename){}
+        record Error(String message, String body){}
     }
 }

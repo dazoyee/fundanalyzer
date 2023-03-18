@@ -19,6 +19,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 print "===== チェックアウトを開始します ====="
+                bat 'git config --system core.longpaths true'
                 // git url: 'https://github.com/ioridazo/fundanalyzer.git', branch: 'develop'
                 checkout scm
                 print "===== チェックアウトを正常に終了しました ====="
