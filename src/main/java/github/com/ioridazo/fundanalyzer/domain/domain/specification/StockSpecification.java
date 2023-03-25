@@ -81,9 +81,7 @@ public class StockSpecification {
      * @return 株価情報
      */
     public Optional<StockPriceEntity> findStock(final String companyCode, final LocalDate targetDate) {
-        return stockPriceDao.selectByCodeAndDate(companyCode, targetDate).stream()
-                .filter(entity -> entity.getStockPrice().isPresent())
-                .findAny();
+        return stockPriceDao.selectByCodeAndDate(companyCode, targetDate).stream().findAny();
     }
 
     /**
@@ -94,7 +92,6 @@ public class StockSpecification {
      */
     public Optional<StockPriceEntity> findLatestStock(final String companyCode) {
         return stockPriceDao.selectByCode(companyCode).stream()
-                .filter(entity -> entity.getStockPrice().isPresent())
                 // latest
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate));
     }
@@ -124,7 +121,7 @@ public class StockSpecification {
 
         final Optional<BigDecimal> latestStock = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
-                .flatMap(StockPriceEntity::getStockPrice)
+                .map(StockPriceEntity::getStockPrice)
                 .map(BigDecimal::valueOf);
 
         final Optional<BigDecimal> averageStockPrice = documentSpecification.findLatestDocument(company)
@@ -387,8 +384,6 @@ public class StockSpecification {
                 .filter(stockPrice -> targetDate.minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> targetDate.isAfter(stockPrice.getTargetDate()))
                 .map(StockPriceEntity::getStockPrice)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .toList();
 
         if (certainPeriodList.isEmpty()) {

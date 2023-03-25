@@ -135,7 +135,7 @@ public class ValuationSpecification {
                                 "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
-                                stock.getStockPrice().orElse(0.0)
+                                stock.getStockPrice()
                         ),
                         companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
@@ -149,7 +149,7 @@ public class ValuationSpecification {
                                 "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
-                                stock.getStockPrice().orElse(0.0)
+                                stock.getStockPrice()
                         ),
                         companySpecification.findCompanyByCode(stock.getCompanyCode()).map(Company::edinetCode).orElse("null"),
                         Category.STOCK,
@@ -171,8 +171,7 @@ public class ValuationSpecification {
     ValuationEntity evaluate(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         final String code = stock.getCompanyCode();
         final LocalDate targetDate = stock.getTargetDate();
-        final BigDecimal stockPrice = stock.getStockPrice().map(BigDecimal::valueOf)
-                .orElseThrow(() -> new FundanalyzerNotExistException("株価終値"));
+        final BigDecimal stockPrice = BigDecimal.valueOf(stock.getStockPrice());
         final Optional<InvestmentIndicatorEntity> investmentIndicatorEntity = investmentIndicatorSpecification.findEntity(code, targetDate);
         final LocalDate submitDate = analysisResult.getSubmitDate();
         final BigDecimal stockPriceOfSubmitDate = getStockPriceOfSubmitDate(code, submitDate);
@@ -204,7 +203,7 @@ public class ValuationSpecification {
         }
 
         // 上記になければ提出日の株価を取得する
-        final Optional<Double> stock = stockSpecification.findStock(companyCode, submitDate).flatMap(StockPriceEntity::getStockPrice);
+        final Optional<Double> stock = stockSpecification.findStock(companyCode, submitDate).map(StockPriceEntity::getStockPrice);
         if (stock.isPresent()) {
             return BigDecimal.valueOf(stock.get());
         }

@@ -183,10 +183,6 @@ public class StockPriceEntity {
         );
     }
 
-    public Optional<Double> getStockPrice() {
-        return Optional.ofNullable(stockPrice);
-    }
-
     public Optional<Double> getOpeningPrice() {
         return Optional.ofNullable(openingPrice);
     }
