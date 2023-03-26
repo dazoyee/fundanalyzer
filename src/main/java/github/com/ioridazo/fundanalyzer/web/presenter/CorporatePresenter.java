@@ -82,7 +82,7 @@ public class CorporatePresenter {
                         .max(Comparator.comparing(AnalysisResultViewModel::getSubmitDate)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted(Comparator.comparing(AnalysisResultViewModel::getSubmitDate))
+                .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod))
                 .toList();
 
         model.addAttribute("analysisLabelAll", analysis.stream()

@@ -14,6 +14,7 @@ import org.seasar.doma.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
@@ -66,14 +67,38 @@ public class StockPriceEntity {
      * @param nikkei    日経スクレイピング結果
      * @param createdAt 登録日
      * @return StockPrice
+     * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofNikkeiResultBean(
-            final String code, final NikkeiResultBean nikkei, final LocalDateTime createdAt) {
+            final String code, final NikkeiResultBean nikkei, final LocalDateTime createdAt) throws DateTimeParseException {
+        return ofNikkeiResultBean(
+                code,
+                Parser.parseDoubleNikkei(nikkei.stockPrice()).orElse(null),
+                nikkei,
+                createdAt
+        );
+    }
+
+    /**
+     * 日経のスクレイピング結果からデータベース登録するためにマッピングする
+     *
+     * @param code       会社コード
+     * @param stockPrice 株価終値
+     * @param nikkei     日経スクレイピング結果
+     * @param createdAt  登録日
+     * @return StockPrice
+     * @throws DateTimeParseException 対象日をパースできなかったとき
+     */
+    public static StockPriceEntity ofNikkeiResultBean(
+            final String code,
+            final Double stockPrice,
+            final NikkeiResultBean nikkei,
+            final LocalDateTime createdAt) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
                 LocalDate.parse(nikkei.targetDate(), DateTimeFormatter.ofPattern("yyyy/M/d")),
-                Parser.parseDoubleNikkei(nikkei.stockPrice()).orElse(null),
+                stockPrice,
                 Parser.parseDoubleNikkei(nikkei.openingPrice()).orElse(null),
                 Parser.parseDoubleNikkei(nikkei.highPrice()).orElse(null),
                 Parser.parseDoubleNikkei(nikkei.lowPrice()).orElse(null),
@@ -84,7 +109,7 @@ public class StockPriceEntity {
                 Parser.parseStringNikkei(nikkei.numberOfShares()),
                 Parser.parseStringNikkei(nikkei.marketCapitalization()),
                 Parser.parseStringNikkei(nikkei.dividendYield()),
-                nikkei.shareholderBenefit().replace("株主優待 ", ""),
+                Optional.ofNullable(nikkei.shareholderBenefit()).map(v -> v.replace("株主優待 ", "")).orElse(null),
                 SourceOfStockPrice.NIKKEI.toValue(),
                 createdAt
         );
@@ -97,9 +122,12 @@ public class StockPriceEntity {
      * @param kabuoji3  kabuoji3のスクレイピング結果
      * @param createdAt 登録日
      * @return StockPrice
+     * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofKabuoji3(
-            final String code, final StockPriceResultBean kabuoji3, final LocalDateTime createdAt) {
+            final String code,
+            final StockPriceResultBean kabuoji3,
+            final LocalDateTime createdAt) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
@@ -128,9 +156,12 @@ public class StockPriceEntity {
      * @param minkabu   minkabuのスクレイピング結果
      * @param createdAt 登録日
      * @return StockPrice
+     * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofMinkabu(
-            final String code, final StockPriceResultBean minkabu, final LocalDateTime createdAt) {
+            final String code,
+            final StockPriceResultBean minkabu,
+            final LocalDateTime createdAt) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
@@ -159,9 +190,12 @@ public class StockPriceEntity {
      * @param yahooFinance yahoo-financeのスクレイピング結果
      * @param createdAt    登録日
      * @return StockPrice
+     * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofYahooFinanceResultBean(
-            final String code, final StockPriceResultBean yahooFinance, final LocalDateTime createdAt) {
+            final String code,
+            final StockPriceResultBean yahooFinance,
+            final LocalDateTime createdAt) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
@@ -181,10 +215,6 @@ public class StockPriceEntity {
                 SourceOfStockPrice.YAHOO_FINANCE.toValue(),
                 createdAt
         );
-    }
-
-    public Optional<Double> getStockPrice() {
-        return Optional.ofNullable(stockPrice);
     }
 
     public Optional<Double> getOpeningPrice() {

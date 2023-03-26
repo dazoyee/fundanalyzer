@@ -300,10 +300,8 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         // find stock
                         stockSpecification.findStock(analysisResult.getCompanyCode(), date)
                                 .ifPresent(spe -> {
-                                            if (spe.getStockPrice().isPresent()) {
-                                                // indicate
-                                                investmentIndicatorSpecification.insert(analysisResult, spe);
-                                            }
+                                            // indicate
+                                            investmentIndicatorSpecification.insert(analysisResult, spe);
                                         }
                                 )
                 );

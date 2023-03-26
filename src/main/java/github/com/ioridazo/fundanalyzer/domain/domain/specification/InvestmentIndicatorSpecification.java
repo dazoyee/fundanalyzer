@@ -9,7 +9,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Investm
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -100,8 +99,7 @@ public class InvestmentIndicatorSpecification {
      */
     public void insert(
             final AnalysisResultEntity analysisResultEntity, final StockPriceEntity stockPriceEntity) {
-        final BigDecimal stockPrice = stockPriceEntity.getStockPrice().map(BigDecimal::new).orElseThrow(FundanalyzerRuntimeException::new);
-        final IndicatorValue indicatorValue = new IndicatorValue(stockPrice, analysisResultEntity);
+        final IndicatorValue indicatorValue = new IndicatorValue(BigDecimal.valueOf(stockPriceEntity.getStockPrice()), analysisResultEntity);
         try {
             investmentIndicatorDao.insert(InvestmentIndicatorEntity.of(
                     stockPriceEntity.getId(),

@@ -1,17 +1,24 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
+import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.MinkabuDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerAlreadyExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
@@ -26,6 +33,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
@@ -385,7 +393,234 @@ class StockSpecificationTest {
     }
 
     @Nested
-    class insert {
+    class insert_stock {
+
+        LocalDateTime nowLocalDateTime = LocalDateTime.of(2023, 3, 26, 11, 0);
+
+        @BeforeEach
+        void setUp() {
+            when(stockSpecification.nowLocalDateTime()).thenReturn(nowLocalDateTime);
+        }
+
+        @DisplayName("insert : 日経から取得した株価情報を登録する")
+        @Test
+        void nikkei_ok() {
+            var code = "code";
+            var nikkei = new NikkeiResultBean(
+                    "100.0",
+                    "2023/3/26",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertDoesNotThrow(() -> stockSpecification.insert(code, nikkei));
+            verify(stockPriceDao, times(1)).insert(any());
+        }
+
+        @DisplayName("insert : 日経から取得した株価情報に対象日がないときはエラーにする")
+        @Test
+        void nikkei_targetDate_isNull() {
+            var code = "code";
+            var nikkei = new NikkeiResultBean(
+                    "100.0",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, nikkei));
+        }
+
+        @DisplayName("insert : 日経から取得した株価情報に株価終値が存在しないときはDBから取得する")
+        @Test
+        void nikkei_stockPrice_isNull() {
+            var code = "code";
+            var nikkei = new NikkeiResultBean(
+                    null,
+                    "2023/3/26",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(stockPriceDao.selectByCodeAndDate(code, LocalDate.parse("2023-03-26"))).thenReturn(List.of(stockPriceEntity()));
+            assertDoesNotThrow(() -> stockSpecification.insert(code, nikkei));
+            verify(stockPriceDao, times(1)).insert(any());
+        }
+
+        @DisplayName("insert : 日経から取得した株価情報に株価終値が存在しないかつDBにも存在しないときはエラーにする")
+        @Test
+        void nikkei_stockPrice_isNull2() {
+            var code = "code";
+            var nikkei = new NikkeiResultBean(
+                    null,
+                    "2023/3/26",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, nikkei));
+        }
+
+        @DisplayName("insert : 日経から取得した株価情報がすでに存在するときはエラーにする")
+        @Test
+        void nikkei_isPresent() {
+            var code = "code";
+            var nikkei = new NikkeiResultBean(
+                    "100.0",
+                    "2023/3/26",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(stockPriceDao.selectByUniqueKey(code, LocalDate.parse("2023-03-26"), "1")).thenReturn(Optional.of(stockPriceEntity()));
+            assertThrows(FundanalyzerAlreadyExistException.class, () -> stockSpecification.insert(code, nikkei));
+        }
+
+        @DisplayName("insert : 取得した株価情報を登録する")
+        @ParameterizedTest
+        @EnumSource(SourceOfStockPrice.class)
+        void insert(SourceOfStockPrice place) {
+            var code = "code";
+            var targetDate = switch (place) {
+                case KABUOJI3 -> "2023-03-26";
+                case YAHOO_FINANCE -> "2023年3月26日";
+                case MINKABU -> "2023/03/26";
+                default -> "";
+            };
+            var resultBean = new StockPriceResultBean(
+                    targetDate,
+                    null,
+                    null,
+                    null,
+                    "100.0",
+                    null,
+                    null
+            );
+
+            switch (place) {
+                case NIKKEI ->
+                        assertThrows(FundanalyzerRuntimeException.class, () -> stockSpecification.insert(code, resultBean, place));
+                case KABUOJI3, MINKABU, YAHOO_FINANCE -> {
+                    assertDoesNotThrow(() -> stockSpecification.insert(code, resultBean, place));
+                    verify(stockPriceDao, times(1)).insert(any());
+                }
+            }
+        }
+
+        @DisplayName("insert : 取得した株価情報に対象日がないときはエラーにする")
+        @ParameterizedTest
+        @EnumSource(SourceOfStockPrice.class)
+        void insert_targetDate_isNull(SourceOfStockPrice place) {
+            var code = "code";
+            var resultBean = new StockPriceResultBean(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "100.0",
+                    null,
+                    null
+            );
+
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, resultBean, place));
+        }
+
+        @DisplayName("insert : 取得した株価情報に株価終値がないときはエラーにする")
+        @ParameterizedTest
+        @EnumSource(SourceOfStockPrice.class)
+        void insert_stockPrice_isNull(SourceOfStockPrice place) {
+            var code = "code";
+            var resultBean = new StockPriceResultBean(
+                    "targetDate",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, resultBean, place));
+        }
+
+        @DisplayName("insert : 取得した株価情報に株価終値がないときはエラーにする")
+        @ParameterizedTest
+        @EnumSource(SourceOfStockPrice.class)
+        void insert_isPresent(SourceOfStockPrice place) {
+            var code = "code";
+            var targetDate = switch (place) {
+                case KABUOJI3 -> "2023-03-26";
+                case YAHOO_FINANCE -> "2023年3月26日";
+                case MINKABU -> "2023/03/26";
+                default -> "";
+            };
+            var resultBean = new StockPriceResultBean(
+                    targetDate,
+                    null,
+                    null,
+                    null,
+                    "100.0",
+                    null,
+                    null
+            );
+
+            when(stockPriceDao.selectByCodeAndDate(code, LocalDate.parse("2023-03-26"))).thenReturn(List.of(stockPriceEntity()));
+            switch (place) {
+                case NIKKEI ->
+                        assertThrows(FundanalyzerRuntimeException.class, () -> stockSpecification.insert(code, resultBean, place));
+                case KABUOJI3, MINKABU, YAHOO_FINANCE ->
+                        assertThrows(FundanalyzerAlreadyExistException.class, () -> stockSpecification.insert(code, resultBean, place));
+            }
+        }
+    }
+
+    @Nested
+    class insert_minkabu {
 
         LocalDateTime nowLocalDateTime = LocalDateTime.of(2022, 12, 26, 19, 0);
 
@@ -602,6 +837,28 @@ class StockSpecificationTest {
                 null,
                 false,
                 false
+        );
+    }
+
+    private StockPriceEntity stockPriceEntity() {
+        return new StockPriceEntity(
+                null,
+                null,
+                null,
+                100.0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
         );
     }
 }

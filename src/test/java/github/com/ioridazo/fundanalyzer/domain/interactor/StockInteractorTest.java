@@ -185,12 +185,12 @@ class StockInteractorTest {
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
             switch (place) {
                 case NIKKEI -> verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
-                case KABUOJI3 -> verify(stockSpecification, times(1)).insertOfKabuoji3(eq("code0"), any());
+                case KABUOJI3, YAHOO_FINANCE ->
+                        verify(stockSpecification, times(1)).insert(eq("code0"), any(), eq(place));
                 case MINKABU -> {
-                    verify(stockSpecification, times(1)).insertOfMinkabu(eq("code0"), any());
+                    verify(stockSpecification, times(1)).insert(eq("code0"), any(), eq(place));
                     verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
                 }
-                case YAHOO_FINANCE -> verify(stockSpecification, times(1)).insertOfYahooFinance(eq("code0"), any());
             }
         }
 
@@ -208,9 +208,9 @@ class StockInteractorTest {
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
             switch (place) {
                 case NIKKEI -> verify(stockSpecification, times(0)).insert(eq("code0"), (NikkeiResultBean) any());
-                case KABUOJI3 -> verify(stockSpecification, times(0)).insertOfKabuoji3(eq("code0"), any());
+                case KABUOJI3, YAHOO_FINANCE ->
+                        verify(stockSpecification, times(0)).insert(eq("code0"), any(), eq(place));
                 case MINKABU -> verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
-                case YAHOO_FINANCE -> verify(stockSpecification, times(0)).insertOfYahooFinance(eq("code0"), any());
             }
         }
     }

@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS `stock_price`
     `id`                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `company_code`          CHAR(5)         NOT NULL COMMENT '企業コード',
     `target_date`           DATE            NOT NULL COMMENT '対象日付',
-    `stock_price`           FLOAT                    DEFAULT NULL COMMENT '終値',
+    `stock_price`           FLOAT           NOT NULL DEFAULT NULL COMMENT '終値',
     `opening_price`         FLOAT                    DEFAULT NULL COMMENT '始値',
     `high_price`            FLOAT                    DEFAULT NULL COMMENT '高値',
     `low_price`             FLOAT                    DEFAULT NULL COMMENT '安値',

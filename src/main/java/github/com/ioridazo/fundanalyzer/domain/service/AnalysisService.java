@@ -67,9 +67,9 @@ public class AnalysisService {
                     // remove
                     documentUseCase.removeDocument(date);
                     // stock
-                    stockUseCase.importStockPrice(date, SourceOfStockPrice.NIKKEI);
                     stockUseCase.importStockPrice(date, SourceOfStockPrice.KABUOJI3);
                     stockUseCase.importStockPrice(date, SourceOfStockPrice.MINKABU);
+                    stockUseCase.importStockPrice(date, SourceOfStockPrice.NIKKEI);
                     // analysis
                     analyzeUseCase.analyze(date);
                     // view corporate
@@ -183,10 +183,10 @@ public class AnalysisService {
                 .map(DateInputData::of)
                 // stock
                 .forEach(date -> {
-                    stockUseCase.importStockPrice(date, SourceOfStockPrice.NIKKEI);
                     stockUseCase.importStockPrice(date, SourceOfStockPrice.KABUOJI3);
                     stockUseCase.importStockPrice(date, SourceOfStockPrice.MINKABU);
                     stockUseCase.importStockPrice(date, SourceOfStockPrice.YAHOO_FINANCE);
+                    stockUseCase.importStockPrice(date, SourceOfStockPrice.NIKKEI);
                 });
     }
 
@@ -200,10 +200,10 @@ public class AnalysisService {
         // is lived?
         if (companyUseCase.isLived(inputData)) {
             // stock
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
             stockUseCase.importStockPrice(inputData, SourceOfStockPrice.KABUOJI3);
             stockUseCase.importStockPrice(inputData, SourceOfStockPrice.MINKABU);
             stockUseCase.importStockPrice(inputData, SourceOfStockPrice.YAHOO_FINANCE);
+            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
         } else {
             // remove company
             companyUseCase.updateRemovedCompany(inputData);
