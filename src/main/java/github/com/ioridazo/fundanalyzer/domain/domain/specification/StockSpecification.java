@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPrice
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.util.Parser;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -190,7 +192,7 @@ public class StockSpecification {
         }
 
         StockPriceEntity entity;
-        if (nikkei.stockPrice() == null) {
+        if (Parser.parseDoubleNikkei(nikkei.stockPrice()).isEmpty()) {
             final LocalDate targetDate = LocalDate.parse(nikkei.targetDate(), DateTimeFormatter.ofPattern("yyyy/M/d"));
             final Double stockPrice = findStock(code, targetDate)
                     .map(StockPriceEntity::getStockPrice)
@@ -246,15 +248,11 @@ public class StockSpecification {
         } catch (final NestedRuntimeException e) {
             handleDaoError(
                     e,
-                    MessageFormat.format(
-                            "一意制約違反のため、データベースへの登録をスキップします。" +
-                                    "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得先:{3}",
-                            "stock_price",
-                            entity.getCompanyCode(),
-                            entity.getTargetDate(),
-                            price.getMemo()
-                    ),
-                    entity.getCompanyCode()
+                    "stock_price",
+                    entity.getCompanyCode(),
+                    entity.getTargetDate(),
+                    entity.getStockPrice(),
+                    price.getMemo()
             );
         }
     }
@@ -310,14 +308,11 @@ public class StockSpecification {
             } catch (NestedRuntimeException e) {
                 handleDaoError(
                         e,
-                        MessageFormat.format(
-                                "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}",
-                                "minkabu",
-                                code,
-                                minkabu.getTargetDate()
-                        ),
-                        code
+                        "minkabu",
+                        code,
+                        targetDate,
+                        0.0,
+                        SourceOfStockPrice.MINKABU.getMemo()
                 );
             }
         }
@@ -385,10 +380,38 @@ public class StockSpecification {
         return minkabuDao.selectByCodeAndDate(code, targetDate).isPresent();
     }
 
-    private void handleDaoError(final NestedRuntimeException e, final String message, final String code) {
+    private void handleDaoError(
+            final NestedRuntimeException e,
+            final String tableName,
+            final String code,
+            final LocalDate targetDate,
+            final Double stockPrice,
+            final String placeMemo) {
         if (e.contains(UniqueConstraintException.class)) {
             log.debug(FundanalyzerLogClient.toSpecificationLogObject(
-                    message,
+                    MessageFormat.format(
+                            "一意制約違反のため、データベースへの登録をスキップします。" +
+                                    "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得先:{3}",
+                            tableName,
+                            code,
+                            targetDate,
+                            placeMemo
+                    ),
+                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
+                    Category.STOCK,
+                    Process.REGISTER
+            ));
+        } else if (e.contains(SQLIntegrityConstraintViolationException.class)) {
+            log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                    MessageFormat.format(
+                            "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
+                                    "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t株価終値:{3}\t取得先:{4}",
+                            tableName,
+                            code,
+                            targetDate,
+                            stockPrice,
+                            placeMemo
+                    ),
                     companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.REGISTER

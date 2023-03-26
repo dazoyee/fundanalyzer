@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Parser;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -73,7 +74,8 @@ public class StockPriceEntity {
             final String code, final NikkeiResultBean nikkei, final LocalDateTime createdAt) throws DateTimeParseException {
         return ofNikkeiResultBean(
                 code,
-                Parser.parseDoubleNikkei(nikkei.stockPrice()).orElse(null),
+                Parser.parseDoubleNikkei(nikkei.stockPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 nikkei,
                 createdAt
         );
@@ -132,7 +134,8 @@ public class StockPriceEntity {
                 null,
                 code,
                 LocalDate.parse(kabuoji3.targetDate()),
-                Parser.parseDoubleKabuoji3(kabuoji3.closingPrice()).orElse(null),
+                Parser.parseDoubleKabuoji3(kabuoji3.closingPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 Parser.parseDoubleKabuoji3(kabuoji3.openingPrice()).orElse(null),
                 Parser.parseDoubleKabuoji3(kabuoji3.highPrice()).orElse(null),
                 Parser.parseDoubleKabuoji3(kabuoji3.lowPrice()).orElse(null),
@@ -166,7 +169,8 @@ public class StockPriceEntity {
                 null,
                 code,
                 LocalDate.parse(minkabu.targetDate(), DateTimeFormatter.ofPattern("uuuu/MM/dd")),
-                Parser.parseDoubleYahooFinance(minkabu.closingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(minkabu.closingPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 Parser.parseDoubleYahooFinance(minkabu.openingPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(minkabu.highPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(minkabu.lowPrice()).orElse(null),
@@ -200,7 +204,8 @@ public class StockPriceEntity {
                 null,
                 code,
                 LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日")),
-                Parser.parseDoubleYahooFinance(yahooFinance.closingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(yahooFinance.closingPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 Parser.parseDoubleYahooFinance(yahooFinance.openingPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(yahooFinance.highPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(yahooFinance.lowPrice()).orElse(null),

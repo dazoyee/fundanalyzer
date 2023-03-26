@@ -454,7 +454,7 @@ class StockSpecificationTest {
         void nikkei_stockPrice_isNull() {
             var code = "code";
             var nikkei = new NikkeiResultBean(
-                    null,
+                    "-- 円",
                     "2023/3/26",
                     null,
                     null,

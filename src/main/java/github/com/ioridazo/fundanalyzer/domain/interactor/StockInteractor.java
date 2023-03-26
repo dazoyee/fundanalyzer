@@ -178,8 +178,8 @@ public class StockInteractor implements StockUseCase {
                     Process.IMPORT
             ), e);
         } catch (final FundanalyzerAlreadyExistException e) {
-            log.debug(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format("株価が既に存在しているのでスキップしました。\t取得先:{0}\t企業コード:{1}\t:対象日{2}",
+            log.trace(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("株価が既に存在しているのでスキップしました。\t取得先:{0}\t企業コード:{1}\t対象日:{2}",
                             place.getMemo(), inputData.getCode5(), e.getTargetDate()),
                     companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
