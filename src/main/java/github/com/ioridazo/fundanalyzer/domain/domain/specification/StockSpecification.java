@@ -14,8 +14,10 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPr
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerAlreadyExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -180,52 +182,80 @@ public class StockSpecification {
      *
      * @param code   企業コード
      * @param nikkei 日経から取得した株価情報
+     * @throws DateTimeParseException 対象日をパースできなかったとき
      */
-    public void insert(final String code, final NikkeiResultBean nikkei) {
-        if (isEmptyStockPrice(code, nikkei.targetDate())) {
-            try {
-                stockPriceDao.insert(StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime()));
-            } catch (NestedRuntimeException e) {
-                handleDaoError(
-                        e,
-                        MessageFormat.format(
-                                "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
-                                "stock_price",
-                                code,
-                                nikkei.targetDate(),
-                                SourceOfStockPrice.NIKKEI.getMemo()
-                        ),
-                        code
-                );
-            }
+    public void insert(final String code, final NikkeiResultBean nikkei) throws DateTimeParseException {
+        if (nikkei.targetDate() == null) {
+            throw new FundanalyzerScrapingException("株価取得スクレイピング処理において対象日を取得できませんでした");
+        }
+
+        StockPriceEntity entity;
+        if (nikkei.stockPrice() == null) {
+            final LocalDate targetDate = LocalDate.parse(nikkei.targetDate(), DateTimeFormatter.ofPattern("yyyy/M/d"));
+            final Double stockPrice = findStock(code, targetDate)
+                    .map(StockPriceEntity::getStockPrice)
+                    .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした"));
+            entity = StockPriceEntity.ofNikkeiResultBean(code, stockPrice, nikkei, nowLocalDateTime());
+        } else {
+            entity = StockPriceEntity.ofNikkeiResultBean(code, nikkei, nowLocalDateTime());
+        }
+
+        if (stockPriceDao.selectByUniqueKey(entity.getCompanyCode(), entity.getTargetDate(), SourceOfStockPrice.NIKKEI.toValue()).isEmpty()) {
+            insert(entity, SourceOfStockPrice.NIKKEI);
+        } else {
+            throw new FundanalyzerAlreadyExistException(entity.getCompanyCode(), entity.getTargetDate());
         }
     }
 
     /**
-     * kabuoji3から取得した株価情報を登録する
+     * 取得した株価情報を登録する
      *
-     * @param code     企業コード
-     * @param kabuoji3 kabuoji3から取得した株価情報
+     * @param code       企業コード
+     * @param resultBean 取得した株価情報
+     * @param price      取得先
+     * @throws DateTimeParseException 対象日をパースできなかったとき
      */
-    public void insertOfKabuoji3(final String code, final StockPriceResultBean kabuoji3) {
-        if (isEmptyStockPrice(code, kabuoji3.targetDate())) {
-            try {
-                stockPriceDao.insert(StockPriceEntity.ofKabuoji3(code, kabuoji3, nowLocalDateTime()));
-            } catch (NestedRuntimeException e) {
-                handleDaoError(
-                        e,
-                        MessageFormat.format(
-                                "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
-                                "stock_price",
-                                code,
-                                kabuoji3.targetDate(),
-                                SourceOfStockPrice.KABUOJI3.getMemo()
-                        ),
-                        code
-                );
-            }
+    public void insert(
+            final String code,
+            final StockPriceResultBean resultBean,
+            final SourceOfStockPrice price) throws DateTimeParseException {
+        if (resultBean.targetDate() == null) {
+            throw new FundanalyzerScrapingException("株価取得スクレイピング処理において対象日を取得できませんでした");
+        }
+        if (resultBean.closingPrice() == null) {
+            throw new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした");
+        }
+
+        final StockPriceEntity entity = switch (price) {
+            case KABUOJI3 -> StockPriceEntity.ofKabuoji3(code, resultBean, nowLocalDateTime());
+            case MINKABU -> StockPriceEntity.ofMinkabu(code, resultBean, nowLocalDateTime());
+            case YAHOO_FINANCE -> StockPriceEntity.ofYahooFinanceResultBean(code, resultBean, nowLocalDateTime());
+            default -> throw new FundanalyzerRuntimeException();
+        };
+
+        if (stockPriceDao.selectByCodeAndDate(entity.getCompanyCode(), entity.getTargetDate()).isEmpty()) {
+            insert(entity, price);
+        } else {
+            throw new FundanalyzerAlreadyExistException(entity.getCompanyCode(), entity.getTargetDate());
+        }
+    }
+
+    private void insert(final StockPriceEntity entity, final SourceOfStockPrice price) {
+        try {
+            stockPriceDao.insert(entity);
+        } catch (final NestedRuntimeException e) {
+            handleDaoError(
+                    e,
+                    MessageFormat.format(
+                            "一意制約違反のため、データベースへの登録をスキップします。" +
+                                    "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得先:{3}",
+                            "stock_price",
+                            entity.getCompanyCode(),
+                            entity.getTargetDate(),
+                            price.getMemo()
+                    ),
+                    entity.getCompanyCode()
+            );
         }
     }
 
@@ -294,60 +324,6 @@ public class StockSpecification {
     }
 
     /**
-     * みんかぶから取得した株価情報を登録する
-     *
-     * @param code    企業コード
-     * @param minkabu minkabuから取得した株価情報
-     */
-    public void insertOfMinkabu(final String code, final StockPriceResultBean minkabu) {
-        if (isEmptyStockPrice(code, minkabu.targetDate())) {
-            try {
-                stockPriceDao.insert(StockPriceEntity.ofMinkabu(code, minkabu, nowLocalDateTime()));
-            } catch (NestedRuntimeException e) {
-                handleDaoError(
-                        e,
-                        MessageFormat.format(
-                                "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
-                                "stock_price",
-                                code,
-                                minkabu.targetDate(),
-                                SourceOfStockPrice.MINKABU.getMemo()
-                        ),
-                        code
-                );
-            }
-        }
-    }
-
-    /**
-     * yahoo-financeから取得した株価情報を登録する
-     *
-     * @param code         企業コード
-     * @param yahooFinance yahoo-financeから取得した株価情報
-     */
-    public void insertOfYahooFinance(final String code, final StockPriceResultBean yahooFinance) {
-        if (isEmptyStockPrice(code, yahooFinance.targetDate())) {
-            try {
-                stockPriceDao.insert(StockPriceEntity.ofYahooFinanceResultBean(code, yahooFinance, nowLocalDateTime()));
-            } catch (NestedRuntimeException e) {
-                handleDaoError(
-                        e,
-                        MessageFormat.format(
-                                "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得元:{3}",
-                                "stock_price",
-                                code,
-                                yahooFinance.targetDate(),
-                                SourceOfStockPrice.YAHOO_FINANCE.getMemo()
-                        ),
-                        code
-                );
-            }
-        }
-    }
-
-    /**
      * 対象日付の株価を削除する
      *
      * @param targetDate 対象日付
@@ -395,38 +371,6 @@ public class StockSpecification {
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average
                     .divide(BigDecimal.valueOf(certainPeriodList.size()), SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP));
-        }
-    }
-
-    /**
-     * 株価情報がデータベースに存在するか
-     *
-     * @param code               企業コード
-     * @param targetDateAsString 対象日
-     * @return boolean
-     */
-    private boolean isEmptyStockPrice(final String code, final String targetDateAsString) {
-        try {
-            final LocalDate targetDate;
-            if (targetDateAsString.contains("/")) {
-                targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy/M/d"));
-            } else if (targetDateAsString.contains("月") && targetDateAsString.contains("日")) {
-                targetDate = LocalDate.parse(targetDateAsString, DateTimeFormatter.ofPattern("yyyy年M月d日"));
-            } else {
-                targetDate = LocalDate.parse(targetDateAsString);
-            }
-            return stockPriceDao.selectByCodeAndDate(code, targetDate).isEmpty();
-        } catch (final NullPointerException e) {
-            log.info(FundanalyzerLogClient.toSpecificationLogObject(
-                    MessageFormat.format(
-                            "{0} の株価取得スクレイピング処理にて日付を取得できなかったため、本日の日付に置き換えて後続処理を実行します。"
-                            , code
-                    ),
-                    companySpecification.findCompanyByCode(code).map(Company::edinetCode).orElse("null"),
-                    Category.STOCK,
-                    Process.REGISTER
-            ), e);
-            return false;
         }
     }
 

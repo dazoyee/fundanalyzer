@@ -2,6 +2,9 @@ package github.com.ioridazo.fundanalyzer.exception;
 
 public class FundanalyzerScrapingException extends RuntimeException {
 
+    public FundanalyzerScrapingException() {
+    }
+
     public FundanalyzerScrapingException(final String message) {
         super(message);
     }

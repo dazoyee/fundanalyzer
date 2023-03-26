@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerAlreadyExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -123,12 +125,6 @@ public class StockInteractor implements StockUseCase {
                     if (isNikkei) {
                         // 日経
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
-                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
-                                MessageFormat.format("日経 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
-                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
-                                Category.STOCK,
-                                Process.IMPORT
-                        ));
                     }
                 }
                 case KABUOJI3 -> {
@@ -138,13 +134,7 @@ public class StockInteractor implements StockUseCase {
                                 // 保存する株価を絞る
                                 .filter(kabuoji3 -> LocalDate.parse(kabuoji3.targetDate())
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(kabuoji3 -> stockSpecification.insertOfKabuoji3(inputData.getCode5(), kabuoji3));
-                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
-                                MessageFormat.format("kabuoji3 から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
-                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
-                                Category.STOCK,
-                                Process.IMPORT
-                        ));
+                                .forEach(kabuoji3 -> stockSpecification.insert(inputData.getCode5(), kabuoji3, place));
                     }
                 }
                 case MINKABU -> {
@@ -154,14 +144,8 @@ public class StockInteractor implements StockUseCase {
                                 // 保存する株価を絞る
                                 .filter(minkabu -> LocalDate.parse(minkabu.targetDate(), DateTimeFormatter.ofPattern("uuuu/MM/dd"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(minkabu -> stockSpecification.insertOfMinkabu(inputData.getCode5(), minkabu));
+                                .forEach(minkabu -> stockSpecification.insert(inputData.getCode5(), minkabu, place));
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
-                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
-                                MessageFormat.format("みんかぶ から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
-                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
-                                Category.STOCK,
-                                Process.IMPORT
-                        ));
                     }
                 }
                 case YAHOO_FINANCE -> {
@@ -171,30 +155,48 @@ public class StockInteractor implements StockUseCase {
                                 // 保存する株価を絞る
                                 .filter(yahooFinance -> LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(yahooFinance -> stockSpecification.insertOfYahooFinance(inputData.getCode5(), yahooFinance));
-                        log.trace(FundanalyzerLogClient.toInteractorLogObject(
-                                MessageFormat.format("Yahoo!ファイナンス から株価を取得しました。\t企業コード:{0}", inputData.getCode5()),
-                                companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
-                                Category.STOCK,
-                                Process.IMPORT
-                        ));
+                                .forEach(yahooFinance -> stockSpecification.insert(inputData.getCode5(), yahooFinance, place));
                     }
                 }
                 default -> throw new FundanalyzerRuntimeException();
             }
+
+            log.trace(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("{0} から株価を取得しました。\t企業コード:{1}", place.getMemo(), inputData.getCode5()),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
+                    Category.STOCK,
+                    Process.IMPORT
+            ));
+        } catch (final DateTimeParseException e) {
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "株価取得の対象日を認識できなかったため、スキップしました。\t取得先:{0}\t企業コード:{1}\t:対象日{2}",
+                            place.getMemo(), inputData.getCode5(), e.getParsedString()
+                    ),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
+                    Category.STOCK,
+                    Process.IMPORT
+            ), e);
+        } catch (final FundanalyzerAlreadyExistException e) {
+            log.debug(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("株価が既に存在しているのでスキップしました。\t取得先:{0}\t企業コード:{1}\t:対象日{2}",
+                            place.getMemo(), inputData.getCode5(), e.getTargetDate()),
+                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
+                    Category.STOCK,
+                    Process.IMPORT
+            ), e);
         } catch (final FundanalyzerCircuitBreakerRecordException | FundanalyzerRateLimiterException e) {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format("株価取得の通信に失敗しました。\t企業コード:{0}", inputData.getCode5()),
+                    MessageFormat.format("株価取得の通信に失敗しました。\t取得先:{0}\t企業コード:{1}",
+                            place.getMemo(), inputData.getCode5()),
                     companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.IMPORT
             ), e);
         } catch (final FundanalyzerScrapingException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "株価取得できなかったため、DBに登録できませんでした。\t企業コード:{0}",
-                            inputData.getCode5()
-                    ),
+                    MessageFormat.format("株価取得できなかったため、DBに登録できませんでした。\t取得先:{0}\t企業コード:{1}",
+                            place.getMemo(), inputData.getCode5()),
                     companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.IMPORT

@@ -10,10 +10,14 @@ import org.seasar.doma.jdbc.Result;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @ConfigAutowireable
 @Dao
 public interface StockPriceDao {
+
+    @Select
+    Optional<StockPriceEntity> selectByUniqueKey(String code, LocalDate targetDate, String sourceOf);
 
     @Select
     List<StockPriceEntity> selectByCodeAndDate(String code, LocalDate targetDate);
