@@ -236,9 +236,9 @@ class ValuationInteractorTest {
     private StockPriceEntity stockPriceEntity() {
         return new StockPriceEntity(
                 null,
-                null,
-                null,
-                null,
+                "code",
+                LocalDate.parse("2023-03-25"),
+                1000.0,
                 null,
                 null,
                 null,

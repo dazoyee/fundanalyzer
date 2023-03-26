@@ -17,7 +17,7 @@ public class StockPriceViewModel {
     public static StockPriceViewModel of(final StockPriceEntity entity) {
         return new StockPriceViewModel(
                 entity.getTargetDate(),
-                entity.getStockPrice().orElse(null),
+                entity.getStockPrice(),
                 entity.getOpeningPrice().orElse(null),
                 entity.getHighPrice().orElse(null),
                 entity.getLowPrice().orElse(null)

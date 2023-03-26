@@ -18,7 +18,7 @@ public final class Parser {
                 .map(v -> v.substring(v.lastIndexOf(("）")) + 1))
                 .map(String::trim)
                 .map(v -> v.replace(" ", ""))
-                .orElseThrow(() -> {
+                .orElseGet(() -> {
                     log.warn("値の変換に失敗したため、NULLで登録します。\tvalue:{}", value);
                     return null;
                 });
@@ -51,7 +51,7 @@ public final class Parser {
     }
 
     public static Optional<Double> parseDoubleNikkei(final String value) {
-        return Optional.of(value)
+        return Optional.ofNullable(value)
                 .map(v -> {
                     if (v.contains(")")) {
                         return v.substring(v.lastIndexOf((")")) + 1, v.length() - 1);

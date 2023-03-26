@@ -109,6 +109,7 @@ public class XbrlScraping {
         final List<List<String>> ignoreList = getScrapingList(targetFile, "jpcrp_cor:DetailedScheduleOfCostOfSalesTextBlock").stream()
                 // 年度項目は除外リストから除外
                 .filter(list -> !(list.stream().anyMatch(s -> s.contains("前")) && list.stream().anyMatch(s -> s.contains("当"))))
+                .filter(list -> list.stream().noneMatch(s -> s.contains("単位")))
                 .toList();
 
         final List<List<String>> scrapingList = ignoreList.isEmpty() ?
@@ -378,7 +379,7 @@ public class XbrlScraping {
 
     private boolean isTargetKey(final String td) {
         return (td.contains("事業") && td.contains("年度") && td.contains("末")
-                && td.contains("現在") && td.contains("発行"))
+                && td.contains("現")&& td.contains("在") && td.contains("発行"))
                 ||
                 (td.contains("当期") && td.contains("末")
                         && td.contains("現在") && td.contains("発行") && td.contains("数"))
