@@ -81,7 +81,7 @@ pipeline {
         stage('Clean') {
             steps {
                 script {
-                    timeout(time: 5, unit: "MINUTES") {
+                    timeout(time: 60, unit: "MINUTES") {
                         RELEASE_SCOPE = input message: 'rollback or complete ?', ok: 'Submit!', parameters: [
                                 choice(
                                         name: 'RELEASE_SCOPE',
