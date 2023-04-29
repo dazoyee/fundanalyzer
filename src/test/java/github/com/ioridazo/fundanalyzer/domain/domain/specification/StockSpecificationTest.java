@@ -91,6 +91,7 @@ class StockSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             var stockPrice2 = new StockPriceEntity(
@@ -98,6 +99,7 @@ class StockSpecificationTest {
                     null,
                     LocalDate.parse("2020-10-07"),
                     (double) 800,
+                    null,
                     null,
                     null,
                     null,
@@ -129,6 +131,7 @@ class StockSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             var latestStockPrice = new StockPriceEntity(
@@ -136,6 +139,7 @@ class StockSpecificationTest {
                     null,
                     LocalDate.parse("2020-10-09"),
                     (double) 1000,
+                    null,
                     null,
                     null,
                     null,
@@ -320,6 +324,7 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
+                            LocalDateTime.of(2021, 4, 29, 0, 0),
                             LocalDateTime.of(2021, 4, 29, 0, 0)
                     ),
                     new StockPriceEntity(
@@ -339,6 +344,7 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
+                            LocalDateTime.of(2022, 4, 29, 0, 0),
                             LocalDateTime.of(2022, 4, 29, 0, 0)
                     )));
             when(stockPriceDao.selectByCode("code2")).thenReturn(List.of(
@@ -359,6 +365,7 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
+                            LocalDateTime.of(2022, 4, 30, 0, 0),
                             LocalDateTime.of(2022, 4, 30, 0, 0)
                     )));
 
@@ -750,6 +757,7 @@ class StockSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             var stockPrice2 = new StockPriceEntity(
@@ -757,6 +765,7 @@ class StockSpecificationTest {
                     null,
                     LocalDate.parse("2020-10-07"),
                     (double) 800,
+                    null,
                     null,
                     null,
                     null,
@@ -788,6 +797,7 @@ class StockSpecificationTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             var latestStockPrice = new StockPriceEntity(
@@ -795,6 +805,7 @@ class StockSpecificationTest {
                     null,
                     LocalDate.parse("2020-10-09"),
                     (double) 1000,
+                    null,
                     null,
                     null,
                     null,
@@ -846,6 +857,7 @@ class StockSpecificationTest {
                 null,
                 null,
                 100.0,
+                null,
                 null,
                 null,
                 null,

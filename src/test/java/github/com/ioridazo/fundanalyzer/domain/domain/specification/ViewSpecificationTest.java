@@ -228,6 +228,7 @@ class ViewSpecificationTest {
                 "(4.01%)",
                 null,
                 null,
+                null,
                 null
         );
         var valuation = new ValuationEntity(
