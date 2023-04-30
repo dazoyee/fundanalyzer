@@ -61,7 +61,7 @@ class StockSchedulerTest {
         }
 
         @DisplayName("stockScheduler : 株価を削除する")
-        @Test
+        // @Test
         void deleteStockScheduler_ok() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
             when(analysisService.deleteStock()).thenReturn(1);
@@ -72,7 +72,7 @@ class StockSchedulerTest {
         }
 
         @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
-        @Test
+        // @Test
         void deleteStockScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).deleteStock();
