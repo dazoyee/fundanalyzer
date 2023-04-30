@@ -15,7 +15,6 @@ import github.com.ioridazo.fundanalyzer.domain.util.Parser;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerAlreadyExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
@@ -180,13 +179,13 @@ public class StockSpecification {
     }
 
     /**
-     * 日経から取得した株価情報を登録する
+     * 日経から取得した株価情報を登録・更新する
      *
      * @param code   企業コード
      * @param nikkei 日経から取得した株価情報
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
-    public void insert(final String code, final NikkeiResultBean nikkei) throws DateTimeParseException {
+    public void upsert(final String code, final NikkeiResultBean nikkei) throws DateTimeParseException {
         if (nikkei.targetDate() == null) {
             throw new FundanalyzerScrapingException("株価取得スクレイピング処理において対象日を取得できませんでした");
         }
@@ -205,19 +204,19 @@ public class StockSpecification {
         if (stockPriceDao.selectByUniqueKey(entity.getCompanyCode(), entity.getTargetDate(), SourceOfStockPrice.NIKKEI.toValue()).isEmpty()) {
             insert(entity, SourceOfStockPrice.NIKKEI);
         } else {
-            throw new FundanalyzerAlreadyExistException(entity.getCompanyCode(), entity.getTargetDate());
+            stockPriceDao.update(entity);
         }
     }
 
     /**
-     * 取得した株価情報を登録する
+     * 取得した株価情報を登録・更新する
      *
      * @param code       企業コード
      * @param resultBean 取得した株価情報
      * @param price      取得先
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
-    public void insert(
+    public void upsert(
             final String code,
             final StockPriceResultBean resultBean,
             final SourceOfStockPrice price) throws DateTimeParseException {
@@ -238,11 +237,15 @@ public class StockSpecification {
         if (stockPriceDao.selectByCodeAndDate(entity.getCompanyCode(), entity.getTargetDate()).isEmpty()) {
             insert(entity, price);
         } else {
-            throw new FundanalyzerAlreadyExistException(entity.getCompanyCode(), entity.getTargetDate());
+            stockPriceDao.update(entity);
         }
     }
 
-    private void insert(final StockPriceEntity entity, final SourceOfStockPrice price) {
+    void insert(final StockPriceEntity entity, final SourceOfStockPrice price) {
+        if (entity.getTargetDate().isAfter(nowLocalDate())) {
+            throw new FundanalyzerScrapingException("株価取得スクレイピング処理において対象日を正しく取得できませんでした");
+        }
+
         try {
             stockPriceDao.insert(entity);
         } catch (final NestedRuntimeException e) {
@@ -258,7 +261,7 @@ public class StockSpecification {
     }
 
     /**
-     * みんかぶから取得した予想株価を登録する
+     * みんかぶから取得した予想株価を登録・更新する
      *
      * @param code    企業コード
      * @param minkabu みんかぶから取得した予想株価
@@ -300,6 +303,10 @@ public class StockSpecification {
 
                 return;
             }
+        }
+
+        if (targetDate.isAfter(nowLocalDate())) {
+            throw new FundanalyzerScrapingException("株価取得スクレイピング処理において対象日を正しく取得できませんでした");
         }
 
         if (!isPresentMinkabu(code, targetDate)) {

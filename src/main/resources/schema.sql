@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS `stock_price`
     `shareholder_benefit`   VARCHAR(100)             DEFAULT NULL COMMENT '株式優待',
     `source_of`             CHAR(1)         NOT NULL COMMENT '取得元',
     `created_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '登録日',
+    `updated_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIME() COMMENT '更新日',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_sp` (`company_code`, `target_date`, `source_of`)
 );

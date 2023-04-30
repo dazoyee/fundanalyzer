@@ -10,7 +10,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerAlreadyExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -124,7 +123,7 @@ public class StockInteractor implements StockUseCase {
                 case NIKKEI -> {
                     if (isNikkei) {
                         // 日経
-                        stockSpecification.insert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
+                        stockSpecification.upsert(inputData.getCode5(), jsoupClient.nikkei(inputData.getCode5()));
                     }
                 }
                 case KABUOJI3 -> {
@@ -134,7 +133,7 @@ public class StockInteractor implements StockUseCase {
                                 // 保存する株価を絞る
                                 .filter(kabuoji3 -> LocalDate.parse(kabuoji3.targetDate())
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(kabuoji3 -> stockSpecification.insert(inputData.getCode5(), kabuoji3, place));
+                                .forEach(kabuoji3 -> stockSpecification.upsert(inputData.getCode5(), kabuoji3, place));
                     }
                 }
                 case MINKABU -> {
@@ -144,7 +143,7 @@ public class StockInteractor implements StockUseCase {
                                 // 保存する株価を絞る
                                 .filter(minkabu -> LocalDate.parse(minkabu.targetDate(), DateTimeFormatter.ofPattern("uuuu/MM/dd"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(minkabu -> stockSpecification.insert(inputData.getCode5(), minkabu, place));
+                                .forEach(minkabu -> stockSpecification.upsert(inputData.getCode5(), minkabu, place));
                         stockSpecification.insert(inputData.getCode5(), jsoupClient.minkabu(inputData.getCode5()));
                     }
                 }
@@ -155,7 +154,7 @@ public class StockInteractor implements StockUseCase {
                                 // 保存する株価を絞る
                                 .filter(yahooFinance -> LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日"))
                                         .isAfter(nowLocalDate().minusDays(daysToStoreStockPrice)))
-                                .forEach(yahooFinance -> stockSpecification.insert(inputData.getCode5(), yahooFinance, place));
+                                .forEach(yahooFinance -> stockSpecification.upsert(inputData.getCode5(), yahooFinance, place));
                     }
                 }
                 default -> throw new FundanalyzerRuntimeException();
@@ -173,14 +172,6 @@ public class StockInteractor implements StockUseCase {
                             "株価取得の対象日を認識できなかったため、スキップしました。\t取得先:{0}\t企業コード:{1}\t:対象日{2}",
                             place.getMemo(), inputData.getCode5(), e.getParsedString()
                     ),
-                    companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
-                    Category.STOCK,
-                    Process.IMPORT
-            ), e);
-        } catch (final FundanalyzerAlreadyExistException e) {
-            log.trace(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format("株価が既に存在しているのでスキップしました。\t取得先:{0}\t企業コード:{1}\t対象日:{2}",
-                            place.getMemo(), inputData.getCode5(), e.getTargetDate()),
                     companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
                     Category.STOCK,
                     Process.IMPORT
