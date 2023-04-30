@@ -384,6 +384,9 @@ public class XbrlScraping {
                 (td.contains("当期") && td.contains("末")
                         && td.contains("現在") && td.contains("発行") && td.contains("数"))
                 ||
+                (td.contains("連結会計年度") && td.contains("末")
+                        && td.contains("現在") && td.contains("発行") && td.contains("数"))
+                ||
                 (td.contains("四半期") && td.contains("末") && td.contains("発行") && td.contains("数"))
                 ||
                 (td.contains("四半期") && td.contains("末")

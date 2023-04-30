@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.util.Parser;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -60,32 +61,35 @@ public class StockPriceEntity {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
+    private final LocalDateTime updatedAt;
+
     /**
      * 日経のスクレイピング結果からデータベース登録するためにマッピングする
      *
-     * @param code      会社コード
-     * @param nikkei    日経スクレイピング結果
-     * @param createdAt 登録日
+     * @param code             会社コード
+     * @param nikkei           日経スクレイピング結果
+     * @param nowLocalDateTime 現在時刻
      * @return StockPrice
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofNikkeiResultBean(
-            final String code, final NikkeiResultBean nikkei, final LocalDateTime createdAt) throws DateTimeParseException {
+            final String code, final NikkeiResultBean nikkei, final LocalDateTime nowLocalDateTime) throws DateTimeParseException {
         return ofNikkeiResultBean(
                 code,
-                Parser.parseDoubleNikkei(nikkei.stockPrice()).orElse(null),
+                Parser.parseDoubleNikkei(nikkei.stockPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 nikkei,
-                createdAt
+                nowLocalDateTime
         );
     }
 
     /**
      * 日経のスクレイピング結果からデータベース登録するためにマッピングする
      *
-     * @param code       会社コード
-     * @param stockPrice 株価終値
-     * @param nikkei     日経スクレイピング結果
-     * @param createdAt  登録日
+     * @param code             会社コード
+     * @param stockPrice       株価終値
+     * @param nikkei           日経スクレイピング結果
+     * @param nowLocalDateTime 現在時刻
      * @return StockPrice
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
@@ -93,7 +97,7 @@ public class StockPriceEntity {
             final String code,
             final Double stockPrice,
             final NikkeiResultBean nikkei,
-            final LocalDateTime createdAt) throws DateTimeParseException {
+            final LocalDateTime nowLocalDateTime) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
@@ -111,28 +115,30 @@ public class StockPriceEntity {
                 Parser.parseStringNikkei(nikkei.dividendYield()),
                 Optional.ofNullable(nikkei.shareholderBenefit()).map(v -> v.replace("株主優待 ", "")).orElse(null),
                 SourceOfStockPrice.NIKKEI.toValue(),
-                createdAt
+                nowLocalDateTime,
+                nowLocalDateTime
         );
     }
 
     /**
      * kabuoji3のスクレイピング結果からデータベース登録するためにマッピングする
      *
-     * @param code      会社コード
-     * @param kabuoji3  kabuoji3のスクレイピング結果
-     * @param createdAt 登録日
+     * @param code             会社コード
+     * @param kabuoji3         kabuoji3のスクレイピング結果
+     * @param nowLocalDateTime 現在時刻
      * @return StockPrice
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofKabuoji3(
             final String code,
             final StockPriceResultBean kabuoji3,
-            final LocalDateTime createdAt) throws DateTimeParseException {
+            final LocalDateTime nowLocalDateTime) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
                 LocalDate.parse(kabuoji3.targetDate()),
-                Parser.parseDoubleKabuoji3(kabuoji3.closingPrice()).orElse(null),
+                Parser.parseDoubleKabuoji3(kabuoji3.closingPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 Parser.parseDoubleKabuoji3(kabuoji3.openingPrice()).orElse(null),
                 Parser.parseDoubleKabuoji3(kabuoji3.highPrice()).orElse(null),
                 Parser.parseDoubleKabuoji3(kabuoji3.lowPrice()).orElse(null),
@@ -145,28 +151,30 @@ public class StockPriceEntity {
                 null,
                 null,
                 SourceOfStockPrice.KABUOJI3.toValue(),
-                createdAt
+                nowLocalDateTime,
+                nowLocalDateTime
         );
     }
 
     /**
      * みんかぶのスクレイピング結果からデータベース登録するためにマッピングする
      *
-     * @param code      会社コード
-     * @param minkabu   minkabuのスクレイピング結果
-     * @param createdAt 登録日
+     * @param code             会社コード
+     * @param minkabu          minkabuのスクレイピング結果
+     * @param nowLocalDateTime 現在時刻
      * @return StockPrice
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofMinkabu(
             final String code,
             final StockPriceResultBean minkabu,
-            final LocalDateTime createdAt) throws DateTimeParseException {
+            final LocalDateTime nowLocalDateTime) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
                 LocalDate.parse(minkabu.targetDate(), DateTimeFormatter.ofPattern("uuuu/MM/dd")),
-                Parser.parseDoubleYahooFinance(minkabu.closingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(minkabu.closingPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 Parser.parseDoubleYahooFinance(minkabu.openingPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(minkabu.highPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(minkabu.lowPrice()).orElse(null),
@@ -179,28 +187,30 @@ public class StockPriceEntity {
                 null,
                 null,
                 SourceOfStockPrice.MINKABU.toValue(),
-                createdAt
+                nowLocalDateTime,
+                nowLocalDateTime
         );
     }
 
     /**
      * yahoo-financeのスクレイピング結果からデータベース登録するためにマッピングする
      *
-     * @param code         会社コード
-     * @param yahooFinance yahoo-financeのスクレイピング結果
-     * @param createdAt    登録日
+     * @param code             会社コード
+     * @param yahooFinance     yahoo-financeのスクレイピング結果
+     * @param nowLocalDateTime 現在時刻
      * @return StockPrice
      * @throws DateTimeParseException 対象日をパースできなかったとき
      */
     public static StockPriceEntity ofYahooFinanceResultBean(
             final String code,
             final StockPriceResultBean yahooFinance,
-            final LocalDateTime createdAt) throws DateTimeParseException {
+            final LocalDateTime nowLocalDateTime) throws DateTimeParseException {
         return new StockPriceEntity(
                 null,
                 code,
                 LocalDate.parse(yahooFinance.targetDate(), DateTimeFormatter.ofPattern("yyyy年M月d日")),
-                Parser.parseDoubleYahooFinance(yahooFinance.closingPrice()).orElse(null),
+                Parser.parseDoubleYahooFinance(yahooFinance.closingPrice())
+                        .orElseThrow(() -> new FundanalyzerScrapingException("株価取得スクレイピング処理において株価終値を取得できませんでした")),
                 Parser.parseDoubleYahooFinance(yahooFinance.openingPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(yahooFinance.highPrice()).orElse(null),
                 Parser.parseDoubleYahooFinance(yahooFinance.lowPrice()).orElse(null),
@@ -213,7 +223,8 @@ public class StockPriceEntity {
                 null,
                 null,
                 SourceOfStockPrice.YAHOO_FINANCE.toValue(),
-                createdAt
+                nowLocalDateTime,
+                nowLocalDateTime
         );
     }
 

@@ -68,7 +68,7 @@ public class StockScheduler {
 
             try {
                 insert();
-                delete();
+                // delete();
             } catch (Throwable t) {
                 // slack通知
                 slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "株価更新", t);

@@ -345,6 +345,7 @@ class ValuationSpecificationTest {
                     "4.01%",
                     null,
                     null,
+                    null,
                     null
             );
         }

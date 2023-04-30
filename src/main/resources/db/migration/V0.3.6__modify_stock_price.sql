@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS `stock_price` ADD COLUMN `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIME () COMMENT '更新日' AFTER `created_at`;
