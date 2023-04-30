@@ -1,8 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
-import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
@@ -184,12 +182,12 @@ class StockInteractorTest {
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
             switch (place) {
-                case NIKKEI -> verify(stockSpecification, times(1)).insert(eq("code0"), (NikkeiResultBean) any());
+                case NIKKEI -> verify(stockSpecification, times(1)).upsert(eq("code0"), any());
                 case KABUOJI3, YAHOO_FINANCE ->
-                        verify(stockSpecification, times(1)).insert(eq("code0"), any(), eq(place));
+                        verify(stockSpecification, times(1)).upsert(eq("code0"), any(), eq(place));
                 case MINKABU -> {
-                    verify(stockSpecification, times(1)).insert(eq("code0"), any(), eq(place));
-                    verify(stockSpecification, times(1)).insert(eq("code0"), (MinkabuResultBean) any());
+                    verify(stockSpecification, times(1)).upsert(eq("code0"), any(), eq(place));
+                    verify(stockSpecification, times(1)).insert(eq("code0"), any());
                 }
             }
         }
@@ -207,10 +205,10 @@ class StockInteractorTest {
 
             assertDoesNotThrow(() -> stockInteractor.importStockPrice(inputData, place));
             switch (place) {
-                case NIKKEI -> verify(stockSpecification, times(0)).insert(eq("code0"), (NikkeiResultBean) any());
+                case NIKKEI -> verify(stockSpecification, times(0)).upsert(eq("code0"), any());
                 case KABUOJI3, YAHOO_FINANCE ->
-                        verify(stockSpecification, times(0)).insert(eq("code0"), any(), eq(place));
-                case MINKABU -> verify(stockSpecification, times(0)).insert(eq("code0"), (MinkabuResultBean) any());
+                        verify(stockSpecification, times(0)).upsert(eq("code0"), any(), eq(place));
+                case MINKABU -> verify(stockSpecification, times(0)).insert(eq("code0"), any());
             }
         }
     }

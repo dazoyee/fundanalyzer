@@ -10,7 +10,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceO
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerAlreadyExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import org.junit.jupiter.api.BeforeEach;
@@ -400,7 +399,7 @@ class StockSpecificationTest {
     }
 
     @Nested
-    class insert_stock {
+    class upsert_stock {
 
         LocalDateTime nowLocalDateTime = LocalDateTime.of(2023, 3, 26, 11, 0);
 
@@ -409,9 +408,9 @@ class StockSpecificationTest {
             when(stockSpecification.nowLocalDateTime()).thenReturn(nowLocalDateTime);
         }
 
-        @DisplayName("insert : 日経から取得した株価情報を登録する")
+        @DisplayName("upsert : 日経から取得した株価情報を登録する")
         @Test
-        void nikkei_ok() {
+        void nikkei_insert() {
             var code = "code";
             var nikkei = new NikkeiResultBean(
                     "100.0",
@@ -429,11 +428,11 @@ class StockSpecificationTest {
                     null
             );
 
-            assertDoesNotThrow(() -> stockSpecification.insert(code, nikkei));
+            assertDoesNotThrow(() -> stockSpecification.upsert(code, nikkei));
             verify(stockPriceDao, times(1)).insert(any());
         }
 
-        @DisplayName("insert : 日経から取得した株価情報に対象日がないときはエラーにする")
+        @DisplayName("upsert : 日経から取得した株価情報に対象日がないときはエラーにする")
         @Test
         void nikkei_targetDate_isNull() {
             var code = "code";
@@ -453,10 +452,10 @@ class StockSpecificationTest {
                     null
             );
 
-            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, nikkei));
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.upsert(code, nikkei));
         }
 
-        @DisplayName("insert : 日経から取得した株価情報に株価終値が存在しないときはDBから取得する")
+        @DisplayName("upsert : 日経から取得した株価情報に株価終値が存在しないときはDBから取得する")
         @Test
         void nikkei_stockPrice_isNull() {
             var code = "code";
@@ -477,11 +476,11 @@ class StockSpecificationTest {
             );
 
             when(stockPriceDao.selectByCodeAndDate(code, LocalDate.parse("2023-03-26"))).thenReturn(List.of(stockPriceEntity()));
-            assertDoesNotThrow(() -> stockSpecification.insert(code, nikkei));
+            assertDoesNotThrow(() -> stockSpecification.upsert(code, nikkei));
             verify(stockPriceDao, times(1)).insert(any());
         }
 
-        @DisplayName("insert : 日経から取得した株価情報に株価終値が存在しないかつDBにも存在しないときはエラーにする")
+        @DisplayName("upsert : 日経から取得した株価情報に株価終値が存在しないかつDBにも存在しないときはエラーにする")
         @Test
         void nikkei_stockPrice_isNull2() {
             var code = "code";
@@ -501,12 +500,12 @@ class StockSpecificationTest {
                     null
             );
 
-            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, nikkei));
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.upsert(code, nikkei));
         }
 
-        @DisplayName("insert : 日経から取得した株価情報がすでに存在するときはエラーにする")
+        @DisplayName("upsert : 日経から取得した株価情報がすでに存在するときはエラーにする")
         @Test
-        void nikkei_isPresent() {
+        void nikkei_update() {
             var code = "code";
             var nikkei = new NikkeiResultBean(
                     "100.0",
@@ -525,13 +524,14 @@ class StockSpecificationTest {
             );
 
             when(stockPriceDao.selectByUniqueKey(code, LocalDate.parse("2023-03-26"), "1")).thenReturn(Optional.of(stockPriceEntity()));
-            assertThrows(FundanalyzerAlreadyExistException.class, () -> stockSpecification.insert(code, nikkei));
+            assertDoesNotThrow(() -> stockSpecification.upsert(code, nikkei));
+            verify(stockPriceDao, times(1)).update(any());
         }
 
-        @DisplayName("insert : 取得した株価情報を登録する")
+        @DisplayName("upsert : 取得した株価情報を登録する")
         @ParameterizedTest
         @EnumSource(SourceOfStockPrice.class)
-        void insert(SourceOfStockPrice place) {
+        void upsert(SourceOfStockPrice place) {
             var code = "code";
             var targetDate = switch (place) {
                 case KABUOJI3 -> "2023-03-26";
@@ -551,18 +551,18 @@ class StockSpecificationTest {
 
             switch (place) {
                 case NIKKEI ->
-                        assertThrows(FundanalyzerRuntimeException.class, () -> stockSpecification.insert(code, resultBean, place));
+                        assertThrows(FundanalyzerRuntimeException.class, () -> stockSpecification.upsert(code, resultBean, place));
                 case KABUOJI3, MINKABU, YAHOO_FINANCE -> {
-                    assertDoesNotThrow(() -> stockSpecification.insert(code, resultBean, place));
+                    assertDoesNotThrow(() -> stockSpecification.upsert(code, resultBean, place));
                     verify(stockPriceDao, times(1)).insert(any());
                 }
             }
         }
 
-        @DisplayName("insert : 取得した株価情報に対象日がないときはエラーにする")
+        @DisplayName("upsert : 取得した株価情報に対象日がないときはエラーにする")
         @ParameterizedTest
         @EnumSource(SourceOfStockPrice.class)
-        void insert_targetDate_isNull(SourceOfStockPrice place) {
+        void upsert_targetDate_isNull(SourceOfStockPrice place) {
             var code = "code";
             var resultBean = new StockPriceResultBean(
                     null,
@@ -574,13 +574,13 @@ class StockSpecificationTest {
                     null
             );
 
-            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, resultBean, place));
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.upsert(code, resultBean, place));
         }
 
-        @DisplayName("insert : 取得した株価情報に株価終値がないときはエラーにする")
+        @DisplayName("upsert : 取得した株価情報に株価終値がないときはエラーにする")
         @ParameterizedTest
         @EnumSource(SourceOfStockPrice.class)
-        void insert_stockPrice_isNull(SourceOfStockPrice place) {
+        void upsert_stockPrice_isNull(SourceOfStockPrice place) {
             var code = "code";
             var resultBean = new StockPriceResultBean(
                     "targetDate",
@@ -592,13 +592,13 @@ class StockSpecificationTest {
                     null
             );
 
-            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(code, resultBean, place));
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.upsert(code, resultBean, place));
         }
 
-        @DisplayName("insert : 取得した株価情報に株価終値がないときはエラーにする")
+        @DisplayName("upsert : 取得した株価情報に株価終値がないときはエラーにする")
         @ParameterizedTest
         @EnumSource(SourceOfStockPrice.class)
-        void insert_isPresent(SourceOfStockPrice place) {
+        void upsert_update(SourceOfStockPrice place) {
             var code = "code";
             var targetDate = switch (place) {
                 case KABUOJI3 -> "2023-03-26";
@@ -619,10 +619,40 @@ class StockSpecificationTest {
             when(stockPriceDao.selectByCodeAndDate(code, LocalDate.parse("2023-03-26"))).thenReturn(List.of(stockPriceEntity()));
             switch (place) {
                 case NIKKEI ->
-                        assertThrows(FundanalyzerRuntimeException.class, () -> stockSpecification.insert(code, resultBean, place));
-                case KABUOJI3, MINKABU, YAHOO_FINANCE ->
-                        assertThrows(FundanalyzerAlreadyExistException.class, () -> stockSpecification.insert(code, resultBean, place));
+                        assertThrows(FundanalyzerRuntimeException.class, () -> stockSpecification.upsert(code, resultBean, place));
+                case KABUOJI3, MINKABU, YAHOO_FINANCE -> {
+                    assertDoesNotThrow(() -> stockSpecification.upsert(code, resultBean, place));
+                    verify(stockPriceDao, times(1)).update(any());
+                }
             }
+        }
+
+        @DisplayName("insert : 現在日以降の株価はエラーとする")
+        @Test
+        void insert_targetDate_error() {
+            var stockPriceEntity = new StockPriceEntity(
+                    null,
+                    null,
+                    LocalDate.parse("2023-04-30"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            when(stockSpecification.nowLocalDate()).thenReturn(LocalDate.parse("2023-04-29"));
+            assertThrows(FundanalyzerScrapingException.class, () -> stockSpecification.insert(stockPriceEntity, SourceOfStockPrice.NIKKEI));
         }
     }
 
