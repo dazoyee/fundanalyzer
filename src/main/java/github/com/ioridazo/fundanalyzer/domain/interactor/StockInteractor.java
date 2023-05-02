@@ -177,7 +177,7 @@ public class StockInteractor implements StockUseCase {
                     Process.IMPORT
             ), e);
         } catch (final FundanalyzerCircuitBreakerRecordException | FundanalyzerRateLimiterException e) {
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("株価取得の通信に失敗しました。\t取得先:{0}\t企業コード:{1}",
                             place.getMemo(), inputData.getCode5()),
                     companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
@@ -185,7 +185,7 @@ public class StockInteractor implements StockUseCase {
                     Process.IMPORT
             ), e);
         } catch (final FundanalyzerScrapingException e) {
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format("株価取得できなかったため、DBに登録できませんでした。\t取得先:{0}\t企業コード:{1}",
                             place.getMemo(), inputData.getCode5()),
                     companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),

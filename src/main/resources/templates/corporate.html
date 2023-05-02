@@ -229,30 +229,6 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-1 col-md-3 col-sm-12">
-                  <div class="info-box bg-light">
-                    <div class="info-box-content info-box-icon">
-                      <form method="post" th:action="@{/v2/favorite/company}">
-                        <input type="hidden" th:value="${corporate.code}" name="code">
-                        <button type="submit" class="btn">
-                          <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
-                          <i th:if="${corporate.isFavorite}" class="fas fa-heart fa-2x" style="color:red;"></i>
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-1 col-md-3 col-sm-12">
-                  <div class="info-box bg-light">
-                    <div class="info-box-content">
-                      <a class="info-box-text text-center text-muted"
-                         th:href="'https://minkabu.jp/stock/'+${corporateView.code}"
-                         target="_blank">
-                        みんかぶ
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </div>
               <div class="row">
                 <div class="col-lg-2 col-md-6 col-sm-12">
@@ -301,6 +277,19 @@
                     </div>
                   </div>
                 </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content info-box-icon">
+                      <form method="post" th:action="@{/v2/favorite/company}">
+                        <input type="hidden" th:value="${corporate.code}" name="code">
+                        <button type="submit" class="btn">
+                          <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
+                          <i th:if="${corporate.isFavorite}" class="fas fa-heart fa-2x" style="color:red;"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="row">
                 <div class="col-lg-2 col-md-6 col-sm-12">
@@ -334,6 +323,39 @@
                       <p class="info-box-text text-center text-muted" th:text="${corporate.dividendYield}">
                         予想配当利回り
                       </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content">
+                      <a class="info-box-text text-center text-muted"
+                         th:href="'https://www.nikkei.com/nkd/company/?scode='+${corporateView.code}"
+                         target="_blank">
+                        日経
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content">
+                      <a class="info-box-text text-center text-muted"
+                         th:href="'https://minkabu.jp/stock/'+${corporateView.code}"
+                         target="_blank">
+                        みんかぶ
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content">
+                      <a class="info-box-text text-center text-muted"
+                         th:href="'https://finance.yahoo.co.jp/quote/'+${corporateView.code}"
+                         target="_blank">
+                        ヤフー
+                      </a>
                     </div>
                   </div>
                 </div>

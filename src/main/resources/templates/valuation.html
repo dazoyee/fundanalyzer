@@ -221,60 +221,183 @@
         <th:block th:unless="${target} == 'industry'">
           <div class="row">
             <div class="col-12">
-              <div class="card">
+              <div class="card card-success card-tabs">
+                <div class="card-header p-0 pt-1">
+                  <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
+                    <li class="nav-item">
+                      <a class="nav-link active" id="stock-tab" data-toggle="pill" href="#stock" role="tab"
+                         aria-controls="stock" aria-selected="true">
+                        株価
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="submit-tab" data-toggle="pill" href="#submit" role="tab"
+                         aria-controls="submit" aria-selected="false">
+                        提出日情報
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="graham-index-tab" data-toggle="pill" href="#graham-index"
+                         role="tab" aria-controls="graham-index" aria-selected="false">
+                        グレアム指数
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" id="dividend-yield-tab" data-toggle="pill" href="#dividend-yield"
+                         role="tab" aria-controls="dividend-yield" aria-selected="false">
+                        配当利回り
+                      </a>
+                    </li>
+                  </ul>
+                </div>
                 <div class="card-body">
-                  <table id="companyTable" class="table table-bordered table-hover">
-                    <thead>
-                    <tr>
-                      <th>コード</th>
-                      <th>会社名</th>
-                      <th>日付</th>
-                      <th>株価</th>
-                      <th>グレアム指数</th>
-                      <th>増減値</th>
-                      <th>増減率</th>
-                      <th>提出日</th>
-                      <th>提出日の株価平均</th>
-                      <th>提出日のグレアム指数</th>
-                      <th>最新企業価値</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="company : ${valuations}">
-                      <td th:text="${company.code}">コード</td>
-                      <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
-                        会社名
-                      </a></td>
-                      <td th:text="${company.targetDate}">対象日付</td>
-                      <td th:text="${company.stockPrice}">株価終値</td>
-                      <td th:text="${company.grahamIndex}">株価終値</td>
-                      <td>
-                        <div th:if="${company.differenceFromSubmitDate} > 0">
-                          <span class="text-primary" th:text="'+'+${company.differenceFromSubmitDate}">提出日との差</span>
-                          <i class="text-primary fa-solid fa-arrow-up"></i>
+                  <div class="tab-content" id="custom-tabs-one-tabContent">
+
+                    <div class="tab-pane fade show active" id="stock" role="tabpanel" aria-labelledby="stock-tab">
+                      <div class="row mb-3">
+                        <div class="col-12">
+                          <table id="stock-table" class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                              <th>コード</th>
+                              <th>会社名</th>
+                              <th>日付</th>
+                              <th>株価</th>
+                              <th>増減値</th>
+                              <th>増減率</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="company : ${valuations}">
+                              <td th:text="${company.code}">コード</td>
+                              <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
+                                会社名
+                              </a></td>
+                              <td th:text="${company.targetDate}">対象日付</td>
+                              <td th:text="${company.stockPrice}">株価終値</td>
+                              <td>
+                                <div th:if="${company.differenceFromSubmitDate} > 0">
+                                  <span class="text-primary"
+                                        th:text="'+'+${company.differenceFromSubmitDate}">提出日との差</span>
+                                  <i class="text-primary fa-solid fa-arrow-up"></i>
+                                </div>
+                                <div th:if="${company.differenceFromSubmitDate} == 0">
+                                  <span class="text-dark"
+                                        th:text="${company.differenceFromSubmitDate}">提出日との差</span>
+                                  <i class="text-dark fa-solid fa-arrows"></i>
+                                </div>
+                                <div th:if="${company.differenceFromSubmitDate} < 0">
+                                  <span class="text-danger"
+                                        th:text="${company.differenceFromSubmitDate}">提出日との差</span>
+                                  <i class="text-danger fa-solid fa-arrow-down"></i>
+                                </div>
+                              </td>
+                              <td th:text="${company.submitDateRatio}">提出日比率</td>
+                            </tr>
+                            </tbody>
+                          </table>
                         </div>
-                        <div th:if="${company.differenceFromSubmitDate} == 0">
-                          <span class="text-dark" th:text="${company.differenceFromSubmitDate}">提出日との差</span>
-                          <i class="text-dark fa-solid fa-arrows"></i>
+                      </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="submit" role="tabpanel" aria-labelledby="submit-tab">
+                      <div class="row mb-3">
+                        <div class="col-12">
+                          <table id="submit-table" class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                              <th>コード</th>
+                              <th>会社名</th>
+                              <th>提出日</th>
+                              <th>株価平均</th>
+                              <th>グレアム指数</th>
+                              <th>最新企業価値</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="company : ${valuations}">
+                              <td th:text="${company.code}">コード</td>
+                              <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
+                                会社名
+                              </a></td>
+                              <td th:text="${company.submitDate}">提出日</td>
+                              <td th:text="${company.stockPriceOfSubmitDate}">提出日の株価</td>
+                              <td th:text="${company.grahamIndexOfSubmitDate}">提出日のグレアム指数</td>
+                              <td th:text="${company.corporateValue}">最新企業価値</td>
+                            </tr>
+                            </tbody>
+                          </table>
                         </div>
-                        <div th:if="${company.differenceFromSubmitDate} < 0">
-                          <span class="text-danger" th:text="${company.differenceFromSubmitDate}">提出日との差</span>
-                          <i class="text-danger fa-solid fa-arrow-down"></i>
+                      </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="graham-index" role="tabpanel" aria-labelledby="graham-index-tab">
+                      <div class="row mb-3">
+                        <div class="col-12">
+                          <table id="graham-index-table" class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                              <th>コード</th>
+                              <th>会社名</th>
+                              <th>日付</th>
+                              <th>グレアム指数</th>
+                              <th>提出日</th>
+                              <th>提出日のグレアム指数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="company : ${valuations}">
+                              <td th:text="${company.code}">コード</td>
+                              <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
+                                会社名
+                              </a></td>
+                              <td th:text="${company.targetDate}">対象日付</td>
+                              <td th:text="${company.grahamIndex}">グレアム指数</td>
+                              <td th:text="${company.submitDate}">提出日</td>
+                              <td th:text="${company.grahamIndexOfSubmitDate}">提出日のグレアム指数</td>
+                            </tr>
+                            </tbody>
+                          </table>
                         </div>
-                      </td>
-                      <td th:text="${company.submitDateRatio}">提出日比率</td>
-                      <td th:text="${company.submitDate}">提出日</td>
-                      <td th:text="${company.stockPriceOfSubmitDate}">提出日の株価</td>
-                      <td th:text="${company.grahamIndexOfSubmitDate}">提出日のグレアム指数</td>
-                      <td th:text="${company.corporateValue}">最新企業価値</td>
-                    </tr>
-                    </tbody>
-                  </table>
+                      </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="dividend-yield" role="tabpanel" aria-labelledby="dividend-yield-tab">
+                      <div class="row">
+                        <div class="col-12">
+                          <table id="dividend-yield-table" class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                              <th>コード</th>
+                              <th>会社名</th>
+                              <th>日付</th>
+                              <th>株価</th>
+                              <th>配当利回り</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="company : ${valuations}">
+                              <td th:text="${company.code}">コード</td>
+                              <td><a th:text="${company.name}" th:href="@{/v2/corporate(code=${company.code})}">
+                                会社名
+                              </a></td>
+                              <td th:text="${company.targetDate}">対象日付</td>
+                              <td th:text="${company.stockPrice}">株価終値</td>
+                              <td th:text="${company.dividendYield}">配当利回り</td>
+                            </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </th:block>
+
         <th:block th:if="${target} == 'industry'">
           <div class="row">
             <div class="col-12">
@@ -352,7 +475,7 @@
           //Date range picker
           $('#calender').daterangepicker()
 
-          $("#companyTable").DataTable({
+          $("#stock-table").DataTable({
               // @formatter:off
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
@@ -360,12 +483,69 @@
             "lengthChange": true,
             "displayLength": 15,
             "lengthMenu": [ 10, 15, 25, 50, 100 ],
-            "searching": true,
+            "searching": false,
             "ordering": true,
-            "order": [ [ 2, 'desc' ], [ 5, 'desc' ] ],
-            "info": true,
+            "order": [ [ 2, 'desc' ], [ 4, 'desc' ] ],
+            "info": false,
             "autoWidth": true,
             "responsive": true,
+            "stateSave": true,
+            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            // @formatter:on
+          });
+
+          $("#submit-table").DataTable({
+              // @formatter:off
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
+            },
+            "lengthChange": true,
+            "displayLength": 15,
+            "lengthMenu": [ 10, 15, 25, 50, 100 ],
+            "searching": false,
+            "ordering": true,
+            "order": [ [ 2, 'desc' ], [ 0, 'asc' ] ],
+            "info": false,
+            "autoWidth": true,
+            // "responsive": true,
+            "stateSave": true,
+            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            // @formatter:on
+          });
+
+          $("#graham-index-table").DataTable({
+              // @formatter:off
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
+            },
+            "lengthChange": true,
+            "displayLength": 15,
+            "lengthMenu": [ 10, 15, 25, 50, 100 ],
+            "searching": false,
+            "ordering": true,
+            "order": [ [ 2, 'desc' ], [ 3, 'asc' ] ],
+            "info": false,
+            "autoWidth": true,
+            // "responsive": true,
+            "stateSave": true,
+            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            // @formatter:on
+          });
+
+          $("#dividend-yield-table").DataTable({
+              // @formatter:off
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Japanese.json"
+            },
+            "lengthChange": true,
+            "displayLength": 15,
+            "lengthMenu": [ 10, 15, 25, 50, 100 ],
+            "searching": false,
+            "ordering": true,
+            "order": [ [ 2, 'desc' ], [ 4, 'desc' ] ],
+            "info": false,
+            "autoWidth": true,
+            // "responsive": true,
             "stateSave": true,
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
             // @formatter:on
