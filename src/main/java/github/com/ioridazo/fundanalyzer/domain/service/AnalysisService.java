@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
@@ -10,17 +13,24 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Result;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AnalysisService {
+
+    private static final Logger log = LogManager.getLogger(AnalysisService.class);
 
     private final CompanyUseCase companyUseCase;
     private final DocumentUseCase documentUseCase;
@@ -200,10 +210,22 @@ public class AnalysisService {
         // is lived?
         if (companyUseCase.isLived(inputData)) {
             // stock
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.KABUOJI3);
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.MINKABU);
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.YAHOO_FINANCE);
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
+            List.of(
+                    SourceOfStockPrice.KABUOJI3,
+                    SourceOfStockPrice.MINKABU,
+                    SourceOfStockPrice.YAHOO_FINANCE,
+                    SourceOfStockPrice.NIKKEI
+            ).forEach(sourceOfStockPrice -> {
+                try {
+                    stockUseCase.importStockPrice(inputData, sourceOfStockPrice);
+                } catch (final FundanalyzerShortCircuitException e) {
+                    log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                            e.getMessage(),
+                            Category.STOCK,
+                            Process.IMPORT
+                    ));
+                }
+            });
         } else {
             // remove company
             companyUseCase.updateRemovedCompany(inputData);
