@@ -14,7 +14,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewMode
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +47,7 @@ public class ViewService {
      *
      * @return 企業一覧
      */
-    @NewSpan
+    @Observed
     public List<CorporateViewModel> getCorporateView() {
         return viewCorporateUseCase.viewMain();
     }
@@ -57,7 +57,7 @@ public class ViewService {
      *
      * @return 企業一覧
      */
-    @NewSpan
+    @Observed
     public List<CorporateViewModel> getQuartCorporateView() {
         return viewCorporateUseCase.viewQuart();
     }
@@ -67,7 +67,7 @@ public class ViewService {
      *
      * @return 企業一覧
      */
-    @NewSpan
+    @Observed
     public List<CorporateViewModel> getAllCorporateView() {
         return viewCorporateUseCase.viewAll();
     }
@@ -77,7 +77,7 @@ public class ViewService {
      *
      * @return 企業一覧
      */
-    @NewSpan
+    @Observed
     public List<CorporateViewModel> getFavoriteCorporateView() {
         return viewCorporateUseCase.viewFavorite();
     }
@@ -87,7 +87,7 @@ public class ViewService {
      *
      * @return 書類状況リスト
      */
-    @NewSpan
+    @Observed
     public List<EdinetListViewModel> getEdinetListView() {
         return viewEdinetUseCase.viewMain();
     }
@@ -97,7 +97,7 @@ public class ViewService {
      *
      * @return 書類状況リスト
      */
-    @NewSpan
+    @Observed
     public List<EdinetListViewModel> getAllEdinetListView() {
         return viewEdinetUseCase.viewAll();
     }
@@ -107,7 +107,7 @@ public class ViewService {
      *
      * @return 更新日時
      */
-    @NewSpan
+    @Observed
     public String getUpdateDate() {
         return companyUseCase.getUpdateDate();
     }
@@ -118,7 +118,7 @@ public class ViewService {
      * @param inputData 企業コード
      * @return 企業詳細
      */
-    @NewSpan
+    @Observed
     public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData) {
         return viewCorporateUseCase.viewCorporateDetail(inputData);
     }
@@ -130,7 +130,7 @@ public class ViewService {
      * @param target    表示種別
      * @return 企業詳細
      */
-    @NewSpan
+    @Observed
     public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData, final Target target) {
         return viewCorporateUseCase.viewCorporateDetail(inputData, target);
     }
@@ -141,7 +141,7 @@ public class ViewService {
      * @param inputData 提出日
      * @return 処理詳細情報
      */
-    @NewSpan
+    @Observed
     public EdinetDetailViewModel getEdinetDetailView(final DateInputData inputData) {
         return viewEdinetUseCase.viewEdinetDetail(inputData);
     }
@@ -149,7 +149,7 @@ public class ViewService {
     /**
      * 表示アップデート
      */
-    @NewSpan
+    @Observed
     @Async
     public void updateCorporateView() {
         // view corporate
@@ -159,7 +159,7 @@ public class ViewService {
     /**
      * 処理状況アップデート
      */
-    @NewSpan
+    @Observed
     @Async
     public void updateEdinetView() {
         // view edinet
@@ -171,7 +171,7 @@ public class ViewService {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     public void updateEdinetListView(final DateInputData inputData) {
         // remove
         documentUseCase.removeDocument(inputData);
@@ -182,7 +182,7 @@ public class ViewService {
     /**
      * 企業評価アップデート
      */
-    @NewSpan
+    @Observed
     @Async
     public void updateValuationView() {
         // view edinet
@@ -194,7 +194,7 @@ public class ViewService {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     @Async
     public void updateValuationView(final CodeInputData inputData) {
         // view valuation
@@ -206,7 +206,7 @@ public class ViewService {
      *
      * @return 株価評価
      */
-    @NewSpan
+    @Observed
     public List<CompanyValuationViewModel> getValuationView() {
         return viewValuationUseCase.viewValuation();
     }
@@ -216,7 +216,7 @@ public class ViewService {
      *
      * @return 株価評価
      */
-    @NewSpan
+    @Observed
     public List<CompanyValuationViewModel> getValuationView(final CodeInputData inputData) {
         return viewValuationUseCase.viewValuation(inputData);
     }
@@ -226,7 +226,7 @@ public class ViewService {
      *
      * @return 株価評価
      */
-    @NewSpan
+    @Observed
     public List<CompanyValuationViewModel> getAllValuationView() {
         return viewValuationUseCase.viewAllValuation();
     }
@@ -236,7 +236,7 @@ public class ViewService {
      *
      * @return 株価評価
      */
-    @NewSpan
+    @Observed
     public List<CompanyValuationViewModel> getFavoriteValuationView() {
         return viewValuationUseCase.viewFavoriteValuation();
     }
@@ -246,7 +246,7 @@ public class ViewService {
      *
      * @return 株価評価
      */
-    @NewSpan
+    @Observed
     public List<IndustryValuationViewModel> getIndustryValuationView() {
         return viewValuationUseCase.viewIndustryValuation();
     }

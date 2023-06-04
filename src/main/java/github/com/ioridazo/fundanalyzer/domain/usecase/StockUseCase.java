@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface StockUseCase {
 
@@ -13,7 +13,7 @@ public interface StockUseCase {
      * @param inputData 提出日
      * @param place     通信先
      */
-    @NewSpan
+    @Observed
     void importStockPrice(DateInputData inputData, SourceOfStockPrice place);
 
     /**
@@ -22,7 +22,7 @@ public interface StockUseCase {
      * @param inputData 企業コード
      * @param place     通信先
      */
-    @NewSpan
+    @Observed
     void importStockPrice(CodeInputData inputData, SourceOfStockPrice place);
 
     /**
@@ -30,6 +30,6 @@ public interface StockUseCase {
      *
      * @return 削除カウント
      */
-    @NewSpan
+    @Observed
     int deleteStockPrice();
 }

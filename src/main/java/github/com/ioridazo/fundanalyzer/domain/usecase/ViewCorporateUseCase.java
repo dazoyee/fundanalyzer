@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public interface ViewCorporateUseCase {
      *
      * @return 企業情報ビュー
      */
-    @NewSpan
+    @Observed
     List<CorporateViewModel> viewMain();
 
     /**
@@ -24,7 +24,7 @@ public interface ViewCorporateUseCase {
      *
      * @return 企業情報ビュー
      */
-    @NewSpan
+    @Observed
     List<CorporateViewModel> viewQuart();
 
     /**
@@ -32,7 +32,7 @@ public interface ViewCorporateUseCase {
      *
      * @return 企業情報ビュー
      */
-    @NewSpan
+    @Observed
     List<CorporateViewModel> viewAll();
 
     /**
@@ -40,7 +40,7 @@ public interface ViewCorporateUseCase {
      *
      * @return 企業情報ビュー
      */
-    @NewSpan
+    @Observed
     List<CorporateViewModel> viewFavorite();
 
     /**
@@ -49,7 +49,7 @@ public interface ViewCorporateUseCase {
      * @param inputData 企業コード
      * @return 企業情報詳細ビュー
      */
-    @NewSpan
+    @Observed
     CorporateDetailViewModel viewCorporateDetail(CodeInputData inputData);
 
     /**
@@ -59,13 +59,13 @@ public interface ViewCorporateUseCase {
      * @param target    表示種別
      * @return 企業情報詳細ビュー
      */
-    @NewSpan
+    @Observed
     CorporateDetailViewModel viewCorporateDetail(CodeInputData inputData, Target target);
 
     /**
      * ビュー更新
      */
-    @NewSpan
+    @Observed
     void updateView();
 
     /**
@@ -73,6 +73,6 @@ public interface ViewCorporateUseCase {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     void updateView(DateInputData inputData);
 }

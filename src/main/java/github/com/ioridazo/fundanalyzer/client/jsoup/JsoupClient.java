@@ -247,7 +247,7 @@ public class JsoupClient {
                                                 throw new FundanalyzerCircuitBreakerRecordException(MessageFormat.format(
                                                         "{0}から200以外のHTTPステータスコードが返却されました。\tHTTPステータスコード:{1}\t企業コード:{2}\tURL:{3}",
                                                         targetName,
-                                                        e.getRawStatusCode(),
+                                                        e.getStatusText(),
                                                         code,
                                                         url
                                                 ), e);

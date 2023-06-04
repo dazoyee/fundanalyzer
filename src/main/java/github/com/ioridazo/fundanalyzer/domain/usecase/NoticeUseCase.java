@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface NoticeUseCase {
 
@@ -10,6 +10,6 @@ public interface NoticeUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void noticeSlack(DateInputData inputData);
 }
