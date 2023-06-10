@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public interface ViewEdinetUseCase {
      *
      * @return EDINETリストビュー
      */
-    @NewSpan
+    @Observed
     List<EdinetListViewModel> viewMain();
 
     /**
@@ -22,7 +22,7 @@ public interface ViewEdinetUseCase {
      *
      * @return EDINETリストビュー
      */
-    @NewSpan
+    @Observed
     List<EdinetListViewModel> viewAll();
 
     /**
@@ -31,13 +31,13 @@ public interface ViewEdinetUseCase {
      * @param inputData 提出日
      * @return EDINETリスト詳細ビュー
      */
-    @NewSpan
+    @Observed
     EdinetDetailViewModel viewEdinetDetail(DateInputData inputData);
 
     /**
      * ビュー更新
      */
-    @NewSpan
+    @Observed
     void updateView();
 
     /**
@@ -45,6 +45,6 @@ public interface ViewEdinetUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void updateView(DateInputData inputData);
 }

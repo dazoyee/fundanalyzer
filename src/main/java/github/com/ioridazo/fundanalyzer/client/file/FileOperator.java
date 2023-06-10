@@ -3,10 +3,10 @@ package github.com.ioridazo.fundanalyzer.client.file;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import io.micrometer.observation.annotation.Observed;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -21,7 +21,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -40,7 +40,15 @@ public class FileOperator {
     FileOperator() {
     }
 
-    @NewSpan
+    /**
+     * ZIPファイルをデコードする
+     *
+     * @param fileInputPath  入力ファイルパス
+     * @param fileOutputPath 出力ファイルパス
+     * @throws IOException IOException
+     */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Observed
     public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
         log.info(FundanalyzerLogClient.toClientLogObject(
                 MessageFormat.format("zipファイルの解凍処理を実行します。\tパス:{0}", fileInputPath.getPath()),
@@ -50,35 +58,32 @@ public class FileOperator {
 
         byte[] buffer = new byte[1024];
 
-        FileInputStream fis = new FileInputStream(fileInputPath + ".zip");
-        BufferedInputStream bis = new BufferedInputStream(fis);
-        ZipInputStream zis = new ZipInputStream(bis, Charset.forName("MS932"));
+        try (ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(new FileInputStream(fileInputPath)), Charset.forName("MS932"))) {
 
-        if (!fileOutputPath.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            fileOutputPath.mkdir();
-        }
-
-        ZipEntry zipEntry = zis.getNextEntry();
-        while (zipEntry != null) {
-            File newFile = new File(String.format("%s/%s%s", fileOutputPath, File.separator, zipEntry.getName()));
-
-            //noinspection ResultOfMethodCallIgnored
-            new File(newFile.getParent()).mkdirs();
-
-            FileOutputStream fos = new FileOutputStream(newFile);
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fos);
-
-            int len;
-            while ((len = zis.read(buffer)) > 0) {
-                bufferedOutputStream.write(buffer, 0, len);
+            if (!fileOutputPath.exists()) {
+                fileOutputPath.mkdir();
             }
-            bufferedOutputStream.close();
 
-            zipEntry = zis.getNextEntry();
+            ZipEntry zipEntry = zis.getNextEntry();
+
+            while (zipEntry != null) {
+                File newFile = new File(fileOutputPath, zipEntry.getName());
+                File parentDir = new File(newFile.getParent());
+
+                if (!parentDir.exists()) {
+                    parentDir.mkdirs();
+                }
+
+                try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(newFile))) {
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        bos.write(buffer, 0, len);
+                    }
+                }
+                zipEntry = zis.getNextEntry();
+            }
         }
-        zis.closeEntry();
-        zis.close();
 
         log.info(FundanalyzerLogClient.toClientLogObject(
                 MessageFormat.format("zipファイルの解凍処理が正常に実行されました。\tパス:{0}", fileOutputPath.getPath()),
@@ -97,7 +102,7 @@ public class FileOperator {
         return Optional.ofNullable(makeTargetPath(pathDecode, targetDate).listFiles())
                 .map(Arrays::stream)
                 .map(fileList -> fileList.map(File::getName))
-                .map(fileName -> fileName.collect(Collectors.toList()))
+                .map(Stream::toList)
                 .or(Optional::empty);
     }
 

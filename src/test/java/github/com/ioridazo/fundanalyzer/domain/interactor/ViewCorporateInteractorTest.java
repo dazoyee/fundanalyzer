@@ -171,10 +171,10 @@ class ViewCorporateInteractorTest {
                             () -> assertEquals("code", actual.getCorporate().getCode(), "corporate.code"),
                             () -> assertEquals("name", actual.getCorporate().getName(), "corporate.name"),
                             () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getLatestCorporateValue()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getAllAverageCorporateValue()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getAllStandardDeviation()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getAllDiscountValue()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getAllDiscountRate())
+                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getAverageCorporateValueToDisplay()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getStandardDeviationToDisplay()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getDiscountValueToDisplay()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getDiscountRateToDisplay())
                     ),
                     () -> assertAll(
                             () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getAnalysisResultList().get(0).getDocumentPeriod()),
@@ -380,7 +380,7 @@ class ViewCorporateInteractorTest {
         void configDiscountRate() {
             var model = new CorporateViewModel();
             model.setSubmitDate(LocalDate.parse("2020-07-04"));
-            model.setAllDiscountRate(BigDecimal.valueOf(119));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(119));
             var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
@@ -391,8 +391,8 @@ class ViewCorporateInteractorTest {
         void configOutlierOfStandardDeviation() {
             var model = new CorporateViewModel();
             model.setSubmitDate(LocalDate.parse("2020-07-04"));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(10000));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(10000));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
@@ -405,8 +405,8 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2020-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(-1));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(100));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(100));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
@@ -419,10 +419,10 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2020-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(1000));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(10000));
-            model.setAllStandardDeviation(BigDecimal.valueOf(100));
-            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.5));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(10000));
+            model.setStandardDeviationToDisplay(BigDecimal.valueOf(100));
+            model.setCoefficientOfVariationToDisplay(BigDecimal.valueOf(0.5));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             var list = List.of(model);
 
             assertEquals(0, viewCorporateInteractor.filter(list).size());
@@ -435,10 +435,10 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2021-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(100));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(10));
-            model.setAllStandardDeviation(BigDecimal.valueOf(100));
-            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.5));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(10));
+            model.setStandardDeviationToDisplay(BigDecimal.valueOf(100));
+            model.setCoefficientOfVariationToDisplay(BigDecimal.valueOf(0.5));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
@@ -451,10 +451,10 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2021-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(10000));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(5000));
-            model.setAllStandardDeviation(BigDecimal.valueOf(100));
-            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.7));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(5000));
+            model.setStandardDeviationToDisplay(BigDecimal.valueOf(100));
+            model.setCoefficientOfVariationToDisplay(BigDecimal.valueOf(0.7));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
@@ -467,11 +467,11 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2021-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(10000));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(5000));
-            model.setAllStandardDeviation(BigDecimal.valueOf(100));
-            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.7));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(5000));
+            model.setStandardDeviationToDisplay(BigDecimal.valueOf(100));
+            model.setCoefficientOfVariationToDisplay(BigDecimal.valueOf(0.7));
             model.setLatestStockPrice(BigDecimal.valueOf(100));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             model.setForecastStock(BigDecimal.valueOf(200));
             var list = List.of(model);
 
@@ -485,11 +485,11 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2021-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(10000));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(5000));
-            model.setAllStandardDeviation(BigDecimal.valueOf(100));
-            model.setAllCoefficientOfVariation(BigDecimal.valueOf(0.7));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(5000));
+            model.setStandardDeviationToDisplay(BigDecimal.valueOf(100));
+            model.setCoefficientOfVariationToDisplay(BigDecimal.valueOf(0.7));
             model.setLatestStockPrice(BigDecimal.valueOf(10));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             model.setForecastStock(BigDecimal.valueOf(100));
             var list = List.of(model);
 
@@ -503,9 +503,9 @@ class ViewCorporateInteractorTest {
             model.setSubmitDate(LocalDate.parse("2021-07-04"));
             model.setMainReport(true);
             model.setLatestCorporateValue(BigDecimal.valueOf(10000));
-            model.setAllAverageCorporateValue(BigDecimal.valueOf(10));
-            model.setAllStandardDeviation(BigDecimal.valueOf(100));
-            model.setAllDiscountRate(BigDecimal.valueOf(120));
+            model.setAverageCorporateValueToDisplay(BigDecimal.valueOf(10));
+            model.setStandardDeviationToDisplay(BigDecimal.valueOf(100));
+            model.setDiscountRateToDisplay(BigDecimal.valueOf(120));
             var list = List.of(model);
 
             assertEquals(1, viewCorporateInteractor.filter(list).size());
@@ -567,11 +567,11 @@ class ViewCorporateInteractorTest {
         model.setCode("code");
         model.setName("name");
         model.setLatestCorporateValue(BigDecimal.TEN);
-        model.setAllAverageCorporateValue(BigDecimal.TEN);
-        model.setAllStandardDeviation(BigDecimal.TEN);
-        model.setAllCoefficientOfVariation(BigDecimal.TEN);
-        model.setAllDiscountValue(BigDecimal.TEN);
-        model.setAllDiscountRate(BigDecimal.TEN);
+        model.setAverageCorporateValueToDisplay(BigDecimal.TEN);
+        model.setStandardDeviationToDisplay(BigDecimal.TEN);
+        model.setCoefficientOfVariationToDisplay(BigDecimal.TEN);
+        model.setDiscountValueToDisplay(BigDecimal.TEN);
+        model.setDiscountRateToDisplay(BigDecimal.TEN);
         return model;
     }
 
@@ -580,11 +580,11 @@ class ViewCorporateInteractorTest {
         model.setCode(code);
         model.setName("name");
         model.setLatestCorporateValue(BigDecimal.TEN);
-        model.setAllAverageCorporateValue(BigDecimal.TEN);
-        model.setAllStandardDeviation(BigDecimal.TEN);
-        model.setAllCoefficientOfVariation(BigDecimal.TEN);
-        model.setAllDiscountValue(BigDecimal.TEN);
-        model.setAllDiscountRate(BigDecimal.TEN);
+        model.setAverageCorporateValueToDisplay(BigDecimal.TEN);
+        model.setStandardDeviationToDisplay(BigDecimal.TEN);
+        model.setCoefficientOfVariationToDisplay(BigDecimal.TEN);
+        model.setDiscountValueToDisplay(BigDecimal.TEN);
+        model.setDiscountRateToDisplay(BigDecimal.TEN);
         return model;
 
     }

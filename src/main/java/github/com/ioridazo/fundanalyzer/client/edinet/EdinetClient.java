@@ -14,12 +14,13 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.micrometer.observation.annotation.Observed;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
@@ -72,7 +73,7 @@ public class EdinetClient {
      * @return EdinetResponse
      * @throws FundanalyzerRestClientException 通知エラー時
      */
-    @NewSpan
+    @Observed
     public EdinetResponse list(final ListRequestParameter parameter) throws FundanalyzerRestClientException {
         if (ListType.DEFAULT.equals(parameter.getType())) {
             log.info(FundanalyzerLogClient.toClientLogObject(
@@ -135,20 +136,20 @@ public class EdinetClient {
                                                     MessageFormat.format(
                                                             "EDINETから200以外のHTTPステータスコードが返却されました。" +
                                                                     "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
-                                                            e.getRawStatusCode(),
+                                                            e.getStatusCode(),
                                                             e.getResponseBodyAsString()
                                                     ),
                                                     Category.DOCUMENT,
                                                     Process.EDINET
                                             ));
 
-                                            if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
+                                            if (HttpStatusCode.valueOf(400) == e.getStatusCode()) {
                                                 throw new FundanalyzerRestClientException(
                                                         "リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。", e);
-                                            } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
+                                            } else if (HttpStatusCode.valueOf(404) == e.getStatusCode()) {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "データが取得できません。パラメータの設定値を見直してください。", e);
-                                            } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
+                                            } else if (HttpStatusCode.valueOf(500) == e.getStatusCode()) {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
                                             } else {
@@ -207,7 +208,7 @@ public class EdinetClient {
      * @param storagePath 保存先
      * @param parameter   パラメータ
      */
-    @NewSpan
+    @Observed
     public void acquisition(final File storagePath, final AcquisitionRequestParameter parameter) {
         makeDirectory(storagePath);
 
@@ -254,12 +255,12 @@ public class EdinetClient {
                                                     Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
                                             );
                                         } catch (final RestClientResponseException e) {
-                                            if (403 == e.getRawStatusCode()) {
+                                            if (HttpStatusCode.valueOf(403) == e.getStatusCode()) {
                                                 log.info(FundanalyzerLogClient.toClientLogObject(
                                                         MessageFormat.format(
                                                                 "EDINETから200以外のHTTPステータスコードが返却されました。" +
                                                                         "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
-                                                                e.getRawStatusCode(),
+                                                                e.getStatusCode(),
                                                                 e.getResponseBodyAsString()
                                                         ),
                                                         parameter.getDocId(),
@@ -271,7 +272,7 @@ public class EdinetClient {
                                                         MessageFormat.format(
                                                                 "EDINETから200以外のHTTPステータスコードが返却されました。" +
                                                                         "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
-                                                                e.getRawStatusCode(),
+                                                                e.getStatusCode(),
                                                                 e.getResponseBodyAsString()
                                                         ),
                                                         parameter.getDocId(),
@@ -280,17 +281,17 @@ public class EdinetClient {
                                                 ));
                                             }
 
-                                            if (HttpStatus.BAD_REQUEST.value() == e.getRawStatusCode()) {
+                                            if (HttpStatusCode.valueOf(400) == e.getStatusCode()) {
                                                 throw new FundanalyzerRestClientException(
                                                         "リクエスト内容が誤っています。リクエストの内容（エンドポイント、パラメータの形式等）を見直してください。", e);
-                                            } else if (HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) {
+                                            } else if (HttpStatus.valueOf(404) == e.getStatusCode()) {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", e);
-                                            } else if (HttpStatus.FORBIDDEN.value() == e.getRawStatusCode()
+                                            } else if (HttpStatusCode.valueOf(403) == e.getStatusCode()
                                                     && "The request is blocked.".contains(e.getResponseBodyAsString())) {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "リクエストがブロックされました。対象の書類を確認してください。", e);
-                                            } else if (HttpStatus.INTERNAL_SERVER_ERROR.value() == e.getRawStatusCode()) {
+                                            } else if (HttpStatusCode.valueOf(500) == e.getStatusCode()) {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "EDINET のトップページ又は金融庁ウェブサイトの各種情報検索サービスにてメンテナンス等の情報を確認してください。", e);
                                             } else {

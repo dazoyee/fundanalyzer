@@ -1,14 +1,14 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface ValuationUseCase {
 
     /**
      * 株価評価
      */
-    @NewSpan
+    @Observed
     int evaluate();
 
     /**
@@ -16,6 +16,6 @@ public interface ValuationUseCase {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     boolean evaluate(CodeInputData inputData);
 }

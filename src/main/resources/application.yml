@@ -9,18 +9,6 @@ spring:
   application:
     name: @pom.artifactId@
 
-  sleuth:
-    enabled: true
-    sampler:
-      probability: 1.0
-  zipkin:
-    enabled: true
-    base-url: http://localhost:9411
-    service:
-      name: ${spring.application.name}
-    sender:
-      type: web
-
 logging:
   level:
     org.seasar.doma:
@@ -47,6 +35,17 @@ management:
   health:
     diskspace.enabled: false
     circuitbreakers.enabled: true
+
+  tracing:
+    enabled: true
+    propagation:
+      type: w3c
+    sampling:
+      probability: 1.0
+
+  otlp:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
 
   metrics:
     distribution:

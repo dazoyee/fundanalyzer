@@ -57,11 +57,11 @@ class StockSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).importStock((CodeInputData) any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());
-            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
+            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any(), any());
         }
 
         @DisplayName("stockScheduler : 株価を削除する")
-        // @Test
+//        @Test
         void deleteStockScheduler_ok() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
             when(analysisService.deleteStock()).thenReturn(1);
@@ -72,7 +72,7 @@ class StockSchedulerTest {
         }
 
         @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
-        // @Test
+//        @Test
         void deleteStockScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).deleteStock();
@@ -101,7 +101,7 @@ class StockSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).evaluate();
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.evaluateScheduler());
-            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
+            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any(), any());
         }
 
         @DisplayName("evaluateScheduler : 株価を評価する")

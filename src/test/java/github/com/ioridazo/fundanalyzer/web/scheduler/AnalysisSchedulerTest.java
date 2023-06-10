@@ -72,7 +72,7 @@ class AnalysisSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).executeAllMain(any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.analysisScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any(), any());
         }
 
         @DisplayName("analysisScheduler : 処理時間外")
@@ -105,7 +105,7 @@ class AnalysisSchedulerTest {
 
             doThrow(new FundanalyzerRuntimeException()).when(viewService).updateCorporateView();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.updateViewScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any(), any());
         }
 
         @DisplayName("updateViewScheduler : 処理時間外")
@@ -143,7 +143,7 @@ class AnalysisSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).analyzeByDate(any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.recoverDocumentPeriodScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any(), any());
         }
 
         @DisplayName("recoverDocumentPeriodScheduler : 処理時間外")

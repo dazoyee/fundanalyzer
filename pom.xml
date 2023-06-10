@@ -6,21 +6,21 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.9</version>
+        <version>3.1.0</version>
         <relativePath/>
     </parent>
 
     <groupId>github.com.ioridazo</groupId>
     <artifactId>fundanalyzer</artifactId>
-    <version>2.2.9</version>
+    <version>2.2.10</version>
     <name>fundanalyzer</name>
     <description>Analyzing stocks from financial statements</description>
 
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2021.0.4</spring-cloud.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version>
 
-        <spring-retry.version>1.3.4</spring-retry.version>
+        <spring-retry.version>2.0.1</spring-retry.version>
         <jsoup.version>1.15.4</jsoup.version>
         <doma-spring-boot-starter.version>1.7.0</doma-spring-boot-starter.version>
         <doma-processor.version>2.53.2</doma-processor.version>
@@ -54,7 +54,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -135,14 +135,14 @@
             <version>${ecs-logging-java.version}</version>
         </dependency>
 
-        <!-- zipkin -->
+        <!-- opentelemetry -->
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-sleuth</artifactId>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-zipkin</artifactId>
         </dependency>
 
         <!-- cache -->
@@ -154,8 +154,8 @@
 
         <!-- resilience4j -->
         <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-spring-boot2</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
         </dependency>
         <dependency>
             <groupId>io.github.resilience4j</groupId>
@@ -170,6 +170,7 @@
         </dependency>
 
         <!-- csv -->
+        <!--suppress VulnerableLibrariesLocal -->
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>

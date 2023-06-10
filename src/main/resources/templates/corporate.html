@@ -229,30 +229,6 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-1 col-md-3 col-sm-12">
-                  <div class="info-box bg-light">
-                    <div class="info-box-content info-box-icon">
-                      <form method="post" th:action="@{/v2/favorite/company}">
-                        <input type="hidden" th:value="${corporate.code}" name="code">
-                        <button type="submit" class="btn">
-                          <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
-                          <i th:if="${corporate.isFavorite}" class="fas fa-heart fa-2x" style="color:red;"></i>
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-1 col-md-3 col-sm-12">
-                  <div class="info-box bg-light">
-                    <div class="info-box-content">
-                      <a class="info-box-text text-center text-muted"
-                         th:href="'https://minkabu.jp/stock/'+${corporateView.code}"
-                         target="_blank">
-                        みんかぶ
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </div>
               <div class="row">
                 <div class="col-lg-2 col-md-6 col-sm-12">
@@ -301,6 +277,19 @@
                     </div>
                   </div>
                 </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content info-box-icon">
+                      <form method="post" th:action="@{/v2/favorite/company}">
+                        <input type="hidden" th:value="${corporate.code}" name="code">
+                        <button type="submit" class="btn">
+                          <i th:if="${!corporate.isFavorite}" class="far fa-heart fa-2x"></i>
+                          <i th:if="${corporate.isFavorite}" class="fas fa-heart fa-2x" style="color:red;"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="row">
                 <div class="col-lg-2 col-md-6 col-sm-12">
@@ -337,6 +326,39 @@
                     </div>
                   </div>
                 </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content">
+                      <a class="info-box-text text-center text-muted"
+                         th:href="'https://www.nikkei.com/nkd/company/?scode='+${corporateView.code}"
+                         target="_blank">
+                        日経
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content">
+                      <a class="info-box-text text-center text-muted"
+                         th:href="'https://minkabu.jp/stock/'+${corporateView.code}"
+                         target="_blank">
+                        みんかぶ
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-1 col-md-3 col-sm-12">
+                  <div class="info-box bg-light">
+                    <div class="info-box-content">
+                      <a class="info-box-text text-center text-muted"
+                         th:href="'https://finance.yahoo.co.jp/quote/'+${corporateView.code}"
+                         target="_blank">
+                        ヤフー
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -362,11 +384,11 @@
             <div class="col-lg-3 col-md-6 col-sm-12">
               <div class="info-box mb-3">
                 <span class="info-box-icon bg-danger elevation-1"
-                      th:if="${corporateView.latestCorporateValue > corporateView.allAverageCorporateValue}">
+                      th:if="${corporateView.latestCorporateValue > corporateView.discountValueToDisplay}">
                   <i class="fas fa-thumbs-up"></i>
                 </span>
                 <span class="info-box-icon bg-primary elevation-1"
-                      th:if="${corporateView.latestCorporateValue <= corporateView.allAverageCorporateValue}">
+                      th:if="${corporateView.latestCorporateValue <= corporateView.discountValueToDisplay}">
                   <i class="fas fa-thumbs-down"></i>
                 </span>
                 <div class="info-box-content">
@@ -398,18 +420,18 @@
             <div class="col-lg-3 col-md-6 col-sm-12">
               <div class="info-box mb-3">
                 <span class="info-box-icon bg-danger elevation-1"
-                      th:if="${corporateView.allDiscountRate > 100}">
+                      th:if="${corporateView.discountRateToDisplay > 100}">
                   <i class="fas fa-thumbs-up"></i>
                 </span>
                 <span class="info-box-icon bg-primary elevation-1"
-                      th:if="${corporateView.allDiscountRate <= 100}">
+                      th:if="${corporateView.discountRateToDisplay <= 100}">
                   <i class="fas fa-thumbs-down"></i>
                 </span>
                 <div class="info-box-content">
                   <span class="info-box-text">割安比率</span>
-                  <span class="info-box-number" th:if="${corporateView.allDiscountRate == null}"> - </span>
-                  <span class="info-box-number" th:if="${corporateView.allDiscountRate != null}"
-                        th:text="${corporateView.allDiscountRate}"></span>
+                  <span class="info-box-number" th:if="${corporateView.discountRateToDisplay == null}"> - </span>
+                  <span class="info-box-number" th:if="${corporateView.discountRateToDisplay != null}"
+                        th:text="${corporateView.discountRateToDisplay}"></span>
                 </div>
               </div>
             </div>
@@ -447,19 +469,19 @@
                     th:text="${corporateView.latestCorporateValue}">最新企業価値
                 </dd>
                 <dt class="col-6">平均企業価値</dt>
-                <dd class="col-6" th:if="${corporateView.allAverageCorporateValue == null}"> -</dd>
-                <dd class="col-6" th:if="${corporateView.allAverageCorporateValue != null}"
-                    th:text="${corporateView.allAverageCorporateValue}">平均企業価値
+                <dd class="col-6" th:if="${corporateView.averageCorporateValueToDisplay == null}"> -</dd>
+                <dd class="col-6" th:if="${corporateView.averageCorporateValueToDisplay != null}"
+                    th:text="${corporateView.averageCorporateValueToDisplay}">平均企業価値
                 </dd>
                 <dt class="col-6">標準偏差</dt>
-                <dd class="col-6" th:if="${corporateView.allStandardDeviation == null}"> -</dd>
-                <dd class="col-6" th:if="${corporateView.allStandardDeviation != null}"
-                    th:text="${corporateView.allStandardDeviation}">標準偏差
+                <dd class="col-6" th:if="${corporateView.standardDeviationToDisplay == null}"> -</dd>
+                <dd class="col-6" th:if="${corporateView.standardDeviationToDisplay != null}"
+                    th:text="${corporateView.standardDeviationToDisplay}">標準偏差
                 </dd>
                 <dt class="col-6">変動係数</dt>
-                <dd class="col-6" th:if="${corporateView.allCoefficientOfVariation == null}"> -</dd>
-                <dd class="col-6" th:if="${corporateView.allCoefficientOfVariation != null}"
-                    th:text="${corporateView.allCoefficientOfVariation}">変動係数
+                <dd class="col-6" th:if="${corporateView.coefficientOfVariationToDisplay == null}"> -</dd>
+                <dd class="col-6" th:if="${corporateView.coefficientOfVariationToDisplay != null}"
+                    th:text="${corporateView.coefficientOfVariationToDisplay}">変動係数
                 </dd>
                 <dt class="col-6">対象年数</dt>
                 <dd class="col-6" th:if="${corporateView.countYear == null}"> -</dd>
@@ -495,9 +517,9 @@
             <div class="col-lg-3 col-md-6 col-sm-12">
               <dl class="row">
                 <dt class="col-6">割安比率</dt>
-                <dd class="col-6" th:if="${corporateView.allDiscountRate == null}"> -</dd>
-                <dd class="col-6" th:if="${corporateView.allDiscountRate != null}"
-                    th:text="${corporateView.allDiscountRate}">割安比率
+                <dd class="col-6" th:if="${corporateView.discountRateToDisplay == null}"> -</dd>
+                <dd class="col-6" th:if="${corporateView.discountRateToDisplay != null}"
+                    th:text="${corporateView.discountRateToDisplay}">割安比率
                 </dd>
                 <dt class="col-6">BPS</dt>
                 <dd class="col-6" th:if="${corporateView.bps == null}"> -</dd>

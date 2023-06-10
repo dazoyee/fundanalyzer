@@ -1,5 +1,8 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
@@ -10,17 +13,24 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Result;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AnalysisService {
+
+    private static final Logger log = LogManager.getLogger(AnalysisService.class);
 
     private final CompanyUseCase companyUseCase;
     private final DocumentUseCase documentUseCase;
@@ -55,7 +65,7 @@ public class AnalysisService {
      *
      * @param inputData 複数の提出日
      */
-    @NewSpan
+    @Observed
     @Async
     public void executeAllMain(final BetweenDateInputData inputData) {
         inputData.getFromDate()
@@ -86,7 +96,7 @@ public class AnalysisService {
      *
      * @param inputData 複数の提出日
      */
-    @NewSpan
+    @Observed
     @Async
     public void executePartOfMain(final BetweenDateInputData inputData) {
         inputData.getFromDate()
@@ -111,7 +121,7 @@ public class AnalysisService {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     public void executeByDate(final DateInputData inputData) {
         // scraping
         documentUseCase.scrape(inputData);
@@ -124,7 +134,7 @@ public class AnalysisService {
      *
      * @param inputData 書類ID
      */
-    @NewSpan
+    @Observed
     public void executeById(final IdInputData inputData) {
         // scraping
         documentUseCase.scrape(inputData);
@@ -138,7 +148,7 @@ public class AnalysisService {
      * @param inputData 財務諸表の登録情報
      * @return 処理結果
      */
-    @NewSpan
+    @Observed
     public Result registerFinancialStatementValue(final FinancialStatementInputData inputData) {
         // register
         return documentUseCase.registerFinancialStatementValue(inputData);
@@ -149,7 +159,7 @@ public class AnalysisService {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     public void analyzeByDate(final DateInputData inputData) {
         // recovery
         documentUseCase.updateDocumentPeriodIfNotExist(inputData);
@@ -165,7 +175,7 @@ public class AnalysisService {
      * @param inputData 書類ID
      */
     @SuppressWarnings("unused")
-    @NewSpan
+    @Observed
     public void analyzeById(final IdInputData inputData) {
         // analyze
         analyzeUseCase.analyze(inputData);
@@ -176,7 +186,7 @@ public class AnalysisService {
      *
      * @param inputData 複数の提出日
      */
-    @NewSpan
+    @Observed
     public void importStock(final BetweenDateInputData inputData) {
         inputData.getFromDate()
                 .datesUntil(inputData.getToDate().plusDays(1))
@@ -195,15 +205,27 @@ public class AnalysisService {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     public void importStock(final CodeInputData inputData) {
         // is lived?
         if (companyUseCase.isLived(inputData)) {
             // stock
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.KABUOJI3);
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.MINKABU);
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.YAHOO_FINANCE);
-            stockUseCase.importStockPrice(inputData, SourceOfStockPrice.NIKKEI);
+            List.of(
+                    SourceOfStockPrice.KABUOJI3,
+                    SourceOfStockPrice.MINKABU,
+                    SourceOfStockPrice.YAHOO_FINANCE,
+                    SourceOfStockPrice.NIKKEI
+            ).forEach(sourceOfStockPrice -> {
+                try {
+                    stockUseCase.importStockPrice(inputData, sourceOfStockPrice);
+                } catch (final FundanalyzerShortCircuitException e) {
+                    log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                            e.getMessage(),
+                            Category.STOCK,
+                            Process.IMPORT
+                    ));
+                }
+            });
         } else {
             // remove company
             companyUseCase.updateRemovedCompany(inputData);
@@ -213,7 +235,7 @@ public class AnalysisService {
     /**
      * 過去の株価削除
      */
-    @NewSpan
+    @Observed
     public int deleteStock() {
         // delete stock
         return stockUseCase.deleteStockPrice();
@@ -225,7 +247,7 @@ public class AnalysisService {
      * @param inputData 企業コード
      * @return お気に入りかどうか
      */
-    @NewSpan
+    @Observed
     public boolean updateFavoriteCompany(final CodeInputData inputData) {
         // update favorite company
         return companyUseCase.updateFavoriteCompany(inputData);
@@ -234,7 +256,7 @@ public class AnalysisService {
     /**
      * 株価の評価
      */
-    @NewSpan
+    @Observed
     public int evaluate() {
         // evaluate
         return valuationUseCase.evaluate();
@@ -246,7 +268,7 @@ public class AnalysisService {
      * @param inputData 企業コード
      * @return 評価件数
      */
-    @NewSpan
+    @Observed
     public boolean evaluate(final CodeInputData inputData) {
         // evaluate
         return valuationUseCase.evaluate(inputData);
@@ -257,7 +279,7 @@ public class AnalysisService {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     public void indicate(final CodeInputData inputData) {
         // indicate
         analyzeUseCase.indicate(inputData);

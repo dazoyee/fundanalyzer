@@ -91,7 +91,10 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
      */
     @Override
     public List<CompanyValuationViewModel> viewAllValuation() {
-        return viewSpecification.findAllCompanyValuationView();
+        return viewSpecification.findAllCompanyValuationView().stream()
+                // 提出日は除外
+                .filter(cvvm -> cvvm.daySinceSubmitDate() != 0L)
+                .toList();
     }
 
     /**

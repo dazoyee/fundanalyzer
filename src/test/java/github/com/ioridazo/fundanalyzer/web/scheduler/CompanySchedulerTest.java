@@ -55,7 +55,7 @@ class CompanySchedulerTest {
 
             doThrow(FundanalyzerRuntimeException.class).when(companyUseCase).importCompanyInfo();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.companyScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any());
+            verify(slackClient, times(1)).sendMessage(any(), any(), any());
         }
 
         @DisplayName("companyScheduler : 処理時間外")
