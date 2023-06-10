@@ -34,6 +34,15 @@ public class CorporateViewModel {
     // 最新企業価値
     private BigDecimal latestCorporateValue;
 
+    // 表示の平均企業価値
+    private BigDecimal averageCorporateValueToDisplay;
+
+    // 表示の標準偏差
+    private BigDecimal standardDeviationToDisplay;
+
+    // 表示の変動係数
+    private BigDecimal coefficientOfVariationToDisplay;
+
     // 3年平均企業価値
     private BigDecimal threeAverageCorporateValue;
 
@@ -78,6 +87,12 @@ public class CorporateViewModel {
 
     // 最新株価
     private BigDecimal latestStockPrice;
+
+    // 表示の割安値
+    private BigDecimal discountValueToDisplay;
+
+    // 表示の割安度
+    private BigDecimal discountRateToDisplay;
 
     // 3年割安値
     private BigDecimal threeDiscountValue;
@@ -182,6 +197,9 @@ public class CorporateViewModel {
                 latestDocumentTypeCode,
                 isMainReport,
                 latestCorporateValue,
+                fiveAverageCorporateValue != null ? fiveAverageCorporateValue : allAverageCorporateValue,
+                fiveStandardDeviation != null ? fiveStandardDeviation : allStandardDeviation,
+                fiveCoefficientOfVariation != null ? fiveCoefficientOfVariation : allCoefficientOfVariation,
                 threeAverageCorporateValue,
                 threeStandardDeviation,
                 threeCoefficientOfVariation,
@@ -197,6 +215,8 @@ public class CorporateViewModel {
                 averageStockPrice,
                 importDate,
                 latestStockPrice,
+                fiveDiscountValue != null ? fiveDiscountValue : allDiscountValue,
+                fiveDiscountRate != null ? fiveDiscountRate : allDiscountRate,
                 threeDiscountValue,
                 threeDiscountRate,
                 fiveDiscountValue,
@@ -228,6 +248,9 @@ public class CorporateViewModel {
                         .map(DocumentTypeCode::toValue)
                         .anyMatch(dtc -> viewBean.getLatestDocumentTypeCode().equals(dtc)),
                 viewBean.getLatestCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                viewBean.getFiveAverageCorporateValue().orElse(viewBean.getAllAverageCorporateValue().orElse(null)),
+                viewBean.getFiveStandardDeviation().orElse(viewBean.getAllStandardDeviation().orElse(null)),
+                viewBean.getFiveCoefficientOfVariation().orElse(viewBean.getAllCoefficientOfVariation().orElse(null)),
                 viewBean.getThreeAverageCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getThreeStandardDeviation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getThreeCoefficientOfVariation().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
@@ -243,6 +266,8 @@ public class CorporateViewModel {
                 viewBean.getAverageStockPrice().orElse(null),
                 viewBean.getImportDate().orElse(null),
                 viewBean.getLatestStockPrice().orElse(null),
+                viewBean.getFiveDiscountValue().orElse(viewBean.getAllDiscountValue().orElse(null)),
+                viewBean.getFiveDiscountRate().orElse(viewBean.getAllDiscountRate().orElse(null)),
                 viewBean.getThreeDiscountValue().orElse(null),
                 viewBean.getThreeDiscountRate().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getFiveDiscountValue().orElse(null),

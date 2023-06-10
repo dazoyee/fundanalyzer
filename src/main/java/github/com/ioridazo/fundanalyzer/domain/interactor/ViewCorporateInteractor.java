@@ -185,9 +185,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData) {
         final Company company = companySpecification.findCompanyByCode(inputData.getCode5())
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException("企業コード");
-                });
+                .orElseThrow(() -> new FundanalyzerNotExistException("企業コード"));
         final Stock stock = stockSpecification.findStock(company);
 
         final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()
@@ -325,31 +323,31 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     List<CorporateViewModel> filter(final List<CorporateViewModel> list) {
         return list.stream()
                 // not null
-                .filter(cvm -> Objects.nonNull(cvm.getAllDiscountRate()))
-                .filter(cvm -> Objects.nonNull(cvm.getAllStandardDeviation()))
+                .filter(cvm -> Objects.nonNull(cvm.getDiscountRateToDisplay()))
+                .filter(cvm -> Objects.nonNull(cvm.getStandardDeviationToDisplay()))
                 .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
                 // 表示する提出日は一定期間のみ
                 .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(configCorporateSize)))
                 // 割安度が170%(外部設定値)以上を表示
-                .filter(cvm -> cvm.getAllDiscountRate().compareTo(configDiscountRate) >= 0)
+                .filter(cvm -> cvm.getDiscountRateToDisplay().compareTo(configDiscountRate) >= 0)
                 // 標準偏差が外れ値となっていたら除外
-                .filter(cvm -> cvm.getAllStandardDeviation().compareTo(configOutlierOfStandardDeviation) < 0)
+                .filter(cvm -> cvm.getStandardDeviationToDisplay().compareTo(configOutlierOfStandardDeviation) < 0)
                 // 最新企業価値がマイナスの場合は除外
                 .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
                 // 最新企業価値が平均より低い場合は除外
-                .filter(cvm -> cvm.getLatestCorporateValue().compareTo(cvm.getAllAverageCorporateValue()) > 0)
+                .filter(cvm -> cvm.getLatestCorporateValue().compareTo(cvm.getAverageCorporateValueToDisplay()) > 0)
                 // 変動係数
                 .filter(cvm -> {
-                    if (Objects.isNull(cvm.getAllCoefficientOfVariation())) {
+                    if (Objects.isNull(cvm.getCoefficientOfVariationToDisplay())) {
                         // 変動係数が存在しない
                         return true;
                     } else {
                         // 変動係数が0.6未満であること
-                        if (cvm.getAllCoefficientOfVariation().compareTo(configCoefficientOfVariation) < 1) {
+                        if (cvm.getCoefficientOfVariationToDisplay().compareTo(configCoefficientOfVariation) < 1) {
                             return true;
                         } else {
                             // 変動係数が0.6以上でも最新企業価値が高ければOK
-                            return cvm.getLatestCorporateValue().compareTo(cvm.getAllAverageCorporateValue()) > -1;
+                            return cvm.getLatestCorporateValue().compareTo(cvm.getAverageCorporateValueToDisplay()) > -1;
                         }
                     }
                 })
