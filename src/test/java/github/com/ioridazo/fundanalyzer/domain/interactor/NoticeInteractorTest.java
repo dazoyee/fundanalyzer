@@ -80,6 +80,6 @@ class NoticeInteractorTest {
 
         assertDoesNotThrow(() -> noticeInteractor.noticeSlack(inputData));
         verify(slackClient, times(1))
-                .sendMessage(eq("github.com.ioridazo.fundanalyzer.domain.interactor.NoticeInteractor.noticeSlack"), any());
+                .sendMessage(eq("github.com.ioridazo.fundanalyzer.domain.interactor.NoticeInteractor.noticeSlack"), any(), any(), any());
     }
 }

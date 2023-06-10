@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface ScrapingUseCase {
 
@@ -12,7 +12,7 @@ public interface ScrapingUseCase {
      *
      * @param document ドキュメント
      */
-    @NewSpan
+    @Observed
     void download(Document document);
 
     /**
@@ -20,7 +20,7 @@ public interface ScrapingUseCase {
      *
      * @param document ドキュメント
      */
-    @NewSpan
+    @Observed
     void bs(Document document);
 
     /**
@@ -28,7 +28,7 @@ public interface ScrapingUseCase {
      *
      * @param document ドキュメント
      */
-    @NewSpan
+    @Observed
     void pl(Document document);
 
     /**
@@ -36,6 +36,6 @@ public interface ScrapingUseCase {
      *
      * @param document ドキュメント
      */
-    @NewSpan
+    @Observed
     void ns(Document document);
 }

@@ -6,7 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class EdinetService {
     /**
      * 企業情報の更新
      */
-    @NewSpan
+    @Observed
     @Async
     public void updateCompany() {
         // company
@@ -38,7 +38,7 @@ public class EdinetService {
      *
      * @param inputData 複数の提出日
      */
-    @NewSpan
+    @Observed
     public void saveEdinetList(final BetweenDateInputData inputData) {
         inputData.getFromDate()
                 .datesUntil(inputData.getToDate().plusDays(1))
@@ -53,7 +53,7 @@ public class EdinetService {
      * @param inputData 書類ID
      * @return 処理結果
      */
-    @NewSpan
+    @Observed
     public Result updateAllDoneStatus(final IdInputData inputData) {
         // update
         return documentUseCase.updateAllDoneStatus(inputData);
@@ -64,7 +64,7 @@ public class EdinetService {
      *
      * @param inputData 書類ID
      */
-    @NewSpan
+    @Observed
     public void removeDocument(final IdInputData inputData) {
         // remove
         documentUseCase.removeDocument(inputData);

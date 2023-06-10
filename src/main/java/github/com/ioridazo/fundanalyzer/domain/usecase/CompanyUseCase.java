@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface CompanyUseCase {
 
@@ -10,7 +10,7 @@ public interface CompanyUseCase {
      *
      * @return 企業情報の更新日時
      */
-    @NewSpan
+    @Observed
     String getUpdateDate();
 
     /**
@@ -22,7 +22,7 @@ public interface CompanyUseCase {
      * ↓
      * データベース保存
      */
-    @NewSpan
+    @Observed
     void importCompanyInfo();
 
     /**
@@ -30,7 +30,7 @@ public interface CompanyUseCase {
      * ↓
      * データベース保存
      */
-    @NewSpan
+    @Observed
     void saveCompanyInfo();
 
     /**
@@ -38,7 +38,7 @@ public interface CompanyUseCase {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     boolean updateFavoriteCompany(CodeInputData inputData);
 
     /**
@@ -47,7 +47,7 @@ public interface CompanyUseCase {
      * @param inputData 企業コード
      * @return boolean
      */
-    @NewSpan
+    @Observed
     boolean isLived(CodeInputData inputData);
 
     /**
@@ -55,6 +55,6 @@ public interface CompanyUseCase {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     void updateRemovedCompany(CodeInputData inputData);
 }

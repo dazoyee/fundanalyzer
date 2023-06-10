@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public interface ViewValuationUseCase {
      *
      * @return 会社評価ビュー
      */
-    @NewSpan
+    @Observed
     List<CompanyValuationViewModel> viewValuation();
 
     /**
@@ -22,7 +22,7 @@ public interface ViewValuationUseCase {
      *
      * @return 会社評価ビュー
      */
-    @NewSpan
+    @Observed
     List<CompanyValuationViewModel> viewValuation(CodeInputData inputData);
 
     /**
@@ -30,7 +30,7 @@ public interface ViewValuationUseCase {
      *
      * @return 会社評価ビュー
      */
-    @NewSpan
+    @Observed
     List<CompanyValuationViewModel> viewAllValuation();
 
     /**
@@ -38,7 +38,7 @@ public interface ViewValuationUseCase {
      *
      * @return 会社評価ビュー
      */
-    @NewSpan
+    @Observed
     List<CompanyValuationViewModel> viewFavoriteValuation();
 
     /**
@@ -46,13 +46,13 @@ public interface ViewValuationUseCase {
      *
      * @return 会社評価ビュー
      */
-    @NewSpan
+    @Observed
     List<IndustryValuationViewModel> viewIndustryValuation();
 
     /**
      * ビュー更新
      */
-    @NewSpan
+    @Observed
     void updateView();
 
     /**
@@ -60,6 +60,6 @@ public interface ViewValuationUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void updateView(CodeInputData inputData);
 }

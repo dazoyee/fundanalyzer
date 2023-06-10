@@ -5,10 +5,10 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import io.micrometer.observation.annotation.Observed;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -37,7 +37,7 @@ public class SeleniumClient {
      * @param inputFilePath 保存先パス
      * @return ダウンロードファイル名
      */
-    @NewSpan
+    @Observed
     public String edinetCodeList(final String inputFilePath) {
         final String endpoint = String.format("/selenium/v1/edinetcode?path=%s", inputFilePath.replace("/", "\\"));
 
@@ -73,8 +73,11 @@ public class SeleniumClient {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record SeleniumResponse(String status, Content content, Error error){
-        record Content(String filename){}
-        record Error(String message, String body){}
+    record SeleniumResponse(String status, Content content, Error error) {
+        record Content(String filename) {
+        }
+
+        record Error(String message, String body) {
+        }
     }
 }

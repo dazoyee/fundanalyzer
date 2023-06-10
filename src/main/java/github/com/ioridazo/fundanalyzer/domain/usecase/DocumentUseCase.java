@@ -4,7 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.FinancialStatementInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface DocumentUseCase {
 
@@ -15,7 +15,7 @@ public interface DocumentUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void allProcess(DateInputData inputData);
 
     /**
@@ -25,7 +25,7 @@ public interface DocumentUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void saveEdinetList(DateInputData inputData);
 
     /**
@@ -33,7 +33,7 @@ public interface DocumentUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void scrape(DateInputData inputData);
 
     /**
@@ -41,7 +41,7 @@ public interface DocumentUseCase {
      *
      * @param inputData 書類ID
      */
-    @NewSpan
+    @Observed
     void scrape(IdInputData inputData);
 
     /**
@@ -50,7 +50,7 @@ public interface DocumentUseCase {
      * @param inputData 財務諸表の登録情報
      * @return 処理結果
      */
-    @NewSpan
+    @Observed
     Result registerFinancialStatementValue(FinancialStatementInputData inputData);
 
     /**
@@ -59,7 +59,7 @@ public interface DocumentUseCase {
      * @param inputData 書類ID
      * @return 処理結果
      */
-    @NewSpan
+    @Observed
     Result updateAllDoneStatus(IdInputData inputData);
 
     /**
@@ -67,7 +67,7 @@ public interface DocumentUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void updateDocumentPeriodIfNotExist(DateInputData inputData);
 
     /**
@@ -75,7 +75,7 @@ public interface DocumentUseCase {
      *
      * @param inputData 書類ID
      */
-    @NewSpan
+    @Observed
     void removeDocument(IdInputData inputData);
 
     /**
@@ -83,6 +83,6 @@ public interface DocumentUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void removeDocument(DateInputData inputData);
 }

@@ -3,10 +3,10 @@ package github.com.ioridazo.fundanalyzer.client.file;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import io.micrometer.observation.annotation.Observed;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -21,7 +21,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -40,7 +40,8 @@ public class FileOperator {
     FileOperator() {
     }
 
-    @NewSpan
+    // FIXME リファクタリング
+    @Observed
     public void decodeZipFile(final File fileInputPath, final File fileOutputPath) throws IOException {
         log.info(FundanalyzerLogClient.toClientLogObject(
                 MessageFormat.format("zipファイルの解凍処理を実行します。\tパス:{0}", fileInputPath.getPath()),
@@ -97,7 +98,7 @@ public class FileOperator {
         return Optional.ofNullable(makeTargetPath(pathDecode, targetDate).listFiles())
                 .map(Arrays::stream)
                 .map(fileList -> fileList.map(File::getName))
-                .map(fileName -> fileName.collect(Collectors.toList()))
+                .map(Stream::toList)
                 .or(Optional::empty);
     }
 

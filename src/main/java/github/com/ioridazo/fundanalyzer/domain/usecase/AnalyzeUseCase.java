@@ -5,7 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
+import io.micrometer.observation.annotation.Observed;
 
 public interface AnalyzeUseCase {
 
@@ -14,7 +14,7 @@ public interface AnalyzeUseCase {
      *
      * @param inputData 書類ID
      */
-    @NewSpan
+    @Observed
     void analyze(IdInputData inputData);
 
     /**
@@ -22,7 +22,7 @@ public interface AnalyzeUseCase {
      *
      * @param inputData 提出日
      */
-    @NewSpan
+    @Observed
     void analyze(DateInputData inputData);
 
     /**
@@ -31,7 +31,7 @@ public interface AnalyzeUseCase {
      * @param company 企業情報
      * @return 企業価値
      */
-    @NewSpan
+    @Observed
     CorporateValue calculateCorporateValue(Company company);
 
     /**
@@ -39,6 +39,6 @@ public interface AnalyzeUseCase {
      *
      * @param inputData 企業コード
      */
-    @NewSpan
+    @Observed
     void indicate(CodeInputData inputData);
 }
