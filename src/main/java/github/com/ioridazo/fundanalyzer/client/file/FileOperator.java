@@ -59,7 +59,7 @@ public class FileOperator {
         byte[] buffer = new byte[1024];
 
         try (ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(new FileInputStream(fileInputPath)), Charset.forName("MS932"))) {
+                new BufferedInputStream(new FileInputStream(fileInputPath + ".zip")), Charset.forName("MS932"))) {
 
             if (!fileOutputPath.exists()) {
                 fileOutputPath.mkdir();
