@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.web.view.model.edinet;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @param submitDate      提出日
@@ -65,10 +65,10 @@ public record EdinetListViewModel(
     }
 
     public boolean isAllDone() {
-        return List.of(
+        return Stream.of(
                 countTarget,
                 countScraped,
                 countAnalyzed
-        ).stream().distinct().count() == 1;
+        ).distinct().count() == 1;
     }
 }

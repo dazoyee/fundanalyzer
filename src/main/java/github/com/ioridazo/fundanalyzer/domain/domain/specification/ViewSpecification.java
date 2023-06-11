@@ -128,9 +128,7 @@ public class ViewSpecification {
     public EdinetListViewModel findEdinetListView(final DateInputData inputData) throws FundanalyzerNotExistException {
         return edinetListViewDao.selectBySubmitDate(inputData.getDate())
                 .map(EdinetListViewModel::of)
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException("提出日");
-                });
+                .orElseThrow(() -> new FundanalyzerNotExistException("提出日"));
     }
 
     /**

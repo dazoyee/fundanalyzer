@@ -62,9 +62,7 @@ public class EdinetDocumentSpecification {
     public EdinetDocument findLimitedEdinetDocument(final String documentId) {
         final EdinetDocument edinetDocument = parsePeriod(documentId);
         final EdinetDocumentEntity entity = edinetDocumentDao.selectByDocId(documentId)
-                .orElseThrow(() -> {
-                    throw new FundanalyzerNotExistException(MESSAGE_EDINET_DOCUMENT);
-                });
+                .orElseThrow(() -> new FundanalyzerNotExistException(MESSAGE_EDINET_DOCUMENT));
         edinetDocument.setDocDescription(entity.getDocDescription().orElse(null));
         edinetDocument.setParentDocId(entity.getParentDocId().orElse(null));
         return edinetDocument;
