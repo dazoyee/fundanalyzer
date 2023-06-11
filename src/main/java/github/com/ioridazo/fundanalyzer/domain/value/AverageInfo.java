@@ -40,28 +40,20 @@ public class AverageInfo {
 
     @JsonCreator
     public static Year yearFromValue(final Integer value) {
-        switch (value) {
-            case 3:
-                return Year.THREE;
-            case 5:
-                return Year.FIVE;
-            case 10:
-                return Year.TEN;
-            default:
-                return Year.UNKNOWN;
-        }
+        return switch (value) {
+            case 3 -> Year.THREE;
+            case 5 -> Year.FIVE;
+            case 10 -> Year.TEN;
+            default -> Year.UNKNOWN;
+        };
     }
 
     public static Integer parseYear(final Year year) {
-        switch (year) {
-            case THREE:
-                return 3;
-            case FIVE:
-                return 5;
-            case TEN:
-                return 10;
-            default:
-                throw new FundanalyzerRuntimeException();
-        }
+        return switch (year) {
+            case THREE -> 3;
+            case FIVE -> 5;
+            case TEN -> 10;
+            default -> throw new FundanalyzerRuntimeException();
+        };
     }
 }
