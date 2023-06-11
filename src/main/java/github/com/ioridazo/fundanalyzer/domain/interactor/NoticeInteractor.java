@@ -54,7 +54,7 @@ public class NoticeInteractor implements NoticeUseCase {
 
             if (!updatedList.isEmpty() && analysisResultEnabled) {
                 slackClient.sendMessage("github.com.ioridazo.fundanalyzer.domain.interactor.NoticeInteractor.noticeSlack",
-                        inputData.getDate(), edinetListView.getCountTarget(), updatedList.size());
+                        inputData.getDate(), edinetListView.countTarget(), updatedList.size());
             }
         } catch (final Exception e) {
             log.error(FundanalyzerLogClient.toInteractorLogObject(

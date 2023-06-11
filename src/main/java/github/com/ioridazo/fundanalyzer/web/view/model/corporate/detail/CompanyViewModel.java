@@ -3,27 +3,25 @@ package github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
-import lombok.Value;
 
 import java.util.Comparator;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
-public class CompanyViewModel {
-    private final String code;
-    private final String name;
-    private final String industry;
-    private final String edinetCode;
-    private final Boolean isFavorite;
-    private final Integer capitalStock;
-    private final String settlementDate;
-    private final String per;
-    private final String pbr;
-    private final String roe;
-    private final String numberOfShares;
-    private final String marketCapitalization;
-    private final String dividendYield;
-    private final String shareholderBenefit;
+public record CompanyViewModel(
+        String code,
+        String name,
+        String industry,
+        String edinetCode,
+        Boolean isFavorite,
+        Integer capitalStock,
+        String settlementDate,
+        String per,
+        String pbr,
+        String roe,
+        String numberOfShares,
+        String marketCapitalization,
+        String dividendYield,
+        String shareholderBenefit
+) {
 
     public static CompanyViewModel of(final Company company, final Stock stock) {
         return new CompanyViewModel(

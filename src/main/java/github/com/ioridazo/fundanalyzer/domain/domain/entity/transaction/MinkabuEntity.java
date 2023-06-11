@@ -50,11 +50,11 @@ public class MinkabuEntity {
                 null,
                 code,
                 targetDate,
-                Parser.parseDoubleMinkabu(minkabu.getStockPrice()).orElse(null),
-                Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getGoals()).orElse(null),
-                Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getTheoretical()).orElse(null),
-                Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getIndividualInvestors()).orElse(null),
-                Parser.parseDoubleMinkabu(minkabu.getExpectedStockPrice().getSecuritiesAnalyst()).orElse(null),
+                Parser.parseDoubleMinkabu(minkabu.stockPrice()).orElse(null),
+                Parser.parseDoubleMinkabu(minkabu.expectedStockPrice().goals()).orElse(null),
+                Parser.parseDoubleMinkabu(minkabu.expectedStockPrice().theoretical()).orElse(null),
+                Parser.parseDoubleMinkabu(minkabu.expectedStockPrice().individualInvestors()).orElse(null),
+                Parser.parseDoubleMinkabu(minkabu.expectedStockPrice().securitiesAnalyst()).orElse(null),
                 createdAt
         );
     }

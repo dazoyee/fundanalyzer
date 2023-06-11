@@ -319,12 +319,12 @@ class JsoupClientTest {
             var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
-                    () -> assertNotNull(actual.getStockPrice()),
-                    () -> assertNotNull(actual.getTargetDate()),
-                    () -> assertNotNull(actual.getExpectedStockPrice().getGoals()),
-                    () -> assertNotNull(actual.getExpectedStockPrice().getTheoretical()),
-                    () -> assertNotNull(actual.getExpectedStockPrice().getIndividualInvestors()),
-                    () -> assertNotNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
+                    () -> assertNotNull(actual.stockPrice()),
+                    () -> assertNotNull(actual.targetDate()),
+                    () -> assertNotNull(actual.expectedStockPrice().goals()),
+                    () -> assertNotNull(actual.expectedStockPrice().theoretical()),
+                    () -> assertNotNull(actual.expectedStockPrice().individualInvestors()),
+                    () -> assertNotNull(actual.expectedStockPrice().securitiesAnalyst())
             );
             System.out.println(actual);
         }
@@ -338,12 +338,12 @@ class JsoupClientTest {
             var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
-                    () -> assertEquals("1,450.0 円", actual.getStockPrice()),
-                    () -> assertEquals("10/21", actual.getTargetDate()),
-                    () -> assertEquals("1,606", actual.getExpectedStockPrice().getGoals()),
-                    () -> assertEquals("1,538", actual.getExpectedStockPrice().getTheoretical()),
-                    () -> assertEquals("1,742", actual.getExpectedStockPrice().getIndividualInvestors()),
-                    () -> assertEquals("1,593", actual.getExpectedStockPrice().getSecuritiesAnalyst())
+                    () -> assertEquals("1,450.0 円", actual.stockPrice()),
+                    () -> assertEquals("10/21", actual.targetDate()),
+                    () -> assertEquals("1,606", actual.expectedStockPrice().goals()),
+                    () -> assertEquals("1,538", actual.expectedStockPrice().theoretical()),
+                    () -> assertEquals("1,742", actual.expectedStockPrice().individualInvestors()),
+                    () -> assertEquals("1,593", actual.expectedStockPrice().securitiesAnalyst())
             );
         }
 
@@ -356,12 +356,12 @@ class JsoupClientTest {
             var actual = client.minkabu(code);
 
             assertAll("MinkabuResultBean",
-                    () -> assertEquals("1,682.0 円", actual.getStockPrice()),
-                    () -> assertEquals("10/21", actual.getTargetDate()),
-                    () -> assertEquals("2,071", actual.getExpectedStockPrice().getGoals()),
-                    () -> assertEquals("2,486", actual.getExpectedStockPrice().getTheoretical()),
-                    () -> assertEquals("1,448", actual.getExpectedStockPrice().getIndividualInvestors()),
-                    () -> assertNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
+                    () -> assertEquals("1,682.0 円", actual.stockPrice()),
+                    () -> assertEquals("10/21", actual.targetDate()),
+                    () -> assertEquals("2,071", actual.expectedStockPrice().goals()),
+                    () -> assertEquals("2,486", actual.expectedStockPrice().theoretical()),
+                    () -> assertEquals("1,448", actual.expectedStockPrice().individualInvestors()),
+                    () -> assertNull(actual.expectedStockPrice().securitiesAnalyst())
             );
         }
 
@@ -375,12 +375,12 @@ class JsoupClientTest {
 
 
             assertAll("MinkabuResultBean",
-                    () -> assertEquals("408. 0 円", actual.getStockPrice()),
-                    () -> assertEquals("11/27", actual.getTargetDate()),
-                    () -> assertEquals("636", actual.getExpectedStockPrice().getGoals()),
-                    () -> assertNull(actual.getExpectedStockPrice().getTheoretical()),
-                    () -> assertNull(actual.getExpectedStockPrice().getIndividualInvestors()),
-                    () -> assertNull(actual.getExpectedStockPrice().getSecuritiesAnalyst())
+                    () -> assertEquals("408. 0 円", actual.stockPrice()),
+                    () -> assertEquals("11/27", actual.targetDate()),
+                    () -> assertEquals("636", actual.expectedStockPrice().goals()),
+                    () -> assertNull(actual.expectedStockPrice().theoretical()),
+                    () -> assertNull(actual.expectedStockPrice().individualInvestors()),
+                    () -> assertNull(actual.expectedStockPrice().securitiesAnalyst())
             );
         }
 

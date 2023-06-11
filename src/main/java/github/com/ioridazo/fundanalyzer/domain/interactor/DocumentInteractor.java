@@ -289,9 +289,7 @@ public class DocumentInteractor implements DocumentUseCase {
         try {
             financialStatementSpecification.insert(
                     companySpecification.findCompanyByEdinetCode(inputData.getEdinetCode())
-                            .orElseThrow(() -> {
-                                throw new FundanalyzerNotExistException("EDINETコード");
-                            }),
+                            .orElseThrow(() -> new FundanalyzerNotExistException("EDINETコード")),
                     FinancialStatementEnum.fromId(inputData.getFinancialStatementId()),
                     inputData.getSubjectId(),
                     documentSpecification.findDocument(inputData.getDocumentId()),

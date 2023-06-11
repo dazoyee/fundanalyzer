@@ -75,15 +75,15 @@ public class EdinetClient {
      */
     @Observed
     public EdinetResponse list(final ListRequestParameter parameter) throws FundanalyzerRestClientException {
-        if (ListType.DEFAULT.equals(parameter.getType())) {
+        if (ListType.DEFAULT.equals(parameter.type())) {
             log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate()),
+                    MessageFormat.format("書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.date()),
                     Category.DOCUMENT,
                     Process.EDINET
             ));
         } else {
             log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.getDate()),
+                    MessageFormat.format("書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{0}", parameter.date()),
                     Category.DOCUMENT,
                     Process.EDINET
             ));
@@ -93,12 +93,12 @@ public class EdinetClient {
             // retry
             final EdinetResponse edinetResponse = retryTemplate.execute(context -> {
                 if (context.getRetryCount() > 0) {
-                    if (ListType.DEFAULT.equals(parameter.getType())) {
+                    if (ListType.DEFAULT.equals(parameter.type())) {
                         log.info(FundanalyzerLogClient.toClientLogObject(
                                 MessageFormat.format(
                                         "通信に失敗したため、リトライ{0}回目の書類一覧（メタデータ）取得処理を実行します。\t取得対象日:{1}",
                                         context.getRetryCount() + 1,
-                                        parameter.getDate()
+                                        parameter.date()
                                 ),
                                 Category.DOCUMENT,
                                 Process.EDINET
@@ -108,7 +108,7 @@ public class EdinetClient {
                                 MessageFormat.format(
                                         "通信に失敗したため、リトライ{0}回目の書類一覧（提出書類一覧及びメタデータ）取得処理を実行します。\t取得対象日:{1}",
                                         context.getRetryCount() + 1,
-                                        parameter.getDate()
+                                        parameter.date()
                                 ),
                                 Category.DOCUMENT,
                                 Process.EDINET
@@ -129,7 +129,7 @@ public class EdinetClient {
                                             return restTemplate.getForObject(
                                                     "/api/v1/documents.json?date={date}&type={type}",
                                                     EdinetResponse.class,
-                                                    Map.of("date", parameter.getDate().toString(), "type", parameter.getType().toValue())
+                                                    Map.of("date", parameter.date().toString(), "type", parameter.type().toValue())
                                             );
                                         } catch (final RestClientResponseException e) {
                                             log.warn(FundanalyzerLogClient.toClientLogObject(
@@ -169,11 +169,11 @@ public class EdinetClient {
                         });
             });
 
-            if (ListType.DEFAULT.equals(parameter.getType())) {
+            if (ListType.DEFAULT.equals(parameter.type())) {
                 log.info(FundanalyzerLogClient.toClientLogObject(
                         MessageFormat.format(
                                 "書類一覧（メタデータ）を正常に取得しました。\t取得対象日:{0}\t対象ファイル件数:{1}",
-                                parameter.getDate(),
+                                parameter.date(),
                                 Optional.ofNullable(edinetResponse)
                                         .map(EdinetResponse::getMetadata)
                                         .map(Metadata::getResultset)
@@ -217,8 +217,8 @@ public class EdinetClient {
             retryTemplate.execute(retryContext -> {
                 if (retryContext.getRetryCount() == 0) {
                     log.info(FundanalyzerLogClient.toClientLogObject(
-                            MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.getDocId()),
-                            parameter.getDocId(),
+                            MessageFormat.format("書類のダウンロード処理を実行します。\t書類管理番号:{0}", parameter.docId()),
+                            parameter.docId(),
                             Category.DOCUMENT,
                             Process.DOWNLOAD
                     ));
@@ -227,9 +227,9 @@ public class EdinetClient {
                             MessageFormat.format(
                                     "通信に失敗したため、リトライ{0}回目の書類のダウンロード処理を実行します。\t書類管理番号:{1}",
                                     retryContext.getRetryCount(),
-                                    parameter.getDocId()
+                                    parameter.docId()
                             ),
-                            parameter.getDocId(),
+                            parameter.docId(),
                             Category.DOCUMENT,
                             Process.DOWNLOAD
                     ));
@@ -251,8 +251,8 @@ public class EdinetClient {
                                                     request -> request
                                                             .getHeaders()
                                                             .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
-                                                    response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.getDocId() + ".zip")),
-                                                    Map.of("docId", parameter.getDocId(), "type", parameter.getType().toValue())
+                                                    response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.docId() + ".zip")),
+                                                    Map.of("docId", parameter.docId(), "type", parameter.type().toValue())
                                             );
                                         } catch (final RestClientResponseException e) {
                                             if (HttpStatusCode.valueOf(403) == e.getStatusCode()) {
@@ -263,7 +263,7 @@ public class EdinetClient {
                                                                 e.getStatusCode(),
                                                                 e.getResponseBodyAsString()
                                                         ),
-                                                        parameter.getDocId(),
+                                                        parameter.docId(),
                                                         Category.DOCUMENT,
                                                         Process.DOWNLOAD
                                                 ));
@@ -275,7 +275,7 @@ public class EdinetClient {
                                                                 e.getStatusCode(),
                                                                 e.getResponseBodyAsString()
                                                         ),
-                                                        parameter.getDocId(),
+                                                        parameter.docId(),
                                                         Category.DOCUMENT,
                                                         Process.DOWNLOAD
                                                 ));
@@ -312,8 +312,8 @@ public class EdinetClient {
             });
 
             log.info(FundanalyzerLogClient.toClientLogObject(
-                    MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.getDocId()),
-                    parameter.getDocId(),
+                    MessageFormat.format("書類のダウンロードが正常に実行されました。\t書類管理番号:{0}", parameter.docId()),
+                    parameter.docId(),
                     Category.DOCUMENT,
                     Process.DOWNLOAD
             ));
@@ -346,6 +346,7 @@ public class EdinetClient {
      * @return null
      * @throws IOException エラー発生時
      */
+    @SuppressWarnings("SameReturnValue")
     Object copyFile(final InputStream file, final Path path) throws IOException {
         try {
             Files.copy(file, path);

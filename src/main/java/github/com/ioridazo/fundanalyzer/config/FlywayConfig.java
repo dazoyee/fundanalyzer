@@ -8,8 +8,6 @@ import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.text.MessageFormat;
-
 @Configuration
 public class FlywayConfig {
 
@@ -25,16 +23,17 @@ public class FlywayConfig {
 
     private void log(final Flyway flyway) {
         for (MigrationInfo info : flyway.info().all())
-            log.info(MessageFormat.format(
-                    "=== Flyway info ===\n" +
-                            "Version: {0}\n" +
-                            "Description: {1}\n" +
-                            "Type: {2}\n" +
-                            "Script: {3}\n" +
-                            "Checksum: {4}\n" +
-                            "Installed on: {5}\n" +
-                            "Execution time: {6}\n" +
-                            "State: {7}\n",
+            log.info("""
+                            === Flyway info ===
+                            Version: {}
+                            Description: {}
+                            Type: {}
+                            Script: {}
+                            Checksum: {}
+                            Installed on: {}
+                            Execution time: {}
+                            State: {}
+                            """,
                     info.getVersion().getVersion(),
                     info.getDescription(),
                     info.getType().name(),
@@ -43,6 +42,6 @@ public class FlywayConfig {
                     info.getInstalledOn(),
                     info.getExecutionTime(),
                     info.getState().getDisplayName()
-            ));
+            );
     }
 }

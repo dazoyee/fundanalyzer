@@ -108,18 +108,18 @@ public record FinanceValueViewModel(
                     new IdValue(
                             FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.getId(),
                             plSubjectEntityList.stream()
-                                    .filter(pl -> pl.getName().equals(PlSubject.PlEnum.OPERATING_PROFIT.getSubject()))
+                                    .filter(pl -> pl.name().equals(PlSubject.PlEnum.OPERATING_PROFIT.getSubject()))
                                     .findFirst().orElseThrow()
-                                    .getId(),
+                                    .id(),
                             PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
                             financeValue.getOperatingProfit().orElse(null)
                     ),
                     new IdValue(
                             FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.getId(),
                             plSubjectEntityList.stream()
-                                    .filter(pl -> pl.getName().equals(PlSubject.PlEnum.NET_INCOME.getSubject()))
+                                    .filter(pl -> pl.name().equals(PlSubject.PlEnum.NET_INCOME.getSubject()))
                                     .findFirst().orElseThrow()
-                                    .getId(),
+                                    .id(),
                             PlSubject.PlEnum.NET_INCOME.getSubject(),
                             financeValue.getNetIncome().orElse(null)
                     ),

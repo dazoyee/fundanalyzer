@@ -131,7 +131,7 @@ public class EdinetController {
     }
 
     /**
-     * 財務諸表の分析する
+     * 財務諸表を分析する
      *
      * @param date 提出日
      * @return EdinetDetail
