@@ -19,7 +19,7 @@ public final class Parser {
                 .map(String::trim)
                 .map(v -> v.replace(" ", ""))
                 .orElseGet(() -> {
-                    log.warn("値の変換に失敗したため、NULLで登録します。\tvalue:{}", value);
+                    log.warn("値の変換に失敗したため、NULLで登録します。");
                     return null;
                 });
     }
