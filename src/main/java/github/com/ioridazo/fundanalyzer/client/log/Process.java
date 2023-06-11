@@ -34,16 +34,12 @@ public enum Process {
     }
 
     public static Process of(final FinancialStatementEnum fs) {
-        switch (fs) {
-            case BALANCE_SHEET:
-                return BS;
-            case PROFIT_AND_LESS_STATEMENT:
-                return PL;
-            case TOTAL_NUMBER_OF_SHARES:
-                return NS;
-            default:
-                throw new FundanalyzerRuntimeException();
-        }
+        return switch (fs) {
+            case BALANCE_SHEET -> BS;
+            case PROFIT_AND_LESS_STATEMENT -> PL;
+            case TOTAL_NUMBER_OF_SHARES -> NS;
+            default -> throw new FundanalyzerRuntimeException();
+        };
     }
 
     public static Process of(final ScrapingKeywordEntity scrapingKeywordEntity) {

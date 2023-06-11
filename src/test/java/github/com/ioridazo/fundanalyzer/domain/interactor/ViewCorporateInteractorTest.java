@@ -163,9 +163,9 @@ class ViewCorporateInteractorTest {
 
             assertAll(
                     () -> assertAll(
-                            () -> assertEquals("code", actual.getCompany().getCode(), "company.code"),
-                            () -> assertEquals("name", actual.getCompany().getName(), "company.name"),
-                            () -> assertEquals("edinetCode", actual.getCompany().getEdinetCode())
+                            () -> assertEquals("code", actual.getCompany().code(), "company.code"),
+                            () -> assertEquals("name", actual.getCompany().name(), "company.name"),
+                            () -> assertEquals("edinetCode", actual.getCompany().edinetCode())
                     ),
                     () -> assertAll(
                             () -> assertEquals("code", actual.getCorporate().getCode(), "corporate.code"),
@@ -177,17 +177,17 @@ class ViewCorporateInteractorTest {
                             () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getDiscountRateToDisplay())
                     ),
                     () -> assertAll(
-                            () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getAnalysisResultList().get(0).getDocumentPeriod()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).getCorporateValue()),
-                            () -> assertEquals("120", actual.getAnalysisResultList().get(0).getDocumentTypeCode()),
-                            () -> assertNull(actual.getAnalysisResultList().get(0).getQuarterType())
+                            () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getAnalysisResultList().get(0).documentPeriod()),
+                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).corporateValue()),
+                            () -> assertEquals("120", actual.getAnalysisResultList().get(0).documentTypeCode()),
+                            () -> assertNull(actual.getAnalysisResultList().get(0).quarterType())
                     ),
                     () -> assertAll(
                             () -> assertAll(
-                                    () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getFinancialStatement().get(0).getKey().getPeriodStart()),
-                                    () -> assertEquals(LocalDate.parse("2021-12-31"), actual.getFinancialStatement().get(0).getKey().getPeriodEnd()),
-                                    () -> assertEquals("有価証券報告書", actual.getFinancialStatement().get(0).getKey().getDocumentTypeName()),
-                                    () -> assertEquals(LocalDate.parse("2021-05-15"), actual.getFinancialStatement().get(0).getKey().getSubmitDate())
+                                    () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getFinancialStatement().get(0).getKey().periodStart()),
+                                    () -> assertEquals(LocalDate.parse("2021-12-31"), actual.getFinancialStatement().get(0).getKey().periodEnd()),
+                                    () -> assertEquals("有価証券報告書", actual.getFinancialStatement().get(0).getKey().documentTypeName()),
+                                    () -> assertEquals(LocalDate.parse("2021-05-15"), actual.getFinancialStatement().get(0).getKey().submitDate())
                             ),
                             () -> assertAll(
                                     () -> assertEquals("bs", actual.getFinancialStatement().get(0).getBs().get(0).getSubject()),

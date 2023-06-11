@@ -133,7 +133,7 @@ public class FinancialStatementSpecification {
             final Company company, final FinancialStatementKeyViewModel key) {
 
         return financialStatementDao.selectByCodeAndPeriod(
-                company.edinetCode(), key.getPeriodEnd(), key.getDocumentTypeCode(), key.getSubmitDate());
+                company.edinetCode(), key.periodEnd(), key.documentTypeCode(), key.submitDate());
     }
 
     /**

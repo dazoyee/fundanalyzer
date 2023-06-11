@@ -72,24 +72,24 @@ public class CorporatePresenter {
         model.addAttribute("analysisResults", view.getAnalysisResultList());
 
         final List<AnalysisResultViewModel> analysis = view.getAnalysisResultList().stream()
-                .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.getDocumentTypeCode().equals(t)))
-                .map(AnalysisResultViewModel::getDocumentPeriod)
+                .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
+                .map(AnalysisResultViewModel::documentPeriod)
                 .distinct()
                 // 最新の企業価値を取得する
                 .map(dp -> view.getAnalysisResultList().stream()
-                        .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.getDocumentTypeCode().equals(t)))
-                        .filter(viewModel -> dp.equals(viewModel.getDocumentPeriod()))
-                        .max(Comparator.comparing(AnalysisResultViewModel::getSubmitDate)))
+                        .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
+                        .filter(viewModel -> dp.equals(viewModel.documentPeriod()))
+                        .max(Comparator.comparing(AnalysisResultViewModel::submitDate)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod))
+                .sorted(Comparator.comparing(AnalysisResultViewModel::documentPeriod))
                 .toList();
 
         model.addAttribute("analysisLabelAll", analysis.stream()
-                .map(AnalysisResultViewModel::getDocumentPeriod)
+                .map(AnalysisResultViewModel::documentPeriod)
                 .toList());
         model.addAttribute("analysisPointAll", analysis.stream()
-                .map(AnalysisResultViewModel::getCorporateValue)
+                .map(AnalysisResultViewModel::corporateValue)
                 .toList());
     }
 
@@ -139,32 +139,32 @@ public class CorporatePresenter {
         model.addAttribute("forecastStocks", view.getMinkabuList());
 
         final List<MinkabuViewModel> forecastStock = view.getMinkabuList().stream()
-                .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate))
+                .sorted(Comparator.comparing(MinkabuViewModel::targetDate))
                 .toList();
 
         model.addAttribute("forecastStockLabel180", forecastStock.stream()
-                .map(MinkabuViewModel::getTargetDate)
+                .map(MinkabuViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
                 .toList());
         model.addAttribute("forecastStockPoint180", forecastStock.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
-                .map(MinkabuViewModel::getGoalsStock)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(180)))
+                .map(MinkabuViewModel::goalsStock)
                 .toList());
 
         model.addAttribute("forecastStockLabel365", forecastStock.stream()
-                .map(MinkabuViewModel::getTargetDate)
+                .map(MinkabuViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
                 .toList());
         model.addAttribute("forecastStockPoint365", forecastStock.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
-                .map(MinkabuViewModel::getGoalsStock)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(365)))
+                .map(MinkabuViewModel::goalsStock)
                 .toList());
 
         model.addAttribute("forecastStockLabelAll", forecastStock.stream()
-                .map(MinkabuViewModel::getTargetDate)
+                .map(MinkabuViewModel::targetDate)
                 .toList());
         model.addAttribute("forecastStockPointAll", forecastStock.stream()
-                .map(MinkabuViewModel::getGoalsStock)
+                .map(MinkabuViewModel::goalsStock)
                 .toList());
     }
 
@@ -172,50 +172,50 @@ public class CorporatePresenter {
         model.addAttribute("stockPrices", view.getStockPriceList());
 
         final List<StockPriceViewModel> stockPrice = view.getStockPriceList().stream()
-                .sorted(Comparator.comparing(StockPriceViewModel::getTargetDate))
+                .sorted(Comparator.comparing(StockPriceViewModel::targetDate))
                 .toList();
 
         model.addAttribute("stockLabel30", stockPrice.stream()
-                .map(StockPriceViewModel::getTargetDate)
+                .map(StockPriceViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(30)))
                 .toList());
         model.addAttribute("stockPoint30", stockPrice.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(30)))
-                .map(StockPriceViewModel::getStockPrice)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(30)))
+                .map(StockPriceViewModel::stockPrice)
                 .toList());
 
         model.addAttribute("stockLabel90", stockPrice.stream()
-                .map(StockPriceViewModel::getTargetDate)
+                .map(StockPriceViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(90)))
                 .toList());
         model.addAttribute("stockPoint90", stockPrice.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(90)))
-                .map(StockPriceViewModel::getStockPrice)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(90)))
+                .map(StockPriceViewModel::stockPrice)
                 .toList());
 
         model.addAttribute("stockLabel180", stockPrice.stream()
-                .map(StockPriceViewModel::getTargetDate)
+                .map(StockPriceViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(180)))
                 .toList());
         model.addAttribute("stockPoint180", stockPrice.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(180)))
-                .map(StockPriceViewModel::getStockPrice)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(180)))
+                .map(StockPriceViewModel::stockPrice)
                 .toList());
 
         model.addAttribute("stockLabel365", stockPrice.stream()
-                .map(StockPriceViewModel::getTargetDate)
+                .map(StockPriceViewModel::targetDate)
                 .filter(targetDate -> targetDate.isAfter(LocalDate.now().minusDays(365)))
                 .toList());
         model.addAttribute("stockPoint365", stockPrice.stream()
-                .filter(vm -> vm.getTargetDate().isAfter(LocalDate.now().minusDays(365)))
-                .map(StockPriceViewModel::getStockPrice)
+                .filter(vm -> vm.targetDate().isAfter(LocalDate.now().minusDays(365)))
+                .map(StockPriceViewModel::stockPrice)
                 .toList());
 
         model.addAttribute("stockLabelAll", stockPrice.stream()
-                .map(StockPriceViewModel::getTargetDate)
+                .map(StockPriceViewModel::targetDate)
                 .toList());
         model.addAttribute("stockPointAll", stockPrice.stream()
-                .map(StockPriceViewModel::getStockPrice)
+                .map(StockPriceViewModel::stockPrice)
                 .toList());
     }
 

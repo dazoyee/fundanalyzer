@@ -190,8 +190,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
         final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()
                 .map(AnalysisResultViewModel::of)
-                .sorted(Comparator.comparing(AnalysisResultViewModel::getDocumentPeriod)
-                        .thenComparing(AnalysisResultViewModel::getSubmitDate)
+                .sorted(Comparator.comparing(AnalysisResultViewModel::documentPeriod)
+                        .thenComparing(AnalysisResultViewModel::submitDate)
                         .reversed())
                 .toList();
 
@@ -207,7 +207,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .map(key -> {
                     final List<FinancialStatementEntity> valueList = financialStatementSpecification.findByKeyPerCompany(company, key);
                     return FinancialStatementViewModel.of(
-                            key.getSubmitDate(),
+                            key.submitDate(),
                             key,
                             financialStatementSpecification.parseBsSubjectValue(valueList),
                             financialStatementSpecification.parsePlSubjectValue(valueList)
@@ -227,11 +227,11 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 stock.getMinkabuEntityList().stream()
                         .filter(minkabuEntity -> minkabuEntity.getGoalsStock().isPresent())
                         .map(MinkabuViewModel::of)
-                        .sorted(Comparator.comparing(MinkabuViewModel::getTargetDate).reversed())
+                        .sorted(Comparator.comparing(MinkabuViewModel::targetDate).reversed())
                         .toList(),
                 stock.getStockPriceEntityList().stream()
                         .map(StockPriceViewModel::of)
-                        .sorted(Comparator.comparing(StockPriceViewModel::getTargetDate).reversed())
+                        .sorted(Comparator.comparing(StockPriceViewModel::targetDate).reversed())
                         .toList()
         );
     }

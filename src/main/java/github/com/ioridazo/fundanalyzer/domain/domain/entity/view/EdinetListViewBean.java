@@ -1,7 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.view;
 
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
-import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.Id;
@@ -10,44 +9,45 @@ import org.seasar.doma.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
+/**
+ * @param submitDate      提出日
+ * @param countAll        総件数
+ * @param countTarget     処理対象件数
+ * @param countScraped    処理済件数
+ * @param countAnalyzed   分析済件数
+ * @param notAnalyzedId   未分析ID
+ * @param cantScrapedId   処理確認ID
+ * @param countNotScraped 未処理件数
+ * @param countNotTarget  対象外件数
+ */
 @Entity(immutable = true)
 @Table(name = "edinet_list_view")
-public class EdinetListViewBean {
+public record EdinetListViewBean(
 
-    // 提出日
-    @Id
-    private final LocalDate submitDate;
+        @Id
+        LocalDate submitDate,
 
-    // 総件数
-    private final Long countAll;
+        Long countAll,
 
-    // 処理対象件数
-    private final Long countTarget;
+        Long countTarget,
 
-    // 処理済件数
-    private final Long countScraped;
+        Long countScraped,
 
-    // 分析済件数
-    private final Long countAnalyzed;
+        Long countAnalyzed,
 
-    // 未分析ID
-    private final String notAnalyzedId;
+        String notAnalyzedId,
 
-    // 処理確認ID
-    private final String cantScrapedId;
+        String cantScrapedId,
 
-    // 未処理件数
-    private final Long countNotScraped;
+        Long countNotScraped,
 
-    // 対象外件数
-    private final Long countNotTarget;
+        Long countNotTarget,
 
-    @Column(updatable = false)
-    private final LocalDateTime createdAt;
+        @Column(updatable = false)
+        LocalDateTime createdAt,
 
-    private final LocalDateTime updatedAt;
+        LocalDateTime updatedAt
+) {
 
     public static EdinetListViewBean of(
             final LocalDate submitDate,
@@ -76,15 +76,15 @@ public class EdinetListViewBean {
 
     public static EdinetListViewBean of(final EdinetListViewModel viewModel, final LocalDateTime nowLocalDateTime) {
         return new EdinetListViewBean(
-                viewModel.getSubmitDate(),
-                viewModel.getCountAll(),
-                viewModel.getCountTarget(),
-                viewModel.getCountScraped(),
-                viewModel.getCountAnalyzed(),
-                viewModel.getNotAnalyzedId(),
-                viewModel.getCantScrapedId(),
-                viewModel.getCountNotScraped(),
-                viewModel.getCountNotTarget(),
+                viewModel.submitDate(),
+                viewModel.countAll(),
+                viewModel.countTarget(),
+                viewModel.countScraped(),
+                viewModel.countAnalyzed(),
+                viewModel.notAnalyzedId(),
+                viewModel.cantScrapedId(),
+                viewModel.countNotScraped(),
+                viewModel.countNotTarget(),
                 nowLocalDateTime,
                 nowLocalDateTime
         );

@@ -101,7 +101,7 @@ public class AnalysisResult {
     }
 
     /**
-     * 企業価値の算出する
+     * 企業価値を算出する
      *
      * @param financeValue 財務諸表値
      * @param document     ドキュメント

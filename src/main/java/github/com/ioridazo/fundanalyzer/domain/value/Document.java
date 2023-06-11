@@ -87,16 +87,12 @@ public class Document {
     }
 
     public Optional<String> getFsDocumentPath(final FinancialStatementEnum fs) {
-        switch (fs) {
-            case BALANCE_SHEET:
-                return getBsDocumentPath();
-            case PROFIT_AND_LESS_STATEMENT:
-                return getPlDocumentPath();
-            case TOTAL_NUMBER_OF_SHARES:
-                return getNumberOfSharesDocumentPath();
-            default:
-                return Optional.empty();
-        }
+        return switch (fs) {
+            case BALANCE_SHEET -> getBsDocumentPath();
+            case PROFIT_AND_LESS_STATEMENT -> getPlDocumentPath();
+            case TOTAL_NUMBER_OF_SHARES -> getNumberOfSharesDocumentPath();
+            default -> Optional.empty();
+        };
     }
 
     public boolean isTarget() {
