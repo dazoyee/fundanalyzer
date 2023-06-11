@@ -1,28 +1,23 @@
 package github.com.ioridazo.fundanalyzer.client.jsoup.result;
 
-import lombok.Value;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.Objects;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
-public class MinkabuResultBean {
+public record MinkabuResultBean(
+        String stockPrice,
+        String targetDate,
+        ExpectedStockPrice expectedStockPrice
+) {
 
-    private final String stockPrice;
-
-    private final String targetDate;
-
-    private final ExpectedStockPrice expectedStockPrice;
-
-    @Value
-    public static class ExpectedStockPrice {
-        private final String goals;
-        private final String theoretical;
-        private final String individualInvestors;
-        private final String securitiesAnalyst;
+    public record ExpectedStockPrice(
+            String goals,
+            String theoretical,
+            String individualInvestors,
+            String securitiesAnalyst
+    ) {
     }
 
     public static MinkabuResultBean ofJsoup(final Document document) {

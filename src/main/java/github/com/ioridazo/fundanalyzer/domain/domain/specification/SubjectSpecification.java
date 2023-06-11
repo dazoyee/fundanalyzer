@@ -94,7 +94,7 @@ public class SubjectSpecification {
                     .findFirst()
                     .orElseThrow(() -> new FundanalyzerRuntimeException("貸借対照表の科目が存在しません"));
             case PROFIT_AND_LESS_STATEMENT -> inquiryPlSubjectList().stream()
-                    .filter(plSubject -> Objects.equals(subjectId, plSubject.getId()))
+                    .filter(plSubject -> Objects.equals(subjectId, plSubject.id()))
                     .map(PlSubject::of)
                     .findFirst()
                     .orElseThrow(() -> new FundanalyzerRuntimeException("損益計算書の科目が存在しません"));
@@ -124,7 +124,7 @@ public class SubjectSpecification {
      */
     public List<Subject> findPlSubjectList(final PlSubject.PlEnum plEnum) {
         return inquiryPlSubjectList().stream()
-                .filter(plSubject -> Objects.equals(plEnum.getOutlineSubjectId(), plSubject.getOutlineSubjectId()))
+                .filter(plSubject -> Objects.equals(plEnum.getOutlineSubjectId(), plSubject.outlineSubjectId()))
                 .map(PlSubject::of)
                 .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
                 .collect(Collectors.toList());

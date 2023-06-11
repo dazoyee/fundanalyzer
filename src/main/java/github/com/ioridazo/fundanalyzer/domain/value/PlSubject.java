@@ -19,10 +19,10 @@ public class PlSubject extends Subject {
 
     public static PlSubject of(final PlSubjectEntity entity) {
         return new PlSubject(
-                entity.getId(),
-                entity.getOutlineSubjectId(),
-                entity.getDetailSubjectId(),
-                entity.getName()
+                entity.id(),
+                entity.outlineSubjectId(),
+                entity.detailSubjectId(),
+                entity.name()
         );
     }
 

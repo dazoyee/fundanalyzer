@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.master;
 
-import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
 import org.seasar.doma.GeneratedValue;
@@ -10,20 +9,19 @@ import org.seasar.doma.Table;
 
 import java.time.LocalDateTime;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
 @Entity(immutable = true)
 @Table(name = "industry")
-public class IndustryEntity {
+public record IndustryEntity(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private final Integer id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        Integer id,
 
-    private final String name;
+        String name,
 
-    @Column(updatable = false)
-    private final LocalDateTime createdAt;
+        @Column(updatable = false)
+        LocalDateTime createdAt
+) {
 
     public static IndustryEntity of(final String industryName, final LocalDateTime nowLocalDateTime) {
         return new IndustryEntity(

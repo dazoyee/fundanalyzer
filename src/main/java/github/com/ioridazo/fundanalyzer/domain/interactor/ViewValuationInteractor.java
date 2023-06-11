@@ -121,10 +121,10 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     @Override
     public List<IndustryValuationViewModel> viewIndustryValuation() {
         return industrySpecification.inquiryIndustryList().stream()
-                .filter(entity -> industrySpecification.isTarget(entity.getId()))
+                .filter(entity -> industrySpecification.isTarget(entity.id()))
                 .map(entity -> viewSpecification.generateIndustryValuationView(
-                        entity.getName(),
-                        viewSpecification.findCompanyValuationViewList(entity.getId())
+                        entity.name(),
+                        viewSpecification.findCompanyValuationViewList(entity.id())
                 ))
                 .toList();
     }

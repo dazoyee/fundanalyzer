@@ -1,53 +1,44 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.edinet;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.EdinetListViewBean;
-import lombok.Value;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value
-public class EdinetListViewModel {
-
-    // 提出日
-    private final LocalDate submitDate;
-
-    // 総件数
-    private final Long countAll;
-
-    // 処理対象件数
-    private final Long countTarget;
-
-    // 処理済件数
-    private final Long countScraped;
-
-    // 分析済件数
-    private final Long countAnalyzed;
-
-    // 未分析ID
-    private final String notAnalyzedId;
-
-    // 処理確認ID
-    private final String cantScrapedId;
-
-    // 未処理件数
-    private final Long countNotScraped;
-
-    // 対象外件数
-    private final Long countNotTarget;
+/**
+ * @param submitDate      提出日
+ * @param countAll        総件数
+ * @param countTarget     処理対象件数
+ * @param countScraped    処理済件数
+ * @param countAnalyzed   分析済件数
+ * @param notAnalyzedId   未分析ID
+ * @param cantScrapedId   処理確認ID
+ * @param countNotScraped 未処理件数
+ * @param countNotTarget  対象外件数
+ */
+public record EdinetListViewModel(
+        LocalDate submitDate,
+        Long countAll,
+        Long countTarget,
+        Long countScraped,
+        Long countAnalyzed,
+        String notAnalyzedId,
+        String cantScrapedId,
+        Long countNotScraped,
+        Long countNotTarget
+) {
 
     public static EdinetListViewModel of(final EdinetListViewBean viewBean) {
         return new EdinetListViewModel(
-                viewBean.getSubmitDate(),
-                viewBean.getCountAll(),
-                viewBean.getCountTarget(),
-                viewBean.getCountScraped(),
-                viewBean.getCountAnalyzed(),
-                viewBean.getNotAnalyzedId(),
-                viewBean.getCantScrapedId(),
-                viewBean.getCountNotScraped(),
-                viewBean.getCountNotTarget()
+                viewBean.submitDate(),
+                viewBean.countAll(),
+                viewBean.countTarget(),
+                viewBean.countScraped(),
+                viewBean.countAnalyzed(),
+                viewBean.notAnalyzedId(),
+                viewBean.cantScrapedId(),
+                viewBean.countNotScraped(),
+                viewBean.countNotTarget()
         );
     }
 

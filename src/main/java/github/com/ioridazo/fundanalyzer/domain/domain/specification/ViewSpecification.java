@@ -154,8 +154,8 @@ public class ViewSpecification {
     public List<EdinetListViewModel> findAllEdinetListView() {
         return edinetListViewDao.selectAll().stream()
                 .map(EdinetListViewModel::of)
-                .filter(viewModel -> viewModel.getSubmitDate().isAfter(nowLocalDate().minusDays(edinetListSize)))
-                .sorted(Comparator.comparing(EdinetListViewModel::getSubmitDate).reversed())
+                .filter(viewModel -> viewModel.submitDate().isAfter(nowLocalDate().minusDays(edinetListSize)))
+                .sorted(Comparator.comparing(EdinetListViewModel::submitDate).reversed())
                 .toList();
     }
 
@@ -218,7 +218,7 @@ public class ViewSpecification {
      * @param viewModel EDINETリストビュー
      */
     public void upsert(final EdinetListViewModel viewModel) {
-        if (isPresent(viewModel.getSubmitDate())) {
+        if (isPresent(viewModel.submitDate())) {
             edinetListViewDao.update(EdinetListViewBean.of(viewModel, nowLocalDateTime()));
         } else {
             try {
@@ -230,7 +230,7 @@ public class ViewSpecification {
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
                                         "\tテーブル名:{0}\t提出日:{1}",
                                 "edinet_list_view",
-                                viewModel.getSubmitDate()
+                                viewModel.submitDate()
                         )
                 );
             }

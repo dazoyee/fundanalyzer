@@ -59,8 +59,8 @@ public class IndustrySpecification {
      */
     public Integer convertFromNameToId(final String industryName) {
         return inquiryIndustryList().stream()
-                .filter(industry -> Objects.equals(industryName, industry.getName()))
-                .map(IndustryEntity::getId)
+                .filter(industry -> Objects.equals(industryName, industry.name()))
+                .map(IndustryEntity::id)
                 .findFirst()
                 .orElseThrow(() -> new FundanalyzerRuntimeException("業種IDが存在しません。"));
     }
@@ -73,8 +73,8 @@ public class IndustrySpecification {
      */
     public String convertFromIdToName(final Integer id) {
         return inquiryIndustryList().stream()
-                .filter(industryEntity -> Objects.equals(id, industryEntity.getId()))
-                .map(IndustryEntity::getName)
+                .filter(industryEntity -> Objects.equals(id, industryEntity.id()))
+                .map(IndustryEntity::name)
                 .findFirst()
                 .orElseThrow(() -> new FundanalyzerRuntimeException("業種名が存在しません。"));
     }
@@ -113,7 +113,7 @@ public class IndustrySpecification {
      */
     private boolean isEmpty(final String name) {
         return inquiryIndustryList().stream()
-                .filter(industryEntity -> Objects.equals(name, industryEntity.getName()))
+                .filter(industryEntity -> Objects.equals(name, industryEntity.name()))
                 .findFirst()
                 .isEmpty();
     }
