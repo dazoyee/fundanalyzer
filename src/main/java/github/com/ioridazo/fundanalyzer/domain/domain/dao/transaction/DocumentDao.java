@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+@SuppressWarnings("UnusedReturnValue")
 @ConfigAutowireable
 @Dao
 public interface DocumentDao {

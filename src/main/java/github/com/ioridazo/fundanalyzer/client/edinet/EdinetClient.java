@@ -346,6 +346,7 @@ public class EdinetClient {
      * @return null
      * @throws IOException エラー発生時
      */
+    @SuppressWarnings("SameReturnValue")
     Object copyFile(final InputStream file, final Path path) throws IOException {
         try {
             Files.copy(file, path);
