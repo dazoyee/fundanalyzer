@@ -3,6 +3,10 @@ def datetime = new Date().format('yyyyMMddHHmmss')
 pipeline {
     agent any
 
+    environment {
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
+    }
+
     tools {
         jdk 'openjdk17'
     }
@@ -31,7 +35,7 @@ pipeline {
                 print "===== テストを開始します ====="
                 bat "./mvnw clean"
 //                bat "./mvnw clean clover:setup"
-                bat "./mvnw test surefire-report:report pmd:pmd pmd:cpd jacoco:report spotbugs:spotbugs"
+                bat "./mvnw test surefire-report:report pmd:pmd pmd:cpd jacoco:report spotbugs:spotbugs sonar:sonar -Dsonar.login=$SONARQUBE_TOKEN"
                 print "===== テストを正常に終了しました ====="
             }
         }

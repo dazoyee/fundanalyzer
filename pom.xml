@@ -38,6 +38,8 @@
         <spotbugs-maven-plugin.version>4.7.3.2</spotbugs-maven-plugin.version>
         <spotbugs.version>4.7.3</spotbugs.version>
         <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
+        <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
+        <sonar.host.url>http://localhost:9000</sonar.host.url>
     </properties>
 
     <dependencies>
@@ -380,6 +382,11 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
 
