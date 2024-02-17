@@ -93,25 +93,22 @@ class EdinetClientTest {
         void list_ok_DEFAULT() throws InterruptedException {
             var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
-            var json = "" +
-                    "{" +
-                    "    \"metadata\":" +
-                    "        {" +
-                    "            \"title\": \"提出された書類を把握するための API\"," +
-                    "            \"parameter\":" +
-                    "                {" +
-                    "                    \"date\": \"2019-04-01\"," +
-                    "                    \"type\": \"1\"" +
-                    "                }," +
-                    "            \"resultset\":" +
-                    "                {" +
-                    "                    \"count\": 1" +
-                    "                }," +
-                    "            \"processDateTime\": \"2019-04-01 13:01\"," +
-                    "            \"status\": \"200\"," +
-                    "            \"message\": \"OK\"" +
-                    "        }" +
-                    "}";
+            var json = """
+{
+  "metadata":{
+    "title":"提出された書類を把握するための API",
+    "parameter":{
+      "date":"2019-04-01",
+      "type":"1"
+    },
+    "resultset":{
+      "count":1
+    },
+    "processDateTime":"2019-04-01 13:01",
+    "status":"200",
+    "message":"OK"
+  }
+}""";
 
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
@@ -148,56 +145,53 @@ class EdinetClientTest {
         void list_ok_GET_LIST() throws InterruptedException {
             var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.GET_LIST);
 
-            var json = "" +
-                    "{" +
-                    "    \"metadata\":" +
-                    "        {" +
-                    "            \"title\": \"提出された書類を把握するための API\"," +
-                    "            \"parameter\":" +
-                    "                {" +
-                    "                    \"date\": \"2019-04-01\"," +
-                    "                    \"type\": \"2\"" +
-                    "                }," +
-                    "            \"resultset\":" +
-                    "                {" +
-                    "                    \"count\": 2" +
-                    "                }," +
-                    "            \"processDateTime\": \"2019-04-01 13:01\"," +
-                    "            \"status\": \"200\"," +
-                    "            \"message\": \"OK\"" +
-                    "        }," +
-                    "    \"results\": [" +
-                    "        {" +
-                    "            \"seqNumber\": 1," +
-                    "            \"docID\": \"S1000001\"," +
-                    "            \"edinetCode\": \"E10001\"," +
-                    "            \"secCode\": \"10000\"," +
-                    "            \"JCN\": \"6000012010023\"," +
-                    "            \"filerName\": \"エディネット株式会社\"," +
-                    "            \"fundCode\": \"G00001\"," +
-                    "            \"ordinanceCode\": \"030\"," +
-                    "            \"formCode\": \"04A000\"," +
-                    "            \"docTypeCode\": \"030\"," +
-                    "            \"periodStart\": \"2019-04-01\", " +
-                    "            \"periodEnd\": \"2020-03-31\"," +
-                    "            \"submitDateTime\": \"2019-04-01 12:34\"," +
-                    "            \"docDescription\": \"有価証券届出書（内国投資信託受益証券）\"," +
-                    "            \"issuerEdinetCode\": null," +
-                    "            \"subjectEdinetCode\": null," +
-                    "            \"subsidiaryEdinetCode\": null," +
-                    "            \"currentReportReason\": null," +
-                    "            \"parentDocID\": null," +
-                    "            \"opeDateTime\": null," +
-                    "            \"withdrawalStatus\": \"0\"," +
-                    "            \"docInfoEditStatus\": \"0\"," +
-                    "            \"disclosureStatus\": \"0\"," +
-                    "            \"xbrlFlag\": \"1\"," +
-                    "            \"pdfFlag\": \"1\"," +
-                    "            \"attachDocFlag\": \"1\"," +
-                    "            \"englishDocFlag\": \"0\"" +
-                    "        }" +
-                    "    ]" +
-                    "}";
+            var json = """
+{
+  "metadata":{
+    "title":"提出された書類を把握するための API",
+    "parameter":{
+      "date":"2019-04-01",
+      "type":"2"
+    },
+    "resultset":{
+      "count":2
+    },
+    "processDateTime":"2019-04-01 13:01",
+    "status":"200",
+    "message":"OK"
+  },
+  "results":[
+    {
+      "seqNumber":1,
+      "docID":"S1000001",
+      "edinetCode":"E10001",
+      "secCode":"10000",
+      "JCN":"6000012010023",
+      "filerName":"エディネット株式会社",
+      "fundCode":"G00001",
+      "ordinanceCode":"030",
+      "formCode":"04A000",
+      "docTypeCode":"030",
+      "periodStart":"2019-04-01",
+      "periodEnd":"2020-03-31",
+      "submitDateTime":"2019-04-01 12:34",
+      "docDescription":"有価証券届出書（内国投資信託受益証券）",
+      "issuerEdinetCode":null,
+      "subjectEdinetCode":null,
+      "subsidiaryEdinetCode":null,
+      "currentReportReason":null,
+      "parentDocID":null,
+      "opeDateTime":null,
+      "withdrawalStatus":"0",
+      "docInfoEditStatus":"0",
+      "disclosureStatus":"0",
+      "xbrlFlag":"1",
+      "pdfFlag":"1",
+      "attachDocFlag":"1",
+      "englishDocFlag":"0"
+    }
+  ]
+}""";
 
             server.enqueue(new MockResponse()
                     .setResponseCode(200)

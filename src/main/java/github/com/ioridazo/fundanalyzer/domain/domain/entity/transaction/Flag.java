@@ -18,7 +18,7 @@ public enum Flag {
     @Override
     public String toString() {
         return "Flag{" +
-                "flag='" + flag + '\'' +
-                '}';
+               "flag='" + flag + '\'' +
+               '}';
     }
 }

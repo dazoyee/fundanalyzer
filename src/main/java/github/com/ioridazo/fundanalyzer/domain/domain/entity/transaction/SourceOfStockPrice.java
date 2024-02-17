@@ -43,8 +43,8 @@ public enum SourceOfStockPrice {
     @Override
     public String toString() {
         return "SourceOfStockPrice{" +
-                "value='" + value + '\'' +
-                ", memo='" + memo + '\'' +
-                '}';
+               "value='" + value + '\'' +
+               ", memo='" + memo + '\'' +
+               '}';
     }
 }

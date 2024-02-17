@@ -70,7 +70,7 @@ public class FinancialStatementSpecification {
         } catch (final NestedRuntimeException e) {
             throw new FundanalyzerBadDataException(MessageFormat.format(
                     "財務諸表の値を正常に取得できませんでした。詳細を確認してください。" +
-                            "\t財務諸表名:{0}\t書類ID:{1}\t科目名:{2}",
+                    "\t財務諸表名:{0}\t書類ID:{1}\t科目名:{2}",
                     fs.getName(),
                     document.getDocumentId(),
                     subject.getName()
@@ -174,7 +174,7 @@ public class FinancialStatementSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t財務諸表名:{2}\t科目ID:{3}\t対象年:{4}",
+                                "\tテーブル名:{0}\t企業コード:{1}\t財務諸表名:{2}\t科目ID:{3}\t対象年:{4}",
                                 "financial_statement",
                                 company.code(),
                                 fs.getName(),

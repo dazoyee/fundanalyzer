@@ -275,7 +275,7 @@ public class StockSpecification {
             log.trace(FundanalyzerLogClient.toSpecificationLogObject(
                     MessageFormat.format(
                             "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
-                                    "\t企業コード:{0}\tスクレイピング結果:{1}",
+                            "\t企業コード:{0}\tスクレイピング結果:{1}",
                             code,
                             minkabu.targetDate()
                     ),
@@ -292,7 +292,7 @@ public class StockSpecification {
                 log.warn(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "みんかぶの予想株価スクレイピング処理で期待の対象日が得られませんでした。登録をスキップします。" +
-                                        "\t企業コード:{0}\tスクレイピング結果:{1}",
+                                "\t企業コード:{0}\tスクレイピング結果:{1}",
                                 code,
                                 minkabu.targetDate()
                         ),
@@ -398,7 +398,7 @@ public class StockSpecification {
             log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                     MessageFormat.format(
                             "一意制約違反のため、データベースへの登録をスキップします。" +
-                                    "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得先:{3}",
+                            "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t取得先:{3}",
                             tableName,
                             code,
                             targetDate,
@@ -412,7 +412,7 @@ public class StockSpecification {
             log.warn(FundanalyzerLogClient.toSpecificationLogObject(
                     MessageFormat.format(
                             "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                    "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t株価終値:{3}\t取得先:{4}",
+                            "\tテーブル名:{0}\t企業コード:{1}\t対象日:{2}\t株価終値:{3}\t取得先:{4}",
                             tableName,
                             code,
                             targetDate,

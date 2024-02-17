@@ -446,7 +446,7 @@ public class DocumentInteractor implements DocumentUseCase {
                     } else {
                         // 四半期報告書において特定の会社を除外する
                         return removeTypeCodes.stream().anyMatch(noTarget -> document.getDocumentTypeCode().toValue().equals(noTarget))
-                                && removeEdinetCodes.stream().anyMatch(noTarget -> document.getEdinetCode().equals(noTarget));
+                               && removeEdinetCodes.stream().anyMatch(noTarget -> document.getEdinetCode().equals(noTarget));
                     }
                 })
                 .forEach(document -> {

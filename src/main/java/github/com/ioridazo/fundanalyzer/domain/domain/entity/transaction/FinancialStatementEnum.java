@@ -57,9 +57,9 @@ public enum FinancialStatementEnum {
     @Override
     public String toString() {
         return "FinancialStatementEnum{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+               "id='" + id + '\'' +
+               ", name='" + name + '\'' +
+               ", value='" + value + '\'' +
+               '}';
     }
 }
