@@ -99,12 +99,14 @@ public class IndicatorValue {
     Optional<BigDecimal> calculatePer(
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
         return analysisResultEntity.getEps()
+                .filter(eps -> eps.compareTo(BigDecimal.ZERO) != 0)
                 .map(eps -> stockPrice.divide(eps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
     Optional<BigDecimal> calculatePbr(
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
         return analysisResultEntity.getBps()
+                .filter(bps -> bps.compareTo(BigDecimal.ZERO) != 0)
                 .map(bps -> stockPrice.divide(bps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
