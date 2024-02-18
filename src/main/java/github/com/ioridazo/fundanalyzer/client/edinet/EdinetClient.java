@@ -55,8 +55,8 @@ public class EdinetClient {
     private final RateLimiterRegistry rateLimiterRegistry;
 
     public EdinetClient(
-            @Qualifier("rest-edinet") final RestTemplate restTemplate,
-            @Qualifier("retry-edinet") final RetryTemplate retryTemplate,
+            @Qualifier("restEdinet") final RestTemplate restTemplate,
+            @Qualifier("retryEdinet") final RetryTemplate retryTemplate,
             final CircuitBreakerRegistry circuitBreaker,
             final RateLimiterRegistry rateLimiterRegistry) {
         this.restTemplate = restTemplate;

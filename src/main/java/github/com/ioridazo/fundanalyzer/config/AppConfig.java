@@ -19,14 +19,12 @@ import java.util.concurrent.Executor;
 @Configuration
 public class AppConfig {
 
-    private static final String REST = "rest-";
-    private static final String RETRY = "retry-";
     private static final String EDINET = "edinet";
     private static final String SELENIUM = "selenium";
     private static final String SLACK = "slack";
     private static final String JSOUP = "jsoup";
 
-    @Bean(REST + EDINET)
+    @Bean("restEdinet")
     public RestTemplate restTemplateEdinet(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
         final RestTemplate restTemplate = new RestTemplateBuilder()
@@ -37,7 +35,7 @@ public class AppConfig {
         return restTemplate;
     }
 
-    @Bean(REST + SELENIUM)
+    @Bean("restSelenium")
     public RestTemplate restTemplateSelenium(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
         final RestTemplate restTemplate = new RestTemplateBuilder()
@@ -48,7 +46,7 @@ public class AppConfig {
         return restTemplate;
     }
 
-    @Bean(REST + SLACK)
+    @Bean("restSlack")
     public RestTemplate restTemplateSlack(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(SLACK);
         final RestTemplate restTemplate = new RestTemplateBuilder()
@@ -59,7 +57,7 @@ public class AppConfig {
         return restTemplate;
     }
 
-    @Bean(REST + JSOUP)
+    @Bean("restJsoup")
     public RestTemplate restTemplateJsoup(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(JSOUP);
         return new RestTemplateBuilder()
@@ -68,7 +66,7 @@ public class AppConfig {
                 .build();
     }
 
-    @Bean(RETRY + EDINET)
+    @Bean("retryEdinet")
     public RetryTemplate retryTemplateEdinet(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
         return new RetryTemplateBuilder()
@@ -77,7 +75,7 @@ public class AppConfig {
                 .build();
     }
 
-    @Bean(RETRY + SELENIUM)
+    @Bean("retrySelenium")
     public RetryTemplate retryTemplateSelenium(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
         return new RetryTemplateBuilder()
@@ -86,7 +84,7 @@ public class AppConfig {
                 .build();
     }
 
-    @Bean(RETRY + SLACK)
+    @Bean("retrySlack")
     public RetryTemplate retryTemplateSlack(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(SLACK);
         return new RetryTemplateBuilder()
@@ -95,7 +93,7 @@ public class AppConfig {
                 .build();
     }
 
-    @Bean(RETRY + JSOUP)
+    @Bean("retryJsoup")
     public RetryTemplate retryTemplateJsoup(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(JSOUP);
         return new RetryTemplateBuilder()

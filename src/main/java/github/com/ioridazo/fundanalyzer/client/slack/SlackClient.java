@@ -39,8 +39,8 @@ public class SlackClient {
     String parameterX;
 
     public SlackClient(
-            @Qualifier("rest-slack") final RestTemplate restTemplate,
-            @Qualifier("retry-slack") final RetryTemplate retryTemplate,
+            @Qualifier("restSlack") final RestTemplate restTemplate,
+            @Qualifier("retrySlack") final RetryTemplate retryTemplate,
             final Environment environment) {
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;

@@ -154,7 +154,7 @@ public class DocumentEntity {
     public static DocumentEntity ofUpdateRemoved(final Document document, final LocalDateTime updatedAt) {
         return DocumentEntity.builder()
                 .documentId(document.getDocumentId())
-                .removed(Flag.ON.toValue())
+                .removed(Flag.ON.getValue())
                 .updatedAt(updatedAt)
                 .build();
     }
