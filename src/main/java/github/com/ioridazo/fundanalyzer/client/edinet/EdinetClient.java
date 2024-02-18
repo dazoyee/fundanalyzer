@@ -18,6 +18,7 @@ import io.micrometer.observation.annotation.Observed;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -53,6 +54,9 @@ public class EdinetClient {
     private final RetryTemplate retryTemplate;
     private final CircuitBreakerRegistry circuitBreaker;
     private final RateLimiterRegistry rateLimiterRegistry;
+
+    @Value("${app.config.edinet.api-key}")
+    String subscriptionKey;
 
     public EdinetClient(
             @Qualifier("restEdinet") final RestTemplate restTemplate,
@@ -127,15 +131,19 @@ public class EdinetClient {
                                         try {
                                             // send
                                             return restTemplate.getForObject(
-                                                    "/api/v1/documents.json?date={date}&type={type}",
+                                                    "/api/v2/documents.json?date={date}&type={type}&Subscription-Key={subscriptionKey}",
                                                     EdinetResponse.class,
-                                                    Map.of("date", parameter.date().toString(), "type", parameter.type().toValue())
+                                                    Map.of(
+                                                            "date", parameter.date().toString(),
+                                                            "type", parameter.type().toValue(),
+                                                            "subscriptionKey", subscriptionKey
+                                                    )
                                             );
                                         } catch (final RestClientResponseException e) {
                                             log.warn(FundanalyzerLogClient.toClientLogObject(
                                                     MessageFormat.format(
                                                             "EDINETから200以外のHTTPステータスコードが返却されました。" +
-                                                                    "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                            "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
                                                             e.getStatusCode(),
                                                             e.getResponseBodyAsString()
                                                     ),
@@ -162,7 +170,7 @@ public class EdinetClient {
                                         } catch (final UnknownContentTypeException e) {
                                             throw new FundanalyzerCircuitBreakerRecordException(
                                                     "HttpMessageConverter応答を抽出するのに適したものが見つかりませんでした。" +
-                                                            "外部機関のサービス稼働状況を確認してください。※システムメンテナンスの疑いあり", e
+                                                    "外部機関のサービス稼働状況を確認してください。※システムメンテナンスの疑いあり", e
                                             );
                                         }
                                     });
@@ -246,20 +254,24 @@ public class EdinetClient {
                                         try {
                                             // send
                                             return restTemplate.execute(
-                                                    "/api/v1/documents/{docId}?type={type}",
+                                                    "/api/v2/documents/{docId}?type={type}&Subscription-Key={subscriptionKey}",
                                                     HttpMethod.GET,
                                                     request -> request
                                                             .getHeaders()
                                                             .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
                                                     response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.docId() + ".zip")),
-                                                    Map.of("docId", parameter.docId(), "type", parameter.type().toValue())
+                                                    Map.of(
+                                                            "docId", parameter.docId(),
+                                                            "type", parameter.type().toValue(),
+                                                            "subscriptionKey", subscriptionKey
+                                                    )
                                             );
                                         } catch (final RestClientResponseException e) {
                                             if (HttpStatusCode.valueOf(403) == e.getStatusCode()) {
                                                 log.info(FundanalyzerLogClient.toClientLogObject(
                                                         MessageFormat.format(
                                                                 "EDINETから200以外のHTTPステータスコードが返却されました。" +
-                                                                        "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                                "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
                                                                 e.getStatusCode(),
                                                                 e.getResponseBodyAsString()
                                                         ),
@@ -271,7 +283,7 @@ public class EdinetClient {
                                                 log.warn(FundanalyzerLogClient.toClientLogObject(
                                                         MessageFormat.format(
                                                                 "EDINETから200以外のHTTPステータスコードが返却されました。" +
-                                                                        "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
+                                                                "\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
                                                                 e.getStatusCode(),
                                                                 e.getResponseBodyAsString()
                                                         ),
@@ -288,7 +300,7 @@ public class EdinetClient {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "データが取得できません。パラメータの設定値を見直してください。対象の書類が非開示となっている可能性があります。", e);
                                             } else if (HttpStatusCode.valueOf(403) == e.getStatusCode()
-                                                    && "The request is blocked.".contains(e.getResponseBodyAsString())) {
+                                                       && "The request is blocked.".contains(e.getResponseBodyAsString())) {
                                                 throw new FundanalyzerCircuitBreakerRecordException(
                                                         "リクエストがブロックされました。対象の書類を確認してください。", e);
                                             } else if (HttpStatusCode.valueOf(500) == e.getStatusCode()) {

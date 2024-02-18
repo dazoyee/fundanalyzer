@@ -34,6 +34,9 @@ resilience4j:
 
 app:
   config:
+    edinet:
+      api-key: "edinet.api-key"
+
     rest-client:
       edinet:
         base-uri: https://disclosure.edinet-fsa.go.jp

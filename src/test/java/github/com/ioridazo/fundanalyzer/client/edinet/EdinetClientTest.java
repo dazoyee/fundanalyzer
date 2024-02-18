@@ -75,6 +75,7 @@ class EdinetClientTest {
                 circuitBreakerRegistry,
                 rateLimiterRegistry
         ));
+        this.client.subscriptionKey = "subscriptionKey";
 
         Mockito.clearInvocations(client);
         Mockito.reset(client);
@@ -94,21 +95,21 @@ class EdinetClientTest {
             var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
             var json = """
-{
-  "metadata":{
-    "title":"提出された書類を把握するための API",
-    "parameter":{
-      "date":"2019-04-01",
-      "type":"1"
-    },
-    "resultset":{
-      "count":1
-    },
-    "processDateTime":"2019-04-01 13:01",
-    "status":"200",
-    "message":"OK"
-  }
-}""";
+                    {
+                      "metadata":{
+                        "title":"提出された書類を把握するための API",
+                        "parameter":{
+                          "date":"2019-04-01",
+                          "type":"1"
+                        },
+                        "resultset":{
+                          "count":1
+                        },
+                        "processDateTime":"2019-04-01 13:01",
+                        "status":"200",
+                        "message":"OK"
+                      }
+                    }""";
 
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
@@ -119,7 +120,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents.json?date=2019-04-01&type=1", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents.json?date=2019-04-01&type=1&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
 
@@ -146,52 +147,52 @@ class EdinetClientTest {
             var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.GET_LIST);
 
             var json = """
-{
-  "metadata":{
-    "title":"提出された書類を把握するための API",
-    "parameter":{
-      "date":"2019-04-01",
-      "type":"2"
-    },
-    "resultset":{
-      "count":2
-    },
-    "processDateTime":"2019-04-01 13:01",
-    "status":"200",
-    "message":"OK"
-  },
-  "results":[
-    {
-      "seqNumber":1,
-      "docID":"S1000001",
-      "edinetCode":"E10001",
-      "secCode":"10000",
-      "JCN":"6000012010023",
-      "filerName":"エディネット株式会社",
-      "fundCode":"G00001",
-      "ordinanceCode":"030",
-      "formCode":"04A000",
-      "docTypeCode":"030",
-      "periodStart":"2019-04-01",
-      "periodEnd":"2020-03-31",
-      "submitDateTime":"2019-04-01 12:34",
-      "docDescription":"有価証券届出書（内国投資信託受益証券）",
-      "issuerEdinetCode":null,
-      "subjectEdinetCode":null,
-      "subsidiaryEdinetCode":null,
-      "currentReportReason":null,
-      "parentDocID":null,
-      "opeDateTime":null,
-      "withdrawalStatus":"0",
-      "docInfoEditStatus":"0",
-      "disclosureStatus":"0",
-      "xbrlFlag":"1",
-      "pdfFlag":"1",
-      "attachDocFlag":"1",
-      "englishDocFlag":"0"
-    }
-  ]
-}""";
+                    {
+                      "metadata":{
+                        "title":"提出された書類を把握するための API",
+                        "parameter":{
+                          "date":"2019-04-01",
+                          "type":"2"
+                        },
+                        "resultset":{
+                          "count":2
+                        },
+                        "processDateTime":"2019-04-01 13:01",
+                        "status":"200",
+                        "message":"OK"
+                      },
+                      "results":[
+                        {
+                          "seqNumber":1,
+                          "docID":"S1000001",
+                          "edinetCode":"E10001",
+                          "secCode":"10000",
+                          "JCN":"6000012010023",
+                          "filerName":"エディネット株式会社",
+                          "fundCode":"G00001",
+                          "ordinanceCode":"030",
+                          "formCode":"04A000",
+                          "docTypeCode":"030",
+                          "periodStart":"2019-04-01",
+                          "periodEnd":"2020-03-31",
+                          "submitDateTime":"2019-04-01 12:34",
+                          "docDescription":"有価証券届出書（内国投資信託受益証券）",
+                          "issuerEdinetCode":null,
+                          "subjectEdinetCode":null,
+                          "subsidiaryEdinetCode":null,
+                          "currentReportReason":null,
+                          "parentDocID":null,
+                          "opeDateTime":null,
+                          "withdrawalStatus":"0",
+                          "docInfoEditStatus":"0",
+                          "disclosureStatus":"0",
+                          "xbrlFlag":"1",
+                          "pdfFlag":"1",
+                          "attachDocFlag":"1",
+                          "englishDocFlag":"0"
+                        }
+                      ]
+                    }""";
 
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
@@ -202,7 +203,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents.json?date=2019-04-01&type=2", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents.json?date=2019-04-01&type=2&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
 
@@ -264,7 +265,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents.json?date=2019-04-01&type=1", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents.json?date=2019-04-01&type=1&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
 
@@ -301,6 +302,7 @@ class EdinetClientTest {
                         circuitBreakerRegistry,
                         rateLimiterRegistry
                 ));
+                this.client.subscriptionKey = "subscriptionKey";
 
                 Mockito.clearInvocations(client);
                 Mockito.reset(client);
@@ -429,6 +431,7 @@ class EdinetClientTest {
                         circuitBreakerRegistry,
                         rateLimiterRegistry
                 ));
+                client.subscriptionKey = "subscriptionKey";
 
                 var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
@@ -460,6 +463,7 @@ class EdinetClientTest {
                         circuitBreakerRegistry,
                         rateLimiterRegistry
                 ));
+                client.subscriptionKey = "subscriptionKey";
 
                 var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
 
@@ -481,7 +485,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents.json?date=2019-04-01&type=1", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents.json?date=2019-04-01&type=1&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
             verify(restTemplate, times(2)).getForObject(anyString(), any(), anyMap());
@@ -511,7 +515,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents/docId?type=1", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents/docId?type=1&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
         }
@@ -530,7 +534,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents/docId?type=1", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents/docId?type=1&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
 
@@ -567,6 +571,7 @@ class EdinetClientTest {
                         circuitBreakerRegistry,
                         rateLimiterRegistry
                 ));
+                this.client.subscriptionKey = "subscriptionKey";
 
                 Mockito.clearInvocations(client);
                 Mockito.reset(client);
@@ -718,6 +723,8 @@ class EdinetClientTest {
                         circuitBreakerRegistry,
                         rateLimiterRegistry
                 ));
+                client.subscriptionKey = "subscriptionKey";
+
                 doNothing().when(client).makeDirectory(any());
                 doReturn(new Object()).when(client).copyFile(any(), any());
 
@@ -753,6 +760,8 @@ class EdinetClientTest {
                         circuitBreakerRegistry,
                         rateLimiterRegistry
                 ));
+                client.subscriptionKey = "subscriptionKey";
+
                 doNothing().when(client).makeDirectory(any());
                 doReturn(new Object()).when(client).copyFile(any(), any());
 
@@ -781,7 +790,7 @@ class EdinetClientTest {
 
             var recordedRequest = server.takeRequest();
             assertAll("request",
-                    () -> assertEquals("/api/v1/documents/docId?type=1", recordedRequest.getPath()),
+                    () -> assertEquals("/api/v2/documents/docId?type=1&Subscription-Key=subscriptionKey", recordedRequest.getPath()),
                     () -> assertEquals("GET", recordedRequest.getMethod())
             );
             verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
