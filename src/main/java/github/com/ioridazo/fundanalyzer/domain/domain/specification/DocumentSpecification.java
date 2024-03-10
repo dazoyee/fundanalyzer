@@ -271,7 +271,7 @@ public class DocumentSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t書類ID:{1}\tEDINETコード:{2}\t提出者名:{3}\t書類種別コード:{4}",
+                                "\tテーブル名:{0}\t書類ID:{1}\tEDINETコード:{2}\t提出者名:{3}\t書類種別コード:{4}",
                                 "document",
                                 results.getDocId(),
                                 results.getEdinetCode().orElse("null"),
@@ -434,7 +434,7 @@ public class DocumentSpecification {
                 log.warn(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "期待値1件に対し、複数のドキュメントが見つかりました。次の項目を確認してください。" +
-                                        "\t会社コード:{0}\t書類ID:{1}\t書類種別コード:{2}\t提出日:{3}\t対象年:{4}",
+                                "\t会社コード:{0}\t書類ID:{1}\t書類種別コード:{2}\t提出日:{3}\t対象年:{4}",
                                 companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::code).orElse("null"),
                                 document.getDocumentId(),
                                 document.getEdinetCode(),

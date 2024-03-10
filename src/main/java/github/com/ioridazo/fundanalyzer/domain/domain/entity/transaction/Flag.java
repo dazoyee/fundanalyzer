@@ -1,24 +1,16 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
+import lombok.Getter;
+
+@Getter
 public enum Flag {
     ON("1"),
     OFF("0"),
     ;
 
-    private final String flag;
+    private final String value;
 
-    Flag(final String flag) {
-        this.flag = flag;
-    }
-
-    public String toValue() {
-        return flag;
-    }
-
-    @Override
-    public String toString() {
-        return "Flag{" +
-                "flag='" + flag + '\'' +
-                '}';
+    Flag(final String value) {
+        this.value = value;
     }
 }

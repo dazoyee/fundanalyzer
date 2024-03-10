@@ -118,7 +118,7 @@ public class InvestmentIndicatorSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
+                                "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
                                 "investment_indicator",
                                 analysisResultEntity.getCompanyCode(),
                                 analysisResultEntity.getSubmitDate()
@@ -131,7 +131,7 @@ public class InvestmentIndicatorSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
+                                "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}",
                                 "investment_indicator",
                                 analysisResultEntity.getCompanyCode(),
                                 analysisResultEntity.getSubmitDate()

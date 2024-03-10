@@ -62,9 +62,9 @@ public enum QuarterType {
     @Override
     public String toString() {
         return "QuarterType{" +
-                "code='" + code + '\'' +
-                ", weight=" + weight +
-                ", memo='" + memo + '\'' +
-                '}';
+               "code='" + code + '\'' +
+               ", weight=" + weight +
+               ", memo='" + memo + '\'' +
+               '}';
     }
 }

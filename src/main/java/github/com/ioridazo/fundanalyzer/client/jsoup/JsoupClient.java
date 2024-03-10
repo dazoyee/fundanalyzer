@@ -53,8 +53,8 @@ public class JsoupClient {
 
     public JsoupClient(
             final RestClientProperties properties,
-            @Qualifier("rest-jsoup") final RestTemplate restTemplate,
-            @Qualifier("retry-jsoup") final RetryTemplate retryTemplate,
+            @Qualifier("restJsoup") final RestTemplate restTemplate,
+            @Qualifier("retryJsoup") final RetryTemplate retryTemplate,
             final CircuitBreakerRegistry circuitBreakerRegistry,
             final RateLimiterRegistry rateLimiterRegistry) {
         this.properties = properties;

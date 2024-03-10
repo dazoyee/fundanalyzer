@@ -110,7 +110,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "書類のダウンロード処理に失敗しました。スタックトレースから原因を確認してください。" +
-                                    "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
+                            "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
                             document.getSubmitDate(),
                             document.getDocumentId(),
                             e.getMessage()
@@ -129,7 +129,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.error(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。" +
-                                    "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
+                            "\t処理対象日:{0}\t書類管理番号:{1}\n{2}",
                             document.getSubmitDate(),
                             document.getDocumentId(),
                             e.getMessage()
@@ -281,7 +281,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
         );
 
         if ((totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent())
-                && (totalCurrentLiabilities.get().equals(totalLiabilities.get()))) {
+            && (totalCurrentLiabilities.get().equals(totalLiabilities.get()))) {
             financialStatementSpecification.insert(
                     company,
                     FinancialStatementEnum.BALANCE_SHEET,
@@ -294,7 +294,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "[貸借対照表] の \"固定負債合計\" が存在しなかったため、\"0\" にてデータベースに登録しました。" +
-                                    "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
+                            "\t企業コード:{0}\t書類ID:{1}\t流動負債合計:{2}\t負債合計:{3}",
                             company.code(),
                             document.getDocumentId(),
                             totalCurrentLiabilities.get(),
@@ -315,7 +315,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
      */
     void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(final Company company, final Document document) {
         if (List.of(DocumentTypeCode.DTC_140, DocumentTypeCode.DTC_150).contains(document.getDocumentTypeCode())
-                && !financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)) {
+            && !financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)) {
             financialStatementSpecification.insert(
                     company,
                     FinancialStatementEnum.BALANCE_SHEET,
@@ -328,7 +328,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "[貸借対照表] の \"投資その他の資産合計\" が存在しなかったため、\"0\" にてデータベースに登録しました。" +
-                                    "\t企業コード:{0}\t書類ID:{1}\t書類種別コード:{2}",
+                            "\t企業コード:{0}\t書類ID:{1}\t書類種別コード:{2}",
                             company.code(),
                             document.getDocumentId(),
                             document.getDocumentTypeCode().toValue() + "（" + document.getDocumentTypeCode().getName() + "）"
@@ -374,7 +374,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "次のスクレイピング情報を正常に登録しました。" +
-                                    "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
+                            "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
                             company.code(),
                             company.edinetCode(),
                             fs.getName(),
@@ -392,7 +392,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.info(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "スクレイピング処理の過程でエラー発生しました。キーワードに合致するファイルが存在しませんでした。" +
-                                    "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
+                            "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
                             company.code(),
                             company.edinetCode(),
                             fs.getName(),
@@ -407,7 +407,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                                    "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
+                            "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
                             company.code(),
                             company.edinetCode(),
                             fs.getName(),

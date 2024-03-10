@@ -144,8 +144,8 @@ public class ValuationInteractor implements ValuationUseCase {
 
             // 4月, 6月, 9月, 11月 を考慮
             if (31 == submitDate.getDayOfMonth()
-                    && Stream.of(Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER)
-                    .anyMatch(month -> month.equals(targetDate.getMonth()))) {
+                && Stream.of(Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER)
+                        .anyMatch(month -> month.equals(targetDate.getMonth()))) {
                 return LocalDate.of(
                         targetDate.getYear(),
                         targetDate.getMonth(),

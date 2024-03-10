@@ -199,7 +199,7 @@ public class ViewSpecification {
                         e,
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t会社コード:{1}\t書類種別コード:{2}\t提出日:{3}",
+                                "\tテーブル名:{0}\t会社コード:{1}\t書類種別コード:{2}\t提出日:{3}",
                                 "corporate_view",
                                 viewModel.getCode(),
                                 viewModel.getLatestDocumentTypeCode(),
@@ -226,7 +226,7 @@ public class ViewSpecification {
                         e,
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t提出日:{1}",
+                                "\tテーブル名:{0}\t提出日:{1}",
                                 "edinet_list_view",
                                 viewModel.submitDate()
                         )

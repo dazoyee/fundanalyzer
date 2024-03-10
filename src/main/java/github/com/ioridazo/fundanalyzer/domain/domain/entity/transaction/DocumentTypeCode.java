@@ -81,8 +81,8 @@ public enum DocumentTypeCode {
     @Override
     public String toString() {
         return "DocumentTypeCode{" +
-                "code='" + code + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "code='" + code + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 }
