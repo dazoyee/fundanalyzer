@@ -131,7 +131,7 @@ public class ValuationSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}\t株価:{3}",
+                                "\tテーブル名:{0}\t企業コード:{1}\t対象日付:{2}\t株価:{3}",
                                 "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),
@@ -145,7 +145,7 @@ public class ValuationSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "整合性制約 (外部キー、主キー、または一意キー) 違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
+                                "\tテーブル名:{0}\t企業コード:{0}\t対象日付:{1}\t株価:{2}",
                                 "valuation",
                                 stock.getCompanyCode(),
                                 stock.getTargetDate(),

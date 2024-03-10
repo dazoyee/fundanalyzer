@@ -247,8 +247,8 @@ public class XbrlScraping {
             } catch (final NumberFormatException | StringIndexOutOfBoundsException e) {
                 throw new FundanalyzerScrapingException(
                         "年度に関して対象の財務諸表は定形外でした。次の値を確認してください。" +
-                                "\t'" + scrapingList.get(1).get(0) + "' and '" + scrapingList.get(1).get(1) + "'" +
-                                "\nファイルパス:" + targetFile);
+                        "\t'" + scrapingList.get(1).get(0) + "' and '" + scrapingList.get(1).get(1) + "'" +
+                        "\nファイルパス:" + targetFile);
             }
 
         } else if (scrapingList.get(1).size() == 3) {
@@ -309,8 +309,8 @@ public class XbrlScraping {
             } catch (final NumberFormatException | StringIndexOutOfBoundsException e) {
                 throw new FundanalyzerScrapingException(
                         "年度に関して対象の財務諸表は定形外でした。次の値を確認してください。" +
-                                "\t'" + scrapingList.get(1).get(0) + "' and '" + scrapingList.get(1).get(1) + "'" +
-                                "\nファイルパス:" + targetFile);
+                        "\t'" + scrapingList.get(1).get(0) + "' and '" + scrapingList.get(1).get(1) + "'" +
+                        "\nファイルパス:" + targetFile);
             }
         }
 
@@ -379,18 +379,18 @@ public class XbrlScraping {
 
     private boolean isTargetKey(final String td) {
         return (td.contains("事業") && td.contains("年度") && td.contains("末")
-                && td.contains("現")&& td.contains("在") && td.contains("発行"))
-                ||
-                (td.contains("当期") && td.contains("末")
-                        && td.contains("現在") && td.contains("発行") && td.contains("数"))
-                ||
-                (td.contains("連結会計年度") && td.contains("末")
-                        && td.contains("現在") && td.contains("発行") && td.contains("数"))
-                ||
-                (td.contains("四半期") && td.contains("末") && td.contains("発行") && td.contains("数"))
-                ||
-                (td.contains("四半期") && td.contains("末")
-                        && td.contains("現在") && td.contains("発行") && td.contains("株"))
+                && td.contains("現") && td.contains("在") && td.contains("発行"))
+               ||
+               (td.contains("当期") && td.contains("末")
+                && td.contains("現在") && td.contains("発行") && td.contains("数"))
+               ||
+               (td.contains("連結会計年度") && td.contains("末")
+                && td.contains("現在") && td.contains("発行") && td.contains("数"))
+               ||
+               (td.contains("四半期") && td.contains("末") && td.contains("発行") && td.contains("数"))
+               ||
+               (td.contains("四半期") && td.contains("末")
+                && td.contains("現在") && td.contains("発行") && td.contains("株"))
                 ;
     }
 

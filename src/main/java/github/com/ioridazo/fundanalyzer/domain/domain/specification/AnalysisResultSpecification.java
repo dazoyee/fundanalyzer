@@ -123,7 +123,7 @@ public class AnalysisResultSpecification {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
                         MessageFormat.format(
                                 "一意制約違反のため、データベースへの登録をスキップします。" +
-                                        "\tテーブル名:{0}\t会社コード:{1}\t期間:{2}\t書類種別コード:{3}\t提出日:{4}",
+                                "\tテーブル名:{0}\t会社コード:{1}\t期間:{2}\t書類種別コード:{3}\t提出日:{4}",
                                 "analysis_result",
                                 company.code(),
                                 document.getDocumentPeriod().map(LocalDate::toString).orElse("null"),

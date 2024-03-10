@@ -18,7 +18,7 @@ public enum CreatedType {
     @Override
     public String toString() {
         return "CreatedType{" +
-                "type='" + type + '\'' +
-                '}';
+               "type='" + type + '\'' +
+               '}';
     }
 }

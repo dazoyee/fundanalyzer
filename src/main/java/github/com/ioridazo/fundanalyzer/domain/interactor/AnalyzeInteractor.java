@@ -165,7 +165,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +
-                                    "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
+                            "\t会社コード:{1}\t書類ID:{2}\t科目名:{3}\t対象年:{4}\n書類パス:{5}",
                             fs.getName(),
                             companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).map(Company::code).orElse("null"),
                             document.getDocumentId(),
@@ -290,10 +290,10 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             // 提出日 <= 株価取得日 && 株価取得日 <= 提出日+1年
             if (
                     (latestDate.isEqual(analysisResult.getSubmitDate())
-                            || latestDate.isAfter(analysisResult.getSubmitDate()))
-                            &&
-                            (latestDate.isEqual(analysisResult.getSubmitDate().plusYears(1))
-                                    || (latestDate.isBefore(analysisResult.getSubmitDate().plusYears(1))))
+                     || latestDate.isAfter(analysisResult.getSubmitDate()))
+                    &&
+                    (latestDate.isEqual(analysisResult.getSubmitDate().plusYears(1))
+                     || (latestDate.isBefore(analysisResult.getSubmitDate().plusYears(1))))
             ) {
                 // executedDate -> latestDate
                 executedDate.plusDays(1).datesUntil(latestDate.plusDays(1)).forEach(date ->
@@ -323,7 +323,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
                                 "提出日または株価取得日が正しくないため、投資指標を算出しませんでした。" +
-                                        "\t企業コード:{0}\t提出日:{1}\t株価取得日:{2}",
+                                "\t企業コード:{0}\t提出日:{1}\t株価取得日:{2}",
                                 analysisResult.getCompanyCode(),
                                 analysisResult.getSubmitDate(),
                                 latestDate

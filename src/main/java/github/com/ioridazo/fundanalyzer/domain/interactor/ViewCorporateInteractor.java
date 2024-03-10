@@ -356,7 +356,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                     if (Objects.nonNull(cvb.getForecastStock())) {
                         // 株価予想が存在する場合、最新株価より高ければOK
                         return (cvb.getForecastStock().divide(cvb.getLatestStockPrice(), 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
-                                && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(configDiffForecastStock) >= 0);
+                               && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(configDiffForecastStock) >= 0);
                     } else {
                         return true;
                     }

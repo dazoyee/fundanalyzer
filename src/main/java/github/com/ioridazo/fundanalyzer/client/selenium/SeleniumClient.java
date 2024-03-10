@@ -25,8 +25,8 @@ public class SeleniumClient {
     private final RetryTemplate retryTemplate;
 
     public SeleniumClient(
-            @Qualifier("rest-selenium") final RestTemplate restTemplate,
-            @Qualifier("retry-selenium") final RetryTemplate retryTemplate) {
+            @Qualifier("restSelenium") final RestTemplate restTemplate,
+            @Qualifier("retrySelenium") final RetryTemplate retryTemplate) {
         this.restTemplate = restTemplate;
         this.retryTemplate = retryTemplate;
     }
