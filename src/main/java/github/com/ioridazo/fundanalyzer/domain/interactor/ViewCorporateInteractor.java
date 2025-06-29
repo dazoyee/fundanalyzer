@@ -117,8 +117,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         )
                         .anyMatch(dtc -> DocumentTypeCode.fromValue(cvm.getLatestDocumentTypeCode()).equals(dtc)))
                 .sorted(Comparator
-                        .comparing(CorporateViewModel::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewModel::getCode))
+                        .comparing(CorporateViewModel::getSubmitDate)
+                        .thenComparing(CorporateViewModel::getCode).reversed())
                 .toList();
     }
 
@@ -131,8 +131,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         )
                         .anyMatch(dtc -> DocumentTypeCode.fromValue(cvm.getLatestDocumentTypeCode()).equals(dtc)))
                 .sorted(Comparator
-                        .comparing(CorporateViewModel::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewModel::getCode))
+                        .comparing(CorporateViewModel::getSubmitDate)
+                        .thenComparing(CorporateViewModel::getCode).reversed())
                 .toList();
     }
 
@@ -171,8 +171,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 )
                 .filter(cvm -> favoriteList.stream().anyMatch(favorite -> cvm.getCode().equals(favorite.substring(0, 4))))
                 .sorted(Comparator
-                        .comparing(CorporateViewModel::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewModel::getCode))
+                        .comparing(CorporateViewModel::getSubmitDate)
+                        .thenComparing(CorporateViewModel::getCode).reversed())
                 .toList();
     }
 
