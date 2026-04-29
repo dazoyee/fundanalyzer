@@ -1,27 +1,33 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail;
 
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
-import lombok.Value;
 
 import java.time.LocalDate;
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value(staticConstructor = "of")
-public class DocumentDetailViewModel {
-    private final String documentId;
-    private final String documentTypeCode;
-    private final String documentTypeName;
-    private final String edinetCode;
-    private final LocalDate documentPeriod;
-    private final String downloaded;
-    private final String decoded;
-    private final String scrapedNumberOfShares;
-    private final String numberOfSharesDocumentPath;
-    private final String scrapedBs;
-    private final String bsDocumentPath;
-    private final String scrapedPl;
-    private final String plDocumentPath;
+/**
+ * ドキュメント詳細ビュー
+ */
+public record DocumentDetailViewModel(
+        String documentId,
+        String documentTypeCode,
+        String documentTypeName,
+        String edinetCode,
+        LocalDate documentPeriod,
+        String downloaded,
+        String decoded,
+        String scrapedNumberOfShares,
+        String numberOfSharesDocumentPath,
+        String scrapedBs,
+        String bsDocumentPath,
+        String scrapedPl,
+        String plDocumentPath) {
 
+    /**
+     * Document からビューを生成する
+     *
+     * @param document ドキュメント
+     * @return DocumentDetailViewModel
+     */
     public static DocumentDetailViewModel of(final Document document) {
         return new DocumentDetailViewModel(
                 document.getDocumentId(),
@@ -38,5 +44,57 @@ public class DocumentDetailViewModel {
                 document.getScrapedPl().toValue(),
                 document.getPlDocumentPath().orElse(null)
         );
+    }
+
+    public String getDocumentId() {
+        return documentId;
+    }
+
+    public String getDocumentTypeCode() {
+        return documentTypeCode;
+    }
+
+    public String getDocumentTypeName() {
+        return documentTypeName;
+    }
+
+    public String getEdinetCode() {
+        return edinetCode;
+    }
+
+    public LocalDate getDocumentPeriod() {
+        return documentPeriod;
+    }
+
+    public String getDownloaded() {
+        return downloaded;
+    }
+
+    public String getDecoded() {
+        return decoded;
+    }
+
+    public String getScrapedNumberOfShares() {
+        return scrapedNumberOfShares;
+    }
+
+    public String getNumberOfSharesDocumentPath() {
+        return numberOfSharesDocumentPath;
+    }
+
+    public String getScrapedBs() {
+        return scrapedBs;
+    }
+
+    public String getBsDocumentPath() {
+        return bsDocumentPath;
+    }
+
+    public String getScrapedPl() {
+        return scrapedPl;
+    }
+
+    public String getPlDocumentPath() {
+        return plDocumentPath;
     }
 }
