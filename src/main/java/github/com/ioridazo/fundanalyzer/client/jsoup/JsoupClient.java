@@ -3,6 +3,9 @@ package github.com.ioridazo.fundanalyzer.client.jsoup;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.MinkabuResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.NikkeiResultBean;
 import github.com.ioridazo.fundanalyzer.client.jsoup.result.StockPriceResultBean;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.config.RestClientProperties;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
@@ -294,7 +297,11 @@ public class JsoupClient {
                     "終値調整", thList.indexOf("終値調整")
             );
         } catch (Throwable t) {
-            log.warn("kabuoji3の表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
+            log.warn(FundanalyzerLogClient.toClientLogObject(
+                    "kabuoji3の表形式に問題が発生したため、読み取り出来ませんでした。\tth:" + thList,
+                    Category.STOCK,
+                    Process.SCRAPING
+            ));
             throw new FundanalyzerScrapingException(t);
         }
     }
@@ -323,7 +330,11 @@ public class JsoupClient {
                     "調整後終値", thList.indexOf("調整後終値")
             );
         } catch (Throwable t) {
-            log.warn("minkabuの表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
+            log.warn(FundanalyzerLogClient.toClientLogObject(
+                    "minkabuの表形式に問題が発生したため、読み取り出来ませんでした。\tth:" + thList,
+                    Category.STOCK,
+                    Process.SCRAPING
+            ));
             throw new FundanalyzerScrapingException(t);
         }
     }
@@ -353,7 +364,11 @@ public class JsoupClient {
                     "調整後終値", thList.indexOf("調整後終値*")
             );
         } catch (Throwable t) {
-            log.warn("yahoo-financeの表形式に問題が発生したため、読み取り出来ませんでした。\tth:{}", thList);
+            log.warn(FundanalyzerLogClient.toClientLogObject(
+                    "yahoo-financeの表形式に問題が発生したため、読み取り出来ませんでした。\tth:" + thList,
+                    Category.STOCK,
+                    Process.SCRAPING
+            ));
             throw new FundanalyzerScrapingException(t);
         }
     }
