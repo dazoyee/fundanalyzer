@@ -34,6 +34,7 @@ class CompanyInteractorTest {
     private CompanySpecification companySpecification;
     private FileOperator fileOperator;
     private SeleniumClient seleniumClient;
+    private JsoupClient jsoupClient;
 
     private CompanyInteractor companyInteractor;
 
@@ -42,6 +43,7 @@ class CompanyInteractorTest {
         companySpecification = Mockito.mock(CompanySpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
         seleniumClient = Mockito.mock(SeleniumClient.class);
+        jsoupClient = Mockito.mock(JsoupClient.class);
 
         companyInteractor = Mockito.spy(new CompanyInteractor(
                 Mockito.mock(IndustrySpecification.class),
@@ -49,7 +51,7 @@ class CompanyInteractorTest {
                 fileOperator,
                 Mockito.mock(CsvCommander.class),
                 seleniumClient,
-                Mockito.mock(JsoupClient.class)
+                jsoupClient
         ));
         companyInteractor.pathCompany = "pathCompany";
         companyInteractor.pathCompanyZip = "pathCompanyZip";
@@ -136,6 +138,85 @@ class CompanyInteractorTest {
                     false,
                     true
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("updateFavoriteCompany メソッド")
+    class UpdateFavoriteCompany {
+
+        @DisplayName("updateFavoriteCompany : お気に入り登録に成功したら true を返す")
+        @Test
+        void registered() {
+            final CodeInputData input = CodeInputData.of("1234");
+            final Company company = new Company(
+                    "1234", null, null, null, null, null, null, null, null, false, true);
+            when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.of(company));
+            when(companySpecification.updateFavorite(company)).thenReturn(true);
+
+            assertEquals(true, companyInteractor.updateFavoriteCompany(input));
+        }
+
+        @DisplayName("updateFavoriteCompany : お気に入り解除なら false を返す")
+        @Test
+        void unregistered() {
+            final CodeInputData input = CodeInputData.of("1234");
+            final Company company = new Company(
+                    "1234", null, null, null, null, null, null, null, null, true, true);
+            when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.of(company));
+            when(companySpecification.updateFavorite(company)).thenReturn(false);
+
+            assertEquals(false, companyInteractor.updateFavoriteCompany(input));
+        }
+
+        @DisplayName("updateFavoriteCompany : 企業が存在しないときは FundanalyzerNotExistException")
+        @Test
+        void absent() {
+            final CodeInputData input = CodeInputData.of("9999");
+            when(companySpecification.findCompanyByCode("9999")).thenReturn(Optional.empty());
+
+            assertThrows(
+                    github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException.class,
+                    () -> companyInteractor.updateFavoriteCompany(input));
+        }
+    }
+
+    @Nested
+    @DisplayName("isLived メソッド")
+    class IsLived {
+
+        @DisplayName("isLived : JsoupClient.isLivedCompanyFromMinkabu の結果を返す")
+        @Test
+        void delegates() {
+            final CodeInputData input = CodeInputData.of("1234");
+            when(jsoupClient.isLivedCompanyFromMinkabu("1234")).thenReturn(true);
+
+            assertEquals(true, companyInteractor.isLived(input));
+        }
+
+        @DisplayName("isLived : 上場廃止の場合は false を返す")
+        @Test
+        void delisted() {
+            final CodeInputData input = CodeInputData.of("9999");
+            when(jsoupClient.isLivedCompanyFromMinkabu("9999")).thenReturn(false);
+
+            assertEquals(false, companyInteractor.isLived(input));
+        }
+    }
+
+    @Nested
+    @DisplayName("updateRemovedCompany 例外パス")
+    class UpdateRemovedCompanyAbsent {
+
+        @DisplayName("updateRemovedCompany : 企業が存在しないときは FundanalyzerNotExistException")
+        @Test
+        void absent() {
+            final CodeInputData input = CodeInputData.of("9999");
+            when(companySpecification.findCompanyByCode("9999")).thenReturn(Optional.empty());
+
+            assertThrows(
+                    github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException.class,
+                    () -> companyInteractor.updateRemovedCompany(input));
         }
     }
 }
