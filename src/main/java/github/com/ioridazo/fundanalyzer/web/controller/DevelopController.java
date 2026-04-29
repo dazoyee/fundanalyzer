@@ -18,7 +18,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
 
-@SuppressWarnings("SameReturnValue")
 @Profile("!prod")
 @Controller
 public class DevelopController {
@@ -46,12 +45,6 @@ public class DevelopController {
         this.companyUseCase = companyUseCase;
         this.stockUseCase = stockUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
-    }
-
-    @SuppressWarnings("SpringMVCViewInspection")
-    @GetMapping("/template")
-    public String template() {
-        return "template";
     }
 
     @GetMapping("/edinet-list")
