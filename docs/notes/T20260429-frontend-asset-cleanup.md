@@ -1,0 +1,228 @@
+# Task T20260429: フロントエンド未参照資産の削除
+
+- 着手日: 2026-04-29
+- 完了日: -
+- 担当: AI エージェント (Claude / Opus 4.7)
+- 関連リンク: なし（事前計画ドキュメントなし。本 md が一次情報源）
+
+---
+
+## ステップ 1: 把握・整理
+
+### 解決すべき課題（1 行）
+
+`src/main/resources/static/` 配下に AdminLTE 由来の未参照プラグインと dist 資産が大量に同梱されており、ビルド成果物（jar / zip）肥大化と保守対象の不明瞭化を招いている。これを安全に削除する。
+
+### 関連既存資産
+
+- テンプレート: [layout.html](src/main/resources/templates/layout.html)・[index.html](src/main/resources/templates/index.html)・[edinet.html](src/main/resources/templates/edinet.html)・[edinet-detail.html](src/main/resources/templates/edinet-detail.html)・[corporate.html](src/main/resources/templates/corporate.html)・[valuation.html](src/main/resources/templates/valuation.html)・[error.html](src/main/resources/templates/error.html)
+- 静的アセット: `src/main/resources/static/dist/`・`src/main/resources/static/plugins/`
+- 開発専用 Controller: [DevelopController.java](src/main/java/github/com/ioridazo/fundanalyzer/web/controller/DevelopController.java)
+- CLAUDE.md の記述: 「`static/dist`, `static/plugins` の資産は AdminLTE テーマの取り込みで、原則編集対象外」
+
+### ドキュメントとコードの整合
+
+- CLAUDE.md は「AdminLTE 資産は編集対象外」と記すが、これは内容改変を禁ずる意図。**未参照資産の物理削除は別の問題**。本タスク完了後、CLAUDE.md の同記述に「未参照資産は削除済み」と注記する余地がある（多軸検証時に判断）。
+- それ以外、ドキュメントとコードの乖離はない。
+
+### スコープ
+
+| 区分 | 内容 |
+|---|---|
+| コア | (a) 未参照プラグイン 48 ディレクトリ削除 (b) `dist/` 未参照ファイル（img/alt/非min/demo・dashboard）の削除 (c) [DevelopController.java:51-55](src/main/java/github/com/ioridazo/fundanalyzer/web/controller/DevelopController.java) の壊れた `/template` エンドポイント削除 (d) CLAUDE.md の AdminLTE 記述を本削除作業を踏まえて更新 |
+| 後回し | DevelopController の他 dev 専用エンドポイント（`/edinet-list`, `/company`, `/scrape/analysis/{date}`）の整理（手動デバッグ手段を奪うため別タスクに分離） |
+| 対象外 | テンプレート（`*.html`）の改変・利用中プラグインのバージョン変更・AdminLTE source map（.css.map / .js.map）の削除 |
+
+---
+
+## ステップ 2: プロトタイピング
+
+**該当なし**: 外部 API・画面表示・データモデルのいずれも変更しない。利用者から見える挙動は不変。
+
+---
+
+## Gate 1: 影響設計の承認
+
+### レビュアー向けサマリ
+
+- **判断してほしいこと**: 削除対象（48 プラグイン + dist 未参照ファイル + 壊れた `/template` エンドポイント）の網羅性が妥当か、CLAUDE.md の「編集対象外」記述との整合をどう扱うか。
+- **重要な変更ポイント**:
+  1. `src/main/resources/static/plugins/` 配下の **48 ディレクトリ（約 49MB）を物理削除**
+  2. `src/main/resources/static/dist/` 配下の **未参照ファイル（img/alt/非min/demo・dashboard）を物理削除**
+  3. [DevelopController.java](src/main/java/github/com/ioridazo/fundanalyzer/web/controller/DevelopController.java) の `/template` エンドポイント（`return "template"` だがテンプレートファイル不在で 500 エラーを返す死コード）を削除
+  4. 機能変更・テンプレート編集・既存テスト変更は **一切行わない**
+  5. ビルド成果物サイズの削減効果は約 50MB 超
+- **確認してほしい観点**:
+  1. 将来 AdminLTE の他プラグインを再導入する見込みがあるか（あるなら削除を見送る判断もありうる）
+  2. `DevelopController` の `/edinet-list`, `/company`, `/scrape/analysis/{date}` を本タスクから対象外として後回しにする判断の妥当性
+
+### 重点観点
+
+#### 影響範囲分析
+
+変更属性チェック:
+
+- 参照層: **該当**（`DevelopController#template()` の参照、テンプレートからの静的リソース参照）
+- 状態層: **該当なし**（ステートマシン・ライフサイクルを変更しないため）
+- データ層: **該当なし**（DB スキーマ・既存データ・移行戦略を変更しないため）
+
+##### 参照層分析結果
+
+| 対象 | 参照箇所 | 影響 |
+|---|---|---|
+| 削除対象プラグイン 48 ディレクトリ | テンプレート 7 ファイル全文検索で参照ゼロ（`grep -rE 'plugins/[a-zA-Z0-9_-]+' src/main/resources/templates/` で確認） | 影響なし |
+| 削除対象 dist ファイル（img/alt/非min/demo/dashboard） | 同上で参照ゼロ。ただし `dist/css/adminlte.min.css` 内の `sourceMappingURL=adminlte.min.css.map` のみ `.map` を参照 → `.map` は **対象外** とし残す | 影響なし |
+| `DevelopController#template()` (52-55 行) | 全コードベース・テンプレート・テストから参照ゼロ。`template.html` も存在しない（`find . -name 'template.html'` で確認） | 影響なし（むしろ死コード除去） |
+| `DevelopController` の他メソッド | 同 Controller 内のみ。テストや他クラスからの参照なし。@Profile("!prod") のため prod では未読込 | 後回しスコープのため本タスクでは触れない |
+| 残存使用プラグイン 12 個 | テンプレートから直接 `th:src` / `th:href` 参照あり | 削除対象外 |
+
+リフレクション・動的ロード: jsoup・Thymeleaf 共に静的アセットを名前で動的解決する仕組みは使っていない。`spring.web.resources.static-locations` のデフォルトに依存。設定ファイル（`application.yml`）からの直接参照もなし（`grep` で確認済）。
+
+##### 状態層分析結果
+
+該当なし（状態遷移を変更しないため）。
+
+##### データ層分析結果
+
+該当なし（DB スキーマ・データを変更しないため）。
+
+#### インフラ影響チェック
+
+| 項目 | 判定 |
+|---|---|
+| 大量データ処理タイムアウト | 該当なし |
+| 新規外部サービス連携 | 該当なし |
+| データストアスキーマ変更 | 該当なし |
+| バッチ・非同期処理追加 | 該当なし |
+| 依存ライブラリの新規追加 | 該当なし（むしろ削除のみ） |
+| ビルド成果物サイズ | jar 内リソース約 50MB 削減。Windows サービスのデプロイ ZIP も縮小。動作には影響なし |
+| デプロイ手順 | 変更なし（[release/start.bat](release/start.bat) など触らない） |
+
+#### 三本柱
+
+| 柱 | 確認結果 |
+|---|---|
+| **テスト戦略** | 既存テスト（特に [EdinetControllerTest](src/test/java/github/com/ioridazo/fundanalyzer/web/controller/EdinetControllerTest.java) など）の **未変更通過** が完了条件。新規テスト追加は不要（外部から見える動作変更なし）。`./mvnw test` で全パス確認 |
+| **セキュリティ方針** | 削除によりアタックサーフェス縮小（古い JS ライブラリの公開停止）。既存の方針強化は不要。`application.yml` の Actuator/権限設定は無変更 |
+| **ドキュメント計画** | CLAUDE.md の「`static/dist`, `static/plugins` は AdminLTE テーマの取り込みで、原則編集対象外」記述は **削除実施を踏まえた更新を多軸検証段階で判断**。本 md（タスク 1 md）が削除作業の正式記録となる |
+
+#### スコープ
+
+§ステップ 1 の 3 区分表に従う（コア / 後回し / 対象外）。
+
+#### 依存追加判断
+
+該当なし（依存追加なし。むしろ未参照ファイルの削除）。
+
+### レビュアー記入欄
+
+- 承認者: iori-oiso（プロジェクトオーナー）
+- レビュー依頼日: 2026-04-29
+- 回答日: 2026-04-29
+- 結論: 合格
+- コメント: 削除方針を承認。ただし CLAUDE.md の「`static/dist`, `static/plugins` は AdminLTE テーマの取り込みで、原則編集対象外」の記述を、本削除作業を踏まえて同タスク内で更新すること。完了条件・スコープにも反映する。
+
+---
+
+## Gate 2: 完了条件の確認
+
+### 運用ルート
+
+**省略**（小タスク基準達成）。根拠:
+
+- [x] 影響範囲が単一機能（フロントエンド静的資産 + dev 専用死コード 1 メソッド）
+- [x] テストケース数が 0 件で済む（既存テスト未変更通過のみ確認）
+- [x] ドキュメント更新は CLAUDE.md の脚注程度（必要なら検証段階で判断）
+- [x] 既存仕様への影響なし（外部から見える挙動不変）
+- [x] セキュリティ・性能への影響なし（むしろ縮小方向）
+
+### 完了条件
+
+#### 機能
+
+- [ ] 未参照プラグイン 48 ディレクトリを `src/main/resources/static/plugins/` から削除
+- [ ] dist 未参照ファイル（`dist/img/*`・`dist/css/alt/*`・`dist/css/adminlte.css(.map)`・`dist/js/adminlte.js(.map)`・`dist/js/demo.js`・`dist/js/pages/dashboard*.js`）を削除
+- [ ] [DevelopController.java](src/main/java/github/com/ioridazo/fundanalyzer/web/controller/DevelopController.java) の `template()` メソッドおよび関連 `@SuppressWarnings("SameReturnValue")` を残コード状況に応じて整理
+
+#### テスト
+
+- [ ] `./mvnw test` 全パス（既存テスト未変更）
+- [ ] `./mvnw clean package` 成功
+
+> **環境制約**: 本作業の実行環境（macOS）に Java ランタイムが未インストールのため、AI エージェントによるローカルビルド検証は実施不可。CI（[Jenkinsfile-ci-prod.groovy](pipeline/Jenkinsfile-ci-prod.groovy)）または開発者の Windows 環境での検証を Gate 3 段階で人間レビュアが確認する。
+
+#### ドキュメント
+
+- [ ] 本タスク 1 md（`docs/notes/T20260429-frontend-asset-cleanup.md`）に Gate 1 / Gate 3 を記録
+- [ ] CLAUDE.md の AdminLTE 記述（「`static/dist`, `static/plugins` の資産は AdminLTE テーマの取り込みで、原則編集対象外」）を、本削除作業を踏まえた表現に更新
+
+#### スコープ外（やらないこと）
+
+- DevelopController の他 dev エンドポイント整理
+- 残存プラグイン 12 個のバージョンアップ
+- テンプレート HTML 自体の改変
+- AdminLTE source map（.css.map / .js.map）の削除
+
+---
+
+## ステップ 5: 実行サイクル
+
+### コミット計画（カテゴリ別 4 コミット）
+
+1. `chore: 未参照プラグイン 48 ディレクトリを削除`（Conventional Commits / 3 層構造）
+2. `chore: dist 配下の未参照ファイルを削除`
+3. `refactor: 死コードの DevelopController#/template を削除`
+4. `docs: CLAUDE.md の AdminLTE 記述を未参照資産削除後の状態に更新`
+
+各コミット後に `./mvnw test` を実行し、緑であることを確認してから次へ進む。
+
+### コミット履歴
+
+（実行時に追記）
+
+---
+
+## ステップ 6: 多軸検証
+
+（実行後に追記）
+
+---
+
+## Gate 3: 最終確認
+
+（実行後に追記）
+
+### レビュアー向けサマリ
+
+- **判断してほしいこと**: 削除後にローカル / dev 環境で画面が正常表示されるか、副次影響がないか
+- **重要な変更ポイント**: （実行後に追記）
+- **確認してほしい観点**:
+  1. ローカル起動で `/v2/index`, `/v2/edinet-list`, `/v2/edinet-list-detail`, `/v2/valuation`, `/v2/corporate` の各画面が崩れず表示されるか
+  2. ブラウザのコンソールに 404 / Network エラーが出ていないか
+
+### 重点観点
+
+- 差分レビュー
+- 動作確認結果（実機・実環境）
+- 副次影響
+- ドキュメント整合性
+
+### レビュアー記入欄
+
+- 承認者: <氏名・役割>
+- レビュー依頼日: -
+- 回答日: -
+- 結論: -
+- コメント: -
+
+---
+
+## 添付ファイル
+
+なし（差分は `git log` / `git show` で確認）
+
+---
+
+## 更新履歴
+
+- 2026-04-29: 初版作成（ステップ 1〜4・Gate 1 セクション記載）
