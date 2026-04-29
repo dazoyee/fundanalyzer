@@ -47,3 +47,15 @@ app:
         t: TKN2V6NQ4
         b: B01EYUAKEL8
         x: x
+
+  # dev プロファイル限定で OS 非依存パスへ上書き。
+  # application.yml は Windows サービス向けデフォルト (C:/fundanalyzer/...) を維持し、
+  # release/config/application-prod.yml で prod 用に再定義する。
+  settings:
+    file:
+      path:
+        company:
+          company: ${user.home}/.${spring.application.name}/company
+          zip: ${user.home}/.${spring.application.name}/company/zip
+        edinet: ${user.home}/.${spring.application.name}/edinet
+        decode: ${user.home}/.${spring.application.name}/decode

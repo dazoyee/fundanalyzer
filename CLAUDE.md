@@ -38,7 +38,22 @@ Maven Wrapper を使うこと（`mvn` ではなく `./mvnw`）。本番Jenkins �
 ./mvnw checkstyle:check          # sun_checks.xml に基づくチェック
 ```
 
-起動後の入口: `http://localhost:8080/fundanalyzer/`（context-path は `application.yml` で `/fundanalyzer` 固定）。Actuator は `/fundanalyzer/actuator/*` で全公開（dev既定）。
+起動後の入口: dev は `http://localhost:8889/fundanalyzer/`、prod は `http://localhost:8890/fundanalyzer/`（context-path は `application.yml` で `/fundanalyzer` 固定）。Actuator は dev では別ポート `http://localhost:8989/actuator/*` で全公開（`management.server.port` 設定）、prod は `http://localhost:8990/actuator/*`。
+
+### Mac で dev 起動する場合
+
+`JAVA_HOME` を Homebrew 版 openjdk@17 に向けて起動する。
+
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+
+# dev 起動（devtools の自動再起動が classloader 起因の起動失敗を起こすため、画面確認だけなら無効化推奨）
+./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-Dspring.devtools.restart.enabled=false'
+```
+
+ファイル出力先（`app.settings.file.path.*`）は dev プロファイルで `${user.home}/.fundanalyzer/...`（Mac: `/Users/<user>/.fundanalyzer/...`、Windows: `C:\Users\<user>\.fundanalyzer\...`）に上書き済み。`application.yml` のデフォルト `C:/fundanalyzer/...` は本番 Windows サービス向けで、`release/config/application-prod.yml` で再定義される。
+
+スケジューラ群は全て `@Profile({"prod"})` のため dev では Bean 登録されず自動起動しない（[StockScheduler.java](src/main/java/github/com/ioridazo/fundanalyzer/web/scheduler/StockScheduler.java) 等参照）。画面表示確認のみであれば EDINET API キーや Selenium の準備は不要。
 
 ## アーキテクチャ（重要）
 
@@ -106,7 +121,7 @@ exception/   … 業務例外
 - `release/config/application-prod.yml` — 本番Windowsサービス起動時に読み込む差分設定（`release/start.bat`）
 - `app.config.edinet.api-key` は環境変数 `edinet.api-key`（`release/env` 経由）に対応。**コミットしない**
 
-dev起動でファイル出力先（`app.settings.file.path.*`）が `C:/fundanalyzer/...` 固定の点に注意。Mac/Linuxで動かすときは個人プロファイル等で上書きが必要。
+ファイル出力先（`app.settings.file.path.*`）は dev で `${user.home}/.fundanalyzer/...`（OS 非依存）、prod で `C:/fundanalyzer/...`（[release/config/application-prod.yml](release/config/application-prod.yml) で再定義、Windows サービス前提）に切り替わる。`application.yml` のデフォルト値は prod 互換のため Windows パスを保持しているが、dev ではこの値は使われない。
 
 ## CI / リリース
 
