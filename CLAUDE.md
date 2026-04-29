@@ -128,3 +128,22 @@ dev起動でファイル出力先（`app.settings.file.path.*`）が `C:/fundana
 - ログは `log4j2-spring.xml` / `log4j2-spring-dev.xml`、本番は ECS フォーマット → Filebeat（`elastic/filebeat/filebeat.yml`）→ Logstash（`elastic/logstash/`）→ Elastic。
 - 外部APIで止まったら、まず Actuator `/fundanalyzer/actuator/health` の `circuitBreakers` と `rateLimiters` を確認。
 - スケジューラの実行時刻は `app.scheduler.hour.*` を確認（dev では時刻によっては動かない）。
+
+## 開発プロセス（一次情報源: `docs/guideline/`）
+
+本リポジトリの開発プロセスは [`docs/guideline/`](docs/guideline/) に集約されている。タスク着手前に必ず参照し、これを **一次情報源** として運用する（CLAUDE.md にルールを再掲しない／重複させない）。
+
+| ファイル | 目的 |
+|---|---|
+| [README.md](docs/guideline/README.md) | 索引・3+N 体制・タスクサイクル・コア原則 |
+| [workflow.md](docs/guideline/workflow.md) | 6 ステップのタスクサイクル本体 |
+| [roles.md](docs/guideline/roles.md) | 計画 / 実装 / 検証エージェントの役割と禁止事項 |
+| [human-checkpoints.md](docs/guideline/human-checkpoints.md) | Gate 1 / 2 / 3 の運用と通過記録（タスク 1 md 統合方式） |
+| [impact-analysis.md](docs/guideline/impact-analysis.md) | 影響範囲分析（参照層 / 状態層 / データ層） |
+| [infra-impact-checklist.md](docs/guideline/infra-impact-checklist.md) | インフラ影響チェック |
+| [test-strategy.md](docs/guideline/test-strategy.md) | テスト戦略テンプレート |
+| [security-policy.md](docs/guideline/security-policy.md) | セキュリティ方針テンプレート |
+| [document-plan.md](docs/guideline/document-plan.md) | ドキュメント計画テンプレート |
+| [git-strategy.md](docs/guideline/git-strategy.md) | Git 戦略（ブランチ・コミット・マージ規約・禁止操作） |
+
+> Claude Code として作業する際は、タスク開始時に最低限 `README.md` → `workflow.md` → `roles.md` → `human-checkpoints.md` を参照する。Gate 1 / Gate 3 は **人間レビュアの承認が必須・スキップ不可** であり、Claude が独断で通過させない。
