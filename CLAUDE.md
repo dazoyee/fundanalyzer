@@ -8,7 +8,7 @@ EDINETから取得した有価証券報告書（XBRL）と各種株価サイト�
 
 - **Java 17 / Spring Boot 3.1.0**
 - **永続化**: Doma 2（DAO + SQLファイル）+ Flyway（`src/main/resources/db/migration/`）+ MySQL（本番） / H2（dev・test）
-- **View**: Thymeleaf + thymeleaf-layout-dialect、AdminLTE系の静的アセット同梱（`src/main/resources/static/plugins/*` は触らない）
+- **View**: Thymeleaf + thymeleaf-layout-dialect、AdminLTE系の静的アセット同梱。`src/main/resources/static/plugins/` はテンプレートが参照する 12 ディレクトリ（`bootstrap` / `datatables*` / `daterangepicker` / `fontawesome-free` / `inputmask` / `jquery` / `jszip` / `moment` / `pdfmake`）のみ保持。新規プラグイン追加時は AdminLTE 公式配布物から該当ディレクトリのみ取り込む
 - **外部I/O**: EDINET API、日経/kabuoji3/minkabu/Yahoo Finance のスクレイピング、Slack Webhook通知、Selenium連携
 - **可観測性**: log4j2 + ECS logging、Micrometer + OpenTelemetry/Zipkin、Resilience4j（CircuitBreaker / RateLimiter）
 
@@ -97,7 +97,7 @@ exception/   … 業務例外
 
 ### View / 画面
 
-`web/presenter/*Presenter.java` が Thymeleaf テンプレ（`src/main/resources/templates/*.html`）にバインド。`layout.html` を thymeleaf-layout-dialect で継承。`static/dist`, `static/plugins` の資産はAdminLTEテーマの取り込みで、原則編集対象外。
+`web/presenter/*Presenter.java` が Thymeleaf テンプレ（`src/main/resources/templates/*.html`）にバインド。`layout.html` を thymeleaf-layout-dialect で継承。`static/dist` および `static/plugins` の資産は AdminLTE テーマ由来。**個別ファイルの内容は改変しない**（バージョンアップ時は配布物ごと差し替え）。一方、テンプレートから未参照のディレクトリ・ファイルは保守対象を絞るために削除する方針（[T20260429-frontend-asset-cleanup](docs/notes/T20260429-frontend-asset-cleanup.md) で初回整理済み）。
 
 ## 設定ファイル
 
