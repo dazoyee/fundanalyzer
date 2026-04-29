@@ -204,7 +204,19 @@
 | **観点 4: セキュリティ** | OK | AI | 攻撃面の縮小（公開していた未使用 JS / CSS が消滅）。新規依存・新規エンドポイント・新規外部呼び出しなし。シークレット漏洩リスクなし |
 | **観点 5: ドキュメント整合性** | OK | AI | CLAUDE.md の AdminLTE 記述を本タスク内容に合わせて更新（コミット 4）。タスク 1 md（本ファイル）を一次情報源として整備済み |
 
-> **環境制約**: ローカル `./mvnw test` 実行は本作業環境（macOS, JRE 未導入）では不可。CI（[Jenkinsfile-ci-prod.groovy](pipeline/Jenkinsfile-ci-prod.groovy)）または開発者の Windows 環境で人間レビュアが Gate 3 段階で実行する。
+### ローカルビルド検証結果（AI 実施・2026-04-29）
+
+Homebrew 版 openjdk@17 (`/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`) を `JAVA_HOME` に指定して再試行したところ、本作業環境（macOS / Apple Silicon）でも Maven Wrapper が動作した（前回「JRE 未導入」と判断したのは `JAVA_HOME` 未設定が原因）。
+
+| コマンド | 結果 | 所要時間 |
+|---|---|---|
+| `./mvnw -B -ntp compile` | BUILD SUCCESS | 約 9 秒 |
+| `./mvnw -B -ntp test` | **BUILD SUCCESS** ／ Tests run: 473, Failures: 0, Errors: 0, Skipped: 0 | 約 38 秒 |
+| `./mvnw -B -ntp package -DskipTests` | BUILD SUCCESS／`target/fundanalyzer-2.2.14-SNAPSHOT.jar` (70MB) ＆ `*-windows.zip` (64MB) 生成 | 約 27 秒 |
+
+> 静的解析・カバレッジ込みの完全 CI コマンド（`test surefire-report:report pmd:pmd pmd:cpd jacoco:report spotbugs:spotbugs checkstyle:check`）は CI（[Jenkinsfile-ci-prod.groovy](pipeline/Jenkinsfile-ci-prod.groovy)）側で人間レビュアが緑であることを確認する。
+
+> **画面表示の動作確認** は本環境では実施不可（dev 起動はファイル出力先 `C:/fundanalyzer/...` を前提としており Mac では起動できない）。Gate 3 で人間レビュアが実機確認する。
 
 ---
 
@@ -236,12 +248,20 @@
 221b81eb    chore: 未参照の AdminLTE プラグインを 48 ディレクトリ削除
 ```
 
-#### 動作確認結果（人間レビュア記入）
+#### 動作確認結果
 
-- [ ] CI ビルド: -
-- [ ] ローカル起動: -
-- [ ] 画面表示: -
-- [ ] 開発者ツール（Network / Console）: -
+AI 実施分（2026-04-29）:
+
+- [x] ローカル `./mvnw test` 緑: 473 件全パス（環境: macOS / openjdk@17 / Maven Wrapper 3.6.3）
+- [x] ローカル `./mvnw package -DskipTests` 成功: jar 70MB / windows.zip 64MB
+- [x] テンプレートからの全アセット参照（21 件）が削除後も解決可能であることを `find` で確認
+
+人間レビュア実施依頼分:
+
+- [ ] CI（Jenkinsfile-ci-prod.groovy）が緑（PMD / SpotBugs / Checkstyle / JaCoCo 含む）
+- [ ] 開発者の Windows / dev 環境でアプリ起動成功
+- [ ] 画面表示: `/v2/index`, `/v2/edinet-list`, `/v2/edinet-list-detail`, `/v2/valuation`, `/v2/corporate` が崩れず表示
+- [ ] ブラウザ開発者ツール（Network / Console）に 404 / エラーなし
 
 #### 副次影響
 
@@ -274,3 +294,4 @@
 - 2026-04-29: 初版作成（ステップ 1〜4・Gate 1 セクション記載）
 - 2026-04-29: Gate 1 承認記録、CLAUDE.md 更新を完了条件に追加
 - 2026-04-29: 削除実行（コミット 1〜3）、ステップ 5 コミット履歴・ステップ 6 多軸検証・Gate 3 セクション記載
+- 2026-04-29: ローカル `./mvnw test` (473 件全パス) ・`./mvnw package` (BUILD SUCCESS) を実施し、ステップ 6 と Gate 3 動作確認結果に AI 実施分を追記
