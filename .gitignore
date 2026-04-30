@@ -34,3 +34,6 @@ build/
 .vscode/
 !/.gitignore
 docs/plans/
+
+### Frontend build (画面刷新タスク Phase 1) ###
+src/main/frontend/node_modules/

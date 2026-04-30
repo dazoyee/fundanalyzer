@@ -38,6 +38,12 @@
         <spotbugs-maven-plugin.version>4.7.3.2</spotbugs-maven-plugin.version>
         <spotbugs.version>4.7.3</spotbugs.version>
         <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
+
+        <!-- frontend build pipeline (画面刷新タスク Phase 1) -->
+        <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
+        <node.version>v20.18.0</node.version>
+        <npm.version>10.8.2</npm.version>
+        <frontend.src.directory>${project.basedir}/src/main/frontend</frontend.src.directory>
     </properties>
 
     <dependencies>
@@ -376,6 +382,50 @@
                             <goal>check</goal>
                             <goal>clover</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- フロントエンドビルド（Tailwind CSS + esbuild）-->
+            <!-- generate-resources phase で Node.js 取得 → npm ci → npm run build を順に実行し、 -->
+            <!-- target/classes/static/css/app.css と target/classes/static/js/app.js を生成する -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin.version}</version>
+                <configuration>
+                    <workingDirectory>${frontend.src.directory}</workingDirectory>
+                    <installDirectory>${project.build.directory}</installDirectory>
+                    <nodeVersion>${node.version}</nodeVersion>
+                    <npmVersion>${npm.version}</npmVersion>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                    </execution>
+                    <execution>
+                        <id>npm-ci</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>ci</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-run-build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

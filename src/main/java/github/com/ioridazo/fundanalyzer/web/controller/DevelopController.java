@@ -14,9 +14,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Profile("!prod")
 @Controller
@@ -85,5 +87,28 @@ public class DevelopController {
 
         model.addAttribute("companies", viewService.getCorporateView());
         return "redirect:" + UriComponentsBuilder.fromUriString("/v2/index").toUriString();
+    }
+
+    /**
+     * 画面刷新タスク Phase 1 POC エンドポイント。Phase 2 開始時に削除する。
+     *
+     * @return Tailwind / htmx / Alpine.js / Lucide / Litepicker / Chart.js / ダークモード /
+     *         レスポンシブ動作確認用のテンプレート名
+     */
+    @GetMapping("/v2/__phase1-poc")
+    public String phase1Poc() {
+        return "__phase1-poc";
+    }
+
+    /**
+     * 画面刷新タスク Phase 1 POC の htmx 部分更新フラグメント。Phase 2 開始時に削除する。
+     *
+     * @return 現在時刻を埋め込んだ HTML スニペット
+     */
+    @GetMapping("/v2/__phase1-poc/fragment")
+    @ResponseBody
+    public String phase1PocFragment() {
+        return "<span class=\"font-bold text-emerald-600 dark:text-emerald-400\">"
+                + "htmx fragment loaded at " + LocalTime.now() + "</span>";
     }
 }

@@ -40,6 +40,33 @@ Maven Wrapper を使うこと（`mvn` ではなく `./mvnw`）。本番Jenkins �
 
 起動後の入口: dev は `http://localhost:8889/fundanalyzer/`、prod は `http://localhost:8890/fundanalyzer/`（context-path は `application.yml` で `/fundanalyzer` 固定）。Actuator は dev では別ポート `http://localhost:8989/actuator/*` で全公開（`management.server.port` 設定）、prod は `http://localhost:8990/actuator/*`。
 
+### フロントエンドビルド（画面刷新タスク Phase 1 以降）
+
+`./mvnw package`（および `process-resources` 以降を含む phase）を実行すると、frontend-maven-plugin が `generate-resources` フェーズで以下を自動実行する:
+
+1. `target/node/` に Node.js 20 LTS を初回のみ自動取得（`https://nodejs.org/dist/` 既定経路）
+2. `src/main/frontend/` で `npm ci`（`package-lock.json` から再現可能インストール）
+3. `npm run build` で Tailwind CSS と esbuild を順に起動し、`target/classes/static/css/app.css` と `target/classes/static/js/app.js` を生成
+
+初回ビルドは Node 取得＋依存解決で +1〜2 分。後続は frontend-maven-plugin がキャッシュを活用し +5〜15 秒程度。本番 Windows サービス環境には Node を一切配置しない（ビルド時のみ取得・jar には CSS/JS 成果物のみ同梱）。
+
+```bash
+# フロントエンドのみ Maven 経由で再ビルド
+./mvnw frontend:install-node-and-npm frontend:npm@npm-ci frontend:npm@npm-run-build
+
+# ローカルに Node 20 がある場合（手元で素早く回したいとき）
+cd src/main/frontend && npm ci && npm run build
+
+# 開発時のウォッチモード（CSS / JS を別ターミナルで並行ウォッチ）
+cd src/main/frontend
+npm run watch:css   # 別ターミナル
+npm run watch:js    # 別ターミナル
+```
+
+採用ライブラリ: Tailwind CSS 3.4 / htmx 2.0 / Alpine.js 3 / Lucide / Litepicker 2 / Chart.js 4 / esbuild 0.20。詳細は [docs/adr/ADR-001-screen-renewal-stack.md](docs/adr/ADR-001-screen-renewal-stack.md)。
+
+> 注: 本リポは Phase 1 時点で **画面刷新の途中**。既存の `templates/*.html` と `static/dist`・`static/plugins/*` は AdminLTE 由来で残存しており、Phase 2 以降で順次置換していく（[docs/notes/T20260429-screen-renewal-htmx-tailwind.md](docs/notes/T20260429-screen-renewal-htmx-tailwind.md) 参照）。「View / 画面」節は Phase 7 完了時に Tailwind/htmx 前提へ書き換える。
+
 ### Mac で dev 起動する場合
 
 `JAVA_HOME` を Homebrew 版 openjdk@17 に向けて起動する。
