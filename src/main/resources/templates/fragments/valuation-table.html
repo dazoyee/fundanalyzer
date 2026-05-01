@@ -152,7 +152,9 @@
             <tr>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='targetDate', label='対象日', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='submitDate', label='提出日', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndexOfSubmitDate', label='提出日グレアム', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
             </tr>
             </thead>
@@ -165,11 +167,13 @@
                        class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
                 </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndex}">0</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndexOfSubmitDate}">0</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.targetDate}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.grahamIndex}">0</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.grahamIndexOfSubmitDate}">0</td>
             </tr>
             <tr th:if="${table.rows().isEmpty()}">
-                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=4)}"></th:block>
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=6)}"></th:block>
             </tr>
             </tbody>
         </table>
@@ -185,6 +189,8 @@
             <tr>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='targetDate', label='対象日', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='stockPrice', label='株価', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='dividendYield', label='配当利回り', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
             </tr>
             </thead>
@@ -197,10 +203,12 @@
                        class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
                 </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${c.dividendYield}">0</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.targetDate}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.stockPrice}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.dividendYield}">0</td>
             </tr>
             <tr th:if="${table.rows().isEmpty()}">
-                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=3)}"></th:block>
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=5)}"></th:block>
             </tr>
             </tbody>
         </table>

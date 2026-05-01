@@ -10,6 +10,33 @@
 <h1 layout:fragment="page-title">株価評価</h1>
 
 <section layout:fragment="content" class="space-y-4">
+    <!-- 上部: 2 アクションフォーム -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <form method="post" th:action="@{/v2/import/stock/date}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">企業の株価を取得する（書類提出日を指定）</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
+                <button type="submit"
+                        class="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    実行
+                </button>
+            </div>
+        </form>
+        <form method="post" th:action="@{/v2/evaluate}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">株価を評価する</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <p class="flex-1 text-sm text-slate-500 dark:text-slate-400">全企業の評価を再計算します</p>
+                <button type="submit"
+                        class="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    実行
+                </button>
+            </div>
+        </form>
+    </div>
+
     <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
         <a th:href="@{/v3/valuation(q=${keyword})}"
            th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
