@@ -17,6 +17,10 @@
                 <th th:replace="~{fragments/index-table :: sortable-th (field='name', label='会社名', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/index-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/index-table :: sortable-th (field='latestCorporateValue', label='最新企業価値', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='coefficientOfVariation', label='変動係数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='averageStockPrice', label='株価平均', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='discountRate', label='割安比率', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='countYear', label='対象年数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
             </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
@@ -26,13 +30,22 @@
                     <a th:href="@{/v3/corporate(code=${c.code})}"
                        th:text="${c.code}"
                        class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
+                    <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
+                       class="ml-1 inline-flex items-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+                       title="みんかぶで開く">
+                        <i data-lucide="external-link" class="h-3 w-3"></i>
+                    </a>
                 </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル会社</td>
                 <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">2025-01-01</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${c.latestCorporateValue}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.latestCorporateValue}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.coefficientOfVariationToDisplay}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.averageStockPrice}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.discountRateToDisplay}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.countYear}">-</td>
             </tr>
             <tr th:if="${table.companies().isEmpty()}">
-                <td colspan="4" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
+                <td colspan="8" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
                     該当する会社がありません
                 </td>
             </tr>

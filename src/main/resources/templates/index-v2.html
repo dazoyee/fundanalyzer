@@ -10,6 +10,36 @@
 <h1 layout:fragment="page-title">会社一覧</h1>
 
 <section layout:fragment="content" class="space-y-4">
+    <!-- 上部: 2 アクションフォーム -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <form method="post" th:action="@{/v1/document/analysis}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">財務諸表の取得と分析をする</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
+                <button type="submit"
+                        class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    実行
+                </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">日付範囲（カンマ区切り）を入力</p>
+        </form>
+        <form method="post" th:action="@{/v1/scrape/id}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">書類IDから取得と分析する</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" name="documentId" placeholder="S100XXXX"
+                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm font-mono dark:border-slate-600 dark:bg-slate-900"/>
+                <button type="submit"
+                        class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    実行
+                </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">書類 ID を入力</p>
+        </form>
+    </div>
+
     <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
         <a th:href="@{/v3/index(q=${keyword},sort=${sortParam})}"
            th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
