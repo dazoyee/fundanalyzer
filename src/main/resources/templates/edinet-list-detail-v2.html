@@ -14,66 +14,229 @@
             <i data-lucide="arrow-left" class="inline-block h-4 w-4"></i> 一覧へ
         </a>
         <span class="text-slate-400">/</span>
-        <span>EDINET 詳細 <span class="font-mono text-base" th:text="${submitDate}">2025-01-01</span></span>
+        <span>処理詳細 <span class="font-mono text-base" th:text="'(' + ${submitDate} + ')'">(2025-01-01)</span></span>
     </span>
 </h1>
 
 <section layout:fragment="content" class="space-y-6" th:with="ed=${edinetDetail.edinetList}">
-    <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <h2 class="mb-3 text-lg font-bold">処理状況サマリ</h2>
-        <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">提出日</dt>
-                <dd class="font-mono" th:text="${ed.submitDate}">-</dd>
-            </div>
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">総件数</dt>
-                <dd class="font-mono" th:text="${ed.countAll}">0</dd>
-            </div>
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">対象件数</dt>
-                <dd class="font-mono" th:text="${ed.countTarget}">0</dd>
-            </div>
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">処理済</dt>
-                <dd class="font-mono" th:text="${ed.countScraped}">0</dd>
-            </div>
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">分析済</dt>
-                <dd class="font-mono" th:text="${ed.countAnalyzed}">0</dd>
-            </div>
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">未処理</dt>
-                <dd class="font-mono" th:text="${ed.countNotScraped}">0</dd>
-            </div>
-            <div>
-                <dt class="text-slate-500 dark:text-slate-400">対象外</dt>
-                <dd class="font-mono" th:text="${ed.countNotTarget}">0</dd>
-            </div>
-        </dl>
+
+    <!-- 上部 2 アクションボタン -->
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <form method="post" th:action="@{/v1/update/edinet-list}">
+            <input type="hidden" th:value="${ed.submitDate}" name="date"/>
+            <button type="submit"
+                    class="w-full rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                更新して前に戻る
+            </button>
+        </form>
+        <form method="post" th:action="@{/v1/analyze/date}">
+            <input type="hidden" th:value="${ed.submitDate}" name="date"/>
+            <button type="submit"
+                    class="w-full rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                分析する
+            </button>
+        </form>
     </div>
 
-    <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-        <h2 class="mb-3 text-lg font-bold">未処理ドキュメント</h2>
-        <div class="overflow-x-auto" th:if="${edinetDetail.documentDetailList != null and !edinetDetail.documentDetailList.isEmpty()}">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+    <!-- 統計サマリ 8 項目 -->
+    <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        <h2 class="mb-3 text-lg font-bold">処理状況サマリ</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                 <thead class="bg-slate-50 dark:bg-slate-700">
                 <tr>
-                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">ドキュメント</th>
+                    <th class="px-3 py-2 text-left font-semibold">総件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">処理対象件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">処理済件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">分析済件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">未分析ID</th>
+                    <th class="px-3 py-2 text-left font-semibold">処理確認ID</th>
+                    <th class="px-3 py-2 text-left font-semibold">未処理件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">対象外件数</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                <tr th:each="doc : ${edinetDetail.documentDetailList}">
-                    <td class="px-3 py-2 text-sm" th:text="${doc}">document detail</td>
+                <tbody>
+                <tr>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countAll}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countTarget}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countScraped}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countAnalyzed}">0</td>
+                    <td class="px-3 py-2 break-all text-xs" th:text="${ed.notAnalyzedId}">-</td>
+                    <td class="px-3 py-2 break-all text-xs" th:text="${ed.cantScrapedId}">-</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countNotScraped}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countNotTarget}">0</td>
                 </tr>
                 </tbody>
             </table>
         </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400"
-           th:if="${edinetDetail.documentDetailList == null or edinetDetail.documentDetailList.isEmpty()}">
-            未処理ドキュメントはありません
-        </p>
     </div>
+
+    <!-- 書類詳細リスト -->
+    <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
+         th:if="${edinetDetail.documentDetailList != null and !edinetDetail.documentDetailList.isEmpty()}">
+        <h2 class="mb-3 text-lg font-bold">書類詳細</h2>
+        <div class="space-y-4"
+             th:each="documentDetail : ${edinetDetail.documentDetailList}">
+            <div x-data="{ open: true }"
+                 class="rounded border border-slate-200 dark:border-slate-700">
+                <button type="button" @click="open = !open"
+                        class="flex w-full items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm font-semibold dark:border-slate-700 dark:bg-slate-700">
+                    <span class="inline-flex items-center gap-2">
+                        <i data-lucide="chevron-right" class="h-4 w-4" x-show="!open"></i>
+                        <i data-lucide="chevron-down" class="h-4 w-4" x-show="open"></i>
+                        <span th:text="${documentDetail.companyName}">会社名</span>
+                    </span>
+                </button>
+                <div x-show="open" class="space-y-4 p-3">
+
+                    <!-- 10 列メタデータテーブル -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-700">
+                            <tr>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">書類ID</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">EDINETコード</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">書類種別</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">対象年</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">DL</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">DC</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">NS</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">BS</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">PL</th>
+                                <th class="px-2 py-2 text-left text-xs font-semibold">RM</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.documentId}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.edinetCode}">-</td>
+                                <td class="px-2 py-2 text-xs" th:text="${documentDetail.document.documentTypeName}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.documentPeriod}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.downloaded}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.decoded}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.scrapedNumberOfShares}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.scrapedBs}">-</td>
+                                <td class="px-2 py-2 font-mono text-xs" th:text="${documentDetail.document.scrapedPl}">-</td>
+                                <td class="px-2 py-2">
+                                    <form method="post" th:action="@{/v1/remove/document}">
+                                        <input type="hidden" th:value="${ed.submitDate}" name="submitDate"/>
+                                        <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                                        <button type="submit"
+                                                class="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">
+                                            除外
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 書類別 2 アクションボタン -->
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <form method="post" th:action="@{/v2/scrape/id}">
+                            <input type="hidden" th:value="${ed.submitDate}" name="date"/>
+                            <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                            <button type="submit"
+                                    class="w-full rounded border border-blue-400 bg-white px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-500 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700">
+                                スクレイピング/分析する
+                            </button>
+                        </form>
+                        <form method="post" th:action="@{/v1/update/all-done/status}">
+                            <input type="hidden" th:value="${ed.submitDate}" name="date"/>
+                            <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                            <button type="submit"
+                                    class="w-full rounded border border-blue-400 bg-white px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-500 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700">
+                                ステータス更新：すべて完了
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 書類ファイル外部リンク 3 種 + 財務値 10 編集フォーム -->
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <!-- BS/PL/NS リンク -->
+                        <div class="rounded border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
+                            <dl class="grid grid-cols-[3rem_1fr] gap-x-3 gap-y-2 text-sm">
+                                <dt class="font-semibold">BS</dt>
+                                <dd class="break-all">
+                                    <a th:if="${documentDetail.document.bsDocumentPath != null}"
+                                       th:text="${documentDetail.document.bsDocumentPath}"
+                                       th:href="${documentDetail.document.bsDocumentPath}"
+                                       target="_blank" rel="noopener"
+                                       class="text-blue-600 hover:underline dark:text-blue-400">-</a>
+                                    <span th:if="${documentDetail.document.bsDocumentPath == null}" class="text-slate-400">未取得</span>
+                                </dd>
+                                <dt class="font-semibold">PL</dt>
+                                <dd class="break-all">
+                                    <a th:if="${documentDetail.document.plDocumentPath != null}"
+                                       th:text="${documentDetail.document.plDocumentPath}"
+                                       th:href="${documentDetail.document.plDocumentPath}"
+                                       target="_blank" rel="noopener"
+                                       class="text-blue-600 hover:underline dark:text-blue-400">-</a>
+                                    <span th:if="${documentDetail.document.plDocumentPath == null}" class="text-slate-400">未取得</span>
+                                </dd>
+                                <dt class="font-semibold">NS</dt>
+                                <dd class="break-all">
+                                    <a th:if="${documentDetail.document.numberOfSharesDocumentPath != null}"
+                                       th:text="${documentDetail.document.numberOfSharesDocumentPath}"
+                                       th:href="${documentDetail.document.numberOfSharesDocumentPath}"
+                                       target="_blank" rel="noopener"
+                                       class="text-blue-600 hover:underline dark:text-blue-400">-</a>
+                                    <span th:if="${documentDetail.document.numberOfSharesDocumentPath == null}" class="text-slate-400">未取得</span>
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <!-- 10 財務値 -->
+                        <div class="rounded border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
+                            <dl class="grid grid-cols-[10rem_1fr] gap-x-3 gap-y-2 text-sm"
+                                th:with="fv=${documentDetail.financeValue}">
+
+                                <th:block th:each="fld : ${ {
+                                    {fv.totalCurrentAssets, 'totalCurrentAssets'},
+                                    {fv.totalInvestmentsAndOtherAssets, 'totalInvestmentsAndOtherAssets'},
+                                    {fv.totalAssets, 'totalAssets'},
+                                    {fv.totalCurrentLiabilities, 'totalCurrentLiabilities'},
+                                    {fv.totalFixedLiabilities, 'totalFixedLiabilities'},
+                                    {fv.subscriptionWarrant, 'subscriptionWarrant'},
+                                    {fv.netAssets, 'netAssets'},
+                                    {fv.operatingProfit, 'operatingProfit'},
+                                    {fv.netIncome, 'netIncome'},
+                                    {fv.numberOfShares, 'numberOfShares'} } }">
+                                    <dt class="font-semibold" th:text="${fld[0].name}">項目</dt>
+                                    <dd>
+                                        <span th:if="${fld[0].value != null}"
+                                              th:text="${fld[0].value}"
+                                              class="font-mono">-</span>
+                                        <form th:if="${fld[0].value == null}"
+                                              method="post" th:action="@{/v1/fix-fundamental-value}"
+                                              class="flex flex-wrap items-center gap-1">
+                                            <input type="hidden" th:value="${ed.submitDate}" name="submitDate"/>
+                                            <input type="hidden" th:value="${documentDetail.document.edinetCode}" name="edinetCode"/>
+                                            <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                                            <input type="hidden" th:value="${fld[0].financialStatementId}" name="financialStatementId"/>
+                                            <input type="hidden" th:value="${fld[0].subjectId}" name="subjectId"/>
+                                            <input type="number" name="value"
+                                                   class="w-32 rounded border border-slate-300 px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-900"/>
+                                            <button type="submit"
+                                                    class="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">
+                                                登録
+                                            </button>
+                                        </form>
+                                    </dd>
+                                </th:block>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-sm text-slate-500 dark:text-slate-400"
+       th:if="${edinetDetail.documentDetailList == null or edinetDetail.documentDetailList.isEmpty()}">
+        未処理ドキュメントはありません
+    </p>
 </section>
 </body>
 </html>
