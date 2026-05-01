@@ -35,14 +35,6 @@
                 <i data-lucide="chevron-right" class="h-4 w-4"></i>
             </a>
         </nav>
-        <nav class="flex flex-wrap gap-1" role="tablist">
-            <a th:href="@{/v3/corporate(code=${corporate.code})}"
-               th:classappend="${target == null} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
-               class="rounded-md px-3 py-1 text-xs font-medium">年次</a>
-            <a th:href="@{/v3/corporate(code=${corporate.code},target='quart')}"
-               th:classappend="${target == 'quart'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
-               class="rounded-md px-3 py-1 text-xs font-medium">四半期</a>
-        </nav>
     </div>
 
     <!-- アクション 3 ボタン -->

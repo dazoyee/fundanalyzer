@@ -111,7 +111,8 @@ public class ViewSpecification {
      * @return 企業情報ビュー
      */
     public CorporateViewModel findLatestCorporateView(final CodeInputData inputData) {
-        return corporateViewDao.selectByCode(inputData.getCode()).stream()
+        // corporate_view.code は CHAR(4)。URL に 5 桁の company.code が来た場合も 4 桁に正規化する
+        return corporateViewDao.selectByCode(inputData.getCode4()).stream()
                 .filter(viewBean -> viewBean.getSubmitDate().isPresent())
                 .max(Comparator.comparing(viewBean -> viewBean.getSubmitDate().get()))
                 .map(CorporateViewModel::of)

@@ -27,9 +27,9 @@ import java.util.Objects;
 public class AnalysisController {
 
     private static final String REDIRECT = "redirect:";
-    private static final URI V2_INDEX_PATH = URI.create("/v2/index");
-    private static final URI V2_CORPORATE_PATH = URI.create("/v2/corporate");
-    private static final URI V2_VALUATION_PATH = URI.create("/v2/valuation");
+    private static final URI V3_INDEX_PATH = URI.create("/v3/index");
+    private static final URI V3_CORPORATE_PATH = URI.create("/v3/corporate");
+    private static final URI V3_VALUATION_PATH = URI.create("/v3/valuation");
 
     private static final String MESSAGE = "message";
     private static final String DATETIME_FORMAT = "MM/dd/uuuu";
@@ -60,7 +60,7 @@ public class AnalysisController {
 
         analysisService.executePartOfMain(BetweenDateInputData.of(fromDate, toDate));
 
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH).toUriString();
     }
 
     /**
@@ -71,7 +71,7 @@ public class AnalysisController {
     @GetMapping("/v1/update/corporate/view")
     public String updateCorporateView() {
         viewService.updateCorporateView();
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
                 .queryParam(MESSAGE, "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
                 .build().encode().toUriString();
     }
@@ -85,7 +85,7 @@ public class AnalysisController {
     @PostMapping("/v1/scrape/date")
     public String scrapeByDate(final String date) {
         analysisService.executeByDate(DateInputData.of(LocalDate.parse(date)));
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH).toUriString();
     }
 
     /**
@@ -118,7 +118,7 @@ public class AnalysisController {
             }
         });
 
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_INDEX_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH).toUriString();
     }
 
     /**
@@ -141,7 +141,7 @@ public class AnalysisController {
                         new String[]{fromDate.toString(), toDate.toString()},
                         Locale.getDefault())
         );
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_VALUATION_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_VALUATION_PATH).toUriString();
     }
 
     /**
@@ -154,7 +154,7 @@ public class AnalysisController {
     public String importStockByCode(final String code) {
         analysisService.importStock(CodeInputData.of(code));
         analysisService.indicate(CodeInputData.of(code));
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_CORPORATE_PATH)
                 .queryParam("code", code.substring(0, 4)).toUriString();
     }
 
@@ -169,7 +169,7 @@ public class AnalysisController {
     public String updateFavoriteCompany(final String code, final RedirectAttributes redirectAttributes) {
         final boolean isFavorite = analysisService.updateFavoriteCompany(CodeInputData.of(code));
         redirectAttributes.addFlashAttribute("isFavorite", isFavorite);
-        return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_CORPORATE_PATH)
                 .queryParam("code", code.substring(0, 4)).toUriString();
     }
 
@@ -188,7 +188,7 @@ public class AnalysisController {
                 viewService.updateValuationView(CodeInputData.of(code));
             }
             redirectAttributes.addFlashAttribute("isEvaluated", isEvaluated);
-            return REDIRECT + UriComponentsBuilder.fromUri(V2_CORPORATE_PATH)
+            return REDIRECT + UriComponentsBuilder.fromUri(V3_CORPORATE_PATH)
                     .queryParam("code", code.substring(0, 4)).toUriString();
         } else {
             final int countValuation = analysisService.evaluate();
@@ -200,7 +200,7 @@ public class AnalysisController {
                             new String[]{String.valueOf(countValuation)},
                             Locale.getDefault())
             );
-            return REDIRECT + UriComponentsBuilder.fromUri(V2_VALUATION_PATH).toUriString();
+            return REDIRECT + UriComponentsBuilder.fromUri(V3_VALUATION_PATH).toUriString();
         }
     }
 }

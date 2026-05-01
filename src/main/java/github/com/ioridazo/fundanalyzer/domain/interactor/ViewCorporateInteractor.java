@@ -250,12 +250,16 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             return viewModel;
         } else {
             final int index = codeList.indexOf(inputData.getCode());
+            if (index < 0) {
+                // 入力コードが対象リストに含まれない (例: target=quart の文脈で年次のみの企業を表示) → 前後ナビなしで返す
+                return viewModel;
+            }
             String backwardCode = null;
             String forwardCode = null;
-            if (index != 0) {
+            if (index > 0) {
                 backwardCode = codeList.get(index - 1);
             }
-            if (index + 1 != codeList.size()) {
+            if (index + 1 < codeList.size()) {
                 forwardCode = codeList.get(index + 1);
             }
 
