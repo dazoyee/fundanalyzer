@@ -90,24 +90,23 @@ public class DevelopController {
     }
 
     /**
-     * 画面刷新タスク Phase 1 POC エンドポイント。Phase 2 開始時に削除する。
+     * 画面刷新タスク Phase 2 POC エンドポイント。layout-v2 を継承する。Phase 7 で削除する。
      *
-     * @return Tailwind / htmx / Alpine.js / Lucide / Litepicker / Chart.js / ダークモード /
-     *         レスポンシブ動作確認用のテンプレート名
+     * @return layout-v2 + 各 widget の動作確認用テンプレート名
      */
-    @GetMapping("/v2/__phase1-poc")
-    public String phase1Poc() {
-        return "__phase1-poc";
+    @GetMapping("/v2/__phase2-layout-poc")
+    public String phase2LayoutPoc() {
+        return "__phase2-layout-poc";
     }
 
     /**
-     * 画面刷新タスク Phase 1 POC の htmx 部分更新フラグメント。Phase 2 開始時に削除する。
+     * 画面刷新タスク Phase 2 POC の htmx 部分更新フラグメント。Phase 7 で削除する。
      *
      * @return 現在時刻を埋め込んだ HTML スニペット
      */
-    @GetMapping("/v2/__phase1-poc/fragment")
+    @GetMapping("/v2/__phase2-layout-poc/fragment")
     @ResponseBody
-    public String phase1PocFragment() {
+    public String phase2LayoutPocFragment() {
         return "<span class=\"font-bold text-emerald-600 dark:text-emerald-400\">"
                 + "htmx fragment loaded at " + LocalTime.now() + "</span>";
     }
