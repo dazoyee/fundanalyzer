@@ -355,7 +355,7 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 |---|---|---|---|---|---|
 | 1 | ビルドパイプ整備 | [Phase 1](T20260429-screen-renewal-phase1-build-pipeline.md) | `feature/screen-renewal-phase1-build-pipeline` | d0ff0b03→1bf4062d（8 コミット） | **完了**（Gate 3 承認・2026-04-29） |
 | 2 | layout.html 刷新 | [Phase 2](T20260429-screen-renewal-phase2-layout-tailwind.md) | `feature/screen-renewal-phase2-layout-tailwind` | 83d90d7b→be898087（7 コミット） | **完了**（Gate 3 承認・2026-05-01） |
-| 3 | index.html 移植 + htmx ページング基盤 | - | - | - | 未着手 |
+| 3 | index.html 移植 + htmx ページング基盤 | [Phase 3](T20260429-screen-renewal-phase3-index-htmx.md) | `feature/screen-renewal-phase3-index-htmx` | cad7da7d→82faf5cd（7 コミット） | **完了**（Gate 3 承認・2026-05-01） |
 | 4 | valuation.html 移植 | - | - | - | 未着手 |
 | 5 | edinet.html / edinet-detail.html 移植 | - | - | - | 未着手 |
 | 6 | corporate.html 移植 | - | - | - | 未着手 |
@@ -419,3 +419,4 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 - 2026-04-29: Gate 1 再実施（スコープ縮小: Jenkins 関連を全 Phase で対象外化）。スコープ表 §コア (j) を削除し §対象外 (H) に追加、Phase 1 タイトルから「+ Jenkinsfile」を削除、Gate 2 完了条件の「Jenkins CI が緑」を取消し線に変更。iori-oiso 承認
 - 2026-04-29: Phase 1 完了（8 コミット d0ff0b03→1bf4062d）。Claude Preview で実機ブラウザ表示確認・全 6 観点 + ダークモード + レスポンシブ動作 OK。Phase 1 Gate 3 承認（iori-oiso）。次は Phase 2（layout.html 刷新）へ
 - 2026-05-01: Phase 2 完了（7 コミット 83d90d7b→be898087）。Claude Preview で再確認・タブレット 768px サイドバー固定・ダークモード+ htmx 補正・モバイル 375px ハンバーガードロワー動作 OK。Phase 2 Gate 3 承認（iori-oiso）。次は Phase 3（index.html 移植 + DataTables → htmx ページング基盤確立）へ
+- 2026-05-01: Phase 3 完了（7 コミット cad7da7d→82faf5cd）。テスト 49 件全パス・テーブル汎用パターン（2 エンドポイント方式 / record / ViewService 拡張 / 入力検証 / fragments / htmx 属性）を確立。Phase 3 Gate 3 承認（iori-oiso）。次は Phase 4（valuation.html 移植・5 テーブル並列）へ
