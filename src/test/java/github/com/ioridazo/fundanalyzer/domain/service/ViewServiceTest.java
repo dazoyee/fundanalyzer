@@ -11,6 +11,12 @@ import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTablePage;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTableQuery;
+import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -395,6 +401,136 @@ class ViewServiceTest {
                     new CompanyTableQuery(null, null, PageRequest.of(0, 25, Sort.by(Sort.Direction.ASC, "secret"))));
             assertEquals("9999", page.companies().get(0).getCode());
             assertEquals("0001", page.companies().get(1).getCode());
+        }
+    }
+
+    @Nested
+    @DisplayName("findCompanyValuationTable メソッド")
+    class FindCompanyValuationTable {
+
+        private CompanyValuationViewModel companyValuation(
+                final String code, final String name, final BigDecimal grahamIndex) {
+            return new CompanyValuationViewModel(
+                    code, name,
+                    LocalDate.of(2025, 1, 1),
+                    BigDecimal.valueOf(1000),
+                    grahamIndex,
+                    BigDecimal.ZERO, BigDecimal.ZERO,
+                    LocalDate.of(2024, 12, 1),
+                    BigDecimal.valueOf(900),
+                    30L,
+                    BigDecimal.valueOf(100), BigDecimal.valueOf(1.1),
+                    BigDecimal.valueOf(0.5),
+                    BigDecimal.valueOf(2000),
+                    BigDecimal.valueOf(0.03)
+            );
+        }
+
+        @Test
+        @DisplayName("target=null → viewValuationUseCase.viewValuation が呼ばれる")
+        void targetNull_callsViewValuation() {
+            when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
+            service.findCompanyValuationTable(new CompanyValuationTableQuery(
+                    null, null, "stock", PageRequest.of(0, 25, Sort.by("code"))));
+            verify(viewValuationUseCase, times(1)).viewValuation();
+        }
+
+        @Test
+        @DisplayName("target=all → viewAllValuation が呼ばれる")
+        void targetAll_callsViewAllValuation() {
+            when(viewValuationUseCase.viewAllValuation()).thenReturn(List.of());
+            service.findCompanyValuationTable(new CompanyValuationTableQuery(
+                    "all", null, "stock", PageRequest.of(0, 25, Sort.by("code"))));
+            verify(viewValuationUseCase, times(1)).viewAllValuation();
+        }
+
+        @Test
+        @DisplayName("target=favorite → viewFavoriteValuation が呼ばれる")
+        void targetFavorite_callsViewFavoriteValuation() {
+            when(viewValuationUseCase.viewFavoriteValuation()).thenReturn(List.of());
+            service.findCompanyValuationTable(new CompanyValuationTableQuery(
+                    "favorite", null, "stock", PageRequest.of(0, 25, Sort.by("code"))));
+            verify(viewValuationUseCase, times(1)).viewFavoriteValuation();
+        }
+
+        @Test
+        @DisplayName("keyword で code に partial match → 該当のみ返す")
+        void keywordCodeMatch() {
+            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
+                    companyValuation("1234", "Alpha", BigDecimal.TEN),
+                    companyValuation("5678", "Beta", BigDecimal.ONE)
+            ));
+            final CompanyValuationTablePage page = service.findCompanyValuationTable(
+                    new CompanyValuationTableQuery(null, "12", "stock",
+                            PageRequest.of(0, 25, Sort.by("code"))));
+            assertEquals(1L, page.totalElements());
+            assertEquals("1234", page.rows().get(0).code());
+        }
+
+        @Test
+        @DisplayName("sort=grahamIndex DESC → 降順で並ぶ")
+        void sortGrahamIndexDesc() {
+            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
+                    companyValuation("1234", "Alpha", BigDecimal.ONE),
+                    companyValuation("5678", "Beta", BigDecimal.TEN)
+            ));
+            final CompanyValuationTablePage page = service.findCompanyValuationTable(
+                    new CompanyValuationTableQuery(null, null, "graham-index",
+                            PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "grahamIndex"))));
+            assertEquals(BigDecimal.TEN, page.rows().get(0).grahamIndex());
+            assertEquals(BigDecimal.ONE, page.rows().get(1).grahamIndex());
+        }
+
+        @Test
+        @DisplayName("view が CompanyValuationTablePage に保持される")
+        void viewIsPreserved() {
+            when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
+            final CompanyValuationTablePage page = service.findCompanyValuationTable(
+                    new CompanyValuationTableQuery(null, null, "submit",
+                            PageRequest.of(0, 25, Sort.by("code"))));
+            assertEquals("submit", page.view());
+        }
+    }
+
+    @Nested
+    @DisplayName("findIndustryValuationTable メソッド")
+    class FindIndustryValuationTable {
+
+        @Test
+        @DisplayName("getIndustryValuationView が呼ばれる")
+        void callsViewIndustryValuation() {
+            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of());
+            service.findIndustryValuationTable(new IndustryValuationTableQuery(
+                    null, PageRequest.of(0, 25, Sort.by("name"))));
+            verify(viewValuationUseCase, times(1)).viewIndustryValuation();
+        }
+
+        @Test
+        @DisplayName("keyword で業種名に partial match → 該当のみ返す")
+        void keywordIndustryNameMatch() {
+            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of(
+                    IndustryValuationViewModel.of("情報・通信業", 1.0, 1.1, 0.5, 100),
+                    IndustryValuationViewModel.of("食品業", 2.0, 1.2, 0.6, 50)
+            ));
+            final IndustryValuationTablePage page = service.findIndustryValuationTable(
+                    new IndustryValuationTableQuery("情報",
+                            PageRequest.of(0, 25, Sort.by("name"))));
+            assertEquals(1L, page.totalElements());
+            assertEquals("情報・通信業", page.rows().get(0).name());
+        }
+
+        @Test
+        @DisplayName("sort=count DESC → 件数降順で並ぶ")
+        void sortCountDesc() {
+            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of(
+                    IndustryValuationViewModel.of("A", 1.0, 1.1, 0.5, 50),
+                    IndustryValuationViewModel.of("B", 2.0, 1.2, 0.6, 100)
+            ));
+            final IndustryValuationTablePage page = service.findIndustryValuationTable(
+                    new IndustryValuationTableQuery(null,
+                            PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "count"))));
+            assertEquals(100, page.rows().get(0).count());
+            assertEquals(50, page.rows().get(1).count());
         }
     }
 }

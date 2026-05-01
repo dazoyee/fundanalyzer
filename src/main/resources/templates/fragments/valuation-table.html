@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<th th:fragment="sortable-th (field, label, target, view, keyword, sortParam)"
+    class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+    <th:block th:with="parts=${sortParam.split(',')},
+                       currentField=${parts[0]},
+                       currentDir=${parts.length > 1 ? parts[1] : 'asc'},
+                       nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
+                       nextSort=${field + ',' + nextDir}">
+        <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${nextSort},page=0)}"
+           hx-target="#valuation-table"
+           hx-push-url="true"
+           class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">
+            <span th:text="${label}">列名</span>
+            <i th:if="${currentField == field and currentDir == 'asc'}" data-lucide="chevron-up" class="h-3 w-3"></i>
+            <i th:if="${currentField == field and currentDir == 'desc'}" data-lucide="chevron-down" class="h-3 w-3"></i>
+            <i th:unless="${currentField == field}" data-lucide="chevrons-up-down" class="h-3 w-3 opacity-30"></i>
+        </a>
+    </th:block>
+</th>
+
+<nav th:fragment="paginator (table, target, view, keyword, sortParam)"
+     class="flex flex-wrap items-center justify-between gap-2"
+     th:if="${table.totalPages() > 1}">
+    <div class="text-sm text-slate-600 dark:text-slate-400">
+        <span th:text="${table.pageNumber() + 1}">1</span> /
+        <span th:text="${table.totalPages()}">1</span> ページ
+    </div>
+    <div class="flex gap-1">
+        <a th:if="${table.pageNumber() > 0}"
+           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
+           hx-target="#valuation-table"
+           hx-push-url="true"
+           class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+            前へ
+        </a>
+        <a th:if="${table.pageNumber() < table.totalPages() - 1}"
+           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
+           hx-target="#valuation-table"
+           hx-push-url="true"
+           class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+            次へ
+            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+        </a>
+    </div>
+</nav>
+
+<div th:fragment="header (table)" class="text-sm text-slate-600 dark:text-slate-400" th:if="${table.totalElements() > 0}">
+    <span th:text="${table.totalElements()}">0</span> 件中
+    <span th:text="${table.pageNumber() * table.pageSize() + 1}">1</span> -
+    <span th:text="${table.pageNumber() * table.pageSize() + table.rows().size()}">25</span> 件目
+</div>
+
+<div th:fragment="empty (colspan)">
+    <td th:attr="colspan=${colspan}" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
+        該当するデータがありません
+    </td>
+</div>
+
+<div th:fragment="stock-table (table, target, view, keyword, sortParam)" class="space-y-3">
+    <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='targetDate', label='日付', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='stockPrice', label='株価', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='differenceFromSubmitDate', label='増減値', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='submitDateRatio', label='増減率', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="c : ${table.rows()}"
+                class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.targetDate}">2025-01-01</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.stockPrice}">1000</td>
+                <td class="px-3 py-2 text-right text-sm">
+                    <span th:if="${c.differenceFromSubmitDate} != null and ${c.differenceFromSubmitDate.signum()} > 0"
+                          th:text="'+' + ${c.differenceFromSubmitDate}"
+                          class="text-emerald-600 dark:text-emerald-400">+0</span>
+                    <span th:if="${c.differenceFromSubmitDate} != null and ${c.differenceFromSubmitDate.signum()} == 0"
+                          th:text="${c.differenceFromSubmitDate}"
+                          class="text-slate-700 dark:text-slate-300">0</span>
+                    <span th:if="${c.differenceFromSubmitDate} != null and ${c.differenceFromSubmitDate.signum()} &lt; 0"
+                          th:text="${c.differenceFromSubmitDate}"
+                          class="text-rose-600 dark:text-rose-400">-0</span>
+                </td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.submitDateRatio}">1.0</td>
+            </tr>
+            <tr th:if="${table.rows().isEmpty()}">
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=6)}"></th:block>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <th:block th:replace="~{fragments/valuation-table :: paginator (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th:block>
+</div>
+
+<div th:fragment="submit-table (table, target, view, keyword, sortParam)" class="space-y-3">
+    <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='submitDate', label='提出日', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='stockPriceOfSubmitDate', label='提出日株価', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndexOfSubmitDate', label='提出日グレアム', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='corporateValue', label='企業価値', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="c : ${table.rows()}"
+                class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">2025-01-01</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.stockPriceOfSubmitDate}">0</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndexOfSubmitDate}">0</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.corporateValue}">0</td>
+            </tr>
+            <tr th:if="${table.rows().isEmpty()}">
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=6)}"></th:block>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <th:block th:replace="~{fragments/valuation-table :: paginator (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th:block>
+</div>
+
+<div th:fragment="graham-index-table (table, target, view, keyword, sortParam)" class="space-y-3">
+    <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndexOfSubmitDate', label='提出日グレアム', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="c : ${table.rows()}"
+                class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndex}">0</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndexOfSubmitDate}">0</td>
+            </tr>
+            <tr th:if="${table.rows().isEmpty()}">
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=4)}"></th:block>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <th:block th:replace="~{fragments/valuation-table :: paginator (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th:block>
+</div>
+
+<div th:fragment="dividend-yield-table (table, target, view, keyword, sortParam)" class="space-y-3">
+    <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='dividendYield', label='配当利回り', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="c : ${table.rows()}"
+                class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${c.dividendYield}">0</td>
+            </tr>
+            <tr th:if="${table.rows().isEmpty()}">
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=3)}"></th:block>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <th:block th:replace="~{fragments/valuation-table :: paginator (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th:block>
+</div>
+
+<div th:fragment="industry-table (table, target, view, keyword, sortParam)" class="space-y-3">
+    <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='業種名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='differenceFromSubmitDate', label='提出日との差', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='submitDateRatio', label='提出日比率', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='count', label='件数', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="i : ${table.rows()}"
+                class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <td class="px-3 py-2 text-sm" th:text="${i.name}">業種</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${i.differenceFromSubmitDate}">0</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${i.submitDateRatio}">0</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${i.grahamIndex}">0</td>
+                <td class="px-3 py-2 text-right text-sm" th:text="${i.count}">0</td>
+            </tr>
+            <tr th:if="${table.rows().isEmpty()}">
+                <th:block th:replace="~{fragments/valuation-table :: empty (colspan=5)}"></th:block>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <th:block th:replace="~{fragments/valuation-table :: paginator (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th:block>
+</div>
+
+</body>
+</html>
