@@ -432,4 +432,40 @@ class CorporatePresenterTest {
             assertTrue(points.contains(new BigDecimal("50")));
         }
     }
+
+    @Nested
+    @DisplayName("corporateDetailViewV3 メソッド")
+    class CorporateDetailViewV3 {
+
+        @Test
+        @DisplayName("呼び出された場合 → corporate-v2 view 名を返す")
+        void returnsCorporateV2() {
+            final String code = "9999";
+            final CorporateDetailViewModel view = buildDetailView(List.of(), List.of(), List.of(), List.of());
+            Mockito.when(viewService.getCorporateDetailView(CodeInputData.of(code))).thenReturn(view);
+            Mockito.when(viewService.getValuationView(CodeInputData.of(code))).thenReturn(List.of());
+
+            final Model model = Mockito.mock(Model.class);
+            final String result = presenter.corporateDetailViewV3(code, null, model);
+
+            assertEquals("corporate-v2", result);
+            Mockito.verify(viewService).getCorporateDetailView(CodeInputData.of(code));
+            Mockito.verify(model).addAttribute("corporate", view.getCompany());
+        }
+
+        @Test
+        @DisplayName("target=quart → ViewService.getCorporateDetailView(CodeInputData, Target) が呼ばれて target Attribute が設定される")
+        void targetQuart_callsTargetedView() {
+            final String code = "9999";
+            final CorporateDetailViewModel view = buildDetailView(List.of(), List.of(), List.of(), List.of());
+            Mockito.when(viewService.getCorporateDetailView(CodeInputData.of(code), Target.QUART)).thenReturn(view);
+            Mockito.when(viewService.getValuationView(CodeInputData.of(code))).thenReturn(List.of());
+
+            final Model model = Mockito.mock(Model.class);
+            final String result = presenter.corporateDetailViewV3(code, "quart", model);
+
+            assertEquals("corporate-v2", result);
+            Mockito.verify(model).addAttribute("target", "quart");
+        }
+    }
 }

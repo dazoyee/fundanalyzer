@@ -24,6 +24,7 @@ import java.util.Optional;
 public class CorporatePresenter {
 
     private static final String CORPORATE = "corporate";
+    private static final String CORPORATE_V2 = "corporate-v2";
 
     private final ViewService viewService;
 
@@ -46,7 +47,29 @@ public class CorporatePresenter {
             @RequestParam(name = "code") final String code,
             @RequestParam(name = "target", required = false) final String target,
             final Model model) {
-        CorporateDetailViewModel view;
+        populateModel(code, target, model);
+        return CORPORATE;
+    }
+
+    /**
+     * 銘柄詳細 v3（Tailwind + layout-v2 継承）。Phase 1 のローカルバンドル window.Chart を使い CDN 依存ゼロ。
+     *
+     * @param code   会社コード
+     * @param target 任意の表示種別
+     * @param model  model
+     * @return corporate-v2 テンプレート名
+     */
+    @GetMapping("/v3/corporate")
+    public String corporateDetailViewV3(
+            @RequestParam(name = "code") final String code,
+            @RequestParam(name = "target", required = false) final String target,
+            final Model model) {
+        populateModel(code, target, model);
+        return CORPORATE_V2;
+    }
+
+    private void populateModel(final String code, final String target, final Model model) {
+        final CorporateDetailViewModel view;
 
         if (Objects.isNull(target)) {
             view = viewService.getCorporateDetailView(CodeInputData.of(code));
@@ -65,7 +88,6 @@ public class CorporatePresenter {
         setForecastStock(view, model);
         setStockPriceView(view, model);
         setValuationView(viewService.getValuationView(CodeInputData.of(code)), model);
-        return CORPORATE;
     }
 
     private void setAnalysisView(final CorporateDetailViewModel view, final Model model) {

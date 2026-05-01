@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title th:text="${corporate.name} + ' - 銘柄詳細'">銘柄詳細</title>
+</head>
+<body>
+<h1 layout:fragment="page-title" class="flex flex-wrap items-center gap-2">
+    <a th:href="@{/v3/index}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+        <i data-lucide="arrow-left" class="inline-block h-4 w-4"></i> 一覧へ
+    </a>
+    <span class="text-slate-400">/</span>
+    <span class="font-mono text-base" th:text="${corporate.code}">9999</span>
+    <span th:text="${corporate.name}">サンプル株式会社</span>
+</h1>
+
+<section layout:fragment="content" class="space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <nav class="flex flex-wrap gap-2" th:if="${backwardCode != null or forwardCode != null}">
+            <a th:if="${backwardCode != null}"
+               th:href="@{/v3/corporate(code=${backwardCode})}"
+               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                <span th:text="${backwardCode}">前</span>
+            </a>
+            <a th:if="${forwardCode != null}"
+               th:href="@{/v3/corporate(code=${forwardCode})}"
+               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+                <span th:text="${forwardCode}">次</span>
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+            </a>
+        </nav>
+        <nav class="flex flex-wrap gap-1" role="tablist">
+            <a th:href="@{/v3/corporate(code=${corporate.code})}"
+               th:classappend="${target == null} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+               class="rounded-md px-3 py-1 text-xs font-medium">年次</a>
+            <a th:href="@{/v3/corporate(code=${corporate.code},target='quart')}"
+               th:classappend="${target == 'quart'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+               class="rounded-md px-3 py-1 text-xs font-medium">四半期</a>
+        </nav>
+    </div>
+
+    <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+        <h2 class="mb-3 text-lg font-bold">会社情報</h2>
+        <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
+            <div><dt class="text-slate-500 dark:text-slate-400">証券コード</dt><dd class="font-mono" th:text="${corporate.code}">9999</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">会社名</dt><dd th:text="${corporate.name}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">提出日</dt><dd th:text="${corporateView != null ? corporateView.submitDate : '-'}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">最新企業価値</dt><dd class="font-mono" th:text="${corporateView != null ? corporateView.latestCorporateValue : '-'}">-</dd></div>
+        </dl>
+    </article>
+
+    <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+        <h2 class="mb-3 text-lg font-bold">企業価値推移（全期間）</h2>
+        <div class="relative h-64"><canvas id="analysisChartAll"></canvas></div>
+    </article>
+
+    <article class="grid gap-4 md:grid-cols-2">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">指標 30 日</h3>
+            <div class="relative h-48"><canvas id="indicatorChart30"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">指標 180 日</h3>
+            <div class="relative h-48"><canvas id="indicatorChart180"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">指標 365 日</h3>
+            <div class="relative h-48"><canvas id="indicatorChart365"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">指標 全期間</h3>
+            <div class="relative h-48"><canvas id="indicatorChartAll"></canvas></div>
+        </div>
+    </article>
+
+    <article class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">予測株価 180 日</h3>
+            <div class="relative h-48"><canvas id="forecastStockChart180"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">予測株価 365 日</h3>
+            <div class="relative h-48"><canvas id="forecastStockChart365"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">予測株価 全期間</h3>
+            <div class="relative h-48"><canvas id="forecastStockChartAll"></canvas></div>
+        </div>
+    </article>
+
+    <article class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">株価 30 日</h3>
+            <div class="relative h-48"><canvas id="stockChart30"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">株価 90 日</h3>
+            <div class="relative h-48"><canvas id="stockChart90"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">株価 180 日</h3>
+            <div class="relative h-48"><canvas id="stockChart180"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">株価 365 日</h3>
+            <div class="relative h-48"><canvas id="stockChart365"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">株価 全期間</h3>
+            <div class="relative h-48"><canvas id="stockChartAll"></canvas></div>
+        </div>
+    </article>
+
+    <article class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">バリュエーション 180 日</h3>
+            <div class="relative h-48"><canvas id="valuationChart180"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">バリュエーション 365 日</h3>
+            <div class="relative h-48"><canvas id="valuationChart365"></canvas></div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-base font-bold">バリュエーション 全期間</h3>
+            <div class="relative h-48"><canvas id="valuationChartAll"></canvas></div>
+        </div>
+    </article>
+
+    <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+             th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+        <h2 class="mb-3 text-lg font-bold">分析結果</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                <tr>
+                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider">提出日</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider">期間</th>
+                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider">書類種別</th>
+                    <th class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">企業価値</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                <tr th:each="r : ${analysisResults}">
+                    <td class="px-3 py-2 text-sm" th:text="${r.submitDate}">-</td>
+                    <td class="px-3 py-2 text-sm" th:text="${r.documentPeriod}">-</td>
+                    <td class="px-3 py-2 text-sm" th:text="${r.documentTypeCode}">-</td>
+                    <td class="px-3 py-2 text-right text-sm font-mono" th:text="${r.corporateValue}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+        ※ 詳細な財務諸表・指標一覧・株価履歴・予測情報は Phase 7 で UI を整理予定です。
+    </p>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const Chart = window.Chart;
+            const lineColor = 'rgb(59 130 246)';
+            const fillColor = 'rgba(59, 130, 246, 0.15)';
+            const baseOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+
+            const buildLine = (id, labels, points, label) => {
+                const el = document.getElementById(id);
+                if (!el || !labels || !points) return;
+                new Chart(el.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{ label: label, data: points, borderColor: lineColor, backgroundColor: fillColor, tension: 0.1 }]
+                    },
+                    options: baseOptions
+                });
+            };
+
+            buildLine('analysisChartAll', /*[[${analysisLabelAll}]]*/ [], /*[[${analysisPointAll}]]*/ [], '企業価値');
+            buildLine('indicatorChart30', /*[[${indicatorLabel30}]]*/ [], /*[[${indicatorPoint30}]]*/ [], '指標');
+            buildLine('indicatorChart180', /*[[${indicatorLabel180}]]*/ [], /*[[${indicatorPoint180}]]*/ [], '指標');
+            buildLine('indicatorChart365', /*[[${indicatorLabel365}]]*/ [], /*[[${indicatorPoint365}]]*/ [], '指標');
+            buildLine('indicatorChartAll', /*[[${indicatorLabelAll}]]*/ [], /*[[${indicatorPointAll}]]*/ [], '指標');
+            buildLine('forecastStockChart180', /*[[${forecastStockLabel180}]]*/ [], /*[[${forecastStockPoint180}]]*/ [], '予測株価');
+            buildLine('forecastStockChart365', /*[[${forecastStockLabel365}]]*/ [], /*[[${forecastStockPoint365}]]*/ [], '予測株価');
+            buildLine('forecastStockChartAll', /*[[${forecastStockLabelAll}]]*/ [], /*[[${forecastStockPointAll}]]*/ [], '予測株価');
+            buildLine('stockChart30', /*[[${stockLabel30}]]*/ [], /*[[${stockPoint30}]]*/ [], '株価');
+            buildLine('stockChart90', /*[[${stockLabel90}]]*/ [], /*[[${stockPoint90}]]*/ [], '株価');
+            buildLine('stockChart180', /*[[${stockLabel180}]]*/ [], /*[[${stockPoint180}]]*/ [], '株価');
+            buildLine('stockChart365', /*[[${stockLabel365}]]*/ [], /*[[${stockPoint365}]]*/ [], '株価');
+            buildLine('stockChartAll', /*[[${stockLabelAll}]]*/ [], /*[[${stockPointAll}]]*/ [], '株価');
+            buildLine('valuationChart180', /*[[${valuationLabel180}]]*/ [], /*[[${valuationPoint180}]]*/ [], 'バリュエーション');
+            buildLine('valuationChart365', /*[[${valuationLabel365}]]*/ [], /*[[${valuationPoint365}]]*/ [], 'バリュエーション');
+            buildLine('valuationChartAll', /*[[${valuationLabelAll}]]*/ [], /*[[${valuationPointAll}]]*/ [], 'バリュエーション');
+        });
+    </script>
+</section>
+</body>
+</html>

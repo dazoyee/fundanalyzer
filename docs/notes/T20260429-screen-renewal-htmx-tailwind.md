@@ -358,7 +358,7 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 | 3 | index.html 移植 + htmx ページング基盤 | [Phase 3](T20260429-screen-renewal-phase3-index-htmx.md) | `feature/screen-renewal-phase3-index-htmx` | cad7da7d→82faf5cd（7 コミット） | **完了**（Gate 3 承認・2026-05-01） |
 | 4 | valuation.html 移植 | [Phase 4](T20260429-screen-renewal-phase4-valuation-htmx.md) | `feature/screen-renewal-phase4-valuation-htmx` | 1ddcfa75→d6fb7bcb（7 コミット） | **完了**（Gate 3 承認・2026-05-01） |
 | 5 | edinet.html / edinet-detail.html 移植 | [Phase 5](T20260429-screen-renewal-phase5-edinet-htmx.md) | `feature/screen-renewal-phase5-edinet-htmx` | cafd0040→368f801a（7 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
-| 6 | corporate.html 移植 | - | - | - | 未着手 |
+| 6 | corporate.html 移植 | [Phase 6](T20260429-screen-renewal-phase6-corporate-htmx.md) | `feature/screen-renewal-phase6-corporate-htmx` | 2c704b73→10f9c63a（6 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 7 | error.html 移植・旧資産削除・ダークモード仕上げ | - | - | - | 未着手 |
 | 8 | Playwright スナップショット導入 | - | - | - | 未着手 |
 
@@ -422,3 +422,4 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 - 2026-05-01: Phase 3 完了（7 コミット cad7da7d→82faf5cd）。テスト 49 件全パス・テーブル汎用パターン（2 エンドポイント方式 / record / ViewService 拡張 / 入力検証 / fragments / htmx 属性）を確立。Phase 3 Gate 3 承認（iori-oiso）。次は Phase 4（valuation.html 移植・5 テーブル並列）へ
 - 2026-05-01: Phase 4 完了（7 コミット 1ddcfa75→d6fb7bcb）。テスト 76 件全パス・5 view fragment（stock / submit / graham-index / dividend-yield / industry）+ Map.of view ホワイトリストでテーブル汎用パターンを 5 テーブル並列に拡張。dev H2 で 31 件の業種マスタ実データ表示を確認。Phase 4 Gate 3 承認（iori-oiso）。次は Phase 5（edinet.html / edinet-detail.html 移植）へ
 - 2026-05-01: Phase 5 完了（7 コミット cafd0040→368f801a）。テスト 59 件全パス（テーブル汎用パターンを edinet-list に適用 + edinet-detail は単純 layout-v2 継承）。Claude Preview 実機確認は省略・人間レビュアに委ねる。Phase 5 Gate 3 承認（iori-oiso）。次は Phase 6（corporate.html 移植・Chart.js 14 個 + ローカルバンドル化）へ
+- 2026-05-01: Phase 6 完了（6 コミット 2c704b73→10f9c63a）。CorporatePresenterTest 12 件全パス。CorporatePresenter は private populateModel 軽量リファクタで v2/v3 共通化、corporate-v2.html は機能等価最低限版（約 200 行・14 canvas + 主要セクション）、Chart.js は Phase 1 ローカルバンドル window.Chart 利用で CDN 撤去、index/valuation の code リンクを /v3/corporate に書き換え。Phase 6 Gate 3 承認（iori-oiso）。次は Phase 7（error.html 移植 + 旧資産削除 + ダークモード仕上げ）へ

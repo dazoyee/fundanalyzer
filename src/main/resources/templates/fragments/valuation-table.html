@@ -77,7 +77,11 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             <tr th:each="c : ${table.rows()}"
                 class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
-                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 font-mono text-sm">
+                    <a th:href="@{/v3/corporate(code=${c.code})}"
+                       th:text="${c.code}"
+                       class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
+                </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
                 <td class="px-3 py-2 text-sm" th:text="${c.targetDate}">2025-01-01</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.stockPrice}">1000</td>
@@ -120,7 +124,11 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             <tr th:each="c : ${table.rows()}"
                 class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
-                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 font-mono text-sm">
+                    <a th:href="@{/v3/corporate(code=${c.code})}"
+                       th:text="${c.code}"
+                       class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
+                </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
                 <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">2025-01-01</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.stockPriceOfSubmitDate}">0</td>
@@ -151,7 +159,11 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             <tr th:each="c : ${table.rows()}"
                 class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
-                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 font-mono text-sm">
+                    <a th:href="@{/v3/corporate(code=${c.code})}"
+                       th:text="${c.code}"
+                       class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
+                </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndex}">0</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.grahamIndexOfSubmitDate}">0</td>
@@ -179,7 +191,11 @@
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             <tr th:each="c : ${table.rows()}"
                 class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
-                <td class="px-3 py-2 font-mono text-sm" th:text="${c.code}">9999</td>
+                <td class="px-3 py-2 font-mono text-sm">
+                    <a th:href="@{/v3/corporate(code=${c.code})}"
+                       th:text="${c.code}"
+                       class="text-blue-600 hover:underline dark:text-blue-400">9999</a>
+                </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.dividendYield}">0</td>
             </tr>
