@@ -11,37 +11,25 @@
 
 <section layout:fragment="content" class="space-y-4">
     <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
-        <a th:attr="hx-get=@{/v3/valuation/table(view=${view},q=${keyword},sort=${sortParam},page=0)}"
-           th:href="@{/v3/valuation(view=${view},q=${keyword},sort=${sortParam})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
-           th:classappend="${target == null} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+        <a th:href="@{/v3/valuation(q=${keyword})}"
+           th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layout-grid" class="h-4 w-4"></i>
             メイン
         </a>
-        <a th:attr="hx-get=@{/v3/valuation/table(target='all',view=${view},q=${keyword},sort=${sortParam},page=0)}"
-           th:href="@{/v3/valuation(target='all',view=${view},q=${keyword},sort=${sortParam})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target='all',q=${keyword})}"
            th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layers" class="h-4 w-4"></i>
             すべて
         </a>
-        <a th:attr="hx-get=@{/v3/valuation/table(target='favorite',view=${view},q=${keyword},sort=${sortParam},page=0)}"
-           th:href="@{/v3/valuation(target='favorite',view=${view},q=${keyword},sort=${sortParam})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target='favorite',q=${keyword})}"
            th:classappend="${target == 'favorite'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="heart" class="h-4 w-4"></i>
             お気に入り
         </a>
-        <a th:attr="hx-get=@{/v3/valuation/table(target='industry',q=${keyword})}"
-           th:href="@{/v3/valuation(target='industry')}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target='industry')}"
            th:classappend="${target == 'industry'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="building" class="h-4 w-4"></i>
@@ -50,28 +38,16 @@
     </nav>
 
     <nav class="flex flex-wrap gap-1" role="tablist" th:unless="${target == 'industry'}">
-        <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view='stock',q=${keyword},page=0)}"
-           th:href="@{/v3/valuation(target=${target},view='stock',q=${keyword})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target=${target},view='stock',q=${keyword})}"
            th:classappend="${view == 'stock'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
            class="rounded-md px-3 py-1 text-xs font-medium">株価</a>
-        <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view='submit',q=${keyword},page=0)}"
-           th:href="@{/v3/valuation(target=${target},view='submit',q=${keyword})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target=${target},view='submit',q=${keyword})}"
            th:classappend="${view == 'submit'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
            class="rounded-md px-3 py-1 text-xs font-medium">提出日</a>
-        <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view='graham-index',q=${keyword},page=0)}"
-           th:href="@{/v3/valuation(target=${target},view='graham-index',q=${keyword})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target=${target},view='graham-index',q=${keyword})}"
            th:classappend="${view == 'graham-index'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
            class="rounded-md px-3 py-1 text-xs font-medium">グレアム</a>
-        <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view='dividend-yield',q=${keyword},page=0)}"
-           th:href="@{/v3/valuation(target=${target},view='dividend-yield',q=${keyword})}"
-           hx-target="#valuation-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/valuation(target=${target},view='dividend-yield',q=${keyword})}"
            th:classappend="${view == 'dividend-yield'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
            class="rounded-md px-3 py-1 text-xs font-medium">配当</a>
     </nav>
@@ -90,7 +66,7 @@
     </div>
 
     <div id="valuation-table"
-         th:replace="~{fragments/valuation-table :: __${view}__-table (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}">
+         th:insert="~{fragments/valuation-table :: __${view}__-table (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}">
     </div>
 </section>
 </body>

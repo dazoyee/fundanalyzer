@@ -15,19 +15,13 @@
     </p>
 
     <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
-        <a th:attr="hx-get=@{/v3/edinet-list/table(q=${keyword},sort=${sortParam},page=0)}"
-           th:href="@{/v3/edinet-list(q=${keyword},sort=${sortParam})}"
-           hx-target="#edinet-list-table"
-           hx-push-url="true"
-           th:classappend="${target == null} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+        <a th:href="@{/v3/edinet-list(q=${keyword},sort=${sortParam})}"
+           th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layout-grid" class="h-4 w-4"></i>
             メイン
         </a>
-        <a th:attr="hx-get=@{/v3/edinet-list/table(target='all',q=${keyword},sort=${sortParam},page=0)}"
-           th:href="@{/v3/edinet-list(target='all',q=${keyword},sort=${sortParam})}"
-           hx-target="#edinet-list-table"
-           hx-push-url="true"
+        <a th:href="@{/v3/edinet-list(target='all',q=${keyword},sort=${sortParam})}"
            th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layers" class="h-4 w-4"></i>
@@ -49,7 +43,7 @@
     </div>
 
     <div id="edinet-list-table"
-         th:replace="~{fragments/edinet-list-table :: table (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}">
+         th:insert="~{fragments/edinet-list-table :: table (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}">
     </div>
 </section>
 </body>
