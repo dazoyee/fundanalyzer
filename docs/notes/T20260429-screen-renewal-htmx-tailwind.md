@@ -359,7 +359,7 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 | 4 | valuation.html 移植 | [Phase 4](T20260429-screen-renewal-phase4-valuation-htmx.md) | `feature/screen-renewal-phase4-valuation-htmx` | 1ddcfa75→d6fb7bcb（7 コミット） | **完了**（Gate 3 承認・2026-05-01） |
 | 5 | edinet.html / edinet-detail.html 移植 | [Phase 5](T20260429-screen-renewal-phase5-edinet-htmx.md) | `feature/screen-renewal-phase5-edinet-htmx` | cafd0040→368f801a（7 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 6 | corporate.html 移植 | [Phase 6](T20260429-screen-renewal-phase6-corporate-htmx.md) | `feature/screen-renewal-phase6-corporate-htmx` | 2c704b73→10f9c63a（6 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
-| 7 | error.html 移植・旧資産削除・ダークモード仕上げ | - | - | - | 未着手 |
+| 7 | error.html 移植・旧資産削除・ダークモード仕上げ | [Phase 7](T20260429-screen-renewal-phase7-cleanup-darkmode.md) | `feature/screen-renewal-phase7-cleanup-darkmode` | 86d8204c→c5c14f46（9 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 8 | Playwright スナップショット導入 | - | - | - | 未着手 |
 
 ---
@@ -423,3 +423,4 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 - 2026-05-01: Phase 4 完了（7 コミット 1ddcfa75→d6fb7bcb）。テスト 76 件全パス・5 view fragment（stock / submit / graham-index / dividend-yield / industry）+ Map.of view ホワイトリストでテーブル汎用パターンを 5 テーブル並列に拡張。dev H2 で 31 件の業種マスタ実データ表示を確認。Phase 4 Gate 3 承認（iori-oiso）。次は Phase 5（edinet.html / edinet-detail.html 移植）へ
 - 2026-05-01: Phase 5 完了（7 コミット cafd0040→368f801a）。テスト 59 件全パス（テーブル汎用パターンを edinet-list に適用 + edinet-detail は単純 layout-v2 継承）。Claude Preview 実機確認は省略・人間レビュアに委ねる。Phase 5 Gate 3 承認（iori-oiso）。次は Phase 6（corporate.html 移植・Chart.js 14 個 + ローカルバンドル化）へ
 - 2026-05-01: Phase 6 完了（6 コミット 2c704b73→10f9c63a）。CorporatePresenterTest 12 件全パス。CorporatePresenter は private populateModel 軽量リファクタで v2/v3 共通化、corporate-v2.html は機能等価最低限版（約 200 行・14 canvas + 主要セクション）、Chart.js は Phase 1 ローカルバンドル window.Chart 利用で CDN 撤去、index/valuation の code リンクを /v3/corporate に書き換え。Phase 6 Gate 3 承認（iori-oiso）。次は Phase 7（error.html 移植 + 旧資産削除 + ダークモード仕上げ）へ
+- 2026-05-01: Phase 7 完了（9 コミット 86d8204c→c5c14f46）。テスト 711 件全パス。旧 Presenter /v2/* 5 個 + POC + 旧テンプレート 6 + 旧 plugins 9 ディレクトリ + dist 全削除（合計数十 MB の資産削除）+ error.html を Tailwind 化 + ダークモード prefers-color-scheme + CLAUDE.md「View / 画面」節書き換え。Phase 7 Gate 3 承認（iori-oiso）。次は最終 Phase 8（Playwright スナップショット導入）へ

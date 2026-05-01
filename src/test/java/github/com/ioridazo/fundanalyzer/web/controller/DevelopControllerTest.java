@@ -119,7 +119,7 @@ class DevelopControllerTest {
 
             final String result = controller.devDoMain(dateString, model);
 
-            assertEquals("redirect:/v2/index", result);
+            assertEquals("redirect:/v3/index", result);
             verify(companyUseCase, times(1)).saveCompanyInfo();
             verify(documentUseCase, times(1)).allProcess(expectedInput);
             verify(documentUseCase, times(1)).removeDocument(expectedInput);

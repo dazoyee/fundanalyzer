@@ -65,7 +65,7 @@ npm run watch:js    # 別ターミナル
 
 採用ライブラリ: Tailwind CSS 3.4 / htmx 2.0 / Alpine.js 3 / Lucide / Litepicker 2 / Chart.js 4 / esbuild 0.20。詳細は [docs/adr/ADR-001-screen-renewal-stack.md](docs/adr/ADR-001-screen-renewal-stack.md)。
 
-> 注: 本リポは Phase 1 時点で **画面刷新の途中**。既存の `templates/*.html` と `static/dist`・`static/plugins/*` は AdminLTE 由来で残存しており、Phase 2 以降で順次置換していく（[docs/notes/T20260429-screen-renewal-htmx-tailwind.md](docs/notes/T20260429-screen-renewal-htmx-tailwind.md) 参照）。「View / 画面」節は Phase 7 完了時に Tailwind/htmx 前提へ書き換える。
+> 画面刷新タスク（Phase 1〜7）完了済み。AdminLTE / jQuery / Bootstrap 4 / DataTables 等の旧スタックは全廃済み。詳細は [docs/notes/T20260429-screen-renewal-htmx-tailwind.md](docs/notes/T20260429-screen-renewal-htmx-tailwind.md) のマスタープラン参照。
 
 ### Mac で dev 起動する場合
 
@@ -139,7 +139,35 @@ exception/   … 業務例外
 
 ### View / 画面
 
-`web/presenter/*Presenter.java` が Thymeleaf テンプレ（`src/main/resources/templates/*.html`）にバインド。`layout.html` を thymeleaf-layout-dialect で継承。`static/dist` および `static/plugins` の資産は AdminLTE テーマ由来。**個別ファイルの内容は改変しない**（バージョンアップ時は配布物ごと差し替え）。一方、テンプレートから未参照のディレクトリ・ファイルは保守対象を絞るために削除する方針（[T20260429-frontend-asset-cleanup](docs/notes/T20260429-frontend-asset-cleanup.md) で初回整理済み）。
+`web/presenter/*Presenter.java` が Thymeleaf テンプレート（`src/main/resources/templates/*-v2.html` および `templates/fragments/*.html`）にバインド。`layout-v2.html` を thymeleaf-layout-dialect で継承する構造（[T20260429-screen-renewal-htmx-tailwind.md](docs/notes/T20260429-screen-renewal-htmx-tailwind.md) で全画面刷新済）。
+
+#### 採用スタック
+
+- **CSS**: Tailwind CSS 3.4（utility-first・ダークモード `dark:` variant）
+- **クライアント JS**: htmx 2.0（部分更新）+ Alpine.js 3（ローカル UI 状態）
+- **アイコン**: Lucide（SVG）
+- **期間選択**: Litepicker 2
+- **グラフ**: Chart.js 4
+- **すべて npm 経由・esbuild バンドル** で `target/classes/static/css/app.css` および `target/classes/static/js/app.js` に出力。**外部 CDN への依存ゼロ**
+
+#### エンドポイントとテンプレート
+
+| URL | テンプレート | Presenter |
+|---|---|---|
+| `/v3/index` / `/v3/index/table` | `index-v2.html` + `fragments/index-table.html` | IndexPresenter |
+| `/v3/corporate` | `corporate-v2.html`（Chart.js 14 個） | CorporatePresenter |
+| `/v3/valuation` / `/v3/valuation/table` | `valuation-v2.html` + `fragments/valuation-table.html`（5 view fragment） | ValuationPresenter |
+| `/v3/edinet-list` / `/v3/edinet-list/table` | `edinet-list-v2.html` + `fragments/edinet-list-table.html` | EdinetPresenter |
+| `/v3/edinet-list-detail` | `edinet-list-detail-v2.html` | EdinetDetailPresenter |
+| エラー画面 | `error.html`（layout-v2 継承） | Spring Boot 標準 |
+
+#### テーブル汎用パターン
+
+各画面は **2 エンドポイント方式**（HTML 全体 + fragment 部分更新）+ **record（XxxTableQuery / XxxTablePage）** + **ViewService.findXxxTable**（メモリ内 stream で filter/sort/page）+ **htmx 属性**（`hx-get` + `hx-target` + `hx-trigger="keyup changed delay:300ms"` + `hx-push-url="true"` で URL 同期）で統一。詳細は Phase 3〜5 のサブタスク md 参照。
+
+#### ダークモード
+
+`layout-v2.html` の Alpine.js x-data でダークモード状態を管理し、`localStorage('fundanalyzer.dark-mode')` を優先・未設定時は `prefers-color-scheme: dark` で初期反映。ヘッダー右上の sun/moon トグルで切替・永続化。
 
 ## 設定ファイル
 

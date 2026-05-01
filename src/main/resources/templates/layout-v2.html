@@ -4,7 +4,11 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       class="h-full"
       x-data="{
-        dark: localStorage.getItem('fundanalyzer.dark-mode') === 'true',
+        dark: (() => {
+          const stored = localStorage.getItem('fundanalyzer.dark-mode');
+          if (stored !== null) return stored === 'true';
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        })(),
         sidebarOpen: false,
         toggleDark() {
           this.dark = !this.dark;

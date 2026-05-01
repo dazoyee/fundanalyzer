@@ -12,29 +12,10 @@ import java.time.LocalDate;
 @Controller
 public class EdinetDetailPresenter {
 
-    private static final String EDINET_DETAIL = "edinet-detail";
-
     private final ViewService viewService;
 
     public EdinetDetailPresenter(final ViewService viewService) {
         this.viewService = viewService;
-    }
-
-    /**
-     * EDINET処理状況を表示する
-     *
-     * @param submitDate 提出日
-     * @param message    メッセージ
-     * @param model      model
-     * @return EdinetDetail
-     */
-    @GetMapping("/v2/edinet-list-detail")
-    public String edinetListDetail(
-            @RequestParam(name = "submitDate") final String submitDate,
-            @RequestParam(name = "message", required = false) final String message,
-            final Model model) {
-        model.addAttribute("edinetDetail", viewService.getEdinetDetailView(DateInputData.of(LocalDate.parse(submitDate))));
-        return EDINET_DETAIL;
     }
 
     /**

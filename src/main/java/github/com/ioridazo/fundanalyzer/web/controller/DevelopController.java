@@ -14,11 +14,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Profile("!prod")
 @Controller
@@ -86,28 +84,6 @@ public class DevelopController {
         viewEdinetUseCase.updateView(inputData);
 
         model.addAttribute("companies", viewService.getCorporateView());
-        return "redirect:" + UriComponentsBuilder.fromUriString("/v2/index").toUriString();
-    }
-
-    /**
-     * 画面刷新タスク Phase 2 POC エンドポイント。layout-v2 を継承する。Phase 7 で削除する。
-     *
-     * @return layout-v2 + 各 widget の動作確認用テンプレート名
-     */
-    @GetMapping("/v2/__phase2-layout-poc")
-    public String phase2LayoutPoc() {
-        return "__phase2-layout-poc";
-    }
-
-    /**
-     * 画面刷新タスク Phase 2 POC の htmx 部分更新フラグメント。Phase 7 で削除する。
-     *
-     * @return 現在時刻を埋め込んだ HTML スニペット
-     */
-    @GetMapping("/v2/__phase2-layout-poc/fragment")
-    @ResponseBody
-    public String phase2LayoutPocFragment() {
-        return "<span class=\"font-bold text-emerald-600 dark:text-emerald-400\">"
-                + "htmx fragment loaded at " + LocalTime.now() + "</span>";
+        return "redirect:" + UriComponentsBuilder.fromUriString("/v3/index").toUriString();
     }
 }

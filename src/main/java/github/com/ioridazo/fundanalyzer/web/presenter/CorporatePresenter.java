@@ -24,6 +24,7 @@ import java.util.Optional;
 public class CorporatePresenter {
 
     private static final String CORPORATE = "corporate";
+
     private static final String CORPORATE_V2 = "corporate-v2";
 
     private final ViewService viewService;
@@ -33,22 +34,6 @@ public class CorporatePresenter {
 
     public CorporatePresenter(final ViewService viewService) {
         this.viewService = viewService;
-    }
-
-    /**
-     * 銘柄詳細を表示する
-     *
-     * @param code  会社コード
-     * @param model model
-     * @return BrandDetail
-     */
-    @GetMapping("/v2/corporate")
-    public String corporateDetailView(
-            @RequestParam(name = "code") final String code,
-            @RequestParam(name = "target", required = false) final String target,
-            final Model model) {
-        populateModel(code, target, model);
-        return CORPORATE;
     }
 
     /**
