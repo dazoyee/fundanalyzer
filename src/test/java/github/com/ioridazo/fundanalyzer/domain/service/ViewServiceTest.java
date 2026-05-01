@@ -11,6 +11,9 @@ import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTablePage;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTableQuery;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
@@ -531,6 +534,62 @@ class ViewServiceTest {
                             PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "count"))));
             assertEquals(100, page.rows().get(0).count());
             assertEquals(50, page.rows().get(1).count());
+        }
+    }
+
+    @Nested
+    @DisplayName("findEdinetListTable メソッド")
+    class FindEdinetListTable {
+
+        private EdinetListViewModel edinet(final LocalDate submitDate, final long countAll) {
+            return new EdinetListViewModel(
+                    submitDate, countAll, 0L, 0L, 0L, "", "", 0L, 0L);
+        }
+
+        @Test
+        @DisplayName("target=null → viewEdinetUseCase.viewMain が呼ばれる")
+        void targetNull_callsViewMain() {
+            when(viewEdinetUseCase.viewMain()).thenReturn(List.of());
+            service.findEdinetListTable(new EdinetListTableQuery(
+                    null, null, PageRequest.of(0, 25, Sort.by("submitDate"))));
+            verify(viewEdinetUseCase, times(1)).viewMain();
+        }
+
+        @Test
+        @DisplayName("target=all → viewEdinetUseCase.viewAll が呼ばれる")
+        void targetAll_callsViewAll() {
+            when(viewEdinetUseCase.viewAll()).thenReturn(List.of());
+            service.findEdinetListTable(new EdinetListTableQuery(
+                    "all", null, PageRequest.of(0, 25, Sort.by("submitDate"))));
+            verify(viewEdinetUseCase, times(1)).viewAll();
+        }
+
+        @Test
+        @DisplayName("keyword で submitDate に partial match")
+        void keywordSubmitDateMatch() {
+            when(viewEdinetUseCase.viewMain()).thenReturn(List.of(
+                    edinet(LocalDate.of(2025, 1, 1), 10L),
+                    edinet(LocalDate.of(2025, 6, 1), 20L)
+            ));
+            final EdinetListTablePage page = service.findEdinetListTable(
+                    new EdinetListTableQuery(null, "2025-06",
+                            PageRequest.of(0, 25, Sort.by("submitDate"))));
+            assertEquals(1L, page.totalElements());
+            assertEquals(LocalDate.of(2025, 6, 1), page.rows().get(0).submitDate());
+        }
+
+        @Test
+        @DisplayName("sort=submitDate DESC → 提出日降順")
+        void sortSubmitDateDesc() {
+            when(viewEdinetUseCase.viewMain()).thenReturn(List.of(
+                    edinet(LocalDate.of(2025, 1, 1), 10L),
+                    edinet(LocalDate.of(2025, 6, 1), 20L)
+            ));
+            final EdinetListTablePage page = service.findEdinetListTable(
+                    new EdinetListTableQuery(null, null,
+                            PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "submitDate"))));
+            assertEquals(LocalDate.of(2025, 6, 1), page.rows().get(0).submitDate());
+            assertEquals(LocalDate.of(2025, 1, 1), page.rows().get(1).submitDate());
         }
     }
 }

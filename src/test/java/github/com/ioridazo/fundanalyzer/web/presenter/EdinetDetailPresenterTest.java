@@ -87,4 +87,21 @@ class EdinetDetailPresenterTest {
                     () -> presenter.edinetListDetail("invalid-date", null, model));
         }
     }
+
+    @Nested
+    @DisplayName("edinetListDetailV3 メソッド")
+    class EdinetListDetailV3 {
+
+        @Test
+        @DisplayName("submitDate指定 → edinet-list-detail-v2 view 名 + 属性設定")
+        void validSubmitDate_returnsV2View() {
+            final Model model = mock(Model.class);
+
+            final String result = presenter.edinetListDetailV3("2025-01-15", model);
+
+            assertEquals("edinet-list-detail-v2", result);
+            verify(model).addAttribute("submitDate", "2025-01-15");
+            verify(model).addAttribute(eq("edinetDetail"), any());
+        }
+    }
 }

@@ -12,6 +12,8 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePag
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTablePage;
+import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
@@ -495,6 +497,84 @@ public class ViewService {
                     IndustryValuationViewModel::grahamIndex, Comparator.nullsLast(Comparator.naturalOrder()));
             case "count" -> Comparator.comparing(
                     IndustryValuationViewModel::count, Comparator.nullsLast(Comparator.naturalOrder()));
+            default -> null;
+        };
+    }
+
+    /**
+     * EDINET 一覧テーブルを target / keyword / pageable で絞り込んで返す。Phase 5 でテーブル汎用パターンを EDINET 一覧に適用した実装。
+     *
+     * @param query 問い合わせ条件
+     * @return 1 ページ分の EDINET リストとページング情報
+     */
+    @Observed
+    public EdinetListTablePage findEdinetListTable(final EdinetListTableQuery query) {
+        final List<EdinetListViewModel> all = "all".equals(Optional.ofNullable(query.target()).orElse(""))
+                ? getAllEdinetListView()
+                : getEdinetListView();
+
+        final String keyword = Optional.ofNullable(query.keyword()).map(String::trim).orElse("");
+        final List<EdinetListViewModel> filtered = keyword.isEmpty()
+                ? all
+                : all.stream()
+                        .filter(e -> e.submitDate() != null
+                                && e.submitDate().toString().toLowerCase().contains(keyword.toLowerCase()))
+                        .toList();
+
+        final Pageable pageable = query.pageable();
+        final List<EdinetListViewModel> sorted = applyEdinetListSort(filtered, pageable.getSort());
+
+        final int totalElements = sorted.size();
+        final int pageSize = pageable.getPageSize();
+        final int pageNumber = pageable.getPageNumber();
+        final int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / pageSize);
+        final List<EdinetListViewModel> pageContent = sorted.stream()
+                .skip((long) pageNumber * pageSize)
+                .limit(pageSize)
+                .toList();
+
+        return new EdinetListTablePage(
+                pageContent, totalPages, totalElements, pageNumber, pageSize, pageable.getSort());
+    }
+
+    private static List<EdinetListViewModel> applyEdinetListSort(
+            final List<EdinetListViewModel> source, final Sort sort) {
+        if (sort.isUnsorted()) {
+            return source;
+        }
+        Comparator<EdinetListViewModel> comparator = null;
+        for (final Sort.Order order : sort) {
+            Comparator<EdinetListViewModel> c = edinetListComparatorFor(order.getProperty());
+            if (c == null) {
+                continue;
+            }
+            if (order.isDescending()) {
+                c = c.reversed();
+            }
+            comparator = (comparator == null) ? c : comparator.thenComparing(c);
+        }
+        if (comparator == null) {
+            return source;
+        }
+        return source.stream().sorted(comparator).toList();
+    }
+
+    private static Comparator<EdinetListViewModel> edinetListComparatorFor(final String property) {
+        return switch (property) {
+            case "submitDate" -> Comparator.comparing(
+                    EdinetListViewModel::submitDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "countAll" -> Comparator.comparing(
+                    EdinetListViewModel::countAll, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "countTarget" -> Comparator.comparing(
+                    EdinetListViewModel::countTarget, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "countScraped" -> Comparator.comparing(
+                    EdinetListViewModel::countScraped, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "countAnalyzed" -> Comparator.comparing(
+                    EdinetListViewModel::countAnalyzed, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "countNotScraped" -> Comparator.comparing(
+                    EdinetListViewModel::countNotScraped, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "countNotTarget" -> Comparator.comparing(
+                    EdinetListViewModel::countNotTarget, Comparator.nullsLast(Comparator.naturalOrder()));
             default -> null;
         };
     }

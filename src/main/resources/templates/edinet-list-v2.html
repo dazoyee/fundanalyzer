@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title>EDINET 一覧</title>
+</head>
+<body>
+<h1 layout:fragment="page-title">EDINET 一覧</h1>
+
+<section layout:fragment="content" class="space-y-4">
+    <p class="text-sm text-slate-500 dark:text-slate-400" th:if="${companyUpdated}">
+        企業情報更新日: <span th:text="${companyUpdated}">2025-01-01</span>
+    </p>
+
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
+        <a th:attr="hx-get=@{/v3/edinet-list/table(q=${keyword},sort=${sortParam},page=0)}"
+           th:href="@{/v3/edinet-list(q=${keyword},sort=${sortParam})}"
+           hx-target="#edinet-list-table"
+           hx-push-url="true"
+           th:classappend="${target == null} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layout-grid" class="h-4 w-4"></i>
+            メイン
+        </a>
+        <a th:attr="hx-get=@{/v3/edinet-list/table(target='all',q=${keyword},sort=${sortParam},page=0)}"
+           th:href="@{/v3/edinet-list(target='all',q=${keyword},sort=${sortParam})}"
+           hx-target="#edinet-list-table"
+           hx-push-url="true"
+           th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layers" class="h-4 w-4"></i>
+            すべて
+        </a>
+    </nav>
+
+    <div class="flex items-center gap-2">
+        <i data-lucide="search" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>
+        <input type="search"
+               name="q"
+               th:value="${keyword}"
+               placeholder="提出日（YYYY-MM-DD 部分一致）で検索"
+               class="w-full rounded border border-slate-300 px-3 py-2 sm:w-72 dark:border-slate-600 dark:bg-slate-900"
+               th:attr="hx-get=@{/v3/edinet-list/table(target=${target},sort=${sortParam},page=0)}"
+               hx-target="#edinet-list-table"
+               hx-trigger="keyup changed delay:300ms, search"
+               hx-push-url="true">
+    </div>
+
+    <div id="edinet-list-table"
+         th:replace="~{fragments/edinet-list-table :: table (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}">
+    </div>
+</section>
+</body>
+</html>
