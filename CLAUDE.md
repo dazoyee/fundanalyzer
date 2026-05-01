@@ -65,6 +65,20 @@ npm run watch:js    # 別ターミナル
 
 採用ライブラリ: Tailwind CSS 3.4 / htmx 2.0 / Alpine.js 3 / Lucide / Litepicker 2 / Chart.js 4 / esbuild 0.20。詳細は [docs/adr/ADR-001-screen-renewal-stack.md](docs/adr/ADR-001-screen-renewal-stack.md)。
 
+#### Playwright スナップショット回帰検証
+
+Phase 8 で `Phase8ScreenSnapshotTest` を導入。`@SpringBootTest` で Spring Boot を起動し Chromium で主要 3 画面（/v3/index / /v3/valuation / /v3/edinet-list）× 2 ビューポート（desktop 1280x800 / mobile 375x812）= 6 ケースのスナップショットを取得して回帰検証する。
+
+```bash
+# Playwright スナップショット込みで全テスト実行（初回 Chromium 取得で +200MB / +1 分）
+./mvnw test
+
+# Playwright を除外して既存テストのみ実行（高速）
+./mvnw test -DexcludedGroups=playwright
+```
+
+スナップショットは `target/playwright-snapshots/<screen>-<viewport>.png` に書き出される。フルカラー比較は ADR-001 の方針で不採用、HTML 構造（aside / header / main / title）の存在のみアサーション。
+
 > 画面刷新タスク（Phase 1〜7）完了済み。AdminLTE / jQuery / Bootstrap 4 / DataTables 等の旧スタックは全廃済み。詳細は [docs/notes/T20260429-screen-renewal-htmx-tailwind.md](docs/notes/T20260429-screen-renewal-htmx-tailwind.md) のマスタープラン参照。
 
 ### Mac で dev 起動する場合

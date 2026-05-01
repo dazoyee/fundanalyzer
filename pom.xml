@@ -220,6 +220,14 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- Playwright（画面刷新タスク Phase 8 で導入・スナップショット回帰検証） -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.46.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

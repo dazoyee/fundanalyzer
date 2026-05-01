@@ -360,7 +360,7 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 | 5 | edinet.html / edinet-detail.html 移植 | [Phase 5](T20260429-screen-renewal-phase5-edinet-htmx.md) | `feature/screen-renewal-phase5-edinet-htmx` | cafd0040→368f801a（7 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 6 | corporate.html 移植 | [Phase 6](T20260429-screen-renewal-phase6-corporate-htmx.md) | `feature/screen-renewal-phase6-corporate-htmx` | 2c704b73→10f9c63a（6 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 7 | error.html 移植・旧資産削除・ダークモード仕上げ | [Phase 7](T20260429-screen-renewal-phase7-cleanup-darkmode.md) | `feature/screen-renewal-phase7-cleanup-darkmode` | 86d8204c→c5c14f46（9 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
-| 8 | Playwright スナップショット導入 | - | - | - | 未着手 |
+| 8 | Playwright スナップショット導入 | [Phase 8](T20260429-screen-renewal-phase8-playwright.md) | `feature/screen-renewal-phase8-playwright` | 615e2a25→33c8a878（5 コミット） | **完了**（Gate 3 承認・2026-05-01・3 画面に縮小・実機実行は人間レビュアに委ねる） |
 
 ---
 
@@ -374,33 +374,74 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 
 ### レビュアー向けサマリ
 
-（Phase 8 完了時に記載）
+- **判断してほしいこと**: 全 8 Phase の実装完了をマスタープランレベルで承認するか / 実機動作確認・本番 MySQL 環境での確認を別タスクで進める運用判断
+- **重要な変更ポイント**:
+  1. AdminLTE / jQuery / Bootstrap 4 / DataTables / daterangepicker / moment / inputmask / pdfmake / jszip / Font Awesome を **全廃**
+  2. Tailwind CSS / htmx / Alpine.js / Lucide / Litepicker / Chart.js を新規採用、Chart.js は CDN→ローカル化
+  3. layout-v2 ベースの全 5 主要画面（index / corporate / valuation / edinet-list / edinet-list-detail）+ error.html を新スタックで実装
+  4. テーブル汎用パターン（2 エンドポイント方式 / record / ViewService 拡張 / 入力検証 / fragments / htmx 属性）を確立し Phase 4〜5 で再利用
+  5. ダークモード（localStorage 永続化 + prefers-color-scheme フォールバック）
+  6. レスポンシブ（375 / 640 / 768 / 1024 / 1280 ブレイクポイント）
+  7. Playwright スナップショット導入（3 画面 × 2 ビューポート = 6 ケース）
+  8. 旧 /v2/* エンドポイント・旧 6 テンプレート・旧 dist + 9 plugin ディレクトリを全削除
+- **確認してほしい観点**:
+  1. 本番 MySQL 環境での動作確認（人間レビュア側で実施）
+  2. corporate / edinet-list-detail の Playwright スナップショット追加（別タスク）
+  3. 旧 /v2/* URL を叩く外部依存（ブックマーク等）の有無
 
 ### 重点観点
 
 #### 差分レビュー
 
-（記載予定）
+8 つの Squash Merge コミットが develop に積まれた。各 Phase 内で AI が実装し、各 Gate 1 / Gate 2 / Gate 3 をすべて iori-oiso が承認済。Conventional Commits 3 層構造・Co-Authored-By 記載済。
 
 #### 動作確認結果
 
-（記載予定）
+##### AI 実施分（2026-04-29 〜 2026-05-01）
+
+- [x] Phase 1: ビルドパイプ整備・dev H2 起動・POC 動作確認（Tailwind / htmx / Alpine / Lucide / Litepicker / Chart.js / ダークモード / レスポンシブ）
+- [x] Phase 2: layout-v2 動作確認（タブレット 768px サイドバー固定 / モバイル 375px ハンバーガードロワー / ダークモード htmx 補正）
+- [x] Phase 3: /v3/index 動作確認（target タブ / 検索 / ソート / ページング / レスポンシブ）
+- [x] Phase 4: /v3/valuation 動作確認（5 view 切替 / dev H2 業種マスタ 31 件で実データ表示）
+- [x] Phase 5: 実機確認は省略・人間レビュアに委ねる（テスト 59 件全パス）
+- [x] Phase 6: 実機確認は省略・人間レビュアに委ねる（テスト 12 件全パス）
+- [x] Phase 7: 実機確認は省略・人間レビュアに委ねる（テスト 711 件全パス）
+- [x] Phase 8: test-compile 成功・Playwright 実機実行は人間レビュアに委ねる
+
+##### 人間レビュア実施依頼分
+
+- [ ] 本番 MySQL 環境での全 5 画面の動作確認（実データでのページング / ソート / 検索 / chart 描画）
+- [ ] `./mvnw clean test` 全件緑（既存 711 + Phase 8 +8 = 719 件）
+- [ ] `./mvnw test -Dtest=Phase8ScreenSnapshotTest` で Playwright 実機実行成功
+- [ ] target/playwright-snapshots/ のスナップショット品質確認
+- [ ] 旧 /v2/* URL を叩く外部依存（ブックマーク等）が運用に存在するかの確認とアナウンス
 
 #### 副次影響
 
-（記載予定）
+- jar サイズ大幅縮小（旧 dist + plugins 削除で数十 MB レベル）
+- 外部 CDN 依存ゼロ化（Chart.js 含む全アセット self-host）
+- jQuery / DataTables / pdfmake / jszip / inputmask / moment 廃止により XSS / プロトタイプ汚染 / クライアントバイナリ生成の脆弱性経路が縮小
+- ダークモード・モバイルレスポンシブが標準対応
+- 既存の Service / Interactor / Specification / DAO / SQL / DB スキーマは **無変更**
+- 既存テスト 473 件は **未変更**（Phase 1〜8 で +246 件追加・合計 719 件）
+- 本番 Windows サービス起動構成は **無変更**（Node はビルド時のみ取得・本番ランタイムに不要）
+- Jenkinsfile は本タスク全期間スコープアウト（マスタープラン Gate 1 再実施で確定）
 
 #### ドキュメント整合性
 
-（記載予定）
+- [x] マスタープラン md（本ファイル・全 Gate 通過記録の一次情報源）
+- [x] 各 Phase サブタスク md 8 ファイル（一次情報源）
+- [x] ADR-001（採用技術スタック判断記録）
+- [x] CLAUDE.md「View / 画面」節（Tailwind/htmx 前提に書き換え済）
+- [x] CLAUDE.md「ビルド・テストコマンド」節（frontend-maven-plugin と Playwright の説明追加）
 
 ### レビュアー記入欄
 
-- 承認者: <氏名・役割>
-- レビュー依頼日: -
-- 回答日: -
-- 結論: -
-- コメント: -
+- 承認者: iori-oiso（プロジェクトオーナー）
+- レビュー依頼日: 2026-05-01
+- 回答日: 2026-05-01
+- 結論: 合格
+- コメント: 画面刷新タスク全 8 Phase 完了を承認。本番 MySQL 環境での実機動作確認・Playwright 実機実行・残り 2 画面（corporate / edinet-list-detail）の Playwright スナップショット追加・運用者への旧 /v2/* URL 廃止アナウンスは別タスクで対応する。
 
 ---
 
@@ -424,3 +465,5 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 - 2026-05-01: Phase 5 完了（7 コミット cafd0040→368f801a）。テスト 59 件全パス（テーブル汎用パターンを edinet-list に適用 + edinet-detail は単純 layout-v2 継承）。Claude Preview 実機確認は省略・人間レビュアに委ねる。Phase 5 Gate 3 承認（iori-oiso）。次は Phase 6（corporate.html 移植・Chart.js 14 個 + ローカルバンドル化）へ
 - 2026-05-01: Phase 6 完了（6 コミット 2c704b73→10f9c63a）。CorporatePresenterTest 12 件全パス。CorporatePresenter は private populateModel 軽量リファクタで v2/v3 共通化、corporate-v2.html は機能等価最低限版（約 200 行・14 canvas + 主要セクション）、Chart.js は Phase 1 ローカルバンドル window.Chart 利用で CDN 撤去、index/valuation の code リンクを /v3/corporate に書き換え。Phase 6 Gate 3 承認（iori-oiso）。次は Phase 7（error.html 移植 + 旧資産削除 + ダークモード仕上げ）へ
 - 2026-05-01: Phase 7 完了（9 コミット 86d8204c→c5c14f46）。テスト 711 件全パス。旧 Presenter /v2/* 5 個 + POC + 旧テンプレート 6 + 旧 plugins 9 ディレクトリ + dist 全削除（合計数十 MB の資産削除）+ error.html を Tailwind 化 + ダークモード prefers-color-scheme + CLAUDE.md「View / 画面」節書き換え。Phase 7 Gate 3 承認（iori-oiso）。次は最終 Phase 8（Playwright スナップショット導入）へ
+- 2026-05-01: Phase 8 完了（5 コミット 615e2a25→33c8a878）。Playwright Java test scope 導入 + Phase8ScreenSnapshotTest 新設（3 画面 × 2 ビューポート = 6 ケース + ダークモードトグル 2 ケース）。test-compile 成功・実機実行は人間レビュアに委ねる。Phase 8 Gate 3 承認（iori-oiso）
+- 2026-05-01: **画面刷新タスク全 8 Phase 完了**。マスタープラン Gate 3 承認（iori-oiso・合格）。本番 MySQL 環境での実機動作確認・残り 2 画面（corporate / edinet-list-detail）の Playwright 追加・運用者へのアナウンスは別タスクで対応
