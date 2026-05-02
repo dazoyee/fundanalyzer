@@ -19,37 +19,14 @@
 <section layout:fragment="content" class="space-y-6"
          th:with="cv4=${corporateView != null ? #strings.substring(corporateView.code, 0, 4) : null}">
 
-    <!-- Flash アラート (POST 後の成功・失敗フィードバック) -->
+    <!-- Flash アラート -->
     <div th:if="${isFavorite != null}"
-         x-data="{ open: true }" x-show="open"
-         class="flex items-start justify-between gap-2 rounded border border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200">
-        <span>
-            <span th:if="${isFavorite}">お気に入りに登録しました</span>
-            <span th:unless="${isFavorite}">お気に入りから除外しました</span>
-        </span>
-        <button type="button" @click="open = false" class="text-blue-600 hover:text-blue-800 dark:text-blue-300" aria-label="閉じる">
-            <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
-        </button>
-    </div>
+         th:with="favMsg=${isFavorite ? 'お気に入りに登録しました' : 'お気に入りから除外しました'}"
+         th:replace="~{fragments/alert :: info(message=${favMsg})}"></div>
     <div th:if="${isEvaluated != null}"
-         x-data="{ open: true }" x-show="open"
-         class="flex items-start justify-between gap-2 rounded border border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200">
-        <span>
-            <span th:if="${isEvaluated}">株価を評価しました</span>
-            <span th:unless="${isEvaluated}">評価対象が存在しないか、または評価に失敗しました</span>
-        </span>
-        <button type="button" @click="open = false" class="text-blue-600 hover:text-blue-800 dark:text-blue-300" aria-label="閉じる">
-            <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
-        </button>
-    </div>
-    <div th:if="${message != null}"
-         x-data="{ open: true }" x-show="open"
-         class="flex items-start justify-between gap-2 rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
-        <span th:text="${message}">メッセージ</span>
-        <button type="button" @click="open = false" class="text-amber-600 hover:text-amber-800 dark:text-amber-300" aria-label="閉じる">
-            <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
-        </button>
-    </div>
+         th:with="evalMsg=${isEvaluated ? '株価を評価しました' : '評価対象が存在しないか、または評価に失敗しました'}"
+         th:replace="~{fragments/alert :: info(message=${evalMsg})}"></div>
+    <div th:if="${message != null}" th:replace="~{fragments/alert :: warning(message=${message})}"></div>
 
     <!-- 上部: 前後ナビ + 年次/四半期切替 -->
     <div class="flex flex-wrap items-center justify-between gap-2">
@@ -136,63 +113,51 @@
     <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
              th:if="${corporateView != null}">
         <h2 class="mb-3 text-lg font-bold">表示情報</h2>
-        <!-- 上段: 4 KPI（旧版互換 GOOD/BAD アイコン付き） -->
+        <!-- 上段: 4 KPI（旧版互換 GOOD/BAD アイコン付き、判定は th:with で 1 回評価） -->
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <!-- 最新企業価値 GOOD: latestCorporateValue > discountValueToDisplay -->
-            <div class="relative rounded border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
-                <span th:if="${corporateView.latestCorporateValue != null and corporateView.discountValueToDisplay != null and corporateView.latestCorporateValue > corporateView.discountValueToDisplay}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
-                      title="GOOD">
+            <div class="relative rounded border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950"
+                 th:with="good=${corporateView.latestCorporateValue != null and corporateView.discountValueToDisplay != null and corporateView.latestCorporateValue > corporateView.discountValueToDisplay}">
+                <span th:if="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow" title="GOOD">
                     <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <span th:if="${corporateView.latestCorporateValue == null or corporateView.discountValueToDisplay == null or corporateView.latestCorporateValue <= corporateView.discountValueToDisplay}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
-                      title="BAD">
+                <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-blue-700 dark:text-blue-300">最新企業価値</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.latestCorporateValue}">-</div>
             </div>
             <!-- 提出日株価平均 GOOD: latestCorporateValue > averageStockPrice -->
-            <div class="relative rounded border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950">
-                <span th:if="${corporateView.latestCorporateValue != null and corporateView.averageStockPrice != null and corporateView.latestCorporateValue > corporateView.averageStockPrice}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
-                      title="GOOD">
+            <div class="relative rounded border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950"
+                 th:with="good=${corporateView.latestCorporateValue != null and corporateView.averageStockPrice != null and corporateView.latestCorporateValue > corporateView.averageStockPrice}">
+                <span th:if="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow" title="GOOD">
                     <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <span th:if="${corporateView.latestCorporateValue == null or corporateView.averageStockPrice == null or corporateView.latestCorporateValue <= corporateView.averageStockPrice}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
-                      title="BAD">
+                <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-emerald-700 dark:text-emerald-300">提出日株価平均</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.averageStockPrice}">-</div>
             </div>
             <!-- 割安度 GOOD: discountRateToDisplay > 100 -->
-            <div class="relative rounded border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
-                <span th:if="${corporateView.discountRateToDisplay != null and corporateView.discountRateToDisplay > 100}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
-                      title="GOOD">
+            <div class="relative rounded border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950"
+                 th:with="good=${corporateView.discountRateToDisplay != null and corporateView.discountRateToDisplay > 100}">
+                <span th:if="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow" title="GOOD">
                     <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <span th:if="${corporateView.discountRateToDisplay == null or corporateView.discountRateToDisplay <= 100}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
-                      title="BAD">
+                <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-amber-700 dark:text-amber-300">割安度</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.discountRateToDisplay}">-</div>
             </div>
             <!-- グレアム指数 GOOD: 0 < grahamIndex < 5.625 -->
-            <div class="relative rounded border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-950">
-                <span th:if="${corporateView.grahamIndex != null and corporateView.grahamIndex > 0 and corporateView.grahamIndex < 5.625}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
-                      title="GOOD">
+            <div class="relative rounded border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-950"
+                 th:with="good=${corporateView.grahamIndex != null and corporateView.grahamIndex > 0 and corporateView.grahamIndex < 5.625}">
+                <span th:if="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow" title="GOOD">
                     <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <span th:unless="${corporateView.grahamIndex != null and corporateView.grahamIndex > 0 and corporateView.grahamIndex < 5.625}"
-                      class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
-                      title="BAD">
+                <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-purple-700 dark:text-purple-300">グレアム指数</div>

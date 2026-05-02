@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    汎用 Flash アラート fragment。
+    color: blue / amber / emerald / rose のいずれか
+    message: 表示テキスト
+    Alpine.js x-show と close ボタン (×) で個別に閉じられる。
+-->
+<div th:fragment="info (message)"
+     x-data="{ open: true }" x-show="open"
+     class="flex items-start justify-between gap-2 rounded border border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200">
+    <span th:text="${message}" th:remove="tag">メッセージ</span>
+    <button type="button" @click="open = false"
+            class="text-blue-600 hover:text-blue-800 dark:text-blue-300" aria-label="閉じる">
+        <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
+    </button>
+</div>
+
+<div th:fragment="warning (message)"
+     x-data="{ open: true }" x-show="open"
+     class="flex items-start justify-between gap-2 rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+    <span th:text="${message}" th:remove="tag">メッセージ</span>
+    <button type="button" @click="open = false"
+            class="text-amber-600 hover:text-amber-800 dark:text-amber-300" aria-label="閉じる">
+        <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
+    </button>
+</div>
+
+<div th:fragment="success (message)"
+     x-data="{ open: true }" x-show="open"
+     class="flex items-start justify-between gap-2 rounded border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
+    <span th:text="${message}" th:remove="tag">メッセージ</span>
+    <button type="button" @click="open = false"
+            class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-300" aria-label="閉じる">
+        <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
+    </button>
+</div>
+
+<div th:fragment="error (message)"
+     x-data="{ open: true }" x-show="open"
+     class="flex items-start justify-between gap-2 rounded border border-rose-300 bg-rose-50 px-4 py-2 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-200">
+    <span th:text="${message}" th:remove="tag">メッセージ</span>
+    <button type="button" @click="open = false"
+            class="text-rose-600 hover:text-rose-800 dark:text-rose-300" aria-label="閉じる">
+        <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
+    </button>
+</div>
+
+</body>
+</html>
