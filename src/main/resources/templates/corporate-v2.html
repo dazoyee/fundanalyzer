@@ -199,25 +199,52 @@
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.grahamIndex}">-</div>
             </div>
         </div>
-        <!-- 下段: 詳細 dl 4 列 × 5 行 -->
-        <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-            <div><dt class="text-slate-500 dark:text-slate-400">提出日</dt><dd th:text="${corporateView.submitDate}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">平均企業価値</dt><dd class="font-mono" th:text="${corporateView.averageCorporateValueToDisplay}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">標準偏差</dt><dd class="font-mono" th:text="${corporateView.standardDeviationToDisplay}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">変動係数</dt><dd class="font-mono" th:text="${corporateView.coefficientOfVariationToDisplay}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">対象年数</dt><dd class="font-mono" th:text="${corporateView.countYear}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">株価取得日</dt><dd th:text="${corporateView.importDate}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">最新株価</dt><dd class="font-mono" th:text="${corporateView.latestStockPrice}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">予想株価</dt><dd class="font-mono" th:text="${corporateView.forecastStock}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">割安値</dt><dd class="font-mono" th:text="${corporateView.discountValueToDisplay}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">株価企業価値率</dt><dd class="font-mono" th:text="${corporateView.priceCorporateValueRatio}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">PER</dt><dd class="font-mono" th:text="${corporateView.per}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">PBR</dt><dd class="font-mono" th:text="${corporateView.pbr}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">BPS</dt><dd class="font-mono" th:text="${corporateView.bps}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">EPS</dt><dd class="font-mono" th:text="${corporateView.eps}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">ROE</dt><dd class="font-mono" th:text="${corporateView.roe}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">ROA</dt><dd class="font-mono" th:text="${corporateView.roa}">-</dd></div>
-        </dl>
+        <!-- 下段: 4 観点カード横並び (旧版互換: 企業価値・統計 / 株価 / 財務指標 / バリュエーション) -->
+        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <!-- 観点 1: 企業価値・統計 -->
+            <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+                <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">企業価値・統計</h3>
+                <dl class="space-y-1 text-xs">
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">提出日</dt><dd th:text="${corporateView.submitDate}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新企業価値</dt><dd class="font-mono" th:text="${corporateView.latestCorporateValue}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">平均企業価値</dt><dd class="font-mono" th:text="${corporateView.averageCorporateValueToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">標準偏差</dt><dd class="font-mono" th:text="${corporateView.standardDeviationToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">変動係数</dt><dd class="font-mono" th:text="${corporateView.coefficientOfVariationToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象年数</dt><dd class="font-mono" th:text="${corporateView.countYear}">-</dd></div>
+                </dl>
+            </div>
+            <!-- 観点 2: 株価 -->
+            <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+                <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">株価</h3>
+                <dl class="space-y-1 text-xs">
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価取得日</dt><dd th:text="${corporateView.importDate}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新株価</dt><dd class="font-mono" th:text="${corporateView.latestStockPrice}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">提出日株価平均</dt><dd class="font-mono" th:text="${corporateView.averageStockPrice}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価予想</dt><dd class="font-mono" th:text="${corporateView.forecastStock}">-</dd></div>
+                </dl>
+            </div>
+            <!-- 観点 3: 財務指標 -->
+            <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+                <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">財務指標</h3>
+                <dl class="space-y-1 text-xs">
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">割安比率</dt><dd class="font-mono" th:text="${corporateView.discountRateToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">BPS</dt><dd class="font-mono" th:text="${corporateView.bps}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">EPS</dt><dd class="font-mono" th:text="${corporateView.eps}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">ROE</dt><dd class="font-mono" th:text="${corporateView.roe}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">ROA</dt><dd class="font-mono" th:text="${corporateView.roa}">-</dd></div>
+                </dl>
+            </div>
+            <!-- 観点 4: バリュエーション指標 -->
+            <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+                <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">バリュエーション指標</h3>
+                <dl class="space-y-1 text-xs">
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価企業価値率</dt><dd class="font-mono" th:text="${corporateView.priceCorporateValueRatio}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER</dt><dd class="font-mono" th:text="${corporateView.per}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR</dt><dd class="font-mono" th:text="${corporateView.pbr}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数</dt><dd class="font-mono" th:text="${corporateView.grahamIndex}">-</dd></div>
+                </dl>
+            </div>
+        </div>
     </article>
 
     <!-- 期間別平均カード（3年/5年/10年/全） -->
