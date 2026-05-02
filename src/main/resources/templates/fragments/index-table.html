@@ -33,7 +33,7 @@
                     <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
                        class="ml-1 inline-flex items-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                        title="みんかぶで開く">
-                        <i data-lucide="external-link" class="h-3 w-3"></i>
+                        <i data-lucide="external-link" class="h-3 w-3" aria-hidden="true"></i>
                     </a>
                 </td>
                 <td class="px-3 py-2 text-sm">
@@ -68,7 +68,7 @@
                hx-target="#index-table"
                hx-push-url="true"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
                 前へ
             </a>
             <a th:if="${table.pageNumber() < table.totalPages() - 1}"
@@ -77,7 +77,7 @@
                hx-push-url="true"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
                 次へ
-                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
             </a>
         </div>
     </nav>
@@ -85,7 +85,7 @@
 
 <th th:fragment="sortable-th (field, label, target, keyword, sortParam)"
     class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-    <th:block th:with="parts=${sortParam.split(',')},
+    <th:block th:with="parts=${(sortParam != null and !#strings.isEmpty(sortParam)) ? sortParam.split(',') : new String[]{'code','asc'}},
                        currentField=${parts[0]},
                        currentDir=${parts.length > 1 ? parts[1] : 'asc'},
                        nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
@@ -95,9 +95,9 @@
            hx-push-url="true"
            class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">
             <span th:text="${label}">列名</span>
-            <i th:if="${currentField == field and currentDir == 'asc'}" data-lucide="chevron-up" class="h-3 w-3"></i>
-            <i th:if="${currentField == field and currentDir == 'desc'}" data-lucide="chevron-down" class="h-3 w-3"></i>
-            <i th:unless="${currentField == field}" data-lucide="chevrons-up-down" class="h-3 w-3 opacity-30"></i>
+            <i th:if="${currentField == field and currentDir == 'asc'}" data-lucide="chevron-up" class="h-3 w-3" aria-hidden="true"></i>
+            <i th:if="${currentField == field and currentDir == 'desc'}" data-lucide="chevron-down" class="h-3 w-3" aria-hidden="true"></i>
+            <i th:unless="${currentField == field}" data-lucide="chevrons-up-down" class="h-3 w-3 opacity-30" aria-hidden="true"></i>
         </a>
     </th:block>
 </th>

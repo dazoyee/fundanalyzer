@@ -9,7 +9,7 @@
 <body>
 <h1 layout:fragment="page-title" class="flex flex-wrap items-center gap-2">
     <a th:href="@{/v3/index}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-        <i data-lucide="arrow-left" class="inline-block h-4 w-4"></i> 一覧へ
+        <i data-lucide="arrow-left" class="inline-block h-4 w-4" aria-hidden="true"></i> 一覧へ
     </a>
     <span class="text-slate-400">/</span>
     <span class="font-mono text-base" th:text="${corporate.code}">9999</span>
@@ -28,7 +28,7 @@
             <span th:unless="${isFavorite}">お気に入りから除外しました</span>
         </span>
         <button type="button" @click="open = false" class="text-blue-600 hover:text-blue-800 dark:text-blue-300" aria-label="閉じる">
-            <i data-lucide="x" class="h-4 w-4"></i>
+            <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
         </button>
     </div>
     <div th:if="${isEvaluated != null}"
@@ -39,7 +39,7 @@
             <span th:unless="${isEvaluated}">評価対象が存在しないか、または評価に失敗しました</span>
         </span>
         <button type="button" @click="open = false" class="text-blue-600 hover:text-blue-800 dark:text-blue-300" aria-label="閉じる">
-            <i data-lucide="x" class="h-4 w-4"></i>
+            <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
         </button>
     </div>
     <div th:if="${message != null}"
@@ -47,7 +47,7 @@
          class="flex items-start justify-between gap-2 rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
         <span th:text="${message}">メッセージ</span>
         <button type="button" @click="open = false" class="text-amber-600 hover:text-amber-800 dark:text-amber-300" aria-label="閉じる">
-            <i data-lucide="x" class="h-4 w-4"></i>
+            <i data-lucide="x" class="h-4 w-4" aria-hidden="true"></i>
         </button>
     </div>
 
@@ -57,14 +57,14 @@
             <a th:if="${backwardCode != null}"
                th:href="@{/v3/corporate(code=${backwardCode},target=${target})}"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
                 <span th:text="${backwardCode}">前</span>
             </a>
             <a th:if="${forwardCode != null}"
                th:href="@{/v3/corporate(code=${forwardCode},target=${target})}"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
                 <span th:text="${forwardCode}">次</span>
-                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
             </a>
         </nav>
     </div>
@@ -75,8 +75,8 @@
             <input type="hidden" th:value="${corporate.code}" name="code"/>
             <button type="submit"
                     class="inline-flex w-full items-center justify-center gap-2 rounded border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-700 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700">
-                <i th:if="${corporate.isFavorite}" data-lucide="heart" class="h-4 w-4 fill-current"></i>
-                <i th:unless="${corporate.isFavorite}" data-lucide="heart" class="h-4 w-4"></i>
+                <i th:if="${corporate.isFavorite}" data-lucide="heart" class="h-4 w-4 fill-current" aria-hidden="true"></i>
+                <i th:unless="${corporate.isFavorite}" data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
                 <span th:text="${corporate.isFavorite} ? 'お気に入り解除' : 'お気に入り登録'">お気に入り</span>
             </button>
         </form>
@@ -119,15 +119,15 @@
         <div class="mt-4 flex flex-wrap gap-2 text-xs" th:if="${cv4 != null}">
             <a th:href="'https://www.nikkei.com/nkd/company/?scode=' + ${cv4}" target="_blank" rel="noopener"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="external-link" class="h-3 w-3"></i> 日経
+                <i data-lucide="external-link" class="h-3 w-3" aria-hidden="true"></i> 日経
             </a>
             <a th:href="'https://minkabu.jp/stock/' + ${cv4}" target="_blank" rel="noopener"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="external-link" class="h-3 w-3"></i> みんかぶ
+                <i data-lucide="external-link" class="h-3 w-3" aria-hidden="true"></i> みんかぶ
             </a>
             <a th:href="'https://finance.yahoo.co.jp/quote/' + ${cv4}" target="_blank" rel="noopener"
                class="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="external-link" class="h-3 w-3"></i> ヤフーファイナンス
+                <i data-lucide="external-link" class="h-3 w-3" aria-hidden="true"></i> ヤフーファイナンス
             </a>
         </div>
     </article>
@@ -143,12 +143,12 @@
                 <span th:if="${corporateView.latestCorporateValue != null and corporateView.discountValueToDisplay != null and corporateView.latestCorporateValue > corporateView.discountValueToDisplay}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
                       title="GOOD">
-                    <i data-lucide="thumbs-up" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <span th:if="${corporateView.latestCorporateValue == null or corporateView.discountValueToDisplay == null or corporateView.latestCorporateValue <= corporateView.discountValueToDisplay}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
                       title="BAD">
-                    <i data-lucide="thumbs-down" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-blue-700 dark:text-blue-300">最新企業価値</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.latestCorporateValue}">-</div>
@@ -158,12 +158,12 @@
                 <span th:if="${corporateView.latestCorporateValue != null and corporateView.averageStockPrice != null and corporateView.latestCorporateValue > corporateView.averageStockPrice}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
                       title="GOOD">
-                    <i data-lucide="thumbs-up" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <span th:if="${corporateView.latestCorporateValue == null or corporateView.averageStockPrice == null or corporateView.latestCorporateValue <= corporateView.averageStockPrice}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
                       title="BAD">
-                    <i data-lucide="thumbs-down" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-emerald-700 dark:text-emerald-300">提出日株価平均</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.averageStockPrice}">-</div>
@@ -173,12 +173,12 @@
                 <span th:if="${corporateView.discountRateToDisplay != null and corporateView.discountRateToDisplay > 100}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
                       title="GOOD">
-                    <i data-lucide="thumbs-up" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <span th:if="${corporateView.discountRateToDisplay == null or corporateView.discountRateToDisplay <= 100}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
                       title="BAD">
-                    <i data-lucide="thumbs-down" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-amber-700 dark:text-amber-300">割安度</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.discountRateToDisplay}">-</div>
@@ -188,12 +188,12 @@
                 <span th:if="${corporateView.grahamIndex != null and corporateView.grahamIndex > 0 and corporateView.grahamIndex < 5.625}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow"
                       title="GOOD">
-                    <i data-lucide="thumbs-up" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <span th:unless="${corporateView.grahamIndex != null and corporateView.grahamIndex > 0 and corporateView.grahamIndex < 5.625}"
                       class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow"
                       title="BAD">
-                    <i data-lucide="thumbs-down" class="h-4 w-4"></i>
+                    <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
                 <div class="text-xs text-purple-700 dark:text-purple-300">グレアム指数</div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.grahamIndex}">-</div>
@@ -291,23 +291,29 @@
     <article x-data="{ tab: 'analysis', sub: 180 }"
              class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
         <h2 class="border-b border-slate-200 px-6 py-3 text-lg font-bold dark:border-slate-700">その他情報</h2>
-        <nav class="flex flex-wrap gap-1 border-b border-slate-200 px-3 dark:border-slate-700" role="tablist">
+        <nav class="flex flex-wrap gap-1 border-b border-slate-200 px-3 dark:border-slate-700" role="tablist" aria-label="銘柄詳細タブ">
             <button @click="tab='analysis'" :class="tab==='analysis' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+                    role="tab" :aria-selected="tab==='analysis'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">分析情報</button>
             <button @click="tab='indicator'; sub=180" :class="tab==='indicator' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+                    role="tab" :aria-selected="tab==='indicator'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">投資指標</button>
             <button @click="tab='financial'" :class="tab==='financial' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+                    role="tab" :aria-selected="tab==='financial'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">財務諸表</button>
             <button @click="tab='forecast'; sub=180" :class="tab==='forecast' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+                    role="tab" :aria-selected="tab==='forecast'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">株価予想</button>
             <button @click="tab='stock'; sub=30" :class="tab==='stock' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+                    role="tab" :aria-selected="tab==='stock'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">株価</button>
             <button @click="tab='valuation'; sub=180" :class="tab==='valuation' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
+                    role="tab" :aria-selected="tab==='valuation'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">評価</button>
         </nav>
 
         <!-- Tab: 分析情報 -->
-        <div x-show="tab==='analysis'" class="space-y-4 p-6">
+        <div x-show="tab==='analysis'" role="tabpanel" class="space-y-4 p-6">
             <div class="relative h-64"><canvas id="analysisChartAll"></canvas></div>
             <div class="overflow-x-auto" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
@@ -334,7 +340,7 @@
         </div>
 
         <!-- Tab: 投資指標 (4 sub-tabs) -->
-        <div x-show="tab==='indicator'" class="space-y-4 p-6">
+        <div x-show="tab==='indicator'" role="tabpanel" class="space-y-4 p-6">
             <nav class="flex flex-wrap gap-1" role="tablist">
                 <button @click="sub=30" :class="sub===30 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">1ヶ月</button>
@@ -374,7 +380,7 @@
         </div>
 
         <!-- Tab: 財務諸表 -->
-        <div x-show="tab==='financial'" class="space-y-4 p-6">
+        <div x-show="tab==='financial'" role="tabpanel" class="space-y-4 p-6">
             <div th:if="${financialStatements == null or financialStatements.isEmpty()}"
                  class="text-sm text-slate-500 dark:text-slate-400">財務諸表データがありません</div>
             <div th:if="${financialStatements != null and !financialStatements.isEmpty()}"
@@ -408,7 +414,7 @@
         </div>
 
         <!-- Tab: 株価予想 (3 sub-tabs) -->
-        <div x-show="tab==='forecast'" class="space-y-4 p-6">
+        <div x-show="tab==='forecast'" role="tabpanel" class="space-y-4 p-6">
             <nav class="flex flex-wrap gap-1" role="tablist">
                 <button @click="sub=180" :class="sub===180 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">6ヶ月</button>
@@ -441,7 +447,7 @@
         </div>
 
         <!-- Tab: 株価 (5 sub-tabs + 株価取得 button + OHLC table) -->
-        <div x-show="tab==='stock'" class="space-y-4 p-6">
+        <div x-show="tab==='stock'" role="tabpanel" class="space-y-4 p-6">
             <nav class="flex flex-wrap gap-1" role="tablist">
                 <button @click="sub=30" :class="sub===30 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">1ヶ月</button>
@@ -484,7 +490,7 @@
         </div>
 
         <!-- Tab: 評価 (3 sub-tabs + 9-col valuations table) -->
-        <div x-show="tab==='valuation'" class="space-y-4 p-6">
+        <div x-show="tab==='valuation'" role="tabpanel" class="space-y-4 p-6">
             <nav class="flex flex-wrap gap-1" role="tablist">
                 <button @click="sub=180" :class="sub===180 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">6ヶ月</button>
