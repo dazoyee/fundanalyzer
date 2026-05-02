@@ -20,13 +20,17 @@
          th:with="cv4=${corporateView != null ? #strings.substring(corporateView.code, 0, 4) : null}">
 
     <!-- Flash アラート -->
-    <div th:if="${isFavorite != null}"
-         th:with="favMsg=${isFavorite ? 'お気に入りに登録しました' : 'お気に入りから除外しました'}"
-         th:replace="~{fragments/alert :: info(message=${favMsg})}"></div>
-    <div th:if="${isEvaluated != null}"
-         th:with="evalMsg=${isEvaluated ? '株価を評価しました' : '評価対象が存在しないか、または評価に失敗しました'}"
-         th:replace="~{fragments/alert :: info(message=${evalMsg})}"></div>
-    <div th:if="${message != null}" th:replace="~{fragments/alert :: warning(message=${message})}"></div>
+    <th:block th:if="${isFavorite != null}"
+              th:with="favMsg=${isFavorite ? 'お気に入りに登録しました' : 'お気に入りから除外しました'}">
+        <div th:replace="~{fragments/alert :: info(message=${favMsg})}"></div>
+    </th:block>
+    <th:block th:if="${isEvaluated != null}"
+              th:with="evalMsg=${isEvaluated ? '株価を評価しました' : '評価対象が存在しないか、または評価に失敗しました'}">
+        <div th:replace="~{fragments/alert :: info(message=${evalMsg})}"></div>
+    </th:block>
+    <th:block th:if="${message != null}">
+        <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
+    </th:block>
 
     <!-- 上部: 前後ナビ + 年次/四半期切替 -->
     <div class="flex flex-wrap items-center justify-between gap-2">

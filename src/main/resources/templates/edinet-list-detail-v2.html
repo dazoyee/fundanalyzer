@@ -22,10 +22,12 @@
 <section layout:fragment="content" class="space-y-6" th:with="ed=${edinetDetail.edinetList}">
 
     <!-- Flash アラート -->
-    <div th:if="${message != null}" th:replace="~{fragments/alert :: info(message=${message})}"></div>
-    <div th:if="${param.error != null}"
-         th:with="errMsg=${param.error[0]}"
-         th:replace="~{fragments/alert :: error(message=${errMsg})}"></div>
+    <th:block th:if="${message != null}">
+        <div th:replace="~{fragments/alert :: info(message=${message})}"></div>
+    </th:block>
+    <th:block th:if="${param.error != null}" th:with="errMsg=${param.error[0]}">
+        <div th:replace="~{fragments/alert :: error(message=${errMsg})}"></div>
+    </th:block>
 
     <!-- 上部 2 アクションボタン -->
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
