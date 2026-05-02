@@ -87,14 +87,20 @@
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.stockPrice}">1000</td>
                 <td class="px-3 py-2 text-right text-sm">
                     <span th:if="${c.differenceFromSubmitDate} != null and ${c.differenceFromSubmitDate.signum()} > 0"
-                          th:text="'+' + ${c.differenceFromSubmitDate}"
-                          class="text-emerald-600 dark:text-emerald-400">+0</span>
+                          class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <span th:text="'+' + ${c.differenceFromSubmitDate}">+0</span>
+                        <i data-lucide="arrow-up" class="h-3 w-3"></i>
+                    </span>
                     <span th:if="${c.differenceFromSubmitDate} != null and ${c.differenceFromSubmitDate.signum()} == 0"
-                          th:text="${c.differenceFromSubmitDate}"
-                          class="text-slate-700 dark:text-slate-300">0</span>
+                          class="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                        <span th:text="${c.differenceFromSubmitDate}">0</span>
+                        <i data-lucide="minus" class="h-3 w-3"></i>
+                    </span>
                     <span th:if="${c.differenceFromSubmitDate} != null and ${c.differenceFromSubmitDate.signum()} &lt; 0"
-                          th:text="${c.differenceFromSubmitDate}"
-                          class="text-rose-600 dark:text-rose-400">-0</span>
+                          class="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                        <span th:text="${c.differenceFromSubmitDate}">-0</span>
+                        <i data-lucide="arrow-down" class="h-3 w-3"></i>
+                    </span>
                 </td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${c.submitDateRatio}">1.0</td>
             </tr>
@@ -233,7 +239,23 @@
             <tr th:each="i : ${table.rows()}"
                 class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
                 <td class="px-3 py-2 text-sm" th:text="${i.name}">業種</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${i.differenceFromSubmitDate}">0</td>
+                <td class="px-3 py-2 text-right text-sm">
+                    <span th:if="${i.differenceFromSubmitDate} != null and ${i.differenceFromSubmitDate.signum()} > 0"
+                          class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <span th:text="'+' + ${i.differenceFromSubmitDate}">+0</span>
+                        <i data-lucide="arrow-up" class="h-3 w-3"></i>
+                    </span>
+                    <span th:if="${i.differenceFromSubmitDate} != null and ${i.differenceFromSubmitDate.signum()} == 0"
+                          class="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                        <span th:text="${i.differenceFromSubmitDate}">0</span>
+                        <i data-lucide="minus" class="h-3 w-3"></i>
+                    </span>
+                    <span th:if="${i.differenceFromSubmitDate} != null and ${i.differenceFromSubmitDate.signum()} &lt; 0"
+                          class="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                        <span th:text="${i.differenceFromSubmitDate}">-0</span>
+                        <i data-lucide="arrow-down" class="h-3 w-3"></i>
+                    </span>
+                </td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${i.submitDateRatio}">0</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${i.grahamIndex}">0</td>
                 <td class="px-3 py-2 text-right text-sm" th:text="${i.count}">0</td>
