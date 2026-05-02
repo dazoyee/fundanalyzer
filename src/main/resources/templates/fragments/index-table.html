@@ -36,7 +36,11 @@
                         <i data-lucide="external-link" class="h-3 w-3"></i>
                     </a>
                 </td>
-                <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル会社</td>
+                <td class="px-3 py-2 text-sm">
+                    <a th:href="@{/v3/corporate(code=${c.code})}"
+                       th:text="${c.name}"
+                       class="text-blue-600 hover:underline dark:text-blue-400">サンプル会社</a>
+                </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">2025-01-01</td>
                 <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.latestCorporateValue}">0</td>
                 <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.coefficientOfVariationToDisplay}">-</td>
