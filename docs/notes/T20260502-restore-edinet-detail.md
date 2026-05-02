@@ -192,10 +192,15 @@ template 拡張で構造（aside/header/main/title）は維持されるため引
 
 2026-05-02（dev プロファイル / preview server / Chromium）
 
-### 実装
+### コミット履歴
 
-- `src/main/resources/templates/edinet-list-detail-v2.html` 79 → 253 行
-- dev seed `V1.0.1__dev_seed_screen_test.sql` に `edinet_list_view` 4 行追加 + S0000008 を未処理状態に
+| ハッシュ | 内容 |
+|---|---|
+| `f3302463` | P1 edinet-list-detail-v2.html 復元 + edinet_list_view seed 追加 |
+| `c4f07b0e` | POST 後 redirect を /v2/* → /v3/* に修正（バグフィックス）|
+| `8bf42877` | パンくずナビ + Flash アラート（message + error param）追加 |
+| `a4fe05c4` | aria-hidden 一括追加 |
+| `c34d9098` | EDINET 系 P1+P2: 2 列復活 + tab role + aria-expanded + edinet-document-card fragment 切り出し（ネスト 13→4 レベル）|
 
 ### 動作確認結果
 
@@ -204,7 +209,7 @@ template 拡張で構造（aside/header/main/title）は維持されるため引
 | # | テストケース | 結果 |
 |---|---|---|
 | 1 | URL 開いて 200 OK | ✅ |
-| 2 | h1 に「処理詳細（2026-03-25）」 | ✅ |
+| 2 | パンくず Home > EDINET 一覧 > 処理詳細 (2026-03-25) | ✅ |
 | 3 | 統計サマリ 8 項目（総件数〜対象外件数） | ✅ |
 | 4 | 上部 2 ボタン（更新して前に戻る／分析する） | ✅ |
 | 5 | 書類詳細 10 列メタデータテーブル | ✅ |
@@ -212,13 +217,21 @@ template 拡張で構造（aside/header/main/title）は維持されるため引
 | 7 | 除外ボタン（10 列目 RM） | ✅ |
 | 8 | BS/PL/NS の document path リンク表示 | ✅ |
 | 9 | 10 個の財務値編集フォーム（`value == null` 時 input + 登録） | ✅ 10 `登録` ボタン |
-| 10 | Alpine.js 折りたたみ（会社名クリック） | ✅ chevron 切替 |
+| 10 | Alpine.js 折りたたみ（会社名クリック）+ aria-expanded | ✅ chevron 切替 + a11y 対応 |
 
 ### 検出した点
 
 - 旧版「11 個」とした財務値フォームは実際 **10 個**（md の数値訂正）
 - `documentDetailList` は `allStatusDone() == false` のものに限定。業務上「失敗・要確認の書類のみ」表示される設計
+- 書類詳細カード（160 行）を `fragments/edinet-document-card.html` に切り出してネスト 13 → 4 レベルに低減
 
 ### Phase 8 Playwright
 
-5 タスク完了後にまとめて確認予定。
+最終コミット `43e56d8c` で **8/8 PASS** 確認済み。
+
+### Gate 3：人間の最終確認
+
+- [x] **承認者**: iori-oiso
+- [x] **承認日**: 2026-05-02
+- [x] 旧 `/edinet-detail` と同等の運用が可能か → ユーザー確認済
+- [x] 業務ブロックが解除されたか → 7 アクション + 10 財務値編集 + 10 列メタ + BS/PL/NS リンクすべて動作

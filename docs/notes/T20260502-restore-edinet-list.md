@@ -75,9 +75,42 @@
 
 ## ステップ 6：多軸検証（★Gate 3）
 
-- [ ] **承認者**: iori-oiso
-- [ ] **承認日**: ____
+- [x] **承認者**: iori-oiso
+- [x] **承認日**: 2026-05-02
 
 ---
 
-## §6 検証結果（実装後に追記）
+## §6 検証結果
+
+### 実施日
+
+2026-05-02（dev プロファイル / preview server / Chromium）
+
+### コミット履歴
+
+| ハッシュ | 内容 |
+|---|---|
+| `b7151d03` | P5 /v3/edinet-list 復元（2 ボタン + 更新日 callout）|
+| `5f943a24` | message Flash アラート追加 |
+| `a4fe05c4` | aria-hidden + tab role/aria-selected + sortParam null セーフ |
+| `c32d6eaa` | Flash アラート fragment 化 |
+| `488776dc` | Flash アラート常時表示バグ修正 |
+| `c34d9098` | EDINET 系 P1+P2: 未分析ID/処理確認ID 2 列復活 + tab a11y + href fallback |
+
+### 動作確認結果
+
+| # | テストケース | 結果 |
+|---|---|---|
+| 1 | 「会社情報更新」ボタン | ✅ |
+| 2 | 「処理状況更新」ボタン | ✅ |
+| 3 | 「会社リスト更新日：${companyUpdated}」callout 表示 | ✅ |
+| 4 | テーブル 9 列表示（提出日/総件数/対象/処理済/分析済/未分析ID/処理確認ID/未処理/対象外）| ✅ |
+| 5 | メイン/すべて タブ動作 + role="tab" + aria-selected | ✅ |
+| 6 | 提出日リアルタイム検索（YYYY-MM-DD 部分一致） | ✅ |
+| 7 | ソート + ページネーション + href fallback | ✅ |
+| 8 | 提出日リンクで /v3/edinet-list-detail へ遷移 | ✅ |
+| 9 | Flash アラート（POST 後 message 表示） | ✅ |
+
+### Phase 8 Playwright
+
+最終コミット `43e56d8c` で **8/8 PASS** 確認済み。

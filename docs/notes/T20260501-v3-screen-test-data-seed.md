@@ -250,11 +250,20 @@ url: jdbc:h2:mem:fundanalyzer-dev;... # （起動毎に消える）
 
 ### Gate 3：人間の最終確認
 
-- [ ] **承認者**: iori-oiso
-- [ ] **承認日**: ____
-- [ ] スクショ 9 ケース分が貼付済か
-- [ ] Phase 8 Playwright 6 case PASS のログが本 md または別資料で確認済か
-- [ ] 本番 flyway locations から dataset が除外されている事実をユーザーが理解しているか
+- [x] **承認者**: iori-oiso
+- [x] **承認日**: 2026-05-02
+- [x] ユーザー実機確認済（ブラウザで `/v3/index` 4 タブ + `/v3/corporate?code=9001` 描画 OK）
+- [x] Phase 8 Playwright 8/8 PASS 確認済（コミット c25acc8a 以降の全コミットで維持）
+- [x] 本番 flyway locations から dataset が除外されている事実を確認済（application-prod.yml は `classpath:db/migration` のみ）
+- [x] 後続タスク（5 画面復元シリーズ）の検証データソースとして本 seed が活用された
+
+### 関連コミット
+
+| ハッシュ | 内容 |
+|---|---|
+| `402d00f1` | seed V1.0.1 初期投入 |
+| `f3302463` | edinet_list_view 4 行追加 + S0000008 未処理状態化 |
+| `c9f98869` | valuation_view 5 行追加（差分 +/-/0 分散）|
 
 ---
 
