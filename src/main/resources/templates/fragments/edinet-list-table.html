@@ -18,6 +18,8 @@
                 <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countTarget', label='対象件数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countScraped', label='処理済', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countAnalyzed', label='分析済', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='notAnalyzedId', label='未分析ID', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='cantScrapedId', label='処理確認ID', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countNotScraped', label='未処理', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countNotTarget', label='対象外', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
             </tr>
@@ -30,15 +32,17 @@
                        th:text="${e.submitDate}"
                        class="font-mono text-blue-600 hover:underline dark:text-blue-400">2025-01-01</a>
                 </td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${e.countAll}">0</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${e.countTarget}">0</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${e.countScraped}">0</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${e.countAnalyzed}">0</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${e.countNotScraped}">0</td>
-                <td class="px-3 py-2 text-right text-sm" th:text="${e.countNotTarget}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countAll}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countTarget}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countScraped}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countAnalyzed}">0</td>
+                <td class="px-3 py-2 break-all text-xs" th:text="${e.notAnalyzedId}">-</td>
+                <td class="px-3 py-2 break-all text-xs" th:text="${e.cantScrapedId}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countNotScraped}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countNotTarget}">0</td>
             </tr>
             <tr th:if="${table.rows().isEmpty()}">
-                <td colspan="7" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
+                <td colspan="9" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
                     該当する提出日がありません
                 </td>
             </tr>
@@ -53,6 +57,7 @@
         </div>
         <div class="flex gap-1">
             <a th:if="${table.pageNumber() > 0}"
+               th:href="@{/v3/edinet-list(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
                th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
                hx-target="#edinet-list-table"
                hx-push-url="true"
@@ -61,6 +66,7 @@
                 前へ
             </a>
             <a th:if="${table.pageNumber() < table.totalPages() - 1}"
+               th:href="@{/v3/edinet-list(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
                th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
                hx-target="#edinet-list-table"
                hx-push-url="true"
@@ -74,12 +80,13 @@
 
 <th th:fragment="sortable-th (field, label, target, keyword, sortParam)"
     class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-    <th:block th:with="parts=${(sortParam != null and !#strings.isEmpty(sortParam)) ? sortParam.split(',') : new String[]{'code','asc'}},
+    <th:block th:with="parts=${(sortParam != null and !#strings.isEmpty(sortParam)) ? sortParam.split(',') : new String[]{'submitDate','desc'}},
                        currentField=${parts[0]},
                        currentDir=${parts.length > 1 ? parts[1] : 'asc'},
                        nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
                        nextSort=${field + ',' + nextDir}">
-        <a th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+        <a th:href="@{/v3/edinet-list(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+           th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
            hx-target="#edinet-list-table"
            hx-push-url="true"
            class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">

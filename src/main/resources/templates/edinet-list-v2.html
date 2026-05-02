@@ -37,14 +37,18 @@
         <span class="font-mono" th:text="${companyUpdated}">2025-01-01</span>
     </div>
 
-    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="EDINET 一覧 表示切替">
         <a th:href="@{/v3/edinet-list(q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${#strings.isEmpty(target)}"
            th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
             メイン
         </a>
         <a th:href="@{/v3/edinet-list(target='all',q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'all'}"
            th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
@@ -58,6 +62,7 @@
                name="q"
                th:value="${keyword}"
                placeholder="提出日（YYYY-MM-DD 部分一致）で検索"
+               aria-label="提出日で検索"
                class="w-full rounded border border-slate-300 px-3 py-2 sm:w-72 dark:border-slate-600 dark:bg-slate-900"
                th:attr="hx-get=@{/v3/edinet-list/table(target=${target},sort=${sortParam},page=0)}"
                hx-target="#edinet-list-table"

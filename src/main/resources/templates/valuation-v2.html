@@ -42,26 +42,34 @@
         </form>
     </div>
 
-    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist">
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="表示切替">
         <a th:href="@{/v3/valuation(q=${keyword})}"
+           role="tab"
+           th:attr="aria-selected=${#strings.isEmpty(target)}"
            th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
             メイン
         </a>
         <a th:href="@{/v3/valuation(target='all',q=${keyword})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'all'}"
            th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
             すべて
         </a>
         <a th:href="@{/v3/valuation(target='favorite',q=${keyword})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'favorite'}"
            th:classappend="${target == 'favorite'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
             お気に入り
         </a>
         <a th:href="@{/v3/valuation(target='industry')}"
+           role="tab"
+           th:attr="aria-selected=${target == 'industry'}"
            th:classappend="${target == 'industry'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
            class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
             <i data-lucide="building" class="h-4 w-4" aria-hidden="true"></i>
@@ -89,6 +97,7 @@
         <input type="search"
                name="q"
                th:value="${keyword}"
+               aria-label="検索"
                th:placeholder="${target == 'industry'} ? '業種名で検索' : '証券コード・会社名で検索'"
                class="w-full rounded border border-slate-300 px-3 py-2 sm:w-64 dark:border-slate-600 dark:bg-slate-900"
                th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},sort=${sortParam},page=0)}"

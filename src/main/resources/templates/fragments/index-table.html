@@ -64,6 +64,7 @@
         </div>
         <div class="flex gap-1">
             <a th:if="${table.pageNumber() > 0}"
+               th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
                th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
                hx-target="#index-table"
                hx-push-url="true"
@@ -72,6 +73,7 @@
                 前へ
             </a>
             <a th:if="${table.pageNumber() < table.totalPages() - 1}"
+               th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
                th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
                hx-target="#index-table"
                hx-push-url="true"
@@ -90,7 +92,8 @@
                        currentDir=${parts.length > 1 ? parts[1] : 'asc'},
                        nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
                        nextSort=${field + ',' + nextDir}">
-        <a th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+        <a th:href="@{/v3/index(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
            hx-target="#index-table"
            hx-push-url="true"
            class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">
