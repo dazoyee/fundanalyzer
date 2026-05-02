@@ -8,17 +8,36 @@
 </head>
 <body>
 <h1 layout:fragment="page-title">
-    <span class="inline-flex items-center gap-2">
+    <span class="inline-flex flex-wrap items-center gap-2">
+        <a th:href="@{/v3/index}"
+           class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">Home</a>
+        <span class="text-slate-400">/</span>
         <a th:href="@{/v3/edinet-list}"
-           class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-            <i data-lucide="arrow-left" class="inline-block h-4 w-4"></i> 一覧へ
-        </a>
+           class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">EDINET 一覧</a>
         <span class="text-slate-400">/</span>
         <span>処理詳細 <span class="font-mono text-base" th:text="'(' + ${submitDate} + ')'">(2025-01-01)</span></span>
     </span>
 </h1>
 
 <section layout:fragment="content" class="space-y-6" th:with="ed=${edinetDetail.edinetList}">
+
+    <!-- Flash アラート (POST 後のメッセージ・エラー表示) -->
+    <div th:if="${message != null}"
+         x-data="{ open: true }" x-show="open"
+         class="flex items-start justify-between gap-2 rounded border border-blue-300 bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200">
+        <span th:text="${message}">メッセージ</span>
+        <button type="button" @click="open = false" class="text-blue-600 hover:text-blue-800 dark:text-blue-300" aria-label="閉じる">
+            <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+    </div>
+    <div th:if="${param.error != null}"
+         x-data="{ open: true }" x-show="open"
+         class="flex items-start justify-between gap-2 rounded border border-rose-300 bg-rose-50 px-4 py-2 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-950 dark:text-rose-200">
+        <span th:text="${param.error[0]}">エラーメッセージ</span>
+        <button type="button" @click="open = false" class="text-rose-600 hover:text-rose-800 dark:text-rose-300" aria-label="閉じる">
+            <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+    </div>
 
     <!-- 上部 2 アクションボタン -->
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
