@@ -361,6 +361,7 @@ ADR-001 の決定内容は変更なし。影響セクションに「Jenkins 関�
 | 6 | corporate.html 移植 | [Phase 6](T20260429-screen-renewal-phase6-corporate-htmx.md) | `feature/screen-renewal-phase6-corporate-htmx` | 2c704b73→10f9c63a（6 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 7 | error.html 移植・旧資産削除・ダークモード仕上げ | [Phase 7](T20260429-screen-renewal-phase7-cleanup-darkmode.md) | `feature/screen-renewal-phase7-cleanup-darkmode` | 86d8204c→c5c14f46（9 コミット） | **完了**（Gate 3 承認・2026-05-01・実機確認は人間レビュアに委ねる） |
 | 8 | Playwright スナップショット導入 | [Phase 8](T20260429-screen-renewal-phase8-playwright.md) | `feature/screen-renewal-phase8-playwright` | 615e2a25→33c8a878（5 コミット） | **完了**（Gate 3 承認・2026-05-01・3 画面に縮小・実機実行は人間レビュアに委ねる） |
+| 9 | **モバイル特化（テーブル → カード化 / 3 タブ ボトムバー / 並び替え select）** | [Phase 9 = T20260502-mobile-ui-renewal](T20260502-mobile-ui-renewal.md) | `develop` 直 (154931ef) | 1 コミット | **完了**（Gate 3 承認・2026-05-03） |
 
 ---
 

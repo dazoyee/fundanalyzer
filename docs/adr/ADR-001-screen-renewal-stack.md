@@ -140,3 +140,4 @@
 |---|---|---|---|
 | 2026-04-29 | 1.0 | iori-oiso + AI（Claude Opus 4.7） | 初版作成・承認 |
 | 2026-04-29 | 1.1 | iori-oiso + AI（Claude Opus 4.7） | §影響 §ネガティブ で Jenkins ノード到達性に関する記述を取消し線に変更し、本タスクではスコープアウト・別タスクで対応する旨を注記（マスタープラン Gate 1 再実施同日記録） |
+| 2026-05-03 | 1.2 | iori-oiso + AI（Claude Opus 4.7） | スマホ UI 刷新タスク（[T20260502-mobile-ui-renewal.md](../notes/T20260502-mobile-ui-renewal.md)）にて **PNG ビジュアルリグレッション採用** に方針変更。初版で「フルカラー比較は不採用」としていたが、モバイル特化の視覚回帰検出が必要と判断し、Playwright Java の `assertThat(page).hasScreenshot()` ベースの baseline 比較（`src/test/resources/playwright-baselines/<screen>-<viewport>.png` 配置・差分許容閾値 `setMaxDiffPixelRatio(0.02)`）を併用する。DOM 構造アサーション（既存 `Phase8ScreenSnapshotTest`）は継続。baseline 更新運用は本 ADR ではなく [T20260502-mobile-ui-renewal.md](../notes/T20260502-mobile-ui-renewal.md) §3.3 を一次情報源とする |

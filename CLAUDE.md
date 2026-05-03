@@ -183,6 +183,17 @@ exception/   … 業務例外
 
 `layout-v2.html` の Alpine.js x-data でダークモード状態を管理し、`localStorage('fundanalyzer.dark-mode')` を優先・未設定時は `prefers-color-scheme: dark` で初期反映。ヘッダー右上の sun/moon トグルで切替・永続化。
 
+#### スマホ対応（sm 未満 / Phase 9 = T20260502）
+
+[T20260502-mobile-ui-renewal.md](docs/notes/T20260502-mobile-ui-renewal.md) で対応。Tailwind `sm` (640px) 未満で:
+
+- **ボトムバー** 3 タブ（会社 / 株価 / EDINET）が `<nav aria-label="モバイルナビ">` で `fixed bottom-0 sm:hidden`。layout-v2 の wrapper は `min-w-0 overflow-x-hidden` で flex item shrink + 横オーバーフロー抑止
+- **テーブル → カード化**: 全 fragment（index-table / valuation-table 5 view / edinet-list-table / edinet-document-card / edinet-list-detail サマリ / corporate-v2 5 サブテーブル）に desktop `<table class="hidden sm:block">` + mobile `<ul class="block sm:hidden" data-mobile-card>` の 2 系統
+- **並び替え select**: 各画面 (sm 未満で表示) に view 別オプションを持たせ `hx-get` で fragment 部分更新
+- **canvas オーバーフロー対策**: `main.css` の `@layer base` で `canvas { max-width:100%; min-width:0; width:100% !important }` を設定（Chart.js inline `style="width: 420px"` 抑止）
+- **手動スクショテスト**: [ManualMobileScreenshotTest.java](src/test/java/github/com/ioridazo/fundanalyzer/web/ManualMobileScreenshotTest.java) を `@Tag("manual-screenshot")` で外付け Spring Boot 起動時に CDP 経由で撮影。`./mvnw test -Dtest=ManualMobileScreenshotTest -Dgroups=manual-screenshot -DfailIfNoTests=false` で実行可能
+- **PNG ビジュアルリグレッション baseline**: `src/test/resources/playwright-baselines/<screen>-<viewport>.png` 配置（ADR-001 v1.2 で方針追記）
+
 ## 設定ファイル
 
 - `src/main/resources/application.yml` — 共通設定（dev既定）

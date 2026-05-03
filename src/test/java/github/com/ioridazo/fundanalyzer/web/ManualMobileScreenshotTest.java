@@ -142,8 +142,16 @@ class ManualMobileScreenshotTest {
     }
 
     private void shootMobile(final String label, final String path) throws Exception {
+        shootViewport(label, path, 390, 844, "mobile");
+    }
+
+    private void shootDesktop(final String label, final String path) throws Exception {
+        shootViewport(label, path, 1280, 800, "desktop");
+    }
+
+    private void shootViewport(final String label, final String path, final int width, final int height, final String viewport) throws Exception {
         try (final Page page = browser.newPage()) {
-            page.setViewportSize(390, 844);
+            page.setViewportSize(width, height);
             page.setDefaultNavigationTimeout(15_000);
             try {
                 page.navigate(BASE + path, new Page.NavigateOptions().setWaitUntil(com.microsoft.playwright.options.WaitUntilState.COMMIT).setTimeout(15_000));
@@ -152,12 +160,12 @@ class ManualMobileScreenshotTest {
             }
             page.waitForTimeout(6000);
 
-            System.out.println("[ManualScreenshot " + label + "] state=" + dumpPageState(page));
+            System.out.println("[ManualScreenshot " + label + "/" + viewport + "] state=" + dumpPageState(page));
 
             final byte[] bytes = cdpFullPageScreenshot(page);
-            final Path out = SHOT_DIR.resolve(label + "-mobile.png");
+            final Path out = SHOT_DIR.resolve(label + "-" + viewport + ".png");
             java.nio.file.Files.write(out, bytes);
-            assertTrue(out.toFile().exists(), label + " mobile スクショ書き出しに失敗: " + out);
+            assertTrue(out.toFile().exists(), label + "/" + viewport + " スクショ書き出しに失敗: " + out);
         }
     }
 
@@ -168,9 +176,21 @@ class ManualMobileScreenshotTest {
     }
 
     @Test
+    @DisplayName("valuation 画面 desktop 1280x800")
+    void shootValuationDesktop() throws Exception {
+        shootDesktop("valuation", "/v3/valuation");
+    }
+
+    @Test
     @DisplayName("edinet-list 画面 mobile 390x844")
     void shootEdinetListMobile() throws Exception {
         shootMobile("edinet-list", "/v3/edinet-list");
+    }
+
+    @Test
+    @DisplayName("edinet-list 画面 desktop 1280x800")
+    void shootEdinetListDesktop() throws Exception {
+        shootDesktop("edinet-list", "/v3/edinet-list");
     }
 
     @Test
@@ -183,8 +203,20 @@ class ManualMobileScreenshotTest {
     }
 
     @Test
+    @DisplayName("edinet-list-detail 画面 desktop 1280x800")
+    void shootEdinetListDetailDesktop() throws Exception {
+        shootDesktop("edinet-list-detail", "/v3/edinet-list-detail?submitDate=2026-03-25");
+    }
+
+    @Test
     @DisplayName("corporate 画面 mobile 390x844")
     void shootCorporateMobile() throws Exception {
         shootMobile("corporate", "/v3/corporate?code=9001");
+    }
+
+    @Test
+    @DisplayName("corporate 画面 desktop 1280x800")
+    void shootCorporateDesktop() throws Exception {
+        shootDesktop("corporate", "/v3/corporate?code=9001");
     }
 }
