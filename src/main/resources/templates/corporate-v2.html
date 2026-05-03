@@ -7,13 +7,15 @@
     <title th:text="${corporate.name} + ' - 銘柄詳細'">銘柄詳細</title>
 </head>
 <body>
-<h1 layout:fragment="page-title" class="flex flex-wrap items-center gap-2">
-    <a th:href="@{/v3/index}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-        <i data-lucide="arrow-left" class="inline-block h-4 w-4" aria-hidden="true"></i> 一覧へ
+<h1 layout:fragment="page-title" class="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">
+    <a th:href="@{/v3/index}"
+       aria-label="一覧へ戻る"
+       class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+        <i data-lucide="arrow-left" class="inline-block h-4 w-4 align-text-bottom" aria-hidden="true"></i><span class="ml-1 hidden sm:inline">一覧へ</span>
     </a>
-    <span class="text-slate-400">/</span>
-    <span class="font-mono text-base" th:text="${corporate.code}">9999</span>
-    <span th:text="${corporate.name}">サンプル株式会社</span>
+    <span class="mx-1 text-slate-400">/</span>
+    <span class="font-mono text-sm sm:text-base" th:text="${corporate.code}">9999</span>
+    <span class="ml-1" th:text="${corporate.name}">サンプル株式会社</span>
 </h1>
 
 <section layout:fragment="content" class="space-y-6"
@@ -260,7 +262,7 @@
     <article x-data="{ tab: 'analysis', sub: 180 }"
              class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
         <h2 class="border-b border-slate-200 px-6 py-3 text-lg font-bold dark:border-slate-700">その他情報</h2>
-        <nav class="flex flex-wrap gap-1 border-b border-slate-200 px-3 dark:border-slate-700" role="tablist" aria-label="銘柄詳細タブ">
+        <nav class="flex gap-1 overflow-x-auto whitespace-nowrap border-b border-slate-200 px-3 dark:border-slate-700 sm:flex-wrap sm:overflow-visible" role="tablist" aria-label="銘柄詳細タブ">
             <button @click="tab='analysis'" :class="tab==='analysis' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
                     role="tab" :aria-selected="tab==='analysis'"
                     class="border-b-2 px-3 py-2 text-sm font-medium" type="button">分析情報</button>
@@ -283,8 +285,8 @@
 
         <!-- Tab: 分析情報 -->
         <div x-show="tab==='analysis'" role="tabpanel" class="space-y-4 p-6">
-            <div class="relative h-64"><canvas id="analysisChartAll"></canvas></div>
-            <div class="overflow-x-auto" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+            <div class="relative h-48 sm:h-64"><canvas id="analysisChartAll"></canvas></div>
+            <div class="hidden overflow-x-auto sm:block" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
@@ -306,6 +308,21 @@
                     </tbody>
                 </table>
             </div>
+            <ul class="block space-y-2 sm:hidden" aria-label="分析情報" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+                <li th:each="r : ${analysisResults}"
+                    data-mobile-card
+                    class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
+                    <div class="flex items-center justify-between">
+                        <span class="font-mono" th:text="${r.submitDate}">-</span>
+                        <span class="font-mono font-semibold" th:text="${r.corporateValue}">-</span>
+                    </div>
+                    <div class="mt-1 flex flex-wrap gap-2 text-slate-500 dark:text-slate-400">
+                        <span th:text="${r.documentPeriod}">-</span>
+                        <span class="font-mono" th:text="${r.documentTypeCode}">-</span>
+                        <span class="font-mono" th:text="${r.quarterType}">-</span>
+                    </div>
+                </li>
+            </ul>
         </div>
 
         <!-- Tab: 投資指標 (4 sub-tabs) -->
@@ -320,11 +337,11 @@
                 <button @click="sub='all'" :class="sub==='all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">全期間</button>
             </nav>
-            <div x-show="sub===30" class="relative h-64"><canvas id="indicatorChart30"></canvas></div>
-            <div x-show="sub===180" class="relative h-64"><canvas id="indicatorChart180"></canvas></div>
-            <div x-show="sub===365" class="relative h-64"><canvas id="indicatorChart365"></canvas></div>
-            <div x-show="sub==='all'" class="relative h-64"><canvas id="indicatorChartAll"></canvas></div>
-            <div class="overflow-x-auto" th:if="${indicators != null and !indicators.isEmpty()}">
+            <div x-show="sub===30" class="relative h-48 sm:h-64"><canvas id="indicatorChart30"></canvas></div>
+            <div x-show="sub===180" class="relative h-48 sm:h-64"><canvas id="indicatorChart180"></canvas></div>
+            <div x-show="sub===365" class="relative h-48 sm:h-64"><canvas id="indicatorChart365"></canvas></div>
+            <div x-show="sub==='all'" class="relative h-48 sm:h-64"><canvas id="indicatorChartAll"></canvas></div>
+            <div class="hidden overflow-x-auto sm:block" th:if="${indicators != null and !indicators.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
@@ -346,6 +363,19 @@
                     </tbody>
                 </table>
             </div>
+            <ul class="block space-y-2 sm:hidden" aria-label="投資指標" th:if="${indicators != null and !indicators.isEmpty()}">
+                <li th:each="i : ${indicators}"
+                    data-mobile-card
+                    class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
+                    <div class="font-mono text-sm" th:text="${i.targetDate}">-</div>
+                    <dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER</dt><dd class="font-mono" th:text="${i.per}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR</dt><dd class="font-mono" th:text="${i.pbr}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム</dt><dd class="font-mono" th:text="${i.grahamIndex}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価企業価値率</dt><dd class="font-mono" th:text="${i.priceCorporateValueRatio}">-</dd></div>
+                    </dl>
+                </li>
+            </ul>
         </div>
 
         <!-- Tab: 財務諸表 -->
@@ -392,10 +422,10 @@
                 <button @click="sub='all'" :class="sub==='all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">全期間</button>
             </nav>
-            <div x-show="sub===180" class="relative h-64"><canvas id="forecastStockChart180"></canvas></div>
-            <div x-show="sub===365" class="relative h-64"><canvas id="forecastStockChart365"></canvas></div>
-            <div x-show="sub==='all'" class="relative h-64"><canvas id="forecastStockChartAll"></canvas></div>
-            <div class="overflow-x-auto" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
+            <div x-show="sub===180" class="relative h-48 sm:h-64"><canvas id="forecastStockChart180"></canvas></div>
+            <div x-show="sub===365" class="relative h-48 sm:h-64"><canvas id="forecastStockChart365"></canvas></div>
+            <div x-show="sub==='all'" class="relative h-48 sm:h-64"><canvas id="forecastStockChartAll"></canvas></div>
+            <div class="hidden overflow-x-auto sm:block" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
@@ -413,6 +443,17 @@
                     </tbody>
                 </table>
             </div>
+            <ul class="block space-y-2 sm:hidden" aria-label="株価予想" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
+                <li th:each="m : ${forecastStocks}"
+                    data-mobile-card
+                    class="flex items-center justify-between rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
+                    <span class="font-mono" th:text="${m.targetDate}">-</span>
+                    <div class="flex gap-3">
+                        <span><span class="text-slate-500 dark:text-slate-400">目標</span> <span class="font-mono" th:text="${m.goalsStock}">-</span></span>
+                        <span><span class="text-slate-500 dark:text-slate-400">理論</span> <span class="font-mono" th:text="${m.theoreticalStock}">-</span></span>
+                    </div>
+                </li>
+            </ul>
         </div>
 
         <!-- Tab: 株価 (5 sub-tabs + 株価取得 button + OHLC table) -->
@@ -429,12 +470,12 @@
                 <button @click="sub='all'" :class="sub==='all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">全期間</button>
             </nav>
-            <div x-show="sub===30" class="relative h-64"><canvas id="stockChart30"></canvas></div>
-            <div x-show="sub===90" class="relative h-64"><canvas id="stockChart90"></canvas></div>
-            <div x-show="sub===180" class="relative h-64"><canvas id="stockChart180"></canvas></div>
-            <div x-show="sub===365" class="relative h-64"><canvas id="stockChart365"></canvas></div>
-            <div x-show="sub==='all'" class="relative h-64"><canvas id="stockChartAll"></canvas></div>
-            <div class="overflow-x-auto" th:if="${stockPrices != null and !stockPrices.isEmpty()}">
+            <div x-show="sub===30" class="relative h-48 sm:h-64"><canvas id="stockChart30"></canvas></div>
+            <div x-show="sub===90" class="relative h-48 sm:h-64"><canvas id="stockChart90"></canvas></div>
+            <div x-show="sub===180" class="relative h-48 sm:h-64"><canvas id="stockChart180"></canvas></div>
+            <div x-show="sub===365" class="relative h-48 sm:h-64"><canvas id="stockChart365"></canvas></div>
+            <div x-show="sub==='all'" class="relative h-48 sm:h-64"><canvas id="stockChartAll"></canvas></div>
+            <div class="hidden overflow-x-auto sm:block" th:if="${stockPrices != null and !stockPrices.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
@@ -456,6 +497,21 @@
                     </tbody>
                 </table>
             </div>
+            <ul class="block space-y-2 sm:hidden" aria-label="株価 OHLC" th:if="${stockPrices != null and !stockPrices.isEmpty()}">
+                <li th:each="s : ${stockPrices}"
+                    data-mobile-card
+                    class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
+                    <div class="flex items-center justify-between">
+                        <span class="font-mono" th:text="${s.targetDate}">-</span>
+                        <span class="font-mono font-semibold" th:text="${s.stockPrice}">-</span>
+                    </div>
+                    <dl class="mt-1 grid grid-cols-3 gap-x-2 text-slate-500 dark:text-slate-400">
+                        <div><dt class="inline">始</dt><dd class="ml-1 inline font-mono text-slate-700 dark:text-slate-300" th:text="${s.openingPrice}">-</dd></div>
+                        <div><dt class="inline">高</dt><dd class="ml-1 inline font-mono text-slate-700 dark:text-slate-300" th:text="${s.highPrice}">-</dd></div>
+                        <div><dt class="inline">安</dt><dd class="ml-1 inline font-mono text-slate-700 dark:text-slate-300" th:text="${s.lowPrice}">-</dd></div>
+                    </dl>
+                </li>
+            </ul>
         </div>
 
         <!-- Tab: 評価 (3 sub-tabs + 9-col valuations table) -->
@@ -468,10 +524,10 @@
                 <button @click="sub='all'" :class="sub==='all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'"
                         class="rounded-md px-3 py-1 text-xs" type="button">全期間</button>
             </nav>
-            <div x-show="sub===180" class="relative h-64"><canvas id="valuationChart180"></canvas></div>
-            <div x-show="sub===365" class="relative h-64"><canvas id="valuationChart365"></canvas></div>
-            <div x-show="sub==='all'" class="relative h-64"><canvas id="valuationChartAll"></canvas></div>
-            <div class="overflow-x-auto" th:if="${valuations != null and !valuations.isEmpty()}">
+            <div x-show="sub===180" class="relative h-48 sm:h-64"><canvas id="valuationChart180"></canvas></div>
+            <div x-show="sub===365" class="relative h-48 sm:h-64"><canvas id="valuationChart365"></canvas></div>
+            <div x-show="sub==='all'" class="relative h-48 sm:h-64"><canvas id="valuationChartAll"></canvas></div>
+            <div class="hidden overflow-x-auto sm:block" th:if="${valuations != null and !valuations.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
@@ -503,6 +559,32 @@
                     </tbody>
                 </table>
             </div>
+            <ul class="block space-y-2 sm:hidden" aria-label="評価履歴" th:if="${valuations != null and !valuations.isEmpty()}">
+                <li th:each="v : ${valuations}"
+                    data-mobile-card
+                    class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
+                    <div class="flex items-center justify-between">
+                        <span class="font-mono" th:text="${v.targetDate}">-</span>
+                        <span class="font-mono font-semibold" th:text="${v.stockPrice}">-</span>
+                    </div>
+                    <dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム</dt><dd class="font-mono" th:text="${v.grahamIndex}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新企業価値</dt><dd class="font-mono" th:text="${v.corporateValue}">-</dd></div>
+                        <div class="flex justify-between">
+                            <dt class="text-slate-500 dark:text-slate-400">増減値</dt>
+                            <dd class="font-mono"
+                                th:classappend="${v.differenceFromSubmitDate != null and v.differenceFromSubmitDate.compareTo(T(java.math.BigDecimal).ZERO) &lt; 0} ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'"
+                                th:text="${v.differenceFromSubmitDate}">-</dd>
+                        </div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">増減率</dt><dd class="font-mono" th:text="${v.submitDateRatio}">-</dd></div>
+                        <div class="col-span-2 mt-1 border-t border-slate-200 pt-1 text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                            提出日 <span class="font-mono" th:text="${v.submitDate}">-</span>
+                            <span class="ml-2">株価 <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${v.stockPriceOfSubmitDate}">-</span></span>
+                            <span class="ml-2">グレアム <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${v.grahamIndexOfSubmitDate}">-</span></span>
+                        </div>
+                    </dl>
+                </li>
+            </ul>
         </div>
     </article>
 

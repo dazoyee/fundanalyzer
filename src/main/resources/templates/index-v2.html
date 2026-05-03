@@ -94,6 +94,28 @@
                hx-push-url="true">
     </div>
 
+    <div class="flex items-center gap-2 sm:hidden">
+        <label for="index-sort-select" class="text-xs text-slate-500 dark:text-slate-400">並び替え</label>
+        <select id="index-sort-select"
+                name="sort"
+                aria-label="並び替え"
+                class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+                th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},page=0)}"
+                hx-target="#index-table"
+                hx-trigger="change"
+                hx-push-url="true">
+            <option value="code,asc"                    th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">証券コード ↑</option>
+            <option value="code,desc"                   th:selected="${sortParam == 'code,desc'}">証券コード ↓</option>
+            <option value="name,asc"                    th:selected="${sortParam == 'name,asc'}">会社名 ↑</option>
+            <option value="submitDate,desc"             th:selected="${sortParam == 'submitDate,desc'}">提出日（新しい順）</option>
+            <option value="submitDate,asc"              th:selected="${sortParam == 'submitDate,asc'}">提出日（古い順）</option>
+            <option value="latestCorporateValue,desc"   th:selected="${sortParam == 'latestCorporateValue,desc'}">最新企業価値 ↓</option>
+            <option value="latestCorporateValue,asc"    th:selected="${sortParam == 'latestCorporateValue,asc'}">最新企業価値 ↑</option>
+            <option value="discountRate,desc"           th:selected="${sortParam == 'discountRate,desc'}">割安比率 ↓</option>
+            <option value="coefficientOfVariation,asc"  th:selected="${sortParam == 'coefficientOfVariation,asc'}">変動係数 ↑</option>
+        </select>
+    </div>
+
     <div id="index-table"
          th:insert="~{fragments/index-table :: table (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}">
     </div>

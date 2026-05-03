@@ -50,7 +50,8 @@
     <!-- 統計サマリ 8 項目 -->
     <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
         <h2 class="mb-3 text-lg font-bold">処理状況サマリ</h2>
-        <div class="overflow-x-auto">
+        <!-- desktop: 横テーブル -->
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                 <thead class="bg-slate-50 dark:bg-slate-700">
                 <tr>
@@ -78,6 +79,17 @@
                 </tbody>
             </table>
         </div>
+        <!-- mobile: dl カード化 -->
+        <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm sm:hidden" data-mobile-card>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">総件数</dt><dd class="font-mono" th:text="${ed.countAll}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象件数</dt><dd class="font-mono" th:text="${ed.countTarget}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">処理済</dt><dd class="font-mono" th:text="${ed.countScraped}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">分析済</dt><dd class="font-mono font-semibold" th:text="${ed.countAnalyzed}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">未処理</dt><dd class="font-mono" th:text="${ed.countNotScraped}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象外</dt><dd class="font-mono" th:text="${ed.countNotTarget}">0</dd></div>
+            <div class="col-span-2"><dt class="text-xs text-slate-500 dark:text-slate-400">未分析ID</dt><dd class="break-all font-mono text-xs" th:text="${ed.notAnalyzedId}">-</dd></div>
+            <div class="col-span-2"><dt class="text-xs text-slate-500 dark:text-slate-400">処理確認ID</dt><dd class="break-all font-mono text-xs" th:text="${ed.cantScrapedId}">-</dd></div>
+        </dl>
     </div>
 
     <!-- 書類詳細リスト (各カードは fragments/edinet-document-card.html に切り出し) -->

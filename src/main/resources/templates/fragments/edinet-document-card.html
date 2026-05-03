@@ -22,8 +22,8 @@
     </button>
     <div x-show="open" class="space-y-4 p-3">
 
-        <!-- 10 列メタデータテーブル -->
-        <div class="overflow-x-auto">
+        <!-- 10 列メタデータ: desktop = テーブル / mobile = dl カード -->
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                 <thead class="bg-slate-50 dark:bg-slate-700">
                 <tr>
@@ -63,6 +63,28 @@
                 </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div class="block rounded border border-slate-200 p-3 sm:hidden dark:border-slate-700" data-mobile-card>
+            <dl class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                <div class="col-span-2"><dt class="text-slate-500 dark:text-slate-400">書類ID</dt><dd class="break-all font-mono" th:text="${documentDetail.document.documentId}">-</dd></div>
+                <div class="col-span-2"><dt class="text-slate-500 dark:text-slate-400">EDINETコード</dt><dd class="break-all font-mono" th:text="${documentDetail.document.edinetCode}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">書類種別</dt><dd th:text="${documentDetail.document.documentTypeName}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象年</dt><dd class="font-mono" th:text="${documentDetail.document.documentPeriod}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">DL</dt><dd class="font-mono" th:text="${documentDetail.document.downloaded}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">DC</dt><dd class="font-mono" th:text="${documentDetail.document.decoded}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">NS</dt><dd class="font-mono" th:text="${documentDetail.document.scrapedNumberOfShares}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">BS</dt><dd class="font-mono" th:text="${documentDetail.document.scrapedBs}">-</dd></div>
+                <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PL</dt><dd class="font-mono" th:text="${documentDetail.document.scrapedPl}">-</dd></div>
+            </dl>
+            <form method="post" th:action="@{/v1/remove/document}" class="mt-3">
+                <input type="hidden" th:value="${submitDate}" name="submitDate"/>
+                <input type="hidden" th:value="${documentDetail.document.documentId}" name="documentId"/>
+                <button type="submit"
+                        class="w-full rounded border border-slate-300 px-3 py-2 text-xs hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700">
+                    除外
+                </button>
+            </form>
         </div>
 
         <!-- 書類別 2 アクションボタン -->

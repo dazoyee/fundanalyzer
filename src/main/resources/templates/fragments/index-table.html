@@ -9,7 +9,8 @@
         <span th:text="${table.pageNumber() * table.pageSize() + table.companies().size()}">25</span> 件目
     </div>
 
-    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+    <!-- desktop: 既存テーブル (sm 以上) -->
+    <div class="hidden overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 sm:block">
         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
             <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
@@ -57,6 +58,55 @@
         </table>
     </div>
 
+    <!-- mobile: カード表示 (sm 未満) -->
+    <ul class="block space-y-3 sm:hidden" aria-label="会社一覧">
+        <li th:each="c : ${table.companies()}"
+            data-mobile-card
+            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <div class="flex items-start justify-between gap-2">
+                <a th:href="@{/v3/corporate(code=${c.code})}"
+                   class="block min-w-0 flex-1 text-blue-600 hover:underline dark:text-blue-400">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span class="font-mono font-bold" th:text="${c.code}">9999</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400" th:text="${c.submitDate}">2025-01-01</span>
+                    </div>
+                    <div class="mt-0.5 truncate text-base font-semibold" th:text="${c.name}">サンプル会社</div>
+                </a>
+                <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
+                   aria-label="みんかぶで開く"
+                   class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-700 dark:hover:text-blue-400">
+                    <i data-lucide="external-link" class="h-4 w-4" aria-hidden="true"></i>
+                </a>
+            </div>
+            <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">最新企業価値</dt>
+                    <dd class="font-mono font-semibold" th:text="${c.latestCorporateValue}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">割安比率</dt>
+                    <dd class="font-mono font-semibold" th:text="${c.discountRateToDisplay}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">株価平均</dt>
+                    <dd class="font-mono" th:text="${c.averageStockPrice}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">変動係数</dt>
+                    <dd class="font-mono" th:text="${c.coefficientOfVariationToDisplay}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">対象年数</dt>
+                    <dd class="font-mono" th:text="${c.countYear}">-</dd>
+                </div>
+            </dl>
+        </li>
+        <li th:if="${table.companies().isEmpty()}"
+            class="rounded-lg border border-slate-200 bg-white px-3 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+            該当する会社がありません
+        </li>
+    </ul>
+
     <nav class="flex flex-wrap items-center justify-between gap-2" th:if="${table.totalPages() > 1}">
         <div class="text-sm text-slate-600 dark:text-slate-400">
             <span th:text="${table.pageNumber() + 1}">1</span> /
@@ -68,7 +118,7 @@
                th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
                hx-target="#index-table"
                hx-push-url="true"
-               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+               class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
                 <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
                 前へ
             </a>
@@ -77,7 +127,7 @@
                th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
                hx-target="#index-table"
                hx-push-url="true"
-               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+               class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
                 次へ
                 <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
             </a>

@@ -106,6 +106,53 @@
                hx-push-url="true">
     </div>
 
+    <div class="flex items-center gap-2 sm:hidden">
+        <label for="valuation-sort-select" class="text-xs text-slate-500 dark:text-slate-400">並び替え</label>
+        <select id="valuation-sort-select"
+                name="sort"
+                aria-label="並び替え"
+                class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+                th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},page=0)}"
+                hx-target="#valuation-table"
+                hx-trigger="change"
+                hx-push-url="true">
+            <th:block th:if="${target == 'industry'}">
+                <option value="name,asc"                   th:selected="${sortParam == 'name,asc' or #strings.isEmpty(sortParam)}">業種名 ↑</option>
+                <option value="grahamIndex,asc"            th:selected="${sortParam == 'grahamIndex,asc'}">グレアム指数 ↑</option>
+                <option value="submitDateRatio,desc"       th:selected="${sortParam == 'submitDateRatio,desc'}">提出日比率 ↓</option>
+                <option value="differenceFromSubmitDate,desc" th:selected="${sortParam == 'differenceFromSubmitDate,desc'}">提出日との差 ↓</option>
+                <option value="count,desc"                 th:selected="${sortParam == 'count,desc'}">件数 ↓</option>
+            </th:block>
+            <th:block th:if="${view == 'stock' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="targetDate,desc"            th:selected="${sortParam == 'targetDate,desc'}">対象日（新しい順）</option>
+                <option value="stockPrice,desc"            th:selected="${sortParam == 'stockPrice,desc'}">株価 ↓</option>
+                <option value="differenceFromSubmitDate,desc" th:selected="${sortParam == 'differenceFromSubmitDate,desc'}">増減値 ↓</option>
+                <option value="submitDateRatio,desc"       th:selected="${sortParam == 'submitDateRatio,desc'}">増減率 ↓</option>
+            </th:block>
+            <th:block th:if="${view == 'submit' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="submitDate,desc"            th:selected="${sortParam == 'submitDate,desc'}">提出日（新しい順）</option>
+                <option value="corporateValue,desc"        th:selected="${sortParam == 'corporateValue,desc'}">企業価値 ↓</option>
+                <option value="grahamIndexOfSubmitDate,asc" th:selected="${sortParam == 'grahamIndexOfSubmitDate,asc'}">提出日グレアム ↑</option>
+                <option value="stockPriceOfSubmitDate,desc" th:selected="${sortParam == 'stockPriceOfSubmitDate,desc'}">提出日株価 ↓</option>
+            </th:block>
+            <th:block th:if="${view == 'graham-index' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="grahamIndex,asc"            th:selected="${sortParam == 'grahamIndex,asc'}">グレアム指数 ↑</option>
+                <option value="grahamIndex,desc"           th:selected="${sortParam == 'grahamIndex,desc'}">グレアム指数 ↓</option>
+                <option value="targetDate,desc"            th:selected="${sortParam == 'targetDate,desc'}">対象日（新しい順）</option>
+                <option value="grahamIndexOfSubmitDate,asc" th:selected="${sortParam == 'grahamIndexOfSubmitDate,asc'}">提出日グレアム ↑</option>
+            </th:block>
+            <th:block th:if="${view == 'dividend-yield' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="dividendYield,desc"         th:selected="${sortParam == 'dividendYield,desc'}">配当利回り ↓</option>
+                <option value="stockPrice,desc"            th:selected="${sortParam == 'stockPrice,desc'}">株価 ↓</option>
+                <option value="targetDate,desc"            th:selected="${sortParam == 'targetDate,desc'}">対象日（新しい順）</option>
+            </th:block>
+        </select>
+    </div>
+
     <div id="valuation-table"
          th:insert="~{fragments/valuation-table :: __${view}__-table (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}">
     </div>

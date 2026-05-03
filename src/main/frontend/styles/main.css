@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /*
+   * Chart.js は canvas に inline style="width: 420px; height: 192px" を設定するため、
+   * モバイル幅 (sm 未満) で親要素ごと viewport をオーバーフローする。
+   * CSS で width:100% を !important で上書きし、親に追従させる。
+   * Chart.js の ResizeObserver が canvas のサイズ変化を検知して再描画するため、
+   * チャート自体は壊れない。
+   */
+  canvas {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
