@@ -98,6 +98,7 @@
         <h2 class="mb-3 text-lg font-bold">書類詳細</h2>
         <div class="space-y-4">
             <div th:each="documentDetail : ${edinetDetail.documentDetailList}"
+                 th:if="${documentDetail != null}"
                  th:replace="~{fragments/edinet-document-card :: card(submitDate=${ed.submitDate}, documentDetail=${documentDetail})}">
             </div>
         </div>
