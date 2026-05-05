@@ -26,9 +26,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>事前条件: ./mvnw spring-boot:run などで localhost:8889 が動作していること。
  *
- * <p>実行方法: ./mvnw test -Dtest=ManualMobileScreenshotTest -Dgroups=manual-screenshot -DfailIfNoTests=false
+ * <p>実行方法（手動確認用・既定の出力先）: ./mvnw test -Dtest=ManualMobileScreenshotTest -Dgroups=manual-screenshot -DfailIfNoTests=false
  *
- * <p>出力: target/manual-screenshots/index-{mobile,desktop}.png
+ * <p>baseline 更新モード: 上記コマンドに -DupdateBaselines=true を追加すると、出力先が
+ * src/test/resources/playwright-baselines/ に切り替わり、{@link MobileScreenshotRegressionTest}
+ * の比較基準を直接上書きする。意図した UI 変更を反映する場合のみ使用し、PR で目視レビューすること。
+ *
+ * <p>出力（既定）: target/manual-screenshots/&lt;screen&gt;-{mobile,desktop}.png
+ * <p>出力（updateBaselines=true）: src/test/resources/playwright-baselines/&lt;screen&gt;-{mobile,desktop}.png
  */
 @Tag("manual-screenshot")
 @DisplayName("Phase B0 プロトタイプ確認用スクショ取得")
@@ -36,9 +41,21 @@ class ManualMobileScreenshotTest {
 
     private static final String BASE = "http://localhost:8889/fundanalyzer";
     private static final Path SHOT_DIR = Paths.get("target", "manual-screenshots");
+    private static final Path BASELINE_DIR = Paths.get("src", "test", "resources", "playwright-baselines");
+    private static final boolean UPDATE_BASELINES = Boolean.getBoolean("updateBaselines");
 
     private static Playwright playwright;
     private static Browser browser;
+
+    /**
+     * 出力先ディレクトリを返す。-DupdateBaselines=true 指定時は baseline ディレクトリ、
+     * 既定は target/manual-screenshots/。
+     *
+     * @return 出力先ディレクトリの Path
+     */
+    private static Path outputDir() {
+        return UPDATE_BASELINES ? BASELINE_DIR : SHOT_DIR;
+    }
 
     @BeforeAll
     static void setupClass() throws Exception {
@@ -58,7 +75,10 @@ class ManualMobileScreenshotTest {
 
         playwright = Playwright.create();
         browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        SHOT_DIR.toFile().mkdirs();
+        outputDir().toFile().mkdirs();
+        if (UPDATE_BASELINES) {
+            System.out.println("[ManualScreenshot] -DupdateBaselines=true: 出力先を " + BASELINE_DIR + " に切り替え");
+        }
     }
 
     @AfterAll
@@ -113,7 +133,7 @@ class ManualMobileScreenshotTest {
             System.out.println("[ManualScreenshot mobile] state=" + dumpPageState(page));
 
             final byte[] bytes = cdpFullPageScreenshot(page);
-            final Path out = SHOT_DIR.resolve("index-mobile.png");
+            final Path out = outputDir().resolve("index-mobile.png");
             java.nio.file.Files.write(out, bytes);
             assertTrue(out.toFile().exists(), "mobile スクショ書き出しに失敗: " + out);
         }
@@ -135,7 +155,7 @@ class ManualMobileScreenshotTest {
             System.out.println("[ManualScreenshot desktop] state=" + dumpPageState(page));
 
             final byte[] bytes = cdpFullPageScreenshot(page);
-            final Path out = SHOT_DIR.resolve("index-desktop.png");
+            final Path out = outputDir().resolve("index-desktop.png");
             java.nio.file.Files.write(out, bytes);
             assertTrue(out.toFile().exists(), "desktop スクショ書き出しに失敗: " + out);
         }
@@ -163,7 +183,7 @@ class ManualMobileScreenshotTest {
             System.out.println("[ManualScreenshot " + label + "/" + viewport + "] state=" + dumpPageState(page));
 
             final byte[] bytes = cdpFullPageScreenshot(page);
-            final Path out = SHOT_DIR.resolve(label + "-" + viewport + ".png");
+            final Path out = outputDir().resolve(label + "-" + viewport + ".png");
             java.nio.file.Files.write(out, bytes);
             assertTrue(out.toFile().exists(), label + "/" + viewport + " スクショ書き出しに失敗: " + out);
         }
@@ -196,9 +216,8 @@ class ManualMobileScreenshotTest {
     @Test
     @DisplayName("edinet-list-detail 画面 mobile 390x844")
     void shootEdinetListDetailMobile() throws Exception {
-        // 注: シードデータの documentDetailList に null 要素が含まれており、
-        // ${documentDetail.companyName} で TemplateInputException が発生する既知バグがある。
-        // 本タスクのスコープ外（B4 のカード化レンダリング自体は処理状況サマリ部分まで成功している）。
+        // 過去の TemplateInputException (documentDetailList の null 要素起因) は
+        // commit 6db2fd07 で EdinetDetailPresenter#sanitize() + th:if ガードにより解消済み。
         shootMobile("edinet-list-detail", "/v3/edinet-list-detail?submitDate=2026-03-25");
     }
 

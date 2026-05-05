@@ -193,6 +193,26 @@ exception/   … 業務例外
 - **canvas オーバーフロー対策**: `main.css` の `@layer base` で `canvas { max-width:100%; min-width:0; width:100% !important }` を設定（Chart.js inline `style="width: 420px"` 抑止）
 - **手動スクショテスト**: [ManualMobileScreenshotTest.java](src/test/java/github/com/ioridazo/fundanalyzer/web/ManualMobileScreenshotTest.java) を `@Tag("manual-screenshot")` で外付け Spring Boot 起動時に CDP 経由で撮影。`./mvnw test -Dtest=ManualMobileScreenshotTest -Dgroups=manual-screenshot -DfailIfNoTests=false` で実行可能
 - **PNG ビジュアルリグレッション baseline**: `src/test/resources/playwright-baselines/<screen>-<viewport>.png` 配置（ADR-001 v1.2 で方針追記）
+- **PNG ビジュアルリグレッションテスト**: [MobileScreenshotRegressionTest.java](src/test/java/github/com/ioridazo/fundanalyzer/web/MobileScreenshotRegressionTest.java) で 5 画面 × 2 viewport = 10 ケースを `@SpringBootTest(RANDOM_PORT)` + Playwright で baseline 比較。BufferedImage の ARGB 単位でピクセル差分を計算し、差分比率 2% を超えたら失敗。差分発生時は `target/playwright-snapshots/diff-<screen>-<viewport>{,-baseline,-current}.png` に baseline / current / diff 強調画像を出力。
+
+  ```bash
+  # baseline と現在の UI が一致するか検証
+  ./mvnw test -Dtest=MobileScreenshotRegressionTest -Dgroups=playwright
+
+  # 通常ビルドから除外
+  ./mvnw test -DexcludedGroups=playwright
+  ```
+
+- **baseline 更新手順**（意図した UI 変更を反映する場合のみ実施）:
+  1. ローカルで dev サーバーを起動: `./mvnw spring-boot:run -Dspring-boot.run.jvmArguments='-Dspring.devtools.restart.enabled=false'`
+  2. 別ターミナルで baseline 上書きを実行:
+
+     ```bash
+     ./mvnw test -Dtest=ManualMobileScreenshotTest -Dgroups=manual-screenshot -DfailIfNoTests=false -DupdateBaselines=true
+     ```
+
+  3. `git diff src/test/resources/playwright-baselines/` で差分画像をコミット前に確認し、PR 説明に変更理由と差分の見え方を記載
+  4. PR レビューで baseline 画像を **目視承認** してからマージ（CI に baseline 正当性の判断は委ねない）
 
 ## 設定ファイル
 
