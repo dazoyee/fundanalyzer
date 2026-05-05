@@ -97,10 +97,17 @@
          th:if="${not #lists.isEmpty(edinetDetail.documentDetailList)}">
         <h2 class="mb-3 text-lg font-bold">書類詳細</h2>
         <div class="space-y-4">
-            <div th:each="documentDetail : ${edinetDetail.documentDetailList}"
-                 th:if="${documentDetail != null}"
-                 th:replace="~{fragments/edinet-document-card :: card(submitDate=${ed.submitDate}, documentDetail=${documentDetail})}">
-            </div>
+            <!--
+                th:each / th:if / th:replace を 1 要素にまとめると Thymeleaf の attribute precedence
+                (th:replace=1 → th:each=2 → th:if=3) により th:if より先に th:replace の引数評価が走り、
+                null の documentDetail がそのまま fragment に渡って EL1007E になる。
+                各属性を別要素に分離して null を確実にスキップする。
+            -->
+            <th:block th:each="documentDetail : ${edinetDetail.documentDetailList}">
+                <th:block th:if="${documentDetail != null}">
+                    <div th:replace="~{fragments/edinet-document-card :: card(submitDate=${ed.submitDate}, documentDetail=${documentDetail})}"></div>
+                </th:block>
+            </th:block>
         </div>
     </div>
 
