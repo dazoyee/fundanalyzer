@@ -22,9 +22,11 @@ public class IndexPresenter {
 
     private static final int MAX_PAGE_SIZE = 100;
     private static final int DEFAULT_PAGE_SIZE = 25;
-    private static final String DEFAULT_SORT = "code,asc";
+    private static final String DEFAULT_SORT = "submitDate,desc";
+    private static final String SORT_FIELD_SUBMIT_DATE = "submitDate";
+    private static final String SORT_FIELD_CODE = "code";
     private static final List<String> ALLOWED_SORT_FIELDS = List.of(
-            "code", "name", "submitDate", "latestCorporateValue");
+            SORT_FIELD_CODE, "name", SORT_FIELD_SUBMIT_DATE, "latestCorporateValue");
 
     private final ViewService viewService;
 
@@ -100,16 +102,25 @@ public class IndexPresenter {
 
     private static Sort parseSort(final String sortParam) {
         if (sortParam == null || sortParam.isBlank()) {
-            return Sort.by(Sort.Direction.ASC, "code");
+            return defaultSort();
         }
         final String[] parts = sortParam.split(",");
         final String field = parts[0].trim();
         if (!ALLOWED_SORT_FIELDS.contains(field)) {
-            return Sort.by(Sort.Direction.ASC, "code");
+            return defaultSort();
         }
         final Sort.Direction direction = parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim())
                 ? Sort.Direction.DESC
                 : Sort.Direction.ASC;
+        if (SORT_FIELD_SUBMIT_DATE.equals(field)) {
+            return Sort.by(direction, SORT_FIELD_SUBMIT_DATE)
+                    .and(Sort.by(Sort.Direction.DESC, SORT_FIELD_CODE));
+        }
         return Sort.by(direction, field);
+    }
+
+    private static Sort defaultSort() {
+        return Sort.by(Sort.Direction.DESC, SORT_FIELD_SUBMIT_DATE)
+                .and(Sort.by(Sort.Direction.DESC, SORT_FIELD_CODE));
     }
 }

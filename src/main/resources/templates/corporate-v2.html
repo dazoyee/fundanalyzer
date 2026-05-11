@@ -7,15 +7,35 @@
     <title th:text="${corporate.name} + ' - 銘柄詳細'">銘柄詳細</title>
 </head>
 <body>
-<h1 layout:fragment="page-title" class="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">
-    <a th:href="@{/v3/index}"
-       aria-label="一覧へ戻る"
-       class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-        <i data-lucide="arrow-left" class="inline-block h-4 w-4 align-text-bottom" aria-hidden="true"></i><span class="ml-1 hidden sm:inline">一覧へ</span>
-    </a>
-    <span class="mx-1 text-slate-400">/</span>
-    <span class="font-mono text-sm sm:text-base" th:text="${corporate.code}">9999</span>
-    <span class="ml-1" th:text="${corporate.name}">サンプル株式会社</span>
+<h1 layout:fragment="page-title" class="flex min-w-0 flex-1 items-center gap-2">
+    <span class="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">
+        <a th:href="@{/v3/index}"
+           aria-label="一覧へ戻る"
+           class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+            <i data-lucide="arrow-left" class="inline-block h-4 w-4 align-text-bottom" aria-hidden="true"></i><span class="ml-1 hidden sm:inline">一覧へ</span>
+        </a>
+        <span class="mx-1 text-slate-400">/</span>
+        <span class="font-mono text-sm sm:text-base" th:text="${corporate.code}">9999</span>
+        <span class="ml-1" th:text="${corporate.name}">サンプル株式会社</span>
+    </span>
+    <nav class="hidden shrink-0 items-center gap-1 sm:flex"
+         aria-label="銘柄ナビ"
+         th:if="${backwardCode != null or forwardCode != null}">
+        <a th:if="${forwardCode != null}"
+           th:href="@{/v3/corporate(code=${forwardCode},target=${target})}"
+           class="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs font-normal hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+           th:aria-label="|より新しい提出日の銘柄: ${forwardCode}|">
+            <i data-lucide="chevron-up" class="h-4 w-4" aria-hidden="true"></i>
+            <span class="font-mono" th:text="${forwardCode}">上</span>
+        </a>
+        <a th:if="${backwardCode != null}"
+           th:href="@{/v3/corporate(code=${backwardCode},target=${target})}"
+           class="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs font-normal hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+           th:aria-label="|より古い提出日の銘柄: ${backwardCode}|">
+            <span class="font-mono" th:text="${backwardCode}">下</span>
+            <i data-lucide="chevron-down" class="h-4 w-4" aria-hidden="true"></i>
+        </a>
+    </nav>
 </h1>
 
 <section layout:fragment="content" class="space-y-6"
@@ -34,23 +54,26 @@
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
 
-    <!-- 上部: 前後ナビ + 年次/四半期切替 -->
-    <div class="flex flex-wrap items-center justify-between gap-2">
-        <nav class="flex flex-wrap gap-2" th:if="${backwardCode != null or forwardCode != null}">
-            <a th:if="${backwardCode != null}"
-               th:href="@{/v3/corporate(code=${backwardCode},target=${target})}"
-               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
-                <span th:text="${backwardCode}">前</span>
-            </a>
-            <a th:if="${forwardCode != null}"
-               th:href="@{/v3/corporate(code=${forwardCode},target=${target})}"
-               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                <span th:text="${forwardCode}">次</span>
-                <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
-            </a>
-        </nav>
-    </div>
+    <!-- スマホ用 前後ナビ (sm 未満。sm 以上はヘッダー H1 横に表示) -->
+    <nav class="flex flex-wrap items-center justify-between gap-2 sm:hidden"
+         aria-label="銘柄ナビ (モバイル)"
+         th:if="${backwardCode != null or forwardCode != null}">
+        <a th:if="${forwardCode != null}"
+           th:href="@{/v3/corporate(code=${forwardCode},target=${target})}"
+           class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+           th:aria-label="|より新しい提出日の銘柄: ${forwardCode}|">
+            <i data-lucide="chevron-up" class="h-4 w-4" aria-hidden="true"></i>
+            <span class="font-mono" th:text="${forwardCode}">上</span>
+        </a>
+        <span th:unless="${forwardCode != null}" aria-hidden="true"></span>
+        <a th:if="${backwardCode != null}"
+           th:href="@{/v3/corporate(code=${backwardCode},target=${target})}"
+           class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
+           th:aria-label="|より古い提出日の銘柄: ${backwardCode}|">
+            <span class="font-mono" th:text="${backwardCode}">下</span>
+            <i data-lucide="chevron-down" class="h-4 w-4" aria-hidden="true"></i>
+        </a>
+    </nav>
 
     <!-- アクション 3 ボタン -->
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">

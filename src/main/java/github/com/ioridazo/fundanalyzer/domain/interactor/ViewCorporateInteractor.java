@@ -145,8 +145,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public List<CorporateViewModel> viewAll() {
         return viewSpecification.findAllCorporateView().stream()
                 .sorted(Comparator
-                        .comparing(CorporateViewModel::getSubmitDate).reversed()
-                        .thenComparing(CorporateViewModel::getCode))
+                        .comparing(CorporateViewModel::getSubmitDate)
+                        .thenComparing(CorporateViewModel::getCode).reversed())
                 .toList();
     }
 
@@ -177,13 +177,25 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     }
 
     /**
-     * 企業情報詳細ビューを取得する
+     * 企業情報詳細ビューを取得する。target 未指定経路では viewAll() ベースで前後コードを設定する。
      *
      * @param inputData 企業コード
      * @return 企業情報詳細ビュー
      */
     @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData) {
+        final CorporateDetailViewModel raw = viewCorporateDetailRaw(inputData);
+        final List<String> codeList = viewAll().stream().map(CorporateViewModel::getCode).toList();
+        return applyAdjacentCodes(raw, codeList, inputData.getCode());
+    }
+
+    /**
+     * 前後コードを設定しない素の企業情報詳細ビューを生成する。前後コード計算の上位メソッドから呼び出される。
+     *
+     * @param inputData 企業コード
+     * @return 前後コード null の企業情報詳細ビュー
+     */
+    protected CorporateDetailViewModel viewCorporateDetailRaw(final CodeInputData inputData) {
         final Company company = companySpecification.findCompanyByCode(inputData.getCode5())
                 .orElseThrow(() -> new FundanalyzerNotExistException("企業コード"));
         final Stock stock = stockSpecification.findStock(company);
@@ -238,33 +250,37 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
 
     @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData, final Target target) {
-        final CorporateDetailViewModel viewModel = viewCorporateDetail(inputData);
+        final CorporateDetailViewModel raw = viewCorporateDetailRaw(inputData);
         final List<String> codeList = switch (target) {
             case MAIN -> viewMain().stream().map(CorporateViewModel::getCode).toList();
             case QUART -> viewQuart().stream().map(CorporateViewModel::getCode).toList();
             case ALL -> viewAll().stream().map(CorporateViewModel::getCode).toList();
             default -> List.of();
         };
+        return applyAdjacentCodes(raw, codeList, inputData.getCode());
+    }
 
+    /**
+     * 提出日順 (新→古) でソート済みの codeList から、指定コードに対する前後コードを ViewModel に設定する。
+     * 前 = より古い提出日 (= リスト末尾方向 / index + 1) / 次 = より新しい提出日 (= リスト先頭方向 / index - 1)。
+     *
+     * @param base     前後コード設定前の ViewModel
+     * @param codeList 提出日順でソート済みの企業コードリスト
+     * @param code     対象企業コード
+     * @return 前後コードを設定した ViewModel。codeList が空または対象コード未含有の場合は base をそのまま返す
+     */
+    private static CorporateDetailViewModel applyAdjacentCodes(
+            final CorporateDetailViewModel base, final List<String> codeList, final String code) {
         if (codeList.isEmpty()) {
-            return viewModel;
-        } else {
-            final int index = codeList.indexOf(inputData.getCode());
-            if (index < 0) {
-                // 入力コードが対象リストに含まれない (例: target=quart の文脈で年次のみの企業を表示) → 前後ナビなしで返す
-                return viewModel;
-            }
-            String backwardCode = null;
-            String forwardCode = null;
-            if (index > 0) {
-                backwardCode = codeList.get(index - 1);
-            }
-            if (index + 1 < codeList.size()) {
-                forwardCode = codeList.get(index + 1);
-            }
-
-            return CorporateDetailViewModel.of(viewModel, backwardCode, forwardCode);
+            return base;
         }
+        final int index = codeList.indexOf(code);
+        if (index < 0) {
+            return base;
+        }
+        final String backwardCode = (index + 1 < codeList.size()) ? codeList.get(index + 1) : null;
+        final String forwardCode = (index > 0) ? codeList.get(index - 1) : null;
+        return CorporateDetailViewModel.of(base, backwardCode, forwardCode);
     }
 
     /**

@@ -120,31 +120,35 @@ class IndexPresenterTest {
         }
 
         @Test
-        @DisplayName("sort のフィールドがホワイトリスト外の場合 → code,asc にフォールバック")
-        void sortFieldNotAllowed_fallsBackToCodeAsc() {
+        @DisplayName("sort のフィールドがホワイトリスト外の場合 → submitDate,desc + code,desc 複合ソートにフォールバック")
+        void sortFieldNotAllowed_fallsBackToDefaultCompoundSort() {
             final Model model = mock(Model.class);
-            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("submitDate"));
             when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
 
             presenter.corporateViewV3(null, null, 0, 25, "secret,asc", model);
 
             final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
             verify(viewService).findCompanyTable(captor.capture());
-            assertEquals(Sort.by(Sort.Direction.ASC, "code"), captor.getValue().pageable().getSort());
+            assertEquals(
+                    Sort.by(Sort.Direction.DESC, "submitDate").and(Sort.by(Sort.Direction.DESC, "code")),
+                    captor.getValue().pageable().getSort());
         }
 
         @Test
-        @DisplayName("sort が null や空の場合 → code,asc にフォールバック")
-        void sortNullOrBlank_fallsBackToCodeAsc() {
+        @DisplayName("sort が null や空の場合 → submitDate,desc + code,desc 複合ソートにフォールバック")
+        void sortNullOrBlank_fallsBackToDefaultCompoundSort() {
             final Model model = mock(Model.class);
-            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("submitDate"));
             when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
 
             presenter.corporateViewV3(null, null, 0, 25, "", model);
 
             final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
             verify(viewService).findCompanyTable(captor.capture());
-            assertEquals(Sort.by(Sort.Direction.ASC, "code"), captor.getValue().pageable().getSort());
+            assertEquals(
+                    Sort.by(Sort.Direction.DESC, "submitDate").and(Sort.by(Sort.Direction.DESC, "code")),
+                    captor.getValue().pageable().getSort());
         }
 
         @Test
@@ -159,6 +163,66 @@ class IndexPresenterTest {
             final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
             verify(viewService).findCompanyTable(captor.capture());
             assertEquals(Sort.by(Sort.Direction.ASC, "name"), captor.getValue().pageable().getSort());
+        }
+
+        @Test
+        @DisplayName("sort=submitDate,desc を明示指定 → submitDate,desc + code,desc 複合ソート")
+        void submitDateDesc_addsCodeDescTieBreak() {
+            final Model model = mock(Model.class);
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("submitDate"));
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+
+            presenter.corporateViewV3(null, null, 0, 25, "submitDate,desc", model);
+
+            final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
+            verify(viewService).findCompanyTable(captor.capture());
+            assertEquals(
+                    Sort.by(Sort.Direction.DESC, "submitDate").and(Sort.by(Sort.Direction.DESC, "code")),
+                    captor.getValue().pageable().getSort());
+        }
+
+        @Test
+        @DisplayName("sort=submitDate,asc を明示指定 → submitDate,asc + code,desc 複合ソート (tie-break は方向に関わらず DESC)")
+        void submitDateAsc_addsCodeDescTieBreak() {
+            final Model model = mock(Model.class);
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("submitDate"));
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+
+            presenter.corporateViewV3(null, null, 0, 25, "submitDate,asc", model);
+
+            final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
+            verify(viewService).findCompanyTable(captor.capture());
+            assertEquals(
+                    Sort.by(Sort.Direction.ASC, "submitDate").and(Sort.by(Sort.Direction.DESC, "code")),
+                    captor.getValue().pageable().getSort());
+        }
+
+        @Test
+        @DisplayName("sort=name,asc 明示時 → name,asc 単独 (tie-break なし)")
+        void nameSort_noTieBreak() {
+            final Model model = mock(Model.class);
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("name"));
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+
+            presenter.corporateViewV3(null, null, 0, 25, "name,asc", model);
+
+            final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
+            verify(viewService).findCompanyTable(captor.capture());
+            assertEquals(Sort.by(Sort.Direction.ASC, "name"), captor.getValue().pageable().getSort());
+        }
+
+        @Test
+        @DisplayName("sort=code,asc 明示時 → code,asc 単独 (tie-break なし)")
+        void codeSort_noTieBreak() {
+            final Model model = mock(Model.class);
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+
+            presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
+
+            final ArgumentCaptor<CompanyTableQuery> captor = ArgumentCaptor.forClass(CompanyTableQuery.class);
+            verify(viewService).findCompanyTable(captor.capture());
+            assertEquals(Sort.by(Sort.Direction.ASC, "code"), captor.getValue().pageable().getSort());
         }
     }
 

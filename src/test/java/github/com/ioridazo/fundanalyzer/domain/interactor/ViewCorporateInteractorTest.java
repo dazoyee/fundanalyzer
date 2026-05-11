@@ -204,7 +204,7 @@ class ViewCorporateInteractorTest {
             verify(financialStatementSpecification, times(1)).findByKeyPerCompany(eq(company), any());
         }
 
-        @DisplayName("viewCorporateDetail : backward と forward の値を確認する")
+        @DisplayName("viewCorporateDetail : backward と forward の値を確認する (リスト = 提出日新→古、次=より新しい提出日)")
         @Test
         void target() {
             doReturn(CorporateDetailViewModel.of(
@@ -217,22 +217,22 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null
-            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
             doReturn(List.of(
-                    defaultCorporateViewModel("code-1"),
+                    defaultCorporateViewModel("new"),
                     defaultCorporateViewModel("code"),
-                    defaultCorporateViewModel("code+1")
+                    defaultCorporateViewModel("old")
             )).when(viewCorporateInteractor).viewMain();
 
             var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
-            assertEquals("code-1", actual.getBackwardCode());
-            assertEquals("code+1", actual.getForwardCode());
+            assertEquals("old", actual.getBackwardCode());
+            assertEquals("new", actual.getForwardCode());
         }
 
-        @DisplayName("viewCorporateDetail : backward が null になることを確認する")
+        @DisplayName("viewCorporateDetail : リスト先頭 (= 最新) の場合 forward が null")
         @Test
-        void target_backward_is_null() {
+        void target_forward_is_null_at_head_of_list() {
             doReturn(CorporateDetailViewModel.of(
                     null,
                     null,
@@ -243,21 +243,21 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null
-            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
             doReturn(List.of(
                     defaultCorporateViewModel("code"),
-                    defaultCorporateViewModel("code+1")
+                    defaultCorporateViewModel("old")
             )).when(viewCorporateInteractor).viewMain();
 
             var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
-            assertNull(actual.getBackwardCode());
-            assertEquals("code+1", actual.getForwardCode());
+            assertEquals("old", actual.getBackwardCode());
+            assertNull(actual.getForwardCode());
         }
 
-        @DisplayName("viewCorporateDetail : forward が null になることを確認する")
+        @DisplayName("viewCorporateDetail : リスト末尾 (= 最古) の場合 backward が null")
         @Test
-        void target_forward_is_null() {
+        void target_backward_is_null_at_tail_of_list() {
             doReturn(CorporateDetailViewModel.of(
                     null,
                     null,
@@ -268,19 +268,49 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null
-            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
             doReturn(List.of(
-                    defaultCorporateViewModel("code-1"),
+                    defaultCorporateViewModel("new"),
                     defaultCorporateViewModel("code")
             )).when(viewCorporateInteractor).viewMain();
 
             var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
-            assertEquals("code-1", actual.getBackwardCode());
-            assertNull(actual.getForwardCode());
+            assertNull(actual.getBackwardCode());
+            assertEquals("new", actual.getForwardCode());
         }
 
-        @DisplayName("viewCorporateDetail : backward と forward が null になることを確認する")
+        @DisplayName("viewCorporateDetail : target=ALL のときも viewAll() の DESC+DESC tie-break で前後コードが算出される")
+        @Test
+        void target_all_useViewAllAndCodeDescTieBreak() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
+            // viewAll() は submitDate DESC + code DESC でソートされる前提
+            doReturn(List.of(
+                    corporateViewWithSubmitDate("9003", LocalDate.parse("2026-03-27")),
+                    corporateViewWithSubmitDate("9005", LocalDate.parse("2026-03-25")),
+                    corporateViewWithSubmitDate("9004", LocalDate.parse("2026-03-25")),
+                    corporateViewWithSubmitDate("code", LocalDate.parse("2026-03-25")),
+                    corporateViewWithSubmitDate("9002", LocalDate.parse("2026-02-14"))
+            )).when(viewCorporateInteractor).viewAll();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.ALL);
+
+            // code(=9001相当) の前 (= リスト次要素 = 9002 / より古い提出日) と 次 (= リスト前要素 = 9004 / 同提出日 code 大)
+            assertEquals("9002", actual.getBackwardCode());
+            assertEquals("9004", actual.getForwardCode());
+        }
+
+        @DisplayName("viewCorporateDetail : 単独要素の場合 backward と forward が null")
         @Test
         void target_backward_and_forward_is_null() {
             doReturn(CorporateDetailViewModel.of(
@@ -293,12 +323,92 @@ class ViewCorporateInteractorTest {
                     null,
                     null,
                     null
-            )).when(viewCorporateInteractor).viewCorporateDetail(inputData);
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
             doReturn(List.of(
                     defaultCorporateViewModel("code")
             )).when(viewCorporateInteractor).viewMain();
 
             var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+
+            assertNull(actual.getBackwardCode());
+            assertNull(actual.getForwardCode());
+        }
+    }
+
+    @Nested
+    @DisplayName("viewCorporateDetail (target なしオーバーロード) — viewAll() ベースで前後コードを設定")
+    class viewCorporateDetailWithoutTarget {
+
+        CodeInputData inputData = CodeInputData.of("code");
+
+        @DisplayName("viewAll() リストの中央要素 → backward は古い側、forward は新しい側に設定される")
+        @Test
+        void noTarget_setsBackwardAndForwardFromViewAll() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
+            doReturn(List.of(
+                    defaultCorporateViewModel("new"),
+                    defaultCorporateViewModel("code"),
+                    defaultCorporateViewModel("old")
+            )).when(viewCorporateInteractor).viewAll();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+
+            assertEquals("old", actual.getBackwardCode());
+            assertEquals("new", actual.getForwardCode());
+        }
+
+        @DisplayName("viewAll() が空の場合 → 前後コードはどちらも null")
+        @Test
+        void noTarget_emptyViewAll_returnsNullCodes() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
+            doReturn(List.<CorporateViewModel>of()).when(viewCorporateInteractor).viewAll();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+
+            assertNull(actual.getBackwardCode());
+            assertNull(actual.getForwardCode());
+        }
+
+        @DisplayName("viewAll() に対象コードが含まれない場合 → 前後コードはどちらも null")
+        @Test
+        void noTarget_codeNotInList_returnsNullCodes() {
+            doReturn(CorporateDetailViewModel.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
+            doReturn(List.of(
+                    defaultCorporateViewModel("other-1"),
+                    defaultCorporateViewModel("other-2")
+            )).when(viewCorporateInteractor).viewAll();
+
+            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
 
             assertNull(actual.getBackwardCode());
             assertNull(actual.getForwardCode());
@@ -587,5 +697,33 @@ class ViewCorporateInteractorTest {
         model.setDiscountRateToDisplay(BigDecimal.TEN);
         return model;
 
+    }
+
+    private CorporateViewModel corporateViewWithSubmitDate(String code, LocalDate submitDate) {
+        var model = defaultCorporateViewModel(code);
+        model.setSubmitDate(submitDate);
+        return model;
+    }
+
+    @Nested
+    @DisplayName("viewAll() — 提出日 DESC + コード DESC でソート（viewMain と tie-break を統一）")
+    class viewAllSort {
+
+        @Test
+        @DisplayName("複数提出日 × 同提出日複数コード → submitDate DESC, then code DESC でソートされる")
+        void sortedBySubmitDateDescThenCodeDesc() {
+            var c1 = corporateViewWithSubmitDate("9001", LocalDate.parse("2026-03-25"));
+            var c2 = corporateViewWithSubmitDate("9004", LocalDate.parse("2026-03-25"));
+            var c3 = corporateViewWithSubmitDate("9005", LocalDate.parse("2026-03-25"));
+            var c4 = corporateViewWithSubmitDate("9003", LocalDate.parse("2026-03-27"));
+            var c5 = corporateViewWithSubmitDate("9002", LocalDate.parse("2026-02-14"));
+            doReturn(List.of(c1, c2, c3, c4, c5)).when(viewSpecification).findAllCorporateView();
+
+            var actual = viewCorporateInteractor.viewAll().stream()
+                    .map(CorporateViewModel::getCode)
+                    .toList();
+
+            assertEquals(List.of("9003", "9005", "9004", "9001", "9002"), actual);
+        }
     }
 }

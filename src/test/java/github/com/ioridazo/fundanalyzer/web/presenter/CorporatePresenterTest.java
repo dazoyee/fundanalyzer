@@ -102,5 +102,20 @@ class CorporatePresenterTest {
             assertEquals("corporate-v2", result);
             Mockito.verify(model).addAttribute("target", "quart");
         }
+
+        @Test
+        @DisplayName("target なし → backwardCode / forwardCode が Model attribute に設定される (target 無し経路でも前後ナビが有効)")
+        void noTarget_setsBackwardAndForwardAttributes() {
+            final String code = "9999";
+            final CorporateDetailViewModel view = buildDetailView(List.of(), List.of(), List.of(), List.of());
+            Mockito.when(viewService.getCorporateDetailView(CodeInputData.of(code))).thenReturn(view);
+            Mockito.when(viewService.getValuationView(CodeInputData.of(code))).thenReturn(List.of());
+
+            final Model model = Mockito.mock(Model.class);
+            presenter.corporateDetailViewV3(code, null, model);
+
+            Mockito.verify(model).addAttribute("backwardCode", "0001");
+            Mockito.verify(model).addAttribute("forwardCode", "0003");
+        }
     }
 }
