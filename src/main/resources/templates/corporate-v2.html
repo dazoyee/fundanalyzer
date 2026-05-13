@@ -106,19 +106,19 @@
     <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <h2 class="mb-3 text-lg font-bold">会社情報</h2>
         <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-            <div><dt class="text-slate-500 dark:text-slate-400">証券コード</dt><dd class="font-mono" th:text="${cv4 != null ? cv4 : corporate.code}">9999</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">EDINET コード</dt><dd class="font-mono" th:text="${corporate.edinetCode}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">業種</dt><dd th:text="${corporate.industry}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">決算月</dt><dd th:text="${corporate.settlementDate}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">資本金</dt><dd class="font-mono" th:text="${corporate.capitalStock}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">株式総数</dt><dd class="font-mono" th:text="${corporate.numberOfShares}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">時価総額</dt><dd class="font-mono" th:text="${corporate.marketCapitalization}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">予想 PER</dt><dd class="font-mono" th:text="${corporate.per}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">実績 PBR</dt><dd class="font-mono" th:text="${corporate.pbr}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">予想 ROE</dt><dd class="font-mono" th:text="${corporate.roe}">-</dd></div>
-            <div><dt class="text-slate-500 dark:text-slate-400">予想配当利回り</dt><dd class="font-mono" th:text="${corporate.dividendYield}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">証券コード<th:block th:replace="~{fragments/tooltip :: hint('security-code')}"></th:block></dt><dd class="font-mono" th:text="${cv4 != null ? cv4 : corporate.code}">9999</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">EDINET コード<th:block th:replace="~{fragments/tooltip :: hint('edinet-code')}"></th:block></dt><dd class="font-mono" th:text="${corporate.edinetCode}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">業種<th:block th:replace="~{fragments/tooltip :: hint('industry')}"></th:block></dt><dd th:text="${corporate.industry}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">決算月<th:block th:replace="~{fragments/tooltip :: hint('settlement-date')}"></th:block></dt><dd th:text="${corporate.settlementDate}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">資本金<th:block th:replace="~{fragments/tooltip :: hint('capital-stock')}"></th:block></dt><dd class="font-mono" th:text="${corporate.capitalStock}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">株式総数<th:block th:replace="~{fragments/tooltip :: hint('number-of-shares')}"></th:block></dt><dd class="font-mono" th:text="${corporate.numberOfShares}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">時価総額<th:block th:replace="~{fragments/tooltip :: hint('market-cap')}"></th:block></dt><dd class="font-mono" th:text="${corporate.marketCapitalization}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">予想 PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></dt><dd class="font-mono" th:text="${corporate.per}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">実績 PBR<th:block th:replace="~{fragments/tooltip :: hint('pbr')}"></th:block></dt><dd class="font-mono" th:text="${corporate.pbr}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">予想 ROE<th:block th:replace="~{fragments/tooltip :: hint('roe')}"></th:block></dt><dd class="font-mono" th:text="${corporate.roe}">-</dd></div>
+            <div><dt class="text-slate-500 dark:text-slate-400">予想配当利回り<th:block th:replace="~{fragments/tooltip :: hint('dividend-yield')}"></th:block></dt><dd class="font-mono" th:text="${corporate.dividendYield}">-</dd></div>
             <div class="sm:col-span-4">
-                <dt class="text-slate-500 dark:text-slate-400">株式優待</dt>
+                <dt class="text-slate-500 dark:text-slate-400">株式優待<th:block th:replace="~{fragments/tooltip :: hint('shareholder-benefit')}"></th:block></dt>
                 <dd class="text-xs" th:text="${corporate.shareholderBenefit}">-</dd>
             </div>
         </dl>
@@ -153,7 +153,7 @@
                 <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <div class="text-xs text-blue-700 dark:text-blue-300">最新企業価値</div>
+                <div class="text-xs text-blue-700 dark:text-blue-300">最新企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.latestCorporateValue}">-</div>
             </div>
             <!-- 提出日株価平均 GOOD: latestCorporateValue > averageStockPrice -->
@@ -165,7 +165,7 @@
                 <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <div class="text-xs text-emerald-700 dark:text-emerald-300">提出日株価平均</div>
+                <div class="text-xs text-emerald-700 dark:text-emerald-300">提出日株価平均<th:block th:replace="~{fragments/tooltip :: hint('submit-stock-avg')}"></th:block></div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.averageStockPrice}">-</div>
             </div>
             <!-- 割安度 GOOD: discountRateToDisplay > 100 -->
@@ -177,7 +177,7 @@
                 <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <div class="text-xs text-amber-700 dark:text-amber-300">割安度</div>
+                <div class="text-xs text-amber-700 dark:text-amber-300">割安度<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.discountRateToDisplay}">-</div>
             </div>
             <!-- グレアム指数 GOOD: 0 < grahamIndex < 5.625 -->
@@ -189,7 +189,7 @@
                 <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
                     <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
                 </span>
-                <div class="text-xs text-purple-700 dark:text-purple-300">グレアム指数</div>
+                <div class="text-xs text-purple-700 dark:text-purple-300">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.grahamIndex}">-</div>
             </div>
         </div>
@@ -199,12 +199,12 @@
             <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
                 <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">企業価値・統計</h3>
                 <dl class="space-y-1 text-xs">
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">提出日</dt><dd th:text="${corporateView.submitDate}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新企業価値</dt><dd class="font-mono" th:text="${corporateView.latestCorporateValue}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">平均企業価値</dt><dd class="font-mono" th:text="${corporateView.averageCorporateValueToDisplay}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">標準偏差</dt><dd class="font-mono" th:text="${corporateView.standardDeviationToDisplay}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">変動係数</dt><dd class="font-mono" th:text="${corporateView.coefficientOfVariationToDisplay}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象年数</dt><dd class="font-mono" th:text="${corporateView.countYear}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">提出日<th:block th:replace="~{fragments/tooltip :: hint('submit-date')}"></th:block></dt><dd th:text="${corporateView.submitDate}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.latestCorporateValue}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">平均企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.averageCorporateValueToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">標準偏差<th:block th:replace="~{fragments/tooltip :: hint('standard-deviation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.standardDeviationToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">変動係数<th:block th:replace="~{fragments/tooltip :: hint('coefficient-of-variation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.coefficientOfVariationToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象年数<th:block th:replace="~{fragments/tooltip :: hint('count-year')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.countYear}">-</dd></div>
                 </dl>
             </div>
             <!-- 観点 2: 株価 -->
@@ -213,29 +213,29 @@
                 <dl class="space-y-1 text-xs">
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価取得日</dt><dd th:text="${corporateView.importDate}">-</dd></div>
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新株価</dt><dd class="font-mono" th:text="${corporateView.latestStockPrice}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">提出日株価平均</dt><dd class="font-mono" th:text="${corporateView.averageStockPrice}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価予想</dt><dd class="font-mono" th:text="${corporateView.forecastStock}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">提出日株価平均<th:block th:replace="~{fragments/tooltip :: hint('submit-stock-avg')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.averageStockPrice}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価予想<th:block th:replace="~{fragments/tooltip :: hint('forecast-stock')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.forecastStock}">-</dd></div>
                 </dl>
             </div>
             <!-- 観点 3: 財務指標 -->
             <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
                 <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">財務指標</h3>
                 <dl class="space-y-1 text-xs">
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">割安比率</dt><dd class="font-mono" th:text="${corporateView.discountRateToDisplay}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">BPS</dt><dd class="font-mono" th:text="${corporateView.bps}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">EPS</dt><dd class="font-mono" th:text="${corporateView.eps}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">ROE</dt><dd class="font-mono" th:text="${corporateView.roe}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">ROA</dt><dd class="font-mono" th:text="${corporateView.roa}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">割安比率<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.discountRateToDisplay}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">BPS<th:block th:replace="~{fragments/tooltip :: hint('bps')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.bps}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">EPS<th:block th:replace="~{fragments/tooltip :: hint('eps')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.eps}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">ROE<th:block th:replace="~{fragments/tooltip :: hint('roe')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.roe}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">ROA<th:block th:replace="~{fragments/tooltip :: hint('roa')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.roa}">-</dd></div>
                 </dl>
             </div>
             <!-- 観点 4: バリュエーション指標 -->
             <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
                 <h3 class="mb-2 text-xs font-bold text-slate-600 dark:text-slate-300">バリュエーション指標</h3>
                 <dl class="space-y-1 text-xs">
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価企業価値率</dt><dd class="font-mono" th:text="${corporateView.priceCorporateValueRatio}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER</dt><dd class="font-mono" th:text="${corporateView.per}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR</dt><dd class="font-mono" th:text="${corporateView.pbr}">-</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数</dt><dd class="font-mono" th:text="${corporateView.grahamIndex}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価企業価値率<th:block th:replace="~{fragments/tooltip :: hint('price-cv-ratio')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.priceCorporateValueRatio}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.per}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR<th:block th:replace="~{fragments/tooltip :: hint('pbr')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.pbr}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.grahamIndex}">-</dd></div>
                 </dl>
             </div>
         </div>
@@ -246,37 +246,37 @@
         <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 class="mb-2 text-sm font-bold">3 年平均</h3>
             <dl class="space-y-1 text-xs">
-                <div class="flex justify-between"><dt>平均企業価値</dt><dd class="font-mono" th:text="${corporateView.threeAverageCorporateValue}">-</dd></div>
-                <div class="flex justify-between"><dt>標準偏差</dt><dd class="font-mono" th:text="${corporateView.threeStandardDeviation}">-</dd></div>
-                <div class="flex justify-between"><dt>変動係数</dt><dd class="font-mono" th:text="${corporateView.threeCoefficientOfVariation}">-</dd></div>
-                <div class="flex justify-between"><dt>割安度</dt><dd class="font-mono" th:text="${corporateView.threeDiscountRate}">-</dd></div>
+                <div class="flex justify-between"><dt>平均企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.threeAverageCorporateValue}">-</dd></div>
+                <div class="flex justify-between"><dt>標準偏差<th:block th:replace="~{fragments/tooltip :: hint('standard-deviation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.threeStandardDeviation}">-</dd></div>
+                <div class="flex justify-between"><dt>変動係数<th:block th:replace="~{fragments/tooltip :: hint('coefficient-of-variation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.threeCoefficientOfVariation}">-</dd></div>
+                <div class="flex justify-between"><dt>割安度<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.threeDiscountRate}">-</dd></div>
             </dl>
         </div>
         <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 class="mb-2 text-sm font-bold">5 年平均</h3>
             <dl class="space-y-1 text-xs">
-                <div class="flex justify-between"><dt>平均企業価値</dt><dd class="font-mono" th:text="${corporateView.fiveAverageCorporateValue}">-</dd></div>
-                <div class="flex justify-between"><dt>標準偏差</dt><dd class="font-mono" th:text="${corporateView.fiveStandardDeviation}">-</dd></div>
-                <div class="flex justify-between"><dt>変動係数</dt><dd class="font-mono" th:text="${corporateView.fiveCoefficientOfVariation}">-</dd></div>
-                <div class="flex justify-between"><dt>割安度</dt><dd class="font-mono" th:text="${corporateView.fiveDiscountRate}">-</dd></div>
+                <div class="flex justify-between"><dt>平均企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.fiveAverageCorporateValue}">-</dd></div>
+                <div class="flex justify-between"><dt>標準偏差<th:block th:replace="~{fragments/tooltip :: hint('standard-deviation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.fiveStandardDeviation}">-</dd></div>
+                <div class="flex justify-between"><dt>変動係数<th:block th:replace="~{fragments/tooltip :: hint('coefficient-of-variation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.fiveCoefficientOfVariation}">-</dd></div>
+                <div class="flex justify-between"><dt>割安度<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.fiveDiscountRate}">-</dd></div>
             </dl>
         </div>
         <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 class="mb-2 text-sm font-bold">10 年平均</h3>
             <dl class="space-y-1 text-xs">
-                <div class="flex justify-between"><dt>平均企業価値</dt><dd class="font-mono" th:text="${corporateView.tenAverageCorporateValue}">-</dd></div>
-                <div class="flex justify-between"><dt>標準偏差</dt><dd class="font-mono" th:text="${corporateView.tenStandardDeviation}">-</dd></div>
-                <div class="flex justify-between"><dt>変動係数</dt><dd class="font-mono" th:text="${corporateView.tenCoefficientOfVariation}">-</dd></div>
-                <div class="flex justify-between"><dt>割安度</dt><dd class="font-mono" th:text="${corporateView.tenDiscountRate}">-</dd></div>
+                <div class="flex justify-between"><dt>平均企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.tenAverageCorporateValue}">-</dd></div>
+                <div class="flex justify-between"><dt>標準偏差<th:block th:replace="~{fragments/tooltip :: hint('standard-deviation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.tenStandardDeviation}">-</dd></div>
+                <div class="flex justify-between"><dt>変動係数<th:block th:replace="~{fragments/tooltip :: hint('coefficient-of-variation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.tenCoefficientOfVariation}">-</dd></div>
+                <div class="flex justify-between"><dt>割安度<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.tenDiscountRate}">-</dd></div>
             </dl>
         </div>
         <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 class="mb-2 text-sm font-bold">全平均</h3>
             <dl class="space-y-1 text-xs">
-                <div class="flex justify-between"><dt>平均企業価値</dt><dd class="font-mono" th:text="${corporateView.allAverageCorporateValue}">-</dd></div>
-                <div class="flex justify-between"><dt>標準偏差</dt><dd class="font-mono" th:text="${corporateView.allStandardDeviation}">-</dd></div>
-                <div class="flex justify-between"><dt>変動係数</dt><dd class="font-mono" th:text="${corporateView.allCoefficientOfVariation}">-</dd></div>
-                <div class="flex justify-between"><dt>割安度</dt><dd class="font-mono" th:text="${corporateView.allDiscountRate}">-</dd></div>
+                <div class="flex justify-between"><dt>平均企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.allAverageCorporateValue}">-</dd></div>
+                <div class="flex justify-between"><dt>標準偏差<th:block th:replace="~{fragments/tooltip :: hint('standard-deviation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.allStandardDeviation}">-</dd></div>
+                <div class="flex justify-between"><dt>変動係数<th:block th:replace="~{fragments/tooltip :: hint('coefficient-of-variation')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.allCoefficientOfVariation}">-</dd></div>
+                <div class="flex justify-between"><dt>割安度<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.allDiscountRate}">-</dd></div>
             </dl>
         </div>
     </article>
@@ -313,11 +313,11 @@
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">提出日</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">対象期間</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">書類種別</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">四半期種別</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">企業価値</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">提出日<th:block th:replace="~{fragments/tooltip :: hint('submit-date')}"></th:block></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">対象期間<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">書類種別<th:block th:replace="~{fragments/tooltip :: hint('document-type')}"></th:block></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">四半期種別<th:block th:replace="~{fragments/tooltip :: hint('quarter-type')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -368,11 +368,11 @@
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">株価企業価値率</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">PER</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">PBR</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">グレアム指数</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">株価企業価値率<th:block th:replace="~{fragments/tooltip :: hint('price-cv-ratio')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">PBR<th:block th:replace="~{fragments/tooltip :: hint('pbr')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -392,10 +392,10 @@
                     class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
                     <div class="font-mono text-sm" th:text="${i.targetDate}">-</div>
                     <dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER</dt><dd class="font-mono" th:text="${i.per}">-</dd></div>
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR</dt><dd class="font-mono" th:text="${i.pbr}">-</dd></div>
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム</dt><dd class="font-mono" th:text="${i.grahamIndex}">-</dd></div>
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価企業価値率</dt><dd class="font-mono" th:text="${i.priceCorporateValueRatio}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></dt><dd class="font-mono" th:text="${i.per}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR<th:block th:replace="~{fragments/tooltip :: hint('pbr')}"></th:block></dt><dd class="font-mono" th:text="${i.pbr}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></dt><dd class="font-mono" th:text="${i.grahamIndex}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">株価企業価値率<th:block th:replace="~{fragments/tooltip :: hint('price-cv-ratio')}"></th:block></dt><dd class="font-mono" th:text="${i.priceCorporateValueRatio}">-</dd></div>
                     </dl>
                 </li>
             </ul>
@@ -413,7 +413,7 @@
                         th:text="${fs.key.documentTypeName} + ' (' + ${fs.key.periodStart} + ' 〜 ' + ${fs.key.periodEnd} + ')'">書類種別 (期間)</h3>
                     <div class="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
                         <div th:if="${fs.bs != null and !fs.bs.isEmpty()}">
-                            <h4 class="mb-2 text-xs font-bold">貸借対照表 (BS)</h4>
+                            <h4 class="mb-2 text-xs font-bold">貸借対照表 (BS)<th:block th:replace="~{fragments/tooltip :: hint('bs')}"></th:block></h4>
                             <dl class="space-y-1 text-xs">
                                 <div th:each="b : ${fs.bs}" class="flex justify-between">
                                     <dt th:text="${b.subject}">-</dt>
@@ -422,7 +422,7 @@
                             </dl>
                         </div>
                         <div th:if="${fs.pl != null and !fs.pl.isEmpty()}">
-                            <h4 class="mb-2 text-xs font-bold">損益計算書 (PL)</h4>
+                            <h4 class="mb-2 text-xs font-bold">損益計算書 (PL)<th:block th:replace="~{fragments/tooltip :: hint('pl')}"></th:block></h4>
                             <dl class="space-y-1 text-xs">
                                 <div th:each="p : ${fs.pl}" class="flex justify-between">
                                     <dt th:text="${p.subject}">-</dt>
@@ -452,9 +452,9 @@
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">目標株価</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">理論株価</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">目標株価<th:block th:replace="~{fragments/tooltip :: hint('forecast-stock')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">理論株価<th:block th:replace="~{fragments/tooltip :: hint('theoretical-stock')}"></th:block></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -472,8 +472,8 @@
                     class="flex items-center justify-between rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
                     <span class="font-mono" th:text="${m.targetDate}">-</span>
                     <div class="flex gap-3">
-                        <span><span class="text-slate-500 dark:text-slate-400">目標</span> <span class="font-mono" th:text="${m.goalsStock}">-</span></span>
-                        <span><span class="text-slate-500 dark:text-slate-400">理論</span> <span class="font-mono" th:text="${m.theoreticalStock}">-</span></span>
+                        <span><span class="text-slate-500 dark:text-slate-400">目標<th:block th:replace="~{fragments/tooltip :: hint('forecast-stock')}"></th:block></span> <span class="font-mono" th:text="${m.goalsStock}">-</span></span>
+                        <span><span class="text-slate-500 dark:text-slate-400">理論<th:block th:replace="~{fragments/tooltip :: hint('theoretical-stock')}"></th:block></span> <span class="font-mono" th:text="${m.theoreticalStock}">-</span></span>
                     </div>
                 </li>
             </ul>
@@ -502,11 +502,11 @@
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">終値</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">始値</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">高値</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">安値</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">終値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">始値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">高値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">安値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -554,15 +554,15 @@
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">日付</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">日付<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
                         <th class="px-3 py-2 text-right text-xs font-semibold">株価</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">グレアム指数</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">増減値</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">増減率</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">提出日</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">提出日株価平均</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">提出日グレアム指数</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">最新企業価値</th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">増減値<th:block th:replace="~{fragments/tooltip :: hint('diff-from-submit')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">増減率<th:block th:replace="~{fragments/tooltip :: hint('diff-from-submit')}"></th:block></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold">提出日<th:block th:replace="~{fragments/tooltip :: hint('submit-date')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">提出日株価平均<th:block th:replace="~{fragments/tooltip :: hint('submit-stock-avg')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">提出日グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold">最新企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -591,19 +591,19 @@
                         <span class="font-mono font-semibold" th:text="${v.stockPrice}">-</span>
                     </div>
                     <dl class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム</dt><dd class="font-mono" th:text="${v.grahamIndex}">-</dd></div>
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新企業価値</dt><dd class="font-mono" th:text="${v.corporateValue}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></dt><dd class="font-mono" th:text="${v.grahamIndex}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">最新企業価値<th:block th:replace="~{fragments/tooltip :: hint('corporate-value')}"></th:block></dt><dd class="font-mono" th:text="${v.corporateValue}">-</dd></div>
                         <div class="flex justify-between">
-                            <dt class="text-slate-500 dark:text-slate-400">増減値</dt>
+                            <dt class="text-slate-500 dark:text-slate-400">増減値<th:block th:replace="~{fragments/tooltip :: hint('diff-from-submit')}"></th:block></dt>
                             <dd class="font-mono"
                                 th:classappend="${v.differenceFromSubmitDate != null and v.differenceFromSubmitDate.compareTo(T(java.math.BigDecimal).ZERO) &lt; 0} ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'"
                                 th:text="${v.differenceFromSubmitDate}">-</dd>
                         </div>
-                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">増減率</dt><dd class="font-mono" th:text="${v.submitDateRatio}">-</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">増減率<th:block th:replace="~{fragments/tooltip :: hint('diff-from-submit')}"></th:block></dt><dd class="font-mono" th:text="${v.submitDateRatio}">-</dd></div>
                         <div class="col-span-2 mt-1 border-t border-slate-200 pt-1 text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                            提出日 <span class="font-mono" th:text="${v.submitDate}">-</span>
+                            提出日<th:block th:replace="~{fragments/tooltip :: hint('submit-date')}"></th:block> <span class="font-mono" th:text="${v.submitDate}">-</span>
                             <span class="ml-2">株価 <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${v.stockPriceOfSubmitDate}">-</span></span>
-                            <span class="ml-2">グレアム <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${v.grahamIndexOfSubmitDate}">-</span></span>
+                            <span class="ml-2">グレアム<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block> <span class="font-mono text-slate-700 dark:text-slate-300" th:text="${v.grahamIndexOfSubmitDate}">-</span></span>
                         </div>
                     </dl>
                 </li>

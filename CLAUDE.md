@@ -183,6 +183,10 @@ exception/   … 業務例外
 
 `/v3/corporate?code=XXXX` のヘッダー H1 横に **前の銘柄 / 次の銘柄** ボタンを配置。`backwardCode` / `forwardCode` は `target=main|quart|all` 指定時はその view ベース、`target` 未指定時は `viewAll()` ベースで算出する。**「次=より新しい提出日」「前=より古い提出日」** で統一。端ではボタン非表示（`th:if`）。スマホ (sm 未満) はタイトル下の独立行に表示（[T20260509](docs/notes/T20260509-corporate-detail-prev-next-nav.md)）。
 
+#### 銘柄詳細の用語ツールチップ
+
+`/v3/corporate` の `dt` / `th` / 見出しテキスト直後に `<th:block th:replace="~{fragments/tooltip :: hint('<key>')}"></th:block>` を埋め込み、hover / focus / tap で用語解説ポップオーバーを表示する。用語キー → ラベル + 解説本文の辞書は [fragments/tooltip.html](src/main/resources/templates/fragments/tooltip.html) に Thymeleaf inline Map で集約。クライアント側は Alpine.js コンポーネント `tooltip` ([app.js](src/main/frontend/scripts/app.js)) で開閉、ESC / 外側クリックで閉じる。`x-cloak` の display:none は [main.css](src/main/frontend/styles/main.css) の `@layer base` で定義（[T20260512](docs/notes/T20260512-corporate-glossary-tooltip.md)）。
+
 #### テーブル汎用パターン
 
 各画面は **2 エンドポイント方式**（HTML 全体 + fragment 部分更新）+ **record（XxxTableQuery / XxxTablePage）** + **ViewService.findXxxTable**（メモリ内 stream で filter/sort/page）+ **htmx 属性**（`hx-get` + `hx-target` + `hx-trigger="keyup changed delay:300ms"` + `hx-push-url="true"` で URL 同期）で統一。詳細は Phase 3〜5 のサブタスク md 参照。

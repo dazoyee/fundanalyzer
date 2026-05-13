@@ -15,4 +15,12 @@
     min-width: 0 !important;
     width: 100% !important;
   }
+
+  /*
+   * Alpine.js の x-cloak ディレクティブ用。Alpine.start() 完了前に x-show 等の
+   * 制御対象要素がチラつくのを防ぐ。fragments/tooltip.html の popover で使用。
+   */
+  [x-cloak] {
+    display: none !important;
+  }
 }

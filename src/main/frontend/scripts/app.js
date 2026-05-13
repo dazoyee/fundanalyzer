@@ -33,6 +33,12 @@ document.body.addEventListener('htmx:configRequest', (event) => {
   event.detail.path = `${contextPath}${path}`;
 });
 
+// 用語ツールチップ (fragments/tooltip.html 対応)。
+// open boolean のみを持つ最小コンポーネント。hover / focus / click で開閉する。
+Alpine.data('tooltip', () => ({
+  open: false,
+}));
+
 document.addEventListener('DOMContentLoaded', () => {
   createIcons({ icons });
   Alpine.start();
