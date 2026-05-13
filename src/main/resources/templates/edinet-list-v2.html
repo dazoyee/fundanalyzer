@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title>EDINET 一覧</title>
+</head>
+<body>
+<h1 layout:fragment="page-title">EDINET 一覧</h1>
+
+<section layout:fragment="content" class="space-y-4">
+    <!-- Flash アラート -->
+    <th:block th:if="${message != null}">
+        <div th:replace="~{fragments/alert :: info(message=${message})}"></div>
+    </th:block>
+
+    <!-- 上部: 2 アクションボタン + 会社リスト更新日 -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <form method="get" th:action="@{/v1/company}">
+            <button type="submit"
+                    class="w-full rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                会社情報更新
+            </button>
+        </form>
+        <form method="get" th:action="@{/v1/update/edinet/view}">
+            <button type="submit"
+                    class="w-full rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                処理状況更新
+            </button>
+        </form>
+    </div>
+
+    <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-950"
+         th:if="${companyUpdated}">
+        <span class="font-semibold">会社リスト更新日：</span>
+        <span class="font-mono" th:text="${companyUpdated}">2025-01-01</span>
+    </div>
+
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="EDINET 一覧 表示切替">
+        <a th:href="@{/v3/edinet-list(q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${#strings.isEmpty(target)}"
+           th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
+            メイン
+        </a>
+        <a th:href="@{/v3/edinet-list(target='all',q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'all'}"
+           th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
+            すべて
+        </a>
+    </nav>
+
+    <div class="flex items-center gap-2">
+        <i data-lucide="search" class="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true"></i>
+        <input type="search"
+               name="q"
+               th:value="${keyword}"
+               placeholder="提出日（YYYY-MM-DD 部分一致）で検索"
+               aria-label="提出日で検索"
+               class="w-full rounded border border-slate-300 px-3 py-2 sm:w-72 dark:border-slate-600 dark:bg-slate-900"
+               th:attr="hx-get=@{/v3/edinet-list/table(target=${target},sort=${sortParam},page=0)}"
+               hx-target="#edinet-list-table"
+               hx-trigger="keyup changed delay:300ms, search"
+               hx-push-url="true">
+    </div>
+
+    <div class="flex items-center gap-2 sm:hidden">
+        <label for="edinet-list-sort-select" class="text-xs text-slate-500 dark:text-slate-400">並び替え</label>
+        <select id="edinet-list-sort-select"
+                name="sort"
+                aria-label="並び替え"
+                class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+                th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},page=0)}"
+                hx-target="#edinet-list-table"
+                hx-trigger="change"
+                hx-push-url="true">
+            <option value="submitDate,desc"     th:selected="${sortParam == 'submitDate,desc' or #strings.isEmpty(sortParam)}">提出日（新しい順）</option>
+            <option value="submitDate,asc"      th:selected="${sortParam == 'submitDate,asc'}">提出日（古い順）</option>
+            <option value="countAll,desc"       th:selected="${sortParam == 'countAll,desc'}">総件数 ↓</option>
+            <option value="countTarget,desc"    th:selected="${sortParam == 'countTarget,desc'}">対象件数 ↓</option>
+            <option value="countAnalyzed,desc"  th:selected="${sortParam == 'countAnalyzed,desc'}">分析済 ↓</option>
+            <option value="countNotScraped,desc" th:selected="${sortParam == 'countNotScraped,desc'}">未処理 ↓</option>
+        </select>
+    </div>
+
+    <div id="edinet-list-table"
+         th:insert="~{fragments/edinet-list-table :: table (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}">
+    </div>
+</section>
+</body>
+</html>

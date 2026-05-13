@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title>株価評価</title>
+</head>
+<body>
+<h1 layout:fragment="page-title">株価評価</h1>
+
+<section layout:fragment="content" class="space-y-4">
+    <!-- Flash アラート -->
+    <th:block th:if="${message != null}">
+        <div th:replace="~{fragments/alert :: success(message=${message})}"></div>
+    </th:block>
+
+    <!-- 上部: 2 アクションフォーム -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <form method="post" th:action="@{/v2/import/stock/date}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">企業の株価を取得する（書類提出日を指定）</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
+                <button type="submit"
+                        class="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    実行
+                </button>
+            </div>
+        </form>
+        <form method="post" th:action="@{/v2/evaluate}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">株価を評価する</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <p class="flex-1 text-sm text-slate-500 dark:text-slate-400">全企業の評価を再計算します</p>
+                <button type="submit"
+                        class="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    実行
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="表示切替">
+        <a th:href="@{/v3/valuation(q=${keyword})}"
+           role="tab"
+           th:attr="aria-selected=${#strings.isEmpty(target)}"
+           th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
+            メイン
+        </a>
+        <a th:href="@{/v3/valuation(target='all',q=${keyword})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'all'}"
+           th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
+            すべて
+        </a>
+        <a th:href="@{/v3/valuation(target='favorite',q=${keyword})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'favorite'}"
+           th:classappend="${target == 'favorite'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
+            お気に入り
+        </a>
+        <a th:href="@{/v3/valuation(target='industry')}"
+           role="tab"
+           th:attr="aria-selected=${target == 'industry'}"
+           th:classappend="${target == 'industry'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="building" class="h-4 w-4" aria-hidden="true"></i>
+            業種別
+        </a>
+    </nav>
+
+    <nav class="flex flex-wrap gap-1" role="tablist" th:unless="${target == 'industry'}">
+        <a th:href="@{/v3/valuation(target=${target},view='stock',q=${keyword})}"
+           th:classappend="${view == 'stock'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+           class="rounded-md px-3 py-1 text-xs font-medium">株価</a>
+        <a th:href="@{/v3/valuation(target=${target},view='submit',q=${keyword})}"
+           th:classappend="${view == 'submit'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+           class="rounded-md px-3 py-1 text-xs font-medium">提出日</a>
+        <a th:href="@{/v3/valuation(target=${target},view='graham-index',q=${keyword})}"
+           th:classappend="${view == 'graham-index'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+           class="rounded-md px-3 py-1 text-xs font-medium">グレアム</a>
+        <a th:href="@{/v3/valuation(target=${target},view='dividend-yield',q=${keyword})}"
+           th:classappend="${view == 'dividend-yield'} ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+           class="rounded-md px-3 py-1 text-xs font-medium">配当</a>
+    </nav>
+
+    <div class="flex items-center gap-2">
+        <i data-lucide="search" class="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true"></i>
+        <input type="search"
+               name="q"
+               th:value="${keyword}"
+               aria-label="検索"
+               th:placeholder="${target == 'industry'} ? '業種名で検索' : '証券コード・会社名で検索'"
+               class="w-full rounded border border-slate-300 px-3 py-2 sm:w-64 dark:border-slate-600 dark:bg-slate-900"
+               th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},sort=${sortParam},page=0)}"
+               hx-target="#valuation-table"
+               hx-trigger="keyup changed delay:300ms, search"
+               hx-push-url="true">
+    </div>
+
+    <div class="flex items-center gap-2 sm:hidden">
+        <label for="valuation-sort-select" class="text-xs text-slate-500 dark:text-slate-400">並び替え</label>
+        <select id="valuation-sort-select"
+                name="sort"
+                aria-label="並び替え"
+                class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+                th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},page=0)}"
+                hx-target="#valuation-table"
+                hx-trigger="change"
+                hx-push-url="true">
+            <th:block th:if="${target == 'industry'}">
+                <option value="name,asc"                   th:selected="${sortParam == 'name,asc' or #strings.isEmpty(sortParam)}">業種名 ↑</option>
+                <option value="grahamIndex,asc"            th:selected="${sortParam == 'grahamIndex,asc'}">グレアム指数 ↑</option>
+                <option value="submitDateRatio,desc"       th:selected="${sortParam == 'submitDateRatio,desc'}">提出日比率 ↓</option>
+                <option value="differenceFromSubmitDate,desc" th:selected="${sortParam == 'differenceFromSubmitDate,desc'}">提出日との差 ↓</option>
+                <option value="count,desc"                 th:selected="${sortParam == 'count,desc'}">件数 ↓</option>
+            </th:block>
+            <th:block th:if="${view == 'stock' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="targetDate,desc"            th:selected="${sortParam == 'targetDate,desc'}">対象日（新しい順）</option>
+                <option value="stockPrice,desc"            th:selected="${sortParam == 'stockPrice,desc'}">株価 ↓</option>
+                <option value="differenceFromSubmitDate,desc" th:selected="${sortParam == 'differenceFromSubmitDate,desc'}">増減値 ↓</option>
+                <option value="submitDateRatio,desc"       th:selected="${sortParam == 'submitDateRatio,desc'}">増減率 ↓</option>
+            </th:block>
+            <th:block th:if="${view == 'submit' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="submitDate,desc"            th:selected="${sortParam == 'submitDate,desc'}">提出日（新しい順）</option>
+                <option value="corporateValue,desc"        th:selected="${sortParam == 'corporateValue,desc'}">企業価値 ↓</option>
+                <option value="grahamIndexOfSubmitDate,asc" th:selected="${sortParam == 'grahamIndexOfSubmitDate,asc'}">提出日グレアム ↑</option>
+                <option value="stockPriceOfSubmitDate,desc" th:selected="${sortParam == 'stockPriceOfSubmitDate,desc'}">提出日株価 ↓</option>
+            </th:block>
+            <th:block th:if="${view == 'graham-index' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="grahamIndex,asc"            th:selected="${sortParam == 'grahamIndex,asc'}">グレアム指数 ↑</option>
+                <option value="grahamIndex,desc"           th:selected="${sortParam == 'grahamIndex,desc'}">グレアム指数 ↓</option>
+                <option value="targetDate,desc"            th:selected="${sortParam == 'targetDate,desc'}">対象日（新しい順）</option>
+                <option value="grahamIndexOfSubmitDate,asc" th:selected="${sortParam == 'grahamIndexOfSubmitDate,asc'}">提出日グレアム ↑</option>
+            </th:block>
+            <th:block th:if="${view == 'dividend-yield' and target != 'industry'}">
+                <option value="code,asc"                   th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">コード ↑</option>
+                <option value="dividendYield,desc"         th:selected="${sortParam == 'dividendYield,desc'}">配当利回り ↓</option>
+                <option value="stockPrice,desc"            th:selected="${sortParam == 'stockPrice,desc'}">株価 ↓</option>
+                <option value="targetDate,desc"            th:selected="${sortParam == 'targetDate,desc'}">対象日（新しい順）</option>
+            </th:block>
+        </select>
+    </div>
+
+    <div id="valuation-table"
+         th:insert="~{fragments/valuation-table :: __${view}__-table (table=${table}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}">
+    </div>
+</section>
+</body>
+</html>

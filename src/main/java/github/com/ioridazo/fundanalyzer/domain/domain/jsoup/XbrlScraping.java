@@ -186,136 +186,90 @@ public class XbrlScraping {
      *
      * @param scrapingList スクレイピング結果
      * @param targetFile   対象ファイル
-     * @return boolean
+     * @return 左から前年度→当年度の順なら true、逆なら false
      */
     private boolean isMainOrderOfYear(final List<List<String>> scrapingList, final File targetFile) {
-        if (scrapingList.get(1).size() == 2) {
-            if (scrapingList.get(1).get(0).contains("前") && scrapingList.get(1).get(1).contains("当")) {
-                return true;
-            } else if (scrapingList.get(1).get(0).contains("当") && scrapingList.get(1).get(1).contains("前")) {
-                return false;
-            }
+        final List<String> headerRow = scrapingList.get(1);
+        if (headerRow.size() == 2) {
+            return compareYearOrder(headerRow.get(0), headerRow.get(1), targetFile);
+        }
+        if (headerRow.size() == 3) {
+            return compareYearOrder(headerRow.get(0), headerRow.get(2), targetFile);
+        }
+        throw new FundanalyzerScrapingException(
+                "年度に関して対象の財務諸表は定形外でした。詳細を確認してください。\nファイルパス:" + targetFile);
+    }
 
-            try {
-                if (scrapingList.get(1).get(0).contains("第") && scrapingList.get(1).get(0).contains("期")) {
-                    if (
-                        // '第' と '期' の間にある数値を比較する
-                            Integer.parseInt(scrapingList.get(1).get(0).substring(
-                                    scrapingList.get(1).get(0).indexOf("第") + 1,
-                                    scrapingList.get(1).get(0).indexOf("期")
-                            )) < Integer.parseInt(scrapingList.get(1).get(1).substring(
-                                    scrapingList.get(1).get(1).indexOf("第") + 1,
-                                    scrapingList.get(1).get(1).indexOf("期")
-                            ))
-                    ) {
-                        return true;
-                    } else if (
-                        // '第' と '期' の間にある数値を比較する
-                            Integer.parseInt(scrapingList.get(1).get(0).substring(
-                                    scrapingList.get(1).get(0).indexOf("第") + 1,
-                                    scrapingList.get(1).get(0).indexOf("期")
-                            )) > Integer.parseInt(scrapingList.get(1).get(1).substring(
-                                    scrapingList.get(1).get(1).indexOf("第") + 1,
-                                    scrapingList.get(1).get(1).indexOf("期")
-                            ))
-                    ) {
-                        return false;
-                    }
+    /**
+     * 2 つのヘッダ文字列を比較し、左側が前年度（古い）なら true を返す
+     *
+     * @param left       比較元（左側のヘッダ文字列）
+     * @param right      比較先（右側のヘッダ文字列）
+     * @param targetFile エラー時に出力する対象ファイル
+     * @return 左が前年度の順序なら true、逆なら false
+     * @throws FundanalyzerScrapingException 順序を判定できないとき
+     */
+    private boolean compareYearOrder(final String left, final String right, final File targetFile) {
+        if (left.contains("前") && right.contains("当")) {
+            return true;
+        }
+        if (left.contains("当") && right.contains("前")) {
+            return false;
+        }
+
+        try {
+            if (left.contains("第") && left.contains("期")) {
+                final int leftPeriod = parsePeriodNumber(left);
+                final int rightPeriod = parsePeriodNumber(right);
+                if (leftPeriod < rightPeriod) {
+                    return true;
                 }
-
-                if (scrapingList.get(1).get(0).contains("年度")) {
-                    if (
-                        // '年度' の数値を比較する
-                            Integer.parseInt(
-                                    scrapingList.get(1).get(0).substring(0, scrapingList.get(1).get(0).indexOf("年度"))
-                            ) < Integer.parseInt(
-                                    scrapingList.get(1).get(1).substring(0, scrapingList.get(1).get(1).indexOf("年度"))
-                            )
-                    ) {
-                        return true;
-                    } else if (
-                        // '年度' の数値を比較する
-                            Integer.parseInt(
-                                    scrapingList.get(1).get(0).substring(0, scrapingList.get(1).get(0).indexOf("年度"))
-                            ) > Integer.parseInt(
-                                    scrapingList.get(1).get(1).substring(0, scrapingList.get(1).get(1).indexOf("年度"))
-                            )
-                    ) {
-                        return false;
-                    }
+                if (leftPeriod > rightPeriod) {
+                    return false;
                 }
-            } catch (final NumberFormatException | StringIndexOutOfBoundsException e) {
-                throw new FundanalyzerScrapingException(
-                        "年度に関して対象の財務諸表は定形外でした。次の値を確認してください。" +
-                        "\t'" + scrapingList.get(1).get(0) + "' and '" + scrapingList.get(1).get(1) + "'" +
-                        "\nファイルパス:" + targetFile);
             }
-
-        } else if (scrapingList.get(1).size() == 3) {
-            if (scrapingList.get(1).get(0).contains("前") && scrapingList.get(1).get(2).contains("当")) {
-                return true;
-            } else if (scrapingList.get(1).get(0).contains("当") && scrapingList.get(1).get(2).contains("前")) {
-                return false;
-            }
-
-            try {
-                if (scrapingList.get(1).get(0).contains("第") && scrapingList.get(1).get(0).contains("期")) {
-                    if (
-                        // '第' と '期' の間にある数値を比較する
-                            Integer.parseInt(scrapingList.get(1).get(0).substring(
-                                    scrapingList.get(1).get(0).indexOf("第") + 1,
-                                    scrapingList.get(1).get(0).indexOf("期")
-                            )) < Integer.parseInt(scrapingList.get(1).get(2).substring(
-                                    scrapingList.get(1).get(2).indexOf("第") + 1,
-                                    scrapingList.get(1).get(2).indexOf("期")
-                            ))
-                    ) {
-                        return true;
-                    } else if (
-                        // '第' と '期' の間にある数値を比較する
-                            Integer.parseInt(scrapingList.get(1).get(0).substring(
-                                    scrapingList.get(1).get(0).indexOf("第") + 1,
-                                    scrapingList.get(1).get(0).indexOf("期")
-                            )) > Integer.parseInt(scrapingList.get(1).get(2).substring(
-                                    scrapingList.get(1).get(2).indexOf("第") + 1,
-                                    scrapingList.get(1).get(2).indexOf("期")
-                            ))
-                    ) {
-                        return false;
-                    }
+            if (left.contains("年度")) {
+                final int leftYear = parseFiscalYear(left);
+                final int rightYear = parseFiscalYear(right);
+                if (leftYear < rightYear) {
+                    return true;
                 }
-
-                if (scrapingList.get(1).get(0).contains("年度")) {
-                    if (
-                        // '年度' の数値を比較する
-                            Integer.parseInt(
-                                    scrapingList.get(1).get(0).substring(0, scrapingList.get(1).get(0).indexOf("年度"))
-                            ) < Integer.parseInt(
-                                    scrapingList.get(1).get(2).substring(0, scrapingList.get(1).get(2).indexOf("年度"))
-                            )
-                    ) {
-                        return true;
-                    } else if (
-                        // '年度' の数値を比較する
-                            Integer.parseInt(
-                                    scrapingList.get(1).get(0).substring(0, scrapingList.get(1).get(0).indexOf("年度"))
-                            ) > Integer.parseInt(
-                                    scrapingList.get(1).get(2).substring(0, scrapingList.get(1).get(2).indexOf("年度"))
-                            )
-                    ) {
-                        return false;
-                    }
+                if (leftYear > rightYear) {
+                    return false;
                 }
-            } catch (final NumberFormatException | StringIndexOutOfBoundsException e) {
-                throw new FundanalyzerScrapingException(
-                        "年度に関して対象の財務諸表は定形外でした。次の値を確認してください。" +
-                        "\t'" + scrapingList.get(1).get(0) + "' and '" + scrapingList.get(1).get(1) + "'" +
-                        "\nファイルパス:" + targetFile);
             }
+        } catch (final NumberFormatException | StringIndexOutOfBoundsException e) {
+            throw new FundanalyzerScrapingException(
+                    "年度に関して対象の財務諸表は定形外でした。次の値を確認してください。" +
+                    "\t'" + left + "' and '" + right + "'" +
+                    "\nファイルパス:" + targetFile);
         }
 
         throw new FundanalyzerScrapingException(
                 "年度に関して対象の財務諸表は定形外でした。詳細を確認してください。\nファイルパス:" + targetFile);
+    }
+
+    /**
+     * '第' と '期' の間にある期数を整数として取り出す
+     *
+     * @param header ヘッダ文字列（例: "第10期" など）
+     * @return 期数
+     */
+    private int parsePeriodNumber(final String header) {
+        return Integer.parseInt(header.substring(
+                header.indexOf("第") + 1,
+                header.indexOf("期")
+        ));
+    }
+
+    /**
+     * '年度' の前にある年数を整数として取り出す
+     *
+     * @param header ヘッダ文字列（例: "2020年度" など）
+     * @return 年数
+     */
+    private int parseFiscalYear(final String header) {
+        return Integer.parseInt(header.substring(0, header.indexOf("年度")));
     }
 
     /**

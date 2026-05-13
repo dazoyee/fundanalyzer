@@ -496,7 +496,17 @@ public class DocumentInteractor implements DocumentUseCase {
      * @param document ドキュメント
      */
     void scrape(final Document document) {
-        // 書類取得
+        downloadIfNeeded(document);
+        scrapeFinancialStatementsIfDecoded(document);
+        markAsRemovedIfAllError(document);
+    }
+
+    /**
+     * ダウンロード未済または途中ならファイル取得し、ERROR ならログのみ出力する
+     *
+     * @param document ドキュメント
+     */
+    private void downloadIfNeeded(final Document document) {
         if (Stream.of(
                 DocumentStatus.NOT_YET,
                 DocumentStatus.HALF_WAY
@@ -507,7 +517,6 @@ public class DocumentInteractor implements DocumentUseCase {
             if (isPresent) {
                 documentSpecification.updateStoreToDone(document);
             } else {
-                // ファイル取得
                 scraping.download(document);
             }
         } else if (DocumentStatus.ERROR == document.getDownloaded()) {
@@ -521,26 +530,36 @@ public class DocumentInteractor implements DocumentUseCase {
                     Process.DOWNLOAD
             ));
         }
+    }
 
+    /**
+     * デコード済の場合、未処理の貸借対照表・損益計算書・株式総数をスクレイピングする
+     *
+     * @param document ドキュメント
+     */
+    private void scrapeFinancialStatementsIfDecoded(final Document document) {
         final Document decodedDocument = documentSpecification.findDocument(document.getDocumentId());
-        if (DocumentStatus.DONE == decodedDocument.getDecoded()) {
-            // スクレイピング
-            // 貸借対照表
-            if (DocumentStatus.DONE != decodedDocument.getScrapedBs()) {
-                scraping.bs(document);
-            }
-            // 損益計算書
-            if (DocumentStatus.DONE != decodedDocument.getScrapedPl()) {
-                scraping.pl(document);
-            }
-            // 株式総数
-            if (DocumentStatus.DONE != decodedDocument.getScrapedNumberOfShares()) {
-                scraping.ns(document);
-            }
+        if (DocumentStatus.DONE != decodedDocument.getDecoded()) {
+            return;
         }
+        if (DocumentStatus.DONE != decodedDocument.getScrapedBs()) {
+            scraping.bs(document);
+        }
+        if (DocumentStatus.DONE != decodedDocument.getScrapedPl()) {
+            scraping.pl(document);
+        }
+        if (DocumentStatus.DONE != decodedDocument.getScrapedNumberOfShares()) {
+            scraping.ns(document);
+        }
+    }
 
+    /**
+     * 貸借対照表・損益計算書・株式総数のすべてが ERROR のとき除外フラグをONにする
+     *
+     * @param document ドキュメント
+     */
+    private void markAsRemovedIfAllError(final Document document) {
         final Document processedDocument = documentSpecification.findDocument(document.getDocumentId());
-        // 除外フラグON
         if (Stream.of(
                 processedDocument.getScrapedBs(),
                 processedDocument.getScrapedPl(),

@@ -1,31 +1,49 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Consolidated;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategories;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
+import org.seasar.doma.jdbc.Sql;
+import org.seasar.doma.jdbc.SqlLogType;
+import org.seasar.doma.jdbc.UniqueConstraintException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ValuationSpecificationTest {
 
     private ValuationDao valuationDao;
+    private CompanySpecification companySpecification;
     private StockSpecification stockSpecification;
     private InvestmentIndicatorSpecification investmentIndicatorSpecification;
 
@@ -34,12 +52,13 @@ class ValuationSpecificationTest {
     @BeforeEach
     void setUp() {
         valuationDao = mock(ValuationDao.class);
+        companySpecification = mock(CompanySpecification.class);
         stockSpecification = mock(StockSpecification.class);
         investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
 
         valuationSpecification = new ValuationSpecification(
                 valuationDao,
-                mock(CompanySpecification.class),
+                companySpecification,
                 stockSpecification,
                 investmentIndicatorSpecification
         );
@@ -348,6 +367,402 @@ class ValuationSpecificationTest {
                     null,
                     null
             );
+        }
+    }
+
+    private static ValuationEntity valuationEntityOf(
+            final Integer id,
+            final String companyCode,
+            final LocalDate submitDate,
+            final LocalDate targetDate,
+            final BigDecimal stockPrice,
+            final Long daySinceSubmitDate) {
+        return new ValuationEntity(
+                id,
+                companyCode,
+                submitDate,
+                targetDate,
+                null,
+                stockPrice,
+                null,
+                null,
+                daySinceSubmitDate,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Nested
+    @DisplayName("findLatestValuation(String, LocalDate) のテスト")
+    class FindLatestValuationByCodeAndSubmitDate {
+
+        private final String companyCode = "1234";
+        private final LocalDate submitDate = LocalDate.parse("2022-06-12");
+
+        @DisplayName("データが存在する場合 → targetDate が最大の評価結果を返す")
+        @Test
+        void returnsLatestByTargetDate() {
+            final ValuationEntity older = valuationEntityOf(
+                    1, companyCode, submitDate, LocalDate.parse("2022-06-13"), BigDecimal.valueOf(100), 1L);
+            final ValuationEntity newer = valuationEntityOf(
+                    2, companyCode, submitDate, LocalDate.parse("2022-08-20"), BigDecimal.valueOf(200), 69L);
+            final ValuationEntity middle = valuationEntityOf(
+                    3, companyCode, submitDate, LocalDate.parse("2022-07-15"), BigDecimal.valueOf(150), 33L);
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of(older, newer, middle));
+
+            final Optional<ValuationEntity> actual =
+                    valuationSpecification.findLatestValuation(companyCode, submitDate);
+
+            assertAll(
+                    () -> assertTrue(actual.isPresent()),
+                    () -> assertEquals(2, actual.orElseThrow().getId()),
+                    () -> assertEquals(LocalDate.parse("2022-08-20"), actual.orElseThrow().getTargetDate())
+            );
+        }
+
+        @DisplayName("データが存在しない場合 → 空 Optional を返す")
+        @Test
+        void returnsEmptyWhenNoData() {
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of());
+
+            final Optional<ValuationEntity> actual =
+                    valuationSpecification.findLatestValuation(companyCode, submitDate);
+
+            assertFalse(actual.isPresent());
+        }
+    }
+
+    @Nested
+    @DisplayName("findValuationOfSubmitDate メソッド")
+    class FindValuationOfSubmitDate {
+
+        private final String companyCode = "1234";
+        private final LocalDate submitDate = LocalDate.parse("2022-06-12");
+
+        @DisplayName("データが存在する場合 → daySinceSubmitDate が最小の評価結果を返す")
+        @Test
+        void returnsMinDaySinceSubmitDate() {
+            final ValuationEntity day0 = valuationEntityOf(
+                    1, companyCode, submitDate, LocalDate.parse("2022-06-12"), BigDecimal.valueOf(100), 0L);
+            final ValuationEntity day10 = valuationEntityOf(
+                    2, companyCode, submitDate, LocalDate.parse("2022-06-22"), BigDecimal.valueOf(120), 10L);
+            final ValuationEntity day3 = valuationEntityOf(
+                    3, companyCode, submitDate, LocalDate.parse("2022-06-15"), BigDecimal.valueOf(110), 3L);
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of(day10, day0, day3));
+
+            final Optional<ValuationEntity> actual =
+                    valuationSpecification.findValuationOfSubmitDate(companyCode, submitDate);
+
+            assertAll(
+                    () -> assertTrue(actual.isPresent()),
+                    () -> assertEquals(1, actual.orElseThrow().getId()),
+                    () -> assertEquals(0L, actual.orElseThrow().getDaySinceSubmitDate())
+            );
+        }
+
+        @DisplayName("データが存在しない場合 → 空 Optional を返す")
+        @Test
+        void returnsEmptyWhenNoData() {
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of());
+
+            final Optional<ValuationEntity> actual =
+                    valuationSpecification.findValuationOfSubmitDate(companyCode, submitDate);
+
+            assertFalse(actual.isPresent());
+        }
+    }
+
+    @Nested
+    @DisplayName("findLatestValuation(String) メソッド")
+    class FindLatestValuationByCode {
+
+        private final String companyCode = "1234";
+
+        @DisplayName("複数提出日が混在する場合 → 最新提出日かつ最新対象日のレコードを返す")
+        @Test
+        void returnsLatestSubmitDateAndTargetDate() {
+            final ValuationEntity oldSubmit1 = valuationEntityOf(
+                    1, companyCode, LocalDate.parse("2021-06-12"), LocalDate.parse("2021-06-12"), BigDecimal.valueOf(100), 0L);
+            final ValuationEntity oldSubmit2 = valuationEntityOf(
+                    2, companyCode, LocalDate.parse("2021-06-12"), LocalDate.parse("2021-12-31"), BigDecimal.valueOf(110), 200L);
+            final ValuationEntity latestSubmit1 = valuationEntityOf(
+                    3, companyCode, LocalDate.parse("2022-06-12"), LocalDate.parse("2022-06-12"), BigDecimal.valueOf(200), 0L);
+            final ValuationEntity latestSubmitTargetMax = valuationEntityOf(
+                    4, companyCode, LocalDate.parse("2022-06-12"), LocalDate.parse("2022-09-30"), BigDecimal.valueOf(220), 110L);
+            when(valuationDao.selectByCode(companyCode))
+                    .thenReturn(List.of(oldSubmit1, oldSubmit2, latestSubmit1, latestSubmitTargetMax));
+
+            final Optional<ValuationEntity> actual =
+                    valuationSpecification.findLatestValuation(companyCode);
+
+            assertAll(
+                    () -> assertTrue(actual.isPresent()),
+                    () -> assertEquals(4, actual.orElseThrow().getId()),
+                    () -> assertEquals(LocalDate.parse("2022-06-12"), actual.orElseThrow().getSubmitDate()),
+                    () -> assertEquals(LocalDate.parse("2022-09-30"), actual.orElseThrow().getTargetDate())
+            );
+        }
+
+        @DisplayName("データが存在しない場合 → 空 Optional を返す")
+        @Test
+        void returnsEmptyWhenNoData() {
+            when(valuationDao.selectByCode(companyCode)).thenReturn(List.of());
+
+            final Optional<ValuationEntity> actual =
+                    valuationSpecification.findLatestValuation(companyCode);
+
+            assertFalse(actual.isPresent());
+        }
+    }
+
+    @Nested
+    @DisplayName("insert メソッド")
+    class Insert {
+
+        private final String companyCode = "code";
+        private final LocalDate submitDate = LocalDate.parse("2022-06-12");
+        private final LocalDate targetDate = LocalDate.parse("2022-07-02");
+
+        private StockPriceEntity stockPrice(final Double price) {
+            return new StockPriceEntity(
+                    1,
+                    companyCode,
+                    targetDate,
+                    price,
+                    null, null, null, null,
+                    null, null, null, null,
+                    null, null, null, null,
+                    null, null
+            );
+        }
+
+        private AnalysisResultEntity analysisResult(final BigDecimal corporateValue) {
+            return new AnalysisResultEntity(
+                    4,
+                    companyCode,
+                    null,
+                    corporateValue,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    submitDate,
+                    "documentId",
+                    null
+            );
+        }
+
+        @BeforeEach
+        void setUp() {
+            when(investmentIndicatorSpecification.findEntity(companyCode, targetDate))
+                    .thenReturn(Optional.empty());
+            when(stockSpecification.findStock(companyCode, submitDate))
+                    .thenReturn(Optional.of(new StockPriceEntity(
+                            9, companyCode, submitDate, 600.0,
+                            null, null, null, null,
+                            null, null, null, null,
+                            null, null, null, null,
+                            null, null
+                    )));
+        }
+
+        @DisplayName("正常系 → ValuationDao.insert が呼び出され例外が発生しない")
+        @Test
+        void normal() {
+            assertDoesNotThrow(() -> valuationSpecification.insert(
+                    stockPrice(500.0), analysisResult(BigDecimal.valueOf(2000))));
+        }
+
+        @DisplayName("UniqueConstraintException が発生した場合 → 例外を握りつぶしてスキップする")
+        @Test
+        void uniqueConstraintException() {
+            final DataIntegrityViolationException wrapper =
+                    new DataIntegrityViolationException(
+                            "duplicate",
+                            new UniqueConstraintException(SqlLogType.FORMATTED, Mockito.mock(Sql.class), null));
+            doThrow(wrapper).when(valuationDao).insert(any(ValuationEntity.class));
+            when(companySpecification.findCompanyByCode(companyCode))
+                    .thenReturn(Optional.of(new Company(
+                            companyCode,
+                            "テスト株式会社",
+                            1,
+                            "業種",
+                            "E12345",
+                            ListCategories.LISTED,
+                            Consolidated.CONSOLIDATED,
+                            10000,
+                            "0331",
+                            false,
+                            true
+                    )));
+
+            assertDoesNotThrow(() -> valuationSpecification.insert(
+                    stockPrice(500.0), analysisResult(BigDecimal.valueOf(2000))));
+        }
+
+        @DisplayName("UniqueConstraintException かつ企業情報が見つからない場合 → 例外を握りつぶしてスキップする")
+        @Test
+        void uniqueConstraintExceptionWithoutCompany() {
+            final DataIntegrityViolationException wrapper =
+                    new DataIntegrityViolationException(
+                            "duplicate",
+                            new UniqueConstraintException(SqlLogType.FORMATTED, Mockito.mock(Sql.class), null));
+            doThrow(wrapper).when(valuationDao).insert(any(ValuationEntity.class));
+            when(companySpecification.findCompanyByCode(companyCode))
+                    .thenReturn(Optional.empty());
+
+            assertDoesNotThrow(() -> valuationSpecification.insert(
+                    stockPrice(500.0), analysisResult(BigDecimal.valueOf(2000))));
+        }
+
+        @DisplayName("SQLIntegrityConstraintViolationException が発生した場合 → 例外を握りつぶしてスキップする")
+        @Test
+        void integrityConstraintException() {
+            final DataIntegrityViolationException wrapper =
+                    new DataIntegrityViolationException(
+                            "fk-violation",
+                            new SQLIntegrityConstraintViolationException("FK violation"));
+            doThrow(wrapper).when(valuationDao).insert(any(ValuationEntity.class));
+            when(companySpecification.findCompanyByCode(companyCode))
+                    .thenReturn(Optional.of(new Company(
+                            companyCode,
+                            "テスト株式会社",
+                            1,
+                            "業種",
+                            "E12345",
+                            ListCategories.LISTED,
+                            Consolidated.CONSOLIDATED,
+                            10000,
+                            "0331",
+                            false,
+                            true
+                    )));
+
+            assertDoesNotThrow(() -> valuationSpecification.insert(
+                    stockPrice(500.0), analysisResult(BigDecimal.valueOf(2000))));
+        }
+
+        @DisplayName("ハンドリング対象外の NestedRuntimeException が発生した場合 → 例外を再スローする")
+        @Test
+        void otherNestedRuntimeExceptionRethrown() {
+            final DataIntegrityViolationException wrapper =
+                    new DataIntegrityViolationException("unknown", new IllegalStateException("boom"));
+            doThrow(wrapper).when(valuationDao).insert(any(ValuationEntity.class));
+
+            assertThrows(DataIntegrityViolationException.class, () -> valuationSpecification.insert(
+                    stockPrice(500.0), analysisResult(BigDecimal.valueOf(2000))));
+        }
+    }
+
+    @Nested
+    @DisplayName("evaluate メソッドにおける提出日株価取得の分岐")
+    class EvaluateStockPriceOfSubmitDate {
+
+        private final String companyCode = "code";
+        private final LocalDate submitDate = LocalDate.parse("2022-06-12");
+        private final LocalDate targetDate = LocalDate.parse("2022-07-02");
+
+        private StockPriceEntity stockPrice(final LocalDate target, final Double price) {
+            return new StockPriceEntity(
+                    1,
+                    companyCode,
+                    target,
+                    price,
+                    null, null, null, null,
+                    null, null, null, null,
+                    null, null, null, null,
+                    null, null
+            );
+        }
+
+        private AnalysisResultEntity analysisResult() {
+            return new AnalysisResultEntity(
+                    4, companyCode, null, BigDecimal.valueOf(2000),
+                    null, null, null, null, null, null,
+                    submitDate, "documentId", null
+            );
+        }
+
+        @BeforeEach
+        void setUp() {
+            when(investmentIndicatorSpecification.findEntity(companyCode, targetDate))
+                    .thenReturn(Optional.empty());
+        }
+
+        @DisplayName("過去valuationが存在する → そこから提出日株価を取得する")
+        @Test
+        void fromExistingValuation() {
+            final ValuationEntity existing = new ValuationEntity(
+                    1,
+                    companyCode,
+                    submitDate,
+                    submitDate,
+                    null,
+                    BigDecimal.valueOf(800.0),
+                    null,
+                    null,
+                    0L,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    LocalDateTime.now()
+            );
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of(existing));
+
+            final ValuationEntity actual = valuationSpecification.evaluate(
+                    stockPrice(targetDate, 500.0), analysisResult());
+
+            assertAll(
+                    () -> assertEquals(BigDecimal.valueOf(-300.0), actual.getDifferenceFromSubmitDate()),
+                    () -> assertEquals(BigDecimal.valueOf(63, 2), actual.getSubmitDateRatio())
+            );
+        }
+
+        @DisplayName("過去valuationなし・findStockなし・getAverageStockPriceあり → 平均株価から取得する")
+        @Test
+        void fromAverageStockPrice() {
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of());
+            when(stockSpecification.findStock(companyCode, submitDate))
+                    .thenReturn(Optional.empty());
+            when(stockSpecification.getAverageStockPrice(companyCode, submitDate))
+                    .thenReturn(Optional.of(BigDecimal.valueOf(400.0)));
+
+            final ValuationEntity actual = valuationSpecification.evaluate(
+                    stockPrice(targetDate, 500.0), analysisResult());
+
+            assertAll(
+                    () -> assertEquals(BigDecimal.valueOf(100.0), actual.getDifferenceFromSubmitDate()),
+                    () -> assertEquals(BigDecimal.valueOf(125, 2), actual.getSubmitDateRatio())
+            );
+        }
+
+        @DisplayName("提出日株価がいずれの経路でも取得できない場合 → FundanalyzerNotExistException を投げる")
+        @Test
+        void throwsWhenNoStockPriceAvailable() {
+            when(valuationDao.selectByCodeAndSubmitDate(companyCode, submitDate))
+                    .thenReturn(List.of());
+            when(stockSpecification.findStock(companyCode, submitDate))
+                    .thenReturn(Optional.empty());
+            when(stockSpecification.getAverageStockPrice(companyCode, submitDate))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(FundanalyzerNotExistException.class,
+                    () -> valuationSpecification.evaluate(
+                            stockPrice(targetDate, 500.0), analysisResult()));
         }
     }
 }

@@ -29,6 +29,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -356,6 +357,37 @@ public class ScrapingInteractor implements ScrapingUseCase {
                 .orElseThrow(FundanalyzerRuntimeException::new);
         final File targetDirectory = makeDocumentPath(pathDecode, document.getSubmitDate(), document.getDocumentId());
 
+        logScrapingStart(fs, document, targetDirectory, startTime);
+
+        try {
+            final Pair<File, ScrapingKeywordEntity> targetFile = findTargetFile(targetDirectory, fs, document);
+            doScraping.accept(company, targetFile);
+            logScrapingSuccess(fs, document, company, targetFile.getFirst(), startTime);
+            documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
+        } catch (final FundanalyzerFileException e) {
+            documentSpecification.updateFsToError(document, fs);
+            logScrapingError(fs, document, company, targetDirectory, startTime, e,
+                    "キーワードに合致するファイルが存在しませんでした。", Level.INFO);
+        } catch (final FundanalyzerScrapingException | FundanalyzerBadDataException | FundanalyzerNotExistException e) {
+            documentSpecification.updateFsToError(document, fs);
+            logScrapingError(fs, document, company, targetDirectory, startTime, e,
+                    "スタックトレースを参考に原因を確認してください。", Level.WARN);
+        }
+    }
+
+    /**
+     * スクレイピング開始のログを出力する
+     *
+     * @param fs              財務諸表種別
+     * @param document        ドキュメント
+     * @param targetDirectory 対象ディレクトリ
+     * @param startTime       開始時刻（ミリ秒）
+     */
+    private void logScrapingStart(
+            final FinancialStatementEnum fs,
+            final Document document,
+            final File targetDirectory,
+            final long startTime) {
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 MessageFormat.format("[{0}] のスクレイピング処理を開始します。\tパス:{1}",
                         fs.getName(),
@@ -365,59 +397,73 @@ public class ScrapingInteractor implements ScrapingUseCase {
                 Process.of(fs),
                 System.currentTimeMillis() - startTime
         ));
+    }
 
-        try {
-            final Pair<File, ScrapingKeywordEntity> targetFile = findTargetFile(targetDirectory, fs, document);
+    /**
+     * スクレイピング成功のログを出力する
+     *
+     * @param fs         財務諸表種別
+     * @param document   ドキュメント
+     * @param company    企業
+     * @param targetFile 対象ファイル
+     * @param startTime  開始時刻（ミリ秒）
+     */
+    private void logScrapingSuccess(
+            final FinancialStatementEnum fs,
+            final Document document,
+            final Company company,
+            final File targetFile,
+            final long startTime) {
+        log.info(FundanalyzerLogClient.toInteractorLogObject(
+                MessageFormat.format(
+                        "次のスクレイピング情報を正常に登録しました。" +
+                        "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
+                        company.code(),
+                        company.edinetCode(),
+                        fs.getName(),
+                        targetFile.getPath()
+                ),
+                document,
+                Category.SCRAPING,
+                Process.of(fs),
+                System.currentTimeMillis() - startTime
+        ));
+    }
 
-            doScraping.accept(company, targetFile);
-
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "次のスクレイピング情報を正常に登録しました。" +
-                            "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイル名:{3}",
-                            company.code(),
-                            company.edinetCode(),
-                            fs.getName(),
-                            targetFile.getFirst().getPath()
-                    ),
-                    document,
-                    Category.SCRAPING,
-                    Process.of(fs),
-                    System.currentTimeMillis() - startTime
-            ));
-
-            documentSpecification.updateFsToDone(document, fs, targetFile.getFirst().getPath());
-        } catch (final FundanalyzerFileException e) {
-            documentSpecification.updateFsToError(document, fs);
-            log.info(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "スクレイピング処理の過程でエラー発生しました。キーワードに合致するファイルが存在しませんでした。" +
-                            "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
-                            company.code(),
-                            company.edinetCode(),
-                            fs.getName(),
-                            targetDirectory.getPath()),
-                    document,
-                    Category.SCRAPING,
-                    Process.of(fs),
-                    System.currentTimeMillis() - startTime
-            ), e);
-        } catch (final FundanalyzerScrapingException | FundanalyzerBadDataException | FundanalyzerNotExistException e) {
-            documentSpecification.updateFsToError(document, fs);
-            log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                    MessageFormat.format(
-                            "スクレイピング処理の過程でエラー発生しました。スタックトレースを参考に原因を確認してください。" +
-                            "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
-                            company.code(),
-                            company.edinetCode(),
-                            fs.getName(),
-                            targetDirectory.getPath()),
-                    document,
-                    Category.SCRAPING,
-                    Process.of(fs),
-                    System.currentTimeMillis() - startTime
-            ), e);
-        }
+    /**
+     * スクレイピング失敗のログを指定レベルで出力する
+     *
+     * @param fs              財務諸表種別
+     * @param document        ドキュメント
+     * @param company         企業
+     * @param targetDirectory 対象ディレクトリ
+     * @param startTime       開始時刻（ミリ秒）
+     * @param cause           発生した例外
+     * @param detail          エラー詳細メッセージ
+     * @param level           ログレベル
+     */
+    private void logScrapingError(
+            final FinancialStatementEnum fs,
+            final Document document,
+            final Company company,
+            final File targetDirectory,
+            final long startTime,
+            final Throwable cause,
+            final String detail,
+            final Level level) {
+        log.log(level, FundanalyzerLogClient.toInteractorLogObject(
+                MessageFormat.format(
+                        "スクレイピング処理の過程でエラー発生しました。" + detail +
+                        "\n企業コード:{0}\tEDINETコード:{1}\t財務諸表名:{2}\tファイルパス:{3}",
+                        company.code(),
+                        company.edinetCode(),
+                        fs.getName(),
+                        targetDirectory.getPath()),
+                document,
+                Category.SCRAPING,
+                Process.of(fs),
+                System.currentTimeMillis() - startTime
+        ), cause);
     }
 
     /**

@@ -1,12 +1,17 @@
 package github.com.ioridazo.fundanalyzer.domain.util;
 
-import lombok.extern.log4j.Log4j2;
+import github.com.ioridazo.fundanalyzer.client.log.Category;
+import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Process;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.text.MessageFormat;
 import java.util.Optional;
 
-@Log4j2
 public final class Parser {
+
+    private static final Logger log = LogManager.getLogger(Parser.class);
 
     private static final String MESSAGE = "株価変換処理において数値を正常に認識できなかったため、NULLで登録します。\tvalue:{0}";
 
@@ -19,7 +24,7 @@ public final class Parser {
                 .map(String::trim)
                 .map(v -> v.replace(" ", ""))
                 .orElseGet(() -> {
-                    log.warn("値の変換に失敗したため、NULLで登録します。");
+                    warn("値の変換に失敗したため、NULLで登録します。");
                     return null;
                 });
     }
@@ -43,7 +48,7 @@ public final class Parser {
                                 return Integer.valueOf(v);
                             }
                         } catch (NumberFormatException e2) {
-                            log.warn(MessageFormat.format(MESSAGE, v));
+                            warn(MessageFormat.format(MESSAGE, v));
                             return null;
                         }
                     });
@@ -71,7 +76,7 @@ public final class Parser {
                             return Double.valueOf(v);
                         }
                     } catch (NumberFormatException e2) {
-                        log.warn(MessageFormat.format(MESSAGE, v));
+                        warn(MessageFormat.format(MESSAGE, v));
                         return null;
                     }
                 });
@@ -81,7 +86,7 @@ public final class Parser {
         try {
             return Optional.ofNullable(value).map(Double::valueOf);
         } catch (NumberFormatException e1) {
-            log.warn(MessageFormat.format(MESSAGE, value));
+            warn(MessageFormat.format(MESSAGE, value));
             return Optional.empty();
         }
     }
@@ -112,7 +117,7 @@ public final class Parser {
                                 return Double.valueOf(v);
                             }
                         } catch (NumberFormatException e2) {
-                            log.warn(MessageFormat.format(MESSAGE, v));
+                            warn(MessageFormat.format(MESSAGE, v));
                             return null;
                         }
                     });
@@ -125,8 +130,12 @@ public final class Parser {
                     .map(v -> v.replace(",", ""))
                     .map(Double::valueOf);
         } catch (NumberFormatException e1) {
-            log.warn(MessageFormat.format(MESSAGE, value));
+            warn(MessageFormat.format(MESSAGE, value));
             return Optional.empty();
         }
+    }
+
+    private static void warn(final String message) {
+        log.warn(FundanalyzerLogClient.toClientLogObject(message, Category.STOCK, Process.SCRAPING));
     }
 }
