@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
@@ -50,6 +51,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final AnalysisCoefficient analysisCoefficient;
 
     @Value("${app.config.view.document-type-code}")
     List<String> targetTypeCodes;
@@ -60,13 +62,15 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final AnalysisCoefficient analysisCoefficient) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
         this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.analysisCoefficient = analysisCoefficient;
     }
 
     /**
@@ -148,7 +152,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     void analyze(final Document document) {
         try {
             final FinanceValue financeValue = financialStatementSpecification.getFinanceValue(document);
-            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
+            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document, analysisCoefficient);
 
             analysisResultSpecification.insert(document, analysisResult);
 

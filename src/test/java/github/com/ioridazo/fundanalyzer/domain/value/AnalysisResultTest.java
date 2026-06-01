@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.DisplayName;
@@ -545,6 +546,62 @@ class AnalysisResultTest {
             );
 
             assertNull(analysisResult.calculateRoa(financeValue, document).orElse(null));
+        }
+    }
+
+    @Nested
+    @DisplayName("calculateCorporateValue 係数オーバーロードのテスト")
+    class calculateCorporateValueWithCoefficient {
+
+        Document document = defaultDocument();
+
+        FinanceValue financeValue = FinanceValue.of(
+                1001L,
+                1002L,
+                null,
+                1003L,
+                1004L,
+                null,
+                null,
+                10005L,
+                null,
+                1006L
+        );
+
+        @DisplayName("calculateCorporateValue : 指定した営業利益重みが式に反映される")
+        @Test
+        void operatingProfitWeight_reflected() {
+            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2), BigDecimal.valueOf(4));
+
+            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(20))
+                    .add(BigDecimal.valueOf(1001))
+                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
+                    .subtract(BigDecimal.valueOf(1004))
+                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
+            assertEquals(expected, actual);
+        }
+
+        @DisplayName("calculateCorporateValue : 既定係数を明示指定した結果は係数なしメソッドと一致する")
+        @Test
+        void defaults_equalsNoCoefficientOverload() {
+            var withDefaults = analysisResult.calculateCorporateValue(financeValue, document, AnalysisCoefficient.defaults());
+            var withoutCoefficient = analysisResult.calculateCorporateValue(financeValue, document);
+            assertEquals(withoutCoefficient, withDefaults);
+        }
+
+        @DisplayName("calculateCorporateValue : 流動負債調整係数のみ変更すると流動負債の項のみ変わる")
+        @Test
+        void currentLiabilitiesRatio_reflected() {
+            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(2.0), BigDecimal.valueOf(4));
+
+            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
+                    .add(BigDecimal.valueOf(1001))
+                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(2.0))).add(BigDecimal.valueOf(1002))
+                    .subtract(BigDecimal.valueOf(1004))
+                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
+            assertEquals(expected, actual);
         }
     }
 

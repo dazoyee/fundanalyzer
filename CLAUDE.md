@@ -150,6 +150,7 @@ exception/   … 業務例外
 - マイグレーションは `src/main/resources/db/migration/V*.sql`。**既存ファイルは編集せず、新規バージョンを追加**（Flyway 規約）。
 - DAO は `domain/domain/dao/{master|transaction|view}/` に配置。SQLは Doma 規約で `src/main/resources/META-INF/github/...` に対応する SQL ファイルを置く（`META-INF/github/com/...` を `find` で確認）。
 - 設定で対象外とする企業/業種/書類タイプ等は `app.config.scraping.*`, `app.config.remove-document.*`, `app.config.view.*` に集約されており、コード内ハードコードしない。
+- 企業価値算出の係数（営業利益重み・流動負債調整係数・年換算重み）は `app.config.analysis.*` に外部化済み（`config/AnalysisCoefficient`）。既定値は現行値（10 / 1.2 / 4）。`AnalyzeInteractor` が注入し `new AnalysisResult(financeValue, document, coefficient)` で算出。`AnalysisResult` の係数なしメソッドは `AnalysisCoefficient.defaults()` 委譲で後方互換。
 
 ### View / 画面
 

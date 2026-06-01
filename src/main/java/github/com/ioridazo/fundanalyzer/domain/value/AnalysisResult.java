@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
@@ -28,9 +29,6 @@ public class AnalysisResult {
 
     private final String documentId;
 
-    private static final BigDecimal WEIGHTING_BUSINESS_VALUE = BigDecimal.TEN;
-    private static final BigDecimal AVERAGE_CURRENT_RATIO = BigDecimal.valueOf(1.2);
-    private static final BigDecimal WEIGHTING_QUARTER_VALUE = BigDecimal.valueOf(4);
     private static final int TENTH_DECIMAL_PLACE = 10;
 
     public AnalysisResult(
@@ -51,7 +49,11 @@ public class AnalysisResult {
     }
 
     public AnalysisResult(final FinanceValue financeValue, final Document document) {
-        this.corporateValue = calculateCorporateValue(financeValue, document);
+        this(financeValue, document, AnalysisCoefficient.defaults());
+    }
+
+    public AnalysisResult(final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient) {
+        this.corporateValue = calculateCorporateValue(financeValue, document, coefficient);
         this.bps = calculateBps(financeValue, document).orElse(null);
         this.eps = calculateEps(financeValue, document).orElse(null);
         this.roe = calculateRoe(financeValue, document).orElse(null);
@@ -101,7 +103,7 @@ public class AnalysisResult {
     }
 
     /**
-     * 企業価値を算出する
+     * 企業価値を既定係数で算出する
      *
      * @param financeValue 財務諸表値
      * @param document     ドキュメント
@@ -110,6 +112,21 @@ public class AnalysisResult {
      */
     BigDecimal calculateCorporateValue(
             final FinanceValue financeValue, final Document document) throws FundanalyzerNotExistException {
+        return calculateCorporateValue(financeValue, document, AnalysisCoefficient.defaults());
+    }
+
+    /**
+     * 企業価値を指定係数で算出する
+     *
+     * @param financeValue 財務諸表値
+     * @param document     ドキュメント
+     * @param coefficient  算出係数
+     * @return 企業価値
+     * @throws FundanalyzerNotExistException 値が存在しないとき
+     */
+    BigDecimal calculateCorporateValue(
+            final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient)
+            throws FundanalyzerNotExistException {
         // 流動資産合計
         final BigDecimal totalCurrentAssets = financeValue.getTotalCurrentAssets().map(BigDecimal::new)
                 .orElseThrow(() -> new FundanalyzerNotExistException(
@@ -145,12 +162,12 @@ public class AnalysisResult {
                         PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
                         document
                 ));
-        // 四半期種別の重みづけ
+        // 四半期種別の重みづけ（QuarterType 未設定時は年次想定の annualWeight をフォールバックに使う）
         final BigDecimal weightingQuarterType = Optional.of(document)
                 .map(Document::getQuarterType)
                 .map(QuarterType::getWeight)
                 .map(BigDecimal::new)
-                .orElse(WEIGHTING_QUARTER_VALUE);
+                .orElse(coefficient.getAnnualWeight());
         // 株式総数
         final BigDecimal numberOfShares = financeValue.getNumberOfShares().map(BigDecimal::new)
                 .orElseThrow(() -> new FundanalyzerNotExistException(
@@ -159,11 +176,11 @@ public class AnalysisResult {
                         document
                 ));
 
-        return operatingProfit.multiply(WEIGHTING_BUSINESS_VALUE)
-                .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(AVERAGE_CURRENT_RATIO)).add(totalInvestmentsAndOtherAssets)
+        return operatingProfit.multiply(coefficient.getOperatingProfitWeight())
+                .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(coefficient.getCurrentLiabilitiesRatio())).add(totalInvestmentsAndOtherAssets)
                 .subtract(totalFixedLiabilities)
                 .divide(weightingQuarterType, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
-                .multiply(WEIGHTING_QUARTER_VALUE)
+                .multiply(coefficient.getAnnualWeight())
                 .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 
