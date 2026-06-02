@@ -30,11 +30,14 @@ import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -434,7 +437,7 @@ class ViewServiceTest {
         void targetNull_callsViewValuation() {
             when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
             service.findCompanyValuationTable(new CompanyValuationTableQuery(
-                    null, null, "stock", PageRequest.of(0, 25, Sort.by("code"))));
+                    null, null, "stock", "raw", PageRequest.of(0, 25, Sort.by("code"))));
             verify(viewValuationUseCase, times(1)).viewValuation();
         }
 
@@ -443,7 +446,7 @@ class ViewServiceTest {
         void targetAll_callsViewAllValuation() {
             when(viewValuationUseCase.viewAllValuation()).thenReturn(List.of());
             service.findCompanyValuationTable(new CompanyValuationTableQuery(
-                    "all", null, "stock", PageRequest.of(0, 25, Sort.by("code"))));
+                    "all", null, "stock", "raw", PageRequest.of(0, 25, Sort.by("code"))));
             verify(viewValuationUseCase, times(1)).viewAllValuation();
         }
 
@@ -452,7 +455,7 @@ class ViewServiceTest {
         void targetFavorite_callsViewFavoriteValuation() {
             when(viewValuationUseCase.viewFavoriteValuation()).thenReturn(List.of());
             service.findCompanyValuationTable(new CompanyValuationTableQuery(
-                    "favorite", null, "stock", PageRequest.of(0, 25, Sort.by("code"))));
+                    "favorite", null, "stock", "raw", PageRequest.of(0, 25, Sort.by("code"))));
             verify(viewValuationUseCase, times(1)).viewFavoriteValuation();
         }
 
@@ -464,7 +467,7 @@ class ViewServiceTest {
                     companyValuation("5678", "Beta", BigDecimal.ONE)
             ));
             final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, "12", "stock",
+                    new CompanyValuationTableQuery(null, "12", "stock", "raw",
                             PageRequest.of(0, 25, Sort.by("code"))));
             assertEquals(1L, page.totalElements());
             assertEquals("1234", page.rows().get(0).code());
@@ -478,7 +481,7 @@ class ViewServiceTest {
                     companyValuation("5678", "Beta", BigDecimal.TEN)
             ));
             final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, null, "graham-index",
+                    new CompanyValuationTableQuery(null, null, "graham-index", "raw",
                             PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "grahamIndex"))));
             assertEquals(BigDecimal.TEN, page.rows().get(0).grahamIndex());
             assertEquals(BigDecimal.ONE, page.rows().get(1).grahamIndex());
@@ -489,9 +492,54 @@ class ViewServiceTest {
         void viewIsPreserved() {
             when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
             final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, null, "submit",
+                    new CompanyValuationTableQuery(null, null, "submit", "raw",
                             PageRequest.of(0, 25, Sort.by("code"))));
             assertEquals("submit", page.view());
+        }
+
+        @Test
+        @DisplayName("view=graham-index mode=relative → グレアム指数が業種内zスコアに差し替わる")
+        void grahamRelative_replacesWithZScore() {
+            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
+                    companyValuation("1234", "Alpha", BigDecimal.TEN),
+                    companyValuation("5678", "Beta", BigDecimal.ONE)
+            ));
+            when(viewValuationUseCase.findGrahamIndustryZScore())
+                    .thenReturn(Map.of("1234", new BigDecimal("1.50")));
+
+            final CompanyValuationTablePage page = service.findCompanyValuationTable(
+                    new CompanyValuationTableQuery(null, null, "graham-index", "relative",
+                            PageRequest.of(0, 25, Sort.by("code"))));
+
+            assertEquals(new BigDecimal("1.50"), page.rows().get(0).grahamIndex());
+            assertNull(page.rows().get(1).grahamIndex());
+        }
+
+        @Test
+        @DisplayName("getGrahamIndustryZScore → 該当コードの業種内zを返す / 該当なしは null")
+        void getGrahamIndustryZScore_returnsZForCode() {
+            when(viewValuationUseCase.findGrahamIndustryZScore())
+                    .thenReturn(Map.of("1234", new BigDecimal("1.50")));
+
+            assertEquals(new BigDecimal("1.50"),
+                    service.getGrahamIndustryZScore(github.com.ioridazo.fundanalyzer.web.model.CodeInputData.of("1234")));
+            assertNull(service.getGrahamIndustryZScore(
+                    github.com.ioridazo.fundanalyzer.web.model.CodeInputData.of("9999")));
+        }
+
+        @Test
+        @DisplayName("view=graham-index mode=raw → 差し替えず findGrahamIndustryZScore を呼ばない")
+        void grahamRaw_doesNotReplace() {
+            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
+                    companyValuation("1234", "Alpha", BigDecimal.TEN)
+            ));
+
+            final CompanyValuationTablePage page = service.findCompanyValuationTable(
+                    new CompanyValuationTableQuery(null, null, "graham-index", "raw",
+                            PageRequest.of(0, 25, Sort.by("code"))));
+
+            assertEquals(BigDecimal.TEN, page.rows().get(0).grahamIndex());
+            verify(viewValuationUseCase, never()).findGrahamIndustryZScore();
         }
     }
 

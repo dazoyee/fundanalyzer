@@ -29,6 +29,9 @@ public class ValuationPresenter {
     private static final String VIEW_DIVIDEND = "dividend-yield";
     private static final String VIEW_INDUSTRY = "industry";
 
+    private static final String MODE_RAW = "raw";
+    private static final String MODE_RELATIVE = "relative";
+
     private static final String DEFAULT_VIEW = VIEW_STOCK;
     private static final int MAX_PAGE_SIZE = 100;
     private static final int DEFAULT_PAGE_SIZE = 25;
@@ -77,8 +80,9 @@ public class ValuationPresenter {
             @RequestParam(name = "page", defaultValue = "0") final int page,
             @RequestParam(name = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) final int size,
             @RequestParam(name = "sort", required = false) final String sortParam,
+            @RequestParam(name = "mode", required = false) final String mode,
             final Model model) {
-        addCommonAttributes(model, target, view, keyword, page, size, sortParam);
+        addCommonAttributes(model, target, view, keyword, page, size, sortParam, mode);
         return VALUATION_V2;
     }
 
@@ -102,8 +106,9 @@ public class ValuationPresenter {
             @RequestParam(name = "page", defaultValue = "0") final int page,
             @RequestParam(name = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) final int size,
             @RequestParam(name = "sort", required = false) final String sortParam,
+            @RequestParam(name = "mode", required = false) final String mode,
             final Model model) {
-        final String resolvedView = addCommonAttributes(model, target, view, keyword, page, size, sortParam);
+        final String resolvedView = addCommonAttributes(model, target, view, keyword, page, size, sortParam, mode);
         return FRAGMENT_PREFIX + resolvedView + "-table";
     }
 
@@ -114,8 +119,10 @@ public class ValuationPresenter {
             final String keyword,
             final int page,
             final int size,
-            final String sortParam) {
+            final String sortParam,
+            final String mode) {
         final String resolvedView = resolveView(target, view);
+        final String resolvedMode = resolveMode(resolvedView, mode);
         final int safePage = Math.max(0, page);
         final int safeSize = Math.min(Math.max(1, size), MAX_PAGE_SIZE);
         final Sort sort = parseSort(resolvedView, sortParam);
@@ -128,7 +135,7 @@ public class ValuationPresenter {
             model.addAttribute("table", tablePage);
         } else {
             final CompanyValuationTableQuery query = new CompanyValuationTableQuery(
-                    target, keyword, resolvedView, pageable);
+                    target, keyword, resolvedView, resolvedMode, pageable);
             final CompanyValuationTablePage tablePage = viewService.findCompanyValuationTable(query);
             model.addAttribute("table", tablePage);
         }
@@ -137,7 +144,22 @@ public class ValuationPresenter {
         model.addAttribute("view", resolvedView);
         model.addAttribute("keyword", keyword);
         model.addAttribute("sortParam", resolvedSortParam);
+        model.addAttribute("mode", resolvedMode);
         return resolvedView;
+    }
+
+    /**
+     * 表示モードを正規化する。graham-index view の relative のみ許可し、それ以外は raw に倒す。
+     *
+     * @param resolvedView 解決済み view
+     * @param mode         要求モード
+     * @return 正規化済みモード（"raw" / "relative"）
+     */
+    private static String resolveMode(final String resolvedView, final String mode) {
+        if (VIEW_GRAHAM.equals(resolvedView) && MODE_RELATIVE.equals(mode)) {
+            return MODE_RELATIVE;
+        }
+        return MODE_RAW;
     }
 
     private static String resolveView(final String target, final String view) {

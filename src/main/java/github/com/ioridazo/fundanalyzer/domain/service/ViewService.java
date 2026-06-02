@@ -29,7 +29,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -311,6 +313,17 @@ public class ViewService {
     }
 
     /**
+     * 指定企業のグレアム指数の業種内zスコアを返す。
+     *
+     * @param inputData 企業コード
+     * @return 業種内zスコア（算出不能なら null）
+     */
+    @Observed
+    public BigDecimal getGrahamIndustryZScore(final CodeInputData inputData) {
+        return viewValuationUseCase.findGrahamIndustryZScore().get(inputData.getCode4());
+    }
+
+    /**
      * 株価評価（オール）
      *
      * @return 株価評価
@@ -348,11 +361,17 @@ public class ViewService {
      */
     @Observed
     public CompanyValuationTablePage findCompanyValuationTable(final CompanyValuationTableQuery query) {
-        final List<CompanyValuationViewModel> all = switch (Optional.ofNullable(query.target()).orElse("")) {
+        final List<CompanyValuationViewModel> targeted = switch (Optional.ofNullable(query.target()).orElse("")) {
             case "all" -> getAllValuationView();
             case "favorite" -> getFavoriteValuationView();
             default -> getValuationView();
         };
+
+        // graham-index view の相対モードでは、グレアム指数の表示値を業種内zスコアに差し替える
+        final List<CompanyValuationViewModel> all =
+                ("graham-index".equals(query.view()) && "relative".equals(query.mode()))
+                        ? replaceGrahamWithIndustryZScore(targeted)
+                        : targeted;
 
         final String keyword = Optional.ofNullable(query.keyword()).map(String::trim).orElse("");
         final List<CompanyValuationViewModel> filtered = keyword.isEmpty()
@@ -409,6 +428,20 @@ public class ViewService {
 
         return new IndustryValuationTablePage(
                 pageContent, totalPages, totalElements, pageNumber, pageSize, pageable.getSort());
+    }
+
+    /**
+     * グレアム指数の表示値を業種内zスコアに差し替えたリストを返す（業種内z算出不能な社は null）。
+     *
+     * @param source 会社評価ビュー一覧
+     * @return グレアム指数を業種内zスコアに差し替えたリスト
+     */
+    private List<CompanyValuationViewModel> replaceGrahamWithIndustryZScore(
+            final List<CompanyValuationViewModel> source) {
+        final Map<String, BigDecimal> zScoreByCode = viewValuationUseCase.findGrahamIndustryZScore();
+        return source.stream()
+                .map(cvvm -> cvvm.withGrahamIndex(zScoreByCode.get(cvvm.code())))
+                .toList();
     }
 
     private static List<CompanyValuationViewModel> applyCompanyValuationSort(

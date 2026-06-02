@@ -191,6 +191,8 @@
                 </span>
                 <div class="text-xs text-purple-700 dark:text-purple-300">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.grahamIndex}">-</div>
+                <div class="mt-0.5 text-xs text-purple-600 dark:text-purple-400 font-mono"
+                     th:text="'業種内z: ' + (${grahamIndustryZScore != null} ? ${grahamIndustryZScore} : '-')">業種内z: -</div>
             </div>
         </div>
         <!-- 下段: 4 観点カード横並び (旧版互換: 企業価値・統計 / 株価 / 財務指標 / バリュエーション) -->
@@ -236,6 +238,7 @@
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.per}">-</dd></div>
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR<th:block th:replace="~{fragments/tooltip :: hint('pbr')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.pbr}">-</dd></div>
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.grahamIndex}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数（業種内z）</dt><dd class="font-mono" th:text="${grahamIndustryZScore != null} ? ${grahamIndustryZScore} : '-'">-</dd></div>
                 </dl>
             </div>
         </div>

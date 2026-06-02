@@ -117,5 +117,21 @@ class CorporatePresenterTest {
             Mockito.verify(model).addAttribute("backwardCode", "0001");
             Mockito.verify(model).addAttribute("forwardCode", "0003");
         }
+
+        @Test
+        @DisplayName("グレアム指数の業種内zスコアが grahamIndustryZScore Model attribute に設定される")
+        void setsGrahamIndustryZScoreAttribute() {
+            final String code = "9999";
+            final CorporateDetailViewModel view = buildDetailView(List.of(), List.of(), List.of(), List.of());
+            Mockito.when(viewService.getCorporateDetailView(CodeInputData.of(code))).thenReturn(view);
+            Mockito.when(viewService.getValuationView(CodeInputData.of(code))).thenReturn(List.of());
+            Mockito.when(viewService.getGrahamIndustryZScore(CodeInputData.of(code)))
+                    .thenReturn(new java.math.BigDecimal("-1.06"));
+
+            final Model model = Mockito.mock(Model.class);
+            presenter.corporateDetailViewV3(code, null, model);
+
+            Mockito.verify(model).addAttribute("grahamIndustryZScore", new java.math.BigDecimal("-1.06"));
+        }
     }
 }

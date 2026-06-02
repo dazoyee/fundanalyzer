@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -300,5 +301,131 @@ class ViewValuationInteractorTest {
             assertDoesNotThrow(() -> interactor.updateView(inputData));
             assertTrue(true);
         }
+    }
+
+    @Nested
+    @DisplayName("computeGrahamIndustryZScore メソッド")
+    class ComputeGrahamIndustryZScore {
+
+        @DisplayName("computeGrahamIndustryZScore : 同一業種内のグレアム指数を標準化する")
+        @Test
+        void sameIndustry_standardized() {
+            final Map<String, Integer> industryByCode = Map.of("1234", 1, "5678", 1, "9012", 1);
+            final List<CompanyValuationViewModel> valuations = List.of(
+                    cvvm("1234", BigDecimal.valueOf(10)),
+                    cvvm("5678", BigDecimal.valueOf(20)),
+                    cvvm("9012", BigDecimal.valueOf(30)));
+
+            final Map<String, BigDecimal> result =
+                    ViewValuationInteractor.computeGrahamIndustryZScore(valuations, industryByCode);
+
+            assertAll(
+                    () -> assertEquals(new BigDecimal("-1.22"), result.get("1234")),
+                    () -> assertEquals(new BigDecimal("0.00"), result.get("5678")),
+                    () -> assertEquals(new BigDecimal("1.22"), result.get("9012")));
+        }
+
+        @DisplayName("computeGrahamIndustryZScore : 業種ごとに独立して標準化される（業種を跨いで混ざらない）")
+        @Test
+        void differentIndustries_doNotMix() {
+            final Map<String, Integer> industryByCode = Map.of(
+                    "1234", 1, "5678", 1, "9012", 1,
+                    "3456", 2, "7890", 2, "2345", 2);
+            final List<CompanyValuationViewModel> valuations = List.of(
+                    cvvm("1234", BigDecimal.valueOf(10)),
+                    cvvm("5678", BigDecimal.valueOf(20)),
+                    cvvm("9012", BigDecimal.valueOf(30)),
+                    cvvm("3456", BigDecimal.valueOf(100)),
+                    cvvm("7890", BigDecimal.valueOf(200)),
+                    cvvm("2345", BigDecimal.valueOf(300)));
+
+            final Map<String, BigDecimal> result =
+                    ViewValuationInteractor.computeGrahamIndustryZScore(valuations, industryByCode);
+
+            assertAll(
+                    () -> assertEquals(new BigDecimal("-1.22"), result.get("1234")),
+                    () -> assertEquals(new BigDecimal("-1.22"), result.get("3456")),
+                    () -> assertEquals(new BigDecimal("1.22"), result.get("2345")));
+        }
+
+        @DisplayName("computeGrahamIndustryZScore : グレアム指数が null の社は母集団・結果から除外される")
+        @Test
+        void nullGraham_excluded() {
+            final Map<String, Integer> industryByCode = Map.of("1234", 1, "5678", 1, "9012", 1, "3456", 1);
+            final List<CompanyValuationViewModel> valuations = List.of(
+                    cvvm("1234", BigDecimal.valueOf(10)),
+                    cvvm("5678", null),
+                    cvvm("9012", BigDecimal.valueOf(20)),
+                    cvvm("3456", BigDecimal.valueOf(30)));
+
+            final Map<String, BigDecimal> result =
+                    ViewValuationInteractor.computeGrahamIndustryZScore(valuations, industryByCode);
+
+            assertAll(
+                    () -> assertTrue(result.get("5678") == null),
+                    () -> assertEquals(new BigDecimal("-1.22"), result.get("1234")),
+                    () -> assertEquals(new BigDecimal("1.22"), result.get("3456")));
+        }
+
+        @DisplayName("computeGrahamIndustryZScore : 業種内社数が3未満のときは算出しない")
+        @Test
+        void lessThanThree_notComputed() {
+            final Map<String, Integer> industryByCode = Map.of("1234", 1, "5678", 1);
+            final List<CompanyValuationViewModel> valuations = List.of(
+                    cvvm("1234", BigDecimal.valueOf(10)),
+                    cvvm("5678", BigDecimal.valueOf(20)));
+
+            final Map<String, BigDecimal> result =
+                    ViewValuationInteractor.computeGrahamIndustryZScore(valuations, industryByCode);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @DisplayName("computeGrahamIndustryZScore : 標準偏差が0のときは算出しない（ゼロ除算回避）")
+        @Test
+        void zeroStandardDeviation_notComputed() {
+            final Map<String, Integer> industryByCode = Map.of("1234", 1, "5678", 1, "9012", 1);
+            final List<CompanyValuationViewModel> valuations = List.of(
+                    cvvm("1234", BigDecimal.valueOf(15)),
+                    cvvm("5678", BigDecimal.valueOf(15)),
+                    cvvm("9012", BigDecimal.valueOf(15)));
+
+            final Map<String, BigDecimal> result =
+                    ViewValuationInteractor.computeGrahamIndustryZScore(valuations, industryByCode);
+
+            assertTrue(result.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("findGrahamIndustryZScore メソッド")
+    class FindGrahamIndustryZScore {
+
+        @DisplayName("findGrahamIndustryZScore : 全対象企業の業種と評価ビューから業種内zスコアを返す")
+        @Test
+        void returnsZScoreByCode() {
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(
+                    company("1234", 1), company("5678", 1), company("9012", 1)));
+            doReturn(List.of(
+                    cvvm("1234", BigDecimal.valueOf(10)),
+                    cvvm("5678", BigDecimal.valueOf(20)),
+                    cvvm("9012", BigDecimal.valueOf(30))))
+                    .when(interactor).viewAllValuation();
+
+            final Map<String, BigDecimal> result = interactor.findGrahamIndustryZScore();
+
+            assertAll(
+                    () -> assertEquals(new BigDecimal("-1.22"), result.get("1234")),
+                    () -> assertEquals(new BigDecimal("1.22"), result.get("9012")));
+        }
+    }
+
+    private static CompanyValuationViewModel cvvm(final String code, final BigDecimal grahamIndex) {
+        return new CompanyValuationViewModel(
+                code, code, null, null, grahamIndex, null, null, null, null, null, null, null, null, null, null);
+    }
+
+    private static Company company(final String code, final Integer industryId) {
+        return new Company(code, code, industryId, "業種", "E" + code, null, null, null, null, false, true);
     }
 }

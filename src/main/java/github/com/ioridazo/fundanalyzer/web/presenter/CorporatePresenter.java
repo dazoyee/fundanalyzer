@@ -67,6 +67,7 @@ public class CorporatePresenter {
         model.addAttribute("backwardCode", view.getBackwardCode());
         model.addAttribute("forwardCode", view.getForwardCode());
         model.addAttribute("corporateView", view.getCorporate());
+        model.addAttribute("grahamIndustryZScore", viewService.getGrahamIndustryZScore(CodeInputData.of(code)));
         setAnalysisView(view, model);
         setInvestmentIndicator(view, model);
         model.addAttribute("financialStatements", view.getFinancialStatement());
