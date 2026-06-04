@@ -30,6 +30,8 @@ public class AnalysisResult {
     private final String documentId;
 
     private static final int TENTH_DECIMAL_PLACE = 10;
+    /** 年換算重み（1年=4四半期の不変定数。四半期分母の既定値と年換算倍率を兼ねる）。 */
+    private static final BigDecimal ANNUAL_WEIGHT = BigDecimal.valueOf(4);
 
     public AnalysisResult(
             final BigDecimal corporateValue,
@@ -46,10 +48,6 @@ public class AnalysisResult {
         this.roa = roa;
         this.submitDate = submitDate;
         this.documentId = documentId;
-    }
-
-    public AnalysisResult(final FinanceValue financeValue, final Document document) {
-        this(financeValue, document, AnalysisCoefficient.defaults());
     }
 
     public AnalysisResult(final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient) {
@@ -103,19 +101,6 @@ public class AnalysisResult {
     }
 
     /**
-     * 企業価値を既定係数で算出する
-     *
-     * @param financeValue 財務諸表値
-     * @param document     ドキュメント
-     * @return 企業価値
-     * @throws FundanalyzerNotExistException 値が存在しないとき
-     */
-    BigDecimal calculateCorporateValue(
-            final FinanceValue financeValue, final Document document) throws FundanalyzerNotExistException {
-        return calculateCorporateValue(financeValue, document, AnalysisCoefficient.defaults());
-    }
-
-    /**
      * 企業価値を指定係数で算出する
      *
      * @param financeValue 財務諸表値
@@ -162,12 +147,12 @@ public class AnalysisResult {
                         PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
                         document
                 ));
-        // 四半期種別の重みづけ（QuarterType 未設定時は年次想定の annualWeight をフォールバックに使う）
+        // 四半期種別の重みづけ（QuarterType 未設定時は年次想定の ANNUAL_WEIGHT をフォールバックに使う）
         final BigDecimal weightingQuarterType = Optional.of(document)
                 .map(Document::getQuarterType)
                 .map(QuarterType::getWeight)
                 .map(BigDecimal::new)
-                .orElse(coefficient.getAnnualWeight());
+                .orElse(ANNUAL_WEIGHT);
         // 株式総数
         final BigDecimal numberOfShares = financeValue.getNumberOfShares().map(BigDecimal::new)
                 .orElseThrow(() -> new FundanalyzerNotExistException(
@@ -180,7 +165,7 @@ public class AnalysisResult {
                 .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(coefficient.getCurrentLiabilitiesRatio())).add(totalInvestmentsAndOtherAssets)
                 .subtract(totalFixedLiabilities)
                 .divide(weightingQuarterType, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
-                .multiply(coefficient.getAnnualWeight())
+                .multiply(ANNUAL_WEIGHT)
                 .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 

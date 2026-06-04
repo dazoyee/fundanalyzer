@@ -7,8 +7,10 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResu
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -46,32 +48,38 @@ import static org.mockito.Mockito.when;
 
 class AnalyzeInteractorTest {
 
+    private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
     private InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private IndustrySpecification industrySpecification;
 
     private AnalyzeInteractor analyzeInteractor;
 
     @BeforeEach
     void setUp() {
+        companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = mock(StockSpecification.class);
         investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
+        industrySpecification = mock(IndustrySpecification.class);
 
         analyzeInteractor = Mockito.spy(new AnalyzeInteractor(
-                Mockito.mock(CompanySpecification.class),
+                companySpecification,
                 documentSpecification,
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
                 investmentIndicatorSpecification,
-                AnalysisCoefficient.defaults()
+                industrySpecification
         ));
         analyzeInteractor.targetTypeCodes = List.of("120", "130");
+        when(industrySpecification.resolveCoefficient(any()))
+                .thenReturn(new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(1.2)));
     }
 
     @Nested
@@ -122,19 +130,11 @@ class AnalyzeInteractorTest {
             verify(analysisResultSpecification, times(1)).insert(any(), any());
         }
 
-        @DisplayName("analyze : 注入された係数が企業価値の算出に反映される")
+        @DisplayName("analyze : 業種別に解決された係数が企業価値の算出に反映される")
         @Test
         void document_usesInjectedCoefficient() {
-            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2), BigDecimal.valueOf(4));
-            var interactor = new AnalyzeInteractor(
-                    mock(CompanySpecification.class),
-                    documentSpecification,
-                    financialStatementSpecification,
-                    analysisResultSpecification,
-                    stockSpecification,
-                    investmentIndicatorSpecification,
-                    coefficient
-            );
+            when(industrySpecification.resolveCoefficient(any()))
+                    .thenReturn(new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2)));
 
             var financeValue = FinanceValue.of(
                     100L,
@@ -159,10 +159,23 @@ class AnalyzeInteractorTest {
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
             var captor = ArgumentCaptor.forClass(AnalysisResult.class);
 
-            assertDoesNotThrow(() -> interactor.analyze(document));
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
 
             verify(analysisResultSpecification, times(1)).insert(eq(document), captor.capture());
             assertEquals(expected, captor.getValue().getCorporateValue());
+        }
+
+        @DisplayName("analyze : 業種別係数が解決できないときはスキップし、バッチを中断しない")
+        @Test
+        void resolveCoefficient_notExist_skips() {
+            when(industrySpecification.resolveCoefficient(any()))
+                    .thenThrow(new FundanalyzerNotExistException("業種別係数が存在しません。"));
+            final FinanceValue financeValue = FinanceValue.of(
+                    100L, 101L, 102L, 103L, 104L, 105L, 106L, 107L, 108L, 109L);
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+            verify(analysisResultSpecification, times(0)).insert(any(), any());
         }
 
         @DisplayName("analyze : 分析時にエラーが発生したときの処理を確認する")

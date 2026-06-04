@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class AnalysisResultTest {
 
     private final AnalysisResult analysisResult = new AnalysisResult(null, null, null, null, null, null, null);
+    private final AnalysisCoefficient defaultCoefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(1.2));
 
     @Nested
     class calculateCorporateValue {
@@ -45,7 +46,7 @@ class AnalysisResultTest {
                     .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
                     .subtract(BigDecimal.valueOf(1004))
                     .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
-            var actual = analysisResult.calculateCorporateValue(financeValue, document);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient);
             assertEquals(expected, actual);
         }
 
@@ -91,7 +92,7 @@ class AnalysisResultTest {
                     .divide(BigDecimal.valueOf(3), 10, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(4))
                     .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
-            var actual = analysisResult.calculateCorporateValue(financeValue, document);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient);
             assertEquals(expected, actual);
         }
 
@@ -113,7 +114,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_CURRENT_ASSETS.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -136,7 +137,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -160,7 +161,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -183,7 +184,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -206,7 +207,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(PlSubject.PlEnum.OPERATING_PROFIT.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -229,7 +230,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals("株式総数", exception.getSubjectName().orElseThrow());
         }
@@ -571,7 +572,7 @@ class AnalysisResultTest {
         @DisplayName("calculateCorporateValue : 指定した営業利益重みが式に反映される")
         @Test
         void operatingProfitWeight_reflected() {
-            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2), BigDecimal.valueOf(4));
+            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2));
 
             var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(20))
                     .add(BigDecimal.valueOf(1001))
@@ -582,18 +583,10 @@ class AnalysisResultTest {
             assertEquals(expected, actual);
         }
 
-        @DisplayName("calculateCorporateValue : 既定係数を明示指定した結果は係数なしメソッドと一致する")
-        @Test
-        void defaults_equalsNoCoefficientOverload() {
-            var withDefaults = analysisResult.calculateCorporateValue(financeValue, document, AnalysisCoefficient.defaults());
-            var withoutCoefficient = analysisResult.calculateCorporateValue(financeValue, document);
-            assertEquals(withoutCoefficient, withDefaults);
-        }
-
         @DisplayName("calculateCorporateValue : 流動負債調整係数のみ変更すると流動負債の項のみ変わる")
         @Test
         void currentLiabilitiesRatio_reflected() {
-            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(2.0), BigDecimal.valueOf(4));
+            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(2.0));
 
             var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
                     .add(BigDecimal.valueOf(1001))

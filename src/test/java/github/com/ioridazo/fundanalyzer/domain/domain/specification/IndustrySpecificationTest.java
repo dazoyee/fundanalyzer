@@ -1,8 +1,10 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +12,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -136,6 +140,46 @@ class IndustrySpecificationTest {
         void boolean_false() {
             var id = 28;
             assertFalse(industrySpecification.isTarget(id));
+        }
+    }
+
+    @Nested
+    @DisplayName("resolveCoefficient メソッド")
+    class ResolveCoefficient {
+
+        @BeforeEach
+        void setUp() {
+            when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(
+                    new IndustryEntity(12, "情報・通信業", BigDecimal.valueOf(15), BigDecimal.valueOf(1.1), LocalDateTime.now()),
+                    new IndustryEntity(14, "電気・ガス業", BigDecimal.valueOf(6), BigDecimal.valueOf(1.2), LocalDateTime.now())));
+        }
+
+        @DisplayName("resolveCoefficient : 業種行の係数を返す")
+        @Test
+        void ok() {
+            final AnalysisCoefficient actual = industrySpecification.resolveCoefficient(12);
+            assertEquals(BigDecimal.valueOf(15), actual.getOperatingProfitWeight());
+            assertEquals(BigDecimal.valueOf(1.1), actual.getCurrentLiabilitiesRatio());
+        }
+
+        @DisplayName("resolveCoefficient : 業種ごとに正しい行の係数を返す（取り違えない）")
+        @Test
+        void differentIndustry() {
+            final AnalysisCoefficient actual = industrySpecification.resolveCoefficient(14);
+            assertEquals(BigDecimal.valueOf(6), actual.getOperatingProfitWeight());
+            assertEquals(BigDecimal.valueOf(1.2), actual.getCurrentLiabilitiesRatio());
+        }
+
+        @DisplayName("resolveCoefficient : 業種IDがnullのときは例外")
+        @Test
+        void nullId() {
+            assertThrows(FundanalyzerNotExistException.class, () -> industrySpecification.resolveCoefficient(null));
+        }
+
+        @DisplayName("resolveCoefficient : 該当業種が存在しないときは例外")
+        @Test
+        void unknownId() {
+            assertThrows(FundanalyzerNotExistException.class, () -> industrySpecification.resolveCoefficient(99));
         }
     }
 }

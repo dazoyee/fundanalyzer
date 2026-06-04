@@ -1,8 +1,10 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.client.csv.bean.EdinetCsvResultBean;
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.master.IndustryDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
@@ -77,6 +79,26 @@ public class IndustrySpecification {
                 .map(IndustryEntity::name)
                 .findFirst()
                 .orElseThrow(() -> new FundanalyzerRuntimeException("業種名が存在しません。"));
+    }
+
+    /**
+     * 業種別の企業価値算出係数を取得する。
+     *
+     * @param industryId 業種ID
+     * @return 業種行の営業利益倍率・流動負債調整係数を持つ係数
+     * @throws FundanalyzerNotExistException 業種IDが null または該当業種が存在しないとき
+     */
+    public AnalysisCoefficient resolveCoefficient(final Integer industryId) {
+        return inquiryIndustryList().stream()
+                .filter(industry -> Objects.equals(industryId, industry.id()))
+                // 係数列が NULL の行（未マイグレーション・簡易生成等）は対象外とし NPE を防ぐ
+                .filter(industry -> industry.operatingProfitWeight() != null
+                                    && industry.currentLiabilitiesRatio() != null)
+                .findFirst()
+                .map(industry -> new AnalysisCoefficient(
+                        industry.operatingProfitWeight(),
+                        industry.currentLiabilitiesRatio()))
+                .orElseThrow(() -> new FundanalyzerNotExistException("業種別係数が存在しません。"));
     }
 
     /**

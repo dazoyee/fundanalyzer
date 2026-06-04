@@ -140,11 +140,6 @@ app:
   version: @pom.version@
 
   config:
-    analysis:
-      operating-profit-weight: 10     # 営業利益の倍率（収益力評価）
-      current-liabilities-ratio: 1.2  # 流動負債の調整係数
-      annual-weight: 4                # 年換算の四半期重み（分母の四半期重み既定値・分子の年換算倍率を兼ねる）
-
     edinet:
       api-key: "edinet.api-key"
 
