@@ -229,3 +229,4 @@ CLAUDE.md・本 md 更新済み。
 
 - 2026-06-03: 初版（YML業種マップ案）→ 業種IDキー → industry 列追加（V0.3.7）と推移。
 - 2026-06-03: 既定値もテーブル（列 DEFAULT）で保持し YML/`defaults()` から削除する方針（設計(i)＋(い)）に確定。`AnalysisCoefficient` を値オブジェクト化（①作り替え）。Gate1 承認待ち。
+- 2026-06-07: **ER図更新は別タスク化**。`develop/document/Entity-Relationship-Diagram.drawio` は2020年作成で `company` 周辺のみ・現行スキーマの大半（`industry`/`analysis_result` 等）が未反映と判明。本タスクの「industry 列追記」は対象テーブルが図に無く成立しないため見送り。ER図は現行 `db/migration/V*.sql` からの**全面再生成を別タスク**で扱う。
