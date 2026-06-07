@@ -17,6 +17,8 @@ public class AnalysisResult {
 
     private final BigDecimal corporateValue;
 
+    private final BigDecimal rimValue;
+
     private final BigDecimal bps;
 
     private final BigDecimal eps;
@@ -41,7 +43,20 @@ public class AnalysisResult {
             final BigDecimal roa,
             final LocalDate submitDate,
             final String documentId) {
+        this(corporateValue, null, bps, eps, roe, roa, submitDate, documentId);
+    }
+
+    public AnalysisResult(
+            final BigDecimal corporateValue,
+            final BigDecimal rimValue,
+            final BigDecimal bps,
+            final BigDecimal eps,
+            final BigDecimal roe,
+            final BigDecimal roa,
+            final LocalDate submitDate,
+            final String documentId) {
         this.corporateValue = corporateValue;
+        this.rimValue = rimValue;
         this.bps = bps;
         this.eps = eps;
         this.roe = roe;
@@ -56,12 +71,14 @@ public class AnalysisResult {
         this.eps = calculateEps(financeValue, document).orElse(null);
         this.roe = calculateRoe(financeValue, document).orElse(null);
         this.roa = calculateRoa(financeValue, document).orElse(null);
+        this.rimValue = calculateRimValue(this.bps, this.roe, coefficient.getCostOfEquity()).orElse(null);
         this.submitDate = document.getSubmitDate();
         this.documentId = document.getDocumentId();
     }
 
     public static AnalysisResult of() {
         return new AnalysisResult(
+                null,
                 null,
                 null,
                 null,
@@ -75,6 +92,7 @@ public class AnalysisResult {
     public static AnalysisResult of(final AnalysisResultEntity entity) {
         return new AnalysisResult(
                 entity.getCorporateValue(),
+                entity.getRimValue().orElse(null),
                 entity.getBps().orElse(null),
                 entity.getEps().orElse(null),
                 entity.getRoe().orElse(null),
@@ -82,6 +100,30 @@ public class AnalysisResult {
                 entity.getSubmitDate(),
                 entity.getDocumentId()
         );
+    }
+
+    public Optional<BigDecimal> getRimValue() {
+        return Optional.ofNullable(rimValue);
+    }
+
+    /**
+     * 残余利益モデル(無成長)の理論株価を算出する。
+     *
+     * <p>{@code BPS × (ROE/100) ÷ r}。BPS/ROE/r が無い・r が 0・ROE が 0 以下（赤字等）のときは算出しない。
+     *
+     * @param bps          1株当たり純資産
+     * @param roe          自己資本利益率（百分率）
+     * @param costOfEquity 資本コスト（割引率）
+     * @return RIM 理論株価（算出不能時は空）
+     */
+    Optional<BigDecimal> calculateRimValue(final BigDecimal bps, final BigDecimal roe, final BigDecimal costOfEquity) {
+        if (bps == null || roe == null || costOfEquity == null
+            || costOfEquity.signum() <= 0 || roe.signum() <= 0) {
+            return Optional.empty();
+        }
+        return Optional.of(bps
+                .multiply(roe.divide(BigDecimal.valueOf(100), TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP))
+                .divide(costOfEquity, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
     public Optional<BigDecimal> getBps() {

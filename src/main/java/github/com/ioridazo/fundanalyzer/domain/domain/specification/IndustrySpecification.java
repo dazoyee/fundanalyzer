@@ -93,11 +93,13 @@ public class IndustrySpecification {
                 .filter(industry -> Objects.equals(industryId, industry.id()))
                 // 係数列が NULL の行（未マイグレーション・簡易生成等）は対象外とし NPE を防ぐ
                 .filter(industry -> industry.operatingProfitWeight() != null
-                                    && industry.currentLiabilitiesRatio() != null)
+                                    && industry.currentLiabilitiesRatio() != null
+                                    && industry.costOfEquity() != null)
                 .findFirst()
                 .map(industry -> new AnalysisCoefficient(
                         industry.operatingProfitWeight(),
-                        industry.currentLiabilitiesRatio()))
+                        industry.currentLiabilitiesRatio(),
+                        industry.costOfEquity()))
                 .orElseThrow(() -> new FundanalyzerNotExistException("業種別係数が存在しません。"));
     }
 

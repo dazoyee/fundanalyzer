@@ -108,6 +108,7 @@ public class AnalysisResultSpecification {
                     company.code(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     analysisResult.getCorporateValue(),
+                    analysisResult.getRimValue().orElse(null),
                     analysisResult.getBps().orElse(null),
                     analysisResult.getEps().orElse(null),
                     analysisResult.getRoe().orElse(null),

@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AnalysisResultTest {
 
@@ -595,6 +596,50 @@ class AnalysisResultTest {
                     .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
             var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
             assertEquals(expected, actual);
+        }
+    }
+
+    @Nested
+    @DisplayName("calculateRimValue のテスト")
+    class CalculateRimValue {
+
+        @DisplayName("calculateRimValue : BPS×(ROE/100)÷r で算出する")
+        @Test
+        void present() {
+            // BPS=1000, ROE=12%, r=0.08 → 1000×0.12÷0.08 = 1500
+            final BigDecimal actual = analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.valueOf(0.08)).orElse(null);
+            assertEquals(0, BigDecimal.valueOf(1500).compareTo(actual));
+        }
+
+        @DisplayName("calculateRimValue : 資本コスト r が異なると比例して変わる")
+        @Test
+        void differentR() {
+            final BigDecimal actual = analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.valueOf(0.10)).orElse(null);
+            assertEquals(0, BigDecimal.valueOf(1200).compareTo(actual));
+        }
+
+        @DisplayName("calculateRimValue : ROE が 0 以下（赤字等）のときは算出しない")
+        @Test
+        void roeNonPositive() {
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.ZERO, BigDecimal.valueOf(0.08)).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(-5), BigDecimal.valueOf(0.08)).isEmpty());
+        }
+
+        @DisplayName("calculateRimValue : BPS/ROE/r が null・r=0 のときは算出しない")
+        @Test
+        void nullOrZero() {
+            assertTrue(analysisResult.calculateRimValue(
+                    null, BigDecimal.valueOf(12), BigDecimal.valueOf(0.08)).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), null, BigDecimal.valueOf(0.08)).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), null).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.ZERO).isEmpty());
         }
     }
 

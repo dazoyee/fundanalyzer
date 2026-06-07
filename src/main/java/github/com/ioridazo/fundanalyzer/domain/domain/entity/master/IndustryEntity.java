@@ -24,6 +24,8 @@ public record IndustryEntity(
 
         BigDecimal currentLiabilitiesRatio,
 
+        BigDecimal costOfEquity,
+
         @Column(updatable = false)
         LocalDateTime createdAt
 ) {
@@ -36,7 +38,7 @@ public record IndustryEntity(
      * @param createdAt 登録日時
      */
     public IndustryEntity(final Integer id, final String name, final LocalDateTime createdAt) {
-        this(id, name, null, null, createdAt);
+        this(id, name, null, null, null, createdAt);
     }
 
     public static IndustryEntity of(final String industryName, final LocalDateTime nowLocalDateTime) {

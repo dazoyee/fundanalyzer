@@ -150,16 +150,17 @@ class IndustrySpecificationTest {
         @BeforeEach
         void setUp() {
             when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(
-                    new IndustryEntity(12, "情報・通信業", BigDecimal.valueOf(15), BigDecimal.valueOf(1.1), LocalDateTime.now()),
-                    new IndustryEntity(14, "電気・ガス業", BigDecimal.valueOf(6), BigDecimal.valueOf(1.2), LocalDateTime.now())));
+                    new IndustryEntity(12, "情報・通信業", BigDecimal.valueOf(15), BigDecimal.valueOf(1.1), BigDecimal.valueOf(0.10), LocalDateTime.now()),
+                    new IndustryEntity(14, "電気・ガス業", BigDecimal.valueOf(6), BigDecimal.valueOf(1.2), BigDecimal.valueOf(0.06), LocalDateTime.now())));
         }
 
-        @DisplayName("resolveCoefficient : 業種行の係数を返す")
+        @DisplayName("resolveCoefficient : 業種行の係数（資本コスト含む）を返す")
         @Test
         void ok() {
             final AnalysisCoefficient actual = industrySpecification.resolveCoefficient(12);
             assertEquals(BigDecimal.valueOf(15), actual.getOperatingProfitWeight());
             assertEquals(BigDecimal.valueOf(1.1), actual.getCurrentLiabilitiesRatio());
+            assertEquals(BigDecimal.valueOf(0.10), actual.getCostOfEquity());
         }
 
         @DisplayName("resolveCoefficient : 業種ごとに正しい行の係数を返す（取り違えない）")
@@ -168,6 +169,7 @@ class IndustrySpecificationTest {
             final AnalysisCoefficient actual = industrySpecification.resolveCoefficient(14);
             assertEquals(BigDecimal.valueOf(6), actual.getOperatingProfitWeight());
             assertEquals(BigDecimal.valueOf(1.2), actual.getCurrentLiabilitiesRatio());
+            assertEquals(BigDecimal.valueOf(0.06), actual.getCostOfEquity());
         }
 
         @DisplayName("resolveCoefficient : 業種IDがnullのときは例外")

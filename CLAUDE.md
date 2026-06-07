@@ -150,7 +150,8 @@ exception/   … 業務例外
 - マイグレーションは `src/main/resources/db/migration/V*.sql`。**既存ファイルは編集せず、新規バージョンを追加**（Flyway 規約）。
 - DAO は `domain/domain/dao/{master|transaction|view}/` に配置。SQLは Doma 規約で `src/main/resources/META-INF/github/...` に対応する SQL ファイルを置く（`META-INF/github/com/...` を `find` で確認）。
 - 設定で対象外とする企業/業種/書類タイプ等は `app.config.scraping.*`, `app.config.remove-document.*`, `app.config.view.*` に集約されており、コード内ハードコードしない。
-- 企業価値算出の係数は3つ: **営業利益倍率・流動負債調整係数は `industry` マスタの列**（`operating_profit_weight`/`current_liabilities_ratio`・既定値も列 DEFAULT 10/1.2 で保持）、**年換算重み(4) はソース定数** `AnalysisResult.ANNUAL_WEIGHT`（「1年=4四半期」で不変）。`AnalyzeInteractor` が会社の `industryId` から `IndustrySpecification.resolveCoefficient(industryId)` で業種別の実効係数（`config/AnalysisCoefficient`＝op/curr の2係数値オブジェクト）を解決し `new AnalysisResult(financeValue, document, coefficient)` で算出。業種別係数の変更は**新規分析分から反映**（既存 `analysis_result` は再分析の一意制約スキップにより据え置き）。
+- 企業価値算出の係数: **営業利益倍率・流動負債調整係数・資本コスト(RIM用 r) は `industry` マスタの列**（`operating_profit_weight`/`current_liabilities_ratio`/`cost_of_equity`・既定値も列 DEFAULT 10/1.2/0.08 で保持）、**年換算重み(4) はソース定数** `AnalysisResult.ANNUAL_WEIGHT`（不変）。`AnalyzeInteractor` が会社の `industryId` から `IndustrySpecification.resolveCoefficient(industryId)` で業種別の実効係数（`config/AnalysisCoefficient`＝op/curr/r の値オブジェクト）を解決し `new AnalysisResult(financeValue, document, coefficient)` で算出。業種別係数の変更は**新規分析分から反映**（既存 `analysis_result` は再分析の一意制約スキップにより据え置き）。
+- **残余利益モデル(RIM)**: `AnalysisResult` が `BPS×(ROE/100)÷r` で2つ目の理論株価 `rimValue` を算出し `analysis_result.rim_value` に保存（前向きのみ・既存行はNULL）。`/v3/corporate` の表示情報に「RIM理論株価」＋「2モデル合意度（企業価値モデルとRIMのうち株価より高い＝割安と判定した数 / 評価できた数）」を表示（`CorporatePresenter.setRimAndAgreement`）。
 
 ### View / 画面
 

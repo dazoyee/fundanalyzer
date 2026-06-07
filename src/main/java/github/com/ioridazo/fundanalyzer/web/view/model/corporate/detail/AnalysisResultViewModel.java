@@ -9,6 +9,7 @@ public record AnalysisResultViewModel(
         LocalDate submitDate,
         LocalDate documentPeriod,
         BigDecimal corporateValue,
+        BigDecimal rimValue,
         String documentTypeCode,
         String quarterType
 ) {
@@ -17,6 +18,7 @@ public record AnalysisResultViewModel(
                 entity.getSubmitDate(),
                 entity.getDocumentPeriod(),
                 entity.getCorporateValue(),
+                entity.getRimValue().orElse(null),
                 entity.getDocumentTypeCode(),
                 entity.getQuarterType()
         );
