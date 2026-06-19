@@ -90,7 +90,7 @@
         <footer class="border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
             <p>
                 &copy; fundanalyzer
-                <span layout:fragment="footer">画面刷新タスク Phase 2 layout-v2</span>
+                <span th:text="'v' + ${applicationVersion}">v?.?.?</span>
             </p>
         </footer>
     </div>
