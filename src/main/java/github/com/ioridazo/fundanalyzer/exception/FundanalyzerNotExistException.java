@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 import java.util.Optional;
 
-public class FundanalyzerNotExistException extends RuntimeException {
+public class FundanalyzerNotExistException extends FundanalyzerRuntimeException {
 
     private static final String MESSAGE = "次の値が存在していません。\t{0}";
 

@@ -1,10 +1,28 @@
 package github.com.ioridazo.fundanalyzer.web.model;
 
-import lombok.Value;
+/**
+ * ID 入力データ
+ *
+ * @param id ドキュメント等の識別子
+ */
+public record IdInputData(String id) {
 
-@SuppressWarnings("RedundantModifiersValueLombok")
-@Value(staticConstructor = "of")
-public class IdInputData {
+    /**
+     * 静的ファクトリ
+     *
+     * @param id 識別子
+     * @return IdInputData
+     */
+    public static IdInputData of(final String id) {
+        return new IdInputData(id);
+    }
 
-    private final String id;
+    /**
+     * 互換アクセサ（既存呼び出し向け）
+     *
+     * @return id
+     */
+    public String getId() {
+        return id;
+    }
 }

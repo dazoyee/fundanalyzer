@@ -111,7 +111,8 @@ public class ViewSpecification {
      * @return 企業情報ビュー
      */
     public CorporateViewModel findLatestCorporateView(final CodeInputData inputData) {
-        return corporateViewDao.selectByCode(inputData.getCode()).stream()
+        // corporate_view.code は CHAR(4)。URL に 5 桁の company.code が来た場合も 4 桁に正規化する
+        return corporateViewDao.selectByCode(inputData.getCode4()).stream()
                 .filter(viewBean -> viewBean.getSubmitDate().isPresent())
                 .max(Comparator.comparing(viewBean -> viewBean.getSubmitDate().get()))
                 .map(CorporateViewModel::of)
@@ -277,86 +278,39 @@ public class ViewSpecification {
             final CorporateValue corporateValue,
             final IndicatorValue indicatorValue) throws FundanalyzerNotExistException {
         final Stock stock = stockSpecification.findStock(company);
+        final Map<AverageInfo.Year, Optional<BigDecimal>> discountValues = calculateDiscountValue(corporateValue, stock);
+        final Map<AverageInfo.Year, Optional<BigDecimal>> discountRates = calculateDiscountRate(corporateValue, stock);
 
         return CorporateViewModel.of(
                 company.code().substring(0, 4),
                 company.companyName(),
                 document.getSubmitDate(),
                 document.getDocumentTypeCode().toValue(),
-                Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
-                        .anyMatch(dtc -> document.getDocumentTypeCode().equals(dtc)),
+                isAnnualOrSemiAnnualReport(document),
                 corporateValue.getLatestCorporateValue().orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))
-                        .findFirst()
-                        .flatMap(AverageInfo::getAverageCorporateValue)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))
-                        .findFirst()
-                        .flatMap(AverageInfo::getStandardDeviation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.THREE))
-                        .findFirst()
-                        .flatMap(AverageInfo::getCoefficientOfVariation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.FIVE))
-                        .findFirst()
-                        .flatMap(AverageInfo::getAverageCorporateValue)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.FIVE))
-                        .findFirst()
-                        .flatMap(AverageInfo::getStandardDeviation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.FIVE))
-                        .findFirst()
-                        .flatMap(AverageInfo::getCoefficientOfVariation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.TEN))
-                        .findFirst()
-                        .flatMap(AverageInfo::getAverageCorporateValue)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.TEN))
-                        .findFirst()
-                        .flatMap(AverageInfo::getStandardDeviation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.TEN))
-                        .findFirst()
-                        .flatMap(AverageInfo::getCoefficientOfVariation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.ALL))
-                        .findFirst()
-                        .flatMap(AverageInfo::getAverageCorporateValue)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.ALL))
-                        .findFirst()
-                        .flatMap(AverageInfo::getStandardDeviation)
-                        .orElse(null),
-                corporateValue.getAverageInfoList().stream()
-                        .filter(averageInfo -> averageInfo.getYear().equals(AverageInfo.Year.ALL))
-                        .findFirst()
-                        .flatMap(AverageInfo::getCoefficientOfVariation)
-                        .orElse(null),
+                averageCorporateValueOf(corporateValue, AverageInfo.Year.THREE),
+                standardDeviationOf(corporateValue, AverageInfo.Year.THREE),
+                coefficientOfVariationOf(corporateValue, AverageInfo.Year.THREE),
+                averageCorporateValueOf(corporateValue, AverageInfo.Year.FIVE),
+                standardDeviationOf(corporateValue, AverageInfo.Year.FIVE),
+                coefficientOfVariationOf(corporateValue, AverageInfo.Year.FIVE),
+                averageCorporateValueOf(corporateValue, AverageInfo.Year.TEN),
+                standardDeviationOf(corporateValue, AverageInfo.Year.TEN),
+                coefficientOfVariationOf(corporateValue, AverageInfo.Year.TEN),
+                averageCorporateValueOf(corporateValue, AverageInfo.Year.ALL),
+                standardDeviationOf(corporateValue, AverageInfo.Year.ALL),
+                coefficientOfVariationOf(corporateValue, AverageInfo.Year.ALL),
                 stock.getAverageStockPrice().orElse(null),
                 stock.getImportDate().orElse(null),
                 stock.getLatestStockPrice().orElse(null),
-                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.THREE, Optional.empty()).orElse(null),
-                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.THREE, Optional.empty()).orElse(null),
-                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.FIVE, Optional.empty()).orElse(null),
-                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.FIVE, Optional.empty()).orElse(null),
-                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.TEN, Optional.empty()).orElse(null),
-                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.TEN, Optional.empty()).orElse(null),
-                calculateDiscountValue(corporateValue, stock).getOrDefault(AverageInfo.Year.ALL, Optional.empty()).orElse(null),
-                calculateDiscountRate(corporateValue, stock).getOrDefault(AverageInfo.Year.ALL, Optional.empty()).orElse(null),
+                discountValueOf(discountValues, AverageInfo.Year.THREE),
+                discountValueOf(discountRates, AverageInfo.Year.THREE),
+                discountValueOf(discountValues, AverageInfo.Year.FIVE),
+                discountValueOf(discountRates, AverageInfo.Year.FIVE),
+                discountValueOf(discountValues, AverageInfo.Year.TEN),
+                discountValueOf(discountRates, AverageInfo.Year.TEN),
+                discountValueOf(discountValues, AverageInfo.Year.ALL),
+                discountValueOf(discountRates, AverageInfo.Year.ALL),
                 corporateValue.getCountYear().orElse(null),
                 stock.getLatestForecastStock().orElse(null),
                 indicatorValue.getPriceCorporateValueRatio(),
@@ -368,6 +322,75 @@ public class ViewSpecification {
                 analysisResult.getRoa().orElse(null),
                 indicatorValue.getGrahamIndex().orElse(null)
         );
+    }
+
+    /**
+     * ドキュメント種別が有価証券報告書もしくは半期報告書か判定する
+     *
+     * @param document ドキュメント
+     * @return DTC_120 または DTC_130 のとき true
+     */
+    private boolean isAnnualOrSemiAnnualReport(final Document document) {
+        return Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
+                .anyMatch(dtc -> document.getDocumentTypeCode().equals(dtc));
+    }
+
+    /**
+     * 指定年区分の AverageInfo を取得する
+     *
+     * @param corporateValue 企業価値
+     * @param year           平均値の対象年区分
+     * @return 該当する AverageInfo（存在しなければ Optional.empty）
+     */
+    private Optional<AverageInfo> findAverageInfo(final CorporateValue corporateValue, final AverageInfo.Year year) {
+        return corporateValue.getAverageInfoList().stream()
+                .filter(averageInfo -> averageInfo.getYear().equals(year))
+                .findFirst();
+    }
+
+    /**
+     * 指定年区分の平均企業価値を取得する
+     *
+     * @param corporateValue 企業価値
+     * @param year           平均値の対象年区分
+     * @return 平均企業価値（存在しなければ null）
+     */
+    private BigDecimal averageCorporateValueOf(final CorporateValue corporateValue, final AverageInfo.Year year) {
+        return findAverageInfo(corporateValue, year).flatMap(AverageInfo::getAverageCorporateValue).orElse(null);
+    }
+
+    /**
+     * 指定年区分の標準偏差を取得する
+     *
+     * @param corporateValue 企業価値
+     * @param year           平均値の対象年区分
+     * @return 標準偏差（存在しなければ null）
+     */
+    private BigDecimal standardDeviationOf(final CorporateValue corporateValue, final AverageInfo.Year year) {
+        return findAverageInfo(corporateValue, year).flatMap(AverageInfo::getStandardDeviation).orElse(null);
+    }
+
+    /**
+     * 指定年区分の変動係数を取得する
+     *
+     * @param corporateValue 企業価値
+     * @param year           平均値の対象年区分
+     * @return 変動係数（存在しなければ null）
+     */
+    private BigDecimal coefficientOfVariationOf(final CorporateValue corporateValue, final AverageInfo.Year year) {
+        return findAverageInfo(corporateValue, year).flatMap(AverageInfo::getCoefficientOfVariation).orElse(null);
+    }
+
+    /**
+     * 割安値・割安度マップから指定年区分の値を取得する
+     *
+     * @param valueMap 算出済の割安値または割安度マップ
+     * @param year     平均値の対象年区分
+     * @return 値（存在しなければ null）
+     */
+    private BigDecimal discountValueOf(
+            final Map<AverageInfo.Year, Optional<BigDecimal>> valueMap, final AverageInfo.Year year) {
+        return valueMap.getOrDefault(year, Optional.empty()).orElse(null);
     }
 
     /**

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="table (table, target, keyword, sortParam)" class="space-y-3">
+    <div class="text-sm text-slate-600 dark:text-slate-400" th:if="${table.totalElements() > 0}">
+        <span th:text="${table.totalElements()}">0</span> 件中
+        <span th:text="${table.pageNumber() * table.pageSize() + 1}">1</span> -
+        <span th:text="${table.pageNumber() * table.pageSize() + table.rows().size()}">25</span> 件目
+    </div>
+
+    <div class="hidden overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 sm:block">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countAll', label='総件数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countTarget', label='対象件数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countScraped', label='処理済', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countAnalyzed', label='分析済', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='notAnalyzedId', label='未分析ID', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='cantScrapedId', label='処理確認ID', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countNotScraped', label='未処理', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/edinet-list-table :: sortable-th (field='countNotTarget', label='対象外', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            <tr th:each="e : ${table.rows()}"
+                class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
+                <td class="px-3 py-2 text-sm">
+                    <a th:href="@{/v3/edinet-list-detail(submitDate=${e.submitDate})}"
+                       th:text="${e.submitDate}"
+                       class="font-mono text-blue-600 hover:underline dark:text-blue-400">2025-01-01</a>
+                </td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countAll}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countTarget}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countScraped}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countAnalyzed}">0</td>
+                <td class="px-3 py-2 break-all text-xs" th:text="${e.notAnalyzedId}">-</td>
+                <td class="px-3 py-2 break-all text-xs" th:text="${e.cantScrapedId}">-</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countNotScraped}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${e.countNotTarget}">0</td>
+            </tr>
+            <tr th:if="${table.rows().isEmpty()}">
+                <td colspan="9" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
+                    該当する提出日がありません
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <ul class="block space-y-3 sm:hidden" aria-label="EDINET 提出日一覧">
+        <li th:each="e : ${table.rows()}"
+            data-mobile-card
+            x-data="{ idsOpen: false }"
+            class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <a th:href="@{/v3/edinet-list-detail(submitDate=${e.submitDate})}"
+               class="block min-w-0 text-blue-600 hover:underline dark:text-blue-400">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="font-mono text-base font-bold" th:text="${e.submitDate}">2025-01-01</span>
+                    <i data-lucide="chevron-right" class="h-4 w-4 text-slate-400" aria-hidden="true"></i>
+                </div>
+            </a>
+            <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">総件数</dt>
+                    <dd class="font-mono" th:text="${e.countAll}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">対象件数</dt>
+                    <dd class="font-mono" th:text="${e.countTarget}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">処理済</dt>
+                    <dd class="font-mono" th:text="${e.countScraped}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">分析済</dt>
+                    <dd class="font-mono font-semibold" th:text="${e.countAnalyzed}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">未処理</dt>
+                    <dd class="font-mono" th:text="${e.countNotScraped}">-</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-slate-500 dark:text-slate-400">対象外</dt>
+                    <dd class="font-mono" th:text="${e.countNotTarget}">-</dd>
+                </div>
+            </dl>
+            <button type="button" @click="idsOpen = !idsOpen"
+                    class="mt-2 inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"
+                    :aria-expanded="idsOpen">
+                <i data-lucide="chevron-right" class="h-3 w-3" x-show="!idsOpen" aria-hidden="true"></i>
+                <i data-lucide="chevron-down" class="h-3 w-3" x-show="idsOpen" aria-hidden="true"></i>
+                ID 詳細
+            </button>
+            <dl x-show="idsOpen" class="mt-2 space-y-1 text-xs" style="display: none;">
+                <div>
+                    <dt class="text-slate-500 dark:text-slate-400">未分析 ID</dt>
+                    <dd class="break-all font-mono" th:text="${e.notAnalyzedId}">-</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-500 dark:text-slate-400">処理確認 ID</dt>
+                    <dd class="break-all font-mono" th:text="${e.cantScrapedId}">-</dd>
+                </div>
+            </dl>
+        </li>
+        <li th:if="${table.rows().isEmpty()}"
+            class="rounded-lg border border-slate-200 bg-white px-3 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+            該当する提出日がありません
+        </li>
+    </ul>
+
+    <nav class="flex flex-wrap items-center justify-between gap-2" th:if="${table.totalPages() > 1}">
+        <div class="text-sm text-slate-600 dark:text-slate-400">
+            <span th:text="${table.pageNumber() + 1}">1</span> /
+            <span th:text="${table.totalPages()}">1</span> ページ
+        </div>
+        <div class="flex gap-1">
+            <a th:if="${table.pageNumber() > 0}"
+               th:href="@{/v3/edinet-list(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
+               th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
+               hx-target="#edinet-list-table"
+               hx-push-url="true"
+               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+                <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
+                前へ
+            </a>
+            <a th:if="${table.pageNumber() < table.totalPages() - 1}"
+               th:href="@{/v3/edinet-list(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
+               th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
+               hx-target="#edinet-list-table"
+               hx-push-url="true"
+               class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+                次へ
+                <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<th th:fragment="sortable-th (field, label, target, keyword, sortParam)"
+    class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+    <th:block th:with="parts=${(sortParam != null and !#strings.isEmpty(sortParam)) ? sortParam.split(',') : new String[]{'submitDate','desc'}},
+                       currentField=${parts[0]},
+                       currentDir=${parts.length > 1 ? parts[1] : 'asc'},
+                       nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
+                       nextSort=${field + ',' + nextDir}">
+        <a th:href="@{/v3/edinet-list(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+           th:attr="hx-get=@{/v3/edinet-list/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+           hx-target="#edinet-list-table"
+           hx-push-url="true"
+           class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">
+            <span th:text="${label}">列名</span>
+            <i th:if="${currentField == field and currentDir == 'asc'}" data-lucide="chevron-up" class="h-3 w-3" aria-hidden="true"></i>
+            <i th:if="${currentField == field and currentDir == 'desc'}" data-lucide="chevron-down" class="h-3 w-3" aria-hidden="true"></i>
+            <i th:unless="${currentField == field}" data-lucide="chevrons-up-down" class="h-3 w-3 opacity-30" aria-hidden="true"></i>
+        </a>
+    </th:block>
+</th>
+
+</body>
+</html>

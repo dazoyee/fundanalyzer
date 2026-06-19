@@ -1,0 +1,27 @@
+{
+  "name": "fundanalyzer-frontend",
+  "version": "1.0.0",
+  "description": "Frontend assets for fundanalyzer (Tailwind CSS + htmx + Alpine.js + Lucide + Litepicker + Chart.js)",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./styles/main.css -o ../../../target/classes/static/css/app.css --minify",
+    "build:js": "esbuild ./scripts/app.js --bundle --minify --outfile=../../../target/classes/static/js/app.js",
+    "build": "npm run build:css && npm run build:js",
+    "watch:css": "tailwindcss -i ./styles/main.css -o ../../../target/classes/static/css/app.css --watch",
+    "watch:js": "esbuild ./scripts/app.js --bundle --outfile=../../../target/classes/static/js/app.js --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "autoprefixer": "^10.4.19",
+    "esbuild": "^0.20.2",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.10"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.1",
+    "chart.js": "^4.4.3",
+    "htmx.org": "^2.0.2",
+    "litepicker": "^2.0.12",
+    "lucide": "^0.395.0"
+  }
+}

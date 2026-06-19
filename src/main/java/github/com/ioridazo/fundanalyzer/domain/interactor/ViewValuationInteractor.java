@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
+import github.com.ioridazo.fundanalyzer.client.log.Logged;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
@@ -130,8 +131,8 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     }
 
     @Override
+    @Logged(category = Category.VIEW, process = Process.UPDATE, message = "評価アップデートが正常に終了しました。")
     public void updateView() {
-        final long startTime = System.currentTimeMillis();
         companySpecification.inquiryAllTargetCompanies().stream()
                 .map(Company::code)
                 .map(valuationSpecification::findLatestValuation)
@@ -143,13 +144,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
         if (updateViewEnabled) {
             slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.valuation");
         }
-
-        log.info(FundanalyzerLogClient.toInteractorLogObject(
-                "評価アップデートが正常に終了しました。",
-                Category.VIEW,
-                Process.UPDATE,
-                System.currentTimeMillis() - startTime
-        ));
     }
 
     @Override

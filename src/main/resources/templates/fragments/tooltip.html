@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  銘柄詳細用語ツールチップ fragment
+  使用例: <dt>予想 PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></dt>
+  対応スクリプト: src/main/frontend/scripts/app.js (Alpine.data('tooltip'))
+  詳細: docs/notes/T20260512-corporate-glossary-tooltip.md
+-->
+<body>
+<th:block th:fragment="hint(key)"
+          th:with="dict=${ {
+            'corporate-value'        : {'label':'企業価値',           'body':'当アプリが BS/PL から算出する 1 株あたりの本源的価値。株価との比較で割安/割高を判定する。'},
+            'submit-stock-avg'       : {'label':'提出日株価平均',     'body':'有報提出日前後の株価を平均した値。提出日基準のフェアバリュー比較に用いる。'},
+            'standard-deviation'     : {'label':'標準偏差',           'body':'各年度の企業価値のバラツキ。値が小さいほど企業価値が安定している。'},
+            'coefficient-of-variation':{'label':'変動係数',           'body':'標準偏差 ÷ 平均値。1 を超えると年度間のバラツキが大きく安定性が低い。'},
+            'count-year'             : {'label':'対象年数',           'body':'集計に用いた決算期の年数。'},
+            'discount-rate'          : {'label':'割安度 / 割安比率',  'body':'(企業価値 ÷ 株価) × 100。100 を超えると企業価値ベースで割安。'},
+            'graham-index'           : {'label':'グレアム指数',       'body':'PER × PBR。Benjamin Graham の指標で 22.5 以下が割安目安。本アプリでは 5.625 未満を「割安」として GOOD 判定する。'},
+            'price-cv-ratio'         : {'label':'株価企業価値率',     'body':'株価 ÷ 企業価値。小さいほど企業価値ベースで割安。'},
+            'per'                    : {'label':'PER (株価収益率)',   'body':'Price Earnings Ratio。株価 ÷ EPS。利益面からの割安/割高判定指標。'},
+            'pbr'                    : {'label':'PBR (株価純資産倍率)','body':'Price Book-value Ratio。株価 ÷ BPS。純資産面からの割安/割高判定指標。'},
+            'roe'                    : {'label':'ROE (自己資本利益率)','body':'Return On Equity。当期純利益 ÷ 自己資本。資本効率の指標。'},
+            'roa'                    : {'label':'ROA (総資産利益率)', 'body':'Return On Assets。当期純利益 ÷ 総資産。資産効率の指標。'},
+            'bps'                    : {'label':'BPS (1株あたり純資産)','body':'Book-value Per Share。純資産 ÷ 発行済株式数。'},
+            'eps'                    : {'label':'EPS (1株あたり利益)','body':'Earnings Per Share。当期純利益 ÷ 発行済株式数。'},
+            'dividend-yield'         : {'label':'予想配当利回り',     'body':'1 株あたり予想配当 ÷ 株価。'},
+            'forecast-stock'         : {'label':'株価予想 / 目標株価','body':'みんかぶ等が提示する将来の予想株価。'},
+            'theoretical-stock'      : {'label':'理論株価',           'body':'バリュエーションモデルから算出した理論的な株価。'},
+            'bs'                     : {'label':'貸借対照表 (BS)',    'body':'Balance Sheet。資産・負債・純資産を一定時点で示す財務諸表。'},
+            'pl'                     : {'label':'損益計算書 (PL)',    'body':'Profit and Loss Statement。一定期間の収益と費用から純利益を示す財務諸表。'},
+            'submit-date'            : {'label':'提出日',             'body':'EDINET に有価証券報告書等が提出された日。'},
+            'document-type'          : {'label':'書類種別',           'body':'EDINET の書類種別コード (例: 120 = 有価証券報告書)。'},
+            'quarter-type'           : {'label':'四半期種別',         'body':'四半期報告書の四半期区分 (Q1 / Q2 / Q3 等)。'},
+            'period'                 : {'label':'対象期間 / 対象日付','body':'集計対象とする決算期間または日付。'},
+            'ohlc'                   : {'label':'終値 / 始値 / 高値 / 安値','body':'当該日のローソク足 4 値 (OHLC: Open / High / Low / Close)。'},
+            'diff-from-submit'       : {'label':'増減値 / 増減率',    'body':'評価対象日の株価と提出日株価平均との差・差率。'},
+            'shareholder-benefit'    : {'label':'株式優待',           'body':'株主に提供される優待制度。'},
+            'market-cap'             : {'label':'時価総額',           'body':'株価 × 発行済株式数。'},
+            'capital-stock'          : {'label':'資本金',             'body':'会社法上の資本金額。'},
+            'number-of-shares'       : {'label':'株式総数',           'body':'発行済株式数。'},
+            'industry'               : {'label':'業種',               'body':'EDINET 提出会社の業種区分。'},
+            'settlement-date'        : {'label':'決算月',             'body':'会計年度の最終月。'},
+            'edinet-code'            : {'label':'EDINET コード',      'body':'EDINET が提出者に付与する 6 桁の識別コード (例: E12345)。'},
+            'security-code'          : {'label':'証券コード',         'body':'金融商品取引所に上場する銘柄の 4 桁コード。'}
+          } }">
+    <span class="relative ml-1 inline-flex align-middle"
+          x-data="tooltip"
+          @keydown.escape.window="open=false"
+          @click.outside="open=false">
+        <button type="button"
+                class="inline-flex h-4 w-4 items-center justify-center rounded-full text-slate-400 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-slate-500 dark:hover:text-blue-400"
+                @mouseenter="open=true"
+                @mouseleave="open=false"
+                @focus="open=true"
+                @blur="open=false"
+                @click.stop="open=!open"
+                :aria-expanded="open"
+                aria-haspopup="true"
+                th:aria-label="|${dict.get(key).get('label')} の用語解説|">
+            <i data-lucide="help-circle" class="h-3.5 w-3.5" aria-hidden="true"></i>
+        </button>
+        <span x-show="open"
+              x-cloak
+              role="tooltip"
+              class="absolute left-1/2 top-full z-50 mt-1 w-60 max-w-[80vw] -translate-x-1/2 rounded border border-slate-300 bg-white p-2 text-left text-xs font-normal leading-relaxed text-slate-700 shadow-lg dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
+            <strong class="mb-1 block text-slate-900 dark:text-slate-100"
+                    th:text="${dict.get(key).get('label')}">term</strong>
+            <span th:text="${dict.get(key).get('body')}">body</span>
+        </span>
+    </span>
+</th:block>
+</body>
+</html>

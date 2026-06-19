@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title>EDINET 詳細</title>
+</head>
+<body>
+<h1 layout:fragment="page-title">
+    <span class="inline-flex flex-wrap items-center gap-2">
+        <a th:href="@{/v3/index}"
+           class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">Home</a>
+        <span class="text-slate-400">/</span>
+        <a th:href="@{/v3/edinet-list}"
+           class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">EDINET 一覧</a>
+        <span class="text-slate-400">/</span>
+        <span>処理詳細 <span class="font-mono text-base" th:text="'(' + ${submitDate} + ')'">(2025-01-01)</span></span>
+    </span>
+</h1>
+
+<section layout:fragment="content" class="space-y-6" th:with="ed=${edinetDetail.edinetList}">
+
+    <!-- Flash アラート -->
+    <th:block th:if="${message != null}">
+        <div th:replace="~{fragments/alert :: info(message=${message})}"></div>
+    </th:block>
+    <th:block th:if="${param.error != null}" th:with="errMsg=${param.error[0]}">
+        <div th:replace="~{fragments/alert :: error(message=${errMsg})}"></div>
+    </th:block>
+
+    <!-- 上部 2 アクションボタン -->
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <form method="post" th:action="@{/v1/update/edinet-list}">
+            <input type="hidden" th:value="${ed.submitDate}" name="date"/>
+            <button type="submit"
+                    class="w-full rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                更新して前に戻る
+            </button>
+        </form>
+        <form method="post" th:action="@{/v1/analyze/date}">
+            <input type="hidden" th:value="${ed.submitDate}" name="date"/>
+            <button type="submit"
+                    class="w-full rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                分析する
+            </button>
+        </form>
+    </div>
+
+    <!-- 統計サマリ 8 項目 -->
+    <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        <h2 class="mb-3 text-lg font-bold">処理状況サマリ</h2>
+        <!-- desktop: 横テーブル -->
+        <div class="hidden overflow-x-auto sm:block">
+            <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                <tr>
+                    <th class="px-3 py-2 text-left font-semibold">総件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">処理対象件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">処理済件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">分析済件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">未分析ID</th>
+                    <th class="px-3 py-2 text-left font-semibold">処理確認ID</th>
+                    <th class="px-3 py-2 text-left font-semibold">未処理件数</th>
+                    <th class="px-3 py-2 text-left font-semibold">対象外件数</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countAll}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countTarget}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countScraped}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countAnalyzed}">0</td>
+                    <td class="px-3 py-2 break-all text-xs" th:text="${ed.notAnalyzedId}">-</td>
+                    <td class="px-3 py-2 break-all text-xs" th:text="${ed.cantScrapedId}">-</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countNotScraped}">0</td>
+                    <td class="px-3 py-2 font-mono" th:text="${ed.countNotTarget}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- mobile: dl カード化 -->
+        <dl class="grid grid-cols-2 gap-x-3 gap-y-2 text-sm sm:hidden" data-mobile-card>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">総件数</dt><dd class="font-mono" th:text="${ed.countAll}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象件数</dt><dd class="font-mono" th:text="${ed.countTarget}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">処理済</dt><dd class="font-mono" th:text="${ed.countScraped}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">分析済</dt><dd class="font-mono font-semibold" th:text="${ed.countAnalyzed}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">未処理</dt><dd class="font-mono" th:text="${ed.countNotScraped}">0</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">対象外</dt><dd class="font-mono" th:text="${ed.countNotTarget}">0</dd></div>
+            <div class="col-span-2"><dt class="text-xs text-slate-500 dark:text-slate-400">未分析ID</dt><dd class="break-all font-mono text-xs" th:text="${ed.notAnalyzedId}">-</dd></div>
+            <div class="col-span-2"><dt class="text-xs text-slate-500 dark:text-slate-400">処理確認ID</dt><dd class="break-all font-mono text-xs" th:text="${ed.cantScrapedId}">-</dd></div>
+        </dl>
+    </div>
+
+    <!-- 書類詳細リスト (各カードは fragments/edinet-document-card.html に切り出し) -->
+    <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
+         th:if="${not #lists.isEmpty(edinetDetail.documentDetailList)}">
+        <h2 class="mb-3 text-lg font-bold">書類詳細</h2>
+        <div class="space-y-4">
+            <!--
+                th:each / th:if / th:replace を 1 要素にまとめると Thymeleaf の attribute precedence
+                (th:replace=1 → th:each=2 → th:if=3) により th:if より先に th:replace の引数評価が走り、
+                null の documentDetail がそのまま fragment に渡って EL1007E になる。
+                各属性を別要素に分離して null を確実にスキップする。
+            -->
+            <th:block th:each="documentDetail : ${edinetDetail.documentDetailList}">
+                <th:block th:if="${documentDetail != null}">
+                    <div th:replace="~{fragments/edinet-document-card :: card(submitDate=${ed.submitDate}, documentDetail=${documentDetail})}"></div>
+                </th:block>
+            </th:block>
+        </div>
+    </div>
+
+    <p class="text-sm text-slate-500 dark:text-slate-400"
+       th:if="${#lists.isEmpty(edinetDetail.documentDetailList)}">
+        未処理ドキュメントはありません
+    </p>
+</section>
+</body>
+</html>

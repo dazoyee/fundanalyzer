@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title>会社一覧</title>
+</head>
+<body>
+<h1 layout:fragment="page-title">会社一覧</h1>
+
+<section layout:fragment="content" class="space-y-4">
+    <!-- Flash アラート -->
+    <th:block th:if="${message != null}">
+        <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
+    </th:block>
+
+    <!-- 上部: 2 アクションフォーム -->
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <form method="post" th:action="@{/v1/document/analysis}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">財務諸表の取得と分析をする</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
+                <button type="submit"
+                        class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    実行
+                </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">日付範囲（カンマ区切り）を入力</p>
+        </form>
+        <form method="post" th:action="@{/v1/scrape/id}"
+              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h3 class="mb-2 text-sm font-bold">書類IDから取得と分析する</h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text" name="documentId" placeholder="S100XXXX"
+                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm font-mono dark:border-slate-600 dark:bg-slate-900"/>
+                <button type="submit"
+                        class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                    実行
+                </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">書類 ID を入力</p>
+        </form>
+    </div>
+
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="表示切替">
+        <a th:href="@{/v3/index(q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${#strings.isEmpty(target)}"
+           th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
+            メイン
+        </a>
+        <a th:href="@{/v3/index(target='quart',q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'quart'}"
+           th:classappend="${target == 'quart'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="calendar-days" class="h-4 w-4" aria-hidden="true"></i>
+            四半期
+        </a>
+        <a th:href="@{/v3/index(target='all',q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'all'}"
+           th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
+            すべて
+        </a>
+        <a th:href="@{/v3/index(target='favorite',q=${keyword},sort=${sortParam})}"
+           role="tab"
+           th:attr="aria-selected=${target == 'favorite'}"
+           th:classappend="${target == 'favorite'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+            <i data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
+            お気に入り
+        </a>
+    </nav>
+
+    <div class="flex items-center gap-2">
+        <i data-lucide="search" class="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true"></i>
+        <input type="search"
+               name="q"
+               th:value="${keyword}"
+               aria-label="検索"
+               placeholder="証券コード・会社名で検索"
+               class="w-full rounded border border-slate-300 px-3 py-2 sm:w-64 dark:border-slate-600 dark:bg-slate-900"
+               th:attr="hx-get=@{/v3/index/table(target=${target},sort=${sortParam},page=0)}"
+               hx-target="#index-table"
+               hx-trigger="keyup changed delay:300ms, search"
+               hx-push-url="true">
+    </div>
+
+    <div class="flex items-center gap-2 sm:hidden">
+        <label for="index-sort-select" class="text-xs text-slate-500 dark:text-slate-400">並び替え</label>
+        <select id="index-sort-select"
+                name="sort"
+                aria-label="並び替え"
+                class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
+                th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},page=0)}"
+                hx-target="#index-table"
+                hx-trigger="change"
+                hx-push-url="true">
+            <option value="code,asc"                    th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">証券コード ↑</option>
+            <option value="code,desc"                   th:selected="${sortParam == 'code,desc'}">証券コード ↓</option>
+            <option value="name,asc"                    th:selected="${sortParam == 'name,asc'}">会社名 ↑</option>
+            <option value="submitDate,desc"             th:selected="${sortParam == 'submitDate,desc'}">提出日（新しい順）</option>
+            <option value="submitDate,asc"              th:selected="${sortParam == 'submitDate,asc'}">提出日（古い順）</option>
+            <option value="latestCorporateValue,desc"   th:selected="${sortParam == 'latestCorporateValue,desc'}">最新企業価値 ↓</option>
+            <option value="latestCorporateValue,asc"    th:selected="${sortParam == 'latestCorporateValue,asc'}">最新企業価値 ↑</option>
+            <option value="discountRate,desc"           th:selected="${sortParam == 'discountRate,desc'}">割安比率 ↓</option>
+            <option value="coefficientOfVariation,asc"  th:selected="${sortParam == 'coefficientOfVariation,asc'}">変動係数 ↑</option>
+        </select>
+    </div>
+
+    <div id="index-table"
+         th:insert="~{fragments/index-table :: table (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}">
+    </div>
+</section>
+</body>
+</html>
