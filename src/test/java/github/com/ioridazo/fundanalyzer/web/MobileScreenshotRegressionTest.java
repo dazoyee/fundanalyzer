@@ -6,6 +6,7 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.CDPSession;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.HttpCredentials;
 import com.microsoft.playwright.options.WaitUntilState;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,11 +46,15 @@ import static org.junit.jupiter.api.Assertions.fail;
  * <p>本テストはサイズの大きい Chromium バイナリを取得するため -Dgroups=playwright が必要。
  * 通常ビルドから除外する場合は -DexcludedGroups=playwright を指定する。
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {"app.security.user=playwright", "app.security.password=playwright"})
 @Tag("playwright")
 @DisplayName("スマホ UI PNG ビジュアルリグレッション")
 class MobileScreenshotRegressionTest {
 
+    private static final Browser.NewPageOptions AUTH = new Browser.NewPageOptions()
+            .setHttpCredentials(new HttpCredentials("playwright", "playwright"));
     private static final Path BASELINE_DIR = Paths.get("src", "test", "resources", "playwright-baselines");
     private static final Path DIFF_DIR = Paths.get("target", "playwright-snapshots");
     private static final double MAX_DIFF_PIXEL_RATIO = 0.02;
@@ -117,7 +122,7 @@ class MobileScreenshotRegressionTest {
                 "baseline が存在しない: " + baselinePath
                         + " (ManualMobileScreenshotTest を -DupdateBaselines=true で実行して再生成すること)");
 
-        try (Page page = browser.newPage()) {
+        try (Page page = browser.newPage(AUTH)) {
             page.setViewportSize(width, height);
             page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
             try {

@@ -4,6 +4,7 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.HttpCredentials;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,6 +41,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ManualMobileScreenshotTest {
 
     private static final String BASE = "http://localhost:8889/fundanalyzer";
+    // dev サーバーの Basic 認証。環境変数 SECURITY_USER / SECURITY_PASSWORD 未設定時の application.yml 既定値に合わせる。
+    // 別資格情報で起動している場合は -DmanualScreenshotUser / -DmanualScreenshotPassword で上書きする。
+    private static final Browser.NewPageOptions AUTH = new Browser.NewPageOptions()
+            .setHttpCredentials(new HttpCredentials(
+                    System.getProperty("manualScreenshotUser", "admin"),
+                    System.getProperty("manualScreenshotPassword", "fundanalyzer-local-dev")));
     private static final Path SHOT_DIR = Paths.get("target", "manual-screenshots");
     private static final Path BASELINE_DIR = Paths.get("src", "test", "resources", "playwright-baselines");
     private static final boolean UPDATE_BASELINES = Boolean.getBoolean("updateBaselines");
@@ -120,7 +127,7 @@ class ManualMobileScreenshotTest {
     @Test
     @DisplayName("index 画面 mobile 390x844 のフルページスクショを撮る")
     void shootIndexMobile() throws Exception {
-        try (final Page page = browser.newPage()) {
+        try (final Page page = browser.newPage(AUTH)) {
             page.setViewportSize(390, 844);
             page.setDefaultNavigationTimeout(15_000);
             try {
@@ -142,7 +149,7 @@ class ManualMobileScreenshotTest {
     @Test
     @DisplayName("index 画面 desktop 1280x800 のフルページスクショを撮る")
     void shootIndexDesktop() throws Exception {
-        try (final Page page = browser.newPage()) {
+        try (final Page page = browser.newPage(AUTH)) {
             page.setViewportSize(1280, 800);
             page.setDefaultNavigationTimeout(15_000);
             try {
@@ -170,7 +177,7 @@ class ManualMobileScreenshotTest {
     }
 
     private void shootViewport(final String label, final String path, final int width, final int height, final String viewport) throws Exception {
-        try (final Page page = browser.newPage()) {
+        try (final Page page = browser.newPage(AUTH)) {
             page.setViewportSize(width, height);
             page.setDefaultNavigationTimeout(15_000);
             try {

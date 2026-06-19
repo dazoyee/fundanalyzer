@@ -1,5 +1,9 @@
 server:
   port: 8890
+  servlet:
+    session:
+      cookie:
+        secure: true    # prod はリバースプロキシ（nginx 等）で TLS 終端した HTTPS 前提
 
 spring:
   datasource:
@@ -46,11 +50,28 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}-main
+  # 本番では Actuator の公開を最小化し、環境変数（SECURITY_PASSWORD 等）の露出を防ぐ。
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,circuitbreakers,ratelimiters
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: false
 
 app:
+  # 本番では Basic 認証の資格情報を環境変数で必須化（フォールバックなし → 未設定なら起動失敗で検知）。
+  # release/config/application-prod.yml が未ロードの起動経路でも dev 既定値が漏れ込まないようにする。
+  security:
+    user: ${SECURITY_USER}
+    password: ${SECURITY_PASSWORD}
+
   config:
     slack:
       parameter:
-        t: TKN2V6NQ4
-        b: B01DFHHPE07
-        x: x
+        t: ${SLACK_WEBHOOK_T:}
+        b: ${SLACK_WEBHOOK_B:}
+        x: ${SLACK_WEBHOOK_X:}

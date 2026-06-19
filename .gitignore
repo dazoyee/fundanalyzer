@@ -42,3 +42,5 @@ src/main/frontend/node_modules/
 .DS_Store
 .claude/
 logs/
+e2e-tests/
+.playwright-cli/

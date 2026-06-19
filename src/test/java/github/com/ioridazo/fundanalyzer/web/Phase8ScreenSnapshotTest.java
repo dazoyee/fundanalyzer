@@ -4,6 +4,7 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.HttpCredentials;
 import com.microsoft.playwright.options.ViewportSize;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,12 +35,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>初回実行時に ~/.cache/ms-playwright/ に Chromium バイナリ（約 200 MB）が自動取得される。
  * 通常ビルドから除外する場合は -DexcludedGroups=playwright を指定する。
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {"app.security.user=playwright", "app.security.password=playwright"})
 @Tag("playwright")
 @DisplayName("Phase 8 スナップショット回帰検証")
 class Phase8ScreenSnapshotTest {
 
     private static final Path SNAPSHOT_DIR = Paths.get("target", "playwright-snapshots");
+    private static final Browser.NewPageOptions AUTH = new Browser.NewPageOptions()
+            .setHttpCredentials(new HttpCredentials("playwright", "playwright"));
 
     private static Playwright playwright;
     private static Browser browser;
@@ -84,7 +89,7 @@ class Phase8ScreenSnapshotTest {
             final String viewportName,
             final int width,
             final int height) {
-        try (final Page page = browser.newPage()) {
+        try (final Page page = browser.newPage(AUTH)) {
             page.setViewportSize(width, height);
             final String url = "http://localhost:" + port + "/fundanalyzer" + path;
             page.navigate(url);
@@ -111,7 +116,7 @@ class Phase8ScreenSnapshotTest {
     @MethodSource("viewportNames")
     @DisplayName("layout-v2 のダークモードトグルが各ビューポートで存在")
     void darkModeToggleExists(final ViewportSize viewport) {
-        try (final Page page = browser.newPage()) {
+        try (final Page page = browser.newPage(AUTH)) {
             page.setViewportSize(viewport.width, viewport.height);
             page.navigate("http://localhost:" + port + "/fundanalyzer/v3/index");
             page.waitForLoadState();

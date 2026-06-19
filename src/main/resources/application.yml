@@ -1,6 +1,11 @@
 server:
   servlet:
     context-path: /fundanalyzer
+    session:
+      cookie:
+        http-only: true      # JS からの Cookie 参照を禁止（XSS 対策）
+        same-site: strict    # クロスサイトリクエストでの Cookie 送信を禁止（CSRF 対策）
+        # secure はプロファイル別に定義（dev=false:HTTP / prod=true:リバースプロキシで TLS 終端）
 
 spring:
   profiles:
@@ -138,6 +143,15 @@ resilience4j:
 
 app:
   version: @pom.version@
+
+  # Basic 認証の資格情報。本番は環境変数 SECURITY_USER / SECURITY_PASSWORD で必ず上書きすること。
+  # 既定値はローカル dev 用であり本番では使用しない（release/config/application-prod.yml で env 必須化）。
+  security:
+    user: ${SECURITY_USER:admin}
+    password: ${SECURITY_PASSWORD:fundanalyzer-local-dev}
+    # Content-Security-Policy。バンドル済み自前 JS（Alpine.js が unsafe-eval、corporate-v2.html の
+    # インライン Chart.js データが unsafe-inline を要する）を許可しつつ外部オリジンを遮断する。
+    csp: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 
   config:
     edinet:

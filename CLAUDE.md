@@ -243,6 +243,18 @@ exception/   … 業務例外
 - `release/config/application-prod.yml` — 本番Windowsサービス起動時に読み込む差分設定（`release/start.bat`）
 - `app.config.edinet.api-key` は環境変数 `edinet.api-key`（`release/env` 経由）に対応。**コミットしない**
 
+### セキュリティ（外部公開対応 / T20260619）
+
+- **Basic 認証**: [SecurityConfig.java](src/main/java/github/com/ioridazo/fundanalyzer/config/SecurityConfig.java) で Spring Security を構成。全リクエスト（静的リソース含む）を認証必須とし、利用者は `app.security.user` / `app.security.password` から構成する単一のメモリ内ユーザーのみ。
+- **資格情報の環境変数**: `SECURITY_USER` / `SECURITY_PASSWORD`。dev は `application.yml` の既定値（`admin` / `fundanalyzer-local-dev`）で起動可能。**prod は [release/config/application-prod.yml](release/config/application-prod.yml) でフォールバックなし `${SECURITY_USER}` / `${SECURITY_PASSWORD}` を必須化**しており、`release/env` に未設定だと起動失敗で検知する。
+- **Slack トークン**: `app.config.slack.parameter.t/b/x` は `SLACK_WEBHOOK_T` / `SLACK_WEBHOOK_B` / `SLACK_WEBHOOK_X` に対応（直書き廃止）。`release/env` 経由で設定。テンプレートは [release/env.example](release/env.example)。
+- **CSRF**: 有効のまま維持。Thymeleaf の `th:action` フォームは Spring Security の `CsrfRequestDataValueProcessor` がトークンを自動注入する。htmx の table fragment は全て GET のため非対象。
+- **セキュリティヘッダー**: SecurityConfig で CSP / X-Frame-Options(DENY) / X-Content-Type-Options(nosniff) / Referrer-Policy(same-origin) / HSTS を付与。CSP はバンドル済み自前 JS（Alpine.js が `unsafe-eval`、`corporate-v2.html` のインライン Chart.js データが `unsafe-inline` を要する）を許可しつつ外部オリジンを遮断する方針。
+- **Cookie**: `server.servlet.session.cookie` で HttpOnly / Secure / SameSite=Strict を設定。
+- **HTTPS**: アプリ内では終端しない。リバースプロキシ（nginx 等）で TLS 終端する前提（Secure Cookie / HSTS はこれに依存）。
+- **Actuator 別ポート（dev 8989 / prod 8990）は認証保護対象外**（外部に露出させない運用前提）。
+- **Playwright テスト**: Security 有効化により実 HTTP アクセスする `Phase8ScreenSnapshotTest` / `MobileScreenshotRegressionTest` は `@SpringBootTest(properties=app.security.user/password=playwright)` + Playwright の `setHttpCredentials` で Basic 認証を付与する。`ManualMobileScreenshotTest` は dev 既定資格情報（`-DmanualScreenshotUser/Password` で上書き可）。
+
 ファイル出力先（`app.settings.file.path.*`）は dev で `${user.home}/.fundanalyzer/...`（OS 非依存）、prod で `C:/fundanalyzer/...`（[release/config/application-prod.yml](release/config/application-prod.yml) で再定義、Windows サービス前提）に切り替わる。`application.yml` のデフォルト値は prod 互換のため Windows パスを保持しているが、dev ではこの値は使われない。
 
 ## CI / リリース

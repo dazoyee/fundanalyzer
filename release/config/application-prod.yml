@@ -33,6 +33,11 @@ resilience4j:
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
+  # 本番では Basic 認証の資格情報を環境変数で必須化（フォールバックなし → 未設定なら起動失敗で検知）。
+  security:
+    user: ${SECURITY_USER}
+    password: ${SECURITY_PASSWORD}
+
   config:
     edinet:
       api-key: "edinet.api-key"
@@ -77,9 +82,9 @@ app:
 
     slack:
       parameter:
-        t: TKN2V6NQ4
-        b: B01DFHHPE07
-        x: x # 任意の値を設定
+        t: ${SLACK_WEBHOOK_T:}
+        b: ${SLACK_WEBHOOK_B:}
+        x: ${SLACK_WEBHOOK_X:} # 任意の値を設定
 
     view:
       discount-rate: 120  # 以上を表示
