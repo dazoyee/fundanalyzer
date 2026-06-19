@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.DisplayName;
@@ -13,10 +14,12 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AnalysisResultTest {
 
     private final AnalysisResult analysisResult = new AnalysisResult(null, null, null, null, null, null, null);
+    private final AnalysisCoefficient defaultCoefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(1.2));
 
     @Nested
     class calculateCorporateValue {
@@ -44,7 +47,7 @@ class AnalysisResultTest {
                     .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
                     .subtract(BigDecimal.valueOf(1004))
                     .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
-            var actual = analysisResult.calculateCorporateValue(financeValue, document);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient);
             assertEquals(expected, actual);
         }
 
@@ -90,7 +93,7 @@ class AnalysisResultTest {
                     .divide(BigDecimal.valueOf(3), 10, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(4))
                     .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
-            var actual = analysisResult.calculateCorporateValue(financeValue, document);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient);
             assertEquals(expected, actual);
         }
 
@@ -112,7 +115,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_CURRENT_ASSETS.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -135,7 +138,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -159,7 +162,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_CURRENT_LIABILITIES.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -182,7 +185,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -205,7 +208,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals(PlSubject.PlEnum.OPERATING_PROFIT.getSubject(), exception.getSubjectName().orElseThrow());
         }
@@ -228,7 +231,7 @@ class AnalysisResultTest {
 
             var exception = assertThrows(
                     FundanalyzerNotExistException.class,
-                    () -> analysisResult.calculateCorporateValue(financeValue, document)
+                    () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals("株式総数", exception.getSubjectName().orElseThrow());
         }
@@ -545,6 +548,98 @@ class AnalysisResultTest {
             );
 
             assertNull(analysisResult.calculateRoa(financeValue, document).orElse(null));
+        }
+    }
+
+    @Nested
+    @DisplayName("calculateCorporateValue 係数オーバーロードのテスト")
+    class calculateCorporateValueWithCoefficient {
+
+        Document document = defaultDocument();
+
+        FinanceValue financeValue = FinanceValue.of(
+                1001L,
+                1002L,
+                null,
+                1003L,
+                1004L,
+                null,
+                null,
+                10005L,
+                null,
+                1006L
+        );
+
+        @DisplayName("calculateCorporateValue : 指定した営業利益重みが式に反映される")
+        @Test
+        void operatingProfitWeight_reflected() {
+            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2));
+
+            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(20))
+                    .add(BigDecimal.valueOf(1001))
+                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
+                    .subtract(BigDecimal.valueOf(1004))
+                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
+            assertEquals(expected, actual);
+        }
+
+        @DisplayName("calculateCorporateValue : 流動負債調整係数のみ変更すると流動負債の項のみ変わる")
+        @Test
+        void currentLiabilitiesRatio_reflected() {
+            var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(2.0));
+
+            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
+                    .add(BigDecimal.valueOf(1001))
+                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(2.0))).add(BigDecimal.valueOf(1002))
+                    .subtract(BigDecimal.valueOf(1004))
+                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Nested
+    @DisplayName("calculateRimValue のテスト")
+    class CalculateRimValue {
+
+        @DisplayName("calculateRimValue : BPS×(ROE/100)÷r で算出する")
+        @Test
+        void present() {
+            // BPS=1000, ROE=12%, r=0.08 → 1000×0.12÷0.08 = 1500
+            final BigDecimal actual = analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.valueOf(0.08)).orElse(null);
+            assertEquals(0, BigDecimal.valueOf(1500).compareTo(actual));
+        }
+
+        @DisplayName("calculateRimValue : 資本コスト r が異なると比例して変わる")
+        @Test
+        void differentR() {
+            final BigDecimal actual = analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.valueOf(0.10)).orElse(null);
+            assertEquals(0, BigDecimal.valueOf(1200).compareTo(actual));
+        }
+
+        @DisplayName("calculateRimValue : ROE が 0 以下（赤字等）のときは算出しない")
+        @Test
+        void roeNonPositive() {
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.ZERO, BigDecimal.valueOf(0.08)).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(-5), BigDecimal.valueOf(0.08)).isEmpty());
+        }
+
+        @DisplayName("calculateRimValue : BPS/ROE/r が null・r=0 のときは算出しない")
+        @Test
+        void nullOrZero() {
+            assertTrue(analysisResult.calculateRimValue(
+                    null, BigDecimal.valueOf(12), BigDecimal.valueOf(0.08)).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), null, BigDecimal.valueOf(0.08)).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), null).isEmpty());
+            assertTrue(analysisResult.calculateRimValue(
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.ZERO).isEmpty());
         }
     }
 

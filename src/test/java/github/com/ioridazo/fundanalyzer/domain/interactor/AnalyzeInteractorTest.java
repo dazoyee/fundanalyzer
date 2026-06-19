@@ -1,13 +1,17 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -21,9 +25,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -42,31 +48,38 @@ import static org.mockito.Mockito.when;
 
 class AnalyzeInteractorTest {
 
+    private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
     private InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private IndustrySpecification industrySpecification;
 
     private AnalyzeInteractor analyzeInteractor;
 
     @BeforeEach
     void setUp() {
+        companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = mock(StockSpecification.class);
         investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
+        industrySpecification = mock(IndustrySpecification.class);
 
         analyzeInteractor = Mockito.spy(new AnalyzeInteractor(
-                Mockito.mock(CompanySpecification.class),
+                companySpecification,
                 documentSpecification,
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
-                investmentIndicatorSpecification
+                investmentIndicatorSpecification,
+                industrySpecification
         ));
         analyzeInteractor.targetTypeCodes = List.of("120", "130");
+        when(industrySpecification.resolveCoefficient(any()))
+                .thenReturn(new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(1.2)));
     }
 
     @Nested
@@ -115,6 +128,54 @@ class AnalyzeInteractorTest {
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
             assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
             verify(analysisResultSpecification, times(1)).insert(any(), any());
+        }
+
+        @DisplayName("analyze : 業種別に解決された係数が企業価値の算出に反映される")
+        @Test
+        void document_usesInjectedCoefficient() {
+            when(industrySpecification.resolveCoefficient(any()))
+                    .thenReturn(new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2)));
+
+            var financeValue = FinanceValue.of(
+                    100L,
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+            // operatingProfit(107)×20 + totalCurrentAssets(100) - totalCurrentLiabilities(103)×1.2
+            //   + totalInvestmentsAndOtherAssets(101) - totalFixedLiabilities(104), ÷ numberOfShares(109)
+            var expected = BigDecimal.valueOf(107).multiply(BigDecimal.valueOf(20))
+                    .add(BigDecimal.valueOf(100))
+                    .subtract(BigDecimal.valueOf(103).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(101))
+                    .subtract(BigDecimal.valueOf(104))
+                    .divide(BigDecimal.valueOf(109), 10, RoundingMode.HALF_UP);
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            var captor = ArgumentCaptor.forClass(AnalysisResult.class);
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+
+            verify(analysisResultSpecification, times(1)).insert(eq(document), captor.capture());
+            assertEquals(expected, captor.getValue().getCorporateValue());
+        }
+
+        @DisplayName("analyze : 業種別係数が解決できないときはスキップし、バッチを中断しない")
+        @Test
+        void resolveCoefficient_notExist_skips() {
+            when(industrySpecification.resolveCoefficient(any()))
+                    .thenThrow(new FundanalyzerNotExistException("業種別係数が存在しません。"));
+            final FinanceValue financeValue = FinanceValue.of(
+                    100L, 101L, 102L, 103L, 104L, 105L, 106L, 107L, 108L, 109L);
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+            verify(analysisResultSpecification, times(0)).insert(any(), any());
         }
 
         @DisplayName("analyze : 分析時にエラーが発生したときの処理を確認する")

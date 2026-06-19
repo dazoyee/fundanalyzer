@@ -8,7 +8,8 @@ import org.springframework.data.domain.Pageable;
  * @param target   表示対象の種別。null（メイン）/ "all" / "favorite"
  * @param keyword  証券コードまたは会社名の partial match キーワード
  * @param view     表示する view 種別。"stock" / "submit" / "graham-index" / "dividend-yield"
+ * @param mode     表示モード。"raw"（実数）/ "relative"（業種内zスコア。graham-index view のみ有効）
  * @param pageable Spring Data の Pageable
  */
-public record CompanyValuationTableQuery(String target, String keyword, String view, Pageable pageable) {
+public record CompanyValuationTableQuery(String target, String keyword, String view, String mode, Pageable pageable) {
 }

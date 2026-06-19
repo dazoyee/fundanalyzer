@@ -12,7 +12,7 @@
 
     <groupId>github.com.ioridazo</groupId>
     <artifactId>fundanalyzer</artifactId>
-    <version>2.3.1</version>
+    <version>2.3.2</version>
     <name>fundanalyzer</name>
     <description>Analyzing stocks from financial statements</description>
 
@@ -81,6 +81,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <dependency>
@@ -221,7 +225,13 @@
             </exclusions>
         </dependency>
 
-        <!-- Playwright（画面刷新タスク Phase 8 で導入・スナップショット回帰検証） -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Playwright�E�画面刷新タスク Phase 8 で導�E・スナップショチE��回帰検証�E�E-->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
@@ -284,7 +294,7 @@
                 </configuration>
             </plugin>
 
-            <!-- パッケージ生成 -->
+            <!-- パッケージ生�E -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>${maven-assembly-plugin.version}</version>
@@ -304,20 +314,20 @@
                 </executions>
             </plugin>
 
-            <!-- 単体テスト いずれかのテストが失敗するとビルド失敗 -->
+            <!-- 単体テスチEぁE��れかのチE��トが失敗するとビルド失敁E-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
 
             <!--  -->
-            <!-- 統合テスト テスト失敗がある場合にビルドの失敗を分離する -->
+            <!-- 統合テスチEチE��ト失敗がある場合にビルド�E失敗を刁E��する -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
 
-            <!-- コーディング規約判定 -->
+            <!-- コーチE��ング規紁E��宁E-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -325,7 +335,7 @@
                 <executions>
                     <execution>
                         <configuration>
-                            <!-- プロジェクト直下にスタイル定義を格納し、指定する -->
+                            <!-- プロジェクト直下にスタイル定義を格納し、指定すめE-->
                             <configLocation>sun_checks.xml</configLocation>
                         </configuration>
                     </execution>
@@ -339,19 +349,19 @@
                 <version>${maven-pmd-plugin.version}</version>
             </plugin>
 
-            <!-- テストカバレッジ集計ツール -->
+            <!-- チE��トカバレチE��雁E��ツール -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco-maven-plugin.version}</version>
                 <executions>
-                    <!--実行ファイル jacoco.execの生成-->
+                    <!--実行ファイル jacoco.execの生�E-->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
-                    <!--execファイルからレポートを生成-->
+                    <!--execファイルからレポ�Eトを生�E-->
                     <execution>
                         <id>report</id>
                         <phase>prepare-package</phase>
@@ -376,7 +386,7 @@
                 </dependencies>
             </plugin>
 
-            <!-- コードカバレッジツール -->
+            <!-- コードカバレチE��チE�Eル -->
             <plugin>
                 <groupId>org.openclover</groupId>
                 <artifactId>clover-maven-plugin</artifactId>
@@ -394,9 +404,9 @@
                 </executions>
             </plugin>
 
-            <!-- フロントエンドビルド（Tailwind CSS + esbuild）-->
-            <!-- generate-resources phase で Node.js 取得 → npm ci → npm run build を順に実行し、 -->
-            <!-- target/classes/static/css/app.css と target/classes/static/js/app.js を生成する -->
+            <!-- フロントエンドビルド！Eailwind CSS + esbuild�E�E->
+            <!-- generate-resources phase で Node.js 取征EↁEnpm ci ↁEnpm run build を頁E��実行し、E-->
+            <!-- target/classes/static/css/app.css と target/classes/static/js/app.js を生成すめE-->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>

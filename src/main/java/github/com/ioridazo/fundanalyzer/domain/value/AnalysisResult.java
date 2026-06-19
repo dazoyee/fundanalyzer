@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
@@ -16,6 +17,8 @@ public class AnalysisResult {
 
     private final BigDecimal corporateValue;
 
+    private final BigDecimal rimValue;
+
     private final BigDecimal bps;
 
     private final BigDecimal eps;
@@ -28,10 +31,9 @@ public class AnalysisResult {
 
     private final String documentId;
 
-    private static final BigDecimal WEIGHTING_BUSINESS_VALUE = BigDecimal.TEN;
-    private static final BigDecimal AVERAGE_CURRENT_RATIO = BigDecimal.valueOf(1.2);
-    private static final BigDecimal WEIGHTING_QUARTER_VALUE = BigDecimal.valueOf(4);
     private static final int TENTH_DECIMAL_PLACE = 10;
+    /** 年換算重み（1年=4四半期の不変定数。四半期分母の既定値と年換算倍率を兼ねる）。 */
+    private static final BigDecimal ANNUAL_WEIGHT = BigDecimal.valueOf(4);
 
     public AnalysisResult(
             final BigDecimal corporateValue,
@@ -41,7 +43,20 @@ public class AnalysisResult {
             final BigDecimal roa,
             final LocalDate submitDate,
             final String documentId) {
+        this(corporateValue, null, bps, eps, roe, roa, submitDate, documentId);
+    }
+
+    public AnalysisResult(
+            final BigDecimal corporateValue,
+            final BigDecimal rimValue,
+            final BigDecimal bps,
+            final BigDecimal eps,
+            final BigDecimal roe,
+            final BigDecimal roa,
+            final LocalDate submitDate,
+            final String documentId) {
         this.corporateValue = corporateValue;
+        this.rimValue = rimValue;
         this.bps = bps;
         this.eps = eps;
         this.roe = roe;
@@ -50,18 +65,20 @@ public class AnalysisResult {
         this.documentId = documentId;
     }
 
-    public AnalysisResult(final FinanceValue financeValue, final Document document) {
-        this.corporateValue = calculateCorporateValue(financeValue, document);
+    public AnalysisResult(final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient) {
+        this.corporateValue = calculateCorporateValue(financeValue, document, coefficient);
         this.bps = calculateBps(financeValue, document).orElse(null);
         this.eps = calculateEps(financeValue, document).orElse(null);
         this.roe = calculateRoe(financeValue, document).orElse(null);
         this.roa = calculateRoa(financeValue, document).orElse(null);
+        this.rimValue = calculateRimValue(this.bps, this.roe, coefficient.getCostOfEquity()).orElse(null);
         this.submitDate = document.getSubmitDate();
         this.documentId = document.getDocumentId();
     }
 
     public static AnalysisResult of() {
         return new AnalysisResult(
+                null,
                 null,
                 null,
                 null,
@@ -75,6 +92,7 @@ public class AnalysisResult {
     public static AnalysisResult of(final AnalysisResultEntity entity) {
         return new AnalysisResult(
                 entity.getCorporateValue(),
+                entity.getRimValue().orElse(null),
                 entity.getBps().orElse(null),
                 entity.getEps().orElse(null),
                 entity.getRoe().orElse(null),
@@ -82,6 +100,30 @@ public class AnalysisResult {
                 entity.getSubmitDate(),
                 entity.getDocumentId()
         );
+    }
+
+    public Optional<BigDecimal> getRimValue() {
+        return Optional.ofNullable(rimValue);
+    }
+
+    /**
+     * 残余利益モデル(無成長)の理論株価を算出する。
+     *
+     * <p>{@code BPS × (ROE/100) ÷ r}。BPS/ROE/r が無い・r が 0・ROE が 0 以下（赤字等）のときは算出しない。
+     *
+     * @param bps          1株当たり純資産
+     * @param roe          自己資本利益率（百分率）
+     * @param costOfEquity 資本コスト（割引率）
+     * @return RIM 理論株価（算出不能時は空）
+     */
+    Optional<BigDecimal> calculateRimValue(final BigDecimal bps, final BigDecimal roe, final BigDecimal costOfEquity) {
+        if (bps == null || roe == null || costOfEquity == null
+            || costOfEquity.signum() <= 0 || roe.signum() <= 0) {
+            return Optional.empty();
+        }
+        return Optional.of(bps
+                .multiply(roe.divide(BigDecimal.valueOf(100), TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP))
+                .divide(costOfEquity, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
     public Optional<BigDecimal> getBps() {
@@ -101,15 +143,17 @@ public class AnalysisResult {
     }
 
     /**
-     * 企業価値を算出する
+     * 企業価値を指定係数で算出する
      *
      * @param financeValue 財務諸表値
      * @param document     ドキュメント
+     * @param coefficient  算出係数
      * @return 企業価値
      * @throws FundanalyzerNotExistException 値が存在しないとき
      */
     BigDecimal calculateCorporateValue(
-            final FinanceValue financeValue, final Document document) throws FundanalyzerNotExistException {
+            final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient)
+            throws FundanalyzerNotExistException {
         // 流動資産合計
         final BigDecimal totalCurrentAssets = financeValue.getTotalCurrentAssets().map(BigDecimal::new)
                 .orElseThrow(() -> new FundanalyzerNotExistException(
@@ -145,12 +189,12 @@ public class AnalysisResult {
                         PlSubject.PlEnum.OPERATING_PROFIT.getSubject(),
                         document
                 ));
-        // 四半期種別の重みづけ
+        // 四半期種別の重みづけ（QuarterType 未設定時は年次想定の ANNUAL_WEIGHT をフォールバックに使う）
         final BigDecimal weightingQuarterType = Optional.of(document)
                 .map(Document::getQuarterType)
                 .map(QuarterType::getWeight)
                 .map(BigDecimal::new)
-                .orElse(WEIGHTING_QUARTER_VALUE);
+                .orElse(ANNUAL_WEIGHT);
         // 株式総数
         final BigDecimal numberOfShares = financeValue.getNumberOfShares().map(BigDecimal::new)
                 .orElseThrow(() -> new FundanalyzerNotExistException(
@@ -159,11 +203,11 @@ public class AnalysisResult {
                         document
                 ));
 
-        return operatingProfit.multiply(WEIGHTING_BUSINESS_VALUE)
-                .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(AVERAGE_CURRENT_RATIO)).add(totalInvestmentsAndOtherAssets)
+        return operatingProfit.multiply(coefficient.getOperatingProfitWeight())
+                .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(coefficient.getCurrentLiabilitiesRatio())).add(totalInvestmentsAndOtherAssets)
                 .subtract(totalFixedLiabilities)
                 .divide(weightingQuarterType, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
-                .multiply(WEIGHTING_QUARTER_VALUE)
+                .multiply(ANNUAL_WEIGHT)
                 .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 

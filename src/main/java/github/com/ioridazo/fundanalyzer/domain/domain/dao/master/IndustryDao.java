@@ -16,6 +16,7 @@ public interface IndustryDao {
     @Select
     List<IndustryEntity> selectAll();
 
+    // 係数列(operating_profit_weight / current_liabilities_ratio / cost_of_equity)は意図的に除外し、DB の DEFAULT(10 / 1.2 / 0.08)を適用する
     @Insert(include = {"name", "createdAt"})
     Result<IndustryEntity> insert(IndustryEntity industryEntity);
 }

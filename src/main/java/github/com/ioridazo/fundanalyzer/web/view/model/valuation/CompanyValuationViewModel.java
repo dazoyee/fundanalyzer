@@ -72,4 +72,17 @@ public record CompanyValuationViewModel(
                 viewBean.getDividendYield().orElse(null)
         );
     }
+
+    /**
+     * グレアム指数のみ差し替えた新インスタンスを返す（業種内zスコア表示用）。
+     *
+     * @param newGrahamIndex 差し替えるグレアム指数（業種内zスコア。算出不能時は null）
+     * @return グレアム指数を差し替えた新インスタンス
+     */
+    public CompanyValuationViewModel withGrahamIndex(final BigDecimal newGrahamIndex) {
+        return new CompanyValuationViewModel(
+                code, name, targetDate, stockPrice, newGrahamIndex, discountValue, discountRate,
+                submitDate, stockPriceOfSubmitDate, daySinceSubmitDate, differenceFromSubmitDate,
+                submitDateRatio, grahamIndexOfSubmitDate, corporateValue, dividendYield);
+    }
 }

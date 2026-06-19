@@ -150,6 +150,8 @@ exception/   … 業務例外
 - マイグレーションは `src/main/resources/db/migration/V*.sql`。**既存ファイルは編集せず、新規バージョンを追加**（Flyway 規約）。
 - DAO は `domain/domain/dao/{master|transaction|view}/` に配置。SQLは Doma 規約で `src/main/resources/META-INF/github/...` に対応する SQL ファイルを置く（`META-INF/github/com/...` を `find` で確認）。
 - 設定で対象外とする企業/業種/書類タイプ等は `app.config.scraping.*`, `app.config.remove-document.*`, `app.config.view.*` に集約されており、コード内ハードコードしない。
+- 企業価値算出の係数: **営業利益倍率・流動負債調整係数・資本コスト(RIM用 r) は `industry` マスタの列**（`operating_profit_weight`/`current_liabilities_ratio`/`cost_of_equity`・既定値も列 DEFAULT 10/1.2/0.08 で保持）、**年換算重み(4) はソース定数** `AnalysisResult.ANNUAL_WEIGHT`（不変）。`AnalyzeInteractor` が会社の `industryId` から `IndustrySpecification.resolveCoefficient(industryId)` で業種別の実効係数（`config/AnalysisCoefficient`＝op/curr/r の値オブジェクト）を解決し `new AnalysisResult(financeValue, document, coefficient)` で算出。業種別係数の変更は**新規分析分から反映**（既存 `analysis_result` は再分析の一意制約スキップにより据え置き）。
+- **残余利益モデル(RIM)**: `AnalysisResult` が `BPS×(ROE/100)÷r` で2つ目の理論株価 `rimValue` を算出し `analysis_result.rim_value` に保存（前向きのみ・既存行はNULL）。`/v3/corporate` の表示情報に「RIM理論株価」＋「2モデル合意度（企業価値モデルとRIMのうち株価より高い＝割安と判定した数 / 評価できた数）」を表示（`CorporatePresenter.setRimAndAgreement`）。
 
 ### View / 画面
 
@@ -183,6 +185,10 @@ exception/   … 業務例外
 
 `/v3/corporate?code=XXXX` のヘッダー H1 横に **前の銘柄 / 次の銘柄** ボタンを配置。`backwardCode` / `forwardCode` は `target=main|quart|all` 指定時はその view ベース、`target` 未指定時は `viewAll()` ベースで算出する。**「次=より新しい提出日」「前=より古い提出日」** で統一。端ではボタン非表示（`th:if`）。スマホ (sm 未満) はタイトル下の独立行に表示（[T20260509](docs/notes/T20260509-corporate-detail-prev-next-nav.md)）。
 
+#### 株価評価の業種内相対表示（グレアム指数）
+
+`/v3/valuation` の graham-index view に **「実数 / 業種内相対」トグル** を配置。相対 ON（`mode=relative`）時、グレアム指数列の表示値を**業種内zスコア**（全対象企業を業種グルーピングし `(値−業種平均)/業種σ`）に差し替える（その場計算・非永続・DB変更なし）。z 算出は `ViewValuationUseCase#findGrahamIndustryZScore` / `ViewValuationInteractor.computeGrahamIndustryZScore`（業種内 n<3・σ=0・graham null は対象外）。`ViewService` が `CompanyValuationViewModel#withGrahamIndex` で値を差し替え。`mode` は `ValuationPresenter` がホワイトリスト検証（graham-index view のみ relative 有効、他は raw）。sort/search/paginator は `mode=relative` 時のみ URL に mode を伝播（[T20260601-2](docs/notes/T20260601-industry-relative-zscore.md)）。
+
 #### 銘柄詳細の用語ツールチップ
 
 `/v3/corporate` の `dt` / `th` / 見出しテキスト直後に `<th:block th:replace="~{fragments/tooltip :: hint('<key>')}"></th:block>` を埋め込み、hover / focus / tap で用語解説ポップオーバーを表示する。用語キー → ラベル + 解説本文の辞書は [fragments/tooltip.html](src/main/resources/templates/fragments/tooltip.html) に Thymeleaf inline Map で集約。クライアント側は Alpine.js コンポーネント `tooltip` ([app.js](src/main/frontend/scripts/app.js)) で開閉、ESC / 外側クリックで閉じる。`x-cloak` の display:none は [main.css](src/main/frontend/styles/main.css) の `@layer base` で定義（[T20260512](docs/notes/T20260512-corporate-glossary-tooltip.md)）。
@@ -194,6 +200,10 @@ exception/   … 業務例外
 #### ダークモード
 
 `layout-v2.html` の Alpine.js x-data でダークモード状態を管理し、`localStorage('fundanalyzer.dark-mode')` を優先・未設定時は `prefers-color-scheme: dark` で初期反映。ヘッダー右上の sun/moon トグルで切替・永続化。
+
+#### サイドバー折りたたみ（デスクトップ / T20260619-2）
+
+デスクトップ (md+) でサイドバーをアイコンのみ (w-16) に折りたたむ機能。`layout-v2.html` の Alpine.js x-data に `sidebarCollapsed` boolean を保持し `localStorage('fundanalyzer.sidebar-collapsed')` で永続化。ヘッダー左上のトグルボタン（旧 `md:hidden` を外して全幅で常時表示）をクリックすると、デスクトップでは幅をトグル・モバイルでは従来どおりオーバーレイサイドバーを開閉する（`window.matchMedia('(min-width: 768px)')` で分岐）。折りたたみ時はナビテキストを非表示・アイコンを中央揃え・ロゴ文字を非表示にし、各ナビリンクに `title` 属性でホバーツールチップを表示する。aside は静的クラスで `w-64` を保持し折りたたみ時は `:class="{ 'md:w-16': sidebarCollapsed }"` で上書き、コンテンツ wrapper は `:class="sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'"` で連動する（[T20260619-2](docs/notes/T20260619-2-sidebar-collapsible.md)）。
 
 #### スマホ対応（sm 未満 / Phase 9 = T20260502）
 
@@ -232,6 +242,18 @@ exception/   … 業務例外
 - `src/main/resources/application-dev.yml` / `application-prod.yml` — プロファイル個別
 - `release/config/application-prod.yml` — 本番Windowsサービス起動時に読み込む差分設定（`release/start.bat`）
 - `app.config.edinet.api-key` は環境変数 `edinet.api-key`（`release/env` 経由）に対応。**コミットしない**
+
+### セキュリティ（外部公開対応 / T20260619）
+
+- **Basic 認証**: [SecurityConfig.java](src/main/java/github/com/ioridazo/fundanalyzer/config/SecurityConfig.java) で Spring Security を構成。全リクエスト（静的リソース含む）を認証必須とし、利用者は `app.security.user` / `app.security.password` から構成する単一のメモリ内ユーザーのみ。
+- **資格情報の環境変数**: `SECURITY_USER` / `SECURITY_PASSWORD`。dev は `application.yml` の既定値（`admin` / `fundanalyzer-local-dev`）で起動可能。**prod は [release/config/application-prod.yml](release/config/application-prod.yml) でフォールバックなし `${SECURITY_USER}` / `${SECURITY_PASSWORD}` を必須化**しており、`release/env` に未設定だと起動失敗で検知する。
+- **Slack トークン**: `app.config.slack.parameter.t/b/x` は `SLACK_WEBHOOK_T` / `SLACK_WEBHOOK_B` / `SLACK_WEBHOOK_X` に対応（直書き廃止）。`release/env` 経由で設定。テンプレートは [release/env.example](release/env.example)。
+- **CSRF**: 有効のまま維持。Thymeleaf の `th:action` フォームは Spring Security の `CsrfRequestDataValueProcessor` がトークンを自動注入する。htmx の table fragment は全て GET のため非対象。
+- **セキュリティヘッダー**: SecurityConfig で CSP / X-Frame-Options(DENY) / X-Content-Type-Options(nosniff) / Referrer-Policy(same-origin) / HSTS を付与。CSP はバンドル済み自前 JS（Alpine.js が `unsafe-eval`、`corporate-v2.html` のインライン Chart.js データが `unsafe-inline` を要する）を許可しつつ外部オリジンを遮断する方針。
+- **Cookie**: `server.servlet.session.cookie` で HttpOnly / Secure / SameSite=Strict を設定。
+- **HTTPS**: アプリ内では終端しない。リバースプロキシ（nginx 等）で TLS 終端する前提（Secure Cookie / HSTS はこれに依存）。
+- **Actuator 別ポート（dev 8989 / prod 8990）は認証保護対象外**（外部に露出させない運用前提）。
+- **Playwright テスト**: Security 有効化により実 HTTP アクセスする `Phase8ScreenSnapshotTest` / `MobileScreenshotRegressionTest` は `@SpringBootTest(properties=app.security.user/password=playwright)` + Playwright の `setHttpCredentials` で Basic 認証を付与する。`ManualMobileScreenshotTest` は dev 既定資格情報（`-DmanualScreenshotUser/Password` で上書き可）。
 
 ファイル出力先（`app.settings.file.path.*`）は dev で `${user.home}/.fundanalyzer/...`（OS 非依存）、prod で `C:/fundanalyzer/...`（[release/config/application-prod.yml](release/config/application-prod.yml) で再定義、Windows サービス前提）に切り替わる。`application.yml` のデフォルト値は prod 互換のため Windows パスを保持しているが、dev ではこの値は使われない。
 

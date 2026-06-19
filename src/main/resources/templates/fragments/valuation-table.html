@@ -9,8 +9,8 @@
                        currentDir=${parts.length > 1 ? parts[1] : 'asc'},
                        nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
                        nextSort=${field + ',' + nextDir}">
-        <a th:href="@{/v3/valuation(target=${target},view=${view},q=${keyword},sort=${nextSort},page=0)}"
-           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${nextSort},page=0)}"
+        <a th:href="@{/v3/valuation(target=${target},view=${view},q=${keyword},sort=${nextSort},page=0,mode=${mode == 'relative' ? 'relative' : null})}"
+           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${nextSort},page=0,mode=${mode == 'relative' ? 'relative' : null})}"
            hx-target="#valuation-table"
            hx-push-url="true"
            class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">
@@ -31,8 +31,8 @@
     </div>
     <div class="flex gap-1">
         <a th:if="${table.pageNumber() > 0}"
-           th:href="@{/v3/valuation(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
-           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
+           th:href="@{/v3/valuation(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1},mode=${mode == 'relative' ? 'relative' : null})}"
+           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1},mode=${mode == 'relative' ? 'relative' : null})}"
            hx-target="#valuation-table"
            hx-push-url="true"
            aria-label="前のページへ移動"
@@ -41,8 +41,8 @@
             前へ
         </a>
         <a th:if="${table.pageNumber() < table.totalPages() - 1}"
-           th:href="@{/v3/valuation(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
-           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
+           th:href="@{/v3/valuation(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1},mode=${mode == 'relative' ? 'relative' : null})}"
+           th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1},mode=${mode == 'relative' ? 'relative' : null})}"
            hx-target="#valuation-table"
            hx-push-url="true"
            aria-label="次のページへ移動"
@@ -244,7 +244,22 @@
 </div>
 
 <div th:fragment="graham-index-table (table, target, view, keyword, sortParam)" class="space-y-3">
-    <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <div th:replace="~{fragments/valuation-table :: header (table=${table})}"></div>
+        <div class="flex items-center gap-2" role="group" aria-label="グレアム指数の表示モード">
+            <span class="text-xs text-slate-500 dark:text-slate-400">表示</span>
+            <div class="inline-flex overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
+                <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=0,mode='raw')}"
+                   hx-target="#valuation-table" hx-push-url="true"
+                   th:classappend="${mode == 'relative'} ? 'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300' : 'bg-blue-600 text-white'"
+                   class="cursor-pointer px-3 py-1 text-xs">実数</a>
+                <a th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},sort=${sortParam},page=0,mode='relative')}"
+                   hx-target="#valuation-table" hx-push-url="true"
+                   th:classappend="${mode == 'relative'} ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-300'"
+                   class="cursor-pointer border-l border-slate-300 px-3 py-1 text-xs dark:border-slate-600">業種内相対</a>
+            </div>
+        </div>
+    </div>
     <div class="hidden overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 sm:block">
         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
             <thead class="bg-slate-50 dark:bg-slate-800">
@@ -252,7 +267,7 @@
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='code', label='コード', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='name', label='会社名', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='targetDate', label='対象日', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndex', label=${mode == 'relative' ? 'グレアム指数（業種内z）' : 'グレアム指数'}, target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='submitDate', label='提出日', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
                 <th th:replace="~{fragments/valuation-table :: sortable-th (field='grahamIndexOfSubmitDate', label='提出日グレアム', target=${target}, view=${view}, keyword=${keyword}, sortParam=${sortParam})}"></th>
             </tr>
@@ -267,7 +282,7 @@
                 </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.name}">サンプル</td>
                 <td class="px-3 py-2 text-sm" th:text="${c.targetDate}">-</td>
-                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.grahamIndex}">0</td>
+                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.grahamIndex != null ? c.grahamIndex : '-'}">0</td>
                 <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">-</td>
                 <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.grahamIndexOfSubmitDate}">0</td>
             </tr>
@@ -291,8 +306,8 @@
             </a>
             <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                 <div class="flex justify-between">
-                    <dt class="text-slate-500 dark:text-slate-400">グレアム指数</dt>
-                    <dd class="font-mono font-semibold" th:text="${c.grahamIndex}">-</dd>
+                    <dt class="text-slate-500 dark:text-slate-400" th:text="${mode == 'relative' ? 'グレアム指数（業種内z）' : 'グレアム指数'}">グレアム指数</dt>
+                    <dd class="font-mono font-semibold" th:text="${c.grahamIndex != null ? c.grahamIndex : '-'}">-</dd>
                 </div>
                 <div class="flex justify-between">
                     <dt class="text-slate-500 dark:text-slate-400">提出日</dt>

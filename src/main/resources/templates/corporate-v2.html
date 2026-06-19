@@ -191,6 +191,36 @@
                 </span>
                 <div class="text-xs text-purple-700 dark:text-purple-300">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></div>
                 <div class="text-lg font-bold font-mono" th:text="${corporateView.grahamIndex}">-</div>
+                <div class="mt-0.5 text-xs text-purple-600 dark:text-purple-400 font-mono"
+                     th:text="'業種内z: ' + (${grahamIndustryZScore != null} ? ${grahamIndustryZScore} : '-')">業種内z: -</div>
+            </div>
+            <!-- RIM理論株価 GOOD: rimValue > latestStockPrice。未算出/株価なしのときはバッジ非表示（中立） -->
+            <div class="relative rounded border border-teal-200 bg-teal-50 p-3 dark:border-teal-800 dark:bg-teal-950"
+                 th:with="comparable=${rimValue != null and corporateView.latestStockPrice != null},
+                          good=${comparable and rimValue > corporateView.latestStockPrice}">
+                <span th:if="${comparable and good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow" title="GOOD">
+                    <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
+                </span>
+                <span th:if="${comparable and !good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
+                    <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
+                </span>
+                <div class="text-xs text-teal-700 dark:text-teal-300">RIM理論株価<th:block th:replace="~{fragments/tooltip :: hint('rim-value')}"></th:block></div>
+                <div class="text-lg font-bold font-mono" th:text="${rimValue != null ? rimValue : '-'}">-</div>
+            </div>
+            <!-- 2モデル合意度（割安と判定したモデル数 / 総数） -->
+            <div class="relative rounded border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-800 dark:bg-indigo-950"
+                 th:with="good=${agreementTotal > 0 and agreementUndervalued == agreementTotal}">
+                <span th:if="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-white shadow" title="GOOD">
+                    <i data-lucide="thumbs-up" class="h-4 w-4" aria-hidden="true"></i>
+                </span>
+                <span th:unless="${good}" class="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-white shadow" title="BAD">
+                    <i data-lucide="thumbs-down" class="h-4 w-4" aria-hidden="true"></i>
+                </span>
+                <div class="text-xs text-indigo-700 dark:text-indigo-300">2モデル合意度<th:block th:replace="~{fragments/tooltip :: hint('model-agreement')}"></th:block></div>
+                <div class="text-lg font-bold font-mono">
+                    <span th:text="${agreementTotal > 0 ? agreementUndervalued + ' / ' + agreementTotal : '-'}">-</span>
+                    <span class="text-xs font-normal text-indigo-600 dark:text-indigo-300"> 割安</span>
+                </div>
             </div>
         </div>
         <!-- 下段: 4 観点カード横並び (旧版互換: 企業価値・統計 / 株価 / 財務指標 / バリュエーション) -->
@@ -236,6 +266,7 @@
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PER<th:block th:replace="~{fragments/tooltip :: hint('per')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.per}">-</dd></div>
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">PBR<th:block th:replace="~{fragments/tooltip :: hint('pbr')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.pbr}">-</dd></div>
                     <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数<th:block th:replace="~{fragments/tooltip :: hint('graham-index')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.grahamIndex}">-</dd></div>
+                    <div class="flex justify-between"><dt class="text-slate-500 dark:text-slate-400">グレアム指数（業種内z）</dt><dd class="font-mono" th:text="${grahamIndustryZScore != null} ? ${grahamIndustryZScore} : '-'">-</dd></div>
                 </dl>
             </div>
         </div>

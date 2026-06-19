@@ -80,8 +80,8 @@ class SlackClientTest {
                 new AppConfig().retryTemplateSlack(properties),
                 environment
         );
-        client.parameterT = "TKN2V6NQ4";
-        client.parameterB = "B01DFHHPE07";
+        client.parameterT = "T_TEST";
+        client.parameterB = "B_TEST";
         client.parameterX = "";
 
         server.enqueue(new MockResponse());

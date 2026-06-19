@@ -20,10 +20,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class ViewValuationInteractor implements ViewValuationUseCase {
@@ -128,6 +132,66 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
                         viewSpecification.findCompanyValuationViewList(entity.id())
                 ))
                 .toList();
+    }
+
+    /** 業種内zスコアを算出する最小社数（これ未満の業種は算出対象外）。 */
+    static final int MIN_INDUSTRY_SIZE = 3;
+    /** zスコアの小数桁数。 */
+    private static final int Z_SCORE_SCALE = 2;
+
+    /**
+     * グレアム指数の業種内zスコアを企業コード（4桁）別に算出する。
+     *
+     * @return 企業コード（4桁）→ 業種内zスコア
+     */
+    @Override
+    public Map<String, BigDecimal> findGrahamIndustryZScore() {
+        final Map<String, Integer> industryByCode = companySpecification.inquiryAllTargetCompanies().stream()
+                .filter(company -> company.code() != null)
+                // 同一の4桁コードが複数存在する場合は最初に出現した業種IDを採用する
+                .collect(Collectors.toMap(Company::getCode4, Company::industryId, (existing, ignored) -> existing));
+        return computeGrahamIndustryZScore(viewAllValuation(), industryByCode);
+    }
+
+    /**
+     * グレアム指数の業種内zスコアを算出する（純粋関数）。
+     *
+     * <p>平均・標準偏差は double で計算する（表示用の相対指標であり最終的に
+     * {@code setScale(2, HALF_UP)} で丸めるため精度上問題ない）。標準偏差は母集団標準偏差。
+     *
+     * @param valuations     会社評価ビュー一覧
+     * @param industryByCode 企業コード（4桁）→ 業種ID
+     * @return 企業コード（4桁）→ 業種内zスコア（算出可能な社のみ）
+     */
+    static Map<String, BigDecimal> computeGrahamIndustryZScore(
+            final List<CompanyValuationViewModel> valuations, final Map<String, Integer> industryByCode) {
+        final Map<Integer, List<CompanyValuationViewModel>> byIndustry = valuations.stream()
+                .filter(cvvm -> cvvm.grahamIndex() != null)
+                .filter(cvvm -> industryByCode.get(cvvm.code()) != null)
+                .collect(Collectors.groupingBy(cvvm -> industryByCode.get(cvvm.code())));
+
+        final Map<String, BigDecimal> result = new HashMap<>();
+        byIndustry.values().forEach(group -> {
+            if (group.size() < MIN_INDUSTRY_SIZE) {
+                return;
+            }
+            final double mean = group.stream()
+                    .mapToDouble(cvvm -> cvvm.grahamIndex().doubleValue())
+                    .average()
+                    .orElse(0);
+            final double standardDeviation = Math.sqrt(group.stream()
+                    .mapToDouble(cvvm -> Math.pow(cvvm.grahamIndex().doubleValue() - mean, 2))
+                    .average()
+                    .orElse(0));
+            if (standardDeviation == 0) {
+                return;
+            }
+            group.forEach(cvvm -> result.put(
+                    cvvm.code(),
+                    BigDecimal.valueOf((cvvm.grahamIndex().doubleValue() - mean) / standardDeviation)
+                            .setScale(Z_SCORE_SCALE, RoundingMode.HALF_UP)));
+        });
+        return result;
     }
 
     @Override

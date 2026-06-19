@@ -117,5 +117,49 @@ class CorporatePresenterTest {
             Mockito.verify(model).addAttribute("backwardCode", "0001");
             Mockito.verify(model).addAttribute("forwardCode", "0003");
         }
+
+        @Test
+        @DisplayName("グレアム指数の業種内zスコアが grahamIndustryZScore Model attribute に設定される")
+        void setsGrahamIndustryZScoreAttribute() {
+            final String code = "9999";
+            final CorporateDetailViewModel view = buildDetailView(List.of(), List.of(), List.of(), List.of());
+            Mockito.when(viewService.getCorporateDetailView(CodeInputData.of(code))).thenReturn(view);
+            Mockito.when(viewService.getValuationView(CodeInputData.of(code))).thenReturn(List.of());
+            Mockito.when(viewService.getGrahamIndustryZScore(CodeInputData.of(code)))
+                    .thenReturn(new BigDecimal("-1.06"));
+
+            final Model model = Mockito.mock(Model.class);
+            presenter.corporateDetailViewV3(code, null, model);
+
+            Mockito.verify(model).addAttribute("grahamIndustryZScore", new BigDecimal("-1.06"));
+        }
+
+        @Test
+        @DisplayName("RIM理論株価と2モデル合意度（割安2/2）が Model attribute に設定される")
+        void setsRimAndAgreement() {
+            final String code = "9999";
+            final CorporateViewModel corporate = new CorporateViewModel();
+            corporate.setLatestCorporateValue(BigDecimal.valueOf(3000));
+            corporate.setLatestStockPrice(BigDecimal.valueOf(1000));
+            final CompanyViewModel company = new CompanyViewModel(
+                    "12345", "テスト会社", "情報・通信業", "E00001", Boolean.FALSE,
+                    100, "3月31日", "10.0", "1.0", "5.0",
+                    "1000000", "1000000000", "2.5", null);
+            final AnalysisResultViewModel ar = new AnalysisResultViewModel(
+                    LocalDate.of(2026, 3, 31), LocalDate.of(2025, 3, 31),
+                    BigDecimal.valueOf(3000), BigDecimal.valueOf(1500), "120", null);
+            final CorporateDetailViewModel view = CorporateDetailViewModel.of(
+                    company, "0001", "0003", corporate, List.of(ar),
+                    List.of(), List.of(), List.of(), List.of());
+            Mockito.when(viewService.getCorporateDetailView(CodeInputData.of(code))).thenReturn(view);
+            Mockito.when(viewService.getValuationView(CodeInputData.of(code))).thenReturn(List.of());
+
+            final Model model = Mockito.mock(Model.class);
+            presenter.corporateDetailViewV3(code, null, model);
+
+            Mockito.verify(model).addAttribute("rimValue", BigDecimal.valueOf(1500));
+            Mockito.verify(model).addAttribute("agreementUndervalued", 2);
+            Mockito.verify(model).addAttribute("agreementTotal", 2);
+        }
     }
 }

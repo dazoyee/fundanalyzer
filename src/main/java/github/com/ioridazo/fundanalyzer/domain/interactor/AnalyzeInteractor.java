@@ -3,6 +3,8 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
@@ -50,6 +52,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final IndustrySpecification industrySpecification;
 
     @Value("${app.config.view.document-type-code}")
     List<String> targetTypeCodes;
@@ -60,13 +63,15 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final IndustrySpecification industrySpecification) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
         this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.industrySpecification = industrySpecification;
     }
 
     /**
@@ -148,7 +153,11 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     void analyze(final Document document) {
         try {
             final FinanceValue financeValue = financialStatementSpecification.getFinanceValue(document);
-            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document);
+            final Integer industryId = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
+                    .map(Company::industryId)
+                    .orElse(null);
+            final AnalysisCoefficient coefficient = industrySpecification.resolveCoefficient(industryId);
+            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document, coefficient);
 
             analysisResultSpecification.insert(document, analysisResult);
 
@@ -161,7 +170,21 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             });
 
         } catch (final FundanalyzerNotExistException e) {
-            final FinancialStatementEnum fs = e.getFs().orElseThrow(FundanalyzerRuntimeException::new);
+            if (e.getFs().isEmpty()) {
+                // 財務科目以外の欠損（会社マスタ未登録・業種別係数なし等）はこの書類のみスキップし、バッチ全体は継続する
+                log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "会社情報または業種別係数が存在しないため、分析をスキップしました。\t書類ID:{0}\tEDINETコード:{1}",
+                                document.getDocumentId(),
+                                document.getEdinetCode()
+                        ),
+                        document,
+                        Category.ANALYSIS,
+                        Process.ANALYSIS
+                ), e);
+                return;
+            }
+            final FinancialStatementEnum fs = e.getFs().get();
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     MessageFormat.format(
                             "{0}の必要な値がデータベースに存在しないかまたはNULLで登録されているため、分析できませんでした。次の項目を確認してください。" +

@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.IndicatorViewModel;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -67,12 +69,51 @@ public class CorporatePresenter {
         model.addAttribute("backwardCode", view.getBackwardCode());
         model.addAttribute("forwardCode", view.getForwardCode());
         model.addAttribute("corporateView", view.getCorporate());
+        model.addAttribute("grahamIndustryZScore", viewService.getGrahamIndustryZScore(CodeInputData.of(code)));
+        setRimAndAgreement(view, view.getCorporate(), model);
         setAnalysisView(view, model);
         setInvestmentIndicator(view, model);
         model.addAttribute("financialStatements", view.getFinancialStatement());
         setForecastStock(view, model);
         setStockPriceView(view, model);
         setValuationView(viewService.getValuationView(CodeInputData.of(code)), model);
+    }
+
+    /**
+     * 最新 RIM 理論株価と2モデル合意度（割安票数 / 総数）を model に積む。
+     *
+     * @param view          銘柄詳細ビュー
+     * @param corporateView 企業価値ビュー（最新企業価値・最新株価）
+     * @param model         model
+     */
+    private void setRimAndAgreement(
+            final CorporateDetailViewModel view, final CorporateViewModel corporateView, final Model model) {
+        final BigDecimal rimValue = view.getAnalysisResultList().stream()
+                .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
+                .max(Comparator.comparing(AnalysisResultViewModel::submitDate))
+                .map(AnalysisResultViewModel::rimValue)
+                .orElse(null);
+        model.addAttribute("rimValue", rimValue);
+
+        final BigDecimal corporateValue = corporateView == null ? null : corporateView.getLatestCorporateValue();
+        final BigDecimal stockPrice = corporateView == null ? null : corporateView.getLatestStockPrice();
+
+        int undervalued = 0;
+        int total = 0;
+        if (corporateValue != null && stockPrice != null) {
+            total++;
+            if (corporateValue.compareTo(stockPrice) > 0) {
+                undervalued++;
+            }
+        }
+        if (rimValue != null && stockPrice != null) {
+            total++;
+            if (rimValue.compareTo(stockPrice) > 0) {
+                undervalued++;
+            }
+        }
+        model.addAttribute("agreementUndervalued", undervalued);
+        model.addAttribute("agreementTotal", total);
     }
 
     private void setAnalysisView(final CorporateDetailViewModel view, final Model model) {

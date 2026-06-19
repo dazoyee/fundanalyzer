@@ -50,7 +50,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "stock");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            final String result = presenter.valuationViewV3(null, null, null, 0, 25, null, model);
+            final String result = presenter.valuationViewV3(null, null, null, 0, 25, null, null, model);
 
             assertEquals("valuation-v2", result);
             verify(model).addAttribute("view", "stock");
@@ -66,7 +66,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("name"));
             when(viewService.findIndustryValuationTable(any(IndustryValuationTableQuery.class))).thenReturn(page);
 
-            presenter.valuationViewV3("industry", "stock", null, 0, 25, null, model);
+            presenter.valuationViewV3("industry", "stock", null, 0, 25, null, null, model);
 
             verify(model).addAttribute("view", "industry");
             verify(viewService, times(1)).findIndustryValuationTable(any(IndustryValuationTableQuery.class));
@@ -81,7 +81,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "submit");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            presenter.valuationViewV3(null, "submit", "abc", 1, 50, "corporateValue,desc", model);
+            presenter.valuationViewV3(null, "submit", "abc", 1, 50, "corporateValue,desc", null, model);
 
             final ArgumentCaptor<CompanyValuationTableQuery> captor =
                     ArgumentCaptor.forClass(CompanyValuationTableQuery.class);
@@ -102,7 +102,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "stock");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            presenter.valuationViewV3(null, "secret", null, 0, 25, null, model);
+            presenter.valuationViewV3(null, "secret", null, 0, 25, null, null, model);
 
             verify(model).addAttribute("view", "stock");
         }
@@ -115,7 +115,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "stock");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            presenter.valuationViewV3(null, "stock", null, 0, 25, "corporateValue,asc", model);
+            presenter.valuationViewV3(null, "stock", null, 0, 25, "corporateValue,asc", null, model);
 
             final ArgumentCaptor<CompanyValuationTableQuery> captor =
                     ArgumentCaptor.forClass(CompanyValuationTableQuery.class);
@@ -132,7 +132,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 100, Sort.by("code"), "stock");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            presenter.valuationViewV3(null, null, null, -5, 1000, null, model);
+            presenter.valuationViewV3(null, null, null, -5, 1000, null, null, model);
 
             final ArgumentCaptor<CompanyValuationTableQuery> captor =
                     ArgumentCaptor.forClass(CompanyValuationTableQuery.class);
@@ -154,7 +154,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "stock");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            final String result = presenter.valuationViewV3Table(null, "stock", null, 0, 25, null, model);
+            final String result = presenter.valuationViewV3Table(null, "stock", null, 0, 25, null, null, model);
 
             assertEquals("fragments/valuation-table :: stock-table", result);
         }
@@ -167,7 +167,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "submit");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            final String result = presenter.valuationViewV3Table(null, "submit", null, 0, 25, null, model);
+            final String result = presenter.valuationViewV3Table(null, "submit", null, 0, 25, null, null, model);
 
             assertEquals("fragments/valuation-table :: submit-table", result);
         }
@@ -180,9 +180,58 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "graham-index");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            final String result = presenter.valuationViewV3Table(null, "graham-index", null, 0, 25, null, model);
+            final String result = presenter.valuationViewV3Table(null, "graham-index", null, 0, 25, null, null, model);
 
             assertEquals("fragments/valuation-table :: graham-index-table", result);
+        }
+
+        @Test
+        @DisplayName("view=graham-index mode=relative → query.mode=relative・model に mode=relative")
+        void grahamRelative_passesRelativeMode() {
+            final Model model = mock(Model.class);
+            final CompanyValuationTablePage page = new CompanyValuationTablePage(
+                    List.of(), 0, 0L, 0, 25, Sort.by("code"), "graham-index");
+            when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
+
+            presenter.valuationViewV3Table(null, "graham-index", null, 0, 25, null, "relative", model);
+
+            final ArgumentCaptor<CompanyValuationTableQuery> captor =
+                    ArgumentCaptor.forClass(CompanyValuationTableQuery.class);
+            verify(viewService).findCompanyValuationTable(captor.capture());
+            assertEquals("relative", captor.getValue().mode());
+            verify(model).addAttribute("mode", "relative");
+        }
+
+        @Test
+        @DisplayName("不正な mode は raw にフォールバック")
+        void invalidMode_fallsBackToRaw() {
+            final Model model = mock(Model.class);
+            final CompanyValuationTablePage page = new CompanyValuationTablePage(
+                    List.of(), 0, 0L, 0, 25, Sort.by("code"), "graham-index");
+            when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
+
+            presenter.valuationViewV3Table(null, "graham-index", null, 0, 25, null, "bogus", model);
+
+            final ArgumentCaptor<CompanyValuationTableQuery> captor =
+                    ArgumentCaptor.forClass(CompanyValuationTableQuery.class);
+            verify(viewService).findCompanyValuationTable(captor.capture());
+            assertEquals("raw", captor.getValue().mode());
+        }
+
+        @Test
+        @DisplayName("graham-index 以外の view で mode=relative → raw に倒す")
+        void relativeOnNonGrahamView_fallsBackToRaw() {
+            final Model model = mock(Model.class);
+            final CompanyValuationTablePage page = new CompanyValuationTablePage(
+                    List.of(), 0, 0L, 0, 25, Sort.by("code"), "stock");
+            when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
+
+            presenter.valuationViewV3Table(null, "stock", null, 0, 25, null, "relative", model);
+
+            final ArgumentCaptor<CompanyValuationTableQuery> captor =
+                    ArgumentCaptor.forClass(CompanyValuationTableQuery.class);
+            verify(viewService).findCompanyValuationTable(captor.capture());
+            assertEquals("raw", captor.getValue().mode());
         }
 
         @Test
@@ -193,7 +242,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("code"), "dividend-yield");
             when(viewService.findCompanyValuationTable(any(CompanyValuationTableQuery.class))).thenReturn(page);
 
-            final String result = presenter.valuationViewV3Table(null, "dividend-yield", null, 0, 25, null, model);
+            final String result = presenter.valuationViewV3Table(null, "dividend-yield", null, 0, 25, null, null, model);
 
             assertEquals("fragments/valuation-table :: dividend-yield-table", result);
         }
@@ -206,7 +255,7 @@ class ValuationPresenterTest {
                     List.of(), 0, 0L, 0, 25, Sort.by("name"));
             when(viewService.findIndustryValuationTable(any(IndustryValuationTableQuery.class))).thenReturn(page);
 
-            final String result = presenter.valuationViewV3Table("industry", null, null, 0, 25, null, model);
+            final String result = presenter.valuationViewV3Table("industry", null, null, 0, 25, null, null, model);
 
             assertEquals("fragments/valuation-table :: industry-table", result);
         }

@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction;
 
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.seasar.doma.Column;
 import org.seasar.doma.Entity;
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 @SuppressWarnings("RedundantModifiersValueLombok")
 @Value
+@AllArgsConstructor
 @Entity(immutable = true)
 @Table(name = "analysis_result")
 public class AnalysisResultEntity {
@@ -30,6 +32,8 @@ public class AnalysisResultEntity {
     private final LocalDate documentPeriod;
 
     private final BigDecimal corporateValue;
+
+    private final BigDecimal rimValue;
 
     private final BigDecimal bps;
 
@@ -50,10 +54,46 @@ public class AnalysisResultEntity {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
+    /**
+     * RIM 値を持たない旧シグネチャ互換コンストラクタ（rimValue は null）。
+     *
+     * @param id                id
+     * @param companyCode       企業コード
+     * @param documentPeriod    期間
+     * @param corporateValue    企業価値
+     * @param bps               BPS
+     * @param eps               EPS
+     * @param roe               ROE
+     * @param roa               ROA
+     * @param documentTypeCode  書類種別コード
+     * @param quarterType       四半期種別
+     * @param submitDate        提出日
+     * @param documentId        書類ID
+     * @param createdAt         登録日時
+     */
+    public AnalysisResultEntity(
+            final Integer id,
+            final String companyCode,
+            final LocalDate documentPeriod,
+            final BigDecimal corporateValue,
+            final BigDecimal bps,
+            final BigDecimal eps,
+            final BigDecimal roe,
+            final BigDecimal roa,
+            final String documentTypeCode,
+            final String quarterType,
+            final LocalDate submitDate,
+            final String documentId,
+            final LocalDateTime createdAt) {
+        this(id, companyCode, documentPeriod, corporateValue, null, bps, eps, roe, roa,
+                documentTypeCode, quarterType, submitDate, documentId, createdAt);
+    }
+
     public static AnalysisResultEntity of(
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
+            final BigDecimal rimValue,
             final BigDecimal bps,
             final BigDecimal eps,
             final BigDecimal roe,
@@ -72,6 +112,7 @@ public class AnalysisResultEntity {
                 companyCode,
                 period,
                 corporateValue,
+                rimValue,
                 bps,
                 eps,
                 roe,
@@ -82,6 +123,10 @@ public class AnalysisResultEntity {
                 documentId,
                 createdAt
         );
+    }
+
+    public Optional<BigDecimal> getRimValue() {
+        return Optional.ofNullable(rimValue);
     }
 
     public Optional<BigDecimal> getBps() {

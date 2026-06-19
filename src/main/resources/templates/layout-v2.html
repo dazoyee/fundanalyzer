@@ -10,9 +10,18 @@
           return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         })(),
         sidebarOpen: false,
+        sidebarCollapsed: localStorage.getItem('fundanalyzer.sidebar-collapsed') === 'true',
         toggleDark() {
           this.dark = !this.dark;
           localStorage.setItem('fundanalyzer.dark-mode', String(this.dark));
+        },
+        toggleSidebar() {
+          if (window.matchMedia('(min-width: 768px)').matches) {
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            localStorage.setItem('fundanalyzer.sidebar-collapsed', String(this.sidebarCollapsed));
+          } else {
+            this.sidebarOpen = !this.sidebarOpen;
+          }
         }
       }"
       :class="{ 'dark': dark }">
@@ -25,27 +34,34 @@
 <body class="flex min-h-full bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100"
       th:attr="data-context-path=@{/}">
 
-    <aside class="fixed inset-y-0 left-0 z-30 w-64 -translate-x-full transform bg-white shadow-lg transition-transform duration-200 ease-in-out dark:bg-slate-800 dark:shadow-slate-900/50 md:translate-x-0"
-           :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }">
-        <div class="flex h-16 items-center gap-2 border-b border-slate-200 px-4 dark:border-slate-700">
-            <i data-lucide="building-2" class="text-blue-600 dark:text-blue-400" aria-hidden="true"></i>
-            <span class="text-lg font-bold">fundanalyzer</span>
+    <aside class="fixed inset-y-0 left-0 z-30 w-64 -translate-x-full transform bg-white shadow-lg transition-[width,transform] duration-200 ease-in-out dark:bg-slate-800 dark:shadow-slate-900/50 md:translate-x-0"
+           :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen, 'md:w-16': sidebarCollapsed }">
+        <div class="flex h-16 items-center gap-2 overflow-hidden border-b border-slate-200 px-4 dark:border-slate-700"
+             :class="{ 'justify-center': sidebarCollapsed }">
+            <i data-lucide="building-2" class="shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true"></i>
+            <span class="text-lg font-bold" :class="{ 'hidden': sidebarCollapsed }">fundanalyzer</span>
         </div>
         <nav class="space-y-1 px-2 py-4">
             <a th:href="@{/v3/index}"
-               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
-                <i data-lucide="building-2" aria-hidden="true"></i>
-                会社一覧
+               title="会社一覧"
+               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+               :class="{ 'justify-center': sidebarCollapsed }">
+                <i data-lucide="building-2" class="shrink-0" aria-hidden="true"></i>
+                <span :class="{ 'hidden': sidebarCollapsed }">会社一覧</span>
             </a>
             <a th:href="@{/v3/valuation}"
-               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
-                <i data-lucide="trending-up" aria-hidden="true"></i>
-                株価評価
+               title="株価評価"
+               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+               :class="{ 'justify-center': sidebarCollapsed }">
+                <i data-lucide="trending-up" class="shrink-0" aria-hidden="true"></i>
+                <span :class="{ 'hidden': sidebarCollapsed }">株価評価</span>
             </a>
             <a th:href="@{/v3/edinet-list}"
-               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
-                <i data-lucide="file-text" aria-hidden="true"></i>
-                EDINET 一覧
+               title="EDINET 一覧"
+               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+               :class="{ 'justify-center': sidebarCollapsed }">
+                <i data-lucide="file-text" class="shrink-0" aria-hidden="true"></i>
+                <span :class="{ 'hidden': sidebarCollapsed }">EDINET 一覧</span>
             </a>
         </nav>
     </aside>
@@ -61,11 +77,12 @@
          x-transition:leave-end="opacity-0"
          style="display: none;"></div>
 
-    <div class="flex min-w-0 flex-1 flex-col overflow-x-hidden md:ml-64">
+    <div class="flex min-w-0 flex-1 flex-col overflow-x-hidden transition-[margin] duration-200"
+         :class="sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'">
         <header class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur dark:border-slate-700 dark:bg-slate-800/80">
             <button type="button"
-                    class="rounded-md p-2 hover:bg-slate-100 md:hidden dark:hover:bg-slate-700"
-                    @click="sidebarOpen = !sidebarOpen"
+                    class="rounded-md p-2 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    @click="toggleSidebar()"
                     aria-label="サイドバーを開閉">
                 <i data-lucide="menu" aria-hidden="true"></i>
             </button>
@@ -90,7 +107,7 @@
         <footer class="border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
             <p>
                 &copy; fundanalyzer
-                <span layout:fragment="footer">画面刷新タスク Phase 2 layout-v2</span>
+                <span th:text="'v' + ${applicationVersion}">v?.?.?</span>
             </p>
         </footer>
     </div>

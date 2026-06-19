@@ -1,5 +1,9 @@
 server:
   port: 8889
+  servlet:
+    session:
+      cookie:
+        secure: false   # dev は HTTP（localhost）のため false。共通の http-only/same-site は application.yml で設定
 
 spring:
   datasource:
@@ -46,9 +50,9 @@ app:
   config:
     slack:
       parameter:
-        t: TKN2V6NQ4
-        b: B01EYUAKEL8
-        x: x
+        t: ${SLACK_WEBHOOK_T:}
+        b: ${SLACK_WEBHOOK_B:}
+        x: ${SLACK_WEBHOOK_X:}
 
   # dev プロファイル限定で OS 非依存パスへ上書き。
   # application.yml は Windows サービス向けデフォルト (C:/fundanalyzer/...) を維持し、

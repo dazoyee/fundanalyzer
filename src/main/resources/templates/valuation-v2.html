@@ -100,7 +100,7 @@
                aria-label="検索"
                th:placeholder="${target == 'industry'} ? '業種名で検索' : '証券コード・会社名で検索'"
                class="w-full rounded border border-slate-300 px-3 py-2 sm:w-64 dark:border-slate-600 dark:bg-slate-900"
-               th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},sort=${sortParam},page=0)}"
+               th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},sort=${sortParam},page=0,mode=${mode == 'relative' ? 'relative' : null})}"
                hx-target="#valuation-table"
                hx-trigger="keyup changed delay:300ms, search"
                hx-push-url="true">
@@ -112,7 +112,7 @@
                 name="sort"
                 aria-label="並び替え"
                 class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"
-                th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},page=0)}"
+                th:attr="hx-get=@{/v3/valuation/table(target=${target},view=${view},q=${keyword},page=0,mode=${mode == 'relative' ? 'relative' : null})}"
                 hx-target="#valuation-table"
                 hx-trigger="change"
                 hx-push-url="true">
