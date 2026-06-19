@@ -201,6 +201,10 @@ exception/   … 業務例外
 
 `layout-v2.html` の Alpine.js x-data でダークモード状態を管理し、`localStorage('fundanalyzer.dark-mode')` を優先・未設定時は `prefers-color-scheme: dark` で初期反映。ヘッダー右上の sun/moon トグルで切替・永続化。
 
+#### サイドバー折りたたみ（デスクトップ / T20260619-2）
+
+デスクトップ (md+) でサイドバーをアイコンのみ (w-16) に折りたたむ機能。`layout-v2.html` の Alpine.js x-data に `sidebarCollapsed` boolean を保持し `localStorage('fundanalyzer.sidebar-collapsed')` で永続化。ヘッダー左上のトグルボタン（旧 `md:hidden` を外して全幅で常時表示）をクリックすると、デスクトップでは幅をトグル・モバイルでは従来どおりオーバーレイサイドバーを開閉する（`window.matchMedia('(min-width: 768px)')` で分岐）。折りたたみ時はナビテキストを非表示・アイコンを中央揃え・ロゴ文字を非表示にし、各ナビリンクに `title` 属性でホバーツールチップを表示する。aside は静的クラスで `w-64` を保持し折りたたみ時は `:class="{ 'md:w-16': sidebarCollapsed }"` で上書き、コンテンツ wrapper は `:class="sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'"` で連動する（[T20260619-2](docs/notes/T20260619-2-sidebar-collapsible.md)）。
+
 #### スマホ対応（sm 未満 / Phase 9 = T20260502）
 
 [T20260502-mobile-ui-renewal.md](docs/notes/T20260502-mobile-ui-renewal.md) で対応。Tailwind `sm` (640px) 未満で:
