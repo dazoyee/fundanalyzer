@@ -2,11 +2,11 @@ package github.com.ioridazo.fundanalyzer.web;
 
 import com.google.gson.JsonObject;
 import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.CDPSession;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
-import com.microsoft.playwright.options.HttpCredentials;
 import com.microsoft.playwright.options.WaitUntilState;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,8 +53,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 @DisplayName("スマホ UI PNG ビジュアルリグレッション")
 class MobileScreenshotRegressionTest {
 
-    private static final Browser.NewPageOptions AUTH = new Browser.NewPageOptions()
-            .setHttpCredentials(new HttpCredentials("playwright", "playwright"));
     private static final Path BASELINE_DIR = Paths.get("src", "test", "resources", "playwright-baselines");
     private static final Path DIFF_DIR = Paths.get("target", "playwright-snapshots");
     private static final double MAX_DIFF_PIXEL_RATIO = 0.02;
@@ -66,6 +64,8 @@ class MobileScreenshotRegressionTest {
 
     private static Playwright playwright;
     private static Browser browser;
+    /** フォームログイン済みのストレージ状態（クッキー）。 */
+    private static String authenticatedStorageState;
 
     @LocalServerPort
     int port;
@@ -75,6 +75,28 @@ class MobileScreenshotRegressionTest {
         playwright = Playwright.create();
         browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         DIFF_DIR.toFile().mkdirs();
+    }
+
+    /**
+     * フォームログインを実行してセッションクッキーを取得する。
+     * 各テストで認証済みページにアクセスするために使用する。
+     *
+     * @param baseUrl アプリケーションのベース URL（例: http://localhost:8080/fundanalyzer）
+     * @return Playwright ストレージ状態 JSON（クッキーを含む）
+     */
+    private static String login(final String baseUrl) {
+        try (BrowserContext ctx = browser.newContext()) {
+            try (Page page = ctx.newPage()) {
+                page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
+                page.navigate(baseUrl + "/login",
+                        new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+                page.fill("input[name='username']", "playwright");
+                page.fill("input[name='password']", "playwright");
+                page.click("button[type='submit']");
+                page.waitForTimeout(2_000);
+            }
+            return ctx.storageState();
+        }
     }
 
     @AfterAll
@@ -122,12 +144,19 @@ class MobileScreenshotRegressionTest {
                 "baseline が存在しない: " + baselinePath
                         + " (ManualMobileScreenshotTest を -DupdateBaselines=true で実行して再生成すること)");
 
-        try (Page page = browser.newPage(AUTH)) {
+        final String baseUrl = "http://localhost:" + port + "/fundanalyzer";
+        if (authenticatedStorageState == null) {
+            authenticatedStorageState = login(baseUrl);
+        }
+
+        try (BrowserContext ctx = browser.newContext(
+                new Browser.NewContextOptions().setStorageState(authenticatedStorageState));
+             Page page = ctx.newPage()) {
             page.setViewportSize(width, height);
             page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
             try {
                 page.navigate(
-                        "http://localhost:" + port + "/fundanalyzer" + path,
+                        baseUrl + path,
                         new Page.NavigateOptions()
                                 .setWaitUntil(WaitUntilState.COMMIT)
                                 .setTimeout(NAVIGATION_TIMEOUT_MS));

@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 /**
- * Basic 認証・CSRF・セキュリティヘッダーを構成する Web セキュリティ設定。
+ * フォームログイン認証・CSRF・セキュリティヘッダーを構成する Web セキュリティ設定。
  *
  * <p>全リクエストを認証必須とし、利用者は {@code app.security.user} / {@code app.security.password}
  * から構成する単一のメモリ内ユーザーのみ。CSRF は有効のまま維持し、Thymeleaf フォームへ自動でトークンを注入する。
@@ -75,8 +75,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/login", "/css/**", "/js/**").permitAll()
                         .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll())
+                .logout(Customizer.withDefaults())
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .contentSecurityPolicy(csp -> csp.policyDirectives(contentSecurityPolicy))

@@ -12,7 +12,7 @@
 
     <groupId>github.com.ioridazo</groupId>
     <artifactId>fundanalyzer</artifactId>
-    <version>2.3.2</version>
+    <version>2.3.3</version>
     <name>fundanalyzer</name>
     <description>Analyzing stocks from financial statements</description>
 
@@ -39,7 +39,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
 
-        <!-- frontend build pipeline (逕ｻ髱｢蛻ｷ譁ｰ繧ｿ繧ｹ繧ｯ Phase 1) -->
+        <!-- frontend build pipeline (画面刷新タスク Phase 1) -->
         <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
         <node.version>v20.18.0</node.version>
         <npm.version>10.8.2</npm.version>
@@ -231,7 +231,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Playwright・育判髱｢蛻ｷ譁ｰ繧ｿ繧ｹ繧ｯ Phase 8 縺ｧ蟆主・繝ｻ繧ｹ繝翫ャ繝励す繝ｧ繝・ヨ蝗槫ｸｰ讀懆ｨｼ・・-->
+        <!-- Playwright（画面刷新タスク Phase 8 で導入・スナップショット回帰検証） -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
@@ -294,7 +294,7 @@
                 </configuration>
             </plugin>
 
-            <!-- 繝代ャ繧ｱ繝ｼ繧ｸ逕滓・ -->
+            <!-- パッケージ生成 -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>${maven-assembly-plugin.version}</version>
@@ -314,20 +314,20 @@
                 </executions>
             </plugin>
 
-            <!-- 蜊倅ｽ薙ユ繧ｹ繝・縺・★繧後°縺ｮ繝・せ繝医′螟ｱ謨励☆繧九→繝薙Ν繝牙､ｱ謨・-->
+            <!-- 単体テスト いずれかのテストが失敗するとビルド失敗 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
 
             <!--  -->
-            <!-- 邨ｱ蜷医ユ繧ｹ繝・繝・せ繝亥､ｱ謨励′縺ゅｋ蝣ｴ蜷医↓繝薙Ν繝峨・螟ｱ謨励ｒ蛻・屬縺吶ｋ -->
+            <!-- 統合テスト テスト失敗がある場合にビルドの失敗を分離する -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
 
-            <!-- 繧ｳ繝ｼ繝・ぅ繝ｳ繧ｰ隕冗ｴ・愛螳・-->
+            <!-- コーディング規約判定 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -335,33 +335,33 @@
                 <executions>
                     <execution>
                         <configuration>
-                            <!-- 繝励Ο繧ｸ繧ｧ繧ｯ繝育峩荳九↓繧ｹ繧ｿ繧､繝ｫ螳夂ｾｩ繧呈ｼ邏阪＠縲∵欠螳壹☆繧・-->
+                            <!-- プロジェクト直下にスタイル定義を格納し、指定する -->
                             <configLocation>sun_checks.xml</configLocation>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- 諡｡蠑ｵ蜿ｯ閭ｽ縺ｪ繧ｯ繝ｭ繧ｹ繝ｩ繝ｳ繧ｲ繝ｼ繧ｸ縺ｮ髱咏噪繧ｳ繝ｼ繝峨い繝翫Λ繧､繧ｶ -->
+            <!-- 拡張可能なクロスランゲージの静的コードアナライザ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>${maven-pmd-plugin.version}</version>
             </plugin>
 
-            <!-- 繝・せ繝医き繝舌Ξ繝・ず髮・ｨ医ヤ繝ｼ繝ｫ -->
+            <!-- テストカバレッジ集計ツール -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco-maven-plugin.version}</version>
                 <executions>
-                    <!--螳溯｡後ヵ繧｡繧､繝ｫ jacoco.exec縺ｮ逕滓・-->
+                    <!--実行ファイル jacoco.execの生成-->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
-                    <!--exec繝輔ぃ繧､繝ｫ縺九ｉ繝ｬ繝昴・繝医ｒ逕滓・-->
+                    <!--execファイルからレポートを生成-->
                     <execution>
                         <id>report</id>
                         <phase>prepare-package</phase>
@@ -386,7 +386,7 @@
                 </dependencies>
             </plugin>
 
-            <!-- 繧ｳ繝ｼ繝峨き繝舌Ξ繝・ず繝・・繝ｫ -->
+            <!-- コードカバレッジツール -->
             <plugin>
                 <groupId>org.openclover</groupId>
                 <artifactId>clover-maven-plugin</artifactId>
@@ -404,9 +404,9 @@
                 </executions>
             </plugin>
 
-            <!-- 繝輔Ο繝ｳ繝医お繝ｳ繝峨ン繝ｫ繝会ｼ・ailwind CSS + esbuild・・->
-            <!-- generate-resources phase 縺ｧ Node.js 蜿門ｾ・竊・npm ci 竊・npm run build 繧帝・↓螳溯｡後＠縲・-->
-            <!-- target/classes/static/css/app.css 縺ｨ target/classes/static/js/app.js 繧堤函謌舌☆繧・-->
+            <!-- フロントエンドビルド（Tailwind CSS + esbuild）-->
+            <!-- generate-resources phase で Node.js 取得 → npm ci → npm run build を順に実行し、 -->
+            <!-- target/classes/static/css/app.css と target/classes/static/js/app.js を生成する -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
