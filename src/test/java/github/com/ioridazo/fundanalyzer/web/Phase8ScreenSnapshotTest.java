@@ -4,7 +4,6 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
-import com.microsoft.playwright.options.HttpCredentials;
 import com.microsoft.playwright.options.ViewportSize;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,8 +42,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class Phase8ScreenSnapshotTest {
 
     private static final Path SNAPSHOT_DIR = Paths.get("target", "playwright-snapshots");
-    private static final Browser.NewPageOptions AUTH = new Browser.NewPageOptions()
-            .setHttpCredentials(new HttpCredentials("playwright", "playwright"));
 
     private static Playwright playwright;
     private static Browser browser;
@@ -69,6 +66,19 @@ class Phase8ScreenSnapshotTest {
         }
     }
 
+    /**
+     * フォームログインを実行する。
+     *
+     * @param page ログイン操作を行う Page
+     */
+    private void login(final Page page) {
+        page.navigate("http://localhost:" + port + "/fundanalyzer/login");
+        page.fill("input[name='username']", "playwright");
+        page.fill("input[name='password']", "playwright");
+        page.click("button[type='submit']");
+        page.waitForLoadState();
+    }
+
     static Stream<Arguments> screenViewportMatrix() {
         return Stream.of(
                 Arguments.of("index", "/v3/index", "desktop", 1280, 800),
@@ -89,8 +99,9 @@ class Phase8ScreenSnapshotTest {
             final String viewportName,
             final int width,
             final int height) {
-        try (final Page page = browser.newPage(AUTH)) {
+        try (final Page page = browser.newPage()) {
             page.setViewportSize(width, height);
+            login(page);
             final String url = "http://localhost:" + port + "/fundanalyzer" + path;
             page.navigate(url);
             page.waitForLoadState();
@@ -116,8 +127,9 @@ class Phase8ScreenSnapshotTest {
     @MethodSource("viewportNames")
     @DisplayName("layout-v2 のダークモードトグルが各ビューポートで存在")
     void darkModeToggleExists(final ViewportSize viewport) {
-        try (final Page page = browser.newPage(AUTH)) {
+        try (final Page page = browser.newPage()) {
             page.setViewportSize(viewport.width, viewport.height);
+            login(page);
             page.navigate("http://localhost:" + port + "/fundanalyzer/v3/index");
             page.waitForLoadState();
 

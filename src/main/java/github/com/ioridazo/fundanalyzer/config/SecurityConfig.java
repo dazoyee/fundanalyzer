@@ -12,7 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
 
 /**
  * フォームログイン認証・CSRF・セキュリティヘッダーを構成する Web セキュリティ設定。
@@ -79,15 +81,17 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .defaultSuccessUrl("/v3/index", false)
                         .permitAll())
                 .logout(Customizer.withDefaults())
+                .addFilterBefore(new DisableEncodeUrlFilter(), UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .contentSecurityPolicy(csp -> csp.policyDirectives(contentSecurityPolicy))
                         .referrerPolicy(referrer -> referrer.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
                         .httpStrictTransportSecurity(hsts -> hsts
-                                .includeSubDomains(true)
+                                .includeSubDomains(false)
                                 .maxAgeInSeconds(HSTS_MAX_AGE_SECONDS)));
         return http.build();
     }
