@@ -12,7 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
 
 /**
  * フォームログイン認証・CSRF・セキュリティヘッダーを構成する Web セキュリティ設定。
@@ -82,6 +84,7 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/v3/index", false)
                         .permitAll())
                 .logout(Customizer.withDefaults())
+                .addFilterBefore(new DisableEncodeUrlFilter(), UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .contentSecurityPolicy(csp -> csp.policyDirectives(contentSecurityPolicy))

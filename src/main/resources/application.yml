@@ -2,6 +2,7 @@ server:
   servlet:
     context-path: /fundanalyzer
     session:
+      tracking-modes: cookie  # セッション追跡をCookieのみに限定しURLへのjsessionid付与を防ぐ
       cookie:
         http-only: true      # JS からの Cookie 参照を禁止（XSS 対策）
         same-site: strict    # クロスサイトリクエストでの Cookie 送信を禁止（CSRF 対策）
