@@ -1,8 +1,27 @@
-server.port: 8890
+server:
+  port: 8890
+  forward-headers-strategy: native  # Nginx の X-Forwarded-Proto を信頼しスキームを正しく認識させる
+  servlet:
+    session:
+      cookie:
+        secure: true  # Nginx TLS 終端環境で Secure フラグを明示的に付与
 
 logging:
   level:
     github.com.ioridazo.fundanalyzer: info
+
+management:
+  server:
+    port: 8990
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+    env:
+      enabled: false
 
 resilience4j:
   ratelimiter.instances:
