@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
+                        .defaultSuccessUrl("/v3/index", false)
                         .permitAll())
                 .logout(Customizer.withDefaults())
                 .headers(headers -> headers
