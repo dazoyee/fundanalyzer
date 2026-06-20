@@ -88,7 +88,7 @@ public class SecurityConfig {
                         .referrerPolicy(referrer -> referrer.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
                         .httpStrictTransportSecurity(hsts -> hsts
-                                .includeSubDomains(true)
+                                .includeSubDomains(false)
                                 .maxAgeInSeconds(HSTS_MAX_AGE_SECONDS)));
         return http.build();
     }
