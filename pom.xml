@@ -39,7 +39,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <clover-maven-plugin.version>4.4.1</clover-maven-plugin.version>
 
-        <!-- frontend build pipeline (‰æ–ÊüVƒ^ƒXƒN Phase 1) -->
+        <!-- frontend build pipeline (ç”»é¢åˆ·æ–°ã‚¿ã‚¹ã‚¯ Phase 1) -->
         <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
         <node.version>v20.18.0</node.version>
         <npm.version>10.8.2</npm.version>
@@ -231,7 +231,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Playwrighti‰æ–ÊüVƒ^ƒXƒN Phase 8 ‚Å“±“üEƒXƒiƒbƒvƒVƒ‡ƒbƒg‰ñ‹AŒŸØj -->
+        <!-- Playwrightï¼ˆç”»é¢åˆ·æ–°ã‚¿ã‚¹ã‚¯ Phase 8 ã§å°Žå…¥ãƒ»ã‚¹ãƒŠãƒƒãƒ—ã‚·ãƒ§ãƒƒãƒˆå›žå¸°æ¤œè¨¼ï¼‰ -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
@@ -291,10 +291,11 @@
                 <configuration>
                     <verbose>true</verbose>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <fetchRemoteTags>false</fetchRemoteTags>
                 </configuration>
             </plugin>
 
-            <!-- ƒpƒbƒP[ƒW¶¬ -->
+            <!-- ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ç”Ÿæˆ -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>${maven-assembly-plugin.version}</version>
@@ -314,20 +315,20 @@
                 </executions>
             </plugin>
 
-            <!-- ’P‘ÌƒeƒXƒg ‚¢‚¸‚ê‚©‚ÌƒeƒXƒg‚ªŽ¸”s‚·‚é‚Æƒrƒ‹ƒhŽ¸”s -->
+            <!-- å˜ä½“ãƒ†ã‚¹ãƒˆ ã„ãšã‚Œã‹ã®ãƒ†ã‚¹ãƒˆãŒå¤±æ•—ã™ã‚‹ã¨ãƒ“ãƒ«ãƒ‰å¤±æ•— -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
 
             <!--  -->
-            <!-- “‡ƒeƒXƒg ƒeƒXƒgŽ¸”s‚ª‚ ‚éê‡‚Éƒrƒ‹ƒh‚ÌŽ¸”s‚ð•ª—£‚·‚é -->
+            <!-- çµ±åˆãƒ†ã‚¹ãƒˆ ãƒ†ã‚¹ãƒˆå¤±æ•—ãŒã‚ã‚‹å ´åˆã«ãƒ“ãƒ«ãƒ‰ã®å¤±æ•—ã‚’åˆ†é›¢ã™ã‚‹ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
 
-            <!-- ƒR[ƒfƒBƒ“ƒO‹K–ñ”»’è -->
+            <!-- ã‚³ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°è¦ç´„åˆ¤å®š -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -335,33 +336,33 @@
                 <executions>
                     <execution>
                         <configuration>
-                            <!-- ƒvƒƒWƒFƒNƒg’¼‰º‚ÉƒXƒ^ƒCƒ‹’è‹`‚ðŠi”[‚µAŽw’è‚·‚é -->
+                            <!-- ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆç›´ä¸‹ã«ã‚¹ã‚¿ã‚¤ãƒ«å®šç¾©ã‚’æ ¼ç´ã—ã€æŒ‡å®šã™ã‚‹ -->
                             <configLocation>sun_checks.xml</configLocation>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- Šg’£‰Â”\‚ÈƒNƒƒXƒ‰ƒ“ƒQ[ƒW‚ÌÃ“IƒR[ƒhƒAƒiƒ‰ƒCƒU -->
+            <!-- æ‹¡å¼µå¯èƒ½ãªã‚¯ãƒ­ã‚¹ãƒ©ãƒ³ã‚²ãƒ¼ã‚¸ã®é™çš„ã‚³ãƒ¼ãƒ‰ã‚¢ãƒŠãƒ©ã‚¤ã‚¶ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>${maven-pmd-plugin.version}</version>
             </plugin>
 
-            <!-- ƒeƒXƒgƒJƒoƒŒƒbƒWWŒvƒc[ƒ‹ -->
+            <!-- ãƒ†ã‚¹ãƒˆã‚«ãƒãƒ¬ãƒƒã‚¸é›†è¨ˆãƒ„ãƒ¼ãƒ« -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco-maven-plugin.version}</version>
                 <executions>
-                    <!--ŽÀsƒtƒ@ƒCƒ‹ jacoco.exec‚Ì¶¬-->
+                    <!--å®Ÿè¡Œãƒ•ã‚¡ã‚¤ãƒ« jacoco.execã®ç”Ÿæˆ-->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
-                    <!--execƒtƒ@ƒCƒ‹‚©‚çƒŒƒ|[ƒg‚ð¶¬-->
+                    <!--execãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰ãƒ¬ãƒãƒ¼ãƒˆã‚’ç”Ÿæˆ-->
                     <execution>
                         <id>report</id>
                         <phase>prepare-package</phase>
@@ -386,7 +387,7 @@
                 </dependencies>
             </plugin>
 
-            <!-- ƒR[ƒhƒJƒoƒŒƒbƒWƒc[ƒ‹ -->
+            <!-- ã‚³ãƒ¼ãƒ‰ã‚«ãƒãƒ¬ãƒƒã‚¸ãƒ„ãƒ¼ãƒ« -->
             <plugin>
                 <groupId>org.openclover</groupId>
                 <artifactId>clover-maven-plugin</artifactId>
@@ -404,9 +405,9 @@
                 </executions>
             </plugin>
 
-            <!-- ƒtƒƒ“ƒgƒGƒ“ƒhƒrƒ‹ƒhiTailwind CSS + esbuildj-->
-            <!-- generate-resources phase ‚Å Node.js Žæ“¾ ¨ npm ci ¨ npm run build ‚ð‡‚ÉŽÀs‚µA -->
-            <!-- target/classes/static/css/app.css ‚Æ target/classes/static/js/app.js ‚ð¶¬‚·‚é -->
+            <!-- ãƒ•ãƒ­ãƒ³ãƒˆã‚¨ãƒ³ãƒ‰ãƒ“ãƒ«ãƒ‰ï¼ˆTailwind CSS + esbuildï¼‰-->
+            <!-- generate-resources phase ã§ Node.js å–å¾— â†’ npm ci â†’ npm run build ã‚’é †ã«å®Ÿè¡Œã—ã€ -->
+            <!-- target/classes/static/css/app.css ã¨ target/classes/static/js/app.js ã‚’ç”Ÿæˆã™ã‚‹ -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
