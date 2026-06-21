@@ -116,6 +116,12 @@ public class CorporatePresenter {
         model.addAttribute("agreementTotal", total);
     }
 
+    /**
+     * 企業価値グラフ用のラベル・データポイントと、提出日ベースの年次株価をモデルに積む。
+     *
+     * @param view  銘柄詳細ビュー
+     * @param model model
+     */
     private void setAnalysisView(final CorporateDetailViewModel view, final Model model) {
         model.addAttribute("analysisResults", view.getAnalysisResultList());
 
@@ -138,6 +144,17 @@ public class CorporatePresenter {
                 .toList());
         model.addAttribute("analysisPointAll", analysis.stream()
                 .map(AnalysisResultViewModel::corporateValue)
+                .toList());
+
+        final List<StockPriceViewModel> allStockPrices = view.getStockPriceList().stream()
+                .sorted(Comparator.comparing(StockPriceViewModel::targetDate))
+                .toList();
+        model.addAttribute("stockPointBySubmit", analysis.stream()
+                .map(vm -> allStockPrices.stream()
+                        .filter(sp -> !sp.targetDate().isAfter(vm.submitDate()))
+                        .max(Comparator.comparing(StockPriceViewModel::targetDate))
+                        .map(StockPriceViewModel::stockPrice)
+                        .orElse(null))
                 .toList());
     }
 

@@ -786,25 +786,21 @@
                 });
             };
 
-            // サマリーチャート: 企業価値(四半期) + 株価(直近1年) を union X軸で2本線表示
+            // サマリーチャート: 企業価値（年次）と提出日ベース年次株価を同一X軸で2本線表示
             (() => {
                 const el = document.getElementById('summaryChart');
                 if (!el) return;
-                const cvLabels = /*[[${analysisLabelAll}]]*/ [];
+                const labels   = /*[[${analysisLabelAll}]]*/ [];
                 const cvPoints = /*[[${analysisPointAll}]]*/ [];
-                const stLabels = /*[[${stockLabel365}]]*/ [];
-                const stPoints = /*[[${stockPoint365}]]*/ [];
-                if (!cvLabels.length && !stLabels.length) return;
-                const allLabels = [...new Set([...cvLabels.map(String), ...stLabels.map(String)])].sort();
-                const cvPts = allLabels.map(d => { const i = cvLabels.map(String).indexOf(d); return i >= 0 ? cvPoints[i] : null; });
-                const stPts = allLabels.map(d => { const i = stLabels.map(String).indexOf(d); return i >= 0 ? stPoints[i] : null; });
+                const stPoints = /*[[${stockPointBySubmit}]]*/ [];
+                if (!labels.length) return;
                 new Chart(el.getContext('2d'), {
                     type: 'line',
                     data: {
-                        labels: allLabels,
+                        labels: labels,
                         datasets: [
-                            { label: '企業価値', data: cvPts, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', spanGaps: true, tension: 0.1, pointRadius: 4, borderWidth: 2 },
-                            { label: '株価', data: stPts, borderColor: 'rgb(16,185,129)', backgroundColor: 'transparent', spanGaps: false, tension: 0.1, pointRadius: 0, borderWidth: 1.5 }
+                            { label: '企業価値', data: cvPoints, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', spanGaps: true, tension: 0.1, pointRadius: 4, borderWidth: 2 },
+                            { label: '株価', data: stPoints, borderColor: 'rgb(16,185,129)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 4, borderWidth: 1.5 }
                         ]
                     },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }, scales: { x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } } } }
