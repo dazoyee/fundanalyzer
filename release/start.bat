@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-:: è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚’èª­ã¿è¾¼ã‚€
+:: İ’èƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚Ş
 for /f "usebackq tokens=1,* delims==" %%a in ("env") do (
     set %%a=%%b
 )
