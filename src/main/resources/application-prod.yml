@@ -3,10 +3,6 @@ server:
   forward-headers-strategy: framework
   tomcat:
     use-relative-redirects: true
-  servlet:
-    session:
-      cookie:
-        secure: false   # HTTP 運用のため Secure フラグを付与しない（HTTPS 化時に true へ変更）
 
 spring:
   datasource:
