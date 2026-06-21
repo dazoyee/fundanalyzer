@@ -1,12 +1,17 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,6 +28,8 @@ import java.util.Optional;
 @Controller
 public class IndexPresenter {
 
+    private static final Logger log = LoggerFactory.getLogger(IndexPresenter.class);
+
     private static final String INDEX_V2 = "index-v2";
     private static final String INDEX_TABLE_FRAGMENT = "fragments/index-table :: table";
     private static final String INDEX_SUMMARY_CHART_FRAGMENT = "fragments/index-summary-chart :: chart";
@@ -38,12 +45,14 @@ public class IndexPresenter {
             SORT_FIELD_CODE, "name", SORT_FIELD_SUBMIT_DATE, "latestCorporateValue", "discountRate", "grahamIndex");
 
     @Value("${app.config.view.document-type-code}")
-    List<String> targetTypeCodes;
+    private List<String> targetTypeCodes;
 
     private final ViewService viewService;
+    private final ObjectMapper objectMapper;
 
-    public IndexPresenter(final ViewService viewService) {
+    public IndexPresenter(final ViewService viewService, final ObjectMapper objectMapper) {
         this.viewService = viewService;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -95,17 +104,41 @@ public class IndexPresenter {
     /**
      * 会社一覧アコーディオン用 summaryChart フラグメント（htmx 遅延ロード）。
      * 年次企業価値と提出日ベース株価の時系列データを返す。
+     * 企業コードが存在しない場合は空データのフラグメントを返す。
      *
-     * @param code  会社コード
-     * @param model model
+     * @param code  会社コード（4〜5桁の数値）
+     * @param model Thymeleaf モデル
      * @return fragments/index-summary-chart :: chart
      */
-    @GetMapping("/v3/index/{code}/summary")
+    @GetMapping("/v3/index/{code:[0-9]{4,5}}/summary")
     public String summaryCorporateChart(
             @PathVariable final String code,
             final Model model) {
-        final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
-        final List<AnalysisResultViewModel> analysis = view.getAnalysisResultList().stream()
+        model.addAttribute("chartId", "summaryChart-" + code);
+        try {
+            final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
+            final List<AnalysisResultViewModel> analysis = resolveLatestPerPeriod(view);
+            final List<StockPriceViewModel> allStockPrices = view.getStockPriceList().stream()
+                    .sorted(Comparator.comparing(StockPriceViewModel::targetDate))
+                    .toList();
+            populateChartModel(model, analysis, allStockPrices);
+        } catch (FundanalyzerNotExistException e) {
+            log.warn("summaryChart: 企業コードが存在しない: code={}", code);
+            model.addAttribute("labelsJson", "[]");
+            model.addAttribute("cvJson", "[]");
+            model.addAttribute("stJson", "[]");
+        }
+        return INDEX_SUMMARY_CHART_FRAGMENT;
+    }
+
+    /**
+     * 対象書類タイプのうち、期ごとに最新提出日のレコードを1件抽出し期順に返す。
+     *
+     * @param view 企業詳細ビュー
+     * @return 期ごとの代表分析結果リスト（期昇順）
+     */
+    private List<AnalysisResultViewModel> resolveLatestPerPeriod(final CorporateDetailViewModel view) {
+        return view.getAnalysisResultList().stream()
                 .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
                 .map(AnalysisResultViewModel::documentPeriod)
                 .distinct()
@@ -117,27 +150,44 @@ public class IndexPresenter {
                 .map(Optional::get)
                 .sorted(Comparator.comparing(AnalysisResultViewModel::documentPeriod))
                 .toList();
+    }
 
-        model.addAttribute("chartId", "summaryChart-" + code);
-        model.addAttribute("analysisLabelAll", analysis.stream()
-                .map(AnalysisResultViewModel::documentPeriod)
-                .toList());
-        model.addAttribute("analysisPointAll", analysis.stream()
-                .map(AnalysisResultViewModel::corporateValue)
-                .toList());
-
-        final List<StockPriceViewModel> allStockPrices = view.getStockPriceList().stream()
-                .sorted(Comparator.comparing(StockPriceViewModel::targetDate))
+    /**
+     * チャート描画用の model 属性（labelsJson / cvJson / stJson）を設定する。
+     *
+     * @param model          Thymeleaf モデル
+     * @param analysis       期ごとの代表分析結果リスト
+     * @param allStockPrices 株価リスト（日付昇順）
+     */
+    private void populateChartModel(
+            final Model model,
+            final List<AnalysisResultViewModel> analysis,
+            final List<StockPriceViewModel> allStockPrices) {
+        final List<String> labelList = analysis.stream()
+                .map(vm -> vm.documentPeriod().toString())
                 .toList();
-        model.addAttribute("stockPointBySubmit", analysis.stream()
+        final List<Object> cvList = analysis.stream()
+                .map(AnalysisResultViewModel::corporateValue)
+                .map(v -> (Object) v)
+                .toList();
+        final List<Object> stList = analysis.stream()
                 .map(vm -> allStockPrices.stream()
                         .filter(sp -> !sp.targetDate().isAfter(vm.submitDate()))
                         .max(Comparator.comparing(StockPriceViewModel::targetDate))
                         .map(StockPriceViewModel::stockPrice)
+                        .map(v -> (Object) v)
                         .orElse(null))
-                .toList());
-
-        return INDEX_SUMMARY_CHART_FRAGMENT;
+                .toList();
+        try {
+            model.addAttribute("labelsJson", objectMapper.writeValueAsString(labelList));
+            model.addAttribute("cvJson", objectMapper.writeValueAsString(cvList));
+            model.addAttribute("stJson", objectMapper.writeValueAsString(stList));
+        } catch (JsonProcessingException e) {
+            log.error("チャートデータのJSON変換に失敗: code={}", model.getAttribute("chartId"), e);
+            model.addAttribute("labelsJson", "[]");
+            model.addAttribute("cvJson", "[]");
+            model.addAttribute("stJson", "[]");
+        }
     }
 
     private void addCommonAttributes(
