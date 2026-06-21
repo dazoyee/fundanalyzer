@@ -36,6 +36,56 @@
             <i data-lucide="chevron-down" class="h-4 w-4" aria-hidden="true"></i>
         </a>
     </nav>
+    <!-- モバイル専用アクションメニュー（⋮ ボタン） -->
+    <div class="relative shrink-0 sm:hidden"
+         x-data="{ menuOpen: false }"
+         @keydown.escape.window="menuOpen = false">
+        <button type="button"
+                @click="menuOpen = !menuOpen"
+                class="rounded-md p-2 hover:bg-slate-100 dark:hover:bg-slate-700"
+                :aria-expanded="String(menuOpen)"
+                aria-label="アクションメニューを開く">
+            <i data-lucide="more-vertical" class="h-5 w-5" aria-hidden="true"></i>
+        </button>
+        <div x-show="menuOpen"
+             @click.outside="menuOpen = false"
+             x-transition:enter="transition ease-out duration-100"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-75"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             style="display: none;"
+             class="absolute right-0 top-full z-50 mt-1 min-w-[10rem] origin-top-right rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+            <form method="post" th:action="@{/v2/favorite/company}"
+                  class="border-b border-slate-100 dark:border-slate-700">
+                <input type="hidden" th:value="${corporate.code}" name="code"/>
+                <button type="submit"
+                        class="flex w-full items-center gap-2 px-4 py-3 text-sm text-rose-600 hover:bg-slate-50 dark:text-rose-400 dark:hover:bg-slate-700">
+                    <i data-lucide="heart" class="h-4 w-4 shrink-0"
+                       th:classappend="${corporate.isFavorite} ? 'fill-current'" aria-hidden="true"></i>
+                    <span th:text="${corporate.isFavorite} ? 'お気に入り解除' : 'お気に入り登録'">お気に入り</span>
+                </button>
+            </form>
+            <form method="post" th:action="@{/v2/evaluate}"
+                  class="border-b border-slate-100 dark:border-slate-700">
+                <input type="hidden" th:value="${corporate.code}" name="code"/>
+                <button type="submit"
+                        class="flex w-full items-center gap-2 px-4 py-3 text-sm text-emerald-700 hover:bg-slate-50 dark:text-emerald-400 dark:hover:bg-slate-700">
+                    <i data-lucide="bar-chart-2" class="h-4 w-4 shrink-0" aria-hidden="true"></i>
+                    評価する
+                </button>
+            </form>
+            <form method="post" th:action="@{/v1/import/stock/code}">
+                <input type="hidden" th:value="${corporate.code}" name="code"/>
+                <button type="submit"
+                        class="flex w-full items-center gap-2 px-4 py-3 text-sm text-blue-600 hover:bg-slate-50 dark:text-blue-400 dark:hover:bg-slate-700">
+                    <i data-lucide="download" class="h-4 w-4 shrink-0" aria-hidden="true"></i>
+                    株価取得
+                </button>
+            </form>
+        </div>
+    </div>
 </h1>
 
 <section layout:fragment="content" class="space-y-6"
@@ -54,8 +104,8 @@
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
 
-    <!-- アクション 3 ボタン -->
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <!-- アクション 3 ボタン（デスクトップのみ表示、モバイルはヘッダーの ⋮ メニューへ） -->
+    <div class="hidden sm:grid sm:grid-cols-3 sm:gap-3">
         <form method="post" th:action="@{/v2/favorite/company}">
             <input type="hidden" th:value="${corporate.code}" name="code"/>
             <button type="submit"
