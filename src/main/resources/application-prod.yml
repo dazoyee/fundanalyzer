@@ -1,9 +1,8 @@
 server:
   port: 8890
-  servlet:
-    session:
-      cookie:
-        secure: true    # prod はリバースプロキシ（nginx 等）で TLS 終端した HTTPS 前提
+  forward-headers-strategy: framework
+  tomcat:
+    use-relative-redirects: true
 
 spring:
   datasource:
