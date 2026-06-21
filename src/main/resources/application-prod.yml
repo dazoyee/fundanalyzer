@@ -1,5 +1,8 @@
 server:
   port: 8890
+  forward-headers-strategy: framework
+  tomcat:
+    use-relative-redirects: true
   servlet:
     session:
       cookie:
