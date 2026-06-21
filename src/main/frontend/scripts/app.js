@@ -49,3 +49,35 @@ document.addEventListener('DOMContentLoaded', () => {
 document.body.addEventListener('htmx:afterSwap', () => {
   createIcons({ icons });
 });
+
+// htmx:load: outerHTML swap で挿入された新要素に対して発生する。
+// iOS Safari では innerHTML 経由の <script> が実行されないため、
+// チャートデータを data-* 属性に埋め込み、ここで描画する。
+document.body.addEventListener('htmx:load', (evt) => {
+  const canvas = evt.detail.elt.querySelector
+    ? evt.detail.elt.querySelector('canvas[data-summary-chart]')
+    : null;
+  if (!canvas) return;
+  const labels = JSON.parse(canvas.dataset.labels || '[]');
+  const cvPoints = JSON.parse(canvas.dataset.cv || '[]');
+  const stPoints = JSON.parse(canvas.dataset.st || '[]');
+  if (!labels.length) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: '企業価値', data: cvPoints, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 2 },
+        { label: '株価', data: stPoints, borderColor: 'rgb(16,185,129)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: { x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } } }
+    }
+  });
+});

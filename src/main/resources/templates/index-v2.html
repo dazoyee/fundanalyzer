@@ -7,43 +7,108 @@
     <title>会社一覧</title>
 </head>
 <body>
-<h1 layout:fragment="page-title">会社一覧</h1>
+<h1 layout:fragment="page-title" class="flex min-w-0 flex-1 items-center gap-2"
+    x-data="{ actionOpen: false }"
+    @keydown.escape.window="actionOpen = false">
+    <span class="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">会社一覧</span>
+
+    <!-- 取得・分析メニュー起動ボタン（全解像度で表示） -->
+    <button type="button"
+            @click="actionOpen = true"
+            class="shrink-0 rounded-md p-2 hover:bg-slate-100 dark:hover:bg-slate-700"
+            :aria-expanded="String(actionOpen)"
+            aria-label="取得・分析メニューを開く">
+        <i data-lucide="settings-2" class="h-5 w-5" aria-hidden="true"></i>
+    </button>
+
+    <!--
+      オーバーレイは body 直下へ teleport する。
+      ヘッダー（layout-v2.html）が backdrop-blur を持ち position:fixed の containing block を
+      生成するため、ヘッダー内に置くと fixed がビューポート基準にならない。
+    -->
+    <template x-teleport="body">
+        <div>
+            <!-- バックドロップ -->
+            <div x-show="actionOpen"
+                 @click="actionOpen = false"
+                 x-transition:enter="transition-opacity ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition-opacity ease-in duration-150"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 style="display: none;"
+                 class="fixed inset-0 z-50 bg-black/50"></div>
+
+            <!-- パネル: スマホ=ボトムシート / PC=中央モーダル -->
+            <div x-show="actionOpen"
+                 x-init="$watch('actionOpen', function (val) { if (val) $nextTick(function () { $refs.firstField && $refs.firstField.focus(); }); })"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="translate-y-full opacity-0 sm:translate-y-4 sm:scale-95"
+                 x-transition:enter-end="translate-y-0 opacity-100 sm:scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="translate-y-0 opacity-100 sm:scale-100"
+                 x-transition:leave-end="translate-y-full opacity-0 sm:translate-y-4 sm:scale-95"
+                 style="display: none;"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="action-menu-title"
+                 class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-4 text-slate-900 shadow-xl dark:bg-slate-800 dark:text-slate-100 sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
+                <div class="mb-3 flex items-center justify-between">
+                    <h2 id="action-menu-title" class="text-base font-bold">取得・分析メニュー</h2>
+                    <button type="button"
+                            @click="actionOpen = false"
+                            class="rounded-md p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            aria-label="閉じる">
+                        <!-- teleport 後は初期 createIcons の対象外になるためインライン SVG（lucide:x 相当） -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <!-- フォームはモーダル（dark:bg-slate-800）より一段暗い dark:bg-slate-900 でコントラストを付ける -->
+                <div class="space-y-3 text-left">
+                    <form method="post" th:action="@{/v1/document/analysis}"
+                          class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <label for="fromToDate" class="mb-2 block text-sm font-bold">財務諸表の取得と分析をする</label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="text" id="fromToDate" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                                   x-ref="firstField"
+                                   class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
+                            <button type="submit"
+                                    class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                                実行
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">日付範囲（カンマ区切り）を入力</p>
+                    </form>
+                    <form method="post" th:action="@{/v1/scrape/id}"
+                          class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <label for="documentId" class="mb-2 block text-sm font-bold">書類IDから取得と分析する</label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="text" id="documentId" name="documentId" placeholder="S100XXXX"
+                                   class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm font-mono dark:border-slate-600 dark:bg-slate-900"/>
+                            <button type="submit"
+                                    class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                                実行
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">書類 ID を入力</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </template>
+</h1>
 
 <section layout:fragment="content" class="space-y-4">
     <!-- Flash アラート -->
     <th:block th:if="${message != null}">
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
-
-    <!-- 上部: 2 アクションフォーム -->
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <form method="post" th:action="@{/v1/document/analysis}"
-              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h3 class="mb-2 text-sm font-bold">財務諸表の取得と分析をする</h3>
-            <div class="flex flex-wrap items-center gap-2">
-                <input type="text" name="fromToDate" placeholder="2024-01-01,2024-12-31"
-                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
-                <button type="submit"
-                        class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                    実行
-                </button>
-            </div>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">日付範囲（カンマ区切り）を入力</p>
-        </form>
-        <form method="post" th:action="@{/v1/scrape/id}"
-              class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h3 class="mb-2 text-sm font-bold">書類IDから取得と分析する</h3>
-            <div class="flex flex-wrap items-center gap-2">
-                <input type="text" name="documentId" placeholder="S100XXXX"
-                       class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm font-mono dark:border-slate-600 dark:bg-slate-900"/>
-                <button type="submit"
-                        class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                    実行
-                </button>
-            </div>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">書類 ID を入力</p>
-        </form>
-    </div>
 
     <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="表示切替">
         <a th:href="@{/v3/index(q=${keyword},sort=${sortParam})}"

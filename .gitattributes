@@ -1,0 +1,16 @@
+# デフォルト: テキストファイルは LF で正規化
+* text=auto eol=lf
+
+# Windows バッチファイルは CRLF
+*.bat text eol=crlf
+
+# バイナリファイル
+*.jar binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.class binary

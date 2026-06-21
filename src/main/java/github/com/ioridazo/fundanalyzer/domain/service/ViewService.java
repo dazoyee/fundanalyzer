@@ -169,6 +169,10 @@ public class ViewService {
                     CorporateViewModel::getSubmitDate, Comparator.nullsLast(Comparator.naturalOrder()));
             case "latestCorporateValue" -> Comparator.comparing(
                     CorporateViewModel::getLatestCorporateValue, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "discountRate" -> Comparator.comparing(
+                    CorporateViewModel::getDiscountRateToDisplay, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "grahamIndex" -> Comparator.comparing(
+                    CorporateViewModel::getGrahamIndex, Comparator.nullsLast(Comparator.naturalOrder()));
             default -> null;
         };
     }

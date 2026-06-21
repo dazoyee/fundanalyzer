@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
@@ -29,12 +30,14 @@ import static org.mockito.Mockito.when;
 class IndexPresenterTest {
 
     private ViewService viewService;
+    private ObjectMapper objectMapper;
     private IndexPresenter presenter;
 
     @BeforeEach
     void setUp() {
         this.viewService = mock(ViewService.class);
-        this.presenter = new IndexPresenter(viewService);
+        this.objectMapper = mock(ObjectMapper.class);
+        this.presenter = new IndexPresenter(viewService, objectMapper);
     }
 
 
