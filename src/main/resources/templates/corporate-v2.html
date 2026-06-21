@@ -131,6 +131,58 @@
         </form>
     </div>
 
+    <!-- バリュエーションサマリーカード（最上部: 企業価値・KPI・グラフ） -->
+    <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+             th:if="${corporateView != null}">
+        <h2 class="mb-4 text-lg font-bold">バリュエーションサマリー</h2>
+        <!-- 3数値バッジ -->
+        <div class="mb-4 grid grid-cols-3 gap-3">
+            <div class="rounded border border-blue-200 bg-blue-50 p-3 text-center dark:border-blue-800 dark:bg-blue-950">
+                <div class="text-xs text-blue-700 dark:text-blue-300">最新企業価値</div>
+                <div class="font-mono text-sm font-bold sm:text-base" th:text="${corporateView.latestCorporateValue}">-</div>
+            </div>
+            <div class="rounded border border-emerald-200 bg-emerald-50 p-3 text-center dark:border-emerald-800 dark:bg-emerald-950">
+                <div class="text-xs text-emerald-700 dark:text-emerald-300">株価平均</div>
+                <div class="font-mono text-sm font-bold sm:text-base" th:text="${corporateView.averageStockPrice}">-</div>
+            </div>
+            <div class="rounded border border-amber-200 bg-amber-50 p-3 text-center dark:border-amber-800 dark:bg-amber-950"
+                 th:with="good=${corporateView.discountRateToDisplay != null and corporateView.discountRateToDisplay > 100}">
+                <div class="text-xs text-amber-700 dark:text-amber-300">割安度</div>
+                <div class="font-mono text-sm font-bold sm:text-base" th:text="${corporateView.discountRateToDisplay}">-</div>
+                <div th:if="${good}" class="mt-0.5 text-xs font-semibold text-rose-600 dark:text-rose-400">GOOD</div>
+            </div>
+        </div>
+        <!-- KPIバッジ行 -->
+        <div class="mb-4 flex flex-wrap gap-2">
+            <span th:with="good=${corporateView.grahamIndex != null and corporateView.grahamIndex > 0 and corporateView.grahamIndex < 5.625}"
+                  th:classappend="${good} ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'"
+                  class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold">
+                <i th:if="${good}" data-lucide="thumbs-up" class="h-3 w-3" aria-hidden="true"></i>
+                <i th:unless="${good}" data-lucide="thumbs-down" class="h-3 w-3" aria-hidden="true"></i>
+                グレアム <span class="font-mono" th:text="${corporateView.grahamIndex}">-</span>
+            </span>
+            <span th:if="${rimValue != null and corporateView.latestStockPrice != null}"
+                  th:with="good=${rimValue > corporateView.latestStockPrice}"
+                  th:classappend="${good} ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'"
+                  class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold">
+                <i th:if="${good}" data-lucide="thumbs-up" class="h-3 w-3" aria-hidden="true"></i>
+                <i th:unless="${good}" data-lucide="thumbs-down" class="h-3 w-3" aria-hidden="true"></i>
+                RIM <span class="font-mono" th:text="${rimValue}">-</span>
+            </span>
+            <span th:with="good=${agreementTotal > 0 and agreementUndervalued == agreementTotal}"
+                  th:classappend="${good} ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'"
+                  class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold">
+                <i th:if="${good}" data-lucide="thumbs-up" class="h-3 w-3" aria-hidden="true"></i>
+                <i th:unless="${good}" data-lucide="thumbs-down" class="h-3 w-3" aria-hidden="true"></i>
+                <span th:text="${agreementTotal > 0 ? agreementUndervalued + '/' + agreementTotal + ' 割安' : '-'}">-</span>
+            </span>
+        </div>
+        <!-- 企業価値 + 株価 マージグラフ -->
+        <div class="relative h-52 sm:h-64">
+            <canvas id="summaryChart"></canvas>
+        </div>
+    </article>
+
     <!-- 会社情報カード（業種・資本金・株式優待・PER/PBR/ROE/配当利回り + 外部リンク） -->
     <article class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
              x-data="{
@@ -775,6 +827,31 @@
                     options: baseOptions
                 });
             };
+
+            // サマリーチャート: 企業価値(四半期) + 株価(直近1年) を union X軸で2本線表示
+            (() => {
+                const el = document.getElementById('summaryChart');
+                if (!el) return;
+                const cvLabels = /*[[${analysisLabelAll}]]*/ [];
+                const cvPoints = /*[[${analysisPointAll}]]*/ [];
+                const stLabels = /*[[${stockLabel365}]]*/ [];
+                const stPoints = /*[[${stockPoint365}]]*/ [];
+                if (!cvLabels.length && !stLabels.length) return;
+                const allLabels = [...new Set([...cvLabels.map(String), ...stLabels.map(String)])].sort();
+                const cvPts = allLabels.map(d => { const i = cvLabels.map(String).indexOf(d); return i >= 0 ? cvPoints[i] : null; });
+                const stPts = allLabels.map(d => { const i = stLabels.map(String).indexOf(d); return i >= 0 ? stPoints[i] : null; });
+                new Chart(el.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: allLabels,
+                        datasets: [
+                            { label: '企業価値', data: cvPts, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', spanGaps: true, tension: 0.1, pointRadius: 4, borderWidth: 2 },
+                            { label: '株価', data: stPts, borderColor: 'rgb(16,185,129)', backgroundColor: 'transparent', spanGaps: false, tension: 0.1, pointRadius: 0, borderWidth: 1.5 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } }, scales: { x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } } } }
+                });
+            })();
 
             buildLine('analysisChartAll', /*[[${analysisLabelAll}]]*/ [], /*[[${analysisPointAll}]]*/ [], '企業価値');
             buildLine('indicatorChart30', /*[[${indicatorLabel30}]]*/ [], /*[[${indicatorPoint30}]]*/ [], '指標');
