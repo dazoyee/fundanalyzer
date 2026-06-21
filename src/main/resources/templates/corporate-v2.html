@@ -118,9 +118,29 @@
     </article>
 
     <!-- 表示情報ダッシュボード -->
-    <article class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
-             th:if="${corporateView != null}">
-        <h2 class="mb-3 text-lg font-bold">表示情報</h2>
+    <article class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
+             th:if="${corporateView != null}"
+             x-data="{
+               open: (() => { const m=!window.matchMedia('(min-width:640px)').matches; const s=localStorage.getItem('corporate.displayInfo.'+(m?'sm':'lg')); return s!==null?s==='true':true; })(),
+               toggle() { const m=!window.matchMedia('(min-width:640px)').matches; this.open=!this.open; localStorage.setItem('corporate.displayInfo.'+(m?'sm':'lg'),String(this.open)); }
+             }">
+        <button @click="toggle()"
+                class="flex w-full items-center justify-between px-6 py-4 text-left"
+                :aria-expanded="String(open)">
+            <h2 class="text-lg font-bold">表示情報</h2>
+            <i data-lucide="chevron-down"
+               :class="open ? 'rotate-180' : ''"
+               class="h-5 w-5 shrink-0 transition-transform duration-200 text-slate-400"
+               aria-hidden="true"></i>
+        </button>
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="px-6 pb-6">
         <!-- 上段: 4 KPI（旧版互換 GOOD/BAD アイコン付き、判定は th:with で 1 回評価） -->
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <!-- 最新企業価値 GOOD: latestCorporateValue > discountValueToDisplay -->
@@ -249,10 +269,33 @@
                 </dl>
             </div>
         </div>
+        </div><!-- /x-show: 表示情報 -->
     </article>
 
     <!-- 期間別平均カード（3年/5年/10年/全） -->
-    <article class="grid gap-3 md:grid-cols-2 lg:grid-cols-4" th:if="${corporateView != null}">
+    <article class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
+             th:if="${corporateView != null}"
+             x-data="{
+               open: (() => { const m=!window.matchMedia('(min-width:640px)').matches; const s=localStorage.getItem('corporate.periodAvg.'+(m?'sm':'lg')); return s!==null?s==='true':!m; })(),
+               toggle() { const m=!window.matchMedia('(min-width:640px)').matches; this.open=!this.open; localStorage.setItem('corporate.periodAvg.'+(m?'sm':'lg'),String(this.open)); }
+             }">
+        <button @click="toggle()"
+                class="flex w-full items-center justify-between px-6 py-4 text-left"
+                :aria-expanded="String(open)">
+            <h2 class="text-lg font-bold">期間別平均</h2>
+            <i data-lucide="chevron-down"
+               :class="open ? 'rotate-180' : ''"
+               class="h-5 w-5 shrink-0 transition-transform duration-200 text-slate-400"
+               aria-hidden="true"></i>
+        </button>
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="grid gap-3 p-4 md:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h3 class="mb-2 text-sm font-bold">3 年平均</h3>
             <dl class="space-y-1 text-xs">
@@ -289,12 +332,32 @@
                 <div class="flex justify-between"><dt>割安度<th:block th:replace="~{fragments/tooltip :: hint('discount-rate')}"></th:block></dt><dd class="font-mono" th:text="${corporateView.allDiscountRate}">-</dd></div>
             </dl>
         </div>
+        </div><!-- /x-show: 期間別平均 -->
     </article>
 
     <!-- その他情報 6 タブ群 -->
-    <article x-data="{ tab: 'analysis', sub: 180 }"
+    <article x-data="{
+               tab: 'analysis', sub: 180,
+               open: (() => { const m=!window.matchMedia('(min-width:640px)').matches; const s=localStorage.getItem('corporate.otherInfo.'+(m?'sm':'lg')); return s!==null?s==='true':!m; })(),
+               toggle() { const m=!window.matchMedia('(min-width:640px)').matches; this.open=!this.open; localStorage.setItem('corporate.otherInfo.'+(m?'sm':'lg'),String(this.open)); }
+             }"
              class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <h2 class="border-b border-slate-200 px-6 py-3 text-lg font-bold dark:border-slate-700">その他情報</h2>
+        <button @click="toggle()"
+                class="flex w-full items-center justify-between px-6 py-4 text-left"
+                :aria-expanded="String(open)">
+            <h2 class="text-lg font-bold">その他情報</h2>
+            <i data-lucide="chevron-down"
+               :class="open ? 'rotate-180' : ''"
+               class="h-5 w-5 shrink-0 transition-transform duration-200 text-slate-400"
+               aria-hidden="true"></i>
+        </button>
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
         <nav class="flex gap-1 overflow-x-auto whitespace-nowrap border-b border-slate-200 px-3 dark:border-slate-700 sm:flex-wrap sm:overflow-visible" role="tablist" aria-label="銘柄詳細タブ">
             <button @click="tab='analysis'" :class="tab==='analysis' ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400'"
                     role="tab" :aria-selected="tab==='analysis'"
@@ -619,6 +682,7 @@
                 </li>
             </ul>
         </div>
+        </div><!-- /x-show: その他情報 -->
     </article>
 
     <script th:inline="javascript">
