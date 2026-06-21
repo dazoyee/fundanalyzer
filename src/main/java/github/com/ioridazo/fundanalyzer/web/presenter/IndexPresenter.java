@@ -1,22 +1,31 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class IndexPresenter {
 
     private static final String INDEX_V2 = "index-v2";
     private static final String INDEX_TABLE_FRAGMENT = "fragments/index-table :: table";
+    private static final String INDEX_SUMMARY_CHART_FRAGMENT = "fragments/index-summary-chart :: chart";
 
     private static final String TARGET = "target";
 
@@ -26,7 +35,10 @@ public class IndexPresenter {
     private static final String SORT_FIELD_SUBMIT_DATE = "submitDate";
     private static final String SORT_FIELD_CODE = "code";
     private static final List<String> ALLOWED_SORT_FIELDS = List.of(
-            SORT_FIELD_CODE, "name", SORT_FIELD_SUBMIT_DATE, "latestCorporateValue");
+            SORT_FIELD_CODE, "name", SORT_FIELD_SUBMIT_DATE, "latestCorporateValue", "discountRate", "grahamIndex");
+
+    @Value("${app.config.view.document-type-code}")
+    List<String> targetTypeCodes;
 
     private final ViewService viewService;
 
@@ -78,6 +90,54 @@ public class IndexPresenter {
             final Model model) {
         addCommonAttributes(model, target, keyword, page, size, sortParam);
         return INDEX_TABLE_FRAGMENT;
+    }
+
+    /**
+     * 会社一覧アコーディオン用 summaryChart フラグメント（htmx 遅延ロード）。
+     * 年次企業価値と提出日ベース株価の時系列データを返す。
+     *
+     * @param code  会社コード
+     * @param model model
+     * @return fragments/index-summary-chart :: chart
+     */
+    @GetMapping("/v3/index/{code}/summary")
+    public String summaryCorporateChart(
+            @PathVariable final String code,
+            final Model model) {
+        final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
+        final List<AnalysisResultViewModel> analysis = view.getAnalysisResultList().stream()
+                .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
+                .map(AnalysisResultViewModel::documentPeriod)
+                .distinct()
+                .map(dp -> view.getAnalysisResultList().stream()
+                        .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
+                        .filter(vm -> dp.equals(vm.documentPeriod()))
+                        .max(Comparator.comparing(AnalysisResultViewModel::submitDate)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparing(AnalysisResultViewModel::documentPeriod))
+                .toList();
+
+        model.addAttribute("chartId", "summaryChart-" + code);
+        model.addAttribute("analysisLabelAll", analysis.stream()
+                .map(AnalysisResultViewModel::documentPeriod)
+                .toList());
+        model.addAttribute("analysisPointAll", analysis.stream()
+                .map(AnalysisResultViewModel::corporateValue)
+                .toList());
+
+        final List<StockPriceViewModel> allStockPrices = view.getStockPriceList().stream()
+                .sorted(Comparator.comparing(StockPriceViewModel::targetDate))
+                .toList();
+        model.addAttribute("stockPointBySubmit", analysis.stream()
+                .map(vm -> allStockPrices.stream()
+                        .filter(sp -> !sp.targetDate().isAfter(vm.submitDate()))
+                        .max(Comparator.comparing(StockPriceViewModel::targetDate))
+                        .map(StockPriceViewModel::stockPrice)
+                        .orElse(null))
+                .toList());
+
+        return INDEX_SUMMARY_CHART_FRAGMENT;
     }
 
     private void addCommonAttributes(
