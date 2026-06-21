@@ -54,27 +54,6 @@
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
 
-    <!-- スマホ用 前後ナビ (sm 未満。sm 以上はヘッダー H1 横に表示) -->
-    <nav class="flex flex-wrap items-center justify-between gap-2 sm:hidden"
-         aria-label="銘柄ナビ (モバイル)"
-         th:if="${backwardCode != null or forwardCode != null}">
-        <a th:if="${forwardCode != null}"
-           th:href="@{/v3/corporate(code=${forwardCode},target=${target})}"
-           class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
-           th:aria-label="|より新しい提出日の銘柄: ${forwardCode}|">
-            <i data-lucide="chevron-up" class="h-4 w-4" aria-hidden="true"></i>
-            <span class="font-mono" th:text="${forwardCode}">上</span>
-        </a>
-        <span th:unless="${forwardCode != null}" aria-hidden="true"></span>
-        <a th:if="${backwardCode != null}"
-           th:href="@{/v3/corporate(code=${backwardCode},target=${target})}"
-           class="inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700"
-           th:aria-label="|より古い提出日の銘柄: ${backwardCode}|">
-            <span class="font-mono" th:text="${backwardCode}">下</span>
-            <i data-lucide="chevron-down" class="h-4 w-4" aria-hidden="true"></i>
-        </a>
-    </nav>
-
     <!-- アクション 3 ボタン -->
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <form method="post" th:action="@{/v2/favorite/company}">
@@ -681,5 +660,44 @@
         });
     </script>
 </section>
+
+<!-- スマホ底部ナビ: 前後銘柄ナビゲーション（前後コードがある場合のみ ←→ に置き換え） -->
+<th:block layout:fragment="mobile-bottom-nav">
+    <th:block th:if="${forwardCode != null or backwardCode != null}">
+        <a th:if="${forwardCode != null}"
+           th:href="@{/v3/corporate(code=${forwardCode},target=${target})}"
+           class="flex min-h-[44px] flex-1 items-center justify-start gap-2 px-4 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700"
+           th:aria-label="|より新しい提出日の銘柄: ${forwardCode}|">
+            <i data-lucide="chevron-left" class="h-5 w-5 shrink-0" aria-hidden="true"></i>
+            <span class="font-mono font-semibold" th:text="${forwardCode}">前</span>
+        </a>
+        <span th:unless="${forwardCode != null}" class="flex-1" aria-hidden="true"></span>
+        <a th:if="${backwardCode != null}"
+           th:href="@{/v3/corporate(code=${backwardCode},target=${target})}"
+           class="flex min-h-[44px] flex-1 items-center justify-end gap-2 px-4 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700"
+           th:aria-label="|より古い提出日の銘柄: ${backwardCode}|">
+            <span class="font-mono font-semibold" th:text="${backwardCode}">次</span>
+            <i data-lucide="chevron-right" class="h-5 w-5 shrink-0" aria-hidden="true"></i>
+        </a>
+        <span th:unless="${backwardCode != null}" class="flex-1" aria-hidden="true"></span>
+    </th:block>
+    <th:block th:unless="${forwardCode != null or backwardCode != null}">
+        <a th:href="@{/v3/index}"
+           class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
+            <i data-lucide="building-2" class="h-5 w-5" aria-hidden="true"></i>
+            <span>会社</span>
+        </a>
+        <a th:href="@{/v3/valuation}"
+           class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
+            <i data-lucide="trending-up" class="h-5 w-5" aria-hidden="true"></i>
+            <span>株価</span>
+        </a>
+        <a th:href="@{/v3/edinet-list}"
+           class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
+            <i data-lucide="file-text" class="h-5 w-5" aria-hidden="true"></i>
+            <span>EDINET</span>
+        </a>
+    </th:block>
+</th:block>
 </body>
 </html>
