@@ -38,16 +38,19 @@ public class ValuationSpecification {
     private final CompanySpecification companySpecification;
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final CorporateActionSpecification corporateActionSpecification;
 
     public ValuationSpecification(
             final ValuationDao valuationDao,
             final CompanySpecification companySpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification) {
+            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final CorporateActionSpecification corporateActionSpecification) {
         this.valuationDao = valuationDao;
         this.companySpecification = companySpecification;
         this.stockSpecification = stockSpecification;
         this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.corporateActionSpecification = corporateActionSpecification;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -171,7 +174,13 @@ public class ValuationSpecification {
     ValuationEntity evaluate(final StockPriceEntity stock, final AnalysisResultEntity analysisResult) {
         final String code = stock.getCompanyCode();
         final LocalDate targetDate = stock.getTargetDate();
-        final BigDecimal stockPrice = BigDecimal.valueOf(stock.getStockPrice());
+        final BigDecimal adjustedStockPrice = corporateActionSpecification.adjustToBasis(
+                BigDecimal.valueOf(stock.getStockPrice()),
+                stock.getCompanyCode(),
+                stock.getTargetDate(),
+                analysisResult.getSubmitDate(),
+                true
+        );
         final Optional<InvestmentIndicatorEntity> investmentIndicatorEntity = investmentIndicatorSpecification.findEntity(code, targetDate);
         final LocalDate submitDate = analysisResult.getSubmitDate();
         final BigDecimal stockPriceOfSubmitDate = getStockPriceOfSubmitDate(code, submitDate);
@@ -181,14 +190,14 @@ public class ValuationSpecification {
                 submitDate,
                 targetDate,
                 stock.getId(),
-                stockPrice,
+                adjustedStockPrice,
                 investmentIndicatorEntity.map(InvestmentIndicatorEntity::getId).orElse(null),
                 investmentIndicatorEntity.flatMap(InvestmentIndicatorEntity::getGrahamIndex).orElse(null),
                 ChronoUnit.DAYS.between(submitDate, targetDate),
-                stockPrice.subtract(stockPriceOfSubmitDate),
-                stockPrice.divide(stockPriceOfSubmitDate, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
-                analysisResult.getCorporateValue().subtract(stockPrice),
-                analysisResult.getCorporateValue().divide(stockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
+                adjustedStockPrice.subtract(stockPriceOfSubmitDate),
+                adjustedStockPrice.divide(stockPriceOfSubmitDate, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
+                analysisResult.getCorporateValue().subtract(adjustedStockPrice),
+                analysisResult.getCorporateValue().divide(adjustedStockPrice, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),
                 analysisResult.getId(),
                 nowLocalDateTime()
         );

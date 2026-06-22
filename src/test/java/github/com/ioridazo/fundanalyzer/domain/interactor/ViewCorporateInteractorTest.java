@@ -3,8 +3,11 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
@@ -27,6 +30,7 @@ import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -52,6 +57,7 @@ class ViewCorporateInteractorTest {
     private StockSpecification stockSpecification;
     private ViewSpecification viewSpecification;
     private SlackClient slackClient;
+    private CorporateActionSpecification corporateActionSpecification;
 
     private ViewCorporateInteractor viewCorporateInteractor;
 
@@ -64,6 +70,10 @@ class ViewCorporateInteractorTest {
         stockSpecification = Mockito.mock(StockSpecification.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
         slackClient = Mockito.mock(SlackClient.class);
+        corporateActionSpecification = Mockito.mock(CorporateActionSpecification.class);
+        when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(corporateActionSpecification.findActions(any())).thenReturn(List.of());
 
         viewCorporateInteractor = Mockito.spy(new ViewCorporateInteractor(
                 Mockito.mock(AnalyzeInteractor.class),
@@ -74,7 +84,8 @@ class ViewCorporateInteractorTest {
                 stockSpecification,
                 Mockito.mock(InvestmentIndicatorSpecification.class),
                 viewSpecification,
-                slackClient
+                slackClient,
+                corporateActionSpecification
         ));
         viewCorporateInteractor.configDiscountRate = BigDecimal.valueOf(120);
         viewCorporateInteractor.configOutlierOfStandardDeviation = BigDecimal.valueOf(10000);
@@ -98,12 +109,13 @@ class ViewCorporateInteractorTest {
             when(companySpecification.findCompanyByCode("code0")).thenReturn(Optional.of(company));
             when(stockSpecification.findStock(company)).thenReturn(stock);
             when(viewSpecification.findLatestCorporateView(inputData)).thenReturn(corporateViewModel);
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(defaultDocument()));
         }
 
         @DisplayName("viewCorporateDetail : 企業情報詳細ビューを取得する")
         @Test
         void of() {
-            var analysisResultEntity = new AnalysisResultEntity(
+            AnalysisResultEntity analysisResultEntity = new AnalysisResultEntity(
                     null,
                     null,
                     LocalDate.parse("2021-01-01"),
@@ -118,7 +130,7 @@ class ViewCorporateInteractorTest {
                     null,
                     null
             );
-            var bsEntity = new FinancialStatementEntity(
+            FinancialStatementEntity bsEntity = new FinancialStatementEntity(
                     null,
                     null,
                     null,
@@ -134,7 +146,7 @@ class ViewCorporateInteractorTest {
                     "0",
                     null
             );
-            var plEntity = new FinancialStatementEntity(
+            FinancialStatementEntity plEntity = new FinancialStatementEntity(
                     null,
                     null,
                     null,
@@ -159,7 +171,7 @@ class ViewCorporateInteractorTest {
             when(financialStatementSpecification.parsePlSubjectValue(List.of(bsEntity, plEntity)))
                     .thenReturn(List.of(FinancialStatementValueViewModel.of("pl", 100L)));
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);
 
             assertAll(
                     () -> assertAll(
@@ -170,15 +182,15 @@ class ViewCorporateInteractorTest {
                     () -> assertAll(
                             () -> assertEquals("code", actual.getCorporate().getCode(), "corporate.code"),
                             () -> assertEquals("name", actual.getCorporate().getName(), "corporate.name"),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getLatestCorporateValue()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getAverageCorporateValueToDisplay()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getStandardDeviationToDisplay()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getDiscountValueToDisplay()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getCorporate().getDiscountRateToDisplay())
+                            () -> assertEquals(0, BigDecimal.TEN.compareTo(actual.getCorporate().getLatestCorporateValue())),
+                            () -> assertEquals(0, BigDecimal.TEN.compareTo(actual.getCorporate().getAverageCorporateValueToDisplay())),
+                            () -> assertEquals(0, BigDecimal.TEN.compareTo(actual.getCorporate().getStandardDeviationToDisplay())),
+                            () -> assertEquals(0, BigDecimal.TEN.compareTo(actual.getCorporate().getDiscountValueToDisplay())),
+                            () -> assertEquals(0, BigDecimal.TEN.compareTo(actual.getCorporate().getDiscountRateToDisplay()))
                     ),
                     () -> assertAll(
                             () -> assertEquals(LocalDate.parse("2021-01-01"), actual.getAnalysisResultList().get(0).documentPeriod()),
-                            () -> assertEquals(BigDecimal.TEN, actual.getAnalysisResultList().get(0).corporateValue()),
+                            () -> assertEquals(0, BigDecimal.TEN.compareTo(actual.getAnalysisResultList().get(0).corporateValue())),
                             () -> assertEquals("120", actual.getAnalysisResultList().get(0).documentTypeCode()),
                             () -> assertNull(actual.getAnalysisResultList().get(0).quarterType())
                     ),
@@ -204,6 +216,106 @@ class ViewCorporateInteractorTest {
             verify(financialStatementSpecification, times(1)).findByKeyPerCompany(eq(company), any());
         }
 
+        @DisplayName("viewCorporateDetail : 確定した株式分割日のみ splitDates に入る")
+        @Test
+        void includeConfirmedSplitDates() {
+            when(analysisResultSpecification.displayTargetList(company, targetTypeCodes)).thenReturn(List.of());
+            when(financialStatementSpecification.findByCompany(company)).thenReturn(List.of());
+            when(corporateActionSpecification.findActions(company.code())).thenReturn(List.of(
+                    new CorporateActionSpecification.CorporateAction(
+                            LocalDate.parse("2024-04-01"),
+                            BigDecimal.valueOf(2),
+                            true
+                    ),
+                    new CorporateActionSpecification.CorporateAction(
+                            LocalDate.parse("2024-03-01"),
+                            BigDecimal.valueOf(3),
+                            false
+                    ),
+                    new CorporateActionSpecification.CorporateAction(
+                            LocalDate.parse("2024-05-01"),
+                            BigDecimal.valueOf(5),
+                            true
+                    )
+            ));
+
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+
+            assertAll(
+                    () -> assertEquals(2, actual.splitDates().size()),
+                    () -> assertEquals(LocalDate.parse("2024-04-01"), actual.splitDates().get(0)),
+                    () -> assertEquals(LocalDate.parse("2024-05-01"), actual.splitDates().get(1))
+            );
+        }
+
+        @DisplayName("viewCorporateDetail : 有報基準かつ確定アクションのみで株価OHLCを補正する")
+        @Test
+        void adjustStockPriceToLatestDocumentBasis() {
+            StockPriceEntity stockPriceEntity = new StockPriceEntity(
+                    null,
+                    "code",
+                    LocalDate.parse("2024-06-10"),
+                    100.0d,
+                    90.0d,
+                    110.0d,
+                    80.0d,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    LocalDateTime.parse("2024-06-10T00:00:00"),
+                    LocalDateTime.parse("2024-06-10T00:00:00")
+            );
+            Stock adjustedStock = Stock.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    List.of(stockPriceEntity),
+                    List.<MinkabuEntity>of()
+            );
+            Document basisDocument = new Document(
+                    null,
+                    null,
+                    null,
+                    "edinetCode",
+                    null,
+                    LocalDate.parse("2024-06-20"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+
+            when(stockSpecification.findStock(company)).thenReturn(adjustedStock);
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(basisDocument));
+            when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
+                    .thenAnswer(invocation -> ((BigDecimal) invocation.getArgument(0)).multiply(BigDecimal.valueOf(2)));
+
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+
+            assertAll(
+                    () -> assertEquals(1, actual.getStockPriceList().size()),
+                    () -> assertEquals(200.0d, actual.getStockPriceList().get(0).stockPrice(), 0.0001d),
+                    () -> assertEquals(180.0d, actual.getStockPriceList().get(0).openingPrice(), 0.0001d),
+                    () -> assertEquals(220.0d, actual.getStockPriceList().get(0).highPrice(), 0.0001d),
+                    () -> assertEquals(160.0d, actual.getStockPriceList().get(0).lowPrice(), 0.0001d)
+            );
+        }
+
         @DisplayName("viewCorporateDetail : backward と forward の値を確認する (リスト = 提出日新→古、次=より新しい提出日)")
         @Test
         void target() {
@@ -224,7 +336,7 @@ class ViewCorporateInteractorTest {
                     defaultCorporateViewModel("old")
             )).when(viewCorporateInteractor).viewMain();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
             assertEquals("old", actual.getBackwardCode());
             assertEquals("new", actual.getForwardCode());
@@ -249,7 +361,7 @@ class ViewCorporateInteractorTest {
                     defaultCorporateViewModel("old")
             )).when(viewCorporateInteractor).viewMain();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
             assertEquals("old", actual.getBackwardCode());
             assertNull(actual.getForwardCode());
@@ -274,7 +386,7 @@ class ViewCorporateInteractorTest {
                     defaultCorporateViewModel("code")
             )).when(viewCorporateInteractor).viewMain();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
             assertNull(actual.getBackwardCode());
             assertEquals("new", actual.getForwardCode());
@@ -303,7 +415,7 @@ class ViewCorporateInteractorTest {
                     corporateViewWithSubmitDate("9002", LocalDate.parse("2026-02-14"))
             )).when(viewCorporateInteractor).viewAll();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.ALL);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.ALL);
 
             // code(=9001相当) の前 (= リスト次要素 = 9002 / より古い提出日) と 次 (= リスト前要素 = 9004 / 同提出日 code 大)
             assertEquals("9002", actual.getBackwardCode());
@@ -328,7 +440,7 @@ class ViewCorporateInteractorTest {
                     defaultCorporateViewModel("code")
             )).when(viewCorporateInteractor).viewMain();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData, Target.MAIN);
 
             assertNull(actual.getBackwardCode());
             assertNull(actual.getForwardCode());
@@ -361,7 +473,7 @@ class ViewCorporateInteractorTest {
                     defaultCorporateViewModel("old")
             )).when(viewCorporateInteractor).viewAll();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);
 
             assertEquals("old", actual.getBackwardCode());
             assertEquals("new", actual.getForwardCode());
@@ -383,7 +495,7 @@ class ViewCorporateInteractorTest {
             )).when(viewCorporateInteractor).viewCorporateDetailRaw(inputData);
             doReturn(List.<CorporateViewModel>of()).when(viewCorporateInteractor).viewAll();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);
 
             assertNull(actual.getBackwardCode());
             assertNull(actual.getForwardCode());
@@ -408,7 +520,7 @@ class ViewCorporateInteractorTest {
                     defaultCorporateViewModel("other-2")
             )).when(viewCorporateInteractor).viewAll();
 
-            var actual = viewCorporateInteractor.viewCorporateDetail(inputData);
+            CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);
 
             assertNull(actual.getBackwardCode());
             assertNull(actual.getForwardCode());

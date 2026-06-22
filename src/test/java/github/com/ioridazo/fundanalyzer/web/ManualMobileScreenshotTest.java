@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>出力（updateBaselines=true）: src/test/resources/playwright-baselines/&lt;screen&gt;-{mobile,desktop}.png
  */
 @Tag("manual-screenshot")
+@Tag("playwright")
 @DisplayName("Phase B0 プロトタイプ確認用スクショ取得")
 class ManualMobileScreenshotTest {
 

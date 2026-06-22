@@ -49,6 +49,7 @@ public class StockSpecification {
     private final MinkabuDao minkabuDao;
     private final CompanySpecification companySpecification;
     private final DocumentSpecification documentSpecification;
+    private final CorporateActionSpecification corporateActionSpecification;
 
     @Value("${app.config.stock.average-stock-price-for-last-days}")
     int daysToAverageStockPrice;
@@ -61,11 +62,13 @@ public class StockSpecification {
             final StockPriceDao stockPriceDao,
             final MinkabuDao minkabuDao,
             final CompanySpecification companySpecification,
-            final DocumentSpecification documentSpecification) {
+            final DocumentSpecification documentSpecification,
+            final CorporateActionSpecification corporateActionSpecification) {
         this.stockPriceDao = stockPriceDao;
         this.minkabuDao = minkabuDao;
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
+        this.corporateActionSpecification = corporateActionSpecification;
     }
 
     LocalDate nowLocalDate() {
@@ -117,18 +120,27 @@ public class StockSpecification {
      */
     public Stock findStock(final Company company) {
         final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.code());
+        final Optional<LocalDate> basisDate = documentSpecification.findLatestDocument(company)
+                .map(Document::getSubmitDate);
 
-        final Optional<LocalDate> importDate = stockPriceList.stream()
+        final Optional<StockPriceEntity> latestStockEntity = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
-                .map(StockPriceEntity::getTargetDate);
+                ;
 
-        final Optional<BigDecimal> latestStock = stockPriceList.stream()
-                .max(Comparator.comparing(StockPriceEntity::getTargetDate))
-                .map(StockPriceEntity::getStockPrice)
-                .map(BigDecimal::valueOf);
+        final Optional<LocalDate> importDate = latestStockEntity.map(StockPriceEntity::getTargetDate);
 
-        final Optional<BigDecimal> averageStockPrice = documentSpecification.findLatestDocument(company)
-                .map(Document::getSubmitDate)
+        final Optional<BigDecimal> latestStock = latestStockEntity
+                .map(stockPrice -> BigDecimal.valueOf(stockPrice.getStockPrice()));
+        final Optional<BigDecimal> adjustedLatestStock = latestStockEntity
+                .flatMap(stockPrice -> basisDate.map(submitDate -> corporateActionSpecification.adjustToBasis(
+                        BigDecimal.valueOf(stockPrice.getStockPrice()),
+                        stockPrice.getCompanyCode(),
+                        stockPrice.getTargetDate(),
+                        submitDate,
+                        true
+                )));
+
+        final Optional<BigDecimal> averageStockPrice = basisDate
                 .flatMap(sd -> getAverageStockPriceOfLatestSubmitDate(sd, stockPriceList));
 
         final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.code());
@@ -141,7 +153,7 @@ public class StockSpecification {
                 company,
                 averageStockPrice.orElse(null),
                 importDate.orElse(null),
-                latestStock.orElse(null),
+                adjustedLatestStock.orElse(latestStock.orElse(null)),
                 latestForecastStock.orElse(null),
                 stockPriceList,
                 minkabuList
@@ -358,17 +370,22 @@ public class StockSpecification {
      */
     private Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(
             final LocalDate targetDate, final List<StockPriceEntity> stockPriceList) {
-        final List<Double> certainPeriodList = stockPriceList.stream()
+        final List<BigDecimal> certainPeriodList = stockPriceList.stream()
                 .filter(stockPrice -> targetDate.minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> targetDate.isAfter(stockPrice.getTargetDate()))
-                .map(StockPriceEntity::getStockPrice)
+                .map(stockPrice -> corporateActionSpecification.adjustToBasis(
+                        BigDecimal.valueOf(stockPrice.getStockPrice()),
+                        stockPrice.getCompanyCode(),
+                        stockPrice.getTargetDate(),
+                        targetDate,
+                        true
+                ))
                 .toList();
 
         if (certainPeriodList.isEmpty()) {
             return Optional.empty();
         } else {
             return Optional.of(certainPeriodList.stream()
-                    .map(BigDecimal::valueOf)
                     // sum
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     // average

@@ -160,7 +160,8 @@ app:
       nikkei.enabled: true
       kabuoji3.enabled: false
       minkabu.enabled: true
-      yahoo-finance.enabled: true
+      yahoo-finance.enabled: false   # P2: Yahooページ構造変更(URL .T欠落+日付形式)で取得不能。復旧せず無効化(T20260621-yahoo-finance-scraping-stopped)
+      staleness-alert-days: 7
       average-stock-price-for-last-days: 30  # 株価平均値の期間
       store-stock-price-for-last-days: 99999  # 株価の保存期間
 

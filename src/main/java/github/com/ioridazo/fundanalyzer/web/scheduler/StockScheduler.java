@@ -4,7 +4,9 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSourceStalenessSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @Profile({"prod"})
@@ -26,6 +29,7 @@ public class StockScheduler {
 
     private final AnalysisService analysisService;
     private final StockSpecification stockSpecification;
+    private final StockSourceStalenessSpecification stockSourceStalenessSpecification;
     private final SlackClient slackClient;
 
     @Value("${app.scheduler.hour.stock}")
@@ -38,14 +42,25 @@ public class StockScheduler {
     boolean deleteStockEnabled;
     @Value("${app.slack.evaluate.enabled:true}")
     boolean evaluateEnabled;
+    @Value("${app.config.stock.staleness-alert-days}")
+    int stalenessAlertDays;
+
+    public StockScheduler(
+            final AnalysisService analysisService,
+            final StockSpecification stockSpecification,
+            final StockSourceStalenessSpecification stockSourceStalenessSpecification,
+            final SlackClient slackClient) {
+        this.analysisService = analysisService;
+        this.stockSpecification = stockSpecification;
+        this.stockSourceStalenessSpecification = stockSourceStalenessSpecification;
+        this.slackClient = slackClient;
+    }
 
     public StockScheduler(
             final AnalysisService analysisService,
             final StockSpecification stockSpecification,
             final SlackClient slackClient) {
-        this.analysisService = analysisService;
-        this.stockSpecification = stockSpecification;
-        this.slackClient = slackClient;
+        this(analysisService, stockSpecification, null, slackClient);
     }
 
     public LocalDateTime nowLocalDateTime() {
@@ -68,6 +83,7 @@ public class StockScheduler {
 
             try {
                 insert();
+                notifyStaleSources();
                 // delete();
             } catch (Throwable t) {
                 // slack通知
@@ -139,6 +155,22 @@ public class StockScheduler {
                 "insertStockScheduler",
                 durationTime
         ));
+    }
+
+    private void notifyStaleSources() {
+        if (stockSourceStalenessSpecification == null) {
+            return;
+        }
+        final List<SourceOfStockPrice> staleSources = stockSourceStalenessSpecification.findStaleSources();
+        if (!staleSources.isEmpty()) {
+            final String names = staleSources.stream()
+                    .map(SourceOfStockPrice::getMemo)
+                    .collect(Collectors.joining("、"));
+            slackClient.sendMessage(
+                    "github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.staleness",
+                    stalenessAlertDays,
+                    names);
+        }
     }
 
     /**

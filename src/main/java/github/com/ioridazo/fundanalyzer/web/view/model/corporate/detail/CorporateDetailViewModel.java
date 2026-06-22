@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail;
 
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ import java.util.List;
  * @param financialStatement 財務諸表のリスト
  * @param minkabuList        みんかぶ予想のリスト
  * @param stockPriceList     株価のリスト
+ * @param splitDates         株式分割日一覧
  */
 public record CorporateDetailViewModel(
         CompanyViewModel company,
@@ -26,7 +28,8 @@ public record CorporateDetailViewModel(
         List<IndicatorViewModel> indicatorList,
         List<FinancialStatementViewModel> financialStatement,
         List<MinkabuViewModel> minkabuList,
-        List<StockPriceViewModel> stockPriceList) {
+        List<StockPriceViewModel> stockPriceList,
+        List<LocalDate> splitDates) {
 
     /**
      * 全フィールド指定の静的ファクトリ
@@ -41,6 +44,34 @@ public record CorporateDetailViewModel(
             final List<FinancialStatementViewModel> financialStatement,
             final List<MinkabuViewModel> minkabuList,
             final List<StockPriceViewModel> stockPriceList) {
+        return of(
+                company,
+                backwardCode,
+                forwardCode,
+                corporate,
+                analysisResultList,
+                indicatorList,
+                financialStatement,
+                minkabuList,
+                stockPriceList,
+                List.of()
+        );
+    }
+
+    /**
+     * 全フィールド指定の静的ファクトリ。
+     */
+    public static CorporateDetailViewModel of(
+            final CompanyViewModel company,
+            final String backwardCode,
+            final String forwardCode,
+            final CorporateViewModel corporate,
+            final List<AnalysisResultViewModel> analysisResultList,
+            final List<IndicatorViewModel> indicatorList,
+            final List<FinancialStatementViewModel> financialStatement,
+            final List<MinkabuViewModel> minkabuList,
+            final List<StockPriceViewModel> stockPriceList,
+            final List<LocalDate> splitDates) {
         return new CorporateDetailViewModel(
                 company,
                 backwardCode,
@@ -50,7 +81,8 @@ public record CorporateDetailViewModel(
                 indicatorList,
                 financialStatement,
                 minkabuList,
-                stockPriceList
+                stockPriceList,
+                splitDates
         );
     }
 
@@ -73,7 +105,8 @@ public record CorporateDetailViewModel(
                 viewModel.indicatorList(),
                 viewModel.financialStatement(),
                 viewModel.minkabuList(),
-                viewModel.stockPriceList()
+                viewModel.stockPriceList(),
+                viewModel.splitDates()
         );
     }
 
@@ -111,5 +144,14 @@ public record CorporateDetailViewModel(
 
     public List<StockPriceViewModel> getStockPriceList() {
         return stockPriceList;
+    }
+
+    /**
+     * 株式分割日一覧を返す。
+     */
+    public List<String> getSplitDates() {
+        return splitDates.stream()
+                .map(LocalDate::toString)
+                .toList();
     }
 }

@@ -29,6 +29,9 @@ public interface StockPriceDao {
     @Select
     List<LocalDate> selectDistinctTargetDate();
 
+    @Select
+    Optional<LocalDate> selectMaxTargetDateBySource(String sourceOf);
+
     @Insert
     Result<StockPriceEntity> insert(StockPriceEntity stockPriceEntity);
 

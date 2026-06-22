@@ -83,6 +83,7 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .defaultSuccessUrl("/v3/index", false)
                         .permitAll())
+                .httpBasic(Customizer.withDefaults())
                 .logout(Customizer.withDefaults())
                 .addFilterBefore(new DisableEncodeUrlFilter(), UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers

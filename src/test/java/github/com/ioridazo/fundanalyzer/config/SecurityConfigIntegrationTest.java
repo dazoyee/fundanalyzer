@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,7 +38,7 @@ class SecurityConfigIntegrationTest {
         @Test
         @DisplayName("未認証で画面にアクセス→ログインページへリダイレクト")
         void index_未認証_302() throws Exception {
-            mockMvc.perform(get("/v3/index"))
+            mockMvc.perform(get("/v3/index").accept(MediaType.TEXT_HTML))
                     .andExpect(status().isFound());
         }
 
@@ -58,7 +59,7 @@ class SecurityConfigIntegrationTest {
         @Test
         @DisplayName("未認証で業務POSTにアクセス→ログインページへリダイレクト")
         void post_未認証_302() throws Exception {
-            mockMvc.perform(post("/v1/document/analysis").with(csrf()))
+            mockMvc.perform(post("/v1/document/analysis").with(csrf()).accept(MediaType.TEXT_HTML))
                     .andExpect(status().isFound());
         }
 
@@ -72,7 +73,7 @@ class SecurityConfigIntegrationTest {
         @Test
         @DisplayName("未認証で株価評価画面にアクセス→ログインページへリダイレクト")
         void valuation_未認証_302() throws Exception {
-            mockMvc.perform(get("/v3/valuation"))
+            mockMvc.perform(get("/v3/valuation").accept(MediaType.TEXT_HTML))
                     .andExpect(status().isFound());
         }
     }
