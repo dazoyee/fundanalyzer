@@ -12,6 +12,7 @@ import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -45,6 +46,7 @@ public class StockScheduler {
     @Value("${app.config.stock.staleness-alert-days}")
     int stalenessAlertDays;
 
+    @Autowired
     public StockScheduler(
             final AnalysisService analysisService,
             final StockSpecification stockSpecification,
