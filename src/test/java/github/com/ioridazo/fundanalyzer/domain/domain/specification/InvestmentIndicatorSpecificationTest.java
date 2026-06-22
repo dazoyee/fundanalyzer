@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.seasar.doma.jdbc.Sql;
 import org.seasar.doma.jdbc.SqlLogType;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -39,13 +41,17 @@ class InvestmentIndicatorSpecificationTest {
 
     private InvestmentIndicatorDao dao;
     private CompanySpecification companySpecification;
+    private CorporateActionSpecification corporateActionSpecification;
     private InvestmentIndicatorSpecification specification;
 
     @BeforeEach
     void setUp() {
         dao = mock(InvestmentIndicatorDao.class);
         companySpecification = mock(CompanySpecification.class);
-        specification = spy(new InvestmentIndicatorSpecification(dao, companySpecification));
+        corporateActionSpecification = mock(CorporateActionSpecification.class);
+        when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        specification = spy(new InvestmentIndicatorSpecification(dao, companySpecification, corporateActionSpecification));
         doReturn(LocalDateTime.parse("2024-04-01T00:00:00")).when(specification).nowLocalDateTime();
     }
 
@@ -59,7 +65,7 @@ class InvestmentIndicatorSpecificationTest {
     private AnalysisResultEntity analysisResult() {
         return new AnalysisResultEntity(
                 10, "1234", LocalDate.parse("2024-03-01"),
-                BigDecimal.valueOf(1500), null, null, null, null,
+                BigDecimal.valueOf(1500), null, BigDecimal.valueOf(120), null, null,
                 "120", "year-1",
                 LocalDate.parse("2024-04-01"), "doc-1",
                 LocalDateTime.parse("2024-04-01T00:00:00"));
@@ -152,6 +158,27 @@ class InvestmentIndicatorSpecificationTest {
             specification.insert(analysisResult(), stockPrice());
 
             verify(dao, times(1)).insert(any(InvestmentIndicatorEntity.class));
+        }
+
+        @DisplayName("insert : 補正後株価で PER を計算する")
+        @Test
+        void usesAdjustedStockPriceForPer() {
+            when(corporateActionSpecification.adjustToBasis(
+                    any(),
+                    eq("1234"),
+                    eq(LocalDate.parse("2024-04-01")),
+                    eq(LocalDate.parse("2024-04-01")),
+                    eq(true)))
+                    .thenReturn(BigDecimal.valueOf(1000.0));
+
+            specification.insert(analysisResult(), stockPrice());
+
+            final ArgumentCaptor<InvestmentIndicatorEntity> captor =
+                    ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
+            verify(dao).insert(captor.capture());
+
+            final InvestmentIndicatorEntity actual = captor.getValue();
+            assertEquals(0, BigDecimal.valueOf(8.3333333333).compareTo(actual.getPer().orElseThrow()));
         }
 
         @DisplayName("insert : UniqueConstraintException 発生時はログ出力で握りつぶす")

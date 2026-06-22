@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,6 +47,7 @@ class ValuationSpecificationTest {
     private CompanySpecification companySpecification;
     private StockSpecification stockSpecification;
     private InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private CorporateActionSpecification corporateActionSpecification;
 
     private ValuationSpecification valuationSpecification;
 
@@ -55,12 +57,16 @@ class ValuationSpecificationTest {
         companySpecification = mock(CompanySpecification.class);
         stockSpecification = mock(StockSpecification.class);
         investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
+        corporateActionSpecification = mock(CorporateActionSpecification.class);
+        when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         valuationSpecification = new ValuationSpecification(
                 valuationDao,
                 companySpecification,
                 stockSpecification,
-                investmentIndicatorSpecification
+                investmentIndicatorSpecification,
+                corporateActionSpecification
         );
     }
 
@@ -143,7 +149,7 @@ class ValuationSpecificationTest {
             when(stockSpecification.findStock(companyCode, submitDate))
                     .thenReturn(Optional.of(stockPrice(submitDate, 600.0)));
 
-            var actual = valuationSpecification.evaluate(
+            final ValuationEntity actual = valuationSpecification.evaluate(
                     stockPrice(targetDate, 500.0),
                     new AnalysisResultEntity(
                             4,
@@ -174,6 +180,42 @@ class ValuationSpecificationTest {
                     () -> assertEquals(BigDecimal.valueOf(0.83), actual.getSubmitDateRatio(), "submitDateRatio"),
                     () -> assertEquals(BigDecimal.valueOf(1500.0), actual.getDiscountValue(), "discountValue"),
                     () -> assertEquals(BigDecimal.valueOf(400, 2), actual.getDiscountRate(), "discountRate")
+            );
+        }
+
+        @DisplayName("evaluate : 補正後株価で割安度を計算する")
+        @Test
+        void usesAdjustedStockPrice() {
+            when(stockSpecification.findStock(companyCode, submitDate))
+                    .thenReturn(Optional.of(stockPrice(submitDate, 600.0)));
+            when(corporateActionSpecification.adjustToBasis(
+                    any(), eq(companyCode), eq(targetDate), eq(submitDate), eq(true)))
+                    .thenReturn(BigDecimal.valueOf(1000.0));
+
+            final ValuationEntity actual = valuationSpecification.evaluate(
+                    stockPrice(targetDate, 500.0),
+                    new AnalysisResultEntity(
+                            4,
+                            companyCode,
+                            null,
+                            BigDecimal.valueOf(2000),
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            submitDate,
+                            "documentId",
+                            null
+                    ));
+
+            assertAll(
+                    () -> assertEquals(0, BigDecimal.valueOf(1000.0).compareTo(actual.getStockPrice())),
+                    () -> assertEquals(0, BigDecimal.valueOf(400.0).compareTo(actual.getDifferenceFromSubmitDate())),
+                    () -> assertEquals(0, BigDecimal.valueOf(167, 2).compareTo(actual.getSubmitDateRatio())),
+                    () -> assertEquals(0, BigDecimal.valueOf(1000.0).compareTo(actual.getDiscountValue())),
+                    () -> assertEquals(0, BigDecimal.valueOf(200, 2).compareTo(actual.getDiscountRate()))
             );
         }
 

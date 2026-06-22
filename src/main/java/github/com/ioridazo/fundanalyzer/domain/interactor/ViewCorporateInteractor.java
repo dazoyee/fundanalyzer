@@ -8,11 +8,14 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Documen
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification.CorporateAction;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -62,6 +65,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
+    private final CorporateActionSpecification corporateActionSpecification;
 
     @Value("${app.config.view.discount-rate}")
     BigDecimal configDiscountRate;
@@ -87,7 +91,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final StockSpecification stockSpecification,
             final InvestmentIndicatorSpecification investmentIndicatorSpecification,
             final ViewSpecification viewSpecification,
-            final SlackClient slackClient) {
+            final SlackClient slackClient,
+            final CorporateActionSpecification corporateActionSpecification) {
         this.analyzeInteractor = analyzeInteractor;
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
@@ -97,6 +102,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.investmentIndicatorSpecification = investmentIndicatorSpecification;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
+        this.corporateActionSpecification = corporateActionSpecification;
     }
 
     LocalDate nowLocalDate() {
@@ -227,6 +233,13 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 })
                 .sorted(Comparator.comparing(FinancialStatementViewModel::getSubmitDate).reversed())
                 .toList();
+        final List<LocalDate> splitDates = corporateActionSpecification.findActions(company.code()).stream()
+                .filter(CorporateAction::confirmed)
+                .map(CorporateAction::effectiveDate)
+                .sorted()
+                .toList();
+        final Optional<LocalDate> basisDate = documentSpecification.findLatestDocument(company)
+                .map(Document::getSubmitDate);
 
         return CorporateDetailViewModel.of(
                 CompanyViewModel.of(company, stock),
@@ -242,9 +255,57 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .sorted(Comparator.comparing(MinkabuViewModel::targetDate).reversed())
                         .toList(),
                 stock.getStockPriceEntityList().stream()
-                        .map(StockPriceViewModel::of)
+                        .map(entity -> toAdjustedViewModel(entity, company.code(), basisDate))
                         .sorted(Comparator.comparing(StockPriceViewModel::targetDate).reversed())
-                        .toList()
+                        .toList(),
+                splitDates
+        );
+    }
+
+    private StockPriceViewModel toAdjustedViewModel(
+            final StockPriceEntity entity,
+            final String companyCode,
+            final Optional<LocalDate> basisDate) {
+        if (basisDate.isEmpty()) {
+            return StockPriceViewModel.of(entity);
+        }
+        final LocalDate basis = basisDate.orElseThrow();
+        return new StockPriceViewModel(
+                entity.getTargetDate(),
+                corporateActionSpecification.adjustToBasis(
+                        BigDecimal.valueOf(entity.getStockPrice()),
+                        companyCode,
+                        entity.getTargetDate(),
+                        basis,
+                        true
+                ).doubleValue(),
+                entity.getOpeningPrice()
+                        .map(value -> corporateActionSpecification.adjustToBasis(
+                                BigDecimal.valueOf(value),
+                                companyCode,
+                                entity.getTargetDate(),
+                                basis,
+                                true
+                        ).doubleValue())
+                        .orElse(null),
+                entity.getHighPrice()
+                        .map(value -> corporateActionSpecification.adjustToBasis(
+                                BigDecimal.valueOf(value),
+                                companyCode,
+                                entity.getTargetDate(),
+                                basis,
+                                true
+                        ).doubleValue())
+                        .orElse(null),
+                entity.getLowPrice()
+                        .map(value -> corporateActionSpecification.adjustToBasis(
+                                BigDecimal.valueOf(value),
+                                companyCode,
+                                entity.getTargetDate(),
+                                basis,
+                                true
+                        ).doubleValue())
+                        .orElse(null)
         );
     }
 

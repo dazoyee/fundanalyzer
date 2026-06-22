@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceO
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
@@ -34,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,6 +48,7 @@ class StockSpecificationTest {
     private MinkabuDao minkabuDao;
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
+    private CorporateActionSpecification corporateActionSpecification;
 
     private StockSpecification stockSpecification;
 
@@ -54,12 +58,22 @@ class StockSpecificationTest {
         minkabuDao = Mockito.mock(MinkabuDao.class);
         companySpecification = Mockito.mock(CompanySpecification.class);
         documentSpecification = Mockito.mock(DocumentSpecification.class);
+        corporateActionSpecification = Mockito.mock(CorporateActionSpecification.class);
+
+        when(corporateActionSpecification.adjustToBasis(
+                any(BigDecimal.class),
+                any(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(true)
+        )).thenAnswer(invocation -> invocation.getArgument(0));
 
         stockSpecification = Mockito.spy(new StockSpecification(
                 stockPriceDao,
                 minkabuDao,
                 companySpecification,
-                documentSpecification
+                documentSpecification,
+                corporateActionSpecification
         ));
         stockSpecification.daysToAverageStockPrice = 30;
         stockSpecification.targetCompanyNumber = 1;
@@ -241,6 +255,78 @@ class StockSpecificationTest {
             var actual = stockSpecification.findStock(company);
 
             assertEquals(BigDecimal.valueOf(75000, 2), actual.getAverageStockPrice().orElseThrow());
+        }
+
+        @DisplayName("split correction : adjustToBasisの結果で最新株価と平均株価を補正する")
+        @Test
+        void splitCorrection() {
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-08"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            )));
+            when(corporateActionSpecification.adjustToBasis(
+                    any(BigDecimal.class),
+                    any(),
+                    any(LocalDate.class),
+                    any(LocalDate.class),
+                    eq(true)
+            )).thenAnswer(invocation -> ((BigDecimal) invocation.getArgument(0)).multiply(BigDecimal.valueOf(2L)));
+
+            Stock actual = stockSpecification.findStock(company);
+
+            assertEquals(0, BigDecimal.valueOf(2000L).compareTo(actual.getLatestStockPrice().orElseThrow()));
+            assertEquals(BigDecimal.valueOf(150000, 2), actual.getAverageStockPrice().orElseThrow());
+        }
+
+        @DisplayName("split correction : confirmedOnly=trueで補正する")
+        @Test
+        void splitCorrection_confirmedOnly() {
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    LocalDate.parse("2020-10-08"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            )));
+
+            stockSpecification.findStock(company);
+
+            ArgumentCaptor<Boolean> confirmedOnlyCaptor = ArgumentCaptor.forClass(Boolean.class);
+            verify(corporateActionSpecification, times(3)).adjustToBasis(
+                    any(BigDecimal.class),
+                    any(),
+                    any(LocalDate.class),
+                    any(LocalDate.class),
+                    confirmedOnlyCaptor.capture()
+            );
+            assertEquals(List.of(true, true, true), confirmedOnlyCaptor.getAllValues());
         }
 
         @DisplayName("averageStockPrice : 特定期間がないときは空で返す")

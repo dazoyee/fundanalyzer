@@ -31,12 +31,15 @@ public class InvestmentIndicatorSpecification {
 
     private final InvestmentIndicatorDao investmentIndicatorDao;
     private final CompanySpecification companySpecification;
+    private final CorporateActionSpecification corporateActionSpecification;
 
     public InvestmentIndicatorSpecification(
             final InvestmentIndicatorDao investmentIndicatorDao,
-            final CompanySpecification companySpecification) {
+            final CompanySpecification companySpecification,
+            final CorporateActionSpecification corporateActionSpecification) {
         this.investmentIndicatorDao = investmentIndicatorDao;
         this.companySpecification = companySpecification;
+        this.corporateActionSpecification = corporateActionSpecification;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -99,7 +102,14 @@ public class InvestmentIndicatorSpecification {
      */
     public void insert(
             final AnalysisResultEntity analysisResultEntity, final StockPriceEntity stockPriceEntity) {
-        final IndicatorValue indicatorValue = new IndicatorValue(BigDecimal.valueOf(stockPriceEntity.getStockPrice()), analysisResultEntity);
+        final BigDecimal adjustedStockPrice = corporateActionSpecification.adjustToBasis(
+                BigDecimal.valueOf(stockPriceEntity.getStockPrice()),
+                analysisResultEntity.getCompanyCode(),
+                stockPriceEntity.getTargetDate(),
+                analysisResultEntity.getSubmitDate(),
+                true
+        );
+        final IndicatorValue indicatorValue = new IndicatorValue(adjustedStockPrice, analysisResultEntity);
         try {
             investmentIndicatorDao.insert(InvestmentIndicatorEntity.of(
                     stockPriceEntity.getId(),

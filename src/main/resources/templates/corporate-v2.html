@@ -716,9 +716,43 @@
             const Chart = window.Chart;
             const lineColor = 'rgb(59 130 246)';
             const fillColor = 'rgba(59, 130, 246, 0.15)';
+            const splitDates = /*[[${splitDates}]]*/ [];
             const baseOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+            const splitMarkerPlugin = {
+                id: 'splitMarker',
+                afterDraw(chart, args, pluginOptions) {
+                    const targetDates = pluginOptions?.splitDates ?? [];
+                    if (!targetDates.length) return;
+                    const labels = chart.data?.labels ?? [];
+                    if (!labels.length) return;
+                    const xScale = chart.scales?.x;
+                    const chartArea = chart.chartArea;
+                    if (!xScale || !chartArea) return;
+                    const { ctx } = chart;
 
-            const buildLine = (id, labels, points, label) => {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(255,99,132,0.8)';
+                    ctx.fillStyle = 'rgba(255,99,132,0.8)';
+                    ctx.lineWidth = 2;
+                    ctx.font = '11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+
+                    targetDates.forEach((splitDate) => {
+                        const index = labels.indexOf(splitDate);
+                        if (index < 0) return;
+                        const x = xScale.getPixelForValue(index);
+                        ctx.beginPath();
+                        ctx.moveTo(x, chartArea.top);
+                        ctx.lineTo(x, chartArea.bottom);
+                        ctx.stroke();
+                        ctx.fillText('分割', x, chartArea.top + 4);
+                    });
+                    ctx.restore();
+                }
+            };
+
+            const buildLine = (id, labels, points, label, targetSplitDates = []) => {
                 const el = document.getElementById(id);
                 if (!el || !labels || !points) return;
                 new Chart(el.getContext('2d'), {
@@ -727,7 +761,14 @@
                         labels: labels,
                         datasets: [{ label: label, data: points, borderColor: lineColor, backgroundColor: fillColor, tension: 0.1 }]
                     },
-                    options: baseOptions
+                    options: {
+                        ...baseOptions,
+                        plugins: {
+                            ...baseOptions.plugins,
+                            splitMarker: { splitDates: targetSplitDates }
+                        }
+                    },
+                    plugins: targetSplitDates.length ? [splitMarkerPlugin] : []
                 });
             };
 
@@ -760,11 +801,11 @@
             buildLine('forecastStockChart180', /*[[${forecastStockLabel180}]]*/ [], /*[[${forecastStockPoint180}]]*/ [], '予測株価');
             buildLine('forecastStockChart365', /*[[${forecastStockLabel365}]]*/ [], /*[[${forecastStockPoint365}]]*/ [], '予測株価');
             buildLine('forecastStockChartAll', /*[[${forecastStockLabelAll}]]*/ [], /*[[${forecastStockPointAll}]]*/ [], '予測株価');
-            buildLine('stockChart30', /*[[${stockLabel30}]]*/ [], /*[[${stockPoint30}]]*/ [], '株価');
-            buildLine('stockChart90', /*[[${stockLabel90}]]*/ [], /*[[${stockPoint90}]]*/ [], '株価');
-            buildLine('stockChart180', /*[[${stockLabel180}]]*/ [], /*[[${stockPoint180}]]*/ [], '株価');
-            buildLine('stockChart365', /*[[${stockLabel365}]]*/ [], /*[[${stockPoint365}]]*/ [], '株価');
-            buildLine('stockChartAll', /*[[${stockLabelAll}]]*/ [], /*[[${stockPointAll}]]*/ [], '株価');
+            buildLine('stockChart30', /*[[${stockLabel30}]]*/ [], /*[[${stockPoint30}]]*/ [], '株価', splitDates);
+            buildLine('stockChart90', /*[[${stockLabel90}]]*/ [], /*[[${stockPoint90}]]*/ [], '株価', splitDates);
+            buildLine('stockChart180', /*[[${stockLabel180}]]*/ [], /*[[${stockPoint180}]]*/ [], '株価', splitDates);
+            buildLine('stockChart365', /*[[${stockLabel365}]]*/ [], /*[[${stockPoint365}]]*/ [], '株価', splitDates);
+            buildLine('stockChartAll', /*[[${stockLabelAll}]]*/ [], /*[[${stockPointAll}]]*/ [], '株価', splitDates);
             buildLine('valuationChart180', /*[[${valuationLabel180}]]*/ [], /*[[${valuationPoint180}]]*/ [], 'バリュエーション');
             buildLine('valuationChart365', /*[[${valuationLabel365}]]*/ [], /*[[${valuationPoint365}]]*/ [], 'バリュエーション');
             buildLine('valuationChartAll', /*[[${valuationLabelAll}]]*/ [], /*[[${valuationPointAll}]]*/ [], 'バリュエーション');
