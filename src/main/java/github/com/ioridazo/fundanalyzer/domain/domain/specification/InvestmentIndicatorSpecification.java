@@ -60,6 +60,16 @@ public class InvestmentIndicatorSpecification {
     }
 
     /**
+     * 企業コードで全投資指標エンティティを取得する。
+     *
+     * @param companyCode 企業コード
+     * @return 投資指標エンティティリスト
+     */
+    public List<InvestmentIndicatorEntity> findAllEntitiesByCode(final String companyCode) {
+        return investmentIndicatorDao.selectByCode(companyCode);
+    }
+
+    /**
      * 投資指標を取得する
      *
      * @param companyCode 企業コード

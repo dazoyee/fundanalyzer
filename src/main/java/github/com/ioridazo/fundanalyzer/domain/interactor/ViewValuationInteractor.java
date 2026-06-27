@@ -83,8 +83,9 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
      */
     @Override
     public List<CompanyValuationViewModel> viewValuation(final CodeInputData inputData) {
-        return valuationSpecification.findValuation(inputData.getCode5()).stream()
-                .map(viewSpecification::generateCompanyValuationView)
+        return viewSpecification.generateCompanyValuationViewsBatch(
+                        valuationSpecification.findAllValuationEntities(inputData.getCode5()))
+                .stream()
                 .sorted(Comparator.comparing(CompanyValuationViewModel::targetDate).reversed())
                 .toList();
     }

@@ -101,6 +101,16 @@ public class ValuationSpecification {
     }
 
     /**
+     * 企業コードで全評価エンティティを取得する（重複排除なし）。
+     *
+     * @param companyCode 企業コード
+     * @return 評価エンティティリスト（重複あり）
+     */
+    public List<ValuationEntity> findAllValuationEntities(final String companyCode) {
+        return valuationDao.selectByCode(companyCode);
+    }
+
+    /**
      * 評価結果を取得する
      *
      * @param companyCode 企業コード
