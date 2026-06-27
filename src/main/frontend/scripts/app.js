@@ -62,9 +62,12 @@ document.body.addEventListener('htmx:load', (evt) => {
   const cvPoints = JSON.parse(canvas.dataset.cv || '[]');
   const stPoints = JSON.parse(canvas.dataset.st || '[]');
   if (!labels.length) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  new Chart(ctx, {
+  // x-show が display:none を外した直後はブラウザのレイアウトが未確定で
+  // canvas の clientHeight が 0 になる。double rAF でレイアウト確定後に初期化。
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
@@ -79,5 +82,6 @@ document.body.addEventListener('htmx:load', (evt) => {
       plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
       scales: { x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } } }
     }
-  });
+    });
+  }); }); // close double rAF
 });
