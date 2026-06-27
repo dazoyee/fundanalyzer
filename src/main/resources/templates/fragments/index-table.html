@@ -24,8 +24,7 @@
             </thead>
             <!-- 各企業が独立した tbody を持つことで Alpine.js スコープを共有 -->
             <tbody th:each="c : ${table.companies()}"
-                   x-data="{open:false, loaded:false}"
-                   x-init="$watch('open', function(val) { if (val && !loaded) { loaded = true; const el = $el.querySelector('[data-chart-trigger]'); if (el && window.htmx) { window.htmx.process(el); window.htmx.trigger(el, 'load-chart'); } } })"
+                   x-data="{open:true}"
                    class="divide-y divide-slate-200 dark:divide-slate-700">
             <tr class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
                 <td class="px-3 py-2">
@@ -109,10 +108,10 @@
                             <i data-lucide="arrow-right" class="h-3.5 w-3.5" aria-hidden="true"></i>
                         </a>
                     </div>
-                    <!-- summaryChart: 展開初回に htmx 遅延ロード -->
+                    <!-- summaryChart: ビューポート進入時に htmx 遅延ロード（intersect once） -->
                     <div data-chart-trigger
                          th:attr="hx-get=@{/v3/index/{code}/summary(code=${c.code})}"
-                         hx-trigger="load-chart"
+                         hx-trigger="intersect once"
                          hx-target="this"
                          hx-swap="outerHTML"
                          class="mt-3">
@@ -136,8 +135,7 @@
     <!-- mobile: カード表示 + アコーディオン展開 (sm 未満) -->
     <ul class="block space-y-3 sm:hidden" aria-label="会社一覧">
         <li th:each="c : ${table.companies()}"
-            x-data="{open:false, loaded:false}"
-            x-init="$watch('open', function(val) { if (val && !loaded) { loaded = true; const el = $el.querySelector('[data-chart-trigger]'); if (el && window.htmx) { window.htmx.process(el); window.htmx.trigger(el, 'load-chart'); } } })"
+            x-data="{open:true}"
             data-mobile-card
             class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div class="p-4">
@@ -230,10 +228,10 @@
                     銘柄詳細を見る
                     <i data-lucide="arrow-right" class="h-4 w-4" aria-hidden="true"></i>
                 </a>
-                <!-- summaryChart: 展開初回に htmx 遅延ロード -->
+                <!-- summaryChart: ビューポート進入時に htmx 遅延ロード（intersect once） -->
                 <div data-chart-trigger
                      th:attr="hx-get=@{/v3/index/{code}/summary(code=${c.code})}"
-                     hx-trigger="load-chart"
+                     hx-trigger="intersect once"
                      hx-target="this"
                      hx-swap="outerHTML"
                      class="mt-3">
