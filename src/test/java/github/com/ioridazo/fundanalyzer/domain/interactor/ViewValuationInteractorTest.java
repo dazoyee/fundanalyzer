@@ -134,15 +134,16 @@ class ViewValuationInteractorTest {
             final CodeInputData inputData = CodeInputData.of("12340");
             final ValuationEntity entityA = emptyValuation(1);
             final ValuationEntity entityB = emptyValuation(2);
-            when(valuationSpecification.findValuation("12340")).thenReturn(List.of(entityA, entityB));
 
             final CompanyValuationViewModel oldView = valuationView("1234", BigDecimal.valueOf(2.0), 1L);
             final CompanyValuationViewModel newView = new CompanyValuationViewModel(
                     "1234", "テスト企業", LocalDate.parse("2024-05-01"),
                     null, null, null, BigDecimal.valueOf(2.0),
                     null, null, 30L, null, null, null, null, null);
-            when(viewSpecification.generateCompanyValuationView(entityA)).thenReturn(oldView);
-            when(viewSpecification.generateCompanyValuationView(entityB)).thenReturn(newView);
+            // N+1解消: 全エンティティを1回取得しバッチ生成する実装に追随
+            when(valuationSpecification.findAllValuationEntities("12340")).thenReturn(List.of(entityA, entityB));
+            when(viewSpecification.generateCompanyValuationViewsBatch(List.of(entityA, entityB)))
+                    .thenReturn(List.of(oldView, newView));
 
             final List<CompanyValuationViewModel> actual = interactor.viewValuation(inputData);
 
