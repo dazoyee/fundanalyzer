@@ -63,43 +63,43 @@
                 class="bg-slate-50 dark:bg-slate-800/60">
                 <td colspan="6" class="px-4 py-3">
                     <div class="flex flex-wrap items-center gap-3">
-                        <!-- 最新企業価値 badge (blue) -->
+                        <!-- 最新企業価値 badge (Good=青 / Bad=赤) -->
                         <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
                                         ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
                             <span class="text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="font-mono text-sm font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
                                 <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
                                    data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
                                 <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true"></i>
+                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
                             </div>
                         </div>
-                        <!-- 割安度 badge (amber) -->
+                        <!-- 割安度 badge (Good=青 / Bad=赤) -->
                         <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
                             <span class="text-xs text-slate-500 dark:text-slate-400">割安度</span>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="font-mono text-sm font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
                                 <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-amber-500" aria-hidden="true"></i>
+                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
                                 <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true"></i>
+                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
                             </div>
                         </div>
-                        <!-- グレアム指数 badge (purple) -->
+                        <!-- グレアム指数 badge (Good=青 / Bad=赤) -->
                         <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 dark:border-purple-800 dark:bg-purple-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
                             <span class="text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="font-mono text-sm font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
                                 <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-purple-500" aria-hidden="true"></i>
+                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
                                 <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true"></i>
+                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
                             </div>
                         </div>
                         <!-- 詳細リンクボタン -->
@@ -185,43 +185,43 @@
                  x-transition:leave-end="opacity-0"
                  class="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-slate-700">
                 <div class="grid grid-cols-3 gap-2">
-                    <!-- 最新企業価値 badge (blue) -->
+                    <!-- 最新企業価値 badge (Good=青 / Bad=赤) -->
                     <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
                                     ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                    : 'flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <span class="truncate text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
                         <div class="mt-0.5 flex items-center gap-0.5">
                             <span class="font-mono text-xs font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
                             <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
                                data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
                             <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true"></i>
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
                         </div>
                     </div>
-                    <!-- 割安度 badge (amber) -->
+                    <!-- 割安度 badge (Good=青 / Bad=赤) -->
                     <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
-                                    ? 'flex flex-col rounded-lg border border-amber-200 bg-amber-50 px-2 py-2 dark:border-amber-800 dark:bg-amber-950'
-                                    : 'flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <span class="text-xs text-slate-500 dark:text-slate-400">割安度</span>
                         <div class="mt-0.5 flex items-center gap-0.5">
                             <span class="font-mono text-xs font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
                             <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-amber-500" aria-hidden="true"></i>
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
                             <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true"></i>
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
                         </div>
                     </div>
-                    <!-- グレアム指数 badge (purple) -->
+                    <!-- グレアム指数 badge (Good=青 / Bad=赤) -->
                     <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
-                                    ? 'flex flex-col rounded-lg border border-purple-200 bg-purple-50 px-2 py-2 dark:border-purple-800 dark:bg-purple-950'
-                                    : 'flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <span class="truncate text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
                         <div class="mt-0.5 flex items-center gap-0.5">
                             <span class="font-mono text-xs font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
                             <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-purple-500" aria-hidden="true"></i>
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
                             <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true"></i>
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
