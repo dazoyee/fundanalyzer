@@ -72,8 +72,8 @@ document.body.addEventListener('htmx:load', (evt) => {
     data: {
       labels: labels,
       datasets: [
-        { label: '企業価値', data: cvPoints, borderColor: 'rgb(59,130,246)', backgroundColor: 'rgba(59,130,246,0.1)', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 2 },
-        { label: '株価', data: stPoints, borderColor: 'rgb(16,185,129)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 }
+        { label: '企業価値', data: cvPoints, borderColor: 'rgb(16,185,129)', backgroundColor: 'rgba(16,185,129,0.1)', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 2 },
+        { label: '株価', data: stPoints, borderColor: 'rgb(100,116,139)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 }
       ]
     },
     options: {
