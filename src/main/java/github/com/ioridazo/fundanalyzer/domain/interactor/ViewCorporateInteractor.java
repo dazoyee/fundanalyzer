@@ -260,7 +260,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 })
                 .sorted(Comparator.comparing(FinancialStatementViewModel::getSubmitDate).reversed())
                 .toList();
-        final List<LocalDate> splitDates = corporateActionSpecification.findActions(company.code()).stream()
+        final List<CorporateActionSpecification.CorporateAction> actions =
+                corporateActionSpecification.findActions(company.code());
+        final List<LocalDate> splitDates = actions.stream()
                 .filter(CorporateAction::confirmed)
                 .map(CorporateAction::effectiveDate)
                 .sorted()
@@ -282,7 +284,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .sorted(Comparator.comparing(MinkabuViewModel::targetDate).reversed())
                         .toList(),
                 stock.getStockPriceEntityList().stream()
-                        .map(entity -> toAdjustedViewModel(entity, company.code(), basisDate))
+                        .map(entity -> toAdjustedViewModelFast(entity, basisDate, actions))
                         .sorted(Comparator.comparing(StockPriceViewModel::targetDate).reversed())
                         .toList(),
                 splitDates
