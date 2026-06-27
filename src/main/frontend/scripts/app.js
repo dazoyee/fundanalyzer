@@ -33,6 +33,21 @@ document.body.addEventListener('htmx:configRequest', (event) => {
   event.detail.path = `${contextPath}${path}`;
 });
 
+// CSRF: htmx の非 GET リクエストに Spring Security のトークンヘッダを付与する。
+// layout-v2 が <meta name="_csrf"> / <meta name="_csrf_header"> を出力する前提。
+// dev では CSRF 無効でトークンが空のため何もしない。
+document.body.addEventListener('htmx:configRequest', (event) => {
+  const verb = (event.detail.verb || '').toUpperCase();
+  if (!verb || verb === 'GET') return;
+  const tokenMeta = document.querySelector('meta[name="_csrf"]');
+  const headerMeta = document.querySelector('meta[name="_csrf_header"]');
+  if (!tokenMeta || !headerMeta) return;
+  const token = tokenMeta.getAttribute('content');
+  const header = headerMeta.getAttribute('content');
+  if (!token || !header) return;
+  event.detail.headers[header] = token;
+});
+
 // 用語ツールチップ (fragments/tooltip.html 対応)。
 // open boolean のみを持つ最小コンポーネント。hover / focus / click で開閉する。
 Alpine.data('tooltip', () => ({

@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ViewService {
@@ -130,6 +131,9 @@ public class ViewService {
                 .skip((long) pageNumber * pageSize)
                 .limit(pageSize)
                 .toList();
+
+        final Set<String> favoriteCodes = companyUseCase.findFavoriteCodes();
+        pageContent.forEach(c -> c.setFavorite(favoriteCodes.contains(c.getCode())));
 
         return new CompanyTablePage(pageContent, totalPages, totalElements, pageNumber, pageSize, pageable.getSort());
     }

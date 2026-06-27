@@ -28,6 +28,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSRF: htmx の非 GET リクエストでトークンヘッダを付与するために公開（dev は CSRF 無効のため空） -->
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}"/>
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}"/>
     <title layout:title-pattern="$CONTENT_TITLE - fundanalyzer">fundanalyzer</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
