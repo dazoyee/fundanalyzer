@@ -23,10 +23,15 @@ java^
     -Delastic.apm.secret_token= ^
     -Delastic.apm.environment=production  ^
     -Delastic.apm.application_packages=com.github.ioridazo  ^
-    -Xms256m  ^
-    -Xmx256m  ^
-    -Xlog:gc*=info:file=%GC_LOG% ^
-    -XX:+HeapDumpOnOutOfMemoryError ^
+    -Xms1g  ^
+    -Xmx1g  ^
+    -XX:+UseG1GC  ^
+    -XX:+UseStringDeduplication  ^
+    -XX:MaxMetaspaceSize=256m  ^
+    -XX:+HeapDumpOnOutOfMemoryError  ^
+    -XX:HeapDumpPath=%APP_LOG_PATH%  ^
+    -XX:+ExitOnOutOfMemoryError  ^
+    -Xlog:gc*=info:file=%GC_LOG%:uptime,level,tags:filecount=5,filesize=10M ^
     -Duser.timezone=Asia/Tokyo  ^
     -jar %APP_NAME%.jar  ^
     --spring.profiles.active=prod  ^
