@@ -45,10 +45,13 @@ import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -246,11 +249,21 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
                 .toList();
 
-        final List<FinancialStatementViewModel> fsList = financialStatementSpecification.findByCompany(company).stream()
+        // 全財務諸表を1回のクエリで取得し、期間キー（period_end, document_type_code, submit_date）で
+        // メモリ内グルーピングする。findByKeyPerCompany のキーごと再クエリ（N+1）を解消する。
+        final List<FinancialStatementEntity> allFinancialStatements = financialStatementSpecification.findByCompany(company);
+        final Map<List<Object>, List<FinancialStatementEntity>> financialStatementsByPeriodKey = allFinancialStatements.stream()
+                .collect(Collectors.groupingBy(entity -> Arrays.asList(
+                        entity.getPeriodEnd(),
+                        entity.getDocumentTypeCode(),
+                        entity.getSubmitDate()
+                )));
+        final List<FinancialStatementViewModel> fsList = allFinancialStatements.stream()
                 .map(FinancialStatementKeyViewModel::of)
                 .distinct()
                 .map(key -> {
-                    final List<FinancialStatementEntity> valueList = financialStatementSpecification.findByKeyPerCompany(company, key);
+                    final List<FinancialStatementEntity> valueList = financialStatementsByPeriodKey.getOrDefault(
+                            Arrays.asList(key.periodEnd(), key.documentTypeCode(), key.submitDate()), List.of());
                     return FinancialStatementViewModel.of(
                             key.submitDate(),
                             key,
