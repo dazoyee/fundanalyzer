@@ -115,7 +115,7 @@
 #### J.1 依存ライブラリの新規追加判断
 
 新規ライブラリ・フレームワークの採否判断は **Gate 1 段階で確定** する（実装着手後の判断は禁止）.
-判断結果はアーキテクチャ判断記録（ADR: Architecture Decision Record）として残し、Gate 1 議事メモから参照する.
+判断結果はアーキテクチャ判断記録（ADR: Architecture Decision Record）として残し、タスク 1 Markdown ファイルの `## Gate 1` セクションから参照する.
 
 | 確認項目 | 内容 |
 |---|---|
@@ -124,7 +124,7 @@
 | 確認内容 | (1) 既存技術スタックとの互換性 (2) 公式サポート状況 (3) ライセンス (4) セキュリティ評価 (5) 代替選択肢との比較 |
 | 採用しない理由の記録 | 必須（[test-strategy.md](test-strategy.md) と [security-policy.md](security-policy.md) でも採用される「採用しない理由を必ず書く」原則に従う）|
 
-ADR の配置・テンプレートは [document-plan.md](document-plan.md) を参照する.
+ADR の運用方針は [document-plan.md](document-plan.md)、テンプレート本体は技術規約集側の [`../tech-guideline/templates/adr.md`](../tech-guideline/templates/adr.md) を参照する.
 
 ---
 
@@ -186,3 +186,12 @@ ADR の配置・テンプレートは [document-plan.md](document-plan.md) を�
 - C. データストア・スキーマ: 変更なし
 - ...
 ```
+
+---
+
+## 更新履歴
+
+| 日付 | バージョン | 概要 |
+|---|---|---|
+| 2026-04-28 | 1.0.0 | 初版（v1.0 として整備） |
+| 2026-05-11 | 1.0.1 | ADR テンプレートの一次情報源を技術規約集側 `../tech-guideline/templates/adr.md` への参照に整合 |

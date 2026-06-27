@@ -46,6 +46,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -426,6 +427,114 @@ public class ViewSpecification {
                 cantScrapedId.length() > 998 ? cantScrapedId.substring(0, 998) : cantScrapedId,
                 scrapedList.getSecond().size()
         );
+    }
+
+    /**
+     * 株価評価ビューを一括生成する（N+1解消版）。
+     * 企業コードに対するすべての評価エンティティを受け取り、DB呼び出しを最小化する。
+     *
+     * @param allEntities 株価評価エンティティリスト（重複排除なし）
+     * @return 株価評価ビューリスト
+     */
+    public List<CompanyValuationViewModel> generateCompanyValuationViewsBatch(
+            final List<ValuationEntity> allEntities) {
+        if (allEntities.isEmpty()) {
+            return List.of();
+        }
+        final String companyCode = allEntities.get(0).getCompanyCode();
+
+        // 企業情報を1回取得
+        final Optional<Company> company = companySpecification.findCompanyByCode(companyCode);
+
+        // 投資指標を1回取得 → 対象日マップ（キー=targetDate、値=grahamIndex）
+        final Map<LocalDate, Optional<BigDecimal>> grahamIndexByTargetDate =
+                investmentIndicatorSpecification.findAllEntitiesByCode(companyCode).stream()
+                        .collect(Collectors.toMap(
+                                InvestmentIndicatorEntity::getTargetDate,
+                                InvestmentIndicatorEntity::getGrahamIndex,
+                                (a, b) -> a
+                        ));
+
+        // 株価一覧を1回取得 → 配当利回り算出
+        final BigDecimal dividendYield = computeDividendYield(
+                companyCode, stockSpecification.findEntityList(companyCode));
+
+        // 提出日ごとの最小 daySinceSubmitDate エンティティのマップ構築
+        final Map<LocalDate, ValuationEntity> submitDateEntityMap = allEntities.stream()
+                .collect(Collectors.toMap(
+                        ValuationEntity::getSubmitDate,
+                        e -> e,
+                        (a, b) -> a.getDaySinceSubmitDate() <= b.getDaySinceSubmitDate() ? a : b
+                ));
+
+        // 対象日ごとに最新提出日エンティティを選択（findValuationと同ロジック）
+        final List<ValuationEntity> deduplicated = allEntities.stream()
+                .collect(Collectors.toMap(
+                        ValuationEntity::getTargetDate,
+                        e -> e,
+                        (a, b) -> a.getSubmitDate().compareTo(b.getSubmitDate()) >= 0 ? a : b
+                ))
+                .values().stream()
+                .toList();
+
+        // 分析結果キャッシュ（ユニークIDのみフェッチ）
+        final Map<Integer, Optional<AnalysisResultEntity>> analysisResultCache = new HashMap<>();
+
+        return deduplicated.stream()
+                .map(entity -> {
+                    final Optional<AnalysisResultEntity> analysisResult =
+                            analysisResultCache.computeIfAbsent(
+                                    entity.getAnalysisResultId(),
+                                    id -> analysisResultSpecification.findAnalysisResult(id));
+                    final ValuationEntity submitDateEntity =
+                            submitDateEntityMap.get(entity.getSubmitDate());
+                    return new CompanyValuationViewModel(
+                            entity.getCompanyCode().substring(0, 4),
+                            company.map(Company::companyName).orElseThrow(),
+                            entity.getTargetDate(),
+                            entity.getStockPrice(),
+                            entity.getGrahamIndex().orElse(null),
+                            entity.getDiscountValue(),
+                            entity.getDiscountRate(),
+                            entity.getSubmitDate(),
+                            submitDateEntity.getStockPrice(),
+                            entity.getDaySinceSubmitDate(),
+                            entity.getDifferenceFromSubmitDate(),
+                            entity.getSubmitDateRatio(),
+                            grahamIndexByTargetDate.getOrDefault(entity.getSubmitDate(), Optional.empty()).orElse(null),
+                            analysisResult.map(AnalysisResultEntity::getCorporateValue).orElseThrow(),
+                            dividendYield
+                    );
+                })
+                .toList();
+    }
+
+    private BigDecimal computeDividendYield(
+            final String companyCode, final List<StockPriceEntity> entityList) {
+        return entityList.stream()
+                .filter(stockPriceEntity -> stockPriceEntity.getDividendYield().isPresent())
+                .max(Comparator.comparing(StockPriceEntity::getTargetDate))
+                .flatMap(StockPriceEntity::getDividendYield)
+                .filter(dividendYield -> !"N/A".equals(dividendYield))
+                .map(v -> {
+                    try {
+                        return new BigDecimal(v
+                                .replace("%", "").replace("\u301c", "")
+                                .replace(" ", "").replace("\u3000", "")
+                        );
+                    } catch (final NumberFormatException e) {
+                        log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                                MessageFormat.format(
+                                        "\u4e88\u60f3\u914d\u5f53\u5229\u56de\u308a\u3092\u6570\u5024\u306b\u5909\u63db\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u5bfe\u8c61\u5024:{0}", v
+                                ),
+                                companySpecification.findCompanyByCode(companyCode).map(Company::edinetCode).orElse("null"),
+                                Category.STOCK,
+                                Process.EVALUATE
+                        ), e.getCause());
+                        return null;
+                    }
+                })
+                .orElse(null);
     }
 
     /**

@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -165,7 +166,6 @@ class ViewCorporateInteractorTest {
 
             when(analysisResultSpecification.displayTargetList(company, targetTypeCodes)).thenReturn(List.of(analysisResultEntity));
             when(financialStatementSpecification.findByCompany(company)).thenReturn(List.of(bsEntity, plEntity));
-            when(financialStatementSpecification.findByKeyPerCompany(eq(company), any())).thenReturn(List.of(bsEntity, plEntity));
             when(financialStatementSpecification.parseBsSubjectValue(List.of(bsEntity, plEntity)))
                     .thenReturn(List.of(FinancialStatementValueViewModel.of("bs", 100L)));
             when(financialStatementSpecification.parsePlSubjectValue(List.of(bsEntity, plEntity)))
@@ -213,7 +213,9 @@ class ViewCorporateInteractorTest {
                     () -> assertEquals(0, actual.getMinkabuList().size()),
                     () -> assertEquals(0, actual.getStockPriceList().size())
             );
-            verify(financialStatementSpecification, times(1)).findByKeyPerCompany(eq(company), any());
+            // N+1解消: 全件を1回取得しメモリ内グルーピングするため findByKeyPerCompany は呼ばれない
+            verify(financialStatementSpecification, times(1)).findByCompany(company);
+            verify(financialStatementSpecification, never()).findByKeyPerCompany(any(), any());
         }
 
         @DisplayName("viewCorporateDetail : 確定した株式分割日のみ splitDates に入る")
@@ -302,7 +304,15 @@ class ViewCorporateInteractorTest {
 
             when(stockSpecification.findStock(company)).thenReturn(adjustedStock);
             when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(basisDocument));
-            when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
+            // N+1解消後は事前取得した actions を adjustToBasisWithActions に渡す。actions が非空のとき補正が行われる
+            when(corporateActionSpecification.findActions(company.code())).thenReturn(List.of(
+                    new CorporateActionSpecification.CorporateAction(
+                            LocalDate.parse("2024-06-15"),
+                            BigDecimal.valueOf(2),
+                            true
+                    )
+            ));
+            when(corporateActionSpecification.adjustToBasisWithActions(any(), any(), any(), any(), eq(true)))
                     .thenAnswer(invocation -> ((BigDecimal) invocation.getArgument(0)).multiply(BigDecimal.valueOf(2)));
 
             CorporateDetailViewModel actual = viewCorporateInteractor.viewCorporateDetail(inputData);

@@ -159,10 +159,10 @@ exception/   … 業務例外
 | ファイル | 目的 |
 |---|---|
 | [README.md](docs/guideline/README.md) | 索引・3+N 体制・タスクサイクル・コア原則 |
-| [workflow.md](docs/guideline/workflow.md) | 6 ステップのタスクサイクル本体 |
+| [workflow.md](docs/guideline/workflow.md) | 5 ステップのタスクサイクル本体 |
 | [roles.md](docs/guideline/roles.md) | 計画 / 実装 / 検証エージェントの役割と禁止事項 |
-| [human-checkpoints.md](docs/guideline/human-checkpoints.md) | Gate 1 / 2 / 3 の運用と通過記録 |
+| [human-checkpoints.md](docs/guideline/human-checkpoints.md) | Gate 1 / 2 の運用と通過記録 |
 | [impact-analysis.md](docs/guideline/impact-analysis.md) | 影響範囲分析 |
 | [git-strategy.md](docs/guideline/git-strategy.md) | Git 戦略（ブランチ・コミット・マージ規約） |
 
-> Gate 1 / Gate 3 は **人間レビュアの承認が必須・スキップ不可**。
+> Gate 1 / Gate 2 は **人間レビュアの承認が必須・スキップ不可**。

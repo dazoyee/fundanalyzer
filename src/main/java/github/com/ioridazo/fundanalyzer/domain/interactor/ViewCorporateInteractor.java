@@ -45,10 +45,13 @@ import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -189,6 +192,33 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
      * @return 企業情報詳細ビュー
      */
     @Override
+    public ViewCorporateUseCase.SummaryChartData viewSummaryChart(final CodeInputData inputData) {
+        final Company company = companySpecification.findCompanyByCode(inputData.getCode5())
+                .orElseThrow(() -> new FundanalyzerNotExistException("company code"));
+
+        final List<AnalysisResultViewModel> analysisResultList =
+                analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()
+                        .map(AnalysisResultViewModel::of)
+                        .sorted(Comparator.comparing(AnalysisResultViewModel::documentPeriod)
+                                .thenComparing(AnalysisResultViewModel::submitDate).reversed())
+                        .toList();
+
+        final Optional<LocalDate> basisDate = documentSpecification.findLatestDocument(company)
+                .map(Document::getSubmitDate);
+
+        final List<CorporateActionSpecification.CorporateAction> actions =
+                corporateActionSpecification.findActions(company.code());
+
+        final List<StockPriceViewModel> stockPriceList =
+                stockSpecification.findEntityList(company.code()).stream()
+                        .map(entity -> toAdjustedViewModelFast(entity, basisDate, actions))
+                        .sorted(Comparator.comparing(StockPriceViewModel::targetDate).reversed())
+                        .toList();
+
+        return new ViewCorporateUseCase.SummaryChartData(analysisResultList, stockPriceList);
+    }
+
+    @Override
     public CorporateDetailViewModel viewCorporateDetail(final CodeInputData inputData) {
         final CorporateDetailViewModel raw = viewCorporateDetailRaw(inputData);
         final List<String> codeList = viewAll().stream().map(CorporateViewModel::getCode).toList();
@@ -219,11 +249,21 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
                 .toList();
 
-        final List<FinancialStatementViewModel> fsList = financialStatementSpecification.findByCompany(company).stream()
+        // 全財務諸表を1回のクエリで取得し、期間キー（period_end, document_type_code, submit_date）で
+        // メモリ内グルーピングする。findByKeyPerCompany のキーごと再クエリ（N+1）を解消する。
+        final List<FinancialStatementEntity> allFinancialStatements = financialStatementSpecification.findByCompany(company);
+        final Map<List<Object>, List<FinancialStatementEntity>> financialStatementsByPeriodKey = allFinancialStatements.stream()
+                .collect(Collectors.groupingBy(entity -> Arrays.asList(
+                        entity.getPeriodEnd(),
+                        entity.getDocumentTypeCode(),
+                        entity.getSubmitDate()
+                )));
+        final List<FinancialStatementViewModel> fsList = allFinancialStatements.stream()
                 .map(FinancialStatementKeyViewModel::of)
                 .distinct()
                 .map(key -> {
-                    final List<FinancialStatementEntity> valueList = financialStatementSpecification.findByKeyPerCompany(company, key);
+                    final List<FinancialStatementEntity> valueList = financialStatementsByPeriodKey.getOrDefault(
+                            Arrays.asList(key.periodEnd(), key.documentTypeCode(), key.submitDate()), List.of());
                     return FinancialStatementViewModel.of(
                             key.submitDate(),
                             key,
@@ -233,7 +273,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 })
                 .sorted(Comparator.comparing(FinancialStatementViewModel::getSubmitDate).reversed())
                 .toList();
-        final List<LocalDate> splitDates = corporateActionSpecification.findActions(company.code()).stream()
+        final List<CorporateActionSpecification.CorporateAction> actions =
+                corporateActionSpecification.findActions(company.code());
+        final List<LocalDate> splitDates = actions.stream()
                 .filter(CorporateAction::confirmed)
                 .map(CorporateAction::effectiveDate)
                 .sorted()
@@ -255,7 +297,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .sorted(Comparator.comparing(MinkabuViewModel::targetDate).reversed())
                         .toList(),
                 stock.getStockPriceEntityList().stream()
-                        .map(entity -> toAdjustedViewModel(entity, company.code(), basisDate))
+                        .map(entity -> toAdjustedViewModelFast(entity, basisDate, actions))
                         .sorted(Comparator.comparing(StockPriceViewModel::targetDate).reversed())
                         .toList(),
                 splitDates
@@ -305,6 +347,37 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                                 basis,
                                 true
                         ).doubleValue())
+                        .orElse(null)
+        );
+    }
+
+    private StockPriceViewModel toAdjustedViewModelFast(
+            final StockPriceEntity entity,
+            final Optional<LocalDate> basisDate,
+            final List<CorporateActionSpecification.CorporateAction> actions) {
+        if (basisDate.isEmpty() || actions.isEmpty()) {
+            return StockPriceViewModel.of(entity);
+        }
+        final LocalDate basis = basisDate.orElseThrow();
+        return new StockPriceViewModel(
+                entity.getTargetDate(),
+                corporateActionSpecification.adjustToBasisWithActions(
+                        BigDecimal.valueOf(entity.getStockPrice()), actions,
+                        entity.getTargetDate(), basis, true).doubleValue(),
+                entity.getOpeningPrice()
+                        .map(value -> corporateActionSpecification.adjustToBasisWithActions(
+                                BigDecimal.valueOf(value), actions,
+                                entity.getTargetDate(), basis, true).doubleValue())
+                        .orElse(null),
+                entity.getHighPrice()
+                        .map(value -> corporateActionSpecification.adjustToBasisWithActions(
+                                BigDecimal.valueOf(value), actions,
+                                entity.getTargetDate(), basis, true).doubleValue())
+                        .orElse(null),
+                entity.getLowPrice()
+                        .map(value -> corporateActionSpecification.adjustToBasisWithActions(
+                                BigDecimal.valueOf(value), actions,
+                                entity.getTargetDate(), basis, true).doubleValue())
                         .orElse(null)
         );
     }

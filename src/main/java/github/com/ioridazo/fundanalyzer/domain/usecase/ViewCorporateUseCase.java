@@ -4,7 +4,10 @@ import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.presenter.Target;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import java.util.List;
 import io.micrometer.observation.annotation.Observed;
 
 import java.util.List;
@@ -73,6 +76,15 @@ public interface ViewCorporateUseCase {
      *
      * @param inputData 企業コード
      */
+    @Observed
+    SummaryChartData viewSummaryChart(CodeInputData inputData);
+
+    /** summaryChart data containing only analysis results and stock prices. */
+    record SummaryChartData(
+            List<AnalysisResultViewModel> analysisResults,
+            List<StockPriceViewModel> stockPrices) {
+    }
+
     @Observed
     void updateView(DateInputData inputData);
 }

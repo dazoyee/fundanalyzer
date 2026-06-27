@@ -116,9 +116,10 @@ public class IndexPresenter {
             final Model model) {
         model.addAttribute("chartId", "summaryChart-" + code);
         try {
-            final CorporateDetailViewModel view = viewService.getCorporateDetailView(CodeInputData.of(code));
-            final List<AnalysisResultViewModel> analysis = resolveLatestPerPeriod(view);
-            final List<StockPriceViewModel> allStockPrices = view.getStockPriceList().stream()
+            final github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase.SummaryChartData data =
+                    viewService.getSummaryChartView(CodeInputData.of(code));
+            final List<AnalysisResultViewModel> analysis = resolveLatestPerPeriod(data.analysisResults());
+            final List<StockPriceViewModel> allStockPrices = data.stockPrices().stream()
                     .sorted(Comparator.comparing(StockPriceViewModel::targetDate))
                     .toList();
             populateChartModel(model, analysis, allStockPrices);
@@ -137,12 +138,12 @@ public class IndexPresenter {
      * @param view 企業詳細ビュー
      * @return 期ごとの代表分析結果リスト（期昇順）
      */
-    private List<AnalysisResultViewModel> resolveLatestPerPeriod(final CorporateDetailViewModel view) {
-        return view.getAnalysisResultList().stream()
+    private List<AnalysisResultViewModel> resolveLatestPerPeriod(final List<AnalysisResultViewModel> list) {
+        return list.stream()
                 .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
                 .map(AnalysisResultViewModel::documentPeriod)
                 .distinct()
-                .map(dp -> view.getAnalysisResultList().stream()
+                .map(dp -> list.stream()
                         .filter(vm -> targetTypeCodes.stream().anyMatch(t -> vm.documentTypeCode().equals(t)))
                         .filter(vm -> dp.equals(vm.documentPeriod()))
                         .max(Comparator.comparing(AnalysisResultViewModel::submitDate)))
