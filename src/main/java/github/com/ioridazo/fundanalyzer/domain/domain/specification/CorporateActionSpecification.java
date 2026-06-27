@@ -96,6 +96,45 @@ public class CorporateActionSpecification {
      * @param basisDate   基準日
      * @return 補正後株価
      */
+    /**
+     * 事前取得した actions を使って株価を調整する。
+     * findActions() を外部で1回だけ呼び、DB呼び出しの N+1 を防ぐ。
+     *
+     * @param priceRaw      元の株価
+     * @param actions       事前取得したコーポレートアクションリスト
+     * @param priceDate     株価の日付
+     * @param basisDate     基準日
+     * @param confirmedOnly 確定済みアクションのみを使うか
+     * @return 調整後株価
+     */
+    public BigDecimal adjustToBasisWithActions(
+            final BigDecimal priceRaw,
+            final List<CorporateAction> actions,
+            final LocalDate priceDate,
+            final LocalDate basisDate,
+            final boolean confirmedOnly) {
+        final BigDecimal numerator = priceRaw.multiply(
+                computeSharesFactor(actions, priceDate, confirmedOnly), MATH_CONTEXT);
+        return numerator.divide(
+                computeSharesFactor(actions, basisDate, confirmedOnly), MATH_CONTEXT).stripTrailingZeros();
+    }
+
+    private BigDecimal computeSharesFactor(
+            final List<CorporateAction> actions,
+            final LocalDate date,
+            final boolean confirmedOnly) {
+        BigDecimal factor = BigDecimal.ONE;
+        for (final CorporateAction action : actions) {
+            if (confirmedOnly && !action.confirmed()) {
+                continue;
+            }
+            if (!action.effectiveDate().isAfter(date)) {
+                factor = factor.multiply(action.ratio(), MATH_CONTEXT);
+            }
+        }
+        return factor.stripTrailingZeros();
+    }
+
     public BigDecimal adjustToBasis(
             final BigDecimal priceRaw,
             final String companyCode,

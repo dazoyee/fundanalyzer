@@ -214,6 +214,11 @@ public class ViewService {
      * @return 企業詳細
      */
     @Observed
+    public ViewCorporateUseCase.SummaryChartData getSummaryChartView(final CodeInputData inputData) {
+        return viewCorporateUseCase.viewSummaryChart(inputData);
+    }
+
+    @Observed
     public CorporateDetailViewModel getCorporateDetailView(final CodeInputData inputData) {
         return viewCorporateUseCase.viewCorporateDetail(inputData);
     }
