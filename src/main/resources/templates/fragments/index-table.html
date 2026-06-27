@@ -9,6 +9,9 @@
         <span th:text="${table.pageNumber() * table.pageSize() + table.companies().size()}">25</span> 件目
     </div>
 
+    <!-- ページネーション（上部） -->
+    <div th:replace="~{fragments/index-table :: pagination (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></div>
+
     <!-- desktop: 6列テーブル + アコーディオン行展開 (sm 以上) -->
     <div class="hidden overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 sm:block">
         <table class="min-w-full">
@@ -247,33 +250,37 @@
         </li>
     </ul>
 
-    <nav class="flex flex-wrap items-center justify-between gap-2" th:if="${table.totalPages() > 1}">
-        <div class="text-sm text-slate-600 dark:text-slate-400">
-            <span th:text="${table.pageNumber() + 1}">1</span> /
-            <span th:text="${table.totalPages()}">1</span> ページ
-        </div>
-        <div class="flex gap-1">
-            <a th:if="${table.pageNumber() > 0}"
-               th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
-               th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
-               hx-target="#index-table"
-               hx-push-url="true"
-               class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
-                前へ
-            </a>
-            <a th:if="${table.pageNumber() < table.totalPages() - 1}"
-               th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
-               th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
-               hx-target="#index-table"
-               hx-push-url="true"
-               class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                次へ
-                <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
-            </a>
-        </div>
-    </nav>
+    <div th:replace="~{fragments/index-table :: pagination (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></div>
 </div>
+
+<!-- ページネーション（上下共通） -->
+<nav th:fragment="pagination (table, target, keyword, sortParam)"
+     class="flex flex-wrap items-center justify-between gap-2" th:if="${table.totalPages() > 1}">
+    <div class="text-sm text-slate-600 dark:text-slate-400">
+        <span th:text="${table.pageNumber() + 1}">1</span> /
+        <span th:text="${table.totalPages()}">1</span> ページ
+    </div>
+    <div class="flex gap-1">
+        <a th:if="${table.pageNumber() > 0}"
+           th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() - 1})}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() - 1})}"
+           hx-target="#index-table"
+           hx-push-url="true"
+           class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+            <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
+            前へ
+        </a>
+        <a th:if="${table.pageNumber() < table.totalPages() - 1}"
+           th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() + 1})}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() + 1})}"
+           hx-target="#index-table"
+           hx-push-url="true"
+           class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+            次へ
+            <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
+        </a>
+    </div>
+</nav>
 
 <th th:fragment="sortable-th (field, label, target, keyword, sortParam)"
     class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
