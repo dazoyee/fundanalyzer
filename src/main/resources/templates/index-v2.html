@@ -156,6 +156,7 @@
                th:attr="hx-get=@{/v3/index/table(target=${target},sort=${sortParam},page=0)}"
                hx-target="#index-table"
                hx-trigger="keyup changed delay:300ms, search"
+               hx-include="#index-size-select"
                hx-push-url="true">
     </div>
 
@@ -168,6 +169,7 @@
                 th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},page=0)}"
                 hx-target="#index-table"
                 hx-trigger="change"
+                hx-include="#index-size-select"
                 hx-push-url="true">
             <option value="code,asc"                    th:selected="${sortParam == 'code,asc' or #strings.isEmpty(sortParam)}">証券コード ↑</option>
             <option value="code,desc"                   th:selected="${sortParam == 'code,desc'}">証券コード ↓</option>

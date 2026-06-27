@@ -3,10 +3,29 @@
 <body>
 
 <div th:fragment="table (table, target, keyword, sortParam)" class="space-y-3">
-    <div class="text-sm text-slate-600 dark:text-slate-400" th:if="${table.totalElements() > 0}">
-        <span th:text="${table.totalElements()}">0</span> 件中
-        <span th:text="${table.pageNumber() * table.pageSize() + 1}">1</span> -
-        <span th:text="${table.pageNumber() * table.pageSize() + table.companies().size()}">25</span> 件目
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="text-sm text-slate-600 dark:text-slate-400" th:if="${table.totalElements() > 0}">
+            <span th:text="${table.totalElements()}">0</span> 件中
+            <span th:text="${table.pageNumber() * table.pageSize() + 1}">1</span> -
+            <span th:text="${table.pageNumber() * table.pageSize() + table.companies().size()}">25</span> 件目
+        </div>
+        <div class="flex items-center gap-2">
+            <label for="index-size-select" class="text-xs text-slate-500 dark:text-slate-400">表示件数</label>
+            <select id="index-size-select"
+                    name="size"
+                    aria-label="表示件数"
+                    class="rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-900"
+                    th:attr="hx-get=@{/v3/index/table(target=${target},sort=${sortParam},page=0)}"
+                    hx-target="#index-table"
+                    hx-trigger="change"
+                    hx-include="[name='q']"
+                    hx-push-url="true">
+                <option value="10"  th:selected="${table.pageSize() == 10}">10件</option>
+                <option value="25"  th:selected="${table.pageSize() == 25}">25件</option>
+                <option value="50"  th:selected="${table.pageSize() == 50}">50件</option>
+                <option value="100" th:selected="${table.pageSize() == 100}">100件</option>
+            </select>
+        </div>
     </div>
 
     <!-- ページネーション（上部） -->
@@ -18,11 +37,11 @@
             <thead class="bg-slate-50 dark:bg-slate-800">
             <tr class="border-b border-slate-200 dark:border-slate-700">
                 <th class="w-10 px-3 py-2"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='code', label='証券コード', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='name', label='会社名', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='discountRate', label='割安比率', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='code', label='証券コード', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='name', label='会社名', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='discountRate', label='割安比率', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
             </tr>
             </thead>
             <!-- 各企業が独立した tbody を持つことで Alpine.js スコープを共有 -->
@@ -282,15 +301,15 @@
     </div>
 </nav>
 
-<th th:fragment="sortable-th (field, label, target, keyword, sortParam)"
+<th th:fragment="sortable-th (field, label, target, keyword, sortParam, size)"
     class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
     <th:block th:with="parts=${(sortParam != null and !#strings.isEmpty(sortParam)) ? sortParam.split(',') : new String[]{'code','asc'}},
                        currentField=${parts[0]},
                        currentDir=${parts.length > 1 ? parts[1] : 'asc'},
                        nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
                        nextSort=${field + ',' + nextDir}">
-        <a th:href="@{/v3/index(target=${target},q=${keyword},sort=${nextSort},page=0)}"
-           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+        <a th:href="@{/v3/index(target=${target},q=${keyword},sort=${nextSort},size=${size},page=0)}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${nextSort},size=${size},page=0)}"
            hx-target="#index-table"
            hx-push-url="true"
            class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">
