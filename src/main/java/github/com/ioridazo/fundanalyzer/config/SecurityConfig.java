@@ -81,7 +81,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/v3/index", false)
+                        .defaultSuccessUrl("/v3/index", true)
                         .permitAll())
                 .httpBasic(Customizer.withDefaults())
                 .logout(Customizer.withDefaults())
