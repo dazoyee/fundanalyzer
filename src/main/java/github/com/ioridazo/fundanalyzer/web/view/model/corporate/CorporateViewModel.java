@@ -148,6 +148,9 @@ public class CorporateViewModel {
     // グレアム指数
     private BigDecimal grahamIndex;
 
+    // お気に入り登録済みか
+    private boolean favorite;
+
     private static final int THIRD_DECIMAL_PLACE = 3;
 
     public static CorporateViewModel of(
@@ -234,7 +237,8 @@ public class CorporateViewModel {
                 eps,
                 roe,
                 roa,
-                grahamIndex
+                grahamIndex,
+                false
         );
     }
 
@@ -285,7 +289,8 @@ public class CorporateViewModel {
                 viewBean.getEps().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getRoe().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getRoa().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
-                viewBean.getGrahamIndex().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null)
+                viewBean.getGrahamIndex().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                false
         );
     }
 }

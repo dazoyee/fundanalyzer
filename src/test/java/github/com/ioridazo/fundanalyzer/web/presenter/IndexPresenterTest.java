@@ -1,7 +1,9 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -30,14 +32,16 @@ import static org.mockito.Mockito.when;
 class IndexPresenterTest {
 
     private ViewService viewService;
+    private AnalysisService analysisService;
     private ObjectMapper objectMapper;
     private IndexPresenter presenter;
 
     @BeforeEach
     void setUp() {
         this.viewService = mock(ViewService.class);
+        this.analysisService = mock(AnalysisService.class);
         this.objectMapper = mock(ObjectMapper.class);
-        this.presenter = new IndexPresenter(viewService, objectMapper);
+        this.presenter = new IndexPresenter(viewService, analysisService, objectMapper);
     }
 
 
@@ -261,6 +265,52 @@ class IndexPresenterTest {
             verify(model).addAttribute("table", page);
             verify(model).addAttribute("sortParam", "submitDate,desc");
             assertNotNull(page);
+        }
+    }
+
+    @Nested
+    @DisplayName("toggleFavorite メソッド")
+    class ToggleFavorite {
+
+        @Test
+        @DisplayName("登録された場合 → favorite=true でボタンフラグメントを返す")
+        void registered_returnsButtonFragmentWithTrue() {
+            final Model model = mock(Model.class);
+            when(analysisService.updateFavoriteCompany(any(CodeInputData.class))).thenReturn(true);
+
+            final String result = presenter.toggleFavorite("9999", model);
+
+            assertEquals("fragments/index-table :: favorite-button", result);
+            verify(analysisService, times(1)).updateFavoriteCompany(any(CodeInputData.class));
+            verify(model).addAttribute("code", "9999");
+            verify(model).addAttribute("favorite", true);
+        }
+
+        @Test
+        @DisplayName("4桁コード入力時 → company マスタ照合用に5桁へ正規化して更新する")
+        void fourDigitCode_normalizedToFiveDigits() {
+            final Model model = mock(Model.class);
+            when(analysisService.updateFavoriteCompany(any(CodeInputData.class))).thenReturn(true);
+
+            presenter.toggleFavorite("9001", model);
+
+            final ArgumentCaptor<CodeInputData> captor = ArgumentCaptor.forClass(CodeInputData.class);
+            verify(analysisService).updateFavoriteCompany(captor.capture());
+            assertEquals("90010", captor.getValue().getCode());
+            // ボタン側の次回トグル用に code 属性は4桁のまま保持する
+            verify(model).addAttribute("code", "9001");
+        }
+
+        @Test
+        @DisplayName("解除された場合 → favorite=false でボタンフラグメントを返す")
+        void unregistered_returnsButtonFragmentWithFalse() {
+            final Model model = mock(Model.class);
+            when(analysisService.updateFavoriteCompany(any(CodeInputData.class))).thenReturn(false);
+
+            final String result = presenter.toggleFavorite("9999", model);
+
+            assertEquals("fragments/index-table :: favorite-button", result);
+            verify(model).addAttribute("favorite", false);
         }
     }
 }

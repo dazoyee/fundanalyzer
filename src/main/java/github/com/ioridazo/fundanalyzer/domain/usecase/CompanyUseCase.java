@@ -3,6 +3,8 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import io.micrometer.observation.annotation.Observed;
 
+import java.util.Set;
+
 public interface CompanyUseCase {
 
     /**
@@ -40,6 +42,14 @@ public interface CompanyUseCase {
      */
     @Observed
     boolean updateFavoriteCompany(CodeInputData inputData);
+
+    /**
+     * お気に入り登録済み企業の証券コード（4桁）の集合
+     *
+     * @return お気に入り証券コード（4桁）の集合
+     */
+    @Observed
+    Set<String> findFavoriteCodes();
 
     /**
      * 上場中かどうか

@@ -114,7 +114,7 @@ class ManualMobileScreenshotTest {
     private static String dumpPageState(final Page page) {
         final Object data = page.evaluate(
                 "() => ({title: document.title, url: location.href, bodyClass: document.body.className, "
-                + "asideTranslate: getComputedStyle(document.querySelector('aside')).transform, "
+                + "asideTranslate: (document.querySelector('aside') ? getComputedStyle(document.querySelector('aside')).transform : null), "
                 + "navMobileExists: !!document.querySelector('nav[aria-label=\"モバイルナビ\"]'), "
                 + "h1: document.querySelector('h1') ? document.querySelector('h1').innerText : null, "
                 + "mainCardCount: document.querySelectorAll('[data-mobile-card]').length, "

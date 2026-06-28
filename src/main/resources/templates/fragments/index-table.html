@@ -3,11 +3,33 @@
 <body>
 
 <div th:fragment="table (table, target, keyword, sortParam)" class="space-y-3">
-    <div class="text-sm text-slate-600 dark:text-slate-400" th:if="${table.totalElements() > 0}">
-        <span th:text="${table.totalElements()}">0</span> 件中
-        <span th:text="${table.pageNumber() * table.pageSize() + 1}">1</span> -
-        <span th:text="${table.pageNumber() * table.pageSize() + table.companies().size()}">25</span> 件目
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="text-sm text-slate-600 dark:text-slate-400" th:if="${table.totalElements() > 0}">
+            <span th:text="${table.totalElements()}">0</span> 件中
+            <span th:text="${table.pageNumber() * table.pageSize() + 1}">1</span> -
+            <span th:text="${table.pageNumber() * table.pageSize() + table.companies().size()}">25</span> 件目
+        </div>
+        <div class="flex items-center gap-2">
+            <label for="index-size-select" class="text-xs text-slate-500 dark:text-slate-400">表示件数</label>
+            <select id="index-size-select"
+                    name="size"
+                    aria-label="表示件数"
+                    class="rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-900"
+                    th:attr="hx-get=@{/v3/index/table(target=${target},sort=${sortParam},page=0)}"
+                    hx-target="#index-table"
+                    hx-trigger="change"
+                    hx-include="[name='q']"
+                    hx-push-url="true">
+                <option value="10"  th:selected="${table.pageSize() == 10}">10件</option>
+                <option value="25"  th:selected="${table.pageSize() == 25}">25件</option>
+                <option value="50"  th:selected="${table.pageSize() == 50}">50件</option>
+                <option value="100" th:selected="${table.pageSize() == 100}">100件</option>
+            </select>
+        </div>
     </div>
+
+    <!-- ページネーション（上部） -->
+    <div th:replace="~{fragments/index-table :: pagination (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></div>
 
     <!-- desktop: 6列テーブル + アコーディオン行展開 (sm 以上) -->
     <div class="hidden overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 sm:block">
@@ -15,17 +37,16 @@
             <thead class="bg-slate-50 dark:bg-slate-800">
             <tr class="border-b border-slate-200 dark:border-slate-700">
                 <th class="w-10 px-3 py-2"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='code', label='証券コード', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='name', label='会社名', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='discountRate', label='割安比率', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
-                <th th:replace="~{fragments/index-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='code', label='証券コード', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='name', label='会社名', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='discountRate', label='割安比率', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th th:replace="~{fragments/index-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
             </tr>
             </thead>
             <!-- 各企業が独立した tbody を持つことで Alpine.js スコープを共有 -->
             <tbody th:each="c : ${table.companies()}"
-                   x-data="{open:false, loaded:false}"
-                   x-init="$watch('open', function(val) { if (val && !loaded) { loaded = true; const el = $el.querySelector('[data-chart-trigger]'); if (el && window.htmx) { window.htmx.process(el); window.htmx.trigger(el, 'load-chart'); } } })"
+                   x-data="{open:true}"
                    class="divide-y divide-slate-200 dark:divide-slate-700">
             <tr class="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800">
                 <td class="px-3 py-2">
@@ -36,12 +57,15 @@
                     </button>
                 </td>
                 <td class="px-3 py-2 font-mono text-sm">
-                    <span th:text="${c.code}">9999</span>
-                    <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
-                       class="ml-1 inline-flex items-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
-                       title="みんかぶで開く">
-                        <i data-lucide="external-link" class="h-3 w-3" aria-hidden="true"></i>
-                    </a>
+                    <span class="inline-flex items-center gap-1">
+                        <button th:replace="~{fragments/index-table :: favorite-button (code=${c.code}, favorite=${c.favorite})}"></button>
+                        <span th:text="${c.code}">9999</span>
+                        <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
+                           class="ml-1 inline-flex items-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+                           title="みんかぶで開く">
+                            <i data-lucide="external-link" class="h-3 w-3" aria-hidden="true"></i>
+                        </a>
+                    </span>
                 </td>
                 <td class="px-3 py-2 text-sm">
                     <a th:href="@{/v3/corporate(code=${c.code},target=${target ?: 'main'})}"
@@ -63,43 +87,43 @@
                 class="bg-slate-50 dark:bg-slate-800/60">
                 <td colspan="6" class="px-4 py-3">
                     <div class="flex flex-wrap items-center gap-3">
-                        <!-- 最新企業価値 badge (blue) -->
+                        <!-- 最新企業価値 badge (Good=青 / Bad=赤) -->
                         <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
                                         ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
                             <span class="text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="font-mono text-sm font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
                                 <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
                                    data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
                                 <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true"></i>
+                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
                             </div>
                         </div>
-                        <!-- 割安度 badge (amber) -->
+                        <!-- 割安度 badge (Good=青 / Bad=赤) -->
                         <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
                             <span class="text-xs text-slate-500 dark:text-slate-400">割安度</span>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="font-mono text-sm font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
                                 <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-amber-500" aria-hidden="true"></i>
+                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
                                 <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true"></i>
+                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
                             </div>
                         </div>
-                        <!-- グレアム指数 badge (purple) -->
+                        <!-- グレアム指数 badge (Good=青 / Bad=赤) -->
                         <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 dark:border-purple-800 dark:bg-purple-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
                             <span class="text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span class="font-mono text-sm font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
                                 <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-purple-500" aria-hidden="true"></i>
+                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
                                 <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-slate-400" aria-hidden="true"></i>
+                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
                             </div>
                         </div>
                         <!-- 詳細リンクボタン -->
@@ -109,10 +133,10 @@
                             <i data-lucide="arrow-right" class="h-3.5 w-3.5" aria-hidden="true"></i>
                         </a>
                     </div>
-                    <!-- summaryChart: 展開初回に htmx 遅延ロード -->
+                    <!-- summaryChart: ビューポート進入時に htmx 遅延ロード（intersect once） -->
                     <div data-chart-trigger
                          th:attr="hx-get=@{/v3/index/{code}/summary(code=${c.code})}"
-                         hx-trigger="load-chart"
+                         hx-trigger="intersect once"
                          hx-target="this"
                          hx-swap="outerHTML"
                          class="mt-3">
@@ -136,8 +160,7 @@
     <!-- mobile: カード表示 + アコーディオン展開 (sm 未満) -->
     <ul class="block space-y-3 sm:hidden" aria-label="会社一覧">
         <li th:each="c : ${table.companies()}"
-            x-data="{open:false, loaded:false}"
-            x-init="$watch('open', function(val) { if (val && !loaded) { loaded = true; const el = $el.querySelector('[data-chart-trigger]'); if (el && window.htmx) { window.htmx.process(el); window.htmx.trigger(el, 'load-chart'); } } })"
+            x-data="{open:true}"
             data-mobile-card
             class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div class="p-4">
@@ -151,6 +174,7 @@
                         <div class="mt-0.5 truncate text-base font-semibold" th:text="${c.name}">サンプル会社</div>
                     </a>
                     <div class="flex shrink-0 items-center gap-1">
+                        <button th:replace="~{fragments/index-table :: favorite-button (code=${c.code}, favorite=${c.favorite})}"></button>
                         <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
                            aria-label="みんかぶで開く"
                            class="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-700 dark:hover:text-blue-400">
@@ -185,43 +209,43 @@
                  x-transition:leave-end="opacity-0"
                  class="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-slate-700">
                 <div class="grid grid-cols-3 gap-2">
-                    <!-- 最新企業価値 badge (blue) -->
+                    <!-- 最新企業価値 badge (Good=青 / Bad=赤) -->
                     <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
                                     ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                    : 'flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <span class="truncate text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
                         <div class="mt-0.5 flex items-center gap-0.5">
                             <span class="font-mono text-xs font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
                             <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
                                data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
                             <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true"></i>
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
                         </div>
                     </div>
-                    <!-- 割安度 badge (amber) -->
+                    <!-- 割安度 badge (Good=青 / Bad=赤) -->
                     <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
-                                    ? 'flex flex-col rounded-lg border border-amber-200 bg-amber-50 px-2 py-2 dark:border-amber-800 dark:bg-amber-950'
-                                    : 'flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <span class="text-xs text-slate-500 dark:text-slate-400">割安度</span>
                         <div class="mt-0.5 flex items-center gap-0.5">
                             <span class="font-mono text-xs font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
                             <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-amber-500" aria-hidden="true"></i>
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
                             <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true"></i>
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
                         </div>
                     </div>
-                    <!-- グレアム指数 badge (purple) -->
+                    <!-- グレアム指数 badge (Good=青 / Bad=赤) -->
                     <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
-                                    ? 'flex flex-col rounded-lg border border-purple-200 bg-purple-50 px-2 py-2 dark:border-purple-800 dark:bg-purple-950'
-                                    : 'flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-900'">
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <span class="truncate text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
                         <div class="mt-0.5 flex items-center gap-0.5">
                             <span class="font-mono text-xs font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
                             <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-purple-500" aria-hidden="true"></i>
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
                             <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true"></i>
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -230,10 +254,10 @@
                     銘柄詳細を見る
                     <i data-lucide="arrow-right" class="h-4 w-4" aria-hidden="true"></i>
                 </a>
-                <!-- summaryChart: 展開初回に htmx 遅延ロード -->
+                <!-- summaryChart: ビューポート進入時に htmx 遅延ロード（intersect once） -->
                 <div data-chart-trigger
                      th:attr="hx-get=@{/v3/index/{code}/summary(code=${c.code})}"
-                     hx-trigger="load-chart"
+                     hx-trigger="intersect once"
                      hx-target="this"
                      hx-swap="outerHTML"
                      class="mt-3">
@@ -249,43 +273,61 @@
         </li>
     </ul>
 
-    <nav class="flex flex-wrap items-center justify-between gap-2" th:if="${table.totalPages() > 1}">
-        <div class="text-sm text-slate-600 dark:text-slate-400">
-            <span th:text="${table.pageNumber() + 1}">1</span> /
-            <span th:text="${table.totalPages()}">1</span> ページ
-        </div>
-        <div class="flex gap-1">
-            <a th:if="${table.pageNumber() > 0}"
-               th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
-               th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() - 1})}"
-               hx-target="#index-table"
-               hx-push-url="true"
-               class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
-                前へ
-            </a>
-            <a th:if="${table.pageNumber() < table.totalPages() - 1}"
-               th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
-               th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},page=${table.pageNumber() + 1})}"
-               hx-target="#index-table"
-               hx-push-url="true"
-               class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
-                次へ
-                <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
-            </a>
-        </div>
-    </nav>
+    <div th:replace="~{fragments/index-table :: pagination (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></div>
 </div>
 
-<th th:fragment="sortable-th (field, label, target, keyword, sortParam)"
+<!-- ページネーション（上下共通） -->
+<nav th:fragment="pagination (table, target, keyword, sortParam)"
+     class="flex flex-wrap items-center justify-between gap-2" th:if="${table.totalPages() > 1}">
+    <div class="text-sm text-slate-600 dark:text-slate-400">
+        <span th:text="${table.pageNumber() + 1}">1</span> /
+        <span th:text="${table.totalPages()}">1</span> ページ
+    </div>
+    <div class="flex gap-1">
+        <a th:if="${table.pageNumber() > 0}"
+           th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() - 1})}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() - 1})}"
+           hx-target="#index-table"
+           hx-push-url="true"
+           class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+            <i data-lucide="chevron-left" class="h-4 w-4" aria-hidden="true"></i>
+            前へ
+        </a>
+        <a th:if="${table.pageNumber() < table.totalPages() - 1}"
+           th:href="@{/v3/index(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() + 1})}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${sortParam},size=${table.pageSize()},page=${table.pageNumber() + 1})}"
+           hx-target="#index-table"
+           hx-push-url="true"
+           class="inline-flex min-h-[40px] items-center gap-1 rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">
+            次へ
+            <i data-lucide="chevron-right" class="h-4 w-4" aria-hidden="true"></i>
+        </a>
+    </div>
+</nav>
+
+<!-- お気に入りボタン（htmx トグル / 画面遷移なし） -->
+<button th:fragment="favorite-button (code, favorite)"
+        type="button"
+        th:attr="hx-post=@{/v3/index/favorite(code=${code})}"
+        hx-target="this"
+        hx-swap="outerHTML"
+        th:title="${favorite} ? 'お気に入りから外す' : 'お気に入りに登録'"
+        th:aria-label="${favorite} ? 'お気に入りから外す' : 'お気に入りに登録'"
+        class="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-red-500 dark:hover:bg-slate-700 dark:hover:text-red-400">
+    <i data-lucide="heart"
+       th:class="${favorite} ? 'h-4 w-4 fill-current text-red-500' : 'h-4 w-4'"
+       aria-hidden="true"></i>
+</button>
+
+<th th:fragment="sortable-th (field, label, target, keyword, sortParam, size)"
     class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
     <th:block th:with="parts=${(sortParam != null and !#strings.isEmpty(sortParam)) ? sortParam.split(',') : new String[]{'code','asc'}},
                        currentField=${parts[0]},
                        currentDir=${parts.length > 1 ? parts[1] : 'asc'},
                        nextDir=${currentField == field and currentDir == 'asc'} ? 'desc' : 'asc',
                        nextSort=${field + ',' + nextDir}">
-        <a th:href="@{/v3/index(target=${target},q=${keyword},sort=${nextSort},page=0)}"
-           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${nextSort},page=0)}"
+        <a th:href="@{/v3/index(target=${target},q=${keyword},sort=${nextSort},size=${size},page=0)}"
+           th:attr="hx-get=@{/v3/index/table(target=${target},q=${keyword},sort=${nextSort},size=${size},page=0)}"
            hx-target="#index-table"
            hx-push-url="true"
            class="inline-flex cursor-pointer items-center gap-1 hover:text-slate-900 dark:hover:text-slate-100">

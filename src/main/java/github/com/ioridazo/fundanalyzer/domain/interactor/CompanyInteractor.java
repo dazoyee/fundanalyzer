@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class CompanyInteractor implements CompanyUseCase {
@@ -163,6 +165,20 @@ public class CompanyInteractor implements CompanyUseCase {
             ));
             throw new FundanalyzerNotExistException();
         }
+    }
+
+    /**
+     * お気に入り登録済み企業の証券コード（4桁）の集合を取得する
+     *
+     * @return お気に入り証券コード（4桁）の集合
+     */
+    @Override
+    public Set<String> findFavoriteCodes() {
+        return companySpecification.findFavoriteCompanies().stream()
+                .map(Company::code)
+                .filter(Objects::nonNull)
+                .map(code -> code.length() >= 4 ? code.substring(0, 4) : code)
+                .collect(Collectors.toSet());
     }
 
     /**
