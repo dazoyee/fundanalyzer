@@ -36,6 +36,7 @@ public class IndexPresenter {
     private static final String INDEX_TABLE_FRAGMENT = "fragments/index-table :: table";
     private static final String INDEX_SUMMARY_CHART_FRAGMENT = "fragments/index-summary-chart :: chart";
     private static final String INDEX_FAVORITE_BUTTON_FRAGMENT = "fragments/index-table :: favorite-button";
+    private static final String INDEX_STAR_BUTTON_FRAGMENT = "fragments/index-table :: star-button";
 
     private static final String TARGET = "target";
 
@@ -158,6 +159,26 @@ public class IndexPresenter {
         model.addAttribute("code", code);
         model.addAttribute("favorite", favorite);
         return INDEX_FAVORITE_BUTTON_FRAGMENT;
+    }
+
+    /**
+     * 会社一覧から注目登録/解除をトグルする（htmx 部分更新）。
+     * トグル後の状態を反映した注目ボタンのフラグメントを返す。
+     *
+     * @param code  会社コード（4〜5桁の数値）
+     * @param model model
+     * @return fragments/index-table :: star-button
+     */
+    @PostMapping("/v3/index/star")
+    public String toggleStar(
+            @RequestParam(name = "code") final String code,
+            final Model model) {
+        // 一覧ビューのコードは 4 桁。company マスタは 5 桁キーのため 5 桁へ正規化して更新する。
+        final boolean star = analysisService.updateStarCompany(
+                CodeInputData.of(CodeInputData.of(code).getCode5()));
+        model.addAttribute("code", code);
+        model.addAttribute("star", star);
+        return INDEX_STAR_BUTTON_FRAGMENT;
     }
 
     /**

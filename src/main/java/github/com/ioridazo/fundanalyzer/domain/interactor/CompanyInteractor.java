@@ -168,6 +168,47 @@ public class CompanyInteractor implements CompanyUseCase {
     }
 
     /**
+     * 企業の注目登録を更新する
+     *
+     * @param inputData 企業コード
+     * @return 注目かどうか
+     */
+    @Override
+    public boolean updateStarCompany(final CodeInputData inputData) {
+        final long startTime = System.currentTimeMillis();
+        final Optional<Company> company = companySpecification.findCompanyByCode(inputData.getCode());
+
+        if (company.isPresent()) {
+            final boolean isStar = companySpecification.updateStar(company.get());
+            if (isStar) {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("対象の企業を注目に登録しました。\t企業コード:{0}", inputData.getCode()),
+                        Category.COMPANY,
+                        Process.UPDATE,
+                        System.currentTimeMillis() - startTime
+                ));
+                return true;
+            } else {
+                log.info(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("対象の企業を注目から除外しました。\t企業コード:{0}", inputData.getCode()),
+                        Category.COMPANY,
+                        Process.UPDATE,
+                        System.currentTimeMillis() - startTime
+                ));
+                return false;
+            }
+        } else {
+            log.info(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format("対象の企業は存在しませんでした。\t企業コード:{0}", inputData.getCode()),
+                    Category.COMPANY,
+                    Process.UPDATE,
+                    System.currentTimeMillis() - startTime
+            ));
+            throw new FundanalyzerNotExistException();
+        }
+    }
+
+    /**
      * お気に入り登録済み企業の証券コード（4桁）の集合を取得する
      *
      * @return お気に入り証券コード（4桁）の集合
@@ -175,6 +216,20 @@ public class CompanyInteractor implements CompanyUseCase {
     @Override
     public Set<String> findFavoriteCodes() {
         return companySpecification.findFavoriteCompanies().stream()
+                .map(Company::code)
+                .filter(Objects::nonNull)
+                .map(code -> code.length() >= 4 ? code.substring(0, 4) : code)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 注目登録済み企業の証券コード（4桁）の集合を取得する
+     *
+     * @return 注目証券コード（4桁）の集合
+     */
+    @Override
+    public Set<String> findStarCodes() {
+        return companySpecification.findStarCompanies().stream()
                 .map(Company::code)
                 .filter(Objects::nonNull)
                 .map(code -> code.length() >= 4 ? code.substring(0, 4) : code)

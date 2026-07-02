@@ -178,7 +178,35 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         .max(Comparator.comparing(CorporateViewModel::getSubmitDate))
                         .orElseThrow()
                 )
-                .filter(cvm -> favoriteList.stream().anyMatch(favorite -> cvm.getCode().equals(favorite.substring(0, 4))))
+                .filter(cvm -> favoriteList.stream().anyMatch(favorite -> cvm.getCode().equals(
+                        favorite.length() >= 4 ? favorite.substring(0, 4) : favorite)))
+                .sorted(Comparator
+                        .comparing(CorporateViewModel::getSubmitDate)
+                        .thenComparing(CorporateViewModel::getCode).reversed())
+                .toList();
+    }
+
+    /**
+     * 注目を取得する
+     *
+     * @return 企業情報ビュー
+     */
+    @Override
+    public List<CorporateViewModel> viewStar() {
+        final List<String> starList = companySpecification.findStarCompanies().stream()
+                .map(Company::code)
+                .toList();
+        final List<CorporateViewModel> allCorporateView = viewSpecification.findAllCorporateView();
+        return allCorporateView.stream()
+                .map(CorporateViewModel::getCode)
+                .distinct()
+                .map(code -> allCorporateView.stream()
+                        .filter(cvm -> code.equals(cvm.getCode()))
+                        .max(Comparator.comparing(CorporateViewModel::getSubmitDate))
+                        .orElseThrow()
+                )
+                .filter(cvm -> starList.stream().anyMatch(star -> cvm.getCode().equals(
+                        star.length() >= 4 ? star.substring(0, 4) : star)))
                 .sorted(Comparator
                         .comparing(CorporateViewModel::getSubmitDate)
                         .thenComparing(CorporateViewModel::getCode).reversed())

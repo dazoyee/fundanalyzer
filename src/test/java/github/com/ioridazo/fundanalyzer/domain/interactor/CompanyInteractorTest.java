@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -17,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -136,6 +139,7 @@ class CompanyInteractorTest {
                     null,
                     null,
                     false,
+                    false,
                     true
             );
         }
@@ -150,7 +154,7 @@ class CompanyInteractorTest {
         void registered() {
             final CodeInputData input = CodeInputData.of("1234");
             final Company company = new Company(
-                    "1234", null, null, null, null, null, null, null, null, false, true);
+                    "1234", null, null, null, null, null, null, null, null, false, false, true);
             when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.of(company));
             when(companySpecification.updateFavorite(company)).thenReturn(true);
 
@@ -162,7 +166,7 @@ class CompanyInteractorTest {
         void unregistered() {
             final CodeInputData input = CodeInputData.of("1234");
             final Company company = new Company(
-                    "1234", null, null, null, null, null, null, null, null, true, true);
+                    "1234", null, null, null, null, null, null, null, null, true, false, true);
             when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.of(company));
             when(companySpecification.updateFavorite(company)).thenReturn(false);
 
@@ -176,8 +180,84 @@ class CompanyInteractorTest {
             when(companySpecification.findCompanyByCode("9999")).thenReturn(Optional.empty());
 
             assertThrows(
-                    github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException.class,
+                    FundanalyzerNotExistException.class,
                     () -> companyInteractor.updateFavoriteCompany(input));
+        }
+    }
+
+    @Nested
+    @DisplayName("updateStarCompany メソッド")
+    class UpdateStarCompany {
+
+        @DisplayName("updateStarCompany : 注目登録に成功したら true を返す")
+        @Test
+        void registered() {
+            final CodeInputData input = CodeInputData.of("1234");
+            final Company company = new Company(
+                    "1234", null, null, null, null, null, null, null, null, false, false, true);
+            when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.of(company));
+            when(companySpecification.updateStar(company)).thenReturn(true);
+
+            assertEquals(true, companyInteractor.updateStarCompany(input));
+        }
+
+        @DisplayName("updateStarCompany : 注目解除なら false を返す")
+        @Test
+        void unregistered() {
+            final CodeInputData input = CodeInputData.of("1234");
+            final Company company = new Company(
+                    "1234", null, null, null, null, null, null, null, null, false, true, true);
+            when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.of(company));
+            when(companySpecification.updateStar(company)).thenReturn(false);
+
+            assertEquals(false, companyInteractor.updateStarCompany(input));
+        }
+
+        @DisplayName("updateStarCompany : 企業が存在しないときは FundanalyzerNotExistException")
+        @Test
+        void absent() {
+            final CodeInputData input = CodeInputData.of("9999");
+            when(companySpecification.findCompanyByCode("9999")).thenReturn(Optional.empty());
+
+            assertThrows(
+                    FundanalyzerNotExistException.class,
+                    () -> companyInteractor.updateStarCompany(input));
+        }
+    }
+
+    @Nested
+    @DisplayName("findFavoriteCodes メソッド")
+    class FindFavoriteCodes {
+
+        @DisplayName("findFavoriteCodes : お気に入り企業の4桁コード集合を返す")
+        @Test
+        void returnsCodes() {
+            when(companySpecification.findFavoriteCompanies()).thenReturn(
+                    List.of(
+                            new Company("12345", null, null, null, null, null, null, null, null, true, false, true),
+                            new Company("6789", null, null, null, null, null, null, null, null, true, false, true),
+                            new Company(null, null, null, null, null, null, null, null, null, true, false, true)
+                    ));
+
+            assertEquals(Set.of("1234", "6789"), companyInteractor.findFavoriteCodes());
+        }
+    }
+
+    @Nested
+    @DisplayName("findStarCodes メソッド")
+    class FindStarCodes {
+
+        @DisplayName("findStarCodes : 注目企業の4桁コード集合を返す")
+        @Test
+        void returnsCodes() {
+            when(companySpecification.findStarCompanies()).thenReturn(
+                    List.of(
+                            new Company("12345", null, null, null, null, null, null, null, null, false, true, true),
+                            new Company("6789", null, null, null, null, null, null, null, null, false, true, true),
+                            new Company(null, null, null, null, null, null, null, null, null, false, true, true)
+                    ));
+
+            assertEquals(Set.of("1234", "6789"), companyInteractor.findStarCodes());
         }
     }
 
@@ -215,7 +295,7 @@ class CompanyInteractorTest {
             when(companySpecification.findCompanyByCode("9999")).thenReturn(Optional.empty());
 
             assertThrows(
-                    github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException.class,
+                    FundanalyzerNotExistException.class,
                     () -> companyInteractor.updateRemovedCompany(input));
         }
     }

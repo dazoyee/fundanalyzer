@@ -57,16 +57,12 @@
              x-transition:leave-end="opacity-0 scale-95"
              style="display: none;"
              class="absolute right-0 top-full z-50 mt-1 min-w-[10rem] origin-top-right rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-            <form method="post" th:action="@{/v2/favorite/company}"
-                  class="border-b border-slate-100 dark:border-slate-700">
-                <input type="hidden" th:value="${corporate.code}" name="code"/>
-                <button type="submit"
-                        class="flex w-full items-center gap-2 px-4 py-3 text-sm text-rose-600 hover:bg-slate-50 dark:text-rose-400 dark:hover:bg-slate-700">
-                    <i data-lucide="heart" class="h-4 w-4 shrink-0"
-                       th:classappend="${corporate.isFavorite} ? 'fill-current'" aria-hidden="true"></i>
-                    <span th:text="${corporate.isFavorite} ? 'お気に入り解除' : 'お気に入り登録'">お気に入り</span>
-                </button>
-            </form>
+            <div class="flex justify-center border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+                <th:block th:replace="~{fragments/corporate-favorite-button :: favorite-button(code=${corporate.code}, favorite=${corporate.isFavorite})}"></th:block>
+            </div>
+            <div class="flex justify-center border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+                <th:block th:replace="~{fragments/corporate-star-button :: star-button(code=${corporate.code}, star=${corporate.isStar})}"></th:block>
+            </div>
             <form method="post" th:action="@{/v2/evaluate}"
                   class="border-b border-slate-100 dark:border-slate-700">
                 <input type="hidden" th:value="${corporate.code}" name="code"/>
@@ -92,10 +88,6 @@
          th:with="cv4=${corporateView != null ? #strings.substring(corporateView.code, 0, 4) : null}">
 
     <!-- Flash アラート -->
-    <th:block th:if="${isFavorite != null}"
-              th:with="favMsg=${isFavorite ? 'お気に入りに登録しました' : 'お気に入りから除外しました'}">
-        <div th:replace="~{fragments/alert :: info(message=${favMsg})}"></div>
-    </th:block>
     <th:block th:if="${isEvaluated != null}"
               th:with="evalMsg=${isEvaluated ? '株価を評価しました' : '評価対象が存在しないか、または評価に失敗しました'}">
         <div th:replace="~{fragments/alert :: info(message=${evalMsg})}"></div>
@@ -104,17 +96,14 @@
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
 
-    <!-- アクション 3 ボタン（デスクトップのみ表示、モバイルはヘッダーの ⋮ メニューへ） -->
-    <div class="hidden sm:grid sm:grid-cols-3 sm:gap-3">
-        <form method="post" th:action="@{/v2/favorite/company}">
-            <input type="hidden" th:value="${corporate.code}" name="code"/>
-            <button type="submit"
-                    class="inline-flex w-full items-center justify-center gap-2 rounded border border-rose-300 bg-white px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-700 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700">
-                <i th:if="${corporate.isFavorite}" data-lucide="heart" class="h-4 w-4 fill-current" aria-hidden="true"></i>
-                <i th:unless="${corporate.isFavorite}" data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
-                <span th:text="${corporate.isFavorite} ? 'お気に入り解除' : 'お気に入り登録'">お気に入り</span>
-            </button>
-        </form>
+    <!-- アクション 4 ボタン（デスクトップのみ表示、モバイルはヘッダーの ⋮ メニューへ） -->
+    <div class="hidden sm:grid sm:grid-cols-4 sm:gap-3">
+        <div class="flex items-center justify-center rounded border border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
+            <th:block th:replace="~{fragments/corporate-favorite-button :: favorite-button(code=${corporate.code}, favorite=${corporate.isFavorite})}"></th:block>
+        </div>
+        <div class="flex items-center justify-center rounded border border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
+            <th:block th:replace="~{fragments/corporate-star-button :: star-button(code=${corporate.code}, star=${corporate.isStar})}"></th:block>
+        </div>
         <form method="post" th:action="@{/v2/evaluate}">
             <input type="hidden" th:value="${corporate.code}" name="code"/>
             <button type="submit"

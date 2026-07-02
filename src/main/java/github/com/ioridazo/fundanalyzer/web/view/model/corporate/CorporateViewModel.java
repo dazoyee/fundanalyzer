@@ -151,6 +151,9 @@ public class CorporateViewModel {
     // お気に入り登録済みか
     private boolean favorite;
 
+    // 注目登録済みか
+    private boolean star;
+
     private static final int THIRD_DECIMAL_PLACE = 3;
 
     public static CorporateViewModel of(
@@ -238,6 +241,7 @@ public class CorporateViewModel {
                 roe,
                 roa,
                 grahamIndex,
+                false,
                 false
         );
     }
@@ -290,6 +294,7 @@ public class CorporateViewModel {
                 viewBean.getRoe().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getRoa().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getGrahamIndex().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
+                false,
                 false
         );
     }

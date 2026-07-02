@@ -44,12 +44,29 @@ public interface CompanyUseCase {
     boolean updateFavoriteCompany(CodeInputData inputData);
 
     /**
+     * 注目企業の登録
+     *
+     * @param inputData 企業コード
+     * @return 注目かどうか
+     */
+    @Observed
+    boolean updateStarCompany(CodeInputData inputData);
+
+    /**
      * お気に入り登録済み企業の証券コード（4桁）の集合
      *
      * @return お気に入り証券コード（4桁）の集合
      */
     @Observed
     Set<String> findFavoriteCodes();
+
+    /**
+     * 注目登録済み企業の証券コード（4桁）の集合
+     *
+     * @return 注目証券コード（4桁）の集合
+     */
+    @Observed
+    Set<String> findStarCodes();
 
     /**
      * 上場中かどうか

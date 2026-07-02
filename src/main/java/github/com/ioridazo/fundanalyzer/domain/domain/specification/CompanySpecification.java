@@ -102,6 +102,18 @@ public class CompanySpecification {
     }
 
     /**
+     * 注目企業情報リストを取得する
+     *
+     * @return 企業情報リスト
+     */
+    public List<Company> findStarCompanies() {
+        return companyDao.selectByStar().stream()
+                .filter(entity -> entity.getCode().isPresent())
+                .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
+                .toList();
+    }
+
+    /**
      * 企業情報を登録する
      *
      * @param results EDINETレスポンス
@@ -158,6 +170,17 @@ public class CompanySpecification {
     public boolean updateFavorite(final Company company) {
         companyDao.update(CompanyEntity.ofUpdateFavorite(company, nowLocalDateTime()));
         return !company.favorite();
+    }
+
+    /**
+     * 注目を更新する
+     *
+     * @param company 企業情報
+     * @return 注目に更新したか
+     */
+    public boolean updateStar(final Company company) {
+        companyDao.update(CompanyEntity.ofUpdateStar(company, nowLocalDateTime()));
+        return !company.star();
     }
 
     /**

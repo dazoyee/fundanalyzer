@@ -306,6 +306,7 @@ class AnalysisResultSpecificationTest {
                 null,
                 null,
                 false,
+                false,
                 false
         );
 
@@ -422,6 +423,7 @@ class AnalysisResultSpecificationTest {
             null,
             null,
             null,
+            false,
             false,
             true
     );
@@ -697,6 +699,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null,
                     false,
+                    false,
                     true
             );
             when(companySpecification.findCompanyByEdinetCode("edinetCode"))
@@ -736,6 +739,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null,
                     false,
+                    false,
                     true
             );
             when(companySpecification.findCompanyByEdinetCode("edinetCode"))
@@ -761,6 +765,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null,
                     null,
+                    false,
                     false,
                     true
             );
@@ -792,6 +797,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null,
                     null,
+                    false,
                     false,
                     true
             );

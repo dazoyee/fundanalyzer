@@ -48,6 +48,9 @@ public class CompanyEntity {
     // 除外フラグ
     private final String removed;
 
+    // 注目
+    private final String star;
+
     // 登録日
     @Column(updatable = false)
     private final LocalDateTime createdAt;
@@ -72,6 +75,25 @@ public class CompanyEntity {
                 company.favorite() ? "0" : "1",   // 反転させるだけ
                 null,
                 null,
+                null,
+                updatedAt
+        );
+    }
+
+    public static CompanyEntity ofUpdateStar(final Company company, final LocalDateTime updatedAt) {
+        return new CompanyEntity(
+                null,
+                null,
+                null,
+                company.edinetCode(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                company.star() ? "0" : "1",   // 反転させるだけ
+                null,
                 updatedAt
         );
     }
@@ -88,6 +110,7 @@ public class CompanyEntity {
                 null,
                 null,
                 "1",
+                null,
                 null,
                 updatedAt
         );
@@ -106,6 +129,7 @@ public class CompanyEntity {
                 Consolidated.fromName(resultBean.getConsolidated()).toValue(),
                 resultBean.getCapitalStock(),
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
+                "0",
                 "0",
                 "0",
                 createdAt,
@@ -128,6 +152,7 @@ public class CompanyEntity {
                 resultBean.getSettlementDate().isBlank() ? null : resultBean.getSettlementDate(),
                 null,
                 null,
+                null,
                 createdAt,
                 createdAt
         );
@@ -148,6 +173,7 @@ public class CompanyEntity {
                 null,
                 null,
                 null,
+                "0",
                 "0",
                 "0",
                 createdAt,

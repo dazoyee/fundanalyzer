@@ -305,6 +305,7 @@ class ViewSpecificationTest {
                 null,
                 null,
                 false,
+                false,
                 true
         );
     }

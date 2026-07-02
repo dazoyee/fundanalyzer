@@ -514,6 +514,7 @@ class ScrapingInteractorTest {
                 null,
                 null,
                 false,
+                false,
                 true
         );
     }

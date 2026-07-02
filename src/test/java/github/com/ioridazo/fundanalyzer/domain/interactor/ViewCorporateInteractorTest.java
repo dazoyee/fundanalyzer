@@ -98,6 +98,47 @@ class ViewCorporateInteractorTest {
     }
 
     @Nested
+    @DisplayName("viewFavorite / viewStar メソッド")
+    class ViewFavoriteAndStar {
+
+        @DisplayName("viewFavorite : 4文字プレフィックス一致の企業のみ返す")
+        @Test
+        void viewFavorite_filtersByCodePrefix() {
+            when(companySpecification.findFavoriteCompanies()).thenReturn(List.of(
+                    new Company("11112", null, null, null, null, null, null, null, null, true, false, true),
+                    new Company("3333", null, null, null, null, null, null, null, null, true, false, true)
+            ));
+            when(viewSpecification.findAllCorporateView()).thenReturn(List.of(
+                    corporateViewWithSubmitDate("1111", LocalDate.parse("2026-03-25")),
+                    corporateViewWithSubmitDate("2222", LocalDate.parse("2026-03-24")),
+                    corporateViewWithSubmitDate("3333", LocalDate.parse("2026-03-23"))
+            ));
+
+            final List<CorporateViewModel> actual = viewCorporateInteractor.viewFavorite();
+
+            assertEquals(List.of("1111", "3333"), actual.stream().map(CorporateViewModel::getCode).toList());
+        }
+
+        @DisplayName("viewStar : 4文字プレフィックス一致の企業のみ返す")
+        @Test
+        void viewStar_filtersByCodePrefix() {
+            when(companySpecification.findStarCompanies()).thenReturn(List.of(
+                    new Company("11112", null, null, null, null, null, null, null, null, false, true, true),
+                    new Company("3333", null, null, null, null, null, null, null, null, false, true, true)
+            ));
+            when(viewSpecification.findAllCorporateView()).thenReturn(List.of(
+                    corporateViewWithSubmitDate("1111", LocalDate.parse("2026-03-25")),
+                    corporateViewWithSubmitDate("2222", LocalDate.parse("2026-03-24")),
+                    corporateViewWithSubmitDate("3333", LocalDate.parse("2026-03-23"))
+            ));
+
+            final List<CorporateViewModel> actual = viewCorporateInteractor.viewStar();
+
+            assertEquals(List.of("1111", "3333"), actual.stream().map(CorporateViewModel::getCode).toList());
+        }
+    }
+
+    @Nested
     class viewCorporateDetail {
 
         CodeInputData inputData = CodeInputData.of("code");
@@ -755,6 +796,7 @@ class ViewCorporateInteractorTest {
                 null,
                 null,
                 null,
+                false,
                 false,
                 true
         );

@@ -32,6 +32,9 @@ public interface CompanyDao {
     List<CompanyEntity> selectByFavorite();
 
     @Select
+    List<CompanyEntity> selectByStar();
+
+    @Select
     List<CompanyEntity> selectByIndustryId(Integer industryId);
 
     @Insert

@@ -12,6 +12,7 @@ public record CompanyViewModel(
         String industry,
         String edinetCode,
         Boolean isFavorite,
+        Boolean isStar,
         Integer capitalStock,
         String settlementDate,
         String per,
@@ -30,6 +31,7 @@ public record CompanyViewModel(
                 company.industryName(),
                 company.edinetCode(),
                 company.favorite(),
+                company.star(),
                 company.capitalStock(),
                 company.settlementDate(),
                 stock.getStockPriceEntityList().stream()

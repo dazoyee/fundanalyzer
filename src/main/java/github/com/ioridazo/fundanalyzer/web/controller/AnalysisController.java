@@ -159,21 +159,6 @@ public class AnalysisController {
     }
 
     /**
-     * 企業をお気に入りに登録する
-     *
-     * @param code               会社コード
-     * @param redirectAttributes redirectAttributes
-     * @return BrandDetail
-     */
-    @PostMapping("/v2/favorite/company")
-    public String updateFavoriteCompany(final String code, final RedirectAttributes redirectAttributes) {
-        final boolean isFavorite = analysisService.updateFavoriteCompany(CodeInputData.of(code));
-        redirectAttributes.addFlashAttribute("isFavorite", isFavorite);
-        return REDIRECT + UriComponentsBuilder.fromUri(V3_CORPORATE_PATH)
-                .queryParam("code", code.substring(0, 4)).toUriString();
-    }
-
-    /**
      * 株価を評価する
      *
      * @param code               会社コード
