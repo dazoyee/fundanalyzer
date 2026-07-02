@@ -47,6 +47,14 @@ public interface ViewCorporateUseCase {
     List<CorporateViewModel> viewFavorite();
 
     /**
+     * 注目ビュー
+     *
+     * @return 企業情報ビュー
+     */
+    @Observed
+    List<CorporateViewModel> viewStar();
+
+    /**
      * 企業情報詳細ビュー
      *
      * @param inputData 企業コード

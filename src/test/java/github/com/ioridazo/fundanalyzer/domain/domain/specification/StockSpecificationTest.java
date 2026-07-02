@@ -376,6 +376,7 @@ class StockSpecificationTest {
                             null,
                             null,
                             false,
+                            false,
                             true
                     ),
                     new Company(
@@ -388,6 +389,7 @@ class StockSpecificationTest {
                             null,
                             null,
                             null,
+                            false,
                             false,
                             true
                     )));
@@ -962,6 +964,7 @@ class StockSpecificationTest {
                 null,
                 null,
                 null,
+                false,
                 false,
                 false
         );

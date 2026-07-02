@@ -254,6 +254,18 @@ public class AnalysisService {
     }
 
     /**
+     * 注目企業の登録
+     *
+     * @param inputData 企業コード
+     * @return 注目かどうか
+     */
+    @Observed
+    public boolean updateStarCompany(final CodeInputData inputData) {
+        // update star company
+        return companyUseCase.updateStarCompany(inputData);
+    }
+
+    /**
      * 株価の評価
      */
     @Observed

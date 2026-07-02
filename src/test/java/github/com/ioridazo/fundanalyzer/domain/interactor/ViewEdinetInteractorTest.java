@@ -194,6 +194,7 @@ class ViewEdinetInteractorTest {
                 null,
                 null,
                 false,
+                false,
                 true
         );
     }

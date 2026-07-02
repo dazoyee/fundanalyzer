@@ -274,6 +274,7 @@ class CorporateActionSpecificationTest {
                 100,
                 "0331",
                 false,
+                false,
                 true
         );
     }

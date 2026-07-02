@@ -99,6 +99,14 @@ class ViewServiceTest {
             service.getFavoriteCorporateView();
             verify(viewCorporateUseCase, times(1)).viewFavorite();
         }
+
+        @DisplayName("getStarCorporateView : viewCorporateUseCase.viewStar に委譲する")
+        @Test
+        void star() {
+            when(viewCorporateUseCase.viewStar()).thenReturn(List.of());
+            service.getStarCorporateView();
+            verify(viewCorporateUseCase, times(1)).viewStar();
+        }
     }
 
     @Nested
@@ -295,6 +303,14 @@ class ViewServiceTest {
             when(viewCorporateUseCase.viewFavorite()).thenReturn(List.of());
             service.findCompanyTable(new CompanyTableQuery("favorite", null, PageRequest.of(0, 25, Sort.by("code"))));
             verify(viewCorporateUseCase, times(1)).viewFavorite();
+        }
+
+        @Test
+        @DisplayName("target=star の場合 → viewCorporateUseCase.viewStar が呼ばれる")
+        void targetStar_callsViewStar() {
+            when(viewCorporateUseCase.viewStar()).thenReturn(List.of());
+            service.findCompanyTable(new CompanyTableQuery("star", null, PageRequest.of(0, 25, Sort.by("code"))));
+            verify(viewCorporateUseCase, times(1)).viewStar();
         }
 
         @Test

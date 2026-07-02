@@ -313,4 +313,49 @@ class IndexPresenterTest {
             verify(model).addAttribute("favorite", false);
         }
     }
+
+    @Nested
+    @DisplayName("toggleStar メソッド")
+    class ToggleStar {
+
+        @Test
+        @DisplayName("登録された場合 → star=true でボタンフラグメントを返す")
+        void registered_returnsButtonFragmentWithTrue() {
+            final Model model = mock(Model.class);
+            when(analysisService.updateStarCompany(any(CodeInputData.class))).thenReturn(true);
+
+            final String result = presenter.toggleStar("9999", model);
+
+            assertEquals("fragments/index-table :: star-button", result);
+            verify(analysisService, times(1)).updateStarCompany(any(CodeInputData.class));
+            verify(model).addAttribute("code", "9999");
+            verify(model).addAttribute("star", true);
+        }
+
+        @Test
+        @DisplayName("4桁コード入力時 → company マスタ照合用に5桁へ正規化して更新する")
+        void fourDigitCode_normalizedToFiveDigits() {
+            final Model model = mock(Model.class);
+            when(analysisService.updateStarCompany(any(CodeInputData.class))).thenReturn(true);
+
+            presenter.toggleStar("9001", model);
+
+            final ArgumentCaptor<CodeInputData> captor = ArgumentCaptor.forClass(CodeInputData.class);
+            verify(analysisService).updateStarCompany(captor.capture());
+            assertEquals("90010", captor.getValue().getCode());
+            verify(model).addAttribute("code", "9001");
+        }
+
+        @Test
+        @DisplayName("解除された場合 → star=false でボタンフラグメントを返す")
+        void unregistered_returnsButtonFragmentWithFalse() {
+            final Model model = mock(Model.class);
+            when(analysisService.updateStarCompany(any(CodeInputData.class))).thenReturn(false);
+
+            final String result = presenter.toggleStar("9999", model);
+
+            assertEquals("fragments/index-table :: star-button", result);
+            verify(model).addAttribute("star", false);
+        }
+    }
 }

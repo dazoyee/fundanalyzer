@@ -771,6 +771,7 @@ class DocumentInteractorTest {
                 null,
                 null,
                 false,
+                false,
                 true
         );
     }
