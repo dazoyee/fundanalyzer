@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
@@ -28,14 +30,22 @@ public class CorporatePresenter {
     private static final String CORPORATE = "corporate";
 
     private static final String CORPORATE_V2 = "corporate-v2";
+    private static final String CORPORATE_FAVORITE_BUTTON_FRAGMENT =
+            "fragments/corporate-favorite-button :: favorite-button";
+    private static final String CORPORATE_STAR_BUTTON_FRAGMENT =
+            "fragments/corporate-star-button :: star-button";
 
     private final ViewService viewService;
+    private final AnalysisService analysisService;
 
     @Value("${app.config.view.document-type-code}")
     List<String> targetTypeCodes;
 
-    public CorporatePresenter(final ViewService viewService) {
+    public CorporatePresenter(
+            final ViewService viewService,
+            final AnalysisService analysisService) {
         this.viewService = viewService;
+        this.analysisService = analysisService;
     }
 
     /**
@@ -53,6 +63,44 @@ public class CorporatePresenter {
             final Model model) {
         populateModel(code, target, model);
         return CORPORATE_V2;
+    }
+
+    /**
+     * 銘柄詳細からお気に入り登録/解除をトグルする（htmx 部分更新）。
+     * トグル後の状態を反映したお気に入りボタンのフラグメントを返す。
+     *
+     * @param code  会社コード（4〜5桁の数値）
+     * @param model model
+     * @return fragments/corporate-favorite-button :: favorite-button
+     */
+    @PostMapping("/v3/corporate/favorite")
+    public String toggleFavorite(
+            @RequestParam(name = "code") final String code,
+            final Model model) {
+        final String normalizedCode = CodeInputData.of(code).getCode5();
+        final boolean favorite = analysisService.updateFavoriteCompany(CodeInputData.of(normalizedCode));
+        model.addAttribute("code", code);
+        model.addAttribute("favorite", favorite);
+        return CORPORATE_FAVORITE_BUTTON_FRAGMENT;
+    }
+
+    /**
+     * 銘柄詳細から注目登録/解除をトグルする（htmx 部分更新）。
+     * トグル後の状態を反映した注目ボタンのフラグメントを返す。
+     *
+     * @param code  会社コード（4〜5桁の数値）
+     * @param model model
+     * @return fragments/corporate-star-button :: star-button
+     */
+    @PostMapping("/v3/corporate/star")
+    public String toggleStar(
+            @RequestParam(name = "code") final String code,
+            final Model model) {
+        final String normalizedCode = CodeInputData.of(code).getCode5();
+        final boolean star = analysisService.updateStarCompany(CodeInputData.of(normalizedCode));
+        model.addAttribute("code", code);
+        model.addAttribute("star", star);
+        return CORPORATE_STAR_BUTTON_FRAGMENT;
     }
 
     private void populateModel(final String code, final String target, final Model model) {

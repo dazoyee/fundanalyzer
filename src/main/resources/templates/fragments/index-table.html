@@ -31,7 +31,7 @@
     <!-- ページネーション（上部） -->
     <div th:replace="~{fragments/index-table :: pagination (table=${table}, target=${target}, keyword=${keyword}, sortParam=${sortParam})}"></div>
 
-    <!-- desktop: 6列テーブル + アコーディオン行展開 (sm 以上) -->
+    <!-- desktop: 9列テーブル + アコーディオン行展開 (sm 以上) -->
     <div class="hidden overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 sm:block">
         <table class="min-w-full">
             <thead class="bg-slate-50 dark:bg-slate-800">
@@ -42,6 +42,9 @@
                 <th th:replace="~{fragments/index-table :: sortable-th (field='submitDate', label='提出日', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
                 <th th:replace="~{fragments/index-table :: sortable-th (field='discountRate', label='割安比率', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
                 <th th:replace="~{fragments/index-table :: sortable-th (field='grahamIndex', label='グレアム指数', target=${target}, keyword=${keyword}, sortParam=${sortParam}, size=${table.pageSize()})}"></th>
+                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">最新企業価値</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">提出日株価平均</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">みんかぶ予想株価</th>
             </tr>
             </thead>
             <!-- 各企業が独立した tbody を持つことで Alpine.js スコープを共有 -->
@@ -59,6 +62,7 @@
                 <td class="px-3 py-2 font-mono text-sm">
                     <span class="inline-flex items-center gap-1">
                         <button th:replace="~{fragments/index-table :: favorite-button (code=${c.code}, favorite=${c.favorite})}"></button>
+                        <button th:replace="~{fragments/index-table :: star-button (code=${c.code}, star=${c.star})}"></button>
                         <span th:text="${c.code}">9999</span>
                         <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
                            class="ml-1 inline-flex items-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
@@ -73,10 +77,72 @@
                        class="text-blue-600 hover:underline dark:text-blue-400">サンプル会社</a>
                 </td>
                 <td class="px-3 py-2 text-sm" th:text="${c.submitDate}">2025-01-01</td>
-                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.discountRateToDisplay ?: '-'}">-</td>
-                <td class="px-3 py-2 text-right text-sm font-mono" th:text="${c.grahamIndex ?: '-'}">-</td>
+                <td class="px-3 py-2">
+                    <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">割安比率</span>
+                        <div class="mt-0.5 flex items-center gap-1">
+                            <span class="font-mono text-sm font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
+                            <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
+                               data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
+                               data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-3 py-2">
+                    <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
+                        <div class="mt-0.5 flex items-center gap-1">
+                            <span class="font-mono text-sm font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
+                            <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
+                               data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
+                               data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-3 py-2">
+                    <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
+                        <div class="mt-0.5 flex items-center gap-1">
+                            <span class="font-mono text-sm font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
+                            <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
+                               data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
+                               data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-3 py-2">
+                    <div class="flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                        <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">提出日株価平均</span>
+                        <div class="mt-0.5 flex items-center gap-1">
+                            <span class="font-mono text-sm font-semibold" th:text="${c.averageStockPrice ?: '-'}">-</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-3 py-2">
+                    <div th:class="${c.forecastStock != null and c.averageStockPrice != null and c.forecastStock.compareTo(c.averageStockPrice) > 0}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <span class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">みんかぶ予想株価</span>
+                        <div class="mt-0.5 flex items-center gap-1">
+                            <span class="font-mono text-sm font-semibold" th:text="${c.forecastStock ?: '-'}">-</span>
+                            <i th:if="${c.forecastStock != null and c.averageStockPrice != null and c.forecastStock.compareTo(c.averageStockPrice) > 0}"
+                               data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.forecastStock != null and c.averageStockPrice != null and c.forecastStock.compareTo(c.averageStockPrice) > 0}"
+                               data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </td>
             </tr>
-            <!-- 展開行: KPI バッジ 3 枚 + 詳細リンク -->
+            <!-- 展開行: summaryChart -->
             <tr x-show="open"
                 x-transition:enter="transition-opacity duration-150 ease-out"
                 x-transition:enter-start="opacity-0"
@@ -85,61 +151,13 @@
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
                 class="bg-slate-50 dark:bg-slate-800/60">
-                <td colspan="6" class="px-4 py-3">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <!-- 最新企業価値 badge (Good=青 / Bad=赤) -->
-                        <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
-                            <span class="text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
-                            <div class="mt-0.5 flex items-center gap-1">
-                                <span class="font-mono text-sm font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
-                                <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
-                                <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
-                            </div>
-                        </div>
-                        <!-- 割安度 badge (Good=青 / Bad=赤) -->
-                        <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
-                            <span class="text-xs text-slate-500 dark:text-slate-400">割安度</span>
-                            <div class="mt-0.5 flex items-center gap-1">
-                                <span class="font-mono text-sm font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
-                                <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
-                                <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
-                            </div>
-                        </div>
-                        <!-- グレアム指数 badge (Good=青 / Bad=赤) -->
-                        <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
-                                        ? 'flex min-w-[9rem] flex-col rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                        : 'flex min-w-[9rem] flex-col rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950'">
-                            <span class="text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
-                            <div class="mt-0.5 flex items-center gap-1">
-                                <span class="font-mono text-sm font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
-                                <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                                   data-lucide="thumbs-up" class="h-3.5 w-3.5 text-blue-500" aria-hidden="true"></i>
-                                <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                                   data-lucide="thumbs-down" class="h-3.5 w-3.5 text-red-500" aria-hidden="true"></i>
-                            </div>
-                        </div>
-                        <!-- 詳細リンクボタン -->
-                        <a th:href="@{/v3/corporate(code=${c.code},target=${target ?: 'main'})}"
-                           class="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-900 dark:text-blue-400 dark:hover:bg-blue-950">
-                            銘柄詳細を見る
-                            <i data-lucide="arrow-right" class="h-3.5 w-3.5" aria-hidden="true"></i>
-                        </a>
-                    </div>
+                <td colspan="9" class="px-4 py-3">
                     <!-- summaryChart: ビューポート進入時に htmx 遅延ロード（intersect once） -->
                     <div data-chart-trigger
                          th:attr="hx-get=@{/v3/index/{code}/summary(code=${c.code})}"
                          hx-trigger="intersect once"
                          hx-target="this"
-                         hx-swap="outerHTML"
-                         class="mt-3">
+                         hx-swap="outerHTML">
                         <div class="flex h-40 items-center justify-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                             <i data-lucide="loader" class="h-5 w-5 animate-spin text-slate-400" aria-hidden="true"></i>
                         </div>
@@ -149,7 +167,7 @@
             </tbody>
             <tbody th:if="${table.companies().isEmpty()}">
             <tr>
-                <td colspan="6" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
+                <td colspan="9" class="px-3 py-6 text-center text-slate-500 dark:text-slate-400">
                     該当する会社がありません
                 </td>
             </tr>
@@ -175,6 +193,7 @@
                     </a>
                     <div class="flex shrink-0 items-center gap-1">
                         <button th:replace="~{fragments/index-table :: favorite-button (code=${c.code}, favorite=${c.favorite})}"></button>
+                        <button th:replace="~{fragments/index-table :: star-button (code=${c.code}, star=${c.star})}"></button>
                         <a th:href="'https://minkabu.jp/stock/' + ${c.code}" target="_blank" rel="noopener"
                            aria-label="みんかぶで開く"
                            class="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-700 dark:hover:text-blue-400">
@@ -187,19 +206,65 @@
                         </button>
                     </div>
                 </div>
-                <!-- 常時表示: 割安比率・グレアム指数 -->
-                <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                    <div class="flex justify-between">
+                <!-- 常時表示: KPI バッジ 5 種 -->
+                <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
                         <dt class="text-slate-500 dark:text-slate-400">割安比率</dt>
-                        <dd class="font-mono font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</dd>
+                        <dd class="mt-0.5 flex items-center gap-0.5">
+                            <span class="font-mono text-xs font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
+                            <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
+                        </dd>
                     </div>
-                    <div class="flex justify-between">
-                        <dt class="text-slate-500 dark:text-slate-400">グレアム指数</dt>
-                        <dd class="font-mono font-semibold" th:text="${c.grahamIndex ?: '-'}">-</dd>
+                    <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <dt class="truncate text-slate-500 dark:text-slate-400">グレアム指数</dt>
+                        <dd class="mt-0.5 flex items-center gap-0.5">
+                            <span class="font-mono text-xs font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
+                            <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
+                        </dd>
+                    </div>
+                    <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <dt class="truncate text-slate-500 dark:text-slate-400">最新企業価値</dt>
+                        <dd class="mt-0.5 flex items-center gap-0.5">
+                            <span class="font-mono text-xs font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
+                            <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
+                        </dd>
+                    </div>
+                    <div class="flex flex-col rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 dark:border-slate-700 dark:bg-slate-800">
+                        <dt class="truncate text-slate-500 dark:text-slate-400">提出日株価平均</dt>
+                        <dd class="mt-0.5 flex items-center gap-0.5">
+                            <span class="font-mono text-xs font-semibold" th:text="${c.averageStockPrice ?: '-'}">-</span>
+                        </dd>
+                    </div>
+                    <div th:class="${c.forecastStock != null and c.averageStockPrice != null and c.forecastStock.compareTo(c.averageStockPrice) > 0}
+                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
+                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
+                        <dt class="truncate text-slate-500 dark:text-slate-400">みんかぶ予想株価</dt>
+                        <dd class="mt-0.5 flex items-center gap-0.5">
+                            <span class="font-mono text-xs font-semibold" th:text="${c.forecastStock ?: '-'}">-</span>
+                            <i th:if="${c.forecastStock != null and c.averageStockPrice != null and c.forecastStock.compareTo(c.averageStockPrice) > 0}"
+                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
+                            <i th:unless="${c.forecastStock != null and c.averageStockPrice != null and c.forecastStock.compareTo(c.averageStockPrice) > 0}"
+                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
+                        </dd>
                     </div>
                 </dl>
             </div>
-            <!-- 展開エリア: KPI バッジ 3 枚 + 詳細リンク -->
+            <!-- 展開エリア: summaryChart -->
             <div x-show="open"
                  x-transition:enter="transition-opacity duration-150 ease-out"
                  x-transition:enter-start="opacity-0"
@@ -208,59 +273,12 @@
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
                  class="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-slate-700">
-                <div class="grid grid-cols-3 gap-2">
-                    <!-- 最新企業価値 badge (Good=青 / Bad=赤) -->
-                    <div th:class="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}
-                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
-                        <span class="truncate text-xs text-slate-500 dark:text-slate-400">最新企業価値</span>
-                        <div class="mt-0.5 flex items-center gap-0.5">
-                            <span class="font-mono text-xs font-semibold" th:text="${c.latestCorporateValue ?: '-'}">-</span>
-                            <i th:if="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
-                            <i th:unless="${c.latestCorporateValue != null and c.discountValueToDisplay != null and c.latestCorporateValue.compareTo(c.discountValueToDisplay) > 0}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
-                        </div>
-                    </div>
-                    <!-- 割安度 badge (Good=青 / Bad=赤) -->
-                    <div th:class="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}
-                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
-                        <span class="text-xs text-slate-500 dark:text-slate-400">割安度</span>
-                        <div class="mt-0.5 flex items-center gap-0.5">
-                            <span class="font-mono text-xs font-semibold" th:text="${c.discountRateToDisplay ?: '-'}">-</span>
-                            <i th:if="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
-                            <i th:unless="${c.discountRateToDisplay != null and c.discountRateToDisplay > 100}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
-                        </div>
-                    </div>
-                    <!-- グレアム指数 badge (Good=青 / Bad=赤) -->
-                    <div th:class="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}
-                                    ? 'flex flex-col rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 dark:border-blue-800 dark:bg-blue-950'
-                                    : 'flex flex-col rounded-lg border border-red-200 bg-red-50 px-2 py-2 dark:border-red-800 dark:bg-red-950'">
-                        <span class="truncate text-xs text-slate-500 dark:text-slate-400">グレアム指数</span>
-                        <div class="mt-0.5 flex items-center gap-0.5">
-                            <span class="font-mono text-xs font-semibold" th:text="${c.grahamIndex ?: '-'}">-</span>
-                            <i th:if="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                               data-lucide="thumbs-up" class="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true"></i>
-                            <i th:unless="${c.grahamIndex != null and c.grahamIndex > 0 and c.grahamIndex < 5.625}"
-                               data-lucide="thumbs-down" class="h-3 w-3 shrink-0 text-red-500" aria-hidden="true"></i>
-                        </div>
-                    </div>
-                </div>
-                <a th:href="@{/v3/corporate(code=${c.code},target=${target ?: 'main'})}"
-                   class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-900 dark:text-blue-400 dark:hover:bg-blue-950">
-                    銘柄詳細を見る
-                    <i data-lucide="arrow-right" class="h-4 w-4" aria-hidden="true"></i>
-                </a>
                 <!-- summaryChart: ビューポート進入時に htmx 遅延ロード（intersect once） -->
                 <div data-chart-trigger
                      th:attr="hx-get=@{/v3/index/{code}/summary(code=${c.code})}"
                      hx-trigger="intersect once"
                      hx-target="this"
-                     hx-swap="outerHTML"
-                     class="mt-3">
+                     hx-swap="outerHTML">
                     <div class="flex h-36 items-center justify-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                         <i data-lucide="loader" class="h-5 w-5 animate-spin text-slate-400" aria-hidden="true"></i>
                     </div>
@@ -316,6 +334,19 @@
         class="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-red-500 dark:hover:bg-slate-700 dark:hover:text-red-400">
     <i data-lucide="heart"
        th:class="${favorite} ? 'h-4 w-4 fill-current text-red-500' : 'h-4 w-4'"
+       aria-hidden="true"></i>
+</button>
+
+<button th:fragment="star-button (code, star)"
+        type="button"
+        th:attr="hx-post=@{/v3/index/star(code=${code})}"
+        hx-target="this"
+        hx-swap="outerHTML"
+        th:title="${star} ? '注目から外す' : '注目に登録'"
+        th:aria-label="${star} ? '注目から外す' : '注目に登録'"
+        class="inline-flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-amber-500 dark:hover:bg-slate-700 dark:hover:text-amber-400">
+    <i data-lucide="star"
+       th:class="${star} ? 'h-4 w-4 fill-current text-amber-500' : 'h-4 w-4'"
        aria-hidden="true"></i>
 </button>
 

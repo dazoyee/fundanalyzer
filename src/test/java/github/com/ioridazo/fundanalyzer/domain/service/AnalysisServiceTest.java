@@ -275,6 +275,19 @@ class AnalysisServiceTest {
     }
 
     @Nested
+    @DisplayName("updateStarCompany メソッド")
+    class UpdateStarCompany {
+
+        @DisplayName("updateStarCompany : CompanyUseCase に委譲し結果を返す")
+        @Test
+        void delegates() {
+            final CodeInputData input = CodeInputData.of("1234");
+            when(companyUseCase.updateStarCompany(input)).thenReturn(true);
+            assertTrue(service.updateStarCompany(input));
+        }
+    }
+
+    @Nested
     @DisplayName("evaluate メソッド")
     class Evaluate {
 

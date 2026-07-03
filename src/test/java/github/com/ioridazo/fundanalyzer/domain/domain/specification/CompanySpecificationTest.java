@@ -160,6 +160,7 @@ class CompanySpecificationTest {
                     "0",
                     "0",
                     null,
+                    null,
                     LocalDateTime.of(2021, 5, 8, 23, 37)
             );
             when(companyDao.selectByEdinetCode("edinetCode")).thenReturn(Optional.of(entity));
@@ -245,6 +246,7 @@ class CompanySpecificationTest {
                     "0",
                     "0",
                     null,
+                    null,
                     LocalDateTime.of(2021, 5, 8, 23, 37)
             );
             when(companyDao.selectByIndustryId(10)).thenReturn(List.of(lived, removed, noCode));
@@ -288,6 +290,7 @@ class CompanySpecificationTest {
                     "1",
                     "0",
                     null,
+                    null,
                     LocalDateTime.of(2021, 5, 8, 23, 37)
             );
             when(companyDao.selectByFavorite()).thenReturn(List.of(withCode, withoutCode));
@@ -328,6 +331,7 @@ class CompanySpecificationTest {
                     null,
                     null,
                     false,
+                    false,
                     true
             );
 
@@ -351,6 +355,7 @@ class CompanySpecificationTest {
                     null,
                     null,
                     true,
+                    false,
                     true
             );
 
@@ -358,6 +363,50 @@ class CompanySpecificationTest {
 
             assertFalse(actual);
             verify(companyDao, times(1)).update(any(CompanyEntity.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("findStarCompanies メソッド")
+    class FindStarCompanies {
+
+        @DisplayName("findStarCompanies : 証券コードを持つ企業のみが返る")
+        @Test
+        void onlyWithCode() {
+            final CompanyEntity withCode = starCompanyEntity("1111", "E0001", 10);
+            final CompanyEntity withoutCode = new CompanyEntity(
+                    null,
+                    "no-code",
+                    10,
+                    "E0002",
+                    null,
+                    null,
+                    null,
+                    null,
+                    "0",
+                    "0",
+                    "1",
+                    LocalDateTime.of(2021, 5, 8, 23, 37),
+                    LocalDateTime.of(2021, 5, 8, 23, 37)
+            );
+            when(companyDao.selectByStar()).thenReturn(List.of(withCode, withoutCode));
+            when(industrySpecification.convertFromIdToName(10)).thenReturn("情報・通信業");
+
+            final List<Company> actual = companySpecification.findStarCompanies();
+
+            assertEquals(1, actual.size());
+            assertEquals("1111", actual.get(0).code());
+            assertTrue(actual.get(0).star());
+        }
+
+        @DisplayName("findStarCompanies : 注目企業がない場合は空のリストを返す")
+        @Test
+        void empty() {
+            when(companyDao.selectByStar()).thenReturn(List.of());
+
+            final List<Company> actual = companySpecification.findStarCompanies();
+
+            assertTrue(actual.isEmpty());
         }
     }
 
@@ -379,6 +428,7 @@ class CompanySpecificationTest {
                     null,
                     null,
                     false,
+                    false,
                     true
             );
 
@@ -392,6 +442,59 @@ class CompanySpecificationTest {
                     () -> assertEquals("1", captured.getRemoved()),
                     () -> assertNull(captured.getFavorite())
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("updateStar メソッド")
+    class UpdateStar {
+
+        @DisplayName("updateStar : 注目でない企業を更新するとtrueを返す")
+        @Test
+        void starFalse() {
+            final Company company = new Company(
+                    "1234",
+                    "テスト株式会社",
+                    10,
+                    "情報・通信業",
+                    "edinetCode",
+                    ListCategories.NULL,
+                    Consolidated.NULL,
+                    null,
+                    null,
+                    false,
+                    false,
+                    true
+            );
+
+            final boolean actual = companySpecification.updateStar(company);
+
+            assertTrue(actual);
+            verify(companyDao, times(1)).update(any(CompanyEntity.class));
+        }
+
+        @DisplayName("updateStar : 注目済み企業を更新するとfalseを返す")
+        @Test
+        void starTrue() {
+            final Company company = new Company(
+                    "1234",
+                    "テスト株式会社",
+                    10,
+                    "情報・通信業",
+                    "edinetCode",
+                    ListCategories.NULL,
+                    Consolidated.NULL,
+                    null,
+                    null,
+                    false,
+                    true,
+                    true
+            );
+
+            final boolean actual = companySpecification.updateStar(company);
+
+            assertFalse(actual);
+            verify(companyDao, times(1)).update(any(CompanyEntity.class));
         }
     }
 
@@ -461,6 +564,7 @@ class CompanySpecificationTest {
                 "12-31",
                 "0",
                 "0",
+                "0",
                 LocalDateTime.of(2021, 5, 8, 23, 37),
                 LocalDateTime.of(2021, 5, 8, 23, 37)
         );
@@ -478,6 +582,25 @@ class CompanySpecificationTest {
                 "12-31",
                 "0",
                 "1",
+                "0",
+                LocalDateTime.of(2021, 5, 8, 23, 37),
+                LocalDateTime.of(2021, 5, 8, 23, 37)
+        );
+    }
+
+    private CompanyEntity starCompanyEntity(final String code, final String edinetCode, final Integer industryId) {
+        return new CompanyEntity(
+                code,
+                "テスト株式会社",
+                industryId,
+                edinetCode,
+                "1",
+                "1",
+                100,
+                "12-31",
+                "0",
+                "0",
+                "1",
                 LocalDateTime.of(2021, 5, 8, 23, 37),
                 LocalDateTime.of(2021, 5, 8, 23, 37)
         );
@@ -489,6 +612,7 @@ class CompanySpecificationTest {
                 null,
                 null,
                 "edinetCode",
+                null,
                 null,
                 null,
                 null,

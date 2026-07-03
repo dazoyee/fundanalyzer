@@ -183,7 +183,7 @@ class ViewValuationInteractorTest {
         @Test
         void filtersByFavorite() {
             final Company favorite = new Company(
-                    "12340", "お気に入り企業", null, null, "edinet1", null, null, null, null, true, true);
+                    "12340", "お気に入り企業", null, null, "edinet1", null, null, null, null, true, false, true);
             when(companySpecification.findFavoriteCompanies()).thenReturn(List.of(favorite));
 
             final CompanyValuationViewModel matched = valuationView("1234", BigDecimal.valueOf(2.0), 5L);
@@ -237,7 +237,7 @@ class ViewValuationInteractorTest {
         @Test
         void upsertsAllAndNotifiesSlack() {
             final Company company = new Company(
-                    "10000", "対象企業", null, null, "edinet1", null, null, null, null, false, true);
+                    "10000", "対象企業", null, null, "edinet1", null, null, null, null, false, false, true);
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
             final ValuationEntity entity = emptyValuation();
             when(valuationSpecification.findLatestValuation("10000")).thenReturn(Optional.of(entity));
@@ -427,6 +427,6 @@ class ViewValuationInteractorTest {
     }
 
     private static Company company(final String code, final Integer industryId) {
-        return new Company(code, code, industryId, "業種", "E" + code, null, null, null, null, false, true);
+        return new Company(code, code, industryId, "業種", "E" + code, null, null, null, null, false, false, true);
     }
 }

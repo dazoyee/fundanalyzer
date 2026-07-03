@@ -74,6 +74,7 @@ class DocumentSpecificationTest {
                 null,
                 null,
                 false,
+                false,
                 true
         );
 

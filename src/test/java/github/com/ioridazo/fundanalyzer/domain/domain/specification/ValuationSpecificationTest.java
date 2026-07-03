@@ -645,6 +645,7 @@ class ValuationSpecificationTest {
                             10000,
                             "0331",
                             false,
+                            false,
                             true
                     )));
 
@@ -686,6 +687,7 @@ class ValuationSpecificationTest {
                             Consolidated.CONSOLIDATED,
                             10000,
                             "0331",
+                            false,
                             false,
                             true
                     )));

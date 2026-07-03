@@ -39,6 +39,8 @@ public record Company(
 
         boolean favorite,
 
+        boolean star,
+
         boolean lived
 ) {
 
@@ -54,6 +56,7 @@ public record Company(
                 entity.getCapitalStock(),
                 entity.getSettlementDate(),
                 Objects.equals(entity.getFavorite(), "1"),
+                Objects.equals(entity.getStar(), "1"),
                 Objects.equals(entity.getRemoved(), "0")
         );
     }

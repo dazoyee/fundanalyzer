@@ -339,7 +339,7 @@ class FinancialStatementSpecificationTest {
         @Test
         void delegates() {
             final github.com.ioridazo.fundanalyzer.domain.value.Company company = new github.com.ioridazo.fundanalyzer.domain.value.Company(
-                    "1234", "テスト企業", null, null, "edinet1", null, null, null, null, false, true);
+                    "1234", "テスト企業", null, null, "edinet1", null, null, null, null, false, false, true);
             when(financialStatementDao.selectByCode("edinet1")).thenReturn(List.of());
 
             assertEquals(0, financialStatementSpecification.findByCompany(company).size());

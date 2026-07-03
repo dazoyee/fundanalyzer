@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
@@ -30,12 +31,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CorporatePresenterTest {
 
     private ViewService viewService;
+    private AnalysisService analysisService;
     private CorporatePresenter presenter;
 
     @BeforeEach
     void setUp() {
         viewService = Mockito.mock(ViewService.class);
-        presenter = new CorporatePresenter(viewService);
+        analysisService = Mockito.mock(AnalysisService.class);
+        presenter = new CorporatePresenter(viewService, analysisService);
         presenter.targetTypeCodes = List.of("120", "130");
     }
 
@@ -48,7 +51,7 @@ class CorporatePresenterTest {
             final List<MinkabuViewModel> minkabuList,
             final List<StockPriceViewModel> stockPriceList) {
         final CompanyViewModel company = new CompanyViewModel(
-                "12345", "テスト会社", "情報・通信業", "E00001", Boolean.FALSE,
+                "12345", "テスト会社", "情報・通信業", "E00001", Boolean.FALSE, Boolean.FALSE,
                 100, "3月31日", "10.0", "1.0", "5.0",
                 "1000000", "1000000000", "2.5", null
         );
@@ -142,7 +145,7 @@ class CorporatePresenterTest {
             corporate.setLatestCorporateValue(BigDecimal.valueOf(3000));
             corporate.setLatestStockPrice(BigDecimal.valueOf(1000));
             final CompanyViewModel company = new CompanyViewModel(
-                    "12345", "テスト会社", "情報・通信業", "E00001", Boolean.FALSE,
+                    "12345", "テスト会社", "情報・通信業", "E00001", Boolean.FALSE, Boolean.FALSE,
                     100, "3月31日", "10.0", "1.0", "5.0",
                     "1000000", "1000000000", "2.5", null);
             final AnalysisResultViewModel ar = new AnalysisResultViewModel(
@@ -160,6 +163,72 @@ class CorporatePresenterTest {
             Mockito.verify(model).addAttribute("rimValue", BigDecimal.valueOf(1500));
             Mockito.verify(model).addAttribute("agreementUndervalued", 2);
             Mockito.verify(model).addAttribute("agreementTotal", 2);
+        }
+    }
+
+    @Nested
+    @DisplayName("toggleFavorite メソッド")
+    class ToggleFavorite {
+
+        @Test
+        @DisplayName("登録された場合 → favorite=true でボタンフラグメントを返す")
+        void registered_returnsButtonFragmentWithTrue() {
+            final Model model = Mockito.mock(Model.class);
+            Mockito.when(analysisService.updateFavoriteCompany(Mockito.any(CodeInputData.class))).thenReturn(true);
+
+            final String result = presenter.toggleFavorite("9999", model);
+
+            assertEquals("fragments/corporate-favorite-button :: favorite-button", result);
+            Mockito.verify(analysisService).updateFavoriteCompany(Mockito.any(CodeInputData.class));
+            Mockito.verify(model).addAttribute("code", "9999");
+            Mockito.verify(model).addAttribute("favorite", true);
+        }
+
+        @Test
+        @DisplayName("4桁コード入力時 → company マスタ照合用に5桁へ正規化して更新する")
+        void fourDigitCode_normalizedToFiveDigits() {
+            final Model model = Mockito.mock(Model.class);
+            Mockito.when(analysisService.updateFavoriteCompany(Mockito.any(CodeInputData.class))).thenReturn(true);
+
+            presenter.toggleFavorite("9001", model);
+
+            final ArgumentCaptor<CodeInputData> captor = ArgumentCaptor.forClass(CodeInputData.class);
+            Mockito.verify(analysisService).updateFavoriteCompany(captor.capture());
+            assertEquals("90010", captor.getValue().getCode());
+            Mockito.verify(model).addAttribute("code", "9001");
+        }
+    }
+
+    @Nested
+    @DisplayName("toggleStar メソッド")
+    class ToggleStar {
+
+        @Test
+        @DisplayName("登録された場合 → star=true でボタンフラグメントを返す")
+        void registered_returnsButtonFragmentWithTrue() {
+            final Model model = Mockito.mock(Model.class);
+            Mockito.when(analysisService.updateStarCompany(Mockito.any(CodeInputData.class))).thenReturn(true);
+
+            final String result = presenter.toggleStar("9999", model);
+
+            assertEquals("fragments/corporate-star-button :: star-button", result);
+            Mockito.verify(analysisService).updateStarCompany(Mockito.any(CodeInputData.class));
+            Mockito.verify(model).addAttribute("code", "9999");
+            Mockito.verify(model).addAttribute("star", true);
+        }
+
+        @Test
+        @DisplayName("4桁コード入力時 → company マスタ照合用に5桁へ正規化して更新する")
+        void fourDigitCode_normalizedToFiveDigits() {
+            final Model model = Mockito.mock(Model.class);
+            Mockito.when(analysisService.updateStarCompany(Mockito.any(CodeInputData.class))).thenReturn(true);
+
+            presenter.toggleStar("9001", model);
+
+            final ArgumentCaptor<CodeInputData> captor = ArgumentCaptor.forClass(CodeInputData.class);
+            Mockito.verify(analysisService).updateStarCompany(captor.capture());
+            assertEquals("90010", captor.getValue().getCode());
+            Mockito.verify(model).addAttribute("code", "9001");
         }
     }
 }

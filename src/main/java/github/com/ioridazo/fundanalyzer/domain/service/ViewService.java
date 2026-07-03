@@ -98,6 +98,16 @@ public class ViewService {
     }
 
     /**
+     * 企業情報（注目）
+     *
+     * @return 企業一覧
+     */
+    @Observed
+    public List<CorporateViewModel> getStarCorporateView() {
+        return viewCorporateUseCase.viewStar();
+    }
+
+    /**
      * 会社一覧テーブルを target / keyword / pageable で絞り込んで返す。Phase 3 で導入したテーブル汎用パターンの初版。
      *
      * @param query 問い合わせ条件
@@ -109,6 +119,7 @@ public class ViewService {
             case "quart" -> getQuartCorporateView();
             case "all" -> getAllCorporateView();
             case "favorite" -> getFavoriteCorporateView();
+            case "star" -> getStarCorporateView();
             default -> getCorporateView();
         };
 
@@ -133,7 +144,9 @@ public class ViewService {
                 .toList();
 
         final Set<String> favoriteCodes = companyUseCase.findFavoriteCodes();
+        final Set<String> starCodes = companyUseCase.findStarCodes();
         pageContent.forEach(c -> c.setFavorite(favoriteCodes.contains(c.getCode())));
+        pageContent.forEach(c -> c.setStar(starCodes.contains(c.getCode())));
 
         return new CompanyTablePage(pageContent, totalPages, totalElements, pageNumber, pageSize, pageable.getSort());
     }
