@@ -79,10 +79,18 @@ class AnalysisControllerTest {
     @Test
     void importStock1() {
         assertEquals(
-                "redirect:/v3/valuation",
+                "redirect:/v3/index",
                 controller.importStockBySubmitDate("07/10/2022 - 07/10/2022", new RedirectAttributesModelMap()));
         Mockito.verify(analysisService, Mockito.times(1))
                 .importStock(BetweenDateInputData.of(LocalDate.parse("2022-07-10"), LocalDate.parse("2022-07-10")));
+    }
+
+    @DisplayName("evaluate : 全企業の株価評価を再計算する")
+    @Test
+    void evaluateAll() {
+        assertEquals("redirect:/v3/index", controller.evaluate(null, new RedirectAttributesModelMap()));
+        Mockito.verify(analysisService, Mockito.times(1)).evaluate();
+        Mockito.verify(viewService, Mockito.times(1)).updateValuationView();
     }
 
     @DisplayName("importStock : 企業の株価を取得する")
