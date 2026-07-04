@@ -85,6 +85,8 @@ class Phase8ScreenSnapshotTest {
                 Arguments.of("index", "/v3/index", "mobile", 375, 812),
                 Arguments.of("valuation", "/v3/valuation", "desktop", 1280, 800),
                 Arguments.of("valuation", "/v3/valuation", "mobile", 375, 812),
+                Arguments.of("analysis", "/v3/analysis", "desktop", 1280, 800),
+                Arguments.of("analysis", "/v3/analysis", "mobile", 375, 812),
                 Arguments.of("edinet-list", "/v3/edinet-list", "desktop", 1280, 800),
                 Arguments.of("edinet-list", "/v3/edinet-list", "mobile", 375, 812)
         );

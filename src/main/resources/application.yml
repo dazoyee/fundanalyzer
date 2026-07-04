@@ -196,6 +196,9 @@ app:
       queue-capacity: 50
       max-pool-size: 500
 
+    analysis:
+      ranking-size: 50
+
     view:
       document-type-code: 120,130  # 分析表示処理対象
       discount-rate: 120  # 以上を表示
