@@ -1,17 +1,13 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.ValuationViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,7 +35,6 @@ import static org.mockito.Mockito.when;
 @DisplayName("ViewValuationInteractor のテスト")
 class ViewValuationInteractorTest {
 
-    private IndustrySpecification industrySpecification;
     private CompanySpecification companySpecification;
     private ValuationSpecification valuationSpecification;
     private ViewSpecification viewSpecification;
@@ -49,14 +44,12 @@ class ViewValuationInteractorTest {
 
     @BeforeEach
     void setUp() {
-        industrySpecification = mock(IndustrySpecification.class);
         companySpecification = mock(CompanySpecification.class);
         valuationSpecification = mock(ValuationSpecification.class);
         viewSpecification = mock(ViewSpecification.class);
         slackClient = mock(SlackClient.class);
 
         interactor = spy(new ViewValuationInteractor(
-                industrySpecification,
                 companySpecification,
                 valuationSpecification,
                 viewSpecification,
@@ -196,36 +189,6 @@ class ViewValuationInteractorTest {
                     () -> assertEquals(1, actual.size()),
                     () -> assertEquals("1234", actual.get(0).code())
             );
-        }
-    }
-
-    @Nested
-    @DisplayName("viewIndustryValuation メソッド")
-    class ViewIndustryValuation {
-
-        @DisplayName("viewIndustryValuation : 対象業種のみビューを生成する")
-        @Test
-        void generatesForTargetIndustries() {
-            final IndustryEntity industryA = new IndustryEntity(1, "業種A", null);
-            final IndustryEntity industryB = new IndustryEntity(2, "業種B", null);
-            when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(industryA, industryB));
-            when(industrySpecification.isTarget(1)).thenReturn(true);
-            when(industrySpecification.isTarget(2)).thenReturn(false);
-            when(viewSpecification.findCompanyValuationViewList(1)).thenReturn(List.of());
-            final IndustryValuationViewModel industryView = IndustryValuationViewModel.of(
-                    "業種A", 0.0, 0.0, 0.0, 0);
-            when(viewSpecification.generateIndustryValuationView(eqStr("業種A"), any())).thenReturn(industryView);
-
-            final List<IndustryValuationViewModel> actual = interactor.viewIndustryValuation();
-
-            assertAll(
-                    () -> assertEquals(1, actual.size()),
-                    () -> assertEquals("業種A", actual.get(0).name())
-            );
-        }
-
-        private String eqStr(final String value) {
-            return org.mockito.ArgumentMatchers.eq(value);
         }
     }
 

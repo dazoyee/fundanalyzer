@@ -65,38 +65,144 @@ document.body.addEventListener('htmx:afterSwap', () => {
   createIcons({ icons });
 });
 
-// htmx:load: outerHTML swap で挿入された新要素に対して発生する。
-// iOS Safari では innerHTML 経由の <script> が実行されないため、
-// チャートデータを data-* 属性に埋め込み、ここで描画する。
-document.body.addEventListener('htmx:load', (evt) => {
-  const canvas = evt.detail.elt.querySelector
-    ? evt.detail.elt.querySelector('canvas[data-summary-chart]')
-    : null;
-  if (!canvas) return;
+function renderSummaryChart(canvas) {
   const labels = JSON.parse(canvas.dataset.labels || '[]');
   const cvPoints = JSON.parse(canvas.dataset.cv || '[]');
   const stPoints = JSON.parse(canvas.dataset.st || '[]');
   if (!labels.length) return;
-  // x-show が display:none を外した直後はブラウザのレイアウトが未確定で
-  // canvas の clientHeight が 0 になる。double rAF でレイアウト確定後に初期化。
   requestAnimationFrame(() => { requestAnimationFrame(() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: '企業価値', data: cvPoints, borderColor: 'rgb(16,185,129)', backgroundColor: 'rgba(16,185,129,0.1)', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 2 },
-        { label: '株価', data: stPoints, borderColor: 'rgb(100,116,139)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
-      scales: { x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } } }
-    }
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: '企業価値', data: cvPoints, borderColor: 'rgb(16,185,129)', backgroundColor: 'rgba(16,185,129,0.1)', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 2 },
+          { label: '株価', data: stPoints, borderColor: 'rgb(100,116,139)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: { x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } } }
+      }
     });
-  }); }); // close double rAF
+  }); });
+}
+
+function renderTrendChart(canvas) {
+  const labels = JSON.parse(canvas.dataset.labels || '[]');
+  const discountPoints = JSON.parse(canvas.dataset.disc || '[]');
+  const grahamPoints = JSON.parse(canvas.dataset.graham || '[]');
+  const ratioPoints = JSON.parse(canvas.dataset.ratio || '[]');
+  if (!labels.length) return;
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: '割安度%', data: discountPoints, yAxisID: 'y', borderColor: 'rgb(16,185,129)', backgroundColor: 'rgba(16,185,129,0.1)', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 2 },
+          { label: 'グレアム指数', data: grahamPoints, yAxisID: 'y1', borderColor: 'rgb(124,58,237)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 },
+          { label: '提出日比率', data: ratioPoints, yAxisID: 'y1', borderColor: 'rgb(217,119,6)', backgroundColor: 'transparent', spanGaps: true, tension: 0.1, pointRadius: 3, borderWidth: 1.5 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+          y: { position: 'left' },
+          y1: { position: 'right', grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }); });
+}
+
+function renderBacktestScatterChart(canvas) {
+  const points = JSON.parse(canvas.dataset.points || '[]');
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: '割安度×リターン',
+            data: points,
+            borderColor: 'rgb(37,99,235)',
+            backgroundColor: 'rgba(37,99,235,0.2)',
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: '割安度%' } },
+          y: { title: { display: true, text: 'リターン%' } }
+        }
+      }
+    });
+  }); });
+}
+
+function renderDistributionChart(canvas, label, color) {
+  const labels = JSON.parse(canvas.dataset.labels || '[]');
+  const counts = JSON.parse(canvas.dataset.counts || '[]');
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: label,
+            data: counts,
+            backgroundColor: color
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }); });
+}
+
+// htmx:load: outerHTML swap で挿入された新要素に対して発生する。
+// iOS Safari では innerHTML 経由の <script> が実行されないため、
+// チャートデータを data-* 属性に埋め込み、ここで描画する。
+document.body.addEventListener('htmx:load', (evt) => {
+  if (!evt.detail.elt.querySelectorAll) return;
+  evt.detail.elt.querySelectorAll('canvas[data-summary-chart], canvas[data-analysis-summary]').forEach((canvas) => {
+    renderSummaryChart(canvas);
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-analysis-trend]').forEach((canvas) => {
+    renderTrendChart(canvas);
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-backtest-scatter]').forEach((canvas) => {
+    renderBacktestScatterChart(canvas);
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-distribution-discount]').forEach((canvas) => {
+    renderDistributionChart(canvas, '割安度', 'rgb(37,99,235)');
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-distribution-graham]').forEach((canvas) => {
+    renderDistributionChart(canvas, 'グレアム指数', 'rgb(124,58,237)');
+  });
 });

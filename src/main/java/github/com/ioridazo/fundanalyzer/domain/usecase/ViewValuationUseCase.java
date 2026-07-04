@@ -2,7 +2,6 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import io.micrometer.observation.annotation.Observed;
 
 import java.math.BigDecimal;
@@ -42,14 +41,6 @@ public interface ViewValuationUseCase {
      */
     @Observed
     List<CompanyValuationViewModel> viewFavoriteValuation();
-
-    /**
-     * 業種ビュー
-     *
-     * @return 会社評価ビュー
-     */
-    @Observed
-    List<IndustryValuationViewModel> viewIndustryValuation();
 
     /**
      * グレアム指数の業種内zスコアを企業コード（4桁）別に算出する。

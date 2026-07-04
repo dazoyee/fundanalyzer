@@ -1,7 +1,9 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.DistributionUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.BacktestUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewValuationUseCase;
@@ -19,9 +21,8 @@ import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.EdinetDetai
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTablePage;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTableQuery;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
 import io.micrometer.observation.annotation.Observed;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -43,18 +44,24 @@ public class ViewService {
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
     private final ViewValuationUseCase viewValuationUseCase;
+    private final BacktestUseCase backtestUseCase;
+    private final DistributionUseCase distributionUseCase;
 
     public ViewService(
             final CompanyUseCase companyUseCase,
             final DocumentUseCase documentUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
             final ViewEdinetUseCase viewEdinetUseCase,
-            final ViewValuationUseCase viewValuationUseCase) {
+            final ViewValuationUseCase viewValuationUseCase,
+            final BacktestUseCase backtestUseCase,
+            final DistributionUseCase distributionUseCase) {
         this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
         this.viewValuationUseCase = viewValuationUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
+        this.backtestUseCase = backtestUseCase;
+        this.distributionUseCase = distributionUseCase;
     }
 
     /**
@@ -350,6 +357,26 @@ public class ViewService {
     }
 
     /**
+     * バックテスト集計結果。
+     *
+     * @return バックテスト集計結果
+     */
+    @Observed
+    public BacktestResult getBacktestView() {
+        return backtestUseCase.backtest();
+    }
+
+    /**
+     * 分布集計結果。
+     *
+     * @return 分布集計結果
+     */
+    @Observed
+    public DistributionResult getDistributionView() {
+        return distributionUseCase.distribution();
+    }
+
+    /**
      * 株価評価（オール）
      *
      * @return 株価評価
@@ -367,16 +394,6 @@ public class ViewService {
     @Observed
     public List<CompanyValuationViewModel> getFavoriteValuationView() {
         return viewValuationUseCase.viewFavoriteValuation();
-    }
-
-    /**
-     * 株価評価（業種）
-     *
-     * @return 株価評価
-     */
-    @Observed
-    public List<IndustryValuationViewModel> getIndustryValuationView() {
-        return viewValuationUseCase.viewIndustryValuation();
     }
 
     /**
@@ -424,39 +441,6 @@ public class ViewService {
     }
 
     /**
-     * 株価評価（業種別）テーブルを keyword / pageable で絞り込んで返す。
-     *
-     * @param query 問い合わせ条件
-     * @return 1 ページ分の業種別評価リストとページング情報
-     */
-    @Observed
-    public IndustryValuationTablePage findIndustryValuationTable(final IndustryValuationTableQuery query) {
-        final List<IndustryValuationViewModel> all = getIndustryValuationView();
-
-        final String keyword = Optional.ofNullable(query.keyword()).map(String::trim).orElse("");
-        final List<IndustryValuationViewModel> filtered = keyword.isEmpty()
-                ? all
-                : all.stream()
-                        .filter(i -> containsIgnoreCase(i.name(), keyword))
-                        .toList();
-
-        final Pageable pageable = query.pageable();
-        final List<IndustryValuationViewModel> sorted = applyIndustryValuationSort(filtered, pageable.getSort());
-
-        final int totalElements = sorted.size();
-        final int pageSize = pageable.getPageSize();
-        final int pageNumber = pageable.getPageNumber();
-        final int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / pageSize);
-        final List<IndustryValuationViewModel> pageContent = sorted.stream()
-                .skip((long) pageNumber * pageSize)
-                .limit(pageSize)
-                .toList();
-
-        return new IndustryValuationTablePage(
-                pageContent, totalPages, totalElements, pageNumber, pageSize, pageable.getSort());
-    }
-
-    /**
      * グレアム指数の表示値を業種内zスコアに差し替えたリストを返す（業種内z算出不能な社は null）。
      *
      * @param source 会社評価ビュー一覧
@@ -478,28 +462,6 @@ public class ViewService {
         Comparator<CompanyValuationViewModel> comparator = null;
         for (final Sort.Order order : sort) {
             Comparator<CompanyValuationViewModel> c = companyValuationComparatorFor(order.getProperty());
-            if (c == null) {
-                continue;
-            }
-            if (order.isDescending()) {
-                c = c.reversed();
-            }
-            comparator = (comparator == null) ? c : comparator.thenComparing(c);
-        }
-        if (comparator == null) {
-            return source;
-        }
-        return source.stream().sorted(comparator).toList();
-    }
-
-    private static List<IndustryValuationViewModel> applyIndustryValuationSort(
-            final List<IndustryValuationViewModel> source, final Sort sort) {
-        if (sort.isUnsorted()) {
-            return source;
-        }
-        Comparator<IndustryValuationViewModel> comparator = null;
-        for (final Sort.Order order : sort) {
-            Comparator<IndustryValuationViewModel> c = industryValuationComparatorFor(order.getProperty());
             if (c == null) {
                 continue;
             }
@@ -540,22 +502,6 @@ public class ViewService {
                     CompanyValuationViewModel::grahamIndex, Comparator.nullsLast(Comparator.naturalOrder()));
             case "dividendYield" -> Comparator.comparing(
                     CompanyValuationViewModel::dividendYield, Comparator.nullsLast(Comparator.naturalOrder()));
-            default -> null;
-        };
-    }
-
-    private static Comparator<IndustryValuationViewModel> industryValuationComparatorFor(final String property) {
-        return switch (property) {
-            case "name" -> Comparator.comparing(
-                    IndustryValuationViewModel::name, Comparator.nullsLast(Comparator.naturalOrder()));
-            case "differenceFromSubmitDate" -> Comparator.comparing(
-                    IndustryValuationViewModel::differenceFromSubmitDate, Comparator.nullsLast(Comparator.naturalOrder()));
-            case "submitDateRatio" -> Comparator.comparing(
-                    IndustryValuationViewModel::submitDateRatio, Comparator.nullsLast(Comparator.naturalOrder()));
-            case "grahamIndex" -> Comparator.comparing(
-                    IndustryValuationViewModel::grahamIndex, Comparator.nullsLast(Comparator.naturalOrder()));
-            case "count" -> Comparator.comparing(
-                    IndustryValuationViewModel::count, Comparator.nullsLast(Comparator.naturalOrder()));
             default -> null;
         };
     }

@@ -44,7 +44,7 @@
             <i data-lucide="building-2" class="shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true"></i>
             <span class="text-lg font-bold" :class="{ 'hidden': sidebarCollapsed }">fundanalyzer</span>
         </div>
-        <nav class="space-y-1 px-2 py-4">
+        <nav x-data="{ pathname: window.location.pathname }" class="space-y-1 px-2 py-4">
             <a th:href="@{/v3/index}"
                title="会社一覧"
                class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -65,6 +65,14 @@
                :class="{ 'justify-center': sidebarCollapsed }">
                 <i data-lucide="file-text" class="shrink-0" aria-hidden="true"></i>
                 <span :class="{ 'hidden': sidebarCollapsed }">EDINET 一覧</span>
+            </a>
+            <a th:href="@{/v3/analysis}"
+               title="分析"
+               :class="[pathname.endsWith('/v3/analysis') ? 'text-blue-600 dark:text-blue-400 bg-slate-100 dark:bg-slate-700' : 'text-slate-700 dark:text-slate-300', sidebarCollapsed ? 'justify-center' : '']"
+               x-bind:aria-current="pathname.endsWith('/v3/analysis') ? 'page' : null"
+               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700">
+                <i data-lucide="bar-chart-3" class="shrink-0" aria-hidden="true"></i>
+                <span :class="{ 'hidden': sidebarCollapsed }">分析</span>
             </a>
         </nav>
     </aside>
@@ -139,6 +147,13 @@
                class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
                 <i data-lucide="file-text" class="h-5 w-5" aria-hidden="true"></i>
                 <span>EDINET</span>
+            </a>
+            <a th:href="@{/v3/analysis}"
+               :class="pathname.endsWith('/v3/analysis') ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'"
+               x-bind:aria-current="pathname.endsWith('/v3/analysis') ? 'page' : null"
+               class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
+                <i data-lucide="bar-chart-3" class="h-5 w-5" aria-hidden="true"></i>
+                <span>分析</span>
             </a>
         </th:block>
     </nav>

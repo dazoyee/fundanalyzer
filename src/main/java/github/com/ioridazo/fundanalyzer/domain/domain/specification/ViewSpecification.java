@@ -28,7 +28,6 @@ import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
@@ -588,34 +587,6 @@ public class ViewSpecification {
                             }
                         })
                         .orElse(null)
-        );
-    }
-
-    /**
-     * 業種による平均の評価結果を取得する
-     *
-     * @param industryName         業種名
-     * @param companyValuationList 会社評価ビューリスト
-     * @return 業種による平均の評価結果
-     */
-    public IndustryValuationViewModel generateIndustryValuationView(
-            final String industryName, final List<CompanyValuationViewModel> companyValuationList) {
-        return IndustryValuationViewModel.of(
-                industryName,
-                companyValuationList.stream()
-                        .map(CompanyValuationViewModel::differenceFromSubmitDate)
-                        .mapToDouble(BigDecimal::doubleValue)
-                        .average().orElse(0),
-                companyValuationList.stream()
-                        .map(CompanyValuationViewModel::submitDateRatio)
-                        .mapToDouble(BigDecimal::doubleValue)
-                        .average().orElse(0),
-                companyValuationList.stream()
-                        .map(CompanyValuationViewModel::grahamIndex)
-                        .filter(Objects::nonNull)
-                        .mapToDouble(BigDecimal::doubleValue)
-                        .average().orElse(0),
-                companyValuationList.size()
         );
     }
 

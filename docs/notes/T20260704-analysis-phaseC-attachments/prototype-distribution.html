@@ -1,0 +1,183 @@
+<style>
+  :root {
+    --bg:#f4f6f9; --surface:#fff; --surface-2:#f1f5f9; --border:#e3e8ef;
+    --text:#0f1b2d; --text-2:#4a5568; --text-3:#93a1b5; --accent:#2563eb; --accent-weak:#eaf1ff;
+    --bar:#2563eb; --bar-2:#7c3aed; --up:#0f9d6b; --median:#d97706;
+    --shadow:0 1px 2px rgba(15,27,45,.04),0 4px 16px rgba(15,27,45,.05);
+    --font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){:root{--bg:#0a1120;--surface:#101a2e;--surface-2:#0e1729;--border:#1e2b45;--text:#e6eef9;--text-2:#9fb0c7;--text-3:#5f6f88;--accent:#4f8bf0;--accent-weak:#142a4d;--bar:#4f8bf0;--bar-2:#a583f5;--up:#23b981;--median:#efab3f;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 22px rgba(0,0,0,.35);}}
+  :root[data-theme="light"]{--bg:#f4f6f9;--surface:#fff;--surface-2:#f1f5f9;--border:#e3e8ef;--text:#0f1b2d;--text-2:#4a5568;--text-3:#93a1b5;--accent:#2563eb;--accent-weak:#eaf1ff;--bar:#2563eb;--bar-2:#7c3aed;--up:#0f9d6b;--median:#d97706;}
+  :root[data-theme="dark"]{--bg:#0a1120;--surface:#101a2e;--surface-2:#0e1729;--border:#1e2b45;--text:#e6eef9;--text-2:#9fb0c7;--text-3:#5f6f88;--accent:#4f8bf0;--accent-weak:#142a4d;--bar:#4f8bf0;--bar-2:#a583f5;--up:#23b981;--median:#efab3f;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.5;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  .app{display:grid;grid-template-columns:232px 1fr;min-height:100vh;}
+  .side{background:var(--surface);border-right:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:22px;}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px;}
+  .brand .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#1e40af);display:grid;place-items:center;color:#fff;}
+  .brand b{font-size:16px;}
+  .nav{display:flex;flex-direction:column;gap:3px;}
+  .nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;color:var(--text-2);text-decoration:none;font-size:14px;font-weight:500;}
+  .nav a:hover{background:var(--surface-2);color:var(--text);}
+  .nav a.active{background:var(--accent-weak);color:var(--accent);font-weight:650;}
+  .main{display:flex;flex-direction:column;min-width:0;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .title{display:flex;align-items:baseline;gap:12px;}
+  .title h1{margin:0;font-size:19px;font-weight:700;}
+  .title .eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;}
+  .badge-proto{font-size:11px;font-weight:700;color:var(--median);background:color-mix(in srgb,var(--median) 14%,transparent);border:1px solid color-mix(in srgb,var(--median) 35%,transparent);padding:4px 9px;border-radius:999px;}
+  .icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);display:grid;place-items:center;cursor:pointer;}
+  .content{padding:22px 26px 40px;display:flex;flex-direction:column;gap:18px;}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);}
+  .tab{border:0;background:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--text-2);padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px;}
+  .tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:1100px){.grid2{grid-template-columns:1fr;}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);}
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+  .card-head h2{margin:0;font-size:14px;font-weight:700;}
+  .card-head .sub{font-size:12px;color:var(--text-3);margin-top:2px;}
+  .card-body{padding:14px 16px;}
+  svg.chart{width:100%;height:auto;display:block;}
+  .grid line{stroke:var(--border);stroke-width:1;}
+  .axis{fill:var(--text-3);font-size:10px;}
+  .axis-title{fill:var(--text-3);font-size:11px;font-weight:600;}
+  .medline{stroke:var(--median);stroke-width:2;stroke-dasharray:4 3;}
+  .medlabel{fill:var(--median);font-size:10px;font-weight:700;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin-top:4px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:12px;height:3px;border-radius:2px;display:inline-block;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:right;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--text-3);text-transform:uppercase;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  thead th:first-child,thead th:nth-child(2){text-align:left;}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;}
+  tbody td:first-child,tbody td:nth-child(2){text-align:left;}
+  tbody tr:last-child td{border-bottom:0;}
+  .rank{color:var(--text-3);width:22px;}
+  .med{font-weight:700;color:var(--up);}
+  .zbar{display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;vertical-align:middle;margin-left:6px;}
+  .zbar i{display:block;height:100%;background:var(--bar-2);}
+  @media (max-width:920px){.app{grid-template-columns:1fr;}.side{flex-direction:row;overflow-x:auto;padding:10px;}.side .nav{flex-direction:row;}.brand b{display:none;}.grid2{grid-template-columns:1fr;}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><b>fundanalyzer</b></div>
+    <nav class="nav">
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/></svg>会社一覧</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>株価評価</a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/></svg>EDINET一覧</a>
+      <a href="#" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>分析</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="title"><span class="eyebrow">Analysis</span><h1>分析ダッシュボード</h1></div>
+      <div style="display:flex;align-items:center;gap:10px;"><span class="badge-proto">プロトタイプ</span>
+        <button class="icon-btn" id="theme" aria-label="テーマ切替"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="false">個別推移</button>
+        <button class="tab" role="tab" aria-selected="false">バックテスト</button>
+        <button class="tab" role="tab" aria-selected="true">分布・業種比較</button>
+      </div>
+
+      <div class="grid2">
+        <!-- 割安度ヒストグラム -->
+        <div class="card">
+          <div class="card-head"><div><h2>割安度の分布</h2><div class="sub">全 1,408 社。中央値 142% / 平均 156%</div></div></div>
+          <div class="card-body">
+            <svg class="chart" viewBox="0 0 520 260" role="img" aria-label="割安度の分布ヒストグラム">
+              <g class="grid"><line x1="44" y1="30" x2="500" y2="30"/><line x1="44" y1="90" x2="500" y2="90"/><line x1="44" y1="150" x2="500" y2="150"/><line x1="44" y1="200" x2="500" y2="200"/></g>
+              <!-- bars: <100,100-120,120-150,150-200,200-300,300+ -->
+              <g fill="var(--bar)">
+                <rect x="60"  y="150" width="56" height="50"/>
+                <rect x="130" y="96"  width="56" height="104"/>
+                <rect x="200" y="60"  width="56" height="140"/>
+                <rect x="270" y="104" width="56" height="96"/>
+                <rect x="340" y="158" width="56" height="42"/>
+                <rect x="410" y="182" width="56" height="18"/>
+              </g>
+              <!-- median line at 120-150 bucket -->
+              <line class="medline" x1="228" y1="24" x2="228" y2="200"/>
+              <text class="medlabel" x="232" y="22">中央値 142%</text>
+              <g class="axis" text-anchor="middle">
+                <text x="88" y="216">&lt;100</text><text x="158" y="216">100-120</text><text x="228" y="216">120-150</text>
+                <text x="298" y="216">150-200</text><text x="368" y="216">200-300</text><text x="438" y="216">300+</text>
+              </g>
+              <text class="axis-title" x="272" y="238" text-anchor="middle">割安度%</text>
+              <g class="axis" text-anchor="end"><text x="38" y="34">400</text><text x="38" y="94">300</text><text x="38" y="154">200</text><text x="38" y="204">0</text></g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- グレアム指数ヒストグラム -->
+        <div class="card">
+          <div class="card-head"><div><h2>グレアム指数の分布</h2><div class="sub">全 1,408 社。中央値 18.4（&lt;22.5 が割安圏の目安）</div></div></div>
+          <div class="card-body">
+            <svg class="chart" viewBox="0 0 520 260" role="img" aria-label="グレアム指数の分布ヒストグラム">
+              <g class="grid"><line x1="44" y1="30" x2="500" y2="30"/><line x1="44" y1="90" x2="500" y2="90"/><line x1="44" y1="150" x2="500" y2="150"/><line x1="44" y1="200" x2="500" y2="200"/></g>
+              <g fill="var(--bar-2)">
+                <rect x="60"  y="120" width="56" height="80"/>
+                <rect x="130" y="72"  width="56" height="128"/>
+                <rect x="200" y="94"  width="56" height="106"/>
+                <rect x="270" y="132" width="56" height="68"/>
+                <rect x="340" y="166" width="56" height="34"/>
+                <rect x="410" y="184" width="56" height="16"/>
+              </g>
+              <!-- 22.5 threshold marker between 15-22.5 and 22.5-40 -->
+              <line class="medline" style="stroke:var(--up)" x1="298" y1="24" x2="298" y2="200"/>
+              <text class="medlabel" style="fill:var(--up)" x="302" y="22">22.5</text>
+              <g class="axis" text-anchor="middle">
+                <text x="88" y="216">0-10</text><text x="158" y="216">10-15</text><text x="228" y="216">15-22.5</text>
+                <text x="298" y="216">22.5-40</text><text x="368" y="216">40-70</text><text x="438" y="216">70+</text>
+              </g>
+              <text class="axis-title" x="272" y="238" text-anchor="middle">グレアム指数</text>
+              <g class="axis" text-anchor="end"><text x="38" y="34">400</text><text x="38" y="94">300</text><text x="38" y="154">200</text><text x="38" y="204">0</text></g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 業種別割安度ランキング -->
+      <div class="card">
+        <div class="card-head"><div><h2>業種別 割安度ランキング</h2><div class="sub">業種内の割安度の中央値が高い順（3社以上の業種）</div></div>
+          <div class="legend"><span><i style="background:var(--median)"></i>中央値</span><span><i style="background:var(--bar-2)"></i>グレアム業種内zスコアの散らばり</span></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th class="rank">#</th><th>業種</th><th>割安度 中央値</th><th>割安度 平均</th><th>グレアム 中央値</th><th>件数</th><th>zスコア幅</th></tr></thead>
+            <tbody>
+              <tr><td class="rank tnum">1</td><td>倉庫・運輸</td><td class="med tnum">198%</td><td class="tnum">211%</td><td class="tnum">14.2</td><td class="tnum">28</td><td><span class="zbar"><i style="width:80%"></i></span></td></tr>
+              <tr><td class="rank tnum">2</td><td>銀行業</td><td class="med tnum">176%</td><td class="tnum">183%</td><td class="tnum">12.1</td><td class="tnum">82</td><td><span class="zbar"><i style="width:66%"></i></span></td></tr>
+              <tr><td class="rank tnum">3</td><td>建設業</td><td class="med tnum">164%</td><td class="tnum">170%</td><td class="tnum">16.5</td><td class="tnum">71</td><td><span class="zbar"><i style="width:72%"></i></span></td></tr>
+              <tr><td class="rank tnum">4</td><td>鉄鋼</td><td class="med tnum">158%</td><td class="tnum">162%</td><td class="tnum">15.8</td><td class="tnum">33</td><td><span class="zbar"><i style="width:54%"></i></span></td></tr>
+              <tr><td class="rank tnum">5</td><td>卸売業</td><td class="med tnum">147%</td><td class="tnum">153%</td><td class="tnum">18.9</td><td class="tnum">124</td><td><span class="zbar"><i style="width:60%"></i></span></td></tr>
+              <tr><td class="rank tnum">6</td><td>化学</td><td class="med tnum">138%</td><td class="tnum">144%</td><td class="tnum">19.7</td><td class="tnum">96</td><td><span class="zbar"><i style="width:48%"></i></span></td></tr>
+              <tr><td class="rank tnum">7</td><td>情報・通信</td><td class="med tnum">121%</td><td class="tnum">129%</td><td class="tnum">24.3</td><td class="tnum">88</td><td><span class="zbar"><i style="width:70%"></i></span></td></tr>
+              <tr><td class="rank tnum">8</td><td>小売業</td><td class="med tnum">112%</td><td class="tnum">118%</td><td class="tnum">26.1</td><td class="tnum">64</td><td><span class="zbar"><i style="width:52%"></i></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-body" style="border-top:1px solid var(--border);color:var(--text-2);font-size:12.5px;">
+          ※ 既存「株価評価」画面の業種別ビューはこの分布タブに統合し、評価画面からは削除します。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    document.getElementById('theme').addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+      root.setAttribute('data-theme',cur==='dark'?'light':'dark');
+    });
+  })();
+</script>

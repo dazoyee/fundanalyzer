@@ -274,25 +274,6 @@ class ViewSpecificationTest {
         assertNull(actual.dividendYield());
     }
 
-    @DisplayName("generateIndustryValuationView : 業種による平均の評価結果を取得する")
-    @Test
-    void generateIndustryValuationView() {
-        var actual = viewSpecification.generateIndustryValuationView(
-                "name",
-                List.of(
-                        companyValuationViewModel(LocalDate.parse("2022-07-09"), BigDecimal.valueOf(100), BigDecimal.valueOf(1.1), null),
-                        companyValuationViewModel(LocalDate.parse("2022-07-10"), BigDecimal.valueOf(-20), BigDecimal.valueOf(1.01), BigDecimal.valueOf(2.05))
-                )
-        );
-        assertAll(
-                () -> assertEquals("name", actual.getName()),
-                () -> assertEquals(BigDecimal.valueOf(4000, 2), actual.getDifferenceFromSubmitDate()),
-                () -> assertEquals(BigDecimal.valueOf(106, 2), actual.getSubmitDateRatio()),
-                () -> assertEquals(BigDecimal.valueOf(205, 2), actual.getGrahamIndex()),
-                () -> assertEquals(2, actual.getCount())
-        );
-    }
-
     private Company defaultCompany() {
         return new Company(
                 "code",

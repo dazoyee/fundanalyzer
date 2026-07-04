@@ -112,6 +112,7 @@ exception/   … 業務例外
 | `/v3/valuation` | ValuationPresenter |
 | `/v3/edinet-list` | EdinetPresenter |
 | `/v3/edinet-list-detail` | EdinetDetailPresenter |
+| `/v3/analysis` | AnalysisPresenter |
 
 各画面の実装詳細（ソート・前後ナビ・ツールチップ・グレアムzスコア・ダークモード・サイドバー・スマホ対応等）は [`docs/notes/`](docs/notes/) の対応タスク md を参照。
 
