@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -137,6 +138,25 @@ class Phase8ScreenSnapshotTest {
 
             assertTrue(page.locator("button[aria-label='ダークモード切替']").count() > 0,
                     "ダークモードトグルボタンが見つからない");
+        }
+    }
+
+    @Test
+    @DisplayName("バックテストタブをクリックすると backtest fragment が描画される")
+    void backtestTabRenders() {
+        try (final Page page = browser.newPage()) {
+            page.setViewportSize(1280, 800);
+            login(page);
+            page.navigate("http://localhost:" + port + "/fundanalyzer/v3/analysis");
+            page.waitForLoadState();
+            page.click("button:has-text('バックテスト')");
+            page.waitForSelector("#backtest-panel");
+            page.waitForTimeout(1500);
+            final String panel = page.locator("#backtest-panel").innerText();
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(SNAPSHOT_DIR.resolve("analysis-backtest.png")).setFullPage(true));
+            assertTrue(!panel.contains("読み込み中"), "backtest fragment が読み込まれていない: " + panel);
+            assertTrue(!page.content().contains("Whitelabel"), "エラーページが表示された");
         }
     }
 

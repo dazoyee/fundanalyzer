@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.BacktestUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewValuationUseCase;
@@ -22,6 +23,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuatio
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult;
 import io.micrometer.observation.annotation.Observed;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -43,18 +45,21 @@ public class ViewService {
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
     private final ViewValuationUseCase viewValuationUseCase;
+    private final BacktestUseCase backtestUseCase;
 
     public ViewService(
             final CompanyUseCase companyUseCase,
             final DocumentUseCase documentUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
             final ViewEdinetUseCase viewEdinetUseCase,
-            final ViewValuationUseCase viewValuationUseCase) {
+            final ViewValuationUseCase viewValuationUseCase,
+            final BacktestUseCase backtestUseCase) {
         this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
         this.viewValuationUseCase = viewValuationUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
+        this.backtestUseCase = backtestUseCase;
     }
 
     /**
@@ -347,6 +352,16 @@ public class ViewService {
     @Observed
     public BigDecimal getGrahamIndustryZScore(final CodeInputData inputData) {
         return viewValuationUseCase.findGrahamIndustryZScore().get(inputData.getCode4());
+    }
+
+    /**
+     * バックテスト集計結果。
+     *
+     * @return バックテスト集計結果
+     */
+    @Observed
+    public BacktestResult getBacktestView() {
+        return backtestUseCase.backtest();
     }
 
     /**

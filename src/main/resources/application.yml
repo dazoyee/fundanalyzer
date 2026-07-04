@@ -198,6 +198,8 @@ app:
 
     analysis:
       ranking-size: 50
+      bucket-boundaries: 1.0,1.2,1.5,2.0
+      match-tolerance-days: 7
 
     view:
       document-type-code: 120,130  # 分析表示処理対象

@@ -4,8 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase.SummaryChartData;
+import github.com.ioridazo.fundanalyzer.domain.value.Horizon;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult.BacktestScatterPoint;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult.HorizonResult;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
@@ -16,9 +20,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -31,6 +38,7 @@ public class AnalysisPresenter {
 
     private static final String ANALYSIS_V2 = "analysis-v2";
     private static final String ANALYSIS_CHART_FRAGMENT = "fragments/analysis-chart :: chart";
+    private static final String ANALYSIS_BACKTEST_FRAGMENT = "fragments/analysis-backtest :: backtest";
 
     @Value("${app.config.view.document-type-code}")
     private List<String> targetTypeCodes;
@@ -98,6 +106,32 @@ public class AnalysisPresenter {
             populateEmptyChartModel(model);
         }
         return ANALYSIS_CHART_FRAGMENT;
+    }
+
+    /**
+     * バックテスト fragment を返す。
+     *
+     * @param horizonLabel 表示対象期間ラベル
+     * @param model        model
+     * @return fragments/analysis-backtest :: backtest
+     */
+    @GetMapping("/v3/analysis/backtest")
+    public String analysisBacktest(
+            @RequestParam(name = "horizon", required = false) final String horizonLabel,
+            final Model model) {
+        final BacktestResult result = viewService.getBacktestView();
+        final Horizon selected = resolveSelectedHorizon(horizonLabel);
+        final HorizonResult selectedResult = result.horizons().stream()
+                .filter(horizonResult -> horizonResult.horizon() == selected)
+                .findFirst()
+                .orElse(null);
+        final String scatterJson = buildScatterJson(selectedResult);
+        model.addAttribute("backtest", result);
+        model.addAttribute("selectedResult", selectedResult);
+        model.addAttribute("selectedHorizon", selected);
+        model.addAttribute("horizons", Horizon.values());
+        model.addAttribute("scatterJson", scatterJson);
+        return ANALYSIS_BACKTEST_FRAGMENT;
     }
 
     /**
@@ -184,5 +218,33 @@ public class AnalysisPresenter {
         model.addAttribute("discJson", "[]");
         model.addAttribute("grahamJson", "[]");
         model.addAttribute("ratioJson", "[]");
+    }
+
+    private Horizon resolveSelectedHorizon(final String horizonLabel) {
+        if (horizonLabel == null) {
+            return Horizon.M6;
+        }
+        try {
+            return Horizon.fromLabel(horizonLabel);
+        } catch (IllegalArgumentException e) {
+            return Horizon.M6;
+        }
+    }
+
+    private String buildScatterJson(final HorizonResult selectedResult) {
+        if (selectedResult == null) {
+            return "[]";
+        }
+        final List<Map<String, Double>> points = new ArrayList<>();
+        for (BacktestScatterPoint point : selectedResult.scatter()) {
+            points.add(Map.of(
+                    "x", point.discountRate() * 100,
+                    "y", point.returnRate() * 100));
+        }
+        try {
+            return objectMapper.writeValueAsString(points);
+        } catch (JsonProcessingException e) {
+            return "[]";
+        }
     }
 }

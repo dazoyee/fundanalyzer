@@ -125,6 +125,36 @@ function renderTrendChart(canvas) {
   }); });
 }
 
+function renderBacktestScatterChart(canvas) {
+  const points = JSON.parse(canvas.dataset.points || '[]');
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: '割安度×リターン',
+            data: points,
+            borderColor: 'rgb(37,99,235)',
+            backgroundColor: 'rgba(37,99,235,0.2)',
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: '割安度%' } },
+          y: { title: { display: true, text: 'リターン%' } }
+        }
+      }
+    });
+  }); });
+}
+
 // htmx:load: outerHTML swap で挿入された新要素に対して発生する。
 // iOS Safari では innerHTML 経由の <script> が実行されないため、
 // チャートデータを data-* 属性に埋め込み、ここで描画する。
@@ -135,5 +165,8 @@ document.body.addEventListener('htmx:load', (evt) => {
   });
   evt.detail.elt.querySelectorAll('canvas[data-analysis-trend]').forEach((canvas) => {
     renderTrendChart(canvas);
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-backtest-scatter]').forEach((canvas) => {
+    renderBacktestScatterChart(canvas);
   });
 });

@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.domain.usecase.BacktestUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
@@ -50,6 +51,7 @@ class ViewServiceTest {
     private ViewCorporateUseCase viewCorporateUseCase;
     private ViewEdinetUseCase viewEdinetUseCase;
     private ViewValuationUseCase viewValuationUseCase;
+    private BacktestUseCase backtestUseCase;
     private ViewService service;
 
     @BeforeEach
@@ -59,9 +61,10 @@ class ViewServiceTest {
         viewCorporateUseCase = mock(ViewCorporateUseCase.class);
         viewEdinetUseCase = mock(ViewEdinetUseCase.class);
         viewValuationUseCase = mock(ViewValuationUseCase.class);
+        backtestUseCase = mock(BacktestUseCase.class);
         service = new ViewService(
                 companyUseCase, documentUseCase,
-                viewCorporateUseCase, viewEdinetUseCase, viewValuationUseCase);
+                viewCorporateUseCase, viewEdinetUseCase, viewValuationUseCase, backtestUseCase);
     }
 
     @Nested
