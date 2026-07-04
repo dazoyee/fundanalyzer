@@ -3,8 +3,6 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTablePage;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTableQuery;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -27,7 +25,6 @@ public class ValuationPresenter {
     private static final String VIEW_SUBMIT = "submit";
     private static final String VIEW_GRAHAM = "graham-index";
     private static final String VIEW_DIVIDEND = "dividend-yield";
-    private static final String VIEW_INDUSTRY = "industry";
 
     private static final String MODE_RAW = "raw";
     private static final String MODE_RELATIVE = "relative";
@@ -49,10 +46,7 @@ public class ValuationPresenter {
             VIEW_GRAHAM, List.of(
                     "code", "name", "grahamIndex", "grahamIndexOfSubmitDate"),
             VIEW_DIVIDEND, List.of(
-                    "code", "name", "dividendYield"),
-            VIEW_INDUSTRY, List.of(
-                    "name", "differenceFromSubmitDate", "submitDateRatio",
-                    "grahamIndex", "count"));
+                    "code", "name", "dividendYield"));
 
     private final ViewService viewService;
 
@@ -63,9 +57,9 @@ public class ValuationPresenter {
     /**
      * 株価評価 v3（Tailwind + htmx）。HTML 全体を返す。
      *
-     * @param target    表示対象。null（メイン）/ "all" / "favorite" / "industry"
-     * @param view      view 種別。stock / submit / graham-index / dividend-yield / industry
-     * @param keyword   証券コード or 会社名（industry view では業種名）の partial match キーワード
+     * @param target    表示対象。null（メイン）/ "all" / "favorite"
+     * @param view      view 種別。stock / submit / graham-index / dividend-yield
+     * @param keyword   証券コード or 会社名の partial match キーワード
      * @param page      ページ番号
      * @param size      1 ページあたり件数
      * @param sortParam ソート条件
@@ -87,7 +81,7 @@ public class ValuationPresenter {
     }
 
     /**
-     * 株価評価 v3 のテーブル fragment。view に応じて 5 種類の fragment を返す。
+     * 株価評価 v3 のテーブル fragment。view に応じて 4 種類の fragment を返す。
      *
      * @param target    表示対象
      * @param view      view 種別
@@ -129,16 +123,10 @@ public class ValuationPresenter {
         final PageRequest pageable = PageRequest.of(safePage, safeSize, sort);
         final String resolvedSortParam = formatSort(sort);
 
-        if (VIEW_INDUSTRY.equals(resolvedView)) {
-            final IndustryValuationTableQuery query = new IndustryValuationTableQuery(keyword, pageable);
-            final IndustryValuationTablePage tablePage = viewService.findIndustryValuationTable(query);
-            model.addAttribute("table", tablePage);
-        } else {
-            final CompanyValuationTableQuery query = new CompanyValuationTableQuery(
-                    target, keyword, resolvedView, resolvedMode, pageable);
-            final CompanyValuationTablePage tablePage = viewService.findCompanyValuationTable(query);
-            model.addAttribute("table", tablePage);
-        }
+        final CompanyValuationTableQuery query = new CompanyValuationTableQuery(
+                target, keyword, resolvedView, resolvedMode, pageable);
+        final CompanyValuationTablePage tablePage = viewService.findCompanyValuationTable(query);
+        model.addAttribute("table", tablePage);
 
         model.addAttribute(TARGET, target);
         model.addAttribute("view", resolvedView);
@@ -163,9 +151,6 @@ public class ValuationPresenter {
     }
 
     private static String resolveView(final String target, final String view) {
-        if (Target.INDUSTRY.toValue().equals(target)) {
-            return VIEW_INDUSTRY;
-        }
         if (view != null && ALLOWED_NON_INDUSTRY_VIEWS.contains(view)) {
             return view;
         }
@@ -174,7 +159,7 @@ public class ValuationPresenter {
 
     private static Sort parseSort(final String view, final String sortParam) {
         final List<String> allowed = ALLOWED_SORT_BY_VIEW.getOrDefault(view, List.of("code"));
-        final String defaultField = VIEW_INDUSTRY.equals(view) ? "name" : "code";
+        final String defaultField = "code";
         if (sortParam == null || sortParam.isBlank()) {
             return Sort.by(Sort.Direction.ASC, defaultField);
         }

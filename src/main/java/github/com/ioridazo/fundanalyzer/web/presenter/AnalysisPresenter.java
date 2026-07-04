@@ -10,6 +10,7 @@ import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult.BacktestScatterPoint;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult.HorizonResult;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
@@ -39,6 +40,7 @@ public class AnalysisPresenter {
     private static final String ANALYSIS_V2 = "analysis-v2";
     private static final String ANALYSIS_CHART_FRAGMENT = "fragments/analysis-chart :: chart";
     private static final String ANALYSIS_BACKTEST_FRAGMENT = "fragments/analysis-backtest :: backtest";
+    private static final String ANALYSIS_DISTRIBUTION_FRAGMENT = "fragments/analysis-distribution :: distribution";
 
     @Value("${app.config.view.document-type-code}")
     private List<String> targetTypeCodes;
@@ -132,6 +134,53 @@ public class AnalysisPresenter {
         model.addAttribute("horizons", Horizon.values());
         model.addAttribute("scatterJson", scatterJson);
         return ANALYSIS_BACKTEST_FRAGMENT;
+    }
+
+    /**
+     * 分布 fragment を返す。
+     *
+     * @param model model
+     * @return fragments/analysis-distribution :: distribution
+     */
+    @GetMapping("/v3/analysis/distribution")
+    public String analysisDistribution(final Model model) {
+        final DistributionResult result = viewService.getDistributionView();
+        final List<DistributionResult.HistogramBin> discountHistogram = result.discountHistogram() != null
+                ? result.discountHistogram()
+                : List.of();
+        final List<DistributionResult.HistogramBin> grahamHistogram = result.grahamHistogram() != null
+                ? result.grahamHistogram()
+                : List.of();
+        String discountLabelsJson = "[]";
+        String discountCountsJson = "[]";
+        String grahamLabelsJson = "[]";
+        String grahamCountsJson = "[]";
+        try {
+            final List<String> discountLabels = discountHistogram.stream()
+                    .map(DistributionResult.HistogramBin::label)
+                    .toList();
+            final List<Long> discountCounts = discountHistogram.stream()
+                    .map(DistributionResult.HistogramBin::count)
+                    .toList();
+            final List<String> grahamLabels = grahamHistogram.stream()
+                    .map(DistributionResult.HistogramBin::label)
+                    .toList();
+            final List<Long> grahamCounts = grahamHistogram.stream()
+                    .map(DistributionResult.HistogramBin::count)
+                    .toList();
+            discountLabelsJson = objectMapper.writeValueAsString(discountLabels);
+            discountCountsJson = objectMapper.writeValueAsString(discountCounts);
+            grahamLabelsJson = objectMapper.writeValueAsString(grahamLabels);
+            grahamCountsJson = objectMapper.writeValueAsString(grahamCounts);
+        } catch (JsonProcessingException e) {
+            log.error("analysisDistribution: チャートデータのJSON変換に失敗", e);
+        }
+        model.addAttribute("distribution", result);
+        model.addAttribute("discountLabelsJson", discountLabelsJson);
+        model.addAttribute("discountCountsJson", discountCountsJson);
+        model.addAttribute("grahamLabelsJson", grahamLabelsJson);
+        model.addAttribute("grahamCountsJson", grahamCountsJson);
+        return ANALYSIS_DISTRIBUTION_FRAGMENT;
     }
 
     /**

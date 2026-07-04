@@ -155,6 +155,36 @@ function renderBacktestScatterChart(canvas) {
   }); });
 }
 
+function renderDistributionChart(canvas, label, color) {
+  const labels = JSON.parse(canvas.dataset.labels || '[]');
+  const counts = JSON.parse(canvas.dataset.counts || '[]');
+  requestAnimationFrame(() => { requestAnimationFrame(() => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: label,
+            data: counts,
+            backgroundColor: color
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }); });
+}
+
 // htmx:load: outerHTML swap で挿入された新要素に対して発生する。
 // iOS Safari では innerHTML 経由の <script> が実行されないため、
 // チャートデータを data-* 属性に埋め込み、ここで描画する。
@@ -168,5 +198,11 @@ document.body.addEventListener('htmx:load', (evt) => {
   });
   evt.detail.elt.querySelectorAll('canvas[data-backtest-scatter]').forEach((canvas) => {
     renderBacktestScatterChart(canvas);
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-distribution-discount]').forEach((canvas) => {
+    renderDistributionChart(canvas, '割安度', 'rgb(37,99,235)');
+  });
+  evt.detail.elt.querySelectorAll('canvas[data-distribution-graham]').forEach((canvas) => {
+    renderDistributionChart(canvas, 'グレアム指数', 'rgb(124,58,237)');
   });
 });

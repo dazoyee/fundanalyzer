@@ -3,10 +3,6 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTablePage;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTableQuery;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -56,21 +52,6 @@ class ValuationPresenterTest {
             verify(model).addAttribute("view", "stock");
             verify(model).addAttribute("table", page);
             verify(model).addAttribute("sortParam", "code,asc");
-        }
-
-        @Test
-        @DisplayName("target=industry → view=industry を強制")
-        void targetIndustry_forcesIndustryView() {
-            final Model model = mock(Model.class);
-            final IndustryValuationTablePage page = new IndustryValuationTablePage(
-                    List.of(), 0, 0L, 0, 25, Sort.by("name"));
-            when(viewService.findIndustryValuationTable(any(IndustryValuationTableQuery.class))).thenReturn(page);
-
-            presenter.valuationViewV3("industry", "stock", null, 0, 25, null, null, model);
-
-            verify(model).addAttribute("view", "industry");
-            verify(viewService, times(1)).findIndustryValuationTable(any(IndustryValuationTableQuery.class));
-            verify(viewService, never()).findCompanyValuationTable(any(CompanyValuationTableQuery.class));
         }
 
         @Test
@@ -247,17 +228,5 @@ class ValuationPresenterTest {
             assertEquals("fragments/valuation-table :: dividend-yield-table", result);
         }
 
-        @Test
-        @DisplayName("target=industry → industry-table fragment")
-        void targetIndustry_returnsIndustryFragment() {
-            final Model model = mock(Model.class);
-            final IndustryValuationTablePage page = new IndustryValuationTablePage(
-                    List.of(), 0, 0L, 0, 25, Sort.by("name"));
-            when(viewService.findIndustryValuationTable(any(IndustryValuationTableQuery.class))).thenReturn(page);
-
-            final String result = presenter.valuationViewV3Table("industry", null, null, 0, 25, null, null, model);
-
-            assertEquals("fragments/valuation-table :: industry-table", result);
-        }
     }
 }

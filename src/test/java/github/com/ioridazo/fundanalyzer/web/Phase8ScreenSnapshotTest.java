@@ -160,6 +160,25 @@ class Phase8ScreenSnapshotTest {
         }
     }
 
+    @Test
+    @DisplayName("分布タブをクリックすると distribution fragment が描画される")
+    void distributionTabRenders() {
+        try (final Page page = browser.newPage()) {
+            page.setViewportSize(1280, 800);
+            login(page);
+            page.navigate("http://localhost:" + port + "/fundanalyzer/v3/analysis");
+            page.waitForLoadState();
+            page.click("button:has-text('分布')");
+            page.waitForSelector("#distribution-panel");
+            page.waitForTimeout(1500);
+            final String panel = page.locator("#distribution-panel").innerText();
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(SNAPSHOT_DIR.resolve("analysis-distribution.png")).setFullPage(true));
+            assertTrue(!panel.contains("読み込み中"), "distribution fragment が読み込まれていない: " + panel);
+            assertTrue(!page.content().contains("Whitelabel"), "エラーページが表示された");
+        }
+    }
+
     static Stream<Arguments> viewportNames() {
         return Stream.of(
                 Arguments.of(new ViewportSize(1280, 800)),

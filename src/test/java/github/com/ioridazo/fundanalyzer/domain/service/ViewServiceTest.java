@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.domain.service;
 
 import github.com.ioridazo.fundanalyzer.domain.usecase.BacktestUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.DistributionUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
@@ -18,9 +19,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewMode
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTablePage;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationTableQuery;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,6 +51,7 @@ class ViewServiceTest {
     private ViewEdinetUseCase viewEdinetUseCase;
     private ViewValuationUseCase viewValuationUseCase;
     private BacktestUseCase backtestUseCase;
+    private DistributionUseCase distributionUseCase;
     private ViewService service;
 
     @BeforeEach
@@ -62,9 +62,10 @@ class ViewServiceTest {
         viewEdinetUseCase = mock(ViewEdinetUseCase.class);
         viewValuationUseCase = mock(ViewValuationUseCase.class);
         backtestUseCase = mock(BacktestUseCase.class);
+        distributionUseCase = mock(DistributionUseCase.class);
         service = new ViewService(
                 companyUseCase, documentUseCase,
-                viewCorporateUseCase, viewEdinetUseCase, viewValuationUseCase, backtestUseCase);
+                viewCorporateUseCase, viewEdinetUseCase, viewValuationUseCase, backtestUseCase, distributionUseCase);
     }
 
     @Nested
@@ -254,12 +255,14 @@ class ViewServiceTest {
             verify(viewValuationUseCase, times(1)).viewFavoriteValuation();
         }
 
-        @DisplayName("getIndustryValuationView : viewValuationUseCase.viewIndustryValuation に委譲する")
+        @DisplayName("getDistributionView : distributionUseCase.distribution に委譲する")
         @Test
-        void industry() {
-            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of());
-            service.getIndustryValuationView();
-            verify(viewValuationUseCase, times(1)).viewIndustryValuation();
+        void distribution() {
+            final DistributionResult expected = new DistributionResult(List.of(), List.of(), null, null, null, List.of());
+            when(distributionUseCase.distribution()).thenReturn(expected);
+
+            assertSame(expected, service.getDistributionView());
+            verify(distributionUseCase, times(1)).distribution();
         }
     }
 
@@ -559,48 +562,6 @@ class ViewServiceTest {
 
             assertEquals(BigDecimal.TEN, page.rows().get(0).grahamIndex());
             verify(viewValuationUseCase, never()).findGrahamIndustryZScore();
-        }
-    }
-
-    @Nested
-    @DisplayName("findIndustryValuationTable メソッド")
-    class FindIndustryValuationTable {
-
-        @Test
-        @DisplayName("getIndustryValuationView が呼ばれる")
-        void callsViewIndustryValuation() {
-            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of());
-            service.findIndustryValuationTable(new IndustryValuationTableQuery(
-                    null, PageRequest.of(0, 25, Sort.by("name"))));
-            verify(viewValuationUseCase, times(1)).viewIndustryValuation();
-        }
-
-        @Test
-        @DisplayName("keyword で業種名に partial match → 該当のみ返す")
-        void keywordIndustryNameMatch() {
-            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of(
-                    IndustryValuationViewModel.of("情報・通信業", 1.0, 1.1, 0.5, 100),
-                    IndustryValuationViewModel.of("食品業", 2.0, 1.2, 0.6, 50)
-            ));
-            final IndustryValuationTablePage page = service.findIndustryValuationTable(
-                    new IndustryValuationTableQuery("情報",
-                            PageRequest.of(0, 25, Sort.by("name"))));
-            assertEquals(1L, page.totalElements());
-            assertEquals("情報・通信業", page.rows().get(0).name());
-        }
-
-        @Test
-        @DisplayName("sort=count DESC → 件数降順で並ぶ")
-        void sortCountDesc() {
-            when(viewValuationUseCase.viewIndustryValuation()).thenReturn(List.of(
-                    IndustryValuationViewModel.of("A", 1.0, 1.1, 0.5, 50),
-                    IndustryValuationViewModel.of("B", 2.0, 1.2, 0.6, 100)
-            ));
-            final IndustryValuationTablePage page = service.findIndustryValuationTable(
-                    new IndustryValuationTableQuery(null,
-                            PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "count"))));
-            assertEquals(100, page.rows().get(0).count());
-            assertEquals(50, page.rows().get(1).count());
         }
     }
 

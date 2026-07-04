@@ -39,6 +39,10 @@
         <button type="button"
                 role="tab"
                 @click="tab = 'distribution'"
+                th:attr="hx-get=@{/v3/analysis/distribution}"
+                hx-target="#distribution-panel"
+                hx-swap="innerHTML"
+                hx-trigger="click once"
                 :aria-selected="String(tab === 'distribution')"
                 :class="tab === 'distribution' ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
                 class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
@@ -94,10 +98,11 @@
         </div>
     </section>
 
-    <section x-show="tab === 'distribution'"
+    <section x-show="tab === 'distribution'">
+        <div id="distribution-panel"
              class="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <h2 class="text-base font-bold">分布</h2>
-        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Phase C で実装予定</p>
+            読み込み中…
+        </div>
     </section>
 </section>
 </body>

@@ -6,14 +6,12 @@ import github.com.ioridazo.fundanalyzer.client.log.Logged;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +32,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
 
     private static final Logger log = LogManager.getLogger(ViewValuationInteractor.class);
 
-    private final IndustrySpecification industrySpecification;
     private final CompanySpecification companySpecification;
     private final ValuationSpecification valuationSpecification;
     private final ViewSpecification viewSpecification;
@@ -48,12 +45,10 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     boolean updateViewEnabled;
 
     public ViewValuationInteractor(
-            final IndustrySpecification industrySpecification,
             final CompanySpecification companySpecification,
             final ValuationSpecification valuationSpecification,
             final ViewSpecification viewSpecification,
             final SlackClient slackClient) {
-        this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.valuationSpecification = valuationSpecification;
         this.viewSpecification = viewSpecification;
@@ -116,22 +111,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
 
         return viewAllValuation().stream()
                 .filter(cvvm -> favoriteList.stream().anyMatch(favorite -> cvvm.code().equals(favorite.substring(0, 4))))
-                .toList();
-    }
-
-    /**
-     * 業種ビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<IndustryValuationViewModel> viewIndustryValuation() {
-        return industrySpecification.inquiryIndustryList().stream()
-                .filter(entity -> industrySpecification.isTarget(entity.id()))
-                .map(entity -> viewSpecification.generateIndustryValuationView(
-                        entity.name(),
-                        viewSpecification.findCompanyValuationViewList(entity.id())
-                ))
                 .toList();
     }
 
