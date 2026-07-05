@@ -55,8 +55,6 @@ class ViewValuationInteractorTest {
                 viewSpecification,
                 slackClient
         ));
-        interactor.configDiscountRate = BigDecimal.valueOf(170);
-        interactor.noTargetList = List.of();
         interactor.updateViewEnabled = true;
     }
 
@@ -91,30 +89,6 @@ class ViewValuationInteractorTest {
                 BigDecimal.valueOf(1500),
                 BigDecimal.valueOf(2.0)
         );
-    }
-
-    @Nested
-    @DisplayName("viewValuation メソッド")
-    class ViewValuation {
-
-        @DisplayName("viewValuation : 割安度が 170% 以上 1000% 未満の企業のみ返却する")
-        @Test
-        void filtersByDiscountRate() {
-            final CompanyValuationViewModel low = valuationView("1000", BigDecimal.valueOf(1.0), 5L);
-            final CompanyValuationViewModel midA = valuationView("2000", BigDecimal.valueOf(2.0), 5L);
-            final CompanyValuationViewModel midB = valuationView("3000", BigDecimal.valueOf(9.99), 5L);
-            final CompanyValuationViewModel tooHigh = valuationView("4000", BigDecimal.valueOf(1000), 5L);
-
-            doReturn(List.of(low, midA, midB, tooHigh)).when(interactor).viewAllValuation();
-
-            final List<CompanyValuationViewModel> actual = interactor.viewValuation();
-
-            assertAll(
-                    () -> assertEquals(2, actual.size()),
-                    () -> assertEquals("2000", actual.get(0).code()),
-                    () -> assertEquals("3000", actual.get(1).code())
-            );
-        }
     }
 
     @Nested
@@ -164,30 +138,6 @@ class ViewValuationInteractorTest {
             assertAll(
                     () -> assertEquals(1, actual.size()),
                     () -> assertEquals("2000", actual.get(0).code())
-            );
-        }
-    }
-
-    @Nested
-    @DisplayName("viewFavoriteValuation メソッド")
-    class ViewFavoriteValuation {
-
-        @DisplayName("viewFavoriteValuation : お気に入り登録された企業のみ返却する")
-        @Test
-        void filtersByFavorite() {
-            final Company favorite = new Company(
-                    "12340", "お気に入り企業", null, null, "edinet1", null, null, null, null, true, false, true);
-            when(companySpecification.findFavoriteCompanies()).thenReturn(List.of(favorite));
-
-            final CompanyValuationViewModel matched = valuationView("1234", BigDecimal.valueOf(2.0), 5L);
-            final CompanyValuationViewModel unmatched = valuationView("9999", BigDecimal.valueOf(2.0), 5L);
-            doReturn(List.of(matched, unmatched)).when(interactor).viewAllValuation();
-
-            final List<CompanyValuationViewModel> actual = interactor.viewFavoriteValuation();
-
-            assertAll(
-                    () -> assertEquals(1, actual.size()),
-                    () -> assertEquals("1234", actual.get(0).code())
             );
         }
     }

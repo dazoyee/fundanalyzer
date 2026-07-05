@@ -29,8 +29,6 @@ public class AnalysisController {
     private static final String REDIRECT = "redirect:";
     private static final URI V3_INDEX_PATH = URI.create("/v3/index");
     private static final URI V3_CORPORATE_PATH = URI.create("/v3/corporate");
-    private static final URI V3_VALUATION_PATH = URI.create("/v3/valuation");
-
     private static final String MESSAGE = "message";
     private static final String DATETIME_FORMAT = "MM/dd/uuuu";
 
@@ -141,7 +139,7 @@ public class AnalysisController {
                         new String[]{fromDate.toString(), toDate.toString()},
                         Locale.getDefault())
         );
-        return REDIRECT + UriComponentsBuilder.fromUri(V3_VALUATION_PATH).toUriString();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH).toUriString();
     }
 
     /**
@@ -185,7 +183,7 @@ public class AnalysisController {
                             new String[]{String.valueOf(countValuation)},
                             Locale.getDefault())
             );
-            return REDIRECT + UriComponentsBuilder.fromUri(V3_VALUATION_PATH).toUriString();
+            return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH).toUriString();
         }
     }
 }
