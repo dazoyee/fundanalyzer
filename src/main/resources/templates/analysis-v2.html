@@ -61,11 +61,11 @@
                 <table class="min-w-full text-left text-sm">
                     <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
                     <tr>
-                        <th class="px-4 py-3 font-medium">コード</th>
-                        <th class="px-4 py-3 font-medium">会社名</th>
-                        <th class="px-4 py-3 font-medium">割安度%</th>
-                        <th class="px-4 py-3 font-medium">グレアム</th>
-                        <th class="px-4 py-3 font-medium">対象日</th>
+                        <th class="whitespace-nowrap px-4 py-3 font-medium">コード</th>
+                        <th class="whitespace-nowrap px-4 py-3 font-medium">会社名</th>
+                        <th class="whitespace-nowrap px-4 py-3 font-medium">割安度%</th>
+                        <th class="whitespace-nowrap px-4 py-3 font-medium">グレアム</th>
+                        <th class="whitespace-nowrap px-4 py-3 font-medium">対象日</th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
@@ -75,7 +75,7 @@
                         hx-target="#analysis-chart"
                         hx-trigger="click">
                         <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-300" th:text="${item.code}">0000</td>
-                        <td class="px-4 py-3 font-medium text-slate-900 dark:text-slate-100" th:text="${item.name}">会社名</td>
+                        <td class="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-slate-100" th:text="${item.name}">会社名</td>
                         <td class="whitespace-nowrap px-4 py-3 text-emerald-600 dark:text-emerald-400" th:text="${item.discountRate != null ? #numbers.formatDecimal(item.discountRate * 100, 1, 0) + '%' : '-'}">0%</td>
                         <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300" th:text="${item.grahamIndex}">0</td>
                         <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300" th:text="${item.targetDate}">2026-01-01</td>

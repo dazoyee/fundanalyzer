@@ -65,16 +65,16 @@
             <table class="min-w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
                 <tr>
-                    <th class="px-4 py-3 font-medium">業種名</th>
-                    <th class="px-4 py-3 font-medium">割安度中央値(%)</th>
-                    <th class="px-4 py-3 font-medium">割安度平均(%)</th>
-                    <th class="px-4 py-3 font-medium">グレアム中央値</th>
-                    <th class="px-4 py-3 font-medium">件数</th>
+                    <th class="whitespace-nowrap px-4 py-3 font-medium">業種名</th>
+                    <th class="whitespace-nowrap px-4 py-3 font-medium">割安度中央値(%)</th>
+                    <th class="whitespace-nowrap px-4 py-3 font-medium">割安度平均(%)</th>
+                    <th class="whitespace-nowrap px-4 py-3 font-medium">グレアム中央値</th>
+                    <th class="whitespace-nowrap px-4 py-3 font-medium">件数</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                 <tr th:each="industry : ${distribution.industries()}">
-                    <td class="px-4 py-3 font-medium text-slate-900 dark:text-slate-100"
+                    <td class="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-slate-100"
                         th:text="${industry.industryName() != null ? industry.industryName() : '-'}">業種</td>
                     <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300"
                         th:text="${industry.discountMedian() != null ? #numbers.formatDecimal(industry.discountMedian(), 1, 1) + '%' : '-'}">-</td>
