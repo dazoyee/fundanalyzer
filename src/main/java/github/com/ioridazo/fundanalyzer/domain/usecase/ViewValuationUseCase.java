@@ -11,14 +11,6 @@ import java.util.Map;
 public interface ViewValuationUseCase {
 
     /**
-     * メインビュー
-     *
-     * @return 会社評価ビュー
-     */
-    @Observed
-    List<CompanyValuationViewModel> viewValuation();
-
-    /**
      * 企業ごとのビュー
      *
      * @return 会社評価ビュー
@@ -33,14 +25,6 @@ public interface ViewValuationUseCase {
      */
     @Observed
     List<CompanyValuationViewModel> viewAllValuation();
-
-    /**
-     * お気に入りビュー
-     *
-     * @return 会社評価ビュー
-     */
-    @Observed
-    List<CompanyValuationViewModel> viewFavoriteValuation();
 
     /**
      * グレアム指数の業種内zスコアを企業コード（4桁）別に算出する。

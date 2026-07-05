@@ -71,9 +71,9 @@ class SecurityConfigIntegrationTest {
         }
 
         @Test
-        @DisplayName("未認証で株価評価画面にアクセス→ログインページへリダイレクト")
-        void valuation_未認証_302() throws Exception {
-            mockMvc.perform(get("/v3/valuation").accept(MediaType.TEXT_HTML))
+        @DisplayName("未認証で分析画面にアクセス→ログインページへリダイレクト")
+        void analysis_未認証_302() throws Exception {
+            mockMvc.perform(get("/v3/analysis").accept(MediaType.TEXT_HTML))
                     .andExpect(status().isFound());
         }
     }

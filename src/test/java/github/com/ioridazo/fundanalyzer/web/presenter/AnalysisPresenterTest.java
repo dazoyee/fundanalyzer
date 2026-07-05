@@ -72,6 +72,12 @@ class AnalysisPresenterTest {
                     ),
                     castList(rankingCaptor.getValue()));
         }
+
+        @Test
+        @DisplayName("旧 valuation URL は /v3/analysis にリダイレクトする")
+        void redirectsLegacyValuationUrl() {
+            assertEquals("redirect:/v3/analysis", presenter.legacyValuationRedirect());
+        }
     }
 
     @Nested

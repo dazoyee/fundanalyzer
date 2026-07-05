@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * 画面刷新タスク Phase 8 のスナップショット回帰検証テスト。
  *
- * <p>主要 3 画面（/v3/index / /v3/valuation / /v3/edinet-list）× 2 ビューポート（desktop 1280x800 /
+ * <p>主要 3 画面（/v3/index / /v3/analysis / /v3/edinet-list）× 2 ビューポート（desktop 1280x800 /
  * mobile 375x812）= 6 ケースで Playwright Chromium を起動し HTML スナップショットを取得する。
  *
  * <p>200 OK + 主要要素（layout-v2 のサイドバー / ヘッダー / main）の存在を JUnit 5 標準アサーションで検証する。
@@ -84,8 +84,6 @@ class Phase8ScreenSnapshotTest {
         return Stream.of(
                 Arguments.of("index", "/v3/index", "desktop", 1280, 800),
                 Arguments.of("index", "/v3/index", "mobile", 375, 812),
-                Arguments.of("valuation", "/v3/valuation", "desktop", 1280, 800),
-                Arguments.of("valuation", "/v3/valuation", "mobile", 375, 812),
                 Arguments.of("analysis", "/v3/analysis", "desktop", 1280, 800),
                 Arguments.of("analysis", "/v3/analysis", "mobile", 375, 812),
                 Arguments.of("edinet-list", "/v3/edinet-list", "desktop", 1280, 800),
@@ -151,7 +149,7 @@ class Phase8ScreenSnapshotTest {
             page.waitForLoadState();
             page.click("button:has-text('バックテスト')");
             page.waitForSelector("#backtest-panel");
-            page.waitForTimeout(1500);
+            page.waitForFunction("() => !document.querySelector('#backtest-panel').innerText.includes('読み込み中')");
             final String panel = page.locator("#backtest-panel").innerText();
             page.screenshot(new Page.ScreenshotOptions()
                     .setPath(SNAPSHOT_DIR.resolve("analysis-backtest.png")).setFullPage(true));
@@ -170,7 +168,7 @@ class Phase8ScreenSnapshotTest {
             page.waitForLoadState();
             page.click("button:has-text('分布')");
             page.waitForSelector("#distribution-panel");
-            page.waitForTimeout(1500);
+            page.waitForFunction("() => !document.querySelector('#distribution-panel').innerText.includes('読み込み中')");
             final String panel = page.locator("#distribution-panel").innerText();
             page.screenshot(new Page.ScreenshotOptions()
                     .setPath(SNAPSHOT_DIR.resolve("analysis-distribution.png")).setFullPage(true));

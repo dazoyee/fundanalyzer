@@ -16,9 +16,6 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewMo
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTablePage;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationTableQuery;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -222,14 +218,6 @@ class ViewServiceTest {
     @DisplayName("評価ビュー取得")
     class ValuationViews {
 
-        @DisplayName("getValuationView : viewValuationUseCase.viewValuation に委譲する")
-        @Test
-        void main() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
-            service.getValuationView();
-            verify(viewValuationUseCase, times(1)).viewValuation();
-        }
-
         @DisplayName("getValuationView(code) : viewValuationUseCase.viewValuation(input) に委譲する")
         @Test
         void byCode() {
@@ -247,14 +235,6 @@ class ViewServiceTest {
             verify(viewValuationUseCase, times(1)).viewAllValuation();
         }
 
-        @DisplayName("getFavoriteValuationView : viewValuationUseCase.viewFavoriteValuation に委譲する")
-        @Test
-        void favorite() {
-            when(viewValuationUseCase.viewFavoriteValuation()).thenReturn(List.of());
-            service.getFavoriteValuationView();
-            verify(viewValuationUseCase, times(1)).viewFavoriteValuation();
-        }
-
         @DisplayName("getDistributionView : distributionUseCase.distribution に委譲する")
         @Test
         void distribution() {
@@ -263,6 +243,16 @@ class ViewServiceTest {
 
             assertSame(expected, service.getDistributionView());
             verify(distributionUseCase, times(1)).distribution();
+        }
+
+        @DisplayName("getGrahamIndustryZScore → 該当コードの業種内zを返す / 該当なしは null")
+        @Test
+        void grahamIndustryZScore() {
+            when(viewValuationUseCase.findGrahamIndustryZScore())
+                    .thenReturn(Map.of("1234", new BigDecimal("1.50")));
+
+            assertEquals(new BigDecimal("1.50"), service.getGrahamIndustryZScore(CodeInputData.of("1234")));
+            assertNull(service.getGrahamIndustryZScore(CodeInputData.of("9999")));
         }
     }
 
@@ -429,139 +419,6 @@ class ViewServiceTest {
                     new CompanyTableQuery(null, null, PageRequest.of(0, 25, Sort.by(Sort.Direction.ASC, "secret"))));
             assertEquals("9999", page.companies().get(0).getCode());
             assertEquals("0001", page.companies().get(1).getCode());
-        }
-    }
-
-    @Nested
-    @DisplayName("findCompanyValuationTable メソッド")
-    class FindCompanyValuationTable {
-
-        private CompanyValuationViewModel companyValuation(
-                final String code, final String name, final BigDecimal grahamIndex) {
-            return new CompanyValuationViewModel(
-                    code, name,
-                    LocalDate.of(2025, 1, 1),
-                    BigDecimal.valueOf(1000),
-                    grahamIndex,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    LocalDate.of(2024, 12, 1),
-                    BigDecimal.valueOf(900),
-                    30L,
-                    BigDecimal.valueOf(100), BigDecimal.valueOf(1.1),
-                    BigDecimal.valueOf(0.5),
-                    BigDecimal.valueOf(2000),
-                    BigDecimal.valueOf(0.03)
-            );
-        }
-
-        @Test
-        @DisplayName("target=null → viewValuationUseCase.viewValuation が呼ばれる")
-        void targetNull_callsViewValuation() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
-            service.findCompanyValuationTable(new CompanyValuationTableQuery(
-                    null, null, "stock", "raw", PageRequest.of(0, 25, Sort.by("code"))));
-            verify(viewValuationUseCase, times(1)).viewValuation();
-        }
-
-        @Test
-        @DisplayName("target=all → viewAllValuation が呼ばれる")
-        void targetAll_callsViewAllValuation() {
-            when(viewValuationUseCase.viewAllValuation()).thenReturn(List.of());
-            service.findCompanyValuationTable(new CompanyValuationTableQuery(
-                    "all", null, "stock", "raw", PageRequest.of(0, 25, Sort.by("code"))));
-            verify(viewValuationUseCase, times(1)).viewAllValuation();
-        }
-
-        @Test
-        @DisplayName("target=favorite → viewFavoriteValuation が呼ばれる")
-        void targetFavorite_callsViewFavoriteValuation() {
-            when(viewValuationUseCase.viewFavoriteValuation()).thenReturn(List.of());
-            service.findCompanyValuationTable(new CompanyValuationTableQuery(
-                    "favorite", null, "stock", "raw", PageRequest.of(0, 25, Sort.by("code"))));
-            verify(viewValuationUseCase, times(1)).viewFavoriteValuation();
-        }
-
-        @Test
-        @DisplayName("keyword で code に partial match → 該当のみ返す")
-        void keywordCodeMatch() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
-                    companyValuation("1234", "Alpha", BigDecimal.TEN),
-                    companyValuation("5678", "Beta", BigDecimal.ONE)
-            ));
-            final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, "12", "stock", "raw",
-                            PageRequest.of(0, 25, Sort.by("code"))));
-            assertEquals(1L, page.totalElements());
-            assertEquals("1234", page.rows().get(0).code());
-        }
-
-        @Test
-        @DisplayName("sort=grahamIndex DESC → 降順で並ぶ")
-        void sortGrahamIndexDesc() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
-                    companyValuation("1234", "Alpha", BigDecimal.ONE),
-                    companyValuation("5678", "Beta", BigDecimal.TEN)
-            ));
-            final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, null, "graham-index", "raw",
-                            PageRequest.of(0, 25, Sort.by(Sort.Direction.DESC, "grahamIndex"))));
-            assertEquals(BigDecimal.TEN, page.rows().get(0).grahamIndex());
-            assertEquals(BigDecimal.ONE, page.rows().get(1).grahamIndex());
-        }
-
-        @Test
-        @DisplayName("view が CompanyValuationTablePage に保持される")
-        void viewIsPreserved() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of());
-            final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, null, "submit", "raw",
-                            PageRequest.of(0, 25, Sort.by("code"))));
-            assertEquals("submit", page.view());
-        }
-
-        @Test
-        @DisplayName("view=graham-index mode=relative → グレアム指数が業種内zスコアに差し替わる")
-        void grahamRelative_replacesWithZScore() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
-                    companyValuation("1234", "Alpha", BigDecimal.TEN),
-                    companyValuation("5678", "Beta", BigDecimal.ONE)
-            ));
-            when(viewValuationUseCase.findGrahamIndustryZScore())
-                    .thenReturn(Map.of("1234", new BigDecimal("1.50")));
-
-            final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, null, "graham-index", "relative",
-                            PageRequest.of(0, 25, Sort.by("code"))));
-
-            assertEquals(new BigDecimal("1.50"), page.rows().get(0).grahamIndex());
-            assertNull(page.rows().get(1).grahamIndex());
-        }
-
-        @Test
-        @DisplayName("getGrahamIndustryZScore → 該当コードの業種内zを返す / 該当なしは null")
-        void getGrahamIndustryZScore_returnsZForCode() {
-            when(viewValuationUseCase.findGrahamIndustryZScore())
-                    .thenReturn(Map.of("1234", new BigDecimal("1.50")));
-
-            assertEquals(new BigDecimal("1.50"),
-                    service.getGrahamIndustryZScore(github.com.ioridazo.fundanalyzer.web.model.CodeInputData.of("1234")));
-            assertNull(service.getGrahamIndustryZScore(
-                    github.com.ioridazo.fundanalyzer.web.model.CodeInputData.of("9999")));
-        }
-
-        @Test
-        @DisplayName("view=graham-index mode=raw → 差し替えず findGrahamIndustryZScore を呼ばない")
-        void grahamRaw_doesNotReplace() {
-            when(viewValuationUseCase.viewValuation()).thenReturn(List.of(
-                    companyValuation("1234", "Alpha", BigDecimal.TEN)
-            ));
-
-            final CompanyValuationTablePage page = service.findCompanyValuationTable(
-                    new CompanyValuationTableQuery(null, null, "graham-index", "raw",
-                            PageRequest.of(0, 25, Sort.by("code"))));
-
-            assertEquals(BigDecimal.TEN, page.rows().get(0).grahamIndex());
-            verify(viewValuationUseCase, never()).findGrahamIndustryZScore();
         }
     }
 

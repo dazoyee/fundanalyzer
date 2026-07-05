@@ -77,6 +77,16 @@ public class AnalysisPresenter {
     }
 
     /**
+     * 旧 valuation 画面の URL を分析ダッシュボードへリダイレクトする。
+     *
+     * @return /v3/analysis へのリダイレクト
+     */
+    @GetMapping("/v3/valuation")
+    public String legacyValuationRedirect() {
+        return "redirect:/v3/analysis";
+    }
+
+    /**
      * 個別銘柄の分析チャート fragment を返す。
      *
      * @param code  会社コード（4〜5桁の数値）

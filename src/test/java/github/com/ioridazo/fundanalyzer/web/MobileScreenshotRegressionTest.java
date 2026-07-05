@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * スマホ UI 刷新の PNG ビジュアルリグレッションテスト。
  *
- * <p>5 画面 × 2 viewport = 10 ケースで baseline と現スクショを BufferedImage の ARGB 単位で比較し、
+ * <p>4 画面 × 2 viewport = 8 ケースで baseline と現スクショを BufferedImage の ARGB 単位で比較し、
  * 差分ピクセル比率が {@value #MAX_DIFF_PIXEL_RATIO_PERCENT}% を超えたら失敗とする。
  *
  * <p>baseline 入力: src/test/resources/playwright-baselines/&lt;screen&gt;-&lt;viewport&gt;.png
@@ -111,7 +111,7 @@ class MobileScreenshotRegressionTest {
 
     /**
      * 画面 × ビューポートのマトリクスを返す。{@link ManualMobileScreenshotTest} と
-     * 同じ 5 画面 × 2 viewport = 10 ケースを網羅する。
+     * 同じ 4 画面 × 2 viewport = 8 ケースを網羅する。
      *
      * @return JUnit パラメタライズド引数のストリーム
      */
@@ -119,8 +119,6 @@ class MobileScreenshotRegressionTest {
         return Stream.of(
                 Arguments.of("index", "/v3/index", "desktop", 1280, 800),
                 Arguments.of("index", "/v3/index", "mobile", 390, 844),
-                Arguments.of("valuation", "/v3/valuation", "desktop", 1280, 800),
-                Arguments.of("valuation", "/v3/valuation", "mobile", 390, 844),
                 Arguments.of("edinet-list", "/v3/edinet-list", "desktop", 1280, 800),
                 Arguments.of("edinet-list", "/v3/edinet-list", "mobile", 390, 844),
                 Arguments.of("edinet-list-detail", "/v3/edinet-list-detail?submitDate=2026-03-25", "desktop", 1280, 800),

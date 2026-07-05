@@ -37,10 +37,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
 
-    @Value("${app.config.view.discount-rate}")
-    BigDecimal configDiscountRate;
-    @Value("${app.config.scraping.no-industry}")
-    List<String> noTargetList;
     @Value("${app.slack.update-view.enabled:true}")
     boolean updateViewEnabled;
 
@@ -53,21 +49,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
         this.valuationSpecification = valuationSpecification;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
-    }
-
-    /**
-     * メインビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<CompanyValuationViewModel> viewValuation() {
-        return viewAllValuation().stream()
-                // 割安度が170%(外部設定値)以上を表示
-                .filter(cvvm -> cvvm.discountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
-                // 割安度が明らかな誤りは除外
-                .filter(cvvm -> cvvm.discountRate().compareTo(BigDecimal.valueOf(1000)) < 0)
-                .toList();
     }
 
     /**
@@ -95,22 +76,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
         return viewSpecification.findAllCompanyValuationView().stream()
                 // 提出日は除外
                 .filter(cvvm -> cvvm.daySinceSubmitDate() != 0L)
-                .toList();
-    }
-
-    /**
-     * お気に入りビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<CompanyValuationViewModel> viewFavoriteValuation() {
-        final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
-                .map(Company::code)
-                .toList();
-
-        return viewAllValuation().stream()
-                .filter(cvvm -> favoriteList.stream().anyMatch(favorite -> cvvm.code().equals(favorite.substring(0, 4))))
                 .toList();
     }
 

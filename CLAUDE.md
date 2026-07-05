@@ -109,7 +109,6 @@ exception/   … 業務例外
 |---|---|
 | `/v3/index` | IndexPresenter |
 | `/v3/corporate` | CorporatePresenter |
-| `/v3/valuation` | ValuationPresenter |
 | `/v3/edinet-list` | EdinetPresenter |
 | `/v3/edinet-list-detail` | EdinetDetailPresenter |
 | `/v3/analysis` | AnalysisPresenter |
