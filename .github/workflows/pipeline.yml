@@ -37,7 +37,7 @@ jobs:
           cache: maven
 
       - name: Run Maven tests
-        run: mvnw.cmd clean test -DexcludedGroups=playwright
+        run: .\mvnw.cmd clean test -DexcludedGroups=playwright
 
       - name: Upload JUnit test results
         if: always()
