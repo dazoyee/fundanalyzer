@@ -1,16 +1,11 @@
 name: Pipeline
 
 on:
-  push:
-    branches:
-      - develop
-      - feature/**
-  pull_request:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (example: 2.3.13)"
-        required: true
+        description: "Release version (example: 2.3.13). Leave empty to run CI only."
+        required: false
         type: string
 
 permissions:
@@ -18,11 +13,10 @@ permissions:
 
 concurrency:
   group: pipeline-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   ci:
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: inputs.version == ''
     runs-on: windows-latest
 
     steps:
@@ -50,7 +44,7 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    if: github.event_name == 'workflow_dispatch'
+    if: inputs.version != ''
     runs-on:
       - self-hosted
       - fundanalyzer
