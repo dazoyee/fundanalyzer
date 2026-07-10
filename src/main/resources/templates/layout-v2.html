@@ -22,6 +22,10 @@
           } else {
             this.sidebarOpen = !this.sidebarOpen;
           }
+        },
+        showScrollTop: false,
+        updateScrollTop() {
+          this.showScrollTop = window.scrollY > 600;
         }
       }"
       :class="{ 'dark': dark }">
@@ -115,6 +119,18 @@
             </p>
         </footer>
     </div>
+
+    <button type="button"
+            class="fixed bottom-20 right-4 z-30 rounded-full bg-slate-900/80 p-3 text-white shadow-lg dark:bg-slate-700 sm:hidden"
+            style="display: none;"
+            x-init="updateScrollTop()"
+            x-show="showScrollTop && !sidebarOpen"
+            x-transition
+            @scroll.window="updateScrollTop()"
+            @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+            aria-label="ページの先頭へ戻る">
+        <i data-lucide="arrow-up" class="h-5 w-5" aria-hidden="true"></i>
+    </button>
 
     <nav aria-label="モバイルナビ"
          x-data="{ pathname: window.location.pathname }"

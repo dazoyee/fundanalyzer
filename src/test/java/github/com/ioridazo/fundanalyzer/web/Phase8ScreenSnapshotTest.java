@@ -118,6 +118,19 @@ class Phase8ScreenSnapshotTest {
             assertTrue(page.locator("header").count() > 0, "ヘッダー header が存在しない");
             assertTrue(page.locator("main").count() > 0, "main コンテンツが存在しない");
 
+            if ("analysis".equals(screenName)) {
+                final boolean rankingTableVisible = page.locator("table").first().isVisible();
+                final long visibleMobileCardCount = page.locator("[data-mobile-card]:visible").count();
+
+                if ("mobile".equals(viewportName)) {
+                    assertTrue(visibleMobileCardCount > 0, "mobile では [data-mobile-card] が1件以上可視である必要がある");
+                    assertTrue(!rankingTableVisible, "mobile では割安度ランキング table は非表示である必要がある");
+                } else {
+                    assertTrue(rankingTableVisible, "desktop では割安度ランキング table が可視である必要がある");
+                    assertTrue(visibleMobileCardCount == 0, "desktop では [data-mobile-card] は非可視である必要がある");
+                }
+            }
+
             final Path snapshotPath = SNAPSHOT_DIR.resolve(screenName + "-" + viewportName + ".png");
             page.screenshot(new Page.ScreenshotOptions().setPath(snapshotPath).setFullPage(true));
             assertTrue(snapshotPath.toFile().exists(), "スナップショット書き出しに失敗: " + snapshotPath);

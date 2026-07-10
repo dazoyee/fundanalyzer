@@ -61,8 +61,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // htmx の swap 後にも Lucide アイコンを再描画する
-document.body.addEventListener('htmx:afterSwap', () => {
+document.body.addEventListener('htmx:afterSwap', (event) => {
   createIcons({ icons });
+  if (
+    event.target?.id === 'analysis-chart'
+    && window.matchMedia('(max-width: 639px)').matches
+    && typeof event.target.scrollIntoView === 'function'
+  ) {
+    event.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 });
 
 function renderSummaryChart(canvas) {

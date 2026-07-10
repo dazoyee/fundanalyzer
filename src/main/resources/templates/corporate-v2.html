@@ -57,11 +57,13 @@
              x-transition:leave-end="opacity-0 scale-95"
              style="display: none;"
              class="absolute right-0 top-full z-50 mt-1 min-w-[10rem] origin-top-right rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
-            <div class="flex justify-center border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+            <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-sm dark:border-slate-700">
                 <th:block th:replace="~{fragments/corporate-favorite-button :: favorite-button(code=${corporate.code}, favorite=${corporate.isFavorite})}"></th:block>
+                <span class="flex-1 cursor-pointer select-none" @click="$el.closest('div').querySelector('button').click()">お気に入り</span>
             </div>
-            <div class="flex justify-center border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+            <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-sm dark:border-slate-700">
                 <th:block th:replace="~{fragments/corporate-star-button :: star-button(code=${corporate.code}, star=${corporate.isStar})}"></th:block>
+                <span class="flex-1 cursor-pointer select-none" @click="$el.closest('div').querySelector('button').click()">注目</span>
             </div>
             <form method="post" th:action="@{/v2/evaluate}"
                   class="border-b border-slate-100 dark:border-slate-700">
