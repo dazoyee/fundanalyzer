@@ -61,6 +61,7 @@ htmx によるテーブル fragment は全て GET リクエストのため対象
 ## Actuator エンドポイント
 
 Actuator は別ポート（dev: 8989 / prod: 8990）で公開し、外部に露出させない運用を前提としています。
+`/actuator/health` は未認証でも疎通確認可能ですが、詳細情報は認証時のみ表示されます。
 公開エンドポイントは `health` と `info` のみ（`env` / `configprops` は無効）。
 
 ---

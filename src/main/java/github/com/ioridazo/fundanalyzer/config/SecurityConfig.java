@@ -1,5 +1,7 @@
 package github.com.ioridazo.fundanalyzer.config;
 
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,15 +71,19 @@ public class SecurityConfig {
     /**
      * セキュリティフィルターチェーンを構成する。
      *
+     * <p>Actuator は health のみ未認証で疎通確認を許可し、他エンドポイントは従来どおり認証必須とする。
+     *
      * @param http HttpSecurity
      * @return セキュリティフィルターチェーン
      * @throws Exception 構成時の例外
      */
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+        final var healthEndpoint = EndpointRequest.to(HealthEndpoint.class);
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(healthEndpoint).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
