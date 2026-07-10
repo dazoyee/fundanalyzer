@@ -218,18 +218,6 @@ class ManualMobileScreenshotTest {
     }
 
     @Test
-    @DisplayName("valuation 画面 mobile 390x844")
-    void shootValuationMobile() throws Exception {
-        shootMobile("valuation", "/v3/valuation");
-    }
-
-    @Test
-    @DisplayName("valuation 画面 desktop 1280x800")
-    void shootValuationDesktop() throws Exception {
-        shootDesktop("valuation", "/v3/valuation");
-    }
-
-    @Test
     @DisplayName("edinet-list 画面 mobile 390x844")
     void shootEdinetListMobile() throws Exception {
         shootMobile("edinet-list", "/v3/edinet-list");

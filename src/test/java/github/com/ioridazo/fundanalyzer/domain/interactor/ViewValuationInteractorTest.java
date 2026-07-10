@@ -1,17 +1,13 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.ValuationViewBean;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,7 +35,6 @@ import static org.mockito.Mockito.when;
 @DisplayName("ViewValuationInteractor のテスト")
 class ViewValuationInteractorTest {
 
-    private IndustrySpecification industrySpecification;
     private CompanySpecification companySpecification;
     private ValuationSpecification valuationSpecification;
     private ViewSpecification viewSpecification;
@@ -49,21 +44,17 @@ class ViewValuationInteractorTest {
 
     @BeforeEach
     void setUp() {
-        industrySpecification = mock(IndustrySpecification.class);
         companySpecification = mock(CompanySpecification.class);
         valuationSpecification = mock(ValuationSpecification.class);
         viewSpecification = mock(ViewSpecification.class);
         slackClient = mock(SlackClient.class);
 
         interactor = spy(new ViewValuationInteractor(
-                industrySpecification,
                 companySpecification,
                 valuationSpecification,
                 viewSpecification,
                 slackClient
         ));
-        interactor.configDiscountRate = BigDecimal.valueOf(170);
-        interactor.noTargetList = List.of();
         interactor.updateViewEnabled = true;
     }
 
@@ -98,30 +89,6 @@ class ViewValuationInteractorTest {
                 BigDecimal.valueOf(1500),
                 BigDecimal.valueOf(2.0)
         );
-    }
-
-    @Nested
-    @DisplayName("viewValuation メソッド")
-    class ViewValuation {
-
-        @DisplayName("viewValuation : 割安度が 170% 以上 1000% 未満の企業のみ返却する")
-        @Test
-        void filtersByDiscountRate() {
-            final CompanyValuationViewModel low = valuationView("1000", BigDecimal.valueOf(1.0), 5L);
-            final CompanyValuationViewModel midA = valuationView("2000", BigDecimal.valueOf(2.0), 5L);
-            final CompanyValuationViewModel midB = valuationView("3000", BigDecimal.valueOf(9.99), 5L);
-            final CompanyValuationViewModel tooHigh = valuationView("4000", BigDecimal.valueOf(1000), 5L);
-
-            doReturn(List.of(low, midA, midB, tooHigh)).when(interactor).viewAllValuation();
-
-            final List<CompanyValuationViewModel> actual = interactor.viewValuation();
-
-            assertAll(
-                    () -> assertEquals(2, actual.size()),
-                    () -> assertEquals("2000", actual.get(0).code()),
-                    () -> assertEquals("3000", actual.get(1).code())
-            );
-        }
     }
 
     @Nested
@@ -172,60 +139,6 @@ class ViewValuationInteractorTest {
                     () -> assertEquals(1, actual.size()),
                     () -> assertEquals("2000", actual.get(0).code())
             );
-        }
-    }
-
-    @Nested
-    @DisplayName("viewFavoriteValuation メソッド")
-    class ViewFavoriteValuation {
-
-        @DisplayName("viewFavoriteValuation : お気に入り登録された企業のみ返却する")
-        @Test
-        void filtersByFavorite() {
-            final Company favorite = new Company(
-                    "12340", "お気に入り企業", null, null, "edinet1", null, null, null, null, true, false, true);
-            when(companySpecification.findFavoriteCompanies()).thenReturn(List.of(favorite));
-
-            final CompanyValuationViewModel matched = valuationView("1234", BigDecimal.valueOf(2.0), 5L);
-            final CompanyValuationViewModel unmatched = valuationView("9999", BigDecimal.valueOf(2.0), 5L);
-            doReturn(List.of(matched, unmatched)).when(interactor).viewAllValuation();
-
-            final List<CompanyValuationViewModel> actual = interactor.viewFavoriteValuation();
-
-            assertAll(
-                    () -> assertEquals(1, actual.size()),
-                    () -> assertEquals("1234", actual.get(0).code())
-            );
-        }
-    }
-
-    @Nested
-    @DisplayName("viewIndustryValuation メソッド")
-    class ViewIndustryValuation {
-
-        @DisplayName("viewIndustryValuation : 対象業種のみビューを生成する")
-        @Test
-        void generatesForTargetIndustries() {
-            final IndustryEntity industryA = new IndustryEntity(1, "業種A", null);
-            final IndustryEntity industryB = new IndustryEntity(2, "業種B", null);
-            when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(industryA, industryB));
-            when(industrySpecification.isTarget(1)).thenReturn(true);
-            when(industrySpecification.isTarget(2)).thenReturn(false);
-            when(viewSpecification.findCompanyValuationViewList(1)).thenReturn(List.of());
-            final IndustryValuationViewModel industryView = IndustryValuationViewModel.of(
-                    "業種A", 0.0, 0.0, 0.0, 0);
-            when(viewSpecification.generateIndustryValuationView(eqStr("業種A"), any())).thenReturn(industryView);
-
-            final List<IndustryValuationViewModel> actual = interactor.viewIndustryValuation();
-
-            assertAll(
-                    () -> assertEquals(1, actual.size()),
-                    () -> assertEquals("業種A", actual.get(0).name())
-            );
-        }
-
-        private String eqStr(final String value) {
-            return org.mockito.ArgumentMatchers.eq(value);
         }
     }
 

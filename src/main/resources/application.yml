@@ -196,6 +196,13 @@ app:
       queue-capacity: 50
       max-pool-size: 500
 
+    analysis:
+      ranking-size: 50
+      bucket-boundaries: 1.0,1.2,1.5,2.0
+      discount-bins: 100,120,150,200,300
+      graham-bins: 10,15,22.5,40,70
+      match-tolerance-days: 7
+
     view:
       document-type-code: 120,130  # 分析表示処理対象
       discount-rate: 120  # 以上を表示

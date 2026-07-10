@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -25,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * 画面刷新タスク Phase 8 のスナップショット回帰検証テスト。
  *
- * <p>主要 3 画面（/v3/index / /v3/valuation / /v3/edinet-list）× 2 ビューポート（desktop 1280x800 /
+ * <p>主要 3 画面（/v3/index / /v3/analysis / /v3/edinet-list）× 2 ビューポート（desktop 1280x800 /
  * mobile 375x812）= 6 ケースで Playwright Chromium を起動し HTML スナップショットを取得する。
  *
  * <p>200 OK + 主要要素（layout-v2 のサイドバー / ヘッダー / main）の存在を JUnit 5 標準アサーションで検証する。
@@ -83,8 +84,8 @@ class Phase8ScreenSnapshotTest {
         return Stream.of(
                 Arguments.of("index", "/v3/index", "desktop", 1280, 800),
                 Arguments.of("index", "/v3/index", "mobile", 375, 812),
-                Arguments.of("valuation", "/v3/valuation", "desktop", 1280, 800),
-                Arguments.of("valuation", "/v3/valuation", "mobile", 375, 812),
+                Arguments.of("analysis", "/v3/analysis", "desktop", 1280, 800),
+                Arguments.of("analysis", "/v3/analysis", "mobile", 375, 812),
                 Arguments.of("edinet-list", "/v3/edinet-list", "desktop", 1280, 800),
                 Arguments.of("edinet-list", "/v3/edinet-list", "mobile", 375, 812)
         );
@@ -117,6 +118,19 @@ class Phase8ScreenSnapshotTest {
             assertTrue(page.locator("header").count() > 0, "ヘッダー header が存在しない");
             assertTrue(page.locator("main").count() > 0, "main コンテンツが存在しない");
 
+            if ("analysis".equals(screenName)) {
+                final boolean rankingTableVisible = page.locator("table").first().isVisible();
+                final long visibleMobileCardCount = page.locator("[data-mobile-card]:visible").count();
+
+                if ("mobile".equals(viewportName)) {
+                    assertTrue(visibleMobileCardCount > 0, "mobile では [data-mobile-card] が1件以上可視である必要がある");
+                    assertTrue(!rankingTableVisible, "mobile では割安度ランキング table は非表示である必要がある");
+                } else {
+                    assertTrue(rankingTableVisible, "desktop では割安度ランキング table が可視である必要がある");
+                    assertTrue(visibleMobileCardCount == 0, "desktop では [data-mobile-card] は非可視である必要がある");
+                }
+            }
+
             final Path snapshotPath = SNAPSHOT_DIR.resolve(screenName + "-" + viewportName + ".png");
             page.screenshot(new Page.ScreenshotOptions().setPath(snapshotPath).setFullPage(true));
             assertTrue(snapshotPath.toFile().exists(), "スナップショット書き出しに失敗: " + snapshotPath);
@@ -135,6 +149,44 @@ class Phase8ScreenSnapshotTest {
 
             assertTrue(page.locator("button[aria-label='ダークモード切替']").count() > 0,
                     "ダークモードトグルボタンが見つからない");
+        }
+    }
+
+    @Test
+    @DisplayName("バックテストタブをクリックすると backtest fragment が描画される")
+    void backtestTabRenders() {
+        try (final Page page = browser.newPage()) {
+            page.setViewportSize(1280, 800);
+            login(page);
+            page.navigate("http://localhost:" + port + "/fundanalyzer/v3/analysis");
+            page.waitForLoadState();
+            page.click("button:has-text('バックテスト')");
+            page.waitForSelector("#backtest-panel");
+            page.waitForFunction("() => !document.querySelector('#backtest-panel').innerText.includes('読み込み中')");
+            final String panel = page.locator("#backtest-panel").innerText();
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(SNAPSHOT_DIR.resolve("analysis-backtest.png")).setFullPage(true));
+            assertTrue(!panel.contains("読み込み中"), "backtest fragment が読み込まれていない: " + panel);
+            assertTrue(!page.content().contains("Whitelabel"), "エラーページが表示された");
+        }
+    }
+
+    @Test
+    @DisplayName("分布タブをクリックすると distribution fragment が描画される")
+    void distributionTabRenders() {
+        try (final Page page = browser.newPage()) {
+            page.setViewportSize(1280, 800);
+            login(page);
+            page.navigate("http://localhost:" + port + "/fundanalyzer/v3/analysis");
+            page.waitForLoadState();
+            page.click("button:has-text('分布')");
+            page.waitForSelector("#distribution-panel");
+            page.waitForFunction("() => !document.querySelector('#distribution-panel').innerText.includes('読み込み中')");
+            final String panel = page.locator("#distribution-panel").innerText();
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(SNAPSHOT_DIR.resolve("analysis-distribution.png")).setFullPage(true));
+            assertTrue(!panel.contains("読み込み中"), "distribution fragment が読み込まれていない: " + panel);
+            assertTrue(!page.content().contains("Whitelabel"), "エラーページが表示された");
         }
     }
 

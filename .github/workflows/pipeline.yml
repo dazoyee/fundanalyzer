@@ -1,0 +1,177 @@
+name: Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: 2.3.13). Leave empty to run CI only."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+
+jobs:
+  ci:
+    if: inputs.version == ''
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Run Maven tests
+        run: .\mvnw.cmd clean test -DexcludedGroups=playwright
+
+      - name: Upload JUnit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-results
+          path: |
+            **/surefire-reports/*.xml
+            **/failsafe-reports/*.xml
+          if-no-files-found: ignore
+
+  release:
+    if: inputs.version != ''
+    runs-on:
+      - self-hosted
+      - fundanalyzer
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_BRANCH: release/v${{ inputs.version }}
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # push (main/tags/develop) に GITHUB_TOKEN を使うため認証を保持する
+
+      - name: Compute next development version
+        id: versioning
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_VERSION
+          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)$') {
+            throw "Invalid version format: $version"
+          }
+          $nextVersion = '{0}.{1}.{2}' -f $Matches[1], $Matches[2], ([int]$Matches[3] + 1)
+          "next_version=$nextVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Update develop branch
+        run: |
+          rem checkout -B / tag -f: 中断された過去の実行が残したローカルブランチ・タグがあっても再実行できるようにする
+          git fetch --all --tags --prune
+          git checkout -B develop origin/develop
+
+      - name: Create release branch
+        run: git checkout -B %RELEASE_BRANCH%
+
+      - name: Set release version
+        run: |
+          mvnw.cmd versions:set -DnewVersion=%RELEASE_VERSION%
+          mvnw.cmd versions:commit
+
+      - name: Commit release version
+        run: 'git commit -am "release: v%RELEASE_VERSION%"'
+
+      - name: Merge release branch into main
+        run: |
+          git checkout -B main origin/main
+          git merge --no-ff %RELEASE_BRANCH%
+
+      - name: Tag and push main
+        run: |
+          git tag -f v%RELEASE_VERSION%
+          git push origin main --tags
+
+      - name: Build release artifact
+        run: mvnw.cmd clean package -DskipTests
+
+      - name: Stop service
+        run: |
+          rem 1062 = ERROR_SERVICE_NOT_ACTIVE: already stopped is acceptable here
+          sc stop fundanalyzer
+          if %ERRORLEVEL% NEQ 0 if %ERRORLEVEL% NEQ 1062 exit /b %ERRORLEVEL%
+          rem timeout.exe requires an interactive console and fails on CI runners
+          powershell -NoProfile -Command "Start-Sleep -Seconds 5"
+
+      - name: Back up current JAR
+        run: copy /Y C:\fundanalyzer\bin\fundanalyzer.jar C:\fundanalyzer\bin\fundanalyzer.jar.bak
+
+      - name: Deploy new JAR
+        run: copy /Y target\fundanalyzer-%RELEASE_VERSION%.jar C:\fundanalyzer\bin\fundanalyzer.jar
+
+      - name: Start service
+        run: sc start fundanalyzer
+
+      - name: Health check
+        id: healthcheck
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $url = 'http://localhost:8080/actuator/health'
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
+              if ($response.StatusCode -eq 200) {
+                exit 0
+              }
+            } catch {
+            }
+            if ($attempt -lt 5) {
+              Start-Sleep -Seconds 5
+            }
+          }
+          exit 1
+
+      - name: Roll back deployment
+        if: steps.healthcheck.outcome == 'failure'
+        run: |
+          rem 1062 = ERROR_SERVICE_NOT_ACTIVE: already stopped is acceptable here
+          sc stop fundanalyzer
+          if %ERRORLEVEL% NEQ 0 if %ERRORLEVEL% NEQ 1062 exit /b %ERRORLEVEL%
+          powershell -NoProfile -Command "Start-Sleep -Seconds 5"
+          copy /Y C:\fundanalyzer\bin\fundanalyzer.jar.bak C:\fundanalyzer\bin\fundanalyzer.jar
+          sc start fundanalyzer
+
+      - name: Fail after rollback
+        if: steps.healthcheck.outcome == 'failure'
+        run: exit /b 1
+
+      - name: Merge release branch back to develop
+        if: steps.healthcheck.outcome == 'success'
+        run: |
+          git checkout develop
+          git merge --no-ff %RELEASE_BRANCH%
+
+      - name: Set next development version
+        if: steps.healthcheck.outcome == 'success'
+        env:
+          NEXT_VERSION: ${{ steps.versioning.outputs.next_version }}
+        run: |
+          mvnw.cmd versions:set -DnewVersion=%NEXT_VERSION%-SNAPSHOT
+          mvnw.cmd versions:commit
+          git commit -am "chore: prepare next development version %NEXT_VERSION%-SNAPSHOT"
+          git push origin develop
+
+      - name: Delete local release branch
+        if: steps.healthcheck.outcome == 'success'
+        run: git branch -D %RELEASE_BRANCH%

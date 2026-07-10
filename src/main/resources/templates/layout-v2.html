@@ -22,6 +22,10 @@
           } else {
             this.sidebarOpen = !this.sidebarOpen;
           }
+        },
+        showScrollTop: false,
+        updateScrollTop() {
+          this.showScrollTop = window.scrollY > 600;
         }
       }"
       :class="{ 'dark': dark }">
@@ -44,7 +48,7 @@
             <i data-lucide="building-2" class="shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true"></i>
             <span class="text-lg font-bold" :class="{ 'hidden': sidebarCollapsed }">fundanalyzer</span>
         </div>
-        <nav class="space-y-1 px-2 py-4">
+        <nav x-data="{ pathname: window.location.pathname }" class="space-y-1 px-2 py-4">
             <a th:href="@{/v3/index}"
                title="会社一覧"
                class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -52,19 +56,20 @@
                 <i data-lucide="building-2" class="shrink-0" aria-hidden="true"></i>
                 <span :class="{ 'hidden': sidebarCollapsed }">会社一覧</span>
             </a>
-            <a th:href="@{/v3/valuation}"
-               title="株価評価"
-               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-               :class="{ 'justify-center': sidebarCollapsed }">
-                <i data-lucide="trending-up" class="shrink-0" aria-hidden="true"></i>
-                <span :class="{ 'hidden': sidebarCollapsed }">株価評価</span>
-            </a>
             <a th:href="@{/v3/edinet-list}"
                title="EDINET 一覧"
                class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
                :class="{ 'justify-center': sidebarCollapsed }">
                 <i data-lucide="file-text" class="shrink-0" aria-hidden="true"></i>
                 <span :class="{ 'hidden': sidebarCollapsed }">EDINET 一覧</span>
+            </a>
+            <a th:href="@{/v3/analysis}"
+               title="分析"
+               :class="[pathname.endsWith('/v3/analysis') ? 'text-blue-600 dark:text-blue-400 bg-slate-100 dark:bg-slate-700' : 'text-slate-700 dark:text-slate-300', sidebarCollapsed ? 'justify-center' : '']"
+               x-bind:aria-current="pathname.endsWith('/v3/analysis') ? 'page' : null"
+               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700">
+                <i data-lucide="bar-chart-3" class="shrink-0" aria-hidden="true"></i>
+                <span :class="{ 'hidden': sidebarCollapsed }">分析</span>
             </a>
         </nav>
     </aside>
@@ -115,6 +120,18 @@
         </footer>
     </div>
 
+    <button type="button"
+            class="fixed bottom-20 right-4 z-30 rounded-full bg-slate-900/80 p-3 text-white shadow-lg dark:bg-slate-700 sm:hidden"
+            style="display: none;"
+            x-init="updateScrollTop()"
+            x-show="showScrollTop && !sidebarOpen"
+            x-transition
+            @scroll.window="updateScrollTop()"
+            @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+            aria-label="ページの先頭へ戻る">
+        <i data-lucide="arrow-up" class="h-5 w-5" aria-hidden="true"></i>
+    </button>
+
     <nav aria-label="モバイルナビ"
          x-data="{ pathname: window.location.pathname }"
          class="fixed inset-x-0 bottom-0 z-20 flex h-16 border-t border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800 sm:hidden">
@@ -126,19 +143,19 @@
                 <i data-lucide="building-2" class="h-5 w-5" aria-hidden="true"></i>
                 <span>会社</span>
             </a>
-            <a th:href="@{/v3/valuation}"
-               :class="pathname.endsWith('/v3/valuation') ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'"
-               x-bind:aria-current="pathname.endsWith('/v3/valuation') ? 'page' : null"
-               class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
-                <i data-lucide="trending-up" class="h-5 w-5" aria-hidden="true"></i>
-                <span>株価</span>
-            </a>
             <a th:href="@{/v3/edinet-list}"
                :class="(pathname.endsWith('/v3/edinet-list') || pathname.endsWith('/v3/edinet-list-detail')) ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'"
                x-bind:aria-current="(pathname.endsWith('/v3/edinet-list') || pathname.endsWith('/v3/edinet-list-detail')) ? 'page' : null"
                class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
                 <i data-lucide="file-text" class="h-5 w-5" aria-hidden="true"></i>
                 <span>EDINET</span>
+            </a>
+            <a th:href="@{/v3/analysis}"
+               :class="pathname.endsWith('/v3/analysis') ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-300'"
+               x-bind:aria-current="pathname.endsWith('/v3/analysis') ? 'page' : null"
+               class="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-2 text-xs text-slate-600 dark:text-slate-300">
+                <i data-lucide="bar-chart-3" class="h-5 w-5" aria-hidden="true"></i>
+                <span>分析</span>
             </a>
         </th:block>
     </nav>

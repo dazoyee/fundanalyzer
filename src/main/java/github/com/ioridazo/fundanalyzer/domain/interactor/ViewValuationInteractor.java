@@ -6,14 +6,12 @@ import github.com.ioridazo.fundanalyzer.client.log.Logged;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.valuation.IndustryValuationViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,45 +32,23 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
 
     private static final Logger log = LogManager.getLogger(ViewValuationInteractor.class);
 
-    private final IndustrySpecification industrySpecification;
     private final CompanySpecification companySpecification;
     private final ValuationSpecification valuationSpecification;
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
 
-    @Value("${app.config.view.discount-rate}")
-    BigDecimal configDiscountRate;
-    @Value("${app.config.scraping.no-industry}")
-    List<String> noTargetList;
     @Value("${app.slack.update-view.enabled:true}")
     boolean updateViewEnabled;
 
     public ViewValuationInteractor(
-            final IndustrySpecification industrySpecification,
             final CompanySpecification companySpecification,
             final ValuationSpecification valuationSpecification,
             final ViewSpecification viewSpecification,
             final SlackClient slackClient) {
-        this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.valuationSpecification = valuationSpecification;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
-    }
-
-    /**
-     * メインビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<CompanyValuationViewModel> viewValuation() {
-        return viewAllValuation().stream()
-                // 割安度が170%(外部設定値)以上を表示
-                .filter(cvvm -> cvvm.discountRate().multiply(BigDecimal.valueOf(100)).compareTo(configDiscountRate) >= 0)
-                // 割安度が明らかな誤りは除外
-                .filter(cvvm -> cvvm.discountRate().compareTo(BigDecimal.valueOf(1000)) < 0)
-                .toList();
     }
 
     /**
@@ -100,38 +76,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
         return viewSpecification.findAllCompanyValuationView().stream()
                 // 提出日は除外
                 .filter(cvvm -> cvvm.daySinceSubmitDate() != 0L)
-                .toList();
-    }
-
-    /**
-     * お気に入りビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<CompanyValuationViewModel> viewFavoriteValuation() {
-        final List<String> favoriteList = companySpecification.findFavoriteCompanies().stream()
-                .map(Company::code)
-                .toList();
-
-        return viewAllValuation().stream()
-                .filter(cvvm -> favoriteList.stream().anyMatch(favorite -> cvvm.code().equals(favorite.substring(0, 4))))
-                .toList();
-    }
-
-    /**
-     * 業種ビューを取得する
-     *
-     * @return 評価結果ビュー
-     */
-    @Override
-    public List<IndustryValuationViewModel> viewIndustryValuation() {
-        return industrySpecification.inquiryIndustryList().stream()
-                .filter(entity -> industrySpecification.isTarget(entity.id()))
-                .map(entity -> viewSpecification.generateIndustryValuationView(
-                        entity.name(),
-                        viewSpecification.findCompanyValuationViewList(entity.id())
-                ))
                 .toList();
     }
 

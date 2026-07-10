@@ -61,7 +61,7 @@
         <input type="search"
                name="q"
                th:value="${keyword}"
-               placeholder="提出日（YYYY-MM-DD 部分一致）で検索"
+               placeholder="提出日で検索（YYYY-MM-DD）"
                aria-label="提出日で検索"
                class="w-full rounded border border-slate-300 px-3 py-2 sm:w-72 dark:border-slate-600 dark:bg-slate-900"
                th:attr="hx-get=@{/v3/edinet-list/table(target=${target},sort=${sortParam},page=0)}"

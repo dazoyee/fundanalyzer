@@ -70,12 +70,12 @@
                     </button>
                 </div>
                 <!-- フォームはモーダル（dark:bg-slate-800）より一段暗い dark:bg-slate-900 でコントラストを付ける -->
-                <div class="space-y-3 text-left">
+                <div class="grid grid-cols-1 gap-3 text-left md:grid-cols-2">
                     <form method="post" th:action="@{/v1/document/analysis}"
                           class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-                        <label for="fromToDate" class="mb-2 block text-sm font-bold">財務諸表の取得と分析をする</label>
+                        <label for="analysisFromToDate" class="mb-2 block text-sm font-bold">財務諸表の取得と分析をする</label>
                         <div class="flex flex-wrap items-center gap-2">
-                            <input type="text" id="fromToDate" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                            <input type="text" id="analysisFromToDate" name="fromToDate" placeholder="2024-01-01,2024-12-31"
                                    x-ref="firstField"
                                    class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
                             <button type="submit"
@@ -97,6 +97,29 @@
                             </button>
                         </div>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">書類 ID を入力</p>
+                    </form>
+                    <form method="post" th:action="@{/v2/import/stock/date}"
+                          class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <label for="stockFromToDate" class="mb-2 block text-sm font-bold">企業の株価を取得する（書類提出日を指定）</label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="text" id="stockFromToDate" name="fromToDate" placeholder="2024-01-01,2024-12-31"
+                                   class="flex-1 min-w-0 rounded border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900"/>
+                            <button type="submit"
+                                    class="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                                実行
+                            </button>
+                        </div>
+                    </form>
+                    <form method="post" th:action="@{/v2/evaluate}"
+                          class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <h3 class="mb-2 text-sm font-bold">株価を評価する</h3>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <p class="flex-1 text-sm text-slate-500 dark:text-slate-400">全企業の評価を再計算します</p>
+                            <button type="submit"
+                                    class="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                                実行
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
