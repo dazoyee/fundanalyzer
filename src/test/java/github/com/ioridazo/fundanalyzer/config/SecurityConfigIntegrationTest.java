@@ -23,7 +23,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Spring Security の認証・CSRF・セキュリティヘッダーを検証する統合テスト。
  */
-@SpringBootTest(properties = {"app.security.user=testuser", "app.security.password=testpass"})
+@SpringBootTest(properties = {
+        "app.security.user=testuser",
+        "app.security.password=testpass",
+        "management.server.port=",
+        "management.endpoints.web.exposure.include=health"
+})
 @AutoConfigureMockMvc
 @DisplayName("SecurityConfigの統合テスト")
 class SecurityConfigIntegrationTest {
@@ -75,6 +80,13 @@ class SecurityConfigIntegrationTest {
         void analysis_未認証_302() throws Exception {
             mockMvc.perform(get("/v3/analysis").accept(MediaType.TEXT_HTML))
                     .andExpect(status().isFound());
+        }
+
+        @Test
+        @DisplayName("未認証でActuator healthにアクセス→200を返す")
+        void actuatorHealth_未認証_200() throws Exception {
+            mockMvc.perform(get("/actuator/health"))
+                    .andExpect(status().isOk());
         }
     }
 

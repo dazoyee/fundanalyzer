@@ -99,8 +99,10 @@ jobs:
 
       - name: Tag and push main
         run: |
+          rem tag -f / push --force: 失敗したリリースの再実行で同一バージョンのタグを付け直せるようにする
           git tag -f v%RELEASE_VERSION%
-          git push origin main --tags
+          git push origin main
+          git push --force origin refs/tags/v%RELEASE_VERSION%
 
       - name: Build release artifact
         run: mvnw.cmd clean package -DskipTests
@@ -127,8 +129,10 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          $url = 'http://localhost:8080/actuator/health'
-          for ($attempt = 1; $attempt -le 5; $attempt++) {
+          # prod の Actuator は管理ポート 8990（application-prod.yml の management.server.port）
+          $url = 'http://localhost:8990/actuator/health'
+          $maxAttempts = 12
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
             try {
               $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
               if ($response.StatusCode -eq 200) {
@@ -136,8 +140,8 @@ jobs:
               }
             } catch {
             }
-            if ($attempt -lt 5) {
-              Start-Sleep -Seconds 5
+            if ($attempt -lt $maxAttempts) {
+              Start-Sleep -Seconds 10
             }
           }
           exit 1
