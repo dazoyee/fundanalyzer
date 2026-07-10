@@ -86,8 +86,9 @@ jobs:
 
       - name: Set release version
         run: |
-          mvnw.cmd versions:set -DnewVersion=%RELEASE_VERSION%
-          mvnw.cmd versions:commit
+          rem バッチからの .cmd 呼び出しは call がないと制御が戻らず後続行が実行されない
+          call mvnw.cmd versions:set -DnewVersion=%RELEASE_VERSION%
+          call mvnw.cmd versions:commit
 
       - name: Commit release version
         run: 'git commit -am "release: v%RELEASE_VERSION%"'
@@ -171,8 +172,9 @@ jobs:
         env:
           NEXT_VERSION: ${{ steps.versioning.outputs.next_version }}
         run: |
-          mvnw.cmd versions:set -DnewVersion=%NEXT_VERSION%-SNAPSHOT
-          mvnw.cmd versions:commit
+          rem バッチからの .cmd 呼び出しは call がないと制御が戻らず後続行が実行されない
+          call mvnw.cmd versions:set -DnewVersion=%NEXT_VERSION%-SNAPSHOT
+          call mvnw.cmd versions:commit
           git commit -am "chore: prepare next development version %NEXT_VERSION%-SNAPSHOT"
           git push origin develop
 
