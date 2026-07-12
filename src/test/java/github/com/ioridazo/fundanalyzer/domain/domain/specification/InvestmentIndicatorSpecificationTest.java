@@ -63,9 +63,13 @@ class InvestmentIndicatorSpecificationTest {
     }
 
     private AnalysisResultEntity analysisResult() {
+        return analysisResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(120));
+    }
+
+    private AnalysisResultEntity analysisResult(final BigDecimal bps, final BigDecimal eps) {
         return new AnalysisResultEntity(
                 10, "1234", LocalDate.parse("2024-03-01"),
-                BigDecimal.valueOf(1500), null, BigDecimal.valueOf(120), null, null,
+                BigDecimal.valueOf(3000), bps, eps, null, null,
                 "120", "year-1",
                 LocalDate.parse("2024-04-01"), "doc-1",
                 LocalDateTime.parse("2024-04-01T00:00:00"));
@@ -179,6 +183,66 @@ class InvestmentIndicatorSpecificationTest {
 
             final InvestmentIndicatorEntity actual = captor.getValue();
             assertEquals(0, BigDecimal.valueOf(8.3333333333).compareTo(actual.getPer().orElseThrow()));
+        }
+
+        @DisplayName("insert : EPSが負のときは PER とグレアム指数を保存しない")
+        @Test
+        void doesNotSavePerOrGrahamIndexWhenEpsIsNegative() {
+            specification.insert(analysisResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(-120)), stockPrice());
+
+            final ArgumentCaptor<InvestmentIndicatorEntity> captor =
+                    ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
+            verify(dao).insert(captor.capture());
+
+            final InvestmentIndicatorEntity actual = captor.getValue();
+            assertTrue(actual.getPer().isEmpty());
+            assertTrue(actual.getGrahamIndex().isEmpty());
+            assertEquals(0, BigDecimal.valueOf(0.3333333333).compareTo(actual.getPbr().orElseThrow()));
+        }
+
+        @DisplayName("insert : EPSがゼロのときは PER とグレアム指数を保存しない")
+        @Test
+        void doesNotSavePerOrGrahamIndexWhenEpsIsZero() {
+            specification.insert(analysisResult(BigDecimal.valueOf(1500), BigDecimal.ZERO), stockPrice());
+
+            final ArgumentCaptor<InvestmentIndicatorEntity> captor =
+                    ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
+            verify(dao).insert(captor.capture());
+
+            final InvestmentIndicatorEntity actual = captor.getValue();
+            assertTrue(actual.getPer().isEmpty());
+            assertTrue(actual.getGrahamIndex().isEmpty());
+            assertEquals(0, BigDecimal.valueOf(0.3333333333).compareTo(actual.getPbr().orElseThrow()));
+        }
+
+        @DisplayName("insert : PBRが負のときは PBR は保存しグレアム指数は保存しない")
+        @Test
+        void savesNegativePbrButNotGrahamIndex() {
+            specification.insert(analysisResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(120)), stockPrice());
+
+            final ArgumentCaptor<InvestmentIndicatorEntity> captor =
+                    ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
+            verify(dao).insert(captor.capture());
+
+            final InvestmentIndicatorEntity actual = captor.getValue();
+            assertEquals(0, BigDecimal.valueOf(4.1666666667).compareTo(actual.getPer().orElseThrow()));
+            assertEquals(0, BigDecimal.valueOf(-0.3333333333).compareTo(actual.getPbr().orElseThrow()));
+            assertTrue(actual.getGrahamIndex().isEmpty());
+        }
+
+        @DisplayName("insert : PER と PBR が両方負相当のときもグレアム指数を保存しない")
+        @Test
+        void doesNotSaveGrahamIndexWhenPerAndPbrWouldBothBeNegative() {
+            specification.insert(analysisResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(-120)), stockPrice());
+
+            final ArgumentCaptor<InvestmentIndicatorEntity> captor =
+                    ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
+            verify(dao).insert(captor.capture());
+
+            final InvestmentIndicatorEntity actual = captor.getValue();
+            assertTrue(actual.getPer().isEmpty());
+            assertEquals(0, BigDecimal.valueOf(-0.3333333333).compareTo(actual.getPbr().orElseThrow()));
+            assertTrue(actual.getGrahamIndex().isEmpty());
         }
 
         @DisplayName("insert : UniqueConstraintException 発生時はログ出力で握りつぶす")
