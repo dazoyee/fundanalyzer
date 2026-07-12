@@ -29,72 +29,64 @@ class AnalysisResultTest {
         @DisplayName("calculateCorporateValue : 各値を取得して計算する")
         @Test
         void present() {
-            var financeValue = FinanceValue.of(
-                    1001L,
-                    1002L,
-                    null,
-                    1003L,
-                    1004L,
-                    null,
-                    null,
-                    10005L,
-                    null,
-                    1006L
-            );
+            var financeValue = defaultCorporateValueFinanceValue();
 
-            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
-                    .add(BigDecimal.valueOf(1001))
-                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
-                    .subtract(BigDecimal.valueOf(1004))
-                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var expected = expectedCorporateValue(defaultCoefficient, null);
             var actual = analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient);
             assertEquals(expected, actual);
+            assertEquals(expectedCorporateValueLegacy(defaultCoefficient, null), actual);
         }
 
         @DisplayName("calculateCorporateValue : 四半期報告書の各値を取得して計算する")
         @Test
         void quarter() {
-            var document = new Document(
-                    null,
-                    null,
-                    QuarterType.QT_3,
-                    "edinetCode",
-                    null,
-                    LocalDate.now(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false
-            );
-            var financeValue = FinanceValue.of(
-                    1001L,
-                    1002L,
-                    null,
-                    1003L,
-                    1004L,
-                    null,
-                    null,
-                    10005L,
-                    null,
-                    1006L
-            );
+            var document = documentOf(QuarterType.QT_3);
+            var financeValue = defaultCorporateValueFinanceValue();
 
-            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
-                    .add(BigDecimal.valueOf(1001))
-                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
-                    .subtract(BigDecimal.valueOf(1004))
-                    .divide(BigDecimal.valueOf(3), 10, RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(4))
-                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var expected = expectedCorporateValue(defaultCoefficient, QuarterType.QT_3);
             var actual = analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient);
             assertEquals(expected, actual);
+        }
+
+        @DisplayName("calculateCorporateValue : QuarterType の全パターンで営業利益のみ年換算する")
+        @Test
+        void allQuarterTypes() {
+            var financeValue = defaultCorporateValueFinanceValue();
+
+            assertEquals(
+                    expectedCorporateValue(defaultCoefficient, QuarterType.QT_1),
+                    analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_1), defaultCoefficient)
+            );
+            assertEquals(
+                    expectedCorporateValue(defaultCoefficient, QuarterType.QT_2),
+                    analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_2), defaultCoefficient)
+            );
+            assertEquals(
+                    expectedCorporateValue(defaultCoefficient, QuarterType.QT_3),
+                    analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_3), defaultCoefficient)
+            );
+            assertEquals(
+                    expectedCorporateValue(defaultCoefficient, QuarterType.QT_4),
+                    analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_4), defaultCoefficient)
+            );
+            assertEquals(
+                    expectedCorporateValue(defaultCoefficient, QuarterType.QT_OTHER),
+                    analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_OTHER), defaultCoefficient)
+            );
+        }
+
+        @DisplayName("calculateCorporateValue : 有報相当は修正前後で算出結果が不変")
+        @Test
+        void annualFormulaIsUnchanged() {
+            var financeValue = defaultCorporateValueFinanceValue();
+            var expectedNewFormula = expectedCorporateValue(defaultCoefficient, null);
+            var expectedLegacyFormula = expectedCorporateValueLegacy(defaultCoefficient, null);
+
+            assertEquals(expectedLegacyFormula, expectedNewFormula);
+            assertEquals(
+                    expectedNewFormula,
+                    analysisResult.calculateCorporateValue(financeValue, defaultDocument(), defaultCoefficient)
+            );
         }
 
         @DisplayName("calculateCorporateValue : 流動資産合計が存在しないとき")
@@ -575,13 +567,10 @@ class AnalysisResultTest {
         void operatingProfitWeight_reflected() {
             var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(20), BigDecimal.valueOf(1.2));
 
-            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(20))
-                    .add(BigDecimal.valueOf(1001))
-                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(1.2))).add(BigDecimal.valueOf(1002))
-                    .subtract(BigDecimal.valueOf(1004))
-                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var expected = expectedCorporateValue(coefficient, null);
             var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
             assertEquals(expected, actual);
+            assertEquals(expectedCorporateValueLegacy(coefficient, null), actual);
         }
 
         @DisplayName("calculateCorporateValue : 流動負債調整係数のみ変更すると流動負債の項のみ変わる")
@@ -589,13 +578,10 @@ class AnalysisResultTest {
         void currentLiabilitiesRatio_reflected() {
             var coefficient = new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(2.0));
 
-            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
-                    .add(BigDecimal.valueOf(1001))
-                    .subtract(BigDecimal.valueOf(1003).multiply(BigDecimal.valueOf(2.0))).add(BigDecimal.valueOf(1002))
-                    .subtract(BigDecimal.valueOf(1004))
-                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+            var expected = expectedCorporateValue(coefficient, null);
             var actual = analysisResult.calculateCorporateValue(financeValue, document, coefficient);
             assertEquals(expected, actual);
+            assertEquals(expectedCorporateValueLegacy(coefficient, null), actual);
         }
     }
 
@@ -644,10 +630,14 @@ class AnalysisResultTest {
     }
 
     private Document defaultDocument() {
+        return documentOf(null);
+    }
+
+    private Document documentOf(final QuarterType quarterType) {
         return new Document(
                 "documentId",
                 null,
-                null,
+                quarterType,
                 "edinetCode",
                 null,
                 LocalDate.now(),
@@ -663,5 +653,44 @@ class AnalysisResultTest {
                 null,
                 false
         );
+    }
+
+    private FinanceValue defaultCorporateValueFinanceValue() {
+        return FinanceValue.of(
+                1001L,
+                1002L,
+                null,
+                1003L,
+                1004L,
+                null,
+                null,
+                10005L,
+                null,
+                1006L
+        );
+    }
+
+    private BigDecimal expectedCorporateValue(final AnalysisCoefficient coefficient, final QuarterType quarterType) {
+        var weightingQuarterType = quarterType == null || quarterType.getWeight() == null ? BigDecimal.valueOf(4) : BigDecimal.valueOf(quarterType.getWeight());
+
+        return BigDecimal.valueOf(10005).multiply(coefficient.getOperatingProfitWeight())
+                .divide(weightingQuarterType, 10, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(4))
+                .add(BigDecimal.valueOf(1001))
+                .subtract(BigDecimal.valueOf(1003).multiply(coefficient.getCurrentLiabilitiesRatio())).add(BigDecimal.valueOf(1002))
+                .subtract(BigDecimal.valueOf(1004))
+                .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal expectedCorporateValueLegacy(final AnalysisCoefficient coefficient, final QuarterType quarterType) {
+        var weightingQuarterType = quarterType == null || quarterType.getWeight() == null ? BigDecimal.valueOf(4) : BigDecimal.valueOf(quarterType.getWeight());
+
+        return BigDecimal.valueOf(10005).multiply(coefficient.getOperatingProfitWeight())
+                .add(BigDecimal.valueOf(1001))
+                .subtract(BigDecimal.valueOf(1003).multiply(coefficient.getCurrentLiabilitiesRatio())).add(BigDecimal.valueOf(1002))
+                .subtract(BigDecimal.valueOf(1004))
+                .divide(weightingQuarterType, 10, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(4))
+                .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
     }
 }

@@ -143,7 +143,13 @@ public class AnalysisResult {
     }
 
     /**
-     * 企業価値を指定係数で算出する
+     * 企業価値を指定係数で算出する。
+     *
+     * <p>年換算は営業利益にのみ適用し、BS のストック項目（流動資産・流動負債・投資その他の資産・固定負債）は
+     * 四半期末時点の残高を等倍で加減算する。
+     *
+     * <p>書類種別 140/150（四半期報告書・訂正四半期報告書）は保存されても集計・表示対象外であり、
+     * 既存保存データの再計算は行わない。
      *
      * @param financeValue 財務諸表値
      * @param document     ドキュメント
@@ -202,12 +208,13 @@ public class AnalysisResult {
                         "株式総数",
                         document
                 ));
+        final BigDecimal annualizedOperatingProfit = operatingProfit.multiply(coefficient.getOperatingProfitWeight())
+                .divide(weightingQuarterType, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
+                .multiply(ANNUAL_WEIGHT);
 
-        return operatingProfit.multiply(coefficient.getOperatingProfitWeight())
+        return annualizedOperatingProfit
                 .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(coefficient.getCurrentLiabilitiesRatio())).add(totalInvestmentsAndOtherAssets)
                 .subtract(totalFixedLiabilities)
-                .divide(weightingQuarterType, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
-                .multiply(ANNUAL_WEIGHT)
                 .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 
