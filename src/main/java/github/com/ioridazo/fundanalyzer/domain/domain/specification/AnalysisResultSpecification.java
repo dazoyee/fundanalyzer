@@ -305,8 +305,8 @@ public class AnalysisResultSpecification {
      *
      * @return バックフィル対象リスト
      */
-    public List<AnalysisResultEntity> findIndicatorBackfillTargets() {
-        return analysisResultDao.selectIndicatorBackfillTargets();
+    public List<AnalysisResultEntity> findIndicatorBackfillTargets(final List<String> documentTypeCodes) {
+        return analysisResultDao.selectIndicatorBackfillTargets(documentTypeCodes);
     }
 
     /**

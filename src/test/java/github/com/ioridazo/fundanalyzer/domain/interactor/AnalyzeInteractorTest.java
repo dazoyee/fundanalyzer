@@ -16,6 +16,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorBackfillResult;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -511,6 +512,166 @@ class AnalyzeInteractorTest {
                     ),
                     () -> assertEquals(BigDecimal.ONE, actual.getCountYear().orElse(null))
             );
+        }
+    }
+
+    @Nested
+    class backfillIndicators {
+
+        private AnalysisResultEntity target(final String documentId) {
+            return new AnalysisResultEntity(
+                    1,
+                    "1234",
+                    LocalDate.parse("2020-06-30"),
+                    BigDecimal.valueOf(100),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "120",
+                    "4",
+                    LocalDate.parse("2020-09-30"),
+                    documentId,
+                    null
+            );
+        }
+
+        private Document document(final String documentId) {
+            return new Document(
+                    documentId,
+                    null,
+                    null,
+                    "edinetCode",
+                    LocalDate.parse("2020-06-30"),
+                    LocalDate.parse("2020-09-30"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+        }
+
+        private Company company() {
+            return new Company(
+                    "1234",
+                    "company",
+                    10,
+                    "industry",
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    false,
+                    true
+            );
+        }
+
+        private FinanceValue financeValue() {
+            return FinanceValue.of(
+                    1000L,
+                    100L,
+                    1200L,
+                    200L,
+                    50L,
+                    0L,
+                    800L,
+                    300L,
+                    150L,
+                    10L
+            );
+        }
+
+        @DisplayName("backfillIndicators : 対象件数を返す")
+        @Test
+        void countIndicatorBackfillTargets() {
+            when(analysisResultSpecification.findIndicatorBackfillTargets(List.of("120", "130")))
+                    .thenReturn(List.of(target("doc-1"), target("doc-2")));
+
+            assertEquals(2, analyzeInteractor.countIndicatorBackfillTargets());
+        }
+
+        @DisplayName("backfillIndicators : 成功・スキップ・想定外例外を集計し継続する")
+        @Test
+        void continuesOnSkipAndUnexpectedException() {
+            final AnalysisResultEntity successTarget = target("doc-1");
+            final AnalysisResultEntity skippedTarget = target("doc-2");
+            final AnalysisResultEntity failedTarget = target("doc-3");
+            final Document successDocument = document("doc-1");
+            final Document skippedDocument = document("doc-2");
+            final Document failedDocument = document("doc-3");
+
+            when(analysisResultSpecification.findIndicatorBackfillTargets(List.of("120", "130")))
+                    .thenReturn(List.of(successTarget, skippedTarget, failedTarget));
+            when(documentSpecification.findDocument("doc-1")).thenReturn(successDocument);
+            when(documentSpecification.findDocument("doc-2")).thenReturn(skippedDocument);
+            when(documentSpecification.findDocument("doc-3")).thenReturn(failedDocument);
+            when(companySpecification.findCompanyByEdinetCode("edinetCode"))
+                    .thenReturn(Optional.of(company()))
+                    .thenReturn(Optional.empty())
+                    .thenReturn(Optional.of(company()));
+            when(industrySpecification.resolveCoefficient(10))
+                    .thenReturn(new AnalysisCoefficient(
+                            BigDecimal.TEN,
+                            BigDecimal.valueOf(1.2),
+                            BigDecimal.valueOf(0.08)
+                    ));
+            when(financialStatementSpecification.getFinanceValue(successDocument)).thenReturn(financeValue());
+            when(financialStatementSpecification.getFinanceValue(failedDocument))
+                    .thenThrow(new IllegalStateException("unexpected"));
+
+            final IndicatorBackfillResult actual = analyzeInteractor.backfillIndicators();
+
+            assertAll(
+                    () -> assertEquals(1, actual.successCount()),
+                    () -> assertEquals(1, actual.skippedCount()),
+                    () -> assertEquals(1, actual.failedCount())
+            );
+            verify(analysisResultSpecification, times(1)).upsert(eq(successDocument), any(AnalysisResult.class));
+            verify(analysisResultSpecification, times(0)).upsert(eq(skippedDocument), any(AnalysisResult.class));
+            verify(analysisResultSpecification, times(0)).upsert(eq(failedDocument), any(AnalysisResult.class));
+        }
+
+        @DisplayName("backfillIndicators : 成功時は全件 upsert する")
+        @Test
+        void success() {
+            final AnalysisResultEntity firstTarget = target("doc-1");
+            final AnalysisResultEntity secondTarget = target("doc-2");
+            final Document firstDocument = document("doc-1");
+            final Document secondDocument = document("doc-2");
+            final Company company = company();
+            final AnalysisCoefficient coefficient = new AnalysisCoefficient(
+                    BigDecimal.TEN,
+                    BigDecimal.valueOf(1.2),
+                    BigDecimal.valueOf(0.08)
+            );
+            final FinanceValue financeValue = financeValue();
+
+            when(analysisResultSpecification.findIndicatorBackfillTargets(List.of("120", "130")))
+                    .thenReturn(List.of(firstTarget, secondTarget));
+            when(documentSpecification.findDocument("doc-1")).thenReturn(firstDocument);
+            when(documentSpecification.findDocument("doc-2")).thenReturn(secondDocument);
+            when(companySpecification.findCompanyByEdinetCode("edinetCode"))
+                    .thenReturn(Optional.of(company))
+                    .thenReturn(Optional.of(company));
+            when(industrySpecification.resolveCoefficient(10)).thenReturn(coefficient);
+            when(financialStatementSpecification.getFinanceValue(firstDocument)).thenReturn(financeValue);
+            when(financialStatementSpecification.getFinanceValue(secondDocument)).thenReturn(financeValue);
+
+            final IndicatorBackfillResult actual = analyzeInteractor.backfillIndicators();
+
+            assertEquals(new IndicatorBackfillResult(2, 0, 0), actual);
+            verify(analysisResultSpecification, times(1)).upsert(eq(firstDocument), any(AnalysisResult.class));
+            verify(analysisResultSpecification, times(1)).upsert(eq(secondDocument), any(AnalysisResult.class));
         }
     }
 

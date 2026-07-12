@@ -573,12 +573,13 @@ class AnalysisResultSpecificationTest {
         @DisplayName("findIndicatorBackfillTargets : DAO の結果をそのまま返却する")
         @Test
         void delegatesToDao() {
+            final List<String> documentTypeCodes = List.of("120", "130");
             final AnalysisResultEntity entity = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
                     null, null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), "doc-1", null);
-            when(analysisResultDao.selectIndicatorBackfillTargets()).thenReturn(List.of(entity));
+            when(analysisResultDao.selectIndicatorBackfillTargets(documentTypeCodes)).thenReturn(List.of(entity));
 
-            final List<AnalysisResultEntity> actual = analysisResultSpecification.findIndicatorBackfillTargets();
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.findIndicatorBackfillTargets(documentTypeCodes);
 
             assertEquals(1, actual.size());
             assertSame(entity, actual.get(0));

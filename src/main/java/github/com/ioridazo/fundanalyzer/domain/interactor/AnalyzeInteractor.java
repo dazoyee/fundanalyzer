@@ -21,9 +21,9 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorBackfillResult;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
-import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
@@ -271,6 +271,47 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         return corporateValue;
     }
 
+    @Override
+    public int countIndicatorBackfillTargets() {
+        return analysisResultSpecification.findIndicatorBackfillTargets(targetTypeCodes).size();
+    }
+
+    @Override
+    public IndicatorBackfillResult backfillIndicators() {
+        int successCount = 0;
+        int skippedCount = 0;
+        int failedCount = 0;
+
+        for (AnalysisResultEntity target : analysisResultSpecification.findIndicatorBackfillTargets(targetTypeCodes)) {
+            try {
+                backfillIndicator(target.getDocumentId());
+                successCount++;
+            } catch (final FundanalyzerNotExistException e) {
+                skippedCount++;
+                log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "指標バックフィルをスキップしました。\t書類ID:{0}",
+                                target.getDocumentId()
+                        ),
+                        Category.ANALYSIS,
+                        Process.ANALYSIS
+                ), e);
+            } catch (final RuntimeException e) {
+                failedCount++;
+                log.error(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "指標バックフィル中に想定外エラーが発生しました。\t書類ID:{0}",
+                                target.getDocumentId()
+                        ),
+                        Category.ANALYSIS,
+                        Process.ANALYSIS
+                ), e);
+            }
+        }
+
+        return new IndicatorBackfillResult(successCount, skippedCount, failedCount);
+    }
+
     /**
      * 投資指標を算出する
      *
@@ -279,6 +320,19 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     @Override
     public void indicate(final CodeInputData inputData) {
         analysisResultSpecification.findLatestAnalysisResult(inputData.getCode()).ifPresent(this::indicate);
+    }
+
+    private void backfillIndicator(final String documentId) {
+        final Document document = documentSpecification.findDocument(documentId);
+        final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
+                .orElseThrow(FundanalyzerNotExistException::new);
+        final AnalysisCoefficient coefficient = industrySpecification.resolveCoefficient(company.industryId());
+        final AnalysisResult analysisResult = new AnalysisResult(
+                financialStatementSpecification.getFinanceValue(document),
+                document,
+                coefficient
+        );
+        analysisResultSpecification.upsert(document, analysisResult);
     }
 
     /**

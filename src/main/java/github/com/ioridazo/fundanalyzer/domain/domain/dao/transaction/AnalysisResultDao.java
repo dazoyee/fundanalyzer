@@ -40,7 +40,7 @@ public interface AnalysisResultDao {
     List<AnalysisResultEntity> selectBySubmitDateAndCreatedAt(LocalDate submitDate, LocalDate nowLocalDate);
 
     @Select
-    List<AnalysisResultEntity> selectIndicatorBackfillTargets();
+    List<AnalysisResultEntity> selectIndicatorBackfillTargets(List<String> documentTypeCodes);
 
     @Insert
     Result<AnalysisResultEntity> insert(AnalysisResultEntity analysisResultEntity);
