@@ -424,6 +424,19 @@ class FinancialStatementSpecificationTest {
             );
         }
 
+        @DisplayName("insert : 前回黒字→今回赤字など符号反転なら比率判定せず警告しない")
+        @Test
+        void noWarningOnSignReversal() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, -500L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
         @DisplayName("insert : 初回登録は比較せず登録する")
         @Test
         void skipValidationWhenPreviousValueMissing() {

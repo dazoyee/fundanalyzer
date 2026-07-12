@@ -272,6 +272,10 @@ public class FinancialStatementSpecification {
         if (previousValue == 0L || currentValue == 0L) {
             return !previousValue.equals(currentValue);
         }
+        // 符号が反転する変動（黒字→赤字等）は正常な業績変動でありスクレイピング異常ではないため、比率判定の対象外とする
+        if ((previousValue > 0L) != (currentValue > 0L)) {
+            return false;
+        }
 
         final BigDecimal ratio = BigDecimal.valueOf(currentValue)
                 .divide(BigDecimal.valueOf(previousValue), 10, RoundingMode.HALF_UP);
