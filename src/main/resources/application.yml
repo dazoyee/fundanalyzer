@@ -214,6 +214,9 @@ app:
 
     scraping:
       document-type-code: 120,130,140,150  # スクレイピング処理対象
+      validation:
+        lower-limit-ratio: 0.1  # 前回値比で下限未満なら警告
+        upper-limit-ratio: 10.0  # 前回値比で上限超なら警告
       no-industry: # 処理対象外
         銀行業
         ,保険業
@@ -272,7 +275,10 @@ app:
 
   slack:
     analysis-result.enabled: true
+    financial-statement-validation.enabled: true
     update-view.enabled: false
     insert-stock.enabled: false
     delete-stock.enabled: false
     evaluate.enabled: true
+
+"github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert": "*財務取得値バリデーション警告*\t*企業コード:{0}*\t*EDINET:{1}*\t*財務諸表:{2}*\t*科目ID:{3}*\t*書類ID:{4}*\t*当期末:{5}*\t*前回期末:{6}*\t*前回値:{7}*\t*今回値:{8}*\t*比率:{9}*"

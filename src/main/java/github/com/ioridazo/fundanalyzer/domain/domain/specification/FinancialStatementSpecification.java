@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
@@ -20,28 +21,44 @@ import github.com.ioridazo.fundanalyzer.web.view.model.edinet.detail.FinanceValu
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.seasar.doma.jdbc.UniqueConstraintException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
 public class FinancialStatementSpecification {
 
     private static final Logger log = LogManager.getLogger(FinancialStatementSpecification.class);
+    private static final String FINANCIAL_STATEMENT_VALIDATION_NOTICE =
+            "github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert";
 
     private final FinancialStatementDao financialStatementDao;
     private final SubjectSpecification subjectSpecification;
+    private final SlackClient slackClient;
+    @Value("${app.config.scraping.validation.lower-limit-ratio}")
+    BigDecimal validationLowerLimitRatio;
+    @Value("${app.config.scraping.validation.upper-limit-ratio}")
+    BigDecimal validationUpperLimitRatio;
+    @Value("${app.slack.financial-statement-validation.enabled:true}")
+    boolean financialStatementValidationEnabled;
 
     public FinancialStatementSpecification(
             final FinancialStatementDao financialStatementDao,
-            final SubjectSpecification subjectSpecification) {
+            final SubjectSpecification subjectSpecification,
+            final SlackClient slackClient) {
         this.financialStatementDao = financialStatementDao;
         this.subjectSpecification = subjectSpecification;
+        this.slackClient = slackClient;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -153,6 +170,44 @@ public class FinancialStatementSpecification {
             final Document document,
             final Long value,
             final CreatedType createdType) {
+        insertInternal(company, fs, dId, document, value, createdType, true);
+    }
+
+    /**
+     * 財務諸表の値を補完登録する
+     *
+     * @param company     企業情報
+     * @param fs          財務諸表種別
+     * @param dId         科目ID
+     * @param document    ドキュメント
+     * @param value       値
+     * @param createdType 登録方法
+     */
+    public void insertWithoutValidation(
+            final Company company,
+            final FinancialStatementEnum fs,
+            final String dId,
+            final Document document,
+            final Long value,
+            final CreatedType createdType) {
+        insertInternal(company, fs, dId, document, value, createdType, false);
+    }
+
+    private void insertInternal(
+            final Company company,
+            final FinancialStatementEnum fs,
+            final String dId,
+            final Document document,
+            final Long value,
+            final CreatedType createdType,
+            final boolean validationTarget) {
+        final Optional<FinancialStatementEntity> previousStatement = validationTarget
+                ? findPreviousStatement(company, fs, dId, document)
+                : Optional.empty();
+        final boolean warningTarget = validationTarget
+                && previousStatement.map(entity -> isValidationWarning(entity.getValue().orElse(null), value)).orElse(false);
+        boolean inserted = false;
+
         try {
             financialStatementDao.insert(FinancialStatementEntity.of(
                     company.code(),
@@ -169,6 +224,7 @@ public class FinancialStatementSpecification {
                     createdType.toValue(),
                     nowLocalDateTime()
             ));
+            inserted = true;
         } catch (NestedRuntimeException e) {
             if (e.contains(UniqueConstraintException.class)) {
                 log.debug(FundanalyzerLogClient.toSpecificationLogObject(
@@ -189,6 +245,100 @@ public class FinancialStatementSpecification {
                 throw e;
             }
         }
+
+        if (inserted && warningTarget) {
+            notifyValidationWarning(company, fs, dId, document, previousStatement.orElseThrow(), value);
+        }
+    }
+
+    private Optional<FinancialStatementEntity> findPreviousStatement(
+            final Company company,
+            final FinancialStatementEnum fs,
+            final String dId,
+            final Document document) {
+        return findByCompany(company).stream()
+                .filter(entity -> Objects.equals(entity.getFinancialStatementId(), fs.getId()))
+                .filter(entity -> Objects.equals(entity.getSubjectId(), dId))
+                .filter(entity -> entity.getPeriodEnd() != null)
+                .filter(entity -> document.getPeriodEnd() != null)
+                .filter(entity -> entity.getPeriodEnd().isBefore(document.getPeriodEnd()))
+                .max(Comparator.comparing(FinancialStatementEntity::getPeriodEnd));
+    }
+
+    private boolean isValidationWarning(final Long previousValue, final Long currentValue) {
+        if (previousValue == null || currentValue == null) {
+            return false;
+        }
+        if (previousValue == 0L || currentValue == 0L) {
+            return !previousValue.equals(currentValue);
+        }
+        // 符号が反転する変動（黒字→赤字等）は正常な業績変動でありスクレイピング異常ではないため、比率判定の対象外とする
+        if ((previousValue > 0L) != (currentValue > 0L)) {
+            return false;
+        }
+
+        final BigDecimal ratio = BigDecimal.valueOf(currentValue)
+                .divide(BigDecimal.valueOf(previousValue), 10, RoundingMode.HALF_UP);
+        return ratio.compareTo(validationLowerLimitRatio) < 0 || ratio.compareTo(validationUpperLimitRatio) > 0;
+    }
+
+    private void notifyValidationWarning(
+            final Company company,
+            final FinancialStatementEnum fs,
+            final String dId,
+            final Document document,
+            final FinancialStatementEntity previousStatement,
+            final Long currentValue) {
+        final Long previousValue = previousStatement.getValue().orElse(null);
+        final String ratio = formatRatio(previousValue, currentValue);
+
+        log.warn(FundanalyzerLogClient.toSpecificationLogObject(
+                MessageFormat.format(
+                        "前回値との乖離が閾値外のため警告付きで登録しました。" +
+                        "\t企業コード:{0}\t財務諸表名:{1}\t科目ID:{2}\t前回値:{3}\t今回値:{4}\t比率:{5}",
+                        company.code(),
+                        fs.getName(),
+                        dId,
+                        previousValue,
+                        currentValue,
+                        ratio
+                ),
+                document,
+                Category.SCRAPING,
+                Process.of(fs)
+        ));
+
+        if (financialStatementValidationEnabled) {
+            slackClient.sendMessage(
+                    FINANCIAL_STATEMENT_VALIDATION_NOTICE,
+                    company.code(),
+                    company.edinetCode(),
+                    fs.getName(),
+                    dId,
+                    document.getDocumentId(),
+                    document.getPeriodEnd(),
+                    previousStatement.getPeriodEnd(),
+                    previousValue,
+                    currentValue,
+                    ratio
+            );
+        }
+    }
+
+    private String formatRatio(final Long previousValue, final Long currentValue) {
+        if (previousValue == null || currentValue == null) {
+            return "N/A";
+        }
+        if (previousValue == 0L && currentValue == 0L) {
+            return "1";
+        }
+        if (previousValue == 0L) {
+            return "INF";
+        }
+        return BigDecimal.valueOf(currentValue)
+                .divide(BigDecimal.valueOf(previousValue), 4, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
     }
 
     /**

@@ -283,7 +283,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
 
         if ((totalCurrentLiabilities.isPresent() && totalLiabilities.isPresent())
             && (totalCurrentLiabilities.get().equals(totalLiabilities.get()))) {
-            financialStatementSpecification.insert(
+            financialStatementSpecification.insertWithoutValidation(
                     company,
                     FinancialStatementEnum.BALANCE_SHEET,
                     subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_FIXED_LIABILITIES).get(0).getId(),
@@ -317,7 +317,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
     void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(final Company company, final Document document) {
         if (List.of(DocumentTypeCode.DTC_140, DocumentTypeCode.DTC_150).contains(document.getDocumentTypeCode())
             && !financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)) {
-            financialStatementSpecification.insert(
+            financialStatementSpecification.insertWithoutValidation(
                     company,
                     FinancialStatementEnum.BALANCE_SHEET,
                     subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS).get(0).getId(),

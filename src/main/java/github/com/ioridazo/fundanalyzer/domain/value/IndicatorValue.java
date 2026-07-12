@@ -99,7 +99,7 @@ public class IndicatorValue {
     Optional<BigDecimal> calculatePer(
             final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
         return analysisResultEntity.getEps()
-                .filter(eps -> eps.compareTo(BigDecimal.ZERO) != 0)
+                .filter(eps -> eps.compareTo(BigDecimal.ZERO) > 0)
                 .map(eps -> stockPrice.divide(eps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
@@ -111,7 +111,9 @@ public class IndicatorValue {
     }
 
     Optional<BigDecimal> calculateGrahamIndex(final BigDecimal per, final BigDecimal pbr) {
-        if (Objects.nonNull(per) && Objects.nonNull(pbr)) {
+        if (Objects.nonNull(per) && Objects.nonNull(pbr)
+                && per.compareTo(BigDecimal.ZERO) > 0
+                && pbr.compareTo(BigDecimal.ZERO) > 0) {
             return Optional.of(per.multiply(pbr));
         } else {
             return Optional.empty();

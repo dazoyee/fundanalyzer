@@ -1,13 +1,16 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
+import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,13 +19,20 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("NewClassNamingConvention")
@@ -30,6 +40,7 @@ class FinancialStatementSpecificationTest {
 
     private FinancialStatementDao financialStatementDao;
     private SubjectSpecification subjectSpecification;
+    private SlackClient slackClient;
 
     private FinancialStatementSpecification financialStatementSpecification;
 
@@ -37,11 +48,16 @@ class FinancialStatementSpecificationTest {
     void setUp() {
         financialStatementDao = Mockito.mock(FinancialStatementDao.class);
         subjectSpecification = Mockito.mock(SubjectSpecification.class);
+        slackClient = Mockito.mock(SlackClient.class);
 
         financialStatementSpecification = Mockito.spy(new FinancialStatementSpecification(
                 financialStatementDao,
-                subjectSpecification
+                subjectSpecification,
+                slackClient
         ));
+        financialStatementSpecification.validationLowerLimitRatio = BigDecimal.valueOf(0.1d);
+        financialStatementSpecification.validationUpperLimitRatio = BigDecimal.TEN;
+        financialStatementSpecification.financialStatementValidationEnabled = true;
     }
 
     @Nested
@@ -282,6 +298,213 @@ class FinancialStatementSpecificationTest {
             final Optional<Long> actual = financialStatementSpecification.findValue(fs, document, List.of(subject));
 
             org.junit.jupiter.api.Assertions.assertTrue(actual.isEmpty());
+        }
+    }
+
+    @Nested
+    class insert {
+
+        private final Company company = new Company(
+                "1234",
+                "company",
+                null,
+                null,
+                "E12345",
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                false
+        );
+        private final Document document = new Document(
+                "DOC001",
+                DocumentTypeCode.DTC_120,
+                QuarterType.QT_4,
+                "E12345",
+                LocalDate.parse("2026-03-31"),
+                LocalDate.parse("2026-06-30"),
+                LocalDate.parse("2025-04-01"),
+                LocalDate.parse("2026-03-31"),
+                DocumentStatus.DONE,
+                DocumentStatus.DONE,
+                DocumentStatus.DONE,
+                null,
+                DocumentStatus.DONE,
+                null,
+                DocumentStatus.DONE,
+                null,
+                false
+        );
+
+        @DisplayName("insert : 比率が閾値内なら登録してSlack通知しない")
+        @Test
+        void noWarningWithinThreshold() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
+        @DisplayName("insert : 下限閾値ちょうどなら警告しない")
+        @Test
+        void noWarningAtLowerBoundary() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
+
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
+        @DisplayName("insert : 上限閾値ちょうどなら警告しない")
+        @Test
+        void noWarningAtUpperBoundary() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1000L, CreatedType.AUTO));
+
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
+        @DisplayName("insert : 下限未満なら警告付きで登録してSlack通知する")
+        @Test
+        void warningAtLowerOutsideBoundary() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 99L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(slackClient, times(1)).sendMessage(
+                    eq("github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert"),
+                    eq("1234"),
+                    eq("E12345"),
+                    eq(FinancialStatementEnum.BALANCE_SHEET.getName()),
+                    eq("1"),
+                    eq("DOC001"),
+                    eq(LocalDate.parse("2026-03-31")),
+                    eq(LocalDate.parse("2025-03-31")),
+                    eq(1000L),
+                    eq(99L),
+                    eq("0.099")
+            );
+        }
+
+        @DisplayName("insert : 上限超なら警告付きで登録してSlack通知する")
+        @Test
+        void warningAtUpperOutsideBoundary() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1001L, CreatedType.AUTO));
+
+            verify(slackClient, times(1)).sendMessage(
+                    eq("github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert"),
+                    eq("1234"),
+                    eq("E12345"),
+                    eq(FinancialStatementEnum.BALANCE_SHEET.getName()),
+                    eq("1"),
+                    eq("DOC001"),
+                    eq(LocalDate.parse("2026-03-31")),
+                    eq(LocalDate.parse("2025-03-31")),
+                    eq(100L),
+                    eq(1001L),
+                    eq("10.01")
+            );
+        }
+
+        @DisplayName("insert : 前回黒字→今回赤字など符号反転なら比率判定せず警告しない")
+        @Test
+        void noWarningOnSignReversal() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, -500L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
+        @DisplayName("insert : 初回登録は比較せず登録する")
+        @Test
+        void skipValidationWhenPreviousValueMissing() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of());
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
+        @DisplayName("insert : 前回0で今回非0なら警告付きで登録してSlack通知する")
+        @Test
+        void warningWhenPreviousZero() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", 0L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1L, CreatedType.AUTO));
+
+            verify(slackClient, times(1)).sendMessage(
+                    eq("github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert"),
+                    eq("1234"),
+                    eq("E12345"),
+                    eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getName()),
+                    eq("0"),
+                    eq("DOC001"),
+                    eq(LocalDate.parse("2026-03-31")),
+                    eq(LocalDate.parse("2025-03-31")),
+                    eq(0L),
+                    eq(1L),
+                    eq("INF")
+            );
+        }
+
+        @DisplayName("insertWithoutValidation : 補完登録では乖離チェックもSlack通知も行わない")
+        @Test
+        void skipValidationForSupplementalInsert() {
+            assertDoesNotThrow(() -> financialStatementSpecification.insertWithoutValidation(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 0L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(financialStatementDao, never()).selectByCode(anyString());
+            verify(slackClient, never()).sendMessage(anyString(), any());
+        }
+
+        private FinancialStatementEntity previousEntity(
+                final FinancialStatementEnum fs,
+                final String subjectId,
+                final Long value,
+                final LocalDate periodEnd) {
+            return new FinancialStatementEntity(
+                    1,
+                    "1234",
+                    "E12345",
+                    fs.getId(),
+                    subjectId,
+                    LocalDate.parse("2024-04-01"),
+                    periodEnd,
+                    value,
+                    DocumentTypeCode.DTC_120.toValue(),
+                    QuarterType.QT_4.toValue(),
+                    LocalDate.parse("2025-06-30"),
+                    "DOC000",
+                    CreatedType.AUTO.toValue(),
+                    null
+            );
         }
     }
 

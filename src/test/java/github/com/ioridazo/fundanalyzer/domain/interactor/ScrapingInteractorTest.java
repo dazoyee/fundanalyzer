@@ -155,6 +155,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.bs(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "id", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(1)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.BALANCE_SHEET, "file");
         }
@@ -208,6 +210,8 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document));
             verify(financialStatementSpecification, times(1))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
         }
 
@@ -227,6 +231,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document));
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "3", document, 0L, CreatedType.AUTO);
         }
 
         @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 四半期報告書で投資その他の資産合計が存在しないとき、投資その他の資産合計に0としてDBに登録する")
@@ -239,6 +245,8 @@ class ScrapingInteractorTest {
 
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC140));
             verify(financialStatementSpecification, times(1))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
         }
 
@@ -253,6 +261,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC140));
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
         }
 
         @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 四半期報告書以外のときはなにもしない")
@@ -266,6 +276,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, document));
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 0L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 0L, CreatedType.AUTO);
         }
     }
 
@@ -296,6 +308,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.pl(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
         }
@@ -357,6 +371,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
         }
@@ -369,6 +385,8 @@ class ScrapingInteractorTest {
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
             verify(financialStatementSpecification, times(1))
                     .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
+            verify(financialStatementSpecification, times(0))
+                    .insertWithoutValidation(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
         }
