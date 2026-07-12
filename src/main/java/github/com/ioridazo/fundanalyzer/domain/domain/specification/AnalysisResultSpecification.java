@@ -299,4 +299,70 @@ public class AnalysisResultSpecification {
                 .map(Optional::get)
                 .toList();
     }
+
+    /**
+     * 指標バックフィル対象となる分析結果リストを取得する
+     *
+     * @return バックフィル対象リスト
+     */
+    public List<AnalysisResultEntity> findIndicatorBackfillTargets(final List<String> documentTypeCodes) {
+        return analysisResultDao.selectIndicatorBackfillTargets(documentTypeCodes);
+    }
+
+    /**
+     * 分析結果を一意キーで upsert する
+     *
+     * <p>Gate1 論点として、この更新経路は BPS/EPS/ROE/ROA/RIM の補完だけを目的とし、
+     * corporate_value の再計算・更新や P1 の係数見直しとは意図的に切り離している。
+     *
+     * @param document       ドキュメント
+     * @param analysisResult 分析結果
+     */
+    public void upsert(final Document document, final AnalysisResult analysisResult) {
+        final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new);
+        final LocalDate documentPeriod = document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod"));
+        final Optional<AnalysisResultEntity> existing = analysisResultDao.selectByUniqueKey(
+                company.code(),
+                documentPeriod,
+                document.getDocumentTypeCode().toValue(),
+                document.getSubmitDate()
+        );
+
+        if (existing.isPresent()) {
+            final AnalysisResultEntity current = existing.get();
+            analysisResultDao.update(new AnalysisResultEntity(
+                    current.getId(),
+                    current.getCompanyCode(),
+                    current.getDocumentPeriod(),
+                    current.getCorporateValue(),
+                    analysisResult.getRimValue().orElse(null),
+                    analysisResult.getBps().orElse(null),
+                    analysisResult.getEps().orElse(null),
+                    analysisResult.getRoe().orElse(null),
+                    analysisResult.getRoa().orElse(null),
+                    current.getDocumentTypeCode(),
+                    current.getQuarterType(),
+                    current.getSubmitDate(),
+                    current.getDocumentId(),
+                    current.getCreatedAt()
+            ));
+            return;
+        }
+
+        analysisResultDao.insert(AnalysisResultEntity.of(
+                company.code(),
+                documentPeriod,
+                analysisResult.getCorporateValue(),
+                analysisResult.getRimValue().orElse(null),
+                analysisResult.getBps().orElse(null),
+                analysisResult.getEps().orElse(null),
+                analysisResult.getRoe().orElse(null),
+                analysisResult.getRoa().orElse(null),
+                document.getDocumentTypeCode(),
+                document.getQuarterType(),
+                document.getSubmitDate(),
+                document.getDocumentId(),
+                nowLocalDateTime()
+        ));
+    }
 }

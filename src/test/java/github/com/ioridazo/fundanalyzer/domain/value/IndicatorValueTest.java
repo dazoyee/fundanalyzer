@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -94,6 +95,52 @@ class IndicatorValueTest {
 
             assertNull(indicatorValue.calculatePer(stockPrice, analysisResultEntity).orElse(null));
         }
+
+        @DisplayName("calculatePer : EPSが負のときは算出しない")
+        @Test
+        void eps_isNegative() {
+            var stockPrice = BigDecimal.valueOf(1523);
+            var analysisResultEntity = new AnalysisResultEntity(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    BigDecimal.valueOf(-2123.14),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals(Optional.empty(), indicatorValue.calculatePer(stockPrice, analysisResultEntity));
+        }
+
+        @DisplayName("calculatePer : EPSがゼロのときは算出しない")
+        @Test
+        void eps_isZero() {
+            var stockPrice = BigDecimal.valueOf(1523);
+            var analysisResultEntity = new AnalysisResultEntity(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    BigDecimal.ZERO,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            assertEquals(Optional.empty(), indicatorValue.calculatePer(stockPrice, analysisResultEntity));
+        }
     }
 
     @Nested
@@ -173,6 +220,51 @@ class IndicatorValueTest {
         void pbr_isEmpty() {
             var pbr = BigDecimal.valueOf(6.33);
             assertNull(indicatorValue.calculateGrahamIndex(null, pbr).orElse(null));
+        }
+
+        @DisplayName("grahamIndex : PERが負のときは算出しない")
+        @Test
+        void per_isNegative() {
+            var per = BigDecimal.valueOf(-6.33);
+            var pbr = BigDecimal.valueOf(0.14);
+
+            assertEquals(Optional.empty(), indicatorValue.calculateGrahamIndex(per, pbr));
+        }
+
+        @DisplayName("grahamIndex : PBRが負のときは算出しない")
+        @Test
+        void pbr_isNegative() {
+            var per = BigDecimal.valueOf(6.33);
+            var pbr = BigDecimal.valueOf(-0.14);
+
+            assertEquals(Optional.empty(), indicatorValue.calculateGrahamIndex(per, pbr));
+        }
+
+        @DisplayName("grahamIndex : PERとPBRが両方負のときは算出しない")
+        @Test
+        void per_and_pbr_areNegative() {
+            var per = BigDecimal.valueOf(-6.33);
+            var pbr = BigDecimal.valueOf(-0.14);
+
+            assertEquals(Optional.empty(), indicatorValue.calculateGrahamIndex(per, pbr));
+        }
+
+        @DisplayName("grahamIndex : PERがゼロのときは算出しない")
+        @Test
+        void per_isZero() {
+            var per = BigDecimal.ZERO;
+            var pbr = BigDecimal.valueOf(0.14);
+
+            assertEquals(Optional.empty(), indicatorValue.calculateGrahamIndex(per, pbr));
+        }
+
+        @DisplayName("grahamIndex : PBRがゼロのときは算出しない")
+        @Test
+        void pbr_isZero() {
+            var per = BigDecimal.valueOf(6.33);
+            var pbr = BigDecimal.ZERO;
+
+            assertEquals(Optional.empty(), indicatorValue.calculateGrahamIndex(per, pbr));
         }
     }
 }
