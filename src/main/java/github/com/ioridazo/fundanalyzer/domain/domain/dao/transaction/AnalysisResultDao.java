@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.Analysi
 import org.seasar.doma.Dao;
 import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
+import org.seasar.doma.Update;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
@@ -38,6 +39,12 @@ public interface AnalysisResultDao {
     @Select
     List<AnalysisResultEntity> selectBySubmitDateAndCreatedAt(LocalDate submitDate, LocalDate nowLocalDate);
 
+    @Select
+    List<AnalysisResultEntity> selectIndicatorBackfillTargets();
+
     @Insert
     Result<AnalysisResultEntity> insert(AnalysisResultEntity analysisResultEntity);
+
+    @Update(excludeNull = true)
+    Result<AnalysisResultEntity> update(AnalysisResultEntity analysisResultEntity);
 }

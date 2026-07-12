@@ -1,7 +1,17 @@
 package github.com.ioridazo.fundanalyzer.web.controller;
 
+import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
+import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -35,14 +45,29 @@ public class AnalysisController {
     private final AnalysisService analysisService;
     private final ViewService viewService;
     private final MessageSource messageSource;
+    private final AnalysisResultSpecification analysisResultSpecification;
+    private final DocumentSpecification documentSpecification;
+    private final FinancialStatementSpecification financialStatementSpecification;
+    private final CompanySpecification companySpecification;
+    private final IndustrySpecification industrySpecification;
 
     public AnalysisController(
             final AnalysisService analysisService,
             final ViewService viewService,
-            final MessageSource messageSource) {
+            final MessageSource messageSource,
+            final AnalysisResultSpecification analysisResultSpecification,
+            final DocumentSpecification documentSpecification,
+            final FinancialStatementSpecification financialStatementSpecification,
+            final CompanySpecification companySpecification,
+            final IndustrySpecification industrySpecification) {
         this.analysisService = analysisService;
         this.viewService = viewService;
         this.messageSource = messageSource;
+        this.analysisResultSpecification = analysisResultSpecification;
+        this.documentSpecification = documentSpecification;
+        this.financialStatementSpecification = financialStatementSpecification;
+        this.companySpecification = companySpecification;
+        this.industrySpecification = industrySpecification;
     }
 
     /**
@@ -71,6 +96,56 @@ public class AnalysisController {
         viewService.updateCorporateView();
         return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
                 .queryParam(MESSAGE, "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
+                .build().encode().toUriString();
+    }
+
+    /**
+     * 指標バックフィル対象件数を確認する
+     *
+     * @return Index
+     */
+    @GetMapping("/v1/admin/analysis/backfill/indicator/preview")
+    public String previewIndicatorBackfill() {
+        final int targetCount = analysisResultSpecification.findIndicatorBackfillTargets().size();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
+                .queryParam(MESSAGE, "指標バックフィル対象件数: " + targetCount + "件")
+                .build().encode().toUriString();
+    }
+
+    /**
+     * 指標バックフィルを実行する
+     *
+     * <p>管理者専用運用を前提とし、実行前に analysis_result テーブルのバックアップ取得を必須とする。
+     * Gate1 論点として、この処理は指標列（BPS/EPS/ROE/ROA/RIM）のみを補完し、
+     * corporate_value 列や P1 の係数ロジックは意図的に再計算しない。
+     *
+     * @return Index
+     */
+    @PostMapping("/v1/admin/analysis/backfill/indicator")
+    public String backfillIndicator() {
+        int successCount = 0;
+        int skippedCount = 0;
+
+        for (AnalysisResultEntity target : analysisResultSpecification.findIndicatorBackfillTargets()) {
+            try {
+                final Document document = documentSpecification.findDocument(target.getDocumentId());
+                final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
+                        .orElseThrow(FundanalyzerNotExistException::new);
+                final AnalysisCoefficient coefficient = industrySpecification.resolveCoefficient(company.industryId());
+                final AnalysisResult analysisResult = new AnalysisResult(
+                        financialStatementSpecification.getFinanceValue(document),
+                        document,
+                        coefficient
+                );
+                analysisResultSpecification.upsert(document, analysisResult);
+                successCount++;
+            } catch (final FundanalyzerNotExistException e) {
+                skippedCount++;
+            }
+        }
+
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
+                .queryParam(MESSAGE, "指標バックフィル完了: success=" + successCount + ", skipped=" + skippedCount)
                 .build().encode().toUriString();
     }
 
