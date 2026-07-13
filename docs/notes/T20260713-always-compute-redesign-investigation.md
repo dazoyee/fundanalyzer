@@ -130,3 +130,76 @@ BPS/EPS が係数非依存の純粋関数である以上、PER/PBR も「`stock_
 2. `investment_indicator`（約300万件規模）を都度計算に倒した場合の詳細画面チャート描画の応答時間は未計測。フェーズ2着手前に検証環境での実測が必要。
 3. corporate_value/RIM の係数依存性をどう扱うか（バージョニング案）は本調査のスコープ外であり、着手する場合は別タスクとして Gate1 影響範囲分析（3属性チェック）から起票する必要がある。
 4. `investment_indicator` は「新規追加」の履歴テーブルであり、既存の巨大データ（約300万件）の扱い（都度計算へ移行する場合、既存の保存列をどう扱うか）は移行コストの見積もりが必要。
+
+---
+
+## 追加検討（実装判断向け）
+
+本番デプロイ済みの P3（指標バックフィル機構: `AnalyzeInteractor.backfillIndicators()`／`AnalysisResultSpecification.upsert()`／`/v1/admin/analysis/backfill/indicator*`）を、部分適用案（BPS/EPS/ROE/ROA の都度計算化）でどこまで置き換えられるかを、実装に着手できる粒度まで深掘りする。
+
+### 6.1 P3 との関係
+
+`selectIndicatorBackfillTargets.sql`（`AnalysisResultDao/selectIndicatorBackfillTargets.sql`）の対象条件は次の通り。
+
+```sql
+bps is null or eps is null or roe is null or roa is null or rim_value is null
+```
+
+ここで見落としてはならない事実がある。**P3 は BPS/EPS/ROE/ROA（係数非依存）だけでなく `rim_value`（係数依存。`costOfEquity` 経由で `industry` マスタに依存する）も同じバックフィル対象に含めている。** `AnalyzeInteractor.backfillIndicator()`（`AnalyzeInteractor.java:325-336`）は毎回 `industrySpecification.resolveCoefficient(company.industryId())` で**現在の係数**を解決してから `AnalysisResult` を再構築し、`upsert()` で `rim_value` を書き戻す。
+
+- **BPS/EPS/ROE/ROA 部分**: フェーズ1（都度計算化）を実施すると、この4列は保存対象でなくなるため `selectIndicatorBackfillTargets.sql` の対象条件から自然に外れ、バックフィル対象は事実上「`rim_value is null` の行」だけに縮小する。P3 は消滅するのではなく、**「RIM 専用バックフィル」に縮退する**。
+- **rim_value 部分の整合性問題**: RIM は corporate_value と同じ「係数依存＝算出時点の係数を凍結すべき値」のカテゴリである（本ノート §3.4 の結論）。にもかかわらず P3 は rim_value を**今の係数で事後的に穴埋め**しており、これは `AnalysisResultSpecification.insert()` が corporate_value について意図的に採用している「一意制約違反時は書き換えない＝非遡及」という設計方針と矛盾する。つまり **P3 は現状でも、本調査が問題視していた provenance 非対称を rim_value について温存/再生産している**。
+  - 実害の有無: `BacktestInteractor.resolveCorporateValue()`（`BacktestInteractor.java:159-170`）は `AnalysisResultEntity::getCorporateValue` のみを参照し、RIM は一切使っていない。したがって現行のバックテストが rim_value のバックフィルによって汚染されることはない。ただし「バックテストで使っていないから問題ない」は将来 RIM を判定ロジックに組み込んだ瞬間に破綻する暗黙の前提であり、恒久的な正当化にはならない。
+- **P3（デプロイ済み資産）の扱い方針**:
+  1. BPS/EPS/ROE/ROA を書き込む経路（`upsert()` 内の該当引数、`selectIndicatorBackfillTargets.sql` の該当 OR 条件）は、フェーズ1完了後は到達しなくなるため、コードとしても明示的に縮小する（"書いても無駄になる列" を残さない）。
+  2. rim_value バックフィルを今後も継続するか、corporate_value と同様に非遡及へ統一するかは、**フェーズ1（BPS/EPS/ROE/ROA 都度計算化）とは独立した意思決定**として扱う。継続する場合は「RIM は例外的に事後補完を許容する」ことを設計判断として明文化する。凍結する場合は P3 機構（Interactor メソッド・admin エンドポイント・DAO クエリ）ごと撤去する。
+  3. 上記の意思決定が済むまでの移行期は、P3 のインフラ（admin エンドポイント・Interactor・DAO）自体は残置し、対象クエリのみ `rim_value is null` に絞ってメッセージ文言（`AnalysisController.java:98-115` のコメント・レスポンス文言）を「RIM バックフィル」に更新するのが最も低リスクな中間状態である。
+
+### 6.2 4列スキーマ削除の是非
+
+直接消費箇所を洗い出した結果、削除の影響は列によって非対称であることが分かった。
+
+| 消費箇所 | 参照方法 | 削除時の影響 |
+|---|---|---|
+| `AnalysisResultViewModel`（詳細画面, `web/view/model/corporate/detail/AnalysisResultViewModel.java:8-25`） | `corporateValue`/`rimValue` のみを公開。bps/eps/roe/roa は**そもそも含まれていない** | 影響なし |
+| `CorporateViewModel`/`CorporateViewBean`（一覧画面） | `corporate_view` テーブルの列を参照。`analysis_result` の列とは別テーブル | 影響なし（`corporate_view` 生成時に都度計算値を書き込む先は維持されるため） |
+| `IndicatorValue` コンストラクタ（`IndicatorValue.java:99-111`） | `analysisResultEntity.getEps()/getBps()` で **DB から読んだ `AnalysisResultEntity` を直接参照** | **最大の実装ポイント**。呼び出し元 `AnalyzeInteractor.indicate()` は `analysisResultSpecification.findAnalysisResult(...)` で取得したエンティティをそのまま渡している（`AnalyzeInteractor.java:168,343`）。列を削除すると `getBps()/getEps()` が常に空になり PER/PBR が算出不能になるため、**列削除には `IndicatorValue` の入力元を「エンティティの永続列」から「FinanceValue 都度計算値」へ差し替えるコード改修が必須** |
+| `AnalysisResult::of(entity)` 経由の再構築（`ViewCorporateInteractor.java:558`） | `findLatestAnalysisResult(...).map(AnalysisResult::of)` で永続列からアンパックし、`ViewSpecification.generateCorporateView()`（`ViewSpecification.java:319-322`）に渡している | 同上。都度計算（`FinanceValue`＋`Document`）による再構築への差し替えが必要 |
+| `AnalysisResultSpecification.insert/upsert`（書き込み側） | 該当引数を渡している | 削除するなら引数ごと除去 |
+
+- **削除する場合の段階案**:
+  1. サービス集約フェーズ: `AnalysisResult.calculateBps/Eps/Roe/Roa`（既に package-private 純粋関数として切り出し済み、`AnalysisResult.java:221,246,269,298`）をそのまま利用し、`IndicatorValue` と `AnalysisResult::of(entity)` の呼び出し元を「永続列読み取り」から「`FinanceValue`＋`Document` からの都度計算」に切り替える。列はまだ DB に残り書き込みも継続する（二重計算だが実害なし・安全弁）。
+  2. 書き込み停止フェーズ: `insert()`/`upsert()` の該当引数を `null` 固定にする。P3 の対象クエリを `rim_value is null` のみに縮小（§6.1）。
+  3. 列削除フェーズ: 新規 Flyway マイグレーションで DROP COLUMN。`AnalysisResultEntity` は RIM 追加時に採用した「後方互換コンストラクタ」パターン（`AnalysisResultEntity.java:74-90`）と同様の移行手法が使える。
+- **削除しない場合の意味**: 「保存はするが読み取りには使わない」状態を恒久的に固定することになる。これは§5未解決点1が指摘した通り、将来の開発者が列の生死をコード調査しないと判断できない状態を残す。恒久的に採用するなら `AnalysisResultEntity` の Javadoc に「表示には使用しない・都度計算値が優先される」旨を明記する運用でカバーはできるが、調査コストを恒久的に負担し続けるより削除する方が望ましい。
+
+### 6.3 性能: 都度計算が入る経路の具体列挙
+
+| 経路 | 呼び出し頻度・文脈 | 都度計算化の影響 |
+|---|---|---|
+| `corporate_view` 生成（`ViewCorporateInteractor.parallelUpdateView`, `ViewCorporateInteractor.java:549-580`） | 管理操作／スケジューラ起点のバッチのみ。リクエストスレッドでは実行されない | `AnalysisResult::of(entity)` の代わりに `financialStatementSpecification.getFinanceValue(document)` を企業ごとに1回追加で呼ぶ必要がある。この呼び出しは `analyze()` 実行時に既に1回行っている処理と同一であり、バッチ文脈に閉じるため画面応答性能への影響はない。企業数>10件時の既存の `parallelStream()` 並列化もそのまま使える |
+| `AnalyzeInteractor.indicate()`（`AnalyzeInteractor.java:343-428`） | 書類分析時、その書類が対象企業の最新書類のときだけ1回 | `FinanceValue` は同一メソッドの呼び出し経路内（`analyze(Document)`）で既に取得済み。引数として使い回す設計に変えれば追加のDB呼び出しは不要（むしろ現状より効率化の余地がある） |
+| 詳細画面 `viewCorporateDetailRaw`/`viewSummaryChart`（`ViewCorporateInteractor.java:262-247`） | 企業詳細ページ表示のたびに実行される per-request 経路 | `AnalysisResultViewModel` は元々 bps/eps/roe/roa を公開していないため、フェーズ1の影響はゼロ。同メソッドは既に `financialStatementSpecification.findByCompany(company)` で全期間分を1クエリに集約しN+1を解消済み（`ViewCorporateInteractor.java:280-288` のコメントに明記）。将来これらの値を画面に出す要件が生じても、この一括取得済みデータ内でメモリ計算すれば新たなN+1は発生しない |
+| 一覧画面（`/v3/index` 等） | per-request | `corporate_view` の材質化スナップショットを読むだけで、`analysis_result` の都度計算は経路に一切入らない。無影響 |
+| `investment_indicator`（PER/PBR/グレアム指数、フェーズ2相当・約300万件） | `viewCorporateDetailRaw` の `investmentIndicatorSpecification.findIndicatorValueList(company.code())`（`ViewCorporateInteractor.java:274`）が唯一の per-request 経路。1社分のみ取得（全件スキャンではない） | `InvestmentIndicatorEntity` は既に `analysisResultId`（FK, `InvestmentIndicatorEntity.java`）を保持しているため、都度計算に倒す場合も「1社分の investment_indicator 行 × 対応する analysis_result 行」を1回の JOIN で取得すれば済み、行ごとに `financial_statement` へ再クエリする素朴なN+1は避けられる設計余地がある。ただし現行コードにはこの JOIN 用の DAO/SQL は存在せず、フェーズ2着手時に新規実装が必要（想定より小さいが、ゼロ実装ではない） |
+
+- **最大の性能懸念**: 上記経路のうち唯一 per-request かつ未実装の JOIN が必要なのは investment_indicator（フェーズ2相当）であり、フェーズ1（BPS/EPS/ROE/ROA）には per-request 経路の性能懸念が存在しない。
+- **キャッシュ（Caffeine）の活用可否**: `CacheConfig`（`config/CacheConfig.java`）は既に `IndustrySpecification.resolveCoefficient` 等の低頻度更新マスタに `@Cacheable` を適用している。BPS/EPS/ROE/ROA は係数を一切参照しない純粋関数であるため、キャッシュのキーが実質「`financial_statement` の値そのもの」になり、保存列を持つのとほぼ同じ状態になってしまう＝キャッシュを挟む意味は薄い。investment_indicator 側（フェーズ2）で JOIN クエリが重いと判明した場合の緩和策としては、企業コード単位の `@Cacheable`（Caffeine、TTL短め）が候補になるが、`corporate_view` のような「使い捨て全件スナップショット」方式とは異なり、株価・財務諸表更新時の無効化タイミング設計が新たに必要になる。これはフェーズ2着手時の検討事項として切り出す。
+
+### 6.4 段階的移行プラン
+
+1. **フェーズ0（合意形成）**: 本追加検討を Gate1/2 でレビューし、フェーズ1着手可否を判断する。成果物: 本ノート＋人間レビュー記録。リスク: なし。ロールバック: 不要。
+2. **フェーズ1a（サービス集約・読み取り側切替）**: `AnalysisResult.calculateBps/Eps/Roe/Roa` 相当を都度計算の入口として、`IndicatorValue`（`AnalyzeInteractor.indicate()` 経由）と `AnalysisResult::of(entity)`（`ViewCorporateInteractor.java:558` 経由）の入力を「永続列読み取り」から「`FinanceValue` 都度計算」に切り替える。列はまだ DB に残り書き込みも継続（二重計算だが実害なし＝安全弁）。成果物: 都度計算に切り替えた Interactor/Specification。リスク: 都度計算値と永続値の不一致（過去に手動修正等で異なる値が入っている可能性）。ロールバック: 呼び出し元を旧実装に戻すだけ（列がまだ生きているため即時可能）。
+3. **フェーズ1b（書き込み停止）**: `AnalysisResultSpecification.insert/upsert` の bps/eps/roe/roa 引数を `null` 固定にし、P3 の対象クエリを `rim_value is null` のみに縮小、admin エンドポイントの文言を更新（§6.1）。成果物: 更新済み Specification／DAO 呼び出し／admin 文言。リスク: フェーズ1aの都度計算に見落としがあれば表示崩れに直結（フェーズ1aでの一致検証が前提）。ロールバック: `null` 固定を戻すだけ（列が残っているため即時復旧可能）。
+4. **フェーズ1c（列削除・DDL）**: 新規 Flyway マイグレーションで4列を DROP COLUMN。`AnalysisResultEntity`・関連コンストラクタ・SQL ファイルから除去。成果物: マイグレーション SQL＋エンティティ変更。リスク: 最も不可逆（DROP COLUMN のロールバックは値復元不能）。ロールバック: 別マイグレーションでの再 ADD（値は失われる）。**フェーズ1bを本番で少なくとも1回のフルバッチサイクル運用し、都度計算への完全移行に問題がないことを確認してから着手する。**
+5. **フェーズ2（investment_indicator 都度計算化・任意）**: フェーズ1とは独立した意思決定。`analysis_result_id` FK を使った JOIN ベースの DAO を新設し、詳細画面チャートの応答時間を検証環境で実測してから着手判断する。フェーズ1の成果とは分離して Gate1 起票する。
+6. **corporate_value/RIM 係数依存分（対象外・別タスク）**: 本ノート §3.4/§5 の結論通り「常に計算」対象から除外する。P3 の rim_value バックフィルを継続するか凍結するかは、フェーズ1とは独立の意思決定として明文化する（§6.1）。
+
+### 6.5 推奨の最終形（Go/No-Go）
+
+- **Go 判断材料**:
+  (a) フェーズ1a実施後、都度計算値と既存永続値が全件一致することをテスト／検証環境で確認できる。
+  (b) P3 の rim_value バックフィルを継続するか凍結するかについて人間レビュアの合意が取れている（§6.1 の意思決定）。
+  (c) `AnalysisResult::of(entity)` を都度計算に切り替えた場合の `parallelUpdateView` 実行時間が、スケジューラの許容時間内に収まることを確認できる。
+- **No-Go 材料**: フェーズ1aの都度計算値と DB 永続値との間に有意な差異が見つかった場合（過去の手動修正・バックフィルにより異なる値が入っている可能性）。この場合は列削除ではなく差異の原因調査が先行タスクになる。
+- **最初に着手すべきフェーズ**: **フェーズ1a（サービス集約・読み取り側切替）**。スキーマ変更を伴わず、二重計算という安全弁付きで、既存動作を壊さずに都度計算方式の実現可能性を検証できる。DDL を伴うフェーズ1cは、フェーズ1a/1bを経て実運用で問題がないことを確認してから Go/No-Go 判断する。
