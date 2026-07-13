@@ -161,22 +161,35 @@ jobs:
         if: steps.healthcheck.outcome == 'failure'
         run: exit /b 1
 
-      - name: Merge release branch back to develop
+      - name: Back-merge release into develop and bump version
         if: steps.healthcheck.outcome == 'success'
-        run: |
-          git checkout develop
-          git merge --no-ff %RELEASE_BRANCH%
-
-      - name: Set next development version
-        if: steps.healthcheck.outcome == 'success'
+        # cmd の run ブロックは途中コマンドの失敗を握り潰し、最後の git push が
+        # "Everything up-to-date"（exit 0）で終わるとステップが緑のまま develop 未更新になりうる。
+        # pwsh で各コマンドの exit code を検査し、最後に origin/develop への反映も検証する。
+        shell: pwsh
         env:
           NEXT_VERSION: ${{ steps.versioning.outputs.next_version }}
         run: |
-          rem バッチからの .cmd 呼び出しは call がないと制御が戻らず後続行が実行されない
-          call mvnw.cmd versions:set -DnewVersion=%NEXT_VERSION%-SNAPSHOT
-          call mvnw.cmd versions:commit
-          git commit -am "chore: prepare next development version %NEXT_VERSION%-SNAPSHOT"
-          git push origin develop
+          $ErrorActionPreference = 'Stop'
+          function Invoke-Checked([string]$desc, [scriptblock]$cmd) {
+            & $cmd
+            if ($LASTEXITCODE -ne 0) { throw "$desc failed (exit $LASTEXITCODE)" }
+          }
+          Invoke-Checked 'checkout develop'            { git checkout develop }
+          Invoke-Checked 'merge release into develop'  { git merge --no-ff $env:RELEASE_BRANCH }
+          Invoke-Checked 'versions:set'                { & .\mvnw.cmd versions:set -DnewVersion="$($env:NEXT_VERSION)-SNAPSHOT" }
+          Invoke-Checked 'versions:commit'             { & .\mvnw.cmd versions:commit }
+          Invoke-Checked 'commit next dev version'     { git commit -am "chore: prepare next development version $($env:NEXT_VERSION)-SNAPSHOT" }
+          Invoke-Checked 'push develop'                { git push origin develop }
+          # push がサイレントに反映されない事象を検知するため、origin の実 SHA を直接照会して検証する
+          $localRev  = (git rev-parse develop).Trim()
+          $lsRemote  = (git ls-remote origin refs/heads/develop)
+          if ($LASTEXITCODE -ne 0) { throw "ls-remote develop failed (exit $LASTEXITCODE)" }
+          $remoteRev = (($lsRemote -split "\s+") | Select-Object -First 1).Trim()
+          if ($localRev -ne $remoteRev) {
+            throw "develop push not reflected on origin (local=$localRev remote=$remoteRev)"
+          }
+          Write-Output "develop advanced to $localRev ($($env:NEXT_VERSION)-SNAPSHOT)"
 
       - name: Delete local release branch
         if: steps.healthcheck.outcome == 'success'
