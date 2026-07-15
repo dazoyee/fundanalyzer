@@ -19,6 +19,30 @@
   200 表示（二重ログイン解消）を確認
 - 本番反映（nssm への `ORBIT_TRUST_HEADER_SECRET` 投入・再起動・実機疎通）はリリース作業として別途実施
 
+## 本番反映（v2.3.15）
+
+- シークレット投入: orbit の nssm でサーバ上生成 → `sync-trust-secret.ps1` で fundanalyzer の env へ同期
+  （手順・スクリプトの正本は iorid リポジトリ `docs/orbit/set-orbit-env.ps1` / `docs/fundanalyzer/sync-trust-secret.ps1`）
+- orbit のデプロイ成功後、GitHub Actions Pipeline（version=2.3.15）でリリース。health check 成功・
+  develop へ 2.3.16-SNAPSHOT バックマージ済み（タグ `v2.3.15`）
+- 反映後検証: LAN からの 8890 直アクセス不達（ループバックバインド有効）、サーバ内 loopback からの
+  ヘッダーなし・偽署名リクエストとも 401（Pre-Authentication 有効）
+
+## 本番反映後の障害と修正
+
+1. **ページ遷移がダウンロードになる**: Tailscale Serve に orbit 導入前の `/fundanalyzer` 直結ルートが
+   残置され orbit を素通り→ヘッダーなし 401（空ボディ＋nosniff）をブラウザがダウンロード扱い。
+   Serve から直結ルートを削除して orbit 経由に一本化（記録は iorid `ssh-log.md`）
+2. **コンテキストルートが白画面（v2.3.16 で修正）**: `/` にマッピングがなく 404 → ERROR ディスパッチで
+   エラーページ描画時、Pre-Authentication は認証をセッション保存せず `OncePerRequestFilter` も
+   再実行されないため `/error` が未認証 401（空ボディ）となり白画面化。旧フォームログインは
+   セッション保存があるため露呈しなかった。対処:
+   - `WebMvcConfig` に `/` → `/v3/index` のリダイレクトを追加（プロキシのリンク先が `/fundanalyzer` のため）
+   - `TrustHeaderSecurityConfig` で `DispatcherType.ERROR` を permitAll（エラーページ描画を認可対象から除外。
+     直接の `/error` リクエストは REQUEST ディスパッチのため従来どおり認証必須）
+   - 実起動検証: 署名付きで `/` → 302 `/v3/index`・存在しないパス → 404 エラーページ HTML（401 でない）・
+     `/v3/index` → 200
+
 ## 課題
 
 本番アクセスは orbit（WebAuthn 認証付きリバースプロキシ）経由に一本化されているが、

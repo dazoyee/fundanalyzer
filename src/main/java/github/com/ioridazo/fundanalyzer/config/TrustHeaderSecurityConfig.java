@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
@@ -49,6 +50,10 @@ public class TrustHeaderSecurityConfig {
         final var healthEndpoint = EndpointRequest.to(HealthEndpoint.class);
         http
                 .authorizeHttpRequests(authorize -> authorize
+                        // 404/500 等のエラーページ描画（ERROR ディスパッチ）は認可対象から除外する。
+                        // Pre-Authentication は認証をセッション保存せず、OncePerRequestFilter は
+                        // 再ディスパッチで実行されないため、除外しないとエラーページが 401 になる。
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/css/**", "/js/**").permitAll()
                         .requestMatchers(healthEndpoint).permitAll()
                         .anyRequest().authenticated())
