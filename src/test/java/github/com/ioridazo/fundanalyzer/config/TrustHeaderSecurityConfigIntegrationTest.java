@@ -85,6 +85,14 @@ class TrustHeaderSecurityConfigIntegrationTest {
         }
 
         @Test
+        @DisplayName("コンテキストルートへの正規ヘッダーアクセス→/v3/indexへリダイレクトする")
+        void root_正規ヘッダー_indexへ302() throws Exception {
+            mockMvc.perform(withTrustHeaders(get("/"), "alice", "ADMIN"))
+                    .andExpect(status().isFound())
+                    .andExpect(header().string("Location", "/v3/index"));
+        }
+
+        @Test
         @DisplayName("フォームログインのエンドポイントは存在しない→/loginは401を返す")
         void login_フォームログイン撤廃_401() throws Exception {
             mockMvc.perform(get("/login").accept(MediaType.TEXT_HTML))
