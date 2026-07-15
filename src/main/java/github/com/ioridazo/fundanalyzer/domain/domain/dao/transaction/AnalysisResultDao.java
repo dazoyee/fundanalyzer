@@ -39,12 +39,6 @@ public interface AnalysisResultDao {
     @Select
     List<AnalysisResultEntity> selectBySubmitDateAndCreatedAt(LocalDate submitDate, LocalDate nowLocalDate);
 
-    @Select
-    List<AnalysisResultEntity> selectIndicatorBackfillTargets(List<String> documentTypeCodes);
-
     @Insert
     Result<AnalysisResultEntity> insert(AnalysisResultEntity analysisResultEntity);
-
-    @Update(excludeNull = true)
-    Result<AnalysisResultEntity> update(AnalysisResultEntity analysisResultEntity);
 }
