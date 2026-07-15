@@ -6,9 +6,10 @@ server:
 
 spring:
   datasource:
+    # DB 資格情報は環境変数で必須化（フォールバックなし → 未設定なら起動失敗で検知）。release/env に DB_USERNAME / DB_PASSWORD を設定する。
     url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=Asia/Tokyo
-    username: fundanalyzer
-    password: fundanalyzer
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driverClassName: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 30
@@ -20,8 +21,8 @@ spring:
     enabled: true
     url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=Asia/Tokyo
     schemas: fundanalyzer
-    user: fundanalyzer
-    password: fundanalyzer
+    user: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     baseline-on-migrate: true
     baseline-version: 0.1.0
     baseline-description: Initial
