@@ -19,6 +19,15 @@
   200 表示（二重ログイン解消）を確認
 - 本番反映（nssm への `ORBIT_TRUST_HEADER_SECRET` 投入・再起動・実機疎通）はリリース作業として別途実施
 
+## 本番反映（v2.3.15）
+
+- シークレット投入: orbit の nssm でサーバ上生成 → `sync-trust-secret.ps1` で fundanalyzer の env へ同期
+  （手順・スクリプトの正本は iorid リポジトリ `docs/orbit/set-orbit-env.ps1` / `docs/fundanalyzer/sync-trust-secret.ps1`）
+- orbit のデプロイ成功後、GitHub Actions Pipeline（version=2.3.15）でリリース。health check 成功・
+  develop へ 2.3.16-SNAPSHOT バックマージ済み（タグ `v2.3.15`）
+- 反映後検証: LAN からの 8890 直アクセス不達（ループバックバインド有効）、サーバ内 loopback からの
+  ヘッダーなし・偽署名リクエストとも 401（Pre-Authentication 有効）
+
 ## 課題
 
 本番アクセスは orbit（WebAuthn 認証付きリバースプロキシ）経由に一本化されているが、
