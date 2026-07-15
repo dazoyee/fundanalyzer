@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
 import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.QuarterType;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.DisplayName;
@@ -626,6 +627,64 @@ class AnalysisResultTest {
                     BigDecimal.valueOf(1000), BigDecimal.valueOf(12), null).isEmpty());
             assertTrue(analysisResult.calculateRimValue(
                     BigDecimal.valueOf(1000), BigDecimal.valueOf(12), BigDecimal.ZERO).isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("of(entity, financeValue, document) : 都度計算ファクトリ")
+    class OfWithComputedIndicators {
+
+        private AnalysisResultEntity entity() {
+            return new AnalysisResultEntity(
+                    1,
+                    "code",
+                    LocalDate.parse("2024-03-31"),
+                    BigDecimal.valueOf(999),
+                    BigDecimal.valueOf(555),
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    "120",
+                    null,
+                    LocalDate.parse("2024-06-30"),
+                    "documentId",
+                    null
+            );
+        }
+
+        @DisplayName("係数依存値は永続値を凍結し、指標は財務諸表値から都度計算する")
+        @Test
+        void computesIndicatorsFromFinanceValue() {
+            var financeValue = FinanceValue.of(
+                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+
+            var actual = AnalysisResult.of(entity(), financeValue, defaultDocument());
+
+            assertEquals(BigDecimal.valueOf(999), actual.getCorporateValue());
+            assertEquals(BigDecimal.valueOf(555), actual.getRimValue().orElseThrow());
+            assertEquals(0, BigDecimal.valueOf(80).compareTo(actual.getBps().orElseThrow()));
+            assertEquals(0, BigDecimal.valueOf(15).compareTo(actual.getEps().orElseThrow()));
+            assertEquals(0, BigDecimal.valueOf(18.75).compareTo(actual.getRoe().orElseThrow()));
+            assertEquals(0, BigDecimal.valueOf(12.5).compareTo(actual.getRoa().orElseThrow()));
+            assertEquals(LocalDate.parse("2024-06-30"), actual.getSubmitDate());
+            assertEquals("documentId", actual.getDocumentId());
+        }
+
+        @DisplayName("入力科目が欠損しているときは例外とせず指標を空にする")
+        @Test
+        void missingInputsYieldEmptyIndicatorsWithoutThrowing() {
+            var financeValue = FinanceValue.of(
+                    null, null, null, null, null, null, null, null, null, null);
+
+            var actual = AnalysisResult.of(entity(), financeValue, defaultDocument());
+
+            assertEquals(BigDecimal.valueOf(999), actual.getCorporateValue());
+            assertEquals(BigDecimal.valueOf(555), actual.getRimValue().orElseThrow());
+            assertTrue(actual.getBps().isEmpty());
+            assertTrue(actual.getEps().isEmpty());
+            assertTrue(actual.getRoe().isEmpty());
+            assertTrue(actual.getRoa().isEmpty());
         }
     }
 

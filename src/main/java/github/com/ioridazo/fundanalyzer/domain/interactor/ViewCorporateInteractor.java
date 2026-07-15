@@ -22,6 +22,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -555,11 +556,25 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 latestDocument.ifPresent(document -> viewList.add(viewSpecification.generateCorporateView(
                         company,
                         document,
-                        analysisResultSpecification.findLatestAnalysisResult(company.code()).map(AnalysisResult::of).orElse(AnalysisResult.of()),
+                        analysisResultSpecification.findLatestAnalysisResult(company.code())
+                                // BPS/EPS/ROE/ROA は永続列ではなく、分析結果に対応する書類の財務諸表値から都度計算する。
+                                // 最新書類と最新分析結果は別クエリ由来のため、書類IDが一致するときのみ取得済み書類を使い回す
+                                .map(entity -> {
+                                    final Document analysisDocument =
+                                            Objects.equals(document.getDocumentId(), entity.getDocumentId())
+                                                    ? document
+                                                    : documentSpecification.findDocument(entity.getDocumentId());
+                                    return AnalysisResult.of(
+                                            entity,
+                                            financialStatementSpecification.getFinanceValue(analysisDocument),
+                                            analysisDocument
+                                    );
+                                })
+                                .orElse(AnalysisResult.of()),
                         analyzeInteractor.calculateCorporateValue(company),
                         investmentIndicatorSpecification.findIndicatorValue(company.code()).orElse(IndicatorValue.of())
                 )));
-            } catch (final FundanalyzerNotExistException e) {
+            } catch (final FundanalyzerNotExistException | FundanalyzerBadDataException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
                                 "条件を満たさないため、次の企業のビューを更新しませんでした。\t企業コード:{0}",

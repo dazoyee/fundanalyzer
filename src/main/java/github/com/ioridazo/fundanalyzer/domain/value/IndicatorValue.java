@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import lombok.Getter;
 
@@ -51,12 +50,12 @@ public class IndicatorValue {
     }
 
     public IndicatorValue(
-            final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        this.priceCorporateValueRatio = calculatePriceCorporateValueRatio(stockPrice, analysisResultEntity);
-        this.per = calculatePer(stockPrice, analysisResultEntity).orElse(null);
-        this.pbr = calculatePbr(stockPrice, analysisResultEntity).orElse(null);
+            final BigDecimal stockPrice, final AnalysisResult analysisResult) {
+        this.priceCorporateValueRatio = calculatePriceCorporateValueRatio(stockPrice, analysisResult);
+        this.per = calculatePer(stockPrice, analysisResult).orElse(null);
+        this.pbr = calculatePbr(stockPrice, analysisResult).orElse(null);
         this.grahamIndex = calculateGrahamIndex(this.per, this.pbr).orElse(null);
-        this.targetDate = analysisResultEntity.getSubmitDate();
+        this.targetDate = analysisResult.getSubmitDate();
     }
 
     public static IndicatorValue of() {
@@ -92,20 +91,20 @@ public class IndicatorValue {
     }
 
     BigDecimal calculatePriceCorporateValueRatio(
-            final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        return stockPrice.divide(analysisResultEntity.getCorporateValue(), TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
+            final BigDecimal stockPrice, final AnalysisResult analysisResult) {
+        return stockPrice.divide(analysisResult.getCorporateValue(), TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 
     Optional<BigDecimal> calculatePer(
-            final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        return analysisResultEntity.getEps()
+            final BigDecimal stockPrice, final AnalysisResult analysisResult) {
+        return analysisResult.getEps()
                 .filter(eps -> eps.compareTo(BigDecimal.ZERO) > 0)
                 .map(eps -> stockPrice.divide(eps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }
 
     Optional<BigDecimal> calculatePbr(
-            final BigDecimal stockPrice, final AnalysisResultEntity analysisResultEntity) {
-        return analysisResultEntity.getBps()
+            final BigDecimal stockPrice, final AnalysisResult analysisResult) {
+        return analysisResult.getBps()
                 .filter(bps -> bps.compareTo(BigDecimal.ZERO) != 0)
                 .map(bps -> stockPrice.divide(bps, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP));
     }

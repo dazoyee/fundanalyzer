@@ -242,7 +242,7 @@ class AnalyzeInteractorTest {
 
             assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
             verify(analysisResultSpecification, times(1)).insert(any(), any());
-            verify(analyzeInteractor, times(1)).indicate(analysisResult);
+            verify(analyzeInteractor, times(1)).indicate(analysisResult, financeValue, document);
         }
 
         @DisplayName("analyze : 最新ドキュメントが存在しないときは投資指標を算出しない")
@@ -729,11 +729,49 @@ class AnalyzeInteractorTest {
             );
         }
 
+        private Document document() {
+            return new Document(
+                    "documentId",
+                    null,
+                    null,
+                    "edinetCode",
+                    LocalDate.parse("2020-06-30"),
+                    LocalDate.parse("2020-09-30"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
+        }
+
+        private FinanceValue financeValue() {
+            return FinanceValue.of(
+                    1000L,
+                    100L,
+                    1200L,
+                    200L,
+                    50L,
+                    0L,
+                    800L,
+                    300L,
+                    150L,
+                    10L
+            );
+        }
+
         @BeforeEach
         void setUp() {
             when(stockSpecification.findStock(eq("code"), any()))
                     .thenReturn(Optional.of(stockPriceEntity(null)));
-
+            when(documentSpecification.findDocument("documentId")).thenReturn(document());
+            when(financialStatementSpecification.getFinanceValue(any(Document.class))).thenReturn(financeValue());
         }
 
         @DisplayName("indicate : 企業コードから投資指標を算出する")
@@ -757,7 +795,7 @@ class AnalyzeInteractorTest {
                     .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
 
             assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
-            verify(investmentIndicatorSpecification, times(7)).insert(any(), any());
+            verify(investmentIndicatorSpecification, times(7)).insert(any(), any(), any());
         }
 
         @DisplayName("indicate : 書類種別コードが対象外のとき")
@@ -779,14 +817,14 @@ class AnalyzeInteractorTest {
                     null
             );
             assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any(), any());
         }
 
         @DisplayName("indicate : 株価が存在しないとき")
         @Test
         void stockPrice_isEmpty() {
             assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any(), any());
         }
 
         @DisplayName("indicate : 投資指標が存在しないとき")
@@ -796,7 +834,7 @@ class AnalyzeInteractorTest {
                     .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
 
             assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
-            verify(investmentIndicatorSpecification, times(26)).insert(any(), any());
+            verify(investmentIndicatorSpecification, times(26)).insert(any(), any(), any());
         }
 
         @DisplayName("indicate : 処理対象日付が正しいとき")
@@ -811,8 +849,8 @@ class AnalyzeInteractorTest {
                     .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
 
             assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
-            verify(investmentIndicatorSpecification, Mockito.atLeastOnce()).insert(any(), any());
-            verify(investmentIndicatorSpecification, Mockito.atMost(366)).insert(any(), any());
+            verify(investmentIndicatorSpecification, Mockito.atLeastOnce()).insert(any(), any(), any());
+            verify(investmentIndicatorSpecification, Mockito.atMost(366)).insert(any(), any(), any());
         }
 
         @DisplayName("indicate : 処理対象日付が正しくないとき")
@@ -828,7 +866,7 @@ class AnalyzeInteractorTest {
                     .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
 
             assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any());
+            verify(investmentIndicatorSpecification, times(0)).insert(any(), any(), any());
         }
     }
 
