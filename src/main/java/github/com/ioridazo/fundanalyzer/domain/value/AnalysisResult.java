@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @Getter
 public class AnalysisResult {
@@ -89,17 +90,38 @@ public class AnalysisResult {
         );
     }
 
-    public static AnalysisResult of(final AnalysisResultEntity entity) {
+    /**
+     * 永続化された企業価値・理論株価（係数依存＝算出時点の係数を凍結した値）と、
+     * 財務諸表から都度計算した係数非依存指標（BPS/EPS/ROE/ROA）を組み合わせて再構築する。
+     *
+     * <p>指標の入力科目が欠損している場合は例外とせず該当指標を空にする（永続列の NULL と同じ扱い）。
+     *
+     * @param entity       企業価値エンティティ（corporate_value / rim_value の凍結値を保持）
+     * @param financeValue 財務諸表値
+     * @param document     ドキュメント
+     * @return 企業価値
+     */
+    public static AnalysisResult of(
+            final AnalysisResultEntity entity, final FinanceValue financeValue, final Document document) {
         return new AnalysisResult(
                 entity.getCorporateValue(),
                 entity.getRimValue().orElse(null),
-                entity.getBps().orElse(null),
-                entity.getEps().orElse(null),
-                entity.getRoe().orElse(null),
-                entity.getRoa().orElse(null),
+                computeIndicatorQuietly(() -> calculateBps(financeValue, document)),
+                computeIndicatorQuietly(() -> calculateEps(financeValue, document)),
+                computeIndicatorQuietly(() -> calculateRoe(financeValue, document)),
+                computeIndicatorQuietly(() -> calculateRoa(financeValue, document)),
                 entity.getSubmitDate(),
                 entity.getDocumentId()
         );
+    }
+
+    private static BigDecimal computeIndicatorQuietly(final Supplier<Optional<BigDecimal>> calculation) {
+        try {
+            return calculation.get().orElse(null);
+        } catch (final FundanalyzerNotExistException | ArithmeticException e) {
+            // 入力科目の欠損（NotExist）と不正値によるゼロ除算（Arithmetic）は指標なし扱いとする
+            return null;
+        }
     }
 
     public Optional<BigDecimal> getRimValue() {
@@ -218,7 +240,7 @@ public class AnalysisResult {
                 .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 
-    Optional<BigDecimal> calculateBps(final FinanceValue financeValue, final Document document) {
+    static Optional<BigDecimal> calculateBps(final FinanceValue financeValue, final Document document) {
         // 純資産
         final Optional<BigDecimal> totalNetAssets = financeValue.getNetAssets().map(BigDecimal::new);
         // 株式総数
@@ -243,7 +265,7 @@ public class AnalysisResult {
         }
     }
 
-    Optional<BigDecimal> calculateEps(final FinanceValue financeValue, final Document document) {
+    static Optional<BigDecimal> calculateEps(final FinanceValue financeValue, final Document document) {
         if (Optional.of(document).map(Document::getQuarterType).map(QuarterType::getWeight).isPresent()) {
             return Optional.empty();
         } else {
@@ -266,7 +288,7 @@ public class AnalysisResult {
         }
     }
 
-    Optional<BigDecimal> calculateRoe(final FinanceValue financeValue, final Document document) {
+    static Optional<BigDecimal> calculateRoe(final FinanceValue financeValue, final Document document) {
         if (Optional.of(document).map(Document::getQuarterType).map(QuarterType::getWeight).isPresent()) {
             return Optional.empty();
         } else {
@@ -295,7 +317,7 @@ public class AnalysisResult {
         }
     }
 
-    Optional<BigDecimal> calculateRoa(final FinanceValue financeValue, final Document document) {
+    static Optional<BigDecimal> calculateRoa(final FinanceValue financeValue, final Document document) {
         if (Optional.of(document).map(Document::getQuarterType).map(QuarterType::getWeight).isPresent()) {
             return Optional.empty();
         } else {

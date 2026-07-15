@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.Investment
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -73,6 +74,12 @@ class InvestmentIndicatorSpecificationTest {
                 "120", "year-1",
                 LocalDate.parse("2024-04-01"), "doc-1",
                 LocalDateTime.parse("2024-04-01T00:00:00"));
+    }
+
+    private AnalysisResult computedResult(final BigDecimal bps, final BigDecimal eps) {
+        return new AnalysisResult(
+                BigDecimal.valueOf(3000), null, bps, eps, null, null,
+                LocalDate.parse("2024-04-01"), "doc-1");
     }
 
     private StockPriceEntity stockPrice() {
@@ -159,7 +166,7 @@ class InvestmentIndicatorSpecificationTest {
         @DisplayName("insert : 正常時はエンティティを DAO に登録する")
         @Test
         void insertsNormally() {
-            specification.insert(analysisResult(), stockPrice());
+            specification.insert(analysisResult(), computedResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(120)), stockPrice());
 
             verify(dao, times(1)).insert(any(InvestmentIndicatorEntity.class));
         }
@@ -175,7 +182,7 @@ class InvestmentIndicatorSpecificationTest {
                     eq(true)))
                     .thenReturn(BigDecimal.valueOf(1000.0));
 
-            specification.insert(analysisResult(), stockPrice());
+            specification.insert(analysisResult(), computedResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(120)), stockPrice());
 
             final ArgumentCaptor<InvestmentIndicatorEntity> captor =
                     ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
@@ -188,7 +195,7 @@ class InvestmentIndicatorSpecificationTest {
         @DisplayName("insert : EPSが負のときは PER とグレアム指数を保存しない")
         @Test
         void doesNotSavePerOrGrahamIndexWhenEpsIsNegative() {
-            specification.insert(analysisResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(-120)), stockPrice());
+            specification.insert(analysisResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(-120)), computedResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(-120)), stockPrice());
 
             final ArgumentCaptor<InvestmentIndicatorEntity> captor =
                     ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
@@ -203,7 +210,7 @@ class InvestmentIndicatorSpecificationTest {
         @DisplayName("insert : EPSがゼロのときは PER とグレアム指数を保存しない")
         @Test
         void doesNotSavePerOrGrahamIndexWhenEpsIsZero() {
-            specification.insert(analysisResult(BigDecimal.valueOf(1500), BigDecimal.ZERO), stockPrice());
+            specification.insert(analysisResult(BigDecimal.valueOf(1500), BigDecimal.ZERO), computedResult(BigDecimal.valueOf(1500), BigDecimal.ZERO), stockPrice());
 
             final ArgumentCaptor<InvestmentIndicatorEntity> captor =
                     ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
@@ -218,7 +225,7 @@ class InvestmentIndicatorSpecificationTest {
         @DisplayName("insert : PBRが負のときは PBR は保存しグレアム指数は保存しない")
         @Test
         void savesNegativePbrButNotGrahamIndex() {
-            specification.insert(analysisResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(120)), stockPrice());
+            specification.insert(analysisResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(120)), computedResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(120)), stockPrice());
 
             final ArgumentCaptor<InvestmentIndicatorEntity> captor =
                     ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
@@ -233,7 +240,7 @@ class InvestmentIndicatorSpecificationTest {
         @DisplayName("insert : PER と PBR が両方負相当のときもグレアム指数を保存しない")
         @Test
         void doesNotSaveGrahamIndexWhenPerAndPbrWouldBothBeNegative() {
-            specification.insert(analysisResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(-120)), stockPrice());
+            specification.insert(analysisResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(-120)), computedResult(BigDecimal.valueOf(-1500), BigDecimal.valueOf(-120)), stockPrice());
 
             final ArgumentCaptor<InvestmentIndicatorEntity> captor =
                     ArgumentCaptor.forClass(InvestmentIndicatorEntity.class);
@@ -253,7 +260,7 @@ class InvestmentIndicatorSpecificationTest {
                     .when(dao).insert(any(InvestmentIndicatorEntity.class));
             when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.empty());
 
-            assertDoesNotThrow(() -> specification.insert(analysisResult(), stockPrice()));
+            assertDoesNotThrow(() -> specification.insert(analysisResult(), computedResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(120)), stockPrice()));
         }
 
         @DisplayName("insert : SQLIntegrityConstraintViolation 発生時はログ出力で握りつぶす")
@@ -263,7 +270,7 @@ class InvestmentIndicatorSpecificationTest {
                     .when(dao).insert(any(InvestmentIndicatorEntity.class));
             when(companySpecification.findCompanyByCode("1234")).thenReturn(Optional.empty());
 
-            assertDoesNotThrow(() -> specification.insert(analysisResult(), stockPrice()));
+            assertDoesNotThrow(() -> specification.insert(analysisResult(), computedResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(120)), stockPrice()));
         }
 
         @DisplayName("insert : それ以外の NestedRuntimeException はそのまま再送出する")
@@ -273,7 +280,7 @@ class InvestmentIndicatorSpecificationTest {
             doThrow(other).when(dao).insert(any(InvestmentIndicatorEntity.class));
 
             final Throwable thrown = assertThrows(DuplicateKeyException.class,
-                    () -> specification.insert(analysisResult(), stockPrice()));
+                    () -> specification.insert(analysisResult(), computedResult(BigDecimal.valueOf(1500), BigDecimal.valueOf(120)), stockPrice()));
             assertEquals(other, thrown);
         }
     }

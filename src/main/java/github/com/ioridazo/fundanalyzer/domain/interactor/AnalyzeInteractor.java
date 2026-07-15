@@ -164,8 +164,9 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             documentSpecification.findLatestDocument(document.getEdinetCode()).ifPresent(ld -> {
                 // this document == latest document
                 if (Objects.equals(document.getDocumentId(), ld.getDocumentId())) {
-                    // indicate
-                    analysisResultSpecification.findAnalysisResult(document.getDocumentId()).ifPresent(this::indicate);
+                    // indicate（取得済みの財務諸表値を使い回して都度計算する）
+                    analysisResultSpecification.findAnalysisResult(document.getDocumentId())
+                            .ifPresent(ar -> indicate(ar, financeValue, document));
                 }
             });
 
@@ -338,6 +339,8 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     /**
      * 投資指標を算出する
      *
+     * <p>財務諸表値・ドキュメントを未取得の呼び出し元向けに解決してから委譲する。
+     *
      * @param analysisResult 分析結果
      */
     void indicate(final AnalysisResultEntity analysisResult) {
@@ -346,7 +349,27 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             return;
         }
 
-        if (analysisResult.getBps().isEmpty() && analysisResult.getEps().isEmpty()) {
+        final Document document = documentSpecification.findDocument(analysisResult.getDocumentId());
+        indicate(analysisResult, financialStatementSpecification.getFinanceValue(document), document);
+    }
+
+    /**
+     * 投資指標を算出する
+     *
+     * <p>PER/PBR の入力となる BPS/EPS は永続列ではなく財務諸表値からの都度計算値を用いる。
+     *
+     * @param analysisResult 分析結果
+     * @param financeValue   財務諸表値
+     * @param document       ドキュメント
+     */
+    void indicate(final AnalysisResultEntity analysisResult, final FinanceValue financeValue, final Document document) {
+        if (targetTypeCodes.stream().noneMatch(target -> analysisResult.getDocumentTypeCode().equals(target))) {
+            // 120,130 以外は処理対象外
+            return;
+        }
+
+        final AnalysisResult computedResult = AnalysisResult.of(analysisResult, financeValue, document);
+        if (computedResult.getBps().isEmpty() && computedResult.getEps().isEmpty()) {
             // 指標に関する値が存在しない場合は対象外
             return;
         }
@@ -378,7 +401,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         stockSpecification.findStock(analysisResult.getCompanyCode(), date)
                                 .ifPresent(spe -> {
                                             // indicate
-                                            investmentIndicatorSpecification.insert(analysisResult, spe);
+                                            investmentIndicatorSpecification.insert(analysisResult, computedResult, spe);
                                         }
                                 )
                 );
