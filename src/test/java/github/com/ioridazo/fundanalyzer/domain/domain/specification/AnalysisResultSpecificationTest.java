@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.seasar.doma.jdbc.Sql;
 import org.seasar.doma.jdbc.SqlLogType;
@@ -567,26 +568,6 @@ class AnalysisResultSpecificationTest {
     }
 
     @Nested
-    @DisplayName("findIndicatorBackfillTargets のテスト")
-    class FindIndicatorBackfillTargets {
-
-        @DisplayName("findIndicatorBackfillTargets : DAO の結果をそのまま返却する")
-        @Test
-        void delegatesToDao() {
-            final List<String> documentTypeCodes = List.of("120", "130");
-            final AnalysisResultEntity entity = new AnalysisResultEntity(
-                    1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
-                    null, null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), "doc-1", null);
-            when(analysisResultDao.selectIndicatorBackfillTargets(documentTypeCodes)).thenReturn(List.of(entity));
-
-            final List<AnalysisResultEntity> actual = analysisResultSpecification.findIndicatorBackfillTargets(documentTypeCodes);
-
-            assertEquals(1, actual.size());
-            assertSame(entity, actual.get(0));
-        }
-    }
-
-    @Nested
     @DisplayName("displayTargetList のテスト")
     class DisplayTargetList {
 
@@ -731,6 +712,50 @@ class AnalysisResultSpecificationTest {
             verify(analysisResultDao, times(1)).insert(any(AnalysisResultEntity.class));
         }
 
+        @DisplayName("insert : BPS/EPS/ROE/ROA は永続化せず corporate_value と rim_value のみ書き込む")
+        @Test
+        void doesNotPersistIndicatorColumns() {
+            final Company target = new Company(
+                    "code",
+                    null,
+                    null,
+                    null,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    false,
+                    true
+            );
+            when(companySpecification.findCompanyByEdinetCode("edinetCode"))
+                    .thenReturn(Optional.of(target));
+            doReturn(FIXED_NOW).when(analysisResultSpecification).nowLocalDateTime();
+            final AnalysisResult analysisResult = new AnalysisResult(
+                    BigDecimal.valueOf(500),
+                    BigDecimal.valueOf(77),
+                    BigDecimal.valueOf(100),
+                    BigDecimal.valueOf(50),
+                    BigDecimal.valueOf(10),
+                    BigDecimal.valueOf(5),
+                    LocalDate.parse("2021-04-01"),
+                    "doc-1"
+            );
+
+            analysisResultSpecification.insert(buildDocument(LocalDate.parse("2020-06-30")), analysisResult);
+
+            final ArgumentCaptor<AnalysisResultEntity> captor = ArgumentCaptor.forClass(AnalysisResultEntity.class);
+            verify(analysisResultDao).insert(captor.capture());
+            final AnalysisResultEntity actual = captor.getValue();
+            assertEquals(BigDecimal.valueOf(500), actual.getCorporateValue());
+            assertEquals(BigDecimal.valueOf(77), actual.getRimValue().orElseThrow());
+            assertTrue(actual.getBps().isEmpty());
+            assertTrue(actual.getEps().isEmpty());
+            assertTrue(actual.getRoe().isEmpty());
+            assertTrue(actual.getRoa().isEmpty());
+        }
+
         @DisplayName("insert : 企業が見つからないときは FundanalyzerNotExistException")
         @Test
         void companyNotFound() {
@@ -835,139 +860,6 @@ class AnalysisResultSpecificationTest {
                     () -> analysisResultSpecification.insert(
                             buildDocument(LocalDate.parse("2020-06-30")), buildAnalysisResult())
             );
-        }
-    }
-
-    @Nested
-    @DisplayName("upsert のテスト")
-    class Upsert {
-
-        private static final LocalDateTime FIXED_NOW = LocalDateTime.parse("2021-04-01T12:00:00");
-
-        private Document buildDocument() {
-            return new Document(
-                    "doc-1",
-                    DocumentTypeCode.DTC_120,
-                    QuarterType.QT_OTHER,
-                    "edinetCode",
-                    LocalDate.parse("2020-06-30"),
-                    LocalDate.parse("2021-04-01"),
-                    null,
-                    null,
-                    DocumentStatus.DONE,
-                    DocumentStatus.DONE,
-                    DocumentStatus.DONE,
-                    null,
-                    DocumentStatus.DONE,
-                    null,
-                    DocumentStatus.DONE,
-                    null,
-                    false
-            );
-        }
-
-        private AnalysisResult buildAnalysisResult() {
-            return new AnalysisResult(
-                    BigDecimal.valueOf(900),
-                    BigDecimal.valueOf(120),
-                    BigDecimal.valueOf(80),
-                    BigDecimal.valueOf(10),
-                    BigDecimal.valueOf(5),
-                    LocalDate.parse("2021-04-01"),
-                    "doc-1"
-            );
-        }
-
-        private Company buildCompany() {
-            return new Company(
-                    "code",
-                    null,
-                    10,
-                    null,
-                    "edinetCode",
-                    null,
-                    null,
-                    null,
-                    null,
-                    false,
-                    false,
-                    true
-            );
-        }
-
-        @DisplayName("upsert : 既存行がないときは insert する")
-        @Test
-        void insertsWhenAbsent() {
-            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(buildCompany()));
-            when(analysisResultDao.selectByUniqueKey("code", LocalDate.parse("2020-06-30"), "120", LocalDate.parse("2021-04-01")))
-                    .thenReturn(Optional.empty());
-            doReturn(FIXED_NOW).when(analysisResultSpecification).nowLocalDateTime();
-
-            analysisResultSpecification.upsert(buildDocument(), buildAnalysisResult());
-
-            verify(analysisResultDao, times(1)).insert(any(AnalysisResultEntity.class));
-            verify(analysisResultDao, never()).update(any(AnalysisResultEntity.class));
-        }
-
-        @DisplayName("upsert : 既存行があるときは indicator 列だけを update する")
-        @Test
-        void updatesWhenPresent() {
-            final AnalysisResultEntity existing = new AnalysisResultEntity(
-                    10,
-                    "code",
-                    LocalDate.parse("2020-06-30"),
-                    BigDecimal.valueOf(777),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    "120",
-                    null,
-                    LocalDate.parse("2021-04-01"),
-                    "doc-1",
-                    FIXED_NOW.minusDays(1)
-            );
-            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(buildCompany()));
-            when(analysisResultDao.selectByUniqueKey("code", LocalDate.parse("2020-06-30"), "120", LocalDate.parse("2021-04-01")))
-                    .thenReturn(Optional.of(existing));
-
-            analysisResultSpecification.upsert(buildDocument(), buildAnalysisResult());
-
-            verify(analysisResultDao, times(1)).update(any(AnalysisResultEntity.class));
-            verify(analysisResultDao, never()).insert(any(AnalysisResultEntity.class));
-        }
-
-        @DisplayName("upsert : 既存の corporate_value は保持する")
-        @Test
-        void preservesCorporateValueOnUpdate() {
-            final AnalysisResultEntity existing = new AnalysisResultEntity(
-                    10,
-                    "code",
-                    LocalDate.parse("2020-06-30"),
-                    BigDecimal.valueOf(777),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    "120",
-                    null,
-                    LocalDate.parse("2021-04-01"),
-                    "doc-1",
-                    FIXED_NOW.minusDays(1)
-            );
-            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(buildCompany()));
-            when(analysisResultDao.selectByUniqueKey("code", LocalDate.parse("2020-06-30"), "120", LocalDate.parse("2021-04-01")))
-                    .thenReturn(Optional.of(existing));
-
-            analysisResultSpecification.upsert(buildDocument(), buildAnalysisResult());
-
-            final var captor = org.mockito.ArgumentCaptor.forClass(AnalysisResultEntity.class);
-            verify(analysisResultDao).update(captor.capture());
-            assertEquals(BigDecimal.valueOf(777), captor.getValue().getCorporateValue());
-            assertEquals(BigDecimal.valueOf(120), captor.getValue().getBps().orElseThrow());
-            assertEquals(BigDecimal.valueOf(80), captor.getValue().getEps().orElseThrow());
         }
     }
 }

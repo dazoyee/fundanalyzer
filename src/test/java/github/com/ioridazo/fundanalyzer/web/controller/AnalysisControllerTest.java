@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
-import github.com.ioridazo.fundanalyzer.domain.value.IndicatorBackfillResult;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -62,29 +61,6 @@ class AnalysisControllerTest {
                 "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。",
                 UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
         Mockito.verify(viewService, Mockito.times(1)).updateCorporateView();
-    }
-
-    @DisplayName("previewIndicatorBackfill : 指標バックフィル対象件数を表示する")
-    @Test
-    void previewIndicatorBackfill() {
-        Mockito.when(analyzeUseCase.countIndicatorBackfillTargets()).thenReturn(2);
-
-        var actual = UriComponentsBuilder.fromUriString(controller.previewIndicatorBackfill()).build();
-
-        assertEquals("/v3/index", actual.getPath());
-        assertEquals("指標バックフィル対象件数: 2件", UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
-        Mockito.verify(analyzeUseCase, Mockito.times(1)).countIndicatorBackfillTargets();
-    }
-
-    @DisplayName("backfillIndicator : UseCase に委譲し既存メッセージ形式でリダイレクトする")
-    @Test
-    void backfillIndicator() {
-        Mockito.when(analyzeUseCase.backfillIndicators()).thenReturn(new IndicatorBackfillResult(1, 2, 3));
-
-        assertEquals(
-                "redirect:/v3/index?message=%E6%8C%87%E6%A8%99%E3%83%90%E3%83%83%E3%82%AF%E3%83%95%E3%82%A3%E3%83%AB%E5%AE%8C%E4%BA%86:%20success%3D1,%20skipped%3D2,%20failed%3D3",
-                controller.backfillIndicator());
-        Mockito.verify(analyzeUseCase, Mockito.times(1)).backfillIndicators();
     }
 
     @DisplayName("scrapeByDate : 指定提出日の書類を分析する")

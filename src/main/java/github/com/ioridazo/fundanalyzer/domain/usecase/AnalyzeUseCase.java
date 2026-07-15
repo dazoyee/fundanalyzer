@@ -2,7 +2,6 @@ package github.com.ioridazo.fundanalyzer.domain.usecase;
 
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
-import github.com.ioridazo.fundanalyzer.domain.value.IndicatorBackfillResult;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.IdInputData;
@@ -34,13 +33,6 @@ public interface AnalyzeUseCase {
      */
     @Observed
     CorporateValue calculateCorporateValue(Company company);
-
-    // バックフィルは analysis_result の再算出であり分析責務に属するため、AnalyzeUseCase に集約する。
-    @Observed
-    int countIndicatorBackfillTargets();
-
-    @Observed
-    IndicatorBackfillResult backfillIndicators();
 
     /**
      * 投資指標の算出
