@@ -4,11 +4,22 @@
 
 ### 認証
 
-- **方式**: フォームログイン（Spring Security）
-- **ユーザー管理**: メモリ内単一ユーザー（`app.security.user` / `app.security.password`）
-- **資格情報の設定**: 環境変数 `SECURITY_USER` / `SECURITY_PASSWORD` で注入
-  - dev: `application.yml` のデフォルト値（`admin` / `fundanalyzer-local-dev`）で起動可能
-  - prod: `release/env` に必須設定（未設定の場合は起動失敗）
+認証方式は `app.security.mode` で切り替える（Spring Security）。
+
+- **prod: `trust-header`（orbit への認証委譲）**
+  - リバースプロキシ [orbit](../orbit) が WebAuthn 認証後に付与する署名付きトラストヘッダー
+    （`X-Orbit-Auth-User` / `X-Orbit-Auth-Role` / `X-Orbit-Auth-Timestamp` / `X-Orbit-Auth-Signature`）を
+    `TrustHeaderAuthenticationFilter` が検証し、Pre-Authentication として受け入れる
+  - 検証規約: 4 ヘッダーすべて存在・各ヘッダー単一値・ユーザー名/ロールに制御文字を含まない・
+    HMAC-SHA256 署名一致（定数時間比較）・タイムスタンプ鮮度 ±300 秒。
+    不成立のリクエストは 401（ヘッダー仕様の正本は orbit リポジトリ `docs/auth-sso.md`）
+  - 共有シークレットは環境変数 `ORBIT_TRUST_HEADER_SECRET` で注入（orbit 側と同一値。未設定の場合は起動失敗）
+  - 多層防御としてバインドをループバックに限定（`server.address` / `management.server.address`）。
+    orbit を経由しない直アクセスはネットワーク層で不達
+  - フォームログイン・パスワード認証の経路は持たない
+- **dev（既定）: `form-login`（フォームログイン）**
+  - メモリ内単一ユーザー（`app.security.user` / `app.security.password`）。既定値（`admin` / `fundanalyzer-local-dev`）で
+    orbit なしの単独起動が可能。環境変数 `SECURITY_USER` / `SECURITY_PASSWORD` で上書きできる
 
 ### セキュリティヘッダー
 
@@ -35,7 +46,7 @@ htmx によるテーブル fragment は全て GET リクエストのため対象
 
 ### HTTPS
 
-アプリケーション内では TLS 終端しません。リバースプロキシ（nginx 等）での TLS 終端を前提としています。
+アプリケーション内では TLS 終端しません。リバースプロキシ（orbit の前段の Tailscale Serve 等）での TLS 終端を前提としています。
 
 ---
 
@@ -45,8 +56,9 @@ htmx によるテーブル fragment は全て GET リクエストのため対象
 
 | 環境変数 | 用途 |
 |---|---|
-| `SECURITY_USER` | ログインユーザー名 |
-| `SECURITY_PASSWORD` | ログインパスワード |
+| `ORBIT_TRUST_HEADER_SECRET` | orbit と共有するトラストヘッダー署名シークレット（prod 必須） |
+| `SECURITY_USER` | フォームログイン用ユーザー名（dev のみ） |
+| `SECURITY_PASSWORD` | フォームログイン用パスワード（dev のみ） |
 | `SLACK_WEBHOOK_T` | Slack Webhook トークン（t 部） |
 | `SLACK_WEBHOOK_B` | Slack Webhook トークン（b 部） |
 | `SLACK_WEBHOOK_X` | Slack Webhook トークン（x 部） |

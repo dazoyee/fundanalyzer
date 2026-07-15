@@ -3,11 +3,11 @@ package github.com.ioridazo.fundanalyzer.config;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,20 +15,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.session.DisableEncodeUrlFilter;
 
 /**
- * フォームログイン認証・CSRF・セキュリティヘッダーを構成する Web セキュリティ設定。
+ * フォームログイン認証・CSRF・セキュリティヘッダーを構成する Web セキュリティ設定
+ * （{@code app.security.mode=form-login}（既定）、ローカル開発・テストで使用）。
  *
  * <p>全リクエストを認証必須とし、利用者は {@code app.security.user} / {@code app.security.password}
  * から構成する単一のメモリ内ユーザーのみ。CSRF は有効のまま維持し、Thymeleaf フォームへ自動でトークンを注入する。
+ * 本番は orbit からの署名付きトラストヘッダー認証（{@link TrustHeaderSecurityConfig}）を使用する。
  */
 @Configuration
+@ConditionalOnProperty(name = "app.security.mode", havingValue = "form-login", matchIfMissing = true)
 public class SecurityConfig {
-
-    /** HSTS の max-age（秒）。1 年（推奨値）。 */
-    private static final long HSTS_MAX_AGE_SECONDS = 31_536_000L;
 
     private final String username;
     private final String password;
@@ -89,17 +88,9 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .defaultSuccessUrl("/v3/index", true)
                         .permitAll())
-                .httpBasic(Customizer.withDefaults())
                 .logout(Customizer.withDefaults())
-                .addFilterBefore(new DisableEncodeUrlFilter(), UsernamePasswordAuthenticationFilter.class)
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
-                        .contentSecurityPolicy(csp -> csp.policyDirectives(contentSecurityPolicy))
-                        .referrerPolicy(referrer -> referrer.policy(
-                                ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
-                        .httpStrictTransportSecurity(hsts -> hsts
-                                .includeSubDomains(false)
-                                .maxAgeInSeconds(HSTS_MAX_AGE_SECONDS)));
+                .addFilterBefore(new DisableEncodeUrlFilter(), UsernamePasswordAuthenticationFilter.class);
+        SecurityHeadersCustomizer.apply(http, contentSecurityPolicy);
         return http.build();
     }
 }
