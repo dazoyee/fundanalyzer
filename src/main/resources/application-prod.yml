@@ -1,5 +1,8 @@
 server:
   port: 8890
+  # 本番アクセスは orbit のリバースプロキシ（同一ホスト・ループバック）経由に限定する。
+  # 直アクセスの遮断はトラストヘッダー署名検証との多層防御。
+  address: 127.0.0.1
   forward-headers-strategy: framework
   tomcat:
     use-relative-redirects: true
@@ -47,6 +50,7 @@ logging:
 management:
   server:
     port: 8990
+    address: 127.0.0.1
   metrics:
     tags:
       application: ${spring.application.name}-main
@@ -92,10 +96,11 @@ resilience4j:
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
 
 app:
-  # 本番では Basic 認証の資格情報を環境変数で必須化（フォールバックなし → 未設定なら起動失敗で検知）。
+  # 本番の認証は orbit（リバースプロキシ）からの署名付きトラストヘッダーに委譲する。
+  # 共有シークレットは環境変数で必須化（フォールバックなし → 未設定なら起動失敗で検知）。orbit 側と同一値を設定する。
   security:
-    user: ${SECURITY_USER}
-    password: ${SECURITY_PASSWORD}
+    mode: trust-header
+    trust-secret: ${ORBIT_TRUST_HEADER_SECRET}
 
   config:
     edinet:

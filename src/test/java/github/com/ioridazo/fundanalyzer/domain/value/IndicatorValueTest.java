@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,11 @@ class IndicatorValueTest {
 
     private final IndicatorValue indicatorValue = new IndicatorValue(null, null, null, null, null);
 
+    private AnalysisResult analysisResult(
+            final BigDecimal corporateValue, final BigDecimal bps, final BigDecimal eps) {
+        return new AnalysisResult(corporateValue, null, bps, eps, null, null, null, null);
+    }
+
     @Nested
     class calculatePriceCorporateValueRatio {
 
@@ -23,24 +27,10 @@ class IndicatorValueTest {
         @Test
         void present() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(2123.14),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(BigDecimal.valueOf(2123.14), null, null);
 
             var expected = BigDecimal.valueOf(1523).divide(BigDecimal.valueOf(2123.14), 10, RoundingMode.HALF_UP);
-            var actual = indicatorValue.calculatePriceCorporateValueRatio(stockPrice, analysisResultEntity);
+            var actual = indicatorValue.calculatePriceCorporateValueRatio(stockPrice, analysisResult);
             assertEquals(expected, actual);
         }
     }
@@ -52,24 +42,10 @@ class IndicatorValueTest {
         @Test
         void present() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(2123.14),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(null, null, BigDecimal.valueOf(2123.14));
 
             var expected = BigDecimal.valueOf(1523).divide(BigDecimal.valueOf(2123.14), 10, RoundingMode.HALF_UP);
-            var actual = indicatorValue.calculatePer(stockPrice, analysisResultEntity).orElseThrow();
+            var actual = indicatorValue.calculatePer(stockPrice, analysisResult).orElseThrow();
             assertEquals(expected, actual);
         }
 
@@ -77,69 +53,27 @@ class IndicatorValueTest {
         @Test
         void eps_isEmpty() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(null, null, null);
 
-            assertNull(indicatorValue.calculatePer(stockPrice, analysisResultEntity).orElse(null));
+            assertNull(indicatorValue.calculatePer(stockPrice, analysisResult).orElse(null));
         }
 
         @DisplayName("calculatePer : EPSが負のときは算出しない")
         @Test
         void eps_isNegative() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(-2123.14),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(null, null, BigDecimal.valueOf(-2123.14));
 
-            assertEquals(Optional.empty(), indicatorValue.calculatePer(stockPrice, analysisResultEntity));
+            assertEquals(Optional.empty(), indicatorValue.calculatePer(stockPrice, analysisResult));
         }
 
         @DisplayName("calculatePer : EPSがゼロのときは算出しない")
         @Test
         void eps_isZero() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.ZERO,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(null, null, BigDecimal.ZERO);
 
-            assertEquals(Optional.empty(), indicatorValue.calculatePer(stockPrice, analysisResultEntity));
+            assertEquals(Optional.empty(), indicatorValue.calculatePer(stockPrice, analysisResult));
         }
     }
 
@@ -150,24 +84,10 @@ class IndicatorValueTest {
         @Test
         void present() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    BigDecimal.valueOf(2123.14),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(null, BigDecimal.valueOf(2123.14), null);
 
             var expected = BigDecimal.valueOf(1523).divide(BigDecimal.valueOf(2123.14), 10, RoundingMode.HALF_UP);
-            var actual = indicatorValue.calculatePbr(stockPrice, analysisResultEntity).orElseThrow();
+            var actual = indicatorValue.calculatePbr(stockPrice, analysisResult).orElseThrow();
             assertEquals(expected, actual);
         }
 
@@ -175,23 +95,9 @@ class IndicatorValueTest {
         @Test
         void bps_isEmpty() {
             var stockPrice = BigDecimal.valueOf(1523);
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            var analysisResult = analysisResult(null, null, null);
 
-            assertNull(indicatorValue.calculatePbr(stockPrice, analysisResultEntity).orElse(null));
+            assertNull(indicatorValue.calculatePbr(stockPrice, analysisResult).orElse(null));
         }
     }
 

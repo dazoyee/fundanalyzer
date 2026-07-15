@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
-import github.com.ioridazo.fundanalyzer.domain.value.IndicatorBackfillResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -76,41 +75,6 @@ public class AnalysisController {
         viewService.updateCorporateView();
         return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
                 .queryParam(MESSAGE, "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
-                .build().encode().toUriString();
-    }
-
-    /**
-     * 指標バックフィル対象件数を確認する
-     *
-     * @return Index
-     */
-    @GetMapping("/v1/admin/analysis/backfill/indicator/preview")
-    public String previewIndicatorBackfill() {
-        final int targetCount = analyzeUseCase.countIndicatorBackfillTargets();
-        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
-                .queryParam(MESSAGE, "指標バックフィル対象件数: " + targetCount + "件")
-                .build().encode().toUriString();
-    }
-
-    /**
-     * 指標バックフィルを実行する
-     *
-     * <p>管理者専用運用を前提とし、実行前に analysis_result テーブルのバックアップ取得を必須とする。
-     * Gate1 論点として、この処理は指標列（BPS/EPS/ROE/ROA/RIM）のみを補完し、
-     * corporate_value 列や P1 の係数ロジックは意図的に再計算しない。
-     *
-     * @return Index
-     */
-    @PostMapping("/v1/admin/analysis/backfill/indicator")
-    public String backfillIndicator() {
-        final IndicatorBackfillResult result = analyzeUseCase.backfillIndicators();
-
-        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
-                .queryParam(
-                        MESSAGE,
-                        "指標バックフィル完了: success=" + result.successCount()
-                                + ", skipped=" + result.skippedCount()
-                                + ", failed=" + result.failedCount())
                 .build().encode().toUriString();
     }
 

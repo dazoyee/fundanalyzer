@@ -21,7 +21,6 @@ import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.CorporateValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
-import github.com.ioridazo.fundanalyzer.domain.value.IndicatorBackfillResult;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -164,8 +163,9 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             documentSpecification.findLatestDocument(document.getEdinetCode()).ifPresent(ld -> {
                 // this document == latest document
                 if (Objects.equals(document.getDocumentId(), ld.getDocumentId())) {
-                    // indicate
-                    analysisResultSpecification.findAnalysisResult(document.getDocumentId()).ifPresent(this::indicate);
+                    // indicate（取得済みの財務諸表値を使い回して都度計算する）
+                    analysisResultSpecification.findAnalysisResult(document.getDocumentId())
+                            .ifPresent(ar -> indicate(ar, financeValue, document));
                 }
             });
 
@@ -271,47 +271,6 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         return corporateValue;
     }
 
-    @Override
-    public int countIndicatorBackfillTargets() {
-        return analysisResultSpecification.findIndicatorBackfillTargets(targetTypeCodes).size();
-    }
-
-    @Override
-    public IndicatorBackfillResult backfillIndicators() {
-        int successCount = 0;
-        int skippedCount = 0;
-        int failedCount = 0;
-
-        for (AnalysisResultEntity target : analysisResultSpecification.findIndicatorBackfillTargets(targetTypeCodes)) {
-            try {
-                backfillIndicator(target.getDocumentId());
-                successCount++;
-            } catch (final FundanalyzerNotExistException e) {
-                skippedCount++;
-                log.warn(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format(
-                                "指標バックフィルをスキップしました。\t書類ID:{0}",
-                                target.getDocumentId()
-                        ),
-                        Category.ANALYSIS,
-                        Process.ANALYSIS
-                ), e);
-            } catch (final RuntimeException e) {
-                failedCount++;
-                log.error(FundanalyzerLogClient.toInteractorLogObject(
-                        MessageFormat.format(
-                                "指標バックフィル中に想定外エラーが発生しました。\t書類ID:{0}",
-                                target.getDocumentId()
-                        ),
-                        Category.ANALYSIS,
-                        Process.ANALYSIS
-                ), e);
-            }
-        }
-
-        return new IndicatorBackfillResult(successCount, skippedCount, failedCount);
-    }
-
     /**
      * 投資指標を算出する
      *
@@ -322,21 +281,10 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         analysisResultSpecification.findLatestAnalysisResult(inputData.getCode()).ifPresent(this::indicate);
     }
 
-    private void backfillIndicator(final String documentId) {
-        final Document document = documentSpecification.findDocument(documentId);
-        final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode())
-                .orElseThrow(FundanalyzerNotExistException::new);
-        final AnalysisCoefficient coefficient = industrySpecification.resolveCoefficient(company.industryId());
-        final AnalysisResult analysisResult = new AnalysisResult(
-                financialStatementSpecification.getFinanceValue(document),
-                document,
-                coefficient
-        );
-        analysisResultSpecification.upsert(document, analysisResult);
-    }
-
     /**
      * 投資指標を算出する
+     *
+     * <p>財務諸表値・ドキュメントを未取得の呼び出し元向けに解決してから委譲する。
      *
      * @param analysisResult 分析結果
      */
@@ -346,7 +294,27 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             return;
         }
 
-        if (analysisResult.getBps().isEmpty() && analysisResult.getEps().isEmpty()) {
+        final Document document = documentSpecification.findDocument(analysisResult.getDocumentId());
+        indicate(analysisResult, financialStatementSpecification.getFinanceValue(document), document);
+    }
+
+    /**
+     * 投資指標を算出する
+     *
+     * <p>PER/PBR の入力となる BPS/EPS は永続列ではなく財務諸表値からの都度計算値を用いる。
+     *
+     * @param analysisResult 分析結果
+     * @param financeValue   財務諸表値
+     * @param document       ドキュメント
+     */
+    void indicate(final AnalysisResultEntity analysisResult, final FinanceValue financeValue, final Document document) {
+        if (targetTypeCodes.stream().noneMatch(target -> analysisResult.getDocumentTypeCode().equals(target))) {
+            // 120,130 以外は処理対象外
+            return;
+        }
+
+        final AnalysisResult computedResult = AnalysisResult.of(analysisResult, financeValue, document);
+        if (computedResult.getBps().isEmpty() && computedResult.getEps().isEmpty()) {
             // 指標に関する値が存在しない場合は対象外
             return;
         }
@@ -378,7 +346,7 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         stockSpecification.findStock(analysisResult.getCompanyCode(), date)
                                 .ifPresent(spe -> {
                                             // indicate
-                                            investmentIndicatorSpecification.insert(analysisResult, spe);
+                                            investmentIndicatorSpecification.insert(analysisResult, computedResult, spe);
                                         }
                                 )
                 );

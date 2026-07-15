@@ -83,13 +83,6 @@ class SecurityConfigIntegrationTest {
         }
 
         @Test
-        @DisplayName("未認証で指標バックフィルプレビューにアクセス→ログインページへリダイレクト")
-        void indicatorBackfillPreview_未認証_302() throws Exception {
-            mockMvc.perform(get("/v1/admin/analysis/backfill/indicator/preview").accept(MediaType.TEXT_HTML))
-                    .andExpect(status().isFound());
-        }
-
-        @Test
         @DisplayName("未認証でActuator healthにアクセス→200を返す")
         void actuatorHealth_未認証_200() throws Exception {
             mockMvc.perform(get("/actuator/health"))
@@ -120,13 +113,6 @@ class SecurityConfigIntegrationTest {
                     .andExpect(status().isForbidden());
         }
 
-        @Test
-        @WithMockUser(username = "testuser", roles = "USER")
-        @DisplayName("認証済みだがCSRFトークンなし指標バックフィルPOST→403を返す")
-        void indicatorBackfillPost_認証あり_CSRFなし_403() throws Exception {
-            mockMvc.perform(post("/v1/admin/analysis/backfill/indicator"))
-                    .andExpect(status().isForbidden());
-        }
     }
 
     @Nested

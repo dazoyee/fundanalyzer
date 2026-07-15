@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.Investment
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import org.apache.logging.log4j.LogManager;
@@ -108,10 +109,13 @@ public class InvestmentIndicatorSpecification {
      * 投資指標を登録する
      *
      * @param analysisResultEntity 企業価値エンティティ
+     * @param analysisResult       企業価値（BPS/EPS は財務諸表からの都度計算値を保持する）
      * @param stockPriceEntity     株価エンティティ
      */
     public void insert(
-            final AnalysisResultEntity analysisResultEntity, final StockPriceEntity stockPriceEntity) {
+            final AnalysisResultEntity analysisResultEntity,
+            final AnalysisResult analysisResult,
+            final StockPriceEntity stockPriceEntity) {
         final BigDecimal adjustedStockPrice = corporateActionSpecification.adjustToBasis(
                 BigDecimal.valueOf(stockPriceEntity.getStockPrice()),
                 analysisResultEntity.getCompanyCode(),
@@ -119,7 +123,7 @@ public class InvestmentIndicatorSpecification {
                 analysisResultEntity.getSubmitDate(),
                 true
         );
-        final IndicatorValue indicatorValue = new IndicatorValue(adjustedStockPrice, analysisResultEntity);
+        final IndicatorValue indicatorValue = new IndicatorValue(adjustedStockPrice, analysisResult);
         try {
             investmentIndicatorDao.insert(InvestmentIndicatorEntity.of(
                     stockPriceEntity.getId(),

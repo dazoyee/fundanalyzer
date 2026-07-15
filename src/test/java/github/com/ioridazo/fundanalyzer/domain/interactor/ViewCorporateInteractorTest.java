@@ -2,6 +2,10 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
+import org.mockito.ArgumentCaptor;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
+import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
+import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
@@ -620,6 +624,102 @@ class ViewCorporateInteractorTest {
 
             assertDoesNotThrow(() -> viewCorporateInteractor.updateView(inputData));
             verify(viewSpecification, times(0)).upsert(corporateViewModel);
+        }
+
+        @DisplayName("updateView : BPS/EPS/ROE/ROA は永続列ではなく財務諸表値から都度計算して渡す")
+        @Test
+        void all_computesIndicatorsFromFinanceValue() {
+            var entity = analysisResultEntity();
+            var analysisDocument = analysisDocument();
+            var financeValue = FinanceValue.of(
+                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(document));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(entity));
+            when(documentSpecification.findDocument("documentId")).thenReturn(analysisDocument);
+            when(financialStatementSpecification.getFinanceValue(analysisDocument)).thenReturn(financeValue);
+            when(viewSpecification.generateCorporateView(eq(company), eq(document), any(), any(), any())).thenReturn(corporateViewModel);
+
+            assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
+
+            final ArgumentCaptor<AnalysisResult> captor = ArgumentCaptor.forClass(AnalysisResult.class);
+            verify(viewSpecification, times(1)).generateCorporateView(eq(company), eq(document), captor.capture(), any(), any());
+            final AnalysisResult actual = captor.getValue();
+            // 永続列（bps=1）ではなく都度計算値（800/10=80）が渡ること
+            assertEquals(0, BigDecimal.valueOf(80).compareTo(actual.getBps().orElseThrow()));
+            assertEquals(0, BigDecimal.valueOf(15).compareTo(actual.getEps().orElseThrow()));
+            // 係数依存値は永続値を凍結したまま
+            assertEquals(BigDecimal.valueOf(999), actual.getCorporateValue());
+            assertEquals(BigDecimal.valueOf(555), actual.getRimValue().orElseThrow());
+        }
+
+        @DisplayName("updateView : 都度計算で不正データ例外が発生した企業はスキップし他社の更新は継続する")
+        @Test
+        void all_continuesWhenFinanceValueThrowsBadData() {
+            var badCompany = company;
+            var okCompany = new Company(
+                    "code2", "name2", null, null, "edinetCode2",
+                    null, null, null, null, false, false, true);
+            var entity = analysisResultEntity();
+            var analysisDocument = analysisDocument();
+            var okViewModel = defaultCorporateViewModel("code2");
+
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(badCompany, okCompany));
+            when(documentSpecification.findLatestDocument(badCompany)).thenReturn(Optional.of(document));
+            when(documentSpecification.findLatestDocument(okCompany)).thenReturn(Optional.of(document));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(entity));
+            when(analysisResultSpecification.findLatestAnalysisResult("code2")).thenReturn(Optional.empty());
+            when(documentSpecification.findDocument("documentId")).thenReturn(analysisDocument);
+            when(financialStatementSpecification.getFinanceValue(analysisDocument))
+                    .thenThrow(new FundanalyzerBadDataException("bad data", new RuntimeException()));
+            when(viewSpecification.generateCorporateView(eq(okCompany), eq(document), any(), any(), any())).thenReturn(okViewModel);
+
+            assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
+
+            verify(viewSpecification, times(0)).generateCorporateView(eq(badCompany), eq(document), any(), any(), any());
+            verify(viewSpecification, times(1)).upsert(okViewModel);
+        }
+
+        private AnalysisResultEntity analysisResultEntity() {
+            return new AnalysisResultEntity(
+                    1,
+                    "code",
+                    LocalDate.parse("2024-03-31"),
+                    BigDecimal.valueOf(999),
+                    BigDecimal.valueOf(555),
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    "120",
+                    null,
+                    LocalDate.parse("2024-06-30"),
+                    "documentId",
+                    null
+            );
+        }
+
+        private Document analysisDocument() {
+            return new Document(
+                    "documentId",
+                    null,
+                    null,
+                    "edinetCode",
+                    null,
+                    LocalDate.parse("2024-06-30"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+            );
         }
     }
 
