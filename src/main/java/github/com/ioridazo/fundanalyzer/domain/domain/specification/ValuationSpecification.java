@@ -131,6 +131,24 @@ public class ValuationSpecification {
     }
 
     /**
+     * 全件数を取得する（再計算バッチの事前確認用）。
+     *
+     * @return 全件数
+     */
+    public int countAll() {
+        return valuationDao.countAll();
+    }
+
+    /**
+     * analysis_result の企業価値（再計算後の現行係数値）を基に、割引値・割引率を一括更新する。
+     *
+     * @return 更新件数
+     */
+    public int updateDerivedValuesFromAnalysisResult() {
+        return valuationDao.updateDerivedValuesFromAnalysisResult();
+    }
+
+    /**
      * 評価結果を登録する
      *
      * @param stock          株価

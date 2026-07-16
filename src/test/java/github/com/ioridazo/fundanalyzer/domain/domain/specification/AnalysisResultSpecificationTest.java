@@ -559,6 +559,42 @@ class AnalysisResultSpecificationTest {
     }
 
     @Nested
+    @DisplayName("係数一括再計算バッチ向けメソッドのテスト")
+    class Recalculation {
+
+        @DisplayName("findAll : DAO の結果をそのまま返却する")
+        @Test
+        void findAll() {
+            final AnalysisResultEntity entity = new AnalysisResultEntity(
+                    1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
+                    null, null, null, null, "120", "4", LocalDate.now(), null, null);
+            when(analysisResultDao.selectAll()).thenReturn(List.of(entity));
+
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.findAll();
+
+            assertEquals(1, actual.size());
+            assertSame(entity, actual.get(0));
+        }
+
+        @DisplayName("countAll : DAO の件数をそのまま返却する")
+        @Test
+        void countAll() {
+            when(analysisResultDao.countAll()).thenReturn(42);
+
+            assertEquals(42, analysisResultSpecification.countAll());
+        }
+
+        @DisplayName("updateCorporateValueAndRimValue : DAO に委譲する")
+        @Test
+        void updateCorporateValueAndRimValue() {
+            analysisResultSpecification.updateCorporateValueAndRimValue(1, BigDecimal.TEN, BigDecimal.ONE);
+
+            verify(analysisResultDao, times(1))
+                    .updateCorporateValueAndRimValue(1, BigDecimal.TEN, BigDecimal.ONE);
+        }
+    }
+
+    @Nested
     @DisplayName("displayTargetList のテスト")
     class DisplayTargetList {
 

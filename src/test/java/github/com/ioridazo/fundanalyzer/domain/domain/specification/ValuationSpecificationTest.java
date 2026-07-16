@@ -39,6 +39,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ValuationSpecificationTest {
@@ -68,6 +70,28 @@ class ValuationSpecificationTest {
                 investmentIndicatorSpecification,
                 corporateActionSpecification
         );
+    }
+
+    @Nested
+    @DisplayName("係数一括再計算バッチ向けメソッドのテスト")
+    class Recalculation {
+
+        @DisplayName("countAll : DAO の件数をそのまま返却する")
+        @Test
+        void countAll() {
+            when(valuationDao.countAll()).thenReturn(42);
+
+            assertEquals(42, valuationSpecification.countAll());
+        }
+
+        @DisplayName("updateDerivedValuesFromAnalysisResult : DAO の更新件数をそのまま返却する")
+        @Test
+        void updateDerivedValuesFromAnalysisResult() {
+            when(valuationDao.updateDerivedValuesFromAnalysisResult()).thenReturn(5);
+
+            assertEquals(5, valuationSpecification.updateDerivedValuesFromAnalysisResult());
+            verify(valuationDao, times(1)).updateDerivedValuesFromAnalysisResult();
+        }
     }
 
     @Nested
