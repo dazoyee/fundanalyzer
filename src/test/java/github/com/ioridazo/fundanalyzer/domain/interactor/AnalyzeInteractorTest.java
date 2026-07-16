@@ -2,22 +2,20 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.config.AnalysisCoefficient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.AverageInfo;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.FinanceValue;
-import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
-import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.domain.value.RecalculationPreview;
+import github.com.ioridazo.fundanalyzer.domain.value.RecalculationResult;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +25,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,11 +37,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,9 +55,9 @@ class AnalyzeInteractorTest {
     private DocumentSpecification documentSpecification;
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
-    private StockSpecification stockSpecification;
-    private InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private ValuationSpecification valuationSpecification;
     private IndustrySpecification industrySpecification;
+    private CacheManager cacheManager;
 
     private AnalyzeInteractor analyzeInteractor;
 
@@ -64,20 +67,19 @@ class AnalyzeInteractorTest {
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
-        stockSpecification = mock(StockSpecification.class);
-        investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
+        valuationSpecification = Mockito.mock(ValuationSpecification.class);
         industrySpecification = mock(IndustrySpecification.class);
+        cacheManager = mock(CacheManager.class);
 
         analyzeInteractor = Mockito.spy(new AnalyzeInteractor(
                 companySpecification,
                 documentSpecification,
                 financialStatementSpecification,
                 analysisResultSpecification,
-                stockSpecification,
-                investmentIndicatorSpecification,
-                industrySpecification
+                valuationSpecification,
+                industrySpecification,
+                cacheManager
         ));
-        analyzeInteractor.targetTypeCodes = List.of("120", "130");
         when(industrySpecification.resolveCoefficient(any()))
                 .thenReturn(new AnalysisCoefficient(BigDecimal.valueOf(10), BigDecimal.valueOf(1.2)));
     }
@@ -104,8 +106,6 @@ class AnalyzeInteractorTest {
                 null,
                 false
         );
-
-        AnalysisResultEntity analysisResult = analysisResultEntity();
 
         DateInputData inputData = DateInputData.of(LocalDate.parse("2021-05-15"));
 
@@ -218,98 +218,6 @@ class AnalyzeInteractorTest {
             verify(analyzeInteractor, times(0)).analyze(document);
         }
 
-        @DisplayName("analyze : 投資指標を算出する")
-        @Test
-        void indicate_ok() {
-            var financeValue = FinanceValue.of(
-                    100L,
-                    101L,
-                    102L,
-                    103L,
-                    104L,
-                    105L,
-                    106L,
-                    107L,
-                    108L,
-                    109L
-            );
-
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-            when(documentSpecification.findLatestDocument("edinetCode")).thenReturn(Optional.of(document));
-            when(analysisResultSpecification.findAnalysisResult("documentId"))
-                    .thenReturn(Optional.of(analysisResult));
-
-            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
-            verify(analysisResultSpecification, times(1)).insert(any(), any());
-            verify(analyzeInteractor, times(1)).indicate(analysisResult, financeValue, document);
-        }
-
-        @DisplayName("analyze : 最新ドキュメントが存在しないときは投資指標を算出しない")
-        @Test
-        void indicate_latest_isEmpty() {
-            var financeValue = FinanceValue.of(
-                    100L,
-                    101L,
-                    102L,
-                    103L,
-                    104L,
-                    105L,
-                    106L,
-                    107L,
-                    108L,
-                    109L
-            );
-
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-            when(documentSpecification.findLatestDocument("edinetCode")).thenReturn(Optional.empty());
-
-            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
-            verify(analysisResultSpecification, times(1)).insert(any(), any());
-            verify(analyzeInteractor, times(0)).indicate((AnalysisResultEntity) any());
-        }
-
-        @DisplayName("analyze : 処理対象が最新でないときは投資指標を算出しない")
-        @Test
-        void indicate_noLatest() {
-            var financeValue = FinanceValue.of(
-                    100L,
-                    101L,
-                    102L,
-                    103L,
-                    104L,
-                    105L,
-                    106L,
-                    107L,
-                    108L,
-                    109L
-            );
-
-            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
-            when(documentSpecification.findLatestDocument("edinetCode"))
-                    .thenReturn(Optional.of(new Document(
-                            "documentId2",
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            false
-                    )));
-
-            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
-            verify(analysisResultSpecification, times(1)).insert(any(), any());
-            verify(analyzeInteractor, times(0)).indicate((AnalysisResultEntity) any());
-        }
     }
 
     @Nested
@@ -515,58 +423,7 @@ class AnalyzeInteractorTest {
     }
 
     @Nested
-    class indicate {
-
-        private AnalysisResultEntity analysisResultEntity(LocalDate submitDate) {
-            return new AnalysisResultEntity(
-                    1,
-                    "code",
-                    null,
-                    null,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    null,
-                    null,
-                    "120",
-                    null,
-                    submitDate,
-                    "documentId",
-                    null
-            );
-        }
-
-        private IndicatorValue indicatorValue(LocalDate targetDate) {
-            return new IndicatorValue(
-                    null,
-                    null,
-                    null,
-                    null,
-                    targetDate
-            );
-        }
-
-        private StockPriceEntity stockPriceEntity(LocalDate targetDate) {
-            return new StockPriceEntity(
-                    null,
-                    null,
-                    targetDate,
-                    1000.0,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-        }
+    class recalculate {
 
         private Document document() {
             return new Document(
@@ -574,8 +431,8 @@ class AnalyzeInteractorTest {
                     null,
                     null,
                     "edinetCode",
-                    LocalDate.parse("2020-06-30"),
-                    LocalDate.parse("2020-09-30"),
+                    null,
+                    LocalDate.now(),
                     null,
                     null,
                     null,
@@ -592,120 +449,222 @@ class AnalyzeInteractorTest {
 
         private FinanceValue financeValue() {
             return FinanceValue.of(
-                    1000L,
                     100L,
-                    1200L,
-                    200L,
-                    50L,
-                    0L,
-                    800L,
-                    300L,
-                    150L,
-                    10L
+                    101L,
+                    102L,
+                    103L,
+                    104L,
+                    105L,
+                    106L,
+                    107L,
+                    108L,
+                    109L
+            );
+        }
+
+        private Company company() {
+            return new Company(
+                    "code",
+                    null,
+                    1,
+                    null,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    false,
+                    true
+            );
+        }
+
+        private AnalysisCoefficient coefficient() {
+            return new AnalysisCoefficient(BigDecimal.TEN, BigDecimal.valueOf(1.2), BigDecimal.valueOf(0.08));
+        }
+
+        private AnalysisResultEntity entity(
+                final Integer id,
+                final BigDecimal corporateValue,
+                final BigDecimal rimValue,
+                final String documentId) {
+            return new AnalysisResultEntity(
+                    id,
+                    "code",
+                    null,
+                    corporateValue,
+                    rimValue,
+                    "120",
+                    null,
+                    LocalDate.now(),
+                    documentId,
+                    null
             );
         }
 
         @BeforeEach
         void setUp() {
-            when(stockSpecification.findStock(eq("code"), any()))
-                    .thenReturn(Optional.of(stockPriceEntity(null)));
             when(documentSpecification.findDocument("documentId")).thenReturn(document());
             when(financialStatementSpecification.getFinanceValue(any(Document.class))).thenReturn(financeValue());
+            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company()));
+            when(industrySpecification.resolveCoefficient(1)).thenReturn(coefficient());
         }
 
-        @DisplayName("indicate : 企業コードから投資指標を算出する")
+        @DisplayName("recalculate : 値が変わる行のみ更新される")
         @Test
-        void inputData_code() {
-            var analysisResultEntity = analysisResultEntity(null);
+        void updatesOnlyChangedRow() {
+            final AnalysisResultEntity staleEntity = entity(1, BigDecimal.ZERO, null, "documentId");
+            when(analysisResultSpecification.findAll()).thenReturn(List.of(staleEntity));
 
-            when(analysisResultSpecification.findLatestAnalysisResult("code"))
-                    .thenReturn(Optional.of(analysisResultEntity));
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(CodeInputData.of("code")));
-            verify(analyzeInteractor, times(1)).indicate(analysisResultEntity);
+            final AnalysisResult expected = new AnalysisResult(financeValue(), document(), coefficient());
+            final Cache cache = mock(Cache.class);
+            when(cacheManager.getCache("backtest")).thenReturn(cache);
 
-        }
+            final RecalculationResult actual = analyzeInteractor.recalculate();
 
-        @DisplayName("indicate : 投資指標を算出する")
-        @Test
-        void present() {
-            when(investmentIndicatorSpecification.findIndicatorValueList(1))
-                    .thenReturn(List.of(indicatorValue(LocalDate.parse("2022-11-19"))));
-            when(stockSpecification.findLatestStock("code"))
-                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
-
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
-            verify(investmentIndicatorSpecification, times(7)).insert(any(), any(), any());
-        }
-
-        @DisplayName("indicate : 書類種別コードが対象外のとき")
-        @Test
-        void documentTypeCode_isNotTarget() {
-            var analysisResultEntity = new AnalysisResultEntity(
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    "140",
-                    null,
-                    null,
-                    null,
-                    null
+            verify(analysisResultSpecification, times(1)).updateCorporateValueAndRimValue(
+                    eq(1), eq(expected.getCorporateValue()), eq(expected.getRimValue().orElse(null)));
+            assertAll(
+                    () -> assertEquals(1, actual.targetCount()),
+                    () -> assertEquals(1, actual.updatedCount()),
+                    () -> assertEquals(0, actual.skippedCount()),
+                    () -> assertEquals(0, actual.failedCount())
             );
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any(), any());
+            verify(valuationSpecification, times(1)).updateDerivedValuesFromAnalysisResult();
+            verify(cache, times(1)).clear();
         }
 
-        @DisplayName("indicate : 株価が存在しないとき")
+        @DisplayName("recalculate : 値が変わらない行は更新をスキップする")
         @Test
-        void stockPrice_isEmpty() {
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any(), any());
+        void skipsUnchangedRow() {
+            final AnalysisResult expected = new AnalysisResult(financeValue(), document(), coefficient());
+            final AnalysisResultEntity upToDateEntity =
+                    entity(1, expected.getCorporateValue(), expected.getRimValue().orElse(null), "documentId");
+            when(analysisResultSpecification.findAll()).thenReturn(List.of(upToDateEntity));
+
+            final RecalculationResult actual = analyzeInteractor.recalculate();
+
+            verify(analysisResultSpecification, never()).updateCorporateValueAndRimValue(any(), any(), any());
+            assertAll(
+                    () -> assertEquals(1, actual.targetCount()),
+                    () -> assertEquals(0, actual.updatedCount()),
+                    () -> assertEquals(1, actual.skippedCount()),
+                    () -> assertEquals(0, actual.failedCount())
+            );
+            // 値の変化がない行のみでも、valuation一括更新は毎回実行する
+            verify(valuationSpecification, times(1)).updateDerivedValuesFromAnalysisResult();
         }
 
-        @DisplayName("indicate : 投資指標が存在しないとき")
+        @DisplayName("recalculate : 入力欠損の行はスキップして継続する")
         @Test
-        void indicatorValue_isEmpty() {
-            when(stockSpecification.findLatestStock("code"))
-                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse("2022-11-26"))));
+        void continuesOnMissingInput() {
+            when(documentSpecification.findDocument("missingDocumentId"))
+                    .thenThrow(new FundanalyzerNotExistException("書類が存在しません。"));
+            final AnalysisResultEntity missingEntity = entity(1, BigDecimal.ZERO, null, "missingDocumentId");
+            final AnalysisResultEntity presentEntity = entity(2, BigDecimal.ZERO, null, "documentId");
+            when(analysisResultSpecification.findAll()).thenReturn(List.of(missingEntity, presentEntity));
 
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse("2022-11-01"))));
-            verify(investmentIndicatorSpecification, times(26)).insert(any(), any(), any());
+            final RecalculationResult actual = analyzeInteractor.recalculate();
+
+            verify(analysisResultSpecification, times(1)).updateCorporateValueAndRimValue(eq(2), any(), any());
+            verify(analysisResultSpecification, never()).updateCorporateValueAndRimValue(eq(1), any(), any());
+            assertAll(
+                    () -> assertEquals(2, actual.targetCount()),
+                    () -> assertEquals(1, actual.updatedCount()),
+                    () -> assertEquals(0, actual.skippedCount()),
+                    () -> assertEquals(1, actual.failedCount())
+            );
         }
 
-        @DisplayName("indicate : 処理対象日付が正しいとき")
-        @ParameterizedTest
-        @CsvSource({
-                "2022-12-01, 2022-12-01",
-                "2022-12-01, 2022-12-02",
-                "2021-12-01, 2022-12-01"
-        })
-        void date_ok(String submitDate, String latestDate) {
-            when(stockSpecification.findLatestStock("code"))
-                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
+        @DisplayName("recalculate : 想定外の実行時例外が発生した行はスキップして継続する")
+        @Test
+        void continuesOnUnexpectedRuntimeException() {
+            when(documentSpecification.findDocument("brokenDocumentId"))
+                    .thenThrow(new NullPointerException("unexpected"));
+            final AnalysisResultEntity brokenEntity = entity(1, BigDecimal.ZERO, null, "brokenDocumentId");
+            final AnalysisResultEntity presentEntity = entity(2, BigDecimal.ZERO, null, "documentId");
+            when(analysisResultSpecification.findAll()).thenReturn(List.of(brokenEntity, presentEntity));
 
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
-            verify(investmentIndicatorSpecification, Mockito.atLeastOnce()).insert(any(), any(), any());
-            verify(investmentIndicatorSpecification, Mockito.atMost(366)).insert(any(), any(), any());
+            final RecalculationResult actual = analyzeInteractor.recalculate();
+
+            verify(analysisResultSpecification, times(1)).updateCorporateValueAndRimValue(eq(2), any(), any());
+            verify(analysisResultSpecification, never()).updateCorporateValueAndRimValue(eq(1), any(), any());
+            verify(valuationSpecification, times(1)).updateDerivedValuesFromAnalysisResult();
+            assertAll(
+                    () -> assertEquals(2, actual.targetCount()),
+                    () -> assertEquals(1, actual.updatedCount()),
+                    () -> assertEquals(0, actual.skippedCount()),
+                    () -> assertEquals(1, actual.failedCount())
+            );
         }
 
-        @DisplayName("indicate : 処理対象日付が正しくないとき")
-        @ParameterizedTest
-        @CsvSource({
-                "2022-11-01, 2022-10-31",
-                "2021-11-01, 2022-11-02"
-        })
-        void date_ng(String submitDate, String latestDate) {
-            when(investmentIndicatorSpecification.findIndicatorValueList(1))
-                    .thenReturn(List.of(indicatorValue(LocalDate.parse("2022-11-19"))));
-            when(stockSpecification.findLatestStock("code"))
-                    .thenReturn(Optional.of(stockPriceEntity(LocalDate.parse(latestDate))));
+        @DisplayName("recalculate : 対象0件でもvaluation一括更新とbacktestキャッシュevictは実行する")
+        @Test
+        void alwaysUpdatesValuationAndEvictsCacheEvenWhenEmpty() {
+            when(analysisResultSpecification.findAll()).thenReturn(List.of());
+            final Cache cache = mock(Cache.class);
+            when(cacheManager.getCache("backtest")).thenReturn(cache);
 
-            assertDoesNotThrow(() -> analyzeInteractor.indicate(analysisResultEntity(LocalDate.parse(submitDate))));
-            verify(investmentIndicatorSpecification, times(0)).insert(any(), any(), any());
+            final RecalculationResult actual = analyzeInteractor.recalculate();
+
+            assertEquals(0, actual.targetCount());
+            verify(valuationSpecification, times(1)).updateDerivedValuesFromAnalysisResult();
+            verify(cache, times(1)).clear();
+        }
+
+        @DisplayName("recalculate : backtestキャッシュが未生成のときはevictをスキップして継続する")
+        @Test
+        void skipsCacheEvictWhenCacheAbsent() {
+            when(analysisResultSpecification.findAll()).thenReturn(List.of());
+            when(cacheManager.getCache("backtest")).thenReturn(null);
+
+            assertDoesNotThrow(() -> analyzeInteractor.recalculate());
+        }
+    }
+
+    @Nested
+    class previewRecalculation {
+
+        @DisplayName("previewRecalculation : analysis_result / valuation の全件数を取得する")
+        @Test
+        void preview() {
+            when(analysisResultSpecification.countAll()).thenReturn(10);
+            when(valuationSpecification.countAll()).thenReturn(20);
+
+            final RecalculationPreview actual = analyzeInteractor.previewRecalculation();
+
+            assertEquals(new RecalculationPreview(10, 20), actual);
+        }
+    }
+
+    @Nested
+    class hasChangedTest {
+
+        @DisplayName("bigDecimalChanged : 両方nullのときは変化なし")
+        @Test
+        void bothNull() {
+            assertFalse(AnalyzeInteractor.bigDecimalChanged(null, null));
+        }
+
+        @DisplayName("bigDecimalChanged : 片方のみnullのときは変化あり")
+        @Test
+        void oneSideNull() {
+            assertAll(
+                    () -> assertTrue(AnalyzeInteractor.bigDecimalChanged(null, BigDecimal.TEN)),
+                    () -> assertTrue(AnalyzeInteractor.bigDecimalChanged(BigDecimal.TEN, null))
+            );
+        }
+
+        @DisplayName("bigDecimalChanged : スケール違いでも値が同じなら変化なし（compareTo比較）")
+        @Test
+        void sameValueDifferentScale() {
+            assertFalse(AnalyzeInteractor.bigDecimalChanged(BigDecimal.valueOf(10), BigDecimal.valueOf(10.00)));
+        }
+
+        @DisplayName("bigDecimalChanged : 値が異なれば変化あり")
+        @Test
+        void differentValue() {
+            assertTrue(AnalyzeInteractor.bigDecimalChanged(BigDecimal.TEN, BigDecimal.ONE));
         }
     }
 
@@ -715,9 +674,6 @@ class AnalyzeInteractorTest {
                 null,
                 null,
                 BigDecimal.TEN,
-                null,
-                null,
-                null,
                 null,
                 "120",
                 null,
