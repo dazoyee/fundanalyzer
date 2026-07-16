@@ -203,6 +203,9 @@ DROP COLUMN は不可逆のため、実装・マージと本番リリース判�
 
 - GitHub Actions Pipeline（version=2.4.0、run 29499152564）でリリースし、release ジョブ成功（2026-07-16）
 - 起動時の Flyway で V0.4.2（指標4列 DROP COLUMN）が適用される構成。全期間再計算バッチの実行は下記手順で別途実施
+- 教訓: Pipeline は version 入力を渡すと **リリースコミット・main マージ・タグ付与・SNAPSHOT バンプまで自動実行する**。
+  CONTRIBUTING.md の手動 Git Flow を並行して行うと release コミットが二重になる（今回発生・実害なし）。
+  リリース時は「develop を push → Pipeline を version 指定でトリガ」だけでよい
 
 ## 本番運用手順（リリース後の再計算実行）
 
