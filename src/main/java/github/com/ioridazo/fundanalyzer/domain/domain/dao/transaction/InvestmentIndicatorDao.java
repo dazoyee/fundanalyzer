@@ -2,16 +2,17 @@ package github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import org.seasar.doma.Dao;
-import org.seasar.doma.Insert;
 import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
-import org.seasar.doma.jdbc.Result;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@SuppressWarnings("UnusedReturnValue")
+/**
+ * investment_indicator への書き込みは停止した（読み取り都度計算化のため {@code insert} は撤去済み）。
+ * テーブル自体・既存データは残置しているため、参照系メソッドのみ残す。
+ */
 @ConfigAutowireable
 @Dao
 public interface InvestmentIndicatorDao {
@@ -24,7 +25,4 @@ public interface InvestmentIndicatorDao {
 
     @Select
     List<InvestmentIndicatorEntity> selectByAnalysisResultId(Integer analysisResultId);
-
-    @Insert
-    Result<InvestmentIndicatorEntity> insert(InvestmentIndicatorEntity investmentIndicatorEntity);
 }

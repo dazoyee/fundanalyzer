@@ -155,7 +155,6 @@ public class AnalysisController {
     @PostMapping("/v1/import/stock/code")
     public String importStockByCode(final String code) {
         analysisService.importStock(CodeInputData.of(code));
-        analysisService.indicate(CodeInputData.of(code));
         return REDIRECT + UriComponentsBuilder.fromUri(V3_CORPORATE_PATH)
                 .queryParam("code", code.substring(0, 4)).toUriString();
     }

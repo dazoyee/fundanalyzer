@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.value;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -49,13 +48,23 @@ public class IndicatorValue {
         this.targetDate = targetDate;
     }
 
+    /**
+     * 都度計算値から投資指標を構築する。
+     *
+     * <p>投資指標の対象日は補正後株価の対象日（{@code targetDate}）であり、分析結果の提出日とは異なる
+     * （分析結果は「提出日が対象日以前で最新のもの」が突合された結果であるため）。
+     *
+     * @param stockPrice     補正後株価
+     * @param analysisResult 分析結果（都度計算値）
+     * @param targetDate     投資指標の対象日（株価の対象日）
+     */
     public IndicatorValue(
-            final BigDecimal stockPrice, final AnalysisResult analysisResult) {
+            final BigDecimal stockPrice, final AnalysisResult analysisResult, final LocalDate targetDate) {
         this.priceCorporateValueRatio = calculatePriceCorporateValueRatio(stockPrice, analysisResult);
         this.per = calculatePer(stockPrice, analysisResult).orElse(null);
         this.pbr = calculatePbr(stockPrice, analysisResult).orElse(null);
         this.grahamIndex = calculateGrahamIndex(this.per, this.pbr).orElse(null);
-        this.targetDate = analysisResult.getSubmitDate();
+        this.targetDate = targetDate;
     }
 
     public static IndicatorValue of() {
@@ -68,14 +77,17 @@ public class IndicatorValue {
         );
     }
 
-    public static IndicatorValue of(final InvestmentIndicatorEntity entity) {
-        return new IndicatorValue(
-                entity.getPriceCorporateValueRatio(),
-                entity.getPer().orElse(null),
-                entity.getPbr().orElse(null),
-                entity.getGrahamIndex().orElse(null),
-                entity.getTargetDate()
-        );
+    /**
+     * 都度計算値から投資指標を構築する。
+     *
+     * @param stockPrice     補正後株価
+     * @param analysisResult 分析結果（都度計算値）
+     * @param targetDate     投資指標の対象日（株価の対象日）
+     * @return 投資指標
+     */
+    public static IndicatorValue of(
+            final BigDecimal stockPrice, final AnalysisResult analysisResult, final LocalDate targetDate) {
+        return new IndicatorValue(stockPrice, analysisResult, targetDate);
     }
 
     public Optional<BigDecimal> getPer() {

@@ -5,10 +5,11 @@ import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
+import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,19 +38,19 @@ public class ValuationSpecification {
     private final ValuationDao valuationDao;
     private final CompanySpecification companySpecification;
     private final StockSpecification stockSpecification;
-    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private final CorporateActionSpecification corporateActionSpecification;
 
     public ValuationSpecification(
             final ValuationDao valuationDao,
             final CompanySpecification companySpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService,
             final CorporateActionSpecification corporateActionSpecification) {
         this.valuationDao = valuationDao;
         this.companySpecification = companySpecification;
         this.stockSpecification = stockSpecification;
-        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.investmentIndicatorReconciliationService = investmentIndicatorReconciliationService;
         this.corporateActionSpecification = corporateActionSpecification;
     }
 
@@ -191,7 +192,13 @@ public class ValuationSpecification {
                 analysisResult.getSubmitDate(),
                 true
         );
-        final Optional<InvestmentIndicatorEntity> investmentIndicatorEntity = investmentIndicatorSpecification.findEntity(code, targetDate);
+        // グレアム指数は都度計算値（調整後株価 × 分析結果の書類から都度計算した bps/eps）から算出する。
+        // investment_indicator への書き込みは停止しているため、紐づく ID は存在せず null を保存する
+        final Optional<BigDecimal> grahamIndex = investmentIndicatorReconciliationService
+                .reconcile(code, List.of(stock), List.of(analysisResult))
+                .stream()
+                .findFirst()
+                .flatMap(IndicatorValue::getGrahamIndex);
         final LocalDate submitDate = analysisResult.getSubmitDate();
         final BigDecimal stockPriceOfSubmitDate = getStockPriceOfSubmitDate(code, submitDate);
 
@@ -201,8 +208,8 @@ public class ValuationSpecification {
                 targetDate,
                 stock.getId(),
                 adjustedStockPrice,
-                investmentIndicatorEntity.map(InvestmentIndicatorEntity::getId).orElse(null),
-                investmentIndicatorEntity.flatMap(InvestmentIndicatorEntity::getGrahamIndex).orElse(null),
+                null,
+                grahamIndex.orElse(null),
                 ChronoUnit.DAYS.between(submitDate, targetDate),
                 adjustedStockPrice.subtract(stockPriceOfSubmitDate),
                 adjustedStockPrice.divide(stockPriceOfSubmitDate, SECOND_DECIMAL_PLACE, RoundingMode.HALF_UP),

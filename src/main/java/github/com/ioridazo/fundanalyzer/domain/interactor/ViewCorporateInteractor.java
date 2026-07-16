@@ -4,6 +4,7 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
 import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
@@ -12,10 +13,10 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateAct
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification.CorporateAction;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -66,7 +67,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final FinancialStatementSpecification financialStatementSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
-    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private final ViewSpecification viewSpecification;
     private final SlackClient slackClient;
     private final CorporateActionSpecification corporateActionSpecification;
@@ -93,7 +94,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final FinancialStatementSpecification financialStatementSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
+            final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService,
             final ViewSpecification viewSpecification,
             final SlackClient slackClient,
             final CorporateActionSpecification corporateActionSpecification) {
@@ -103,7 +104,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.financialStatementSpecification = financialStatementSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
-        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
+        this.investmentIndicatorReconciliationService = investmentIndicatorReconciliationService;
         this.viewSpecification = viewSpecification;
         this.slackClient = slackClient;
         this.corporateActionSpecification = corporateActionSpecification;
@@ -265,14 +266,17 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 .orElseThrow(() -> new FundanalyzerNotExistException("企業コード"));
         final Stock stock = stockSpecification.findStock(company);
 
-        final List<AnalysisResultViewModel> analysisResultList = analysisResultSpecification.displayTargetList(company, targetTypeCodes).stream()
+        final List<AnalysisResultEntity> analysisResultEntities = analysisResultSpecification.displayTargetList(company, targetTypeCodes);
+        final List<AnalysisResultViewModel> analysisResultList = analysisResultEntities.stream()
                 .map(AnalysisResultViewModel::of)
                 .sorted(Comparator.comparing(AnalysisResultViewModel::documentPeriod)
                         .thenComparing(AnalysisResultViewModel::submitDate)
                         .reversed())
                 .toList();
 
-        final List<IndicatorViewModel> indicatorList = investmentIndicatorSpecification.findIndicatorValueList(company.code()).stream()
+        // investment_indicator への書き込みは停止しているため、株価日次リストと分析結果履歴から都度突合する
+        final List<IndicatorViewModel> indicatorList = investmentIndicatorReconciliationService
+                .reconcile(company.code(), stock.getStockPriceEntityList(), analysisResultEntities).stream()
                 .filter(indicatorValue -> indicatorValue.getGrahamIndex().isPresent())
                 .map(IndicatorViewModel::of)
                 .sorted(Comparator.comparing(IndicatorViewModel::targetDate).reversed())
@@ -553,27 +557,18 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             try {
                 final Optional<Document> latestDocument = documentSpecification.findLatestDocument(company);
 
-                latestDocument.ifPresent(document -> viewList.add(viewSpecification.generateCorporateView(
-                        company,
-                        document,
-                        analysisResultSpecification.findLatestAnalysisResult(company.code())
-                                // BPS/EPS/ROE/ROA は永続列ではなく、分析結果に対応する書類の財務諸表値から都度計算する。
-                                // 最新書類と最新分析結果は別クエリ由来のため、書類IDが一致するときのみ取得済み書類を使い回す
-                                .map(entity -> {
-                                    final Document analysisDocument =
-                                            Objects.equals(document.getDocumentId(), entity.getDocumentId())
-                                                    ? document
-                                                    : documentSpecification.findDocument(entity.getDocumentId());
-                                    return AnalysisResult.of(
-                                            entity,
-                                            financialStatementSpecification.getFinanceValue(analysisDocument),
-                                            analysisDocument
-                                    );
-                                })
-                                .orElse(AnalysisResult.of()),
-                        analyzeInteractor.calculateCorporateValue(company),
-                        investmentIndicatorSpecification.findIndicatorValue(company.code()).orElse(IndicatorValue.of())
-                )));
+                latestDocument.ifPresent(document -> {
+                    final Optional<AnalysisResultEntity> latestAnalysisResultEntity =
+                            analysisResultSpecification.findLatestAnalysisResult(company.code());
+
+                    viewList.add(viewSpecification.generateCorporateView(
+                            company,
+                            document,
+                            resolveAnalysisResult(document, latestAnalysisResultEntity),
+                            analyzeInteractor.calculateCorporateValue(company),
+                            resolveIndicatorValue(company, latestAnalysisResultEntity)
+                    ));
+                });
             } catch (final FundanalyzerNotExistException | FundanalyzerBadDataException e) {
                 log.warn(FundanalyzerLogClient.toInteractorLogObject(
                         MessageFormat.format(
@@ -592,5 +587,53 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         } else {
             viewList.forEach(viewSpecification::upsert);
         }
+    }
+
+    /**
+     * BPS/EPS/ROE/ROA は永続列ではなく、分析結果に対応する書類の財務諸表値から都度計算する。
+     * 最新書類と最新分析結果は別クエリ由来のため、書類IDが一致するときのみ取得済み書類を使い回す。
+     *
+     * @param latestDocument           最新書類
+     * @param latestAnalysisResultEntity 最新分析結果（存在しない場合は空の企業価値のみ返す）
+     * @return 分析結果（都度計算値）
+     */
+    private AnalysisResult resolveAnalysisResult(
+            final Document latestDocument, final Optional<AnalysisResultEntity> latestAnalysisResultEntity) {
+        return latestAnalysisResultEntity
+                .map(entity -> {
+                    final Document analysisDocument =
+                            Objects.equals(latestDocument.getDocumentId(), entity.getDocumentId())
+                                    ? latestDocument
+                                    : documentSpecification.findDocument(entity.getDocumentId());
+                    return AnalysisResult.of(
+                            entity,
+                            financialStatementSpecification.getFinanceValue(analysisDocument),
+                            analysisDocument
+                    );
+                })
+                .orElse(AnalysisResult.of());
+    }
+
+    /**
+     * investment_indicator への書き込みは停止しているため、最新株価と最新分析結果から都度突合する。
+     *
+     * @param company                    企業情報
+     * @param latestAnalysisResultEntity 最新分析結果（存在しない場合は空の投資指標を返す）
+     * @return 投資指標（都度計算値）
+     */
+    private IndicatorValue resolveIndicatorValue(
+            final Company company, final Optional<AnalysisResultEntity> latestAnalysisResultEntity) {
+        if (latestAnalysisResultEntity.isEmpty()) {
+            return IndicatorValue.of();
+        }
+        final Optional<StockPriceEntity> latestStock = stockSpecification.findLatestStock(company.code());
+        if (latestStock.isEmpty()) {
+            return IndicatorValue.of();
+        }
+        return investmentIndicatorReconciliationService.reconcile(
+                        company.code(), List.of(latestStock.get()), List.of(latestAnalysisResultEntity.get()))
+                .stream()
+                .findFirst()
+                .orElse(IndicatorValue.of());
     }
 }

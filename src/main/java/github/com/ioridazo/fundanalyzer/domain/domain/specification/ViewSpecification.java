@@ -8,7 +8,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.EdinetListViewDao
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.view.ValuationViewDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
@@ -69,7 +68,6 @@ public class ViewSpecification {
     private final DocumentSpecification documentSpecification;
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
-    private final InvestmentIndicatorSpecification investmentIndicatorSpecification;
     private final ValuationSpecification valuationSpecification;
 
     @Value("${app.config.view.edinet-list.size}")
@@ -83,7 +81,6 @@ public class ViewSpecification {
             final DocumentSpecification documentSpecification,
             final AnalysisResultSpecification analysisResultSpecification,
             final StockSpecification stockSpecification,
-            final InvestmentIndicatorSpecification investmentIndicatorSpecification,
             final ValuationSpecification valuationSpecification) {
         this.corporateViewDao = corporateViewDao;
         this.edinetListViewDao = edinetListViewDao;
@@ -92,7 +89,6 @@ public class ViewSpecification {
         this.documentSpecification = documentSpecification;
         this.analysisResultSpecification = analysisResultSpecification;
         this.stockSpecification = stockSpecification;
-        this.investmentIndicatorSpecification = investmentIndicatorSpecification;
         this.valuationSpecification = valuationSpecification;
     }
 
@@ -445,15 +441,6 @@ public class ViewSpecification {
         // 企業情報を1回取得
         final Optional<Company> company = companySpecification.findCompanyByCode(companyCode);
 
-        // 投資指標を1回取得 → 対象日マップ（キー=targetDate、値=grahamIndex）
-        final Map<LocalDate, Optional<BigDecimal>> grahamIndexByTargetDate =
-                investmentIndicatorSpecification.findAllEntitiesByCode(companyCode).stream()
-                        .collect(Collectors.toMap(
-                                InvestmentIndicatorEntity::getTargetDate,
-                                InvestmentIndicatorEntity::getGrahamIndex,
-                                (a, b) -> a
-                        ));
-
         // 株価一覧を1回取得 → 配当利回り算出
         final BigDecimal dividendYield = computeDividendYield(
                 companyCode, stockSpecification.findEntityList(companyCode));
@@ -500,7 +487,9 @@ public class ViewSpecification {
                             entity.getDaySinceSubmitDate(),
                             entity.getDifferenceFromSubmitDate(),
                             entity.getSubmitDateRatio(),
-                            grahamIndexByTargetDate.getOrDefault(entity.getSubmitDate(), Optional.empty()).orElse(null),
+                            // 提出日のグレアム指数: 同一提出日で最も提出日に近い評価行（submitDateEntity）自身の
+                            // グレアム指数を用いる（都度計算値は評価時に valuation.graham_index として保存済み）
+                            submitDateEntity.getGrahamIndex().orElse(null),
                             analysisResult.map(AnalysisResultEntity::getCorporateValue).orElseThrow(),
                             dividendYield
                     );
@@ -544,7 +533,9 @@ public class ViewSpecification {
      */
     public CompanyValuationViewModel generateCompanyValuationView(final ValuationEntity entity) {
         final Optional<Company> company = companySpecification.findCompanyByCode(entity.getCompanyCode());
-        final Optional<InvestmentIndicatorEntity> investmentIndicatorOfSubmitDate = investmentIndicatorSpecification.findEntity(entity.getCompanyCode(), entity.getSubmitDate());
+        // 提出日の評価行（daySinceSubmitDate 最小）を1回取得し、提出日株価・提出日のグレアム指数の両方に使い回す
+        final Optional<ValuationEntity> valuationOfSubmitDate =
+                valuationSpecification.findValuationOfSubmitDate(entity.getCompanyCode(), entity.getSubmitDate());
         final Optional<AnalysisResultEntity> analysisResult = analysisResultSpecification.findAnalysisResult(entity.getAnalysisResultId());
 
         return new CompanyValuationViewModel(
@@ -556,12 +547,11 @@ public class ViewSpecification {
                 entity.getDiscountValue(),
                 entity.getDiscountRate(),
                 entity.getSubmitDate(),
-                valuationSpecification.findValuationOfSubmitDate(entity.getCompanyCode(), entity.getSubmitDate())
-                        .map(ValuationEntity::getStockPrice).orElseThrow(),
+                valuationOfSubmitDate.map(ValuationEntity::getStockPrice).orElseThrow(),
                 entity.getDaySinceSubmitDate(),
                 entity.getDifferenceFromSubmitDate(),
                 entity.getSubmitDateRatio(),
-                investmentIndicatorOfSubmitDate.flatMap(InvestmentIndicatorEntity::getGrahamIndex).orElse(null),
+                valuationOfSubmitDate.flatMap(ValuationEntity::getGrahamIndex).orElse(null),
                 analysisResult.map(AnalysisResultEntity::getCorporateValue).orElseThrow(),
                 stockSpecification.findEntityList(entity.getCompanyCode()).stream()
                         .filter(stockPriceEntity -> stockPriceEntity.getDividendYield().isPresent())
