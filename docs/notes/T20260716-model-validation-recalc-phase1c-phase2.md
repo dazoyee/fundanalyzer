@@ -151,3 +151,26 @@ DROP COLUMN は不可逆のため、実装・マージと本番リリース判�
   低: A（additive・冪等バッチ）
 - ロールバック: A=エンドポイント無効化のみ / B=本番リリース前なら revert で完結 / C=読取切替の呼び出し元を戻す
 - 通過記録: 人間レビュアが AskUserQuestion 経由で設計を承認（2026-07-16）
+
+## 実装・統合の記録
+
+- 3ストリームを worktree 分離の並列サブエージェントで実装し、`feature/model-validation-recalc` に B → A → C の順で統合
+- 競合解消: `AnalyzeUseCase` / `AnalyzeInteractor` / `AnalyzeInteractorTest`（A の recalculate 追加と C の indicate 撤去の重なり。
+  recalculate 群を残し indicate 群を除去）、`InvestmentIndicatorSpecificationTest`（C の削除を採用）。
+  A・C が旧エンティティシグネチャ（B 適用前）で書いた新規テスト4箇所を 10 引数構成へ追随修正
+- 統合後テスト: 861 件グリーン（playwright 除外）
+- 主な実装上の決定:
+  - `AnalyzeInteractor` の再計算は入力欠損行を warn ログ＋failed カウントで継続（skipped=値変化なし、failed=入力欠損）
+  - valuation の集合 UPDATE は相関サブクエリ形式で MySQL/H2 両対応。実 H2 での統合テストで ROUND ≒ HALF_UP を検証
+  - C は `InvestmentIndicatorSpecification` を全撤去（全 find 系が呼び出し元を失ったため）。
+    `InvestmentIndicatorDao` の読取と Entity は約300万件の残置データと整合させるため維持（列・テーブル撤去は後続 2c）
+
+## dev 環境での E2E 検証（統合後）
+
+- `/v3/index`・`/v3/corporate?code=9001`（詳細）・`/v3/analysis` すべて 200。詳細画面はウォームで約 60〜70ms、
+  PER/PBR/グレアム指数が都度計算経路で描画されることを確認（シードデータ規模）
+- `GET /v1/admin/analysis/recalculate/preview` → 「対象件数: analysis_result=15件, valuation=5件」を確認
+- `POST /v1/admin/analysis/recalculate` → target=15, failed=15, valuationUpdated=5。
+  failed の原因は dev シードに financial_statement 行が存在しないため（環境要因）。
+  本番は全 analysis_result 行が財務諸表値由来（フェーズ1a 検証で 31,776 行の再計算一致を確認済み）のため入力は揃う
+- 本番相当件数での詳細画面応答時間はローカルで実測不能のため、リリース後の運用確認項目とする
