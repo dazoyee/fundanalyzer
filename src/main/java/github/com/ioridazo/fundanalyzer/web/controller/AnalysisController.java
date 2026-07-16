@@ -3,6 +3,8 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.RecalculationPreview;
+import github.com.ioridazo.fundanalyzer.domain.value.RecalculationResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -75,6 +77,48 @@ public class AnalysisController {
         viewService.updateCorporateView();
         return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
                 .queryParam(MESSAGE, "表示アップデート処理を要求しました。しばらく経ってから再度アクセスしてください。")
+                .build().encode().toUriString();
+    }
+
+    /**
+     * 係数一括再計算バッチの対象件数を確認する
+     *
+     * @return Index
+     */
+    @GetMapping("/v1/admin/analysis/recalculate/preview")
+    public String previewRecalculate() {
+        final RecalculationPreview preview = analyzeUseCase.previewRecalculation();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
+                .queryParam(
+                        MESSAGE,
+                        "係数一括再計算対象件数: analysis_result=" + preview.analysisResultCount()
+                                + "件, valuation=" + preview.valuationCount() + "件")
+                .build().encode().toUriString();
+    }
+
+    /**
+     * 係数一括再計算バッチを実行する
+     *
+     * <p>管理者専用運用を前提とし、実行前に analysis_result / valuation テーブルのバックアップ取得を必須とする。
+     * 業種係数変更後、全期間の企業価値・RIM理論株価を現行係数で再計算し、連動して valuation の割引値・割引率、
+     * corporate_view / valuation_view まで一括で一貫させる。
+     *
+     * @return Index
+     */
+    @PostMapping("/v1/admin/analysis/recalculate")
+    public String recalculate() {
+        final RecalculationResult result = analyzeUseCase.recalculate();
+        viewService.updateCorporateView();
+        viewService.updateValuationView();
+
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
+                .queryParam(
+                        MESSAGE,
+                        "係数一括再計算完了: target=" + result.targetCount()
+                                + ", updated=" + result.updatedCount()
+                                + ", skipped=" + result.skippedCount()
+                                + ", failed=" + result.failedCount()
+                                + ", valuationUpdated=" + result.valuationUpdatedCount())
                 .build().encode().toUriString();
     }
 
