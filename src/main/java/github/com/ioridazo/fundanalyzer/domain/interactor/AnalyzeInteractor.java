@@ -323,6 +323,19 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         Category.ANALYSIS,
                         Process.ANALYSIS
                 ), e);
+            } catch (final RuntimeException e) {
+                // 異常データ1件でバッチ全体（valuation 追随更新・キャッシュ evict を含む）が
+                // 中断しないよう、想定外の実行時例外も該当行のみ失敗として継続する
+                failedCount++;
+                log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format(
+                                "再計算中に想定外のエラーが発生したため、該当行をスキップしました。\t書類ID:{0}\tID:{1}",
+                                entity.getDocumentId(),
+                                entity.getId()
+                        ),
+                        Category.ANALYSIS,
+                        Process.ANALYSIS
+                ), e);
             }
         }
 

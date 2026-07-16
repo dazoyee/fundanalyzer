@@ -88,6 +88,42 @@ public class InvestmentIndicatorReconciliationService {
     }
 
     /**
+     * 事前に計算済みの分析結果（都度計算値）を用いて、株価1件分の投資指標を構築する。
+     *
+     * <p>呼び出し元が既に対象書類の {@link Document} / 財務諸表値を解決済みで {@link AnalysisResult} を
+     * 構築している場合に使う。{@link DocumentSpecification#findDocument} や
+     * {@link FinancialStatementSpecification#getFinanceValue} を再実行しないため、
+     * 同一書類に対する二重計算（企業ごとの重い財務諸表参照の重複実行）を避けられる。
+     *
+     * <p>{@code reconcile} と異なり、提出日が対象日以前かの判定のみをここで行い、
+     * 複数書類からの最新選択（切替境界の判定）は呼び出し元が既に済ませていることを前提とする。
+     *
+     * @param companyCode               企業コード
+     * @param stockPrice                株価エンティティ（対象日1件）
+     * @param analysisResultEntity      事前計算に使った分析結果エンティティ（提出日の判定に使用）
+     * @param precomputedAnalysisResult 事前計算済みの分析結果（都度計算値）
+     * @return 提出日が対象日以前であれば構築された投資指標。提出日が対象日より後（対応する分析結果なし）であれば空
+     */
+    public Optional<IndicatorValue> reconcilePrecomputed(
+            final String companyCode,
+            final StockPriceEntity stockPrice,
+            final AnalysisResultEntity analysisResultEntity,
+            final AnalysisResult precomputedAnalysisResult) {
+        if (analysisResultEntity.getSubmitDate().isAfter(
+                stockPrice.getTargetDate())) {
+            return Optional.empty();
+        }
+        final List<CorporateActionSpecification.CorporateAction> actions =
+                corporateActionSpecification.findActions(companyCode);
+        return Optional.of(buildIndicatorValue(
+                stockPrice.getTargetDate(),
+                BigDecimal.valueOf(stockPrice.getStockPrice()),
+                analysisResultEntity.getSubmitDate(),
+                precomputedAnalysisResult,
+                actions));
+    }
+
+    /**
      * 書類ごとの分析結果（BPS/EPS 都度計算値）を対象書類数分の小ループで解決する。
      *
      * <p>書類が解決できない行（データ不整合）は warn ログを出して対象から除外し、処理は継続する。
@@ -137,9 +173,17 @@ public class InvestmentIndicatorReconciliationService {
             return Optional.empty();
         }
 
-        final BigDecimal adjustedStockPrice = corporateActionSpecification.adjustToBasisWithActions(
-                stockPrice, actions, targetDate, entity.getSubmitDate(), true);
+        return Optional.of(buildIndicatorValue(targetDate, stockPrice, entity.getSubmitDate(), computed, actions));
+    }
 
-        return Optional.of(IndicatorValue.of(adjustedStockPrice, computed, targetDate));
+    private IndicatorValue buildIndicatorValue(
+            final LocalDate targetDate,
+            final BigDecimal stockPrice,
+            final LocalDate submitDate,
+            final AnalysisResult computed,
+            final List<CorporateActionSpecification.CorporateAction> actions) {
+        final BigDecimal adjustedStockPrice = corporateActionSpecification.adjustToBasisWithActions(
+                stockPrice, actions, targetDate, submitDate, true);
+        return IndicatorValue.of(adjustedStockPrice, computed, targetDate);
     }
 }

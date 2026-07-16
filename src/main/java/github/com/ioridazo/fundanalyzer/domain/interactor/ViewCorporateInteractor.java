@@ -560,13 +560,14 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                 latestDocument.ifPresent(document -> {
                     final Optional<AnalysisResultEntity> latestAnalysisResultEntity =
                             analysisResultSpecification.findLatestAnalysisResult(company.code());
+                    final AnalysisResult analysisResult = resolveAnalysisResult(document, latestAnalysisResultEntity);
 
                     viewList.add(viewSpecification.generateCorporateView(
                             company,
                             document,
-                            resolveAnalysisResult(document, latestAnalysisResultEntity),
+                            analysisResult,
                             analyzeInteractor.calculateCorporateValue(company),
-                            resolveIndicatorValue(company, latestAnalysisResultEntity)
+                            resolveIndicatorValue(company, latestAnalysisResultEntity, analysisResult)
                     ));
                 });
             } catch (final FundanalyzerNotExistException | FundanalyzerBadDataException e) {
@@ -617,12 +618,20 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     /**
      * investment_indicator への書き込みは停止しているため、最新株価と最新分析結果から都度突合する。
      *
+     * <p>{@code resolveAnalysisResult} で解決済みの {@link AnalysisResult} をそのまま受け取り、
+     * {@link InvestmentIndicatorReconciliationService#reconcilePrecomputed} 経由で突合する。これにより
+     * 同一の最新分析結果エンティティに対する書類・財務諸表値の解決（documentSpecification.findDocument /
+     * financialStatementSpecification.getFinanceValue）が二重に実行されるのを避ける。
+     *
      * @param company                    企業情報
      * @param latestAnalysisResultEntity 最新分析結果（存在しない場合は空の投資指標を返す）
+     * @param analysisResult             resolveAnalysisResult で解決済みの分析結果（都度計算値）
      * @return 投資指標（都度計算値）
      */
     private IndicatorValue resolveIndicatorValue(
-            final Company company, final Optional<AnalysisResultEntity> latestAnalysisResultEntity) {
+            final Company company,
+            final Optional<AnalysisResultEntity> latestAnalysisResultEntity,
+            final AnalysisResult analysisResult) {
         if (latestAnalysisResultEntity.isEmpty()) {
             return IndicatorValue.of();
         }
@@ -630,10 +639,8 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         if (latestStock.isEmpty()) {
             return IndicatorValue.of();
         }
-        return investmentIndicatorReconciliationService.reconcile(
-                        company.code(), List.of(latestStock.get()), List.of(latestAnalysisResultEntity.get()))
-                .stream()
-                .findFirst()
+        return investmentIndicatorReconciliationService
+                .reconcilePrecomputed(company.code(), latestStock.get(), latestAnalysisResultEntity.get(), analysisResult)
                 .orElse(IndicatorValue.of());
     }
 }

@@ -576,6 +576,28 @@ class AnalyzeInteractorTest {
             );
         }
 
+        @DisplayName("recalculate : 想定外の実行時例外が発生した行はスキップして継続する")
+        @Test
+        void continuesOnUnexpectedRuntimeException() {
+            when(documentSpecification.findDocument("brokenDocumentId"))
+                    .thenThrow(new NullPointerException("unexpected"));
+            final AnalysisResultEntity brokenEntity = entity(1, BigDecimal.ZERO, null, "brokenDocumentId");
+            final AnalysisResultEntity presentEntity = entity(2, BigDecimal.ZERO, null, "documentId");
+            when(analysisResultSpecification.findAll()).thenReturn(List.of(brokenEntity, presentEntity));
+
+            final RecalculationResult actual = analyzeInteractor.recalculate();
+
+            verify(analysisResultSpecification, times(1)).updateCorporateValueAndRimValue(eq(2), any(), any());
+            verify(analysisResultSpecification, never()).updateCorporateValueAndRimValue(eq(1), any(), any());
+            verify(valuationSpecification, times(1)).updateDerivedValuesFromAnalysisResult();
+            assertAll(
+                    () -> assertEquals(2, actual.targetCount()),
+                    () -> assertEquals(1, actual.updatedCount()),
+                    () -> assertEquals(0, actual.skippedCount()),
+                    () -> assertEquals(1, actual.failedCount())
+            );
+        }
+
         @DisplayName("recalculate : 対象0件でもvaluation一括更新とbacktestキャッシュevictは実行する")
         @Test
         void alwaysUpdatesValuationAndEvictsCacheEvenWhenEmpty() {
