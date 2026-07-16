@@ -306,17 +306,4 @@ class AnalysisServiceTest {
             assertFalse(service.evaluate(input));
         }
     }
-
-    @Nested
-    @DisplayName("indicate メソッド")
-    class Indicate {
-
-        @DisplayName("indicate : AnalyzeUseCase.indicate に委譲する")
-        @Test
-        void delegates() {
-            final CodeInputData input = CodeInputData.of("1234");
-            service.indicate(input);
-            verify(analyzeUseCase, times(1)).indicate(input);
-        }
-    }
 }

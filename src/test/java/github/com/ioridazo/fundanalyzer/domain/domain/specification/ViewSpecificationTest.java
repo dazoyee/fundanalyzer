@@ -69,7 +69,6 @@ class ViewSpecificationTest {
                 Mockito.mock(DocumentSpecification.class),
                 analysisResultSpecification,
                 stockSpecification,
-                Mockito.mock(InvestmentIndicatorSpecification.class),
                 valuationSpecification
         ));
     }

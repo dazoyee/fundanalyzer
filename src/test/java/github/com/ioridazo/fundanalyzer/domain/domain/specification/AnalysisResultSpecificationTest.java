@@ -567,7 +567,7 @@ class AnalysisResultSpecificationTest {
         void findAll() {
             final AnalysisResultEntity entity = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
-                    null, null, null, null, "120", "4", LocalDate.now(), null, null);
+                    null, "120", "4", LocalDate.now(), null, null);
             when(analysisResultDao.selectAll()).thenReturn(List.of(entity));
 
             final List<AnalysisResultEntity> actual = analysisResultSpecification.findAll();

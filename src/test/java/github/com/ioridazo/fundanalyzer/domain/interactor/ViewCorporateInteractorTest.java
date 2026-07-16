@@ -14,9 +14,9 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
+import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
@@ -60,6 +60,7 @@ class ViewCorporateInteractorTest {
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
+    private InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private ViewSpecification viewSpecification;
     private SlackClient slackClient;
     private CorporateActionSpecification corporateActionSpecification;
@@ -73,12 +74,14 @@ class ViewCorporateInteractorTest {
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
+        investmentIndicatorReconciliationService = Mockito.mock(InvestmentIndicatorReconciliationService.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
         slackClient = Mockito.mock(SlackClient.class);
         corporateActionSpecification = Mockito.mock(CorporateActionSpecification.class);
         when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(corporateActionSpecification.findActions(any())).thenReturn(List.of());
+        lenient().when(investmentIndicatorReconciliationService.reconcile(any(), any(), any())).thenReturn(List.of());
 
         viewCorporateInteractor = Mockito.spy(new ViewCorporateInteractor(
                 Mockito.mock(AnalyzeInteractor.class),
@@ -87,7 +90,7 @@ class ViewCorporateInteractorTest {
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
-                Mockito.mock(InvestmentIndicatorSpecification.class),
+                investmentIndicatorReconciliationService,
                 viewSpecification,
                 slackClient,
                 corporateActionSpecification

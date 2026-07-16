@@ -140,10 +140,7 @@ public class StockScheduler {
         final List<String> targetCodeList = stockSpecification.findTargetCodeForStockScheduler();
         targetCodeList.stream()
                 .map(CodeInputData::of)
-                .forEach(inputData -> {
-                    analysisService.importStock(inputData);
-                    analysisService.indicate(inputData);
-                });
+                .forEach(analysisService::importStock);
 
         if (insertStockEnabled) {
             slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.insert", targetCodeList.size());

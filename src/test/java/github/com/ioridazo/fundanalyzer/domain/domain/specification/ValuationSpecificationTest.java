@@ -4,10 +4,11 @@ import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.ValuationD
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Consolidated;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategories;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.InvestmentIndicatorEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
+import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,8 +37,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -48,7 +51,7 @@ class ValuationSpecificationTest {
     private ValuationDao valuationDao;
     private CompanySpecification companySpecification;
     private StockSpecification stockSpecification;
-    private InvestmentIndicatorSpecification investmentIndicatorSpecification;
+    private InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private CorporateActionSpecification corporateActionSpecification;
 
     private ValuationSpecification valuationSpecification;
@@ -58,16 +61,18 @@ class ValuationSpecificationTest {
         valuationDao = mock(ValuationDao.class);
         companySpecification = mock(CompanySpecification.class);
         stockSpecification = mock(StockSpecification.class);
-        investmentIndicatorSpecification = mock(InvestmentIndicatorSpecification.class);
+        investmentIndicatorReconciliationService = mock(InvestmentIndicatorReconciliationService.class);
         corporateActionSpecification = mock(CorporateActionSpecification.class);
         when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(investmentIndicatorReconciliationService.reconcile(any(), anyList(), anyList()))
+                .thenReturn(List.of());
 
         valuationSpecification = new ValuationSpecification(
                 valuationDao,
                 companySpecification,
                 stockSpecification,
-                investmentIndicatorSpecification,
+                investmentIndicatorReconciliationService,
                 corporateActionSpecification
         );
     }
@@ -149,24 +154,6 @@ class ValuationSpecificationTest {
         private final LocalDate submitDate = LocalDate.parse("2022-06-12");
         private final LocalDate targetDate = LocalDate.parse("2022-07-02");
 
-        @BeforeEach
-        void setUp() {
-            when(investmentIndicatorSpecification.findEntity(companyCode, targetDate))
-                    .thenReturn(Optional.of(new InvestmentIndicatorEntity(
-                            2,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null
-                    )));
-        }
-
         @DisplayName("evaluate : マッピングを確認する")
         @Test
         void mapping() {
@@ -194,7 +181,8 @@ class ValuationSpecificationTest {
                     () -> assertEquals(LocalDate.parse("2022-07-02"), actual.getTargetDate(), "targetDate"),
                     () -> assertEquals(1, actual.getStockPriceId().orElse(null), "stockPriceId"),
                     () -> assertEquals(BigDecimal.valueOf(500.0), actual.getStockPrice(), "stockPrice"),
-                    () -> assertEquals(2, actual.getInvestmentIndicatorId().orElse(null), "investmentIndicatorId"),
+                    // investment_indicator への書き込みは停止しているため、紐づく ID は常に null を保存する
+                    () -> assertNull(actual.getInvestmentIndicatorId().orElse(null), "investmentIndicatorId"),
                     () -> assertNull(actual.getGrahamIndex().orElse(null), "grahamIndex"),
                     () -> assertEquals(20, actual.getDaySinceSubmitDate(), "daySinceSubmitDate"),
                     () -> assertEquals(BigDecimal.valueOf(-100.0), actual.getDifferenceFromSubmitDate(), "differenceFromSubmitDate"),
@@ -202,6 +190,28 @@ class ValuationSpecificationTest {
                     () -> assertEquals(BigDecimal.valueOf(1500.0), actual.getDiscountValue(), "discountValue"),
                     () -> assertEquals(BigDecimal.valueOf(400, 2), actual.getDiscountRate(), "discountRate")
             );
+        }
+
+        @DisplayName("evaluate : ドメインサービスが返した投資指標のグレアム指数を保存する")
+        @Test
+        void usesGrahamIndexFromReconciliationService() {
+            when(stockSpecification.findStock(companyCode, submitDate))
+                    .thenReturn(Optional.of(stockPrice(submitDate, 600.0)));
+            final AnalysisResultEntity analysisResultEntity = new AnalysisResultEntity(
+                    4, companyCode, null, BigDecimal.valueOf(2000),
+                    null, null, null,
+                    submitDate, "documentId", null
+            );
+            final StockPriceEntity targetStock = stockPrice(targetDate, 500.0);
+            final IndicatorValue indicatorValue = new IndicatorValue(
+                    BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.valueOf(6.5), targetDate);
+            when(investmentIndicatorReconciliationService.reconcile(
+                    companyCode, List.of(targetStock), List.of(analysisResultEntity)))
+                    .thenReturn(List.of(indicatorValue));
+
+            final ValuationEntity actual = valuationSpecification.evaluate(targetStock, analysisResultEntity);
+
+            assertEquals(0, BigDecimal.valueOf(6.5).compareTo(actual.getGrahamIndex().orElseThrow()));
         }
 
         @DisplayName("evaluate : 補正後株価で割安度を計算する")
@@ -606,8 +616,6 @@ class ValuationSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(investmentIndicatorSpecification.findEntity(companyCode, targetDate))
-                    .thenReturn(Optional.empty());
             when(stockSpecification.findStock(companyCode, submitDate))
                     .thenReturn(Optional.of(new StockPriceEntity(
                             9, companyCode, submitDate, 600.0,
@@ -735,12 +743,6 @@ class ValuationSpecificationTest {
                     null, null, null,
                     submitDate, "documentId", null
             );
-        }
-
-        @BeforeEach
-        void setUp() {
-            when(investmentIndicatorSpecification.findEntity(companyCode, targetDate))
-                    .thenReturn(Optional.empty());
         }
 
         @DisplayName("過去valuationが存在する → そこから提出日株価を取得する")
