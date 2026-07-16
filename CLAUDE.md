@@ -100,6 +100,8 @@ exception/   … 業務例外
 - DAO は `domain/domain/dao/{master|transaction|view}/` に配置。SQLは Doma 規約で `src/main/resources/META-INF/github/...` に対応する SQL ファイルを置く。
 - 設定で対象外とする企業/業種/書類タイプ等は `app.config.scraping.*` 等に集約。コード内ハードコードしない。
 - 企業価値算出の係数（営業利益倍率・流動負債比率・資本コスト）は `industry` マスタの列で管理。`IndustrySpecification.resolveCoefficient()` で解決する。
+- **係数を変更したら必ず一括再計算を実行する**: 分析結果・評価は「モデル検証」の意味論（全期間を常に現行係数で一貫させる）を採用しており、係数マイグレーション適用後に `POST /v1/admin/analysis/recalculate` で過去分の `analysis_result`（企業価値・RIM）と `valuation`（割引値・割引率）を再計算する。新旧係数の混在を許容しない（設計判断の経緯は `docs/notes/` の対応タスク md を参照）。
+- BPS/EPS/ROE/ROA・PER/PBR/グレアム指数などの係数非依存指標は永続化せず、財務諸表値・株価から表示時に都度計算する。
 
 ### View / 画面
 

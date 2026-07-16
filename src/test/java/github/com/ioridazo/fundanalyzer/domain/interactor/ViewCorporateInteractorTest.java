@@ -14,11 +14,12 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
-import github.com.ioridazo.fundanalyzer.domain.domain.specification.InvestmentIndicatorSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
+import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
+import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
 import github.com.ioridazo.fundanalyzer.domain.value.Stock;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -42,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -60,6 +62,7 @@ class ViewCorporateInteractorTest {
     private FinancialStatementSpecification financialStatementSpecification;
     private AnalysisResultSpecification analysisResultSpecification;
     private StockSpecification stockSpecification;
+    private InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private ViewSpecification viewSpecification;
     private SlackClient slackClient;
     private CorporateActionSpecification corporateActionSpecification;
@@ -73,12 +76,16 @@ class ViewCorporateInteractorTest {
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         analysisResultSpecification = Mockito.mock(AnalysisResultSpecification.class);
         stockSpecification = Mockito.mock(StockSpecification.class);
+        investmentIndicatorReconciliationService = Mockito.mock(InvestmentIndicatorReconciliationService.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
         slackClient = Mockito.mock(SlackClient.class);
         corporateActionSpecification = Mockito.mock(CorporateActionSpecification.class);
         when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(corporateActionSpecification.findActions(any())).thenReturn(List.of());
+        lenient().when(investmentIndicatorReconciliationService.reconcile(any(), any(), any())).thenReturn(List.of());
+        lenient().when(investmentIndicatorReconciliationService.reconcilePrecomputed(any(), any(), any(), any()))
+                .thenReturn(Optional.empty());
 
         viewCorporateInteractor = Mockito.spy(new ViewCorporateInteractor(
                 Mockito.mock(AnalyzeInteractor.class),
@@ -87,7 +94,7 @@ class ViewCorporateInteractorTest {
                 financialStatementSpecification,
                 analysisResultSpecification,
                 stockSpecification,
-                Mockito.mock(InvestmentIndicatorSpecification.class),
+                investmentIndicatorReconciliationService,
                 viewSpecification,
                 slackClient,
                 corporateActionSpecification
@@ -166,9 +173,6 @@ class ViewCorporateInteractorTest {
                     null,
                     LocalDate.parse("2021-01-01"),
                     BigDecimal.TEN,
-                    null,
-                    null,
-                    null,
                     null,
                     "120",
                     null,
@@ -654,6 +658,54 @@ class ViewCorporateInteractorTest {
             assertEquals(BigDecimal.valueOf(555), actual.getRimValue().orElseThrow());
         }
 
+        @DisplayName("updateView : 同一の最新分析結果に対する書類・財務諸表値の解決は1回のみ（二重計算しない）")
+        @Test
+        void all_resolvesDocumentAndFinanceValueOnlyOnce() {
+            var entity = analysisResultEntity();
+            var analysisDocument = analysisDocument();
+            var financeValue = FinanceValue.of(
+                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+            var stockPriceEntity = new StockPriceEntity(
+                    null,
+                    "code",
+                    LocalDate.parse("2024-07-01"),
+                    100.0d,
+                    null, null, null, null, null, null, null, null, null, null, null, null,
+                    LocalDateTime.parse("2024-07-01T00:00:00"),
+                    LocalDateTime.parse("2024-07-01T00:00:00")
+            );
+            var expectedIndicatorValue = IndicatorValue.of();
+
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
+            when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(document));
+            when(analysisResultSpecification.findLatestAnalysisResult("code")).thenReturn(Optional.of(entity));
+            when(documentSpecification.findDocument("documentId")).thenReturn(analysisDocument);
+            when(financialStatementSpecification.getFinanceValue(analysisDocument)).thenReturn(financeValue);
+            when(stockSpecification.findLatestStock("code")).thenReturn(Optional.of(stockPriceEntity));
+            when(investmentIndicatorReconciliationService
+                    .reconcilePrecomputed(eq("code"), eq(stockPriceEntity), eq(entity), any(AnalysisResult.class)))
+                    .thenReturn(Optional.of(expectedIndicatorValue));
+            when(viewSpecification.generateCorporateView(eq(company), eq(document), any(), any(), any())).thenReturn(corporateViewModel);
+
+            assertDoesNotThrow(() -> viewCorporateInteractor.updateView());
+
+            // documentSpecification.findDocument / financialStatementSpecification.getFinanceValue は
+            // resolveAnalysisResult 側の1回のみで、resolveIndicatorValue 側からは再実行されないこと
+            verify(documentSpecification, times(1)).findDocument("documentId");
+            verify(financialStatementSpecification, times(1)).getFinanceValue(analysisDocument);
+            // 一覧突合版の reconcile ではなく、事前計算済み版の reconcilePrecomputed が使われること
+            verify(investmentIndicatorReconciliationService, never()).reconcile(any(), any(), any());
+
+            final ArgumentCaptor<AnalysisResult> analysisResultCaptor = ArgumentCaptor.forClass(AnalysisResult.class);
+            verify(viewSpecification, times(1))
+                    .generateCorporateView(eq(company), eq(document), analysisResultCaptor.capture(), any(), eq(expectedIndicatorValue));
+            final ArgumentCaptor<AnalysisResult> precomputedCaptor = ArgumentCaptor.forClass(AnalysisResult.class);
+            verify(investmentIndicatorReconciliationService, times(1))
+                    .reconcilePrecomputed(eq("code"), eq(stockPriceEntity), eq(entity), precomputedCaptor.capture());
+            // resolveAnalysisResult で解決した同一の AnalysisResult インスタンスが resolveIndicatorValue にも渡されること
+            assertSame(analysisResultCaptor.getValue(), precomputedCaptor.getValue());
+        }
+
         @DisplayName("updateView : 都度計算で不正データ例外が発生した企業はスキップし他社の更新は継続する")
         @Test
         void all_continuesWhenFinanceValueThrowsBadData() {
@@ -688,10 +740,6 @@ class ViewCorporateInteractorTest {
                     LocalDate.parse("2024-03-31"),
                     BigDecimal.valueOf(999),
                     BigDecimal.valueOf(555),
-                    BigDecimal.ONE,
-                    BigDecimal.ONE,
-                    BigDecimal.ONE,
-                    BigDecimal.ONE,
                     "120",
                     null,
                     LocalDate.parse("2024-06-30"),

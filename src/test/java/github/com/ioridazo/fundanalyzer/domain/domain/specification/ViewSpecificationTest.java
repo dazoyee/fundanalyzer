@@ -69,7 +69,6 @@ class ViewSpecificationTest {
                 Mockito.mock(DocumentSpecification.class),
                 analysisResultSpecification,
                 stockSpecification,
-                Mockito.mock(InvestmentIndicatorSpecification.class),
                 valuationSpecification
         ));
     }
@@ -258,9 +257,6 @@ class ViewSpecificationTest {
                         null,
                         null,
                         BigDecimal.TEN,
-                        null,
-                        null,
-                        null,
                         null,
                         null,
                         null,

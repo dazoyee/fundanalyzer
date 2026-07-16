@@ -285,15 +285,4 @@ public class AnalysisService {
         // evaluate
         return valuationUseCase.evaluate(inputData);
     }
-
-    /**
-     * 投資指標の算出
-     *
-     * @param inputData 企業コード
-     */
-    @Observed
-    public void indicate(final CodeInputData inputData) {
-        // indicate
-        analyzeUseCase.indicate(inputData);
-    }
 }

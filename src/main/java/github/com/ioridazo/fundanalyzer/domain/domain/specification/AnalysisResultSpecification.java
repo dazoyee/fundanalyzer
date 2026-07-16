@@ -86,6 +86,36 @@ public class AnalysisResultSpecification {
     }
 
     /**
+     * 全件取得する（係数一括再計算バッチの走査対象）。
+     *
+     * @return 分析結果の全行
+     */
+    public List<AnalysisResultEntity> findAll() {
+        return analysisResultDao.selectAll();
+    }
+
+    /**
+     * 全件数を取得する（再計算バッチの事前確認用）。
+     *
+     * @return 全件数
+     */
+    public int countAll() {
+        return analysisResultDao.countAll();
+    }
+
+    /**
+     * 企業価値・RIM理論株価を更新する（係数一括再計算バッチ専用）。
+     *
+     * @param id             ID
+     * @param corporateValue 企業価値
+     * @param rimValue       RIM理論株価（算出不能な場合は null）
+     */
+    public void updateCorporateValueAndRimValue(
+            final Integer id, final BigDecimal corporateValue, final BigDecimal rimValue) {
+        analysisResultDao.updateCorporateValueAndRimValue(id, corporateValue, rimValue);
+    }
+
+    /**
      * 本日にテーブルに登録されたリストを取得する
      *
      * @param submitDate 提出日
@@ -104,17 +134,13 @@ public class AnalysisResultSpecification {
     public void insert(final Document document, final AnalysisResult analysisResult) {
         final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new);
         try {
-            // BPS/EPS/ROE/ROA（係数非依存指標）は読み取り時に財務諸表値から都度計算するため永続化しない。
+            // BPS/EPS/ROE/ROA は財務諸表値から都度計算する（永続列は持たない）。
             // corporate_value / rim_value は算出時点の係数を凍結した値として書き込みを継続する
             analysisResultDao.insert(AnalysisResultEntity.of(
                     company.code(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     analysisResult.getCorporateValue(),
                     analysisResult.getRimValue().orElse(null),
-                    null,
-                    null,
-                    null,
-                    null,
                     document.getDocumentTypeCode(),
                     document.getQuarterType(),
                     document.getSubmitDate(),

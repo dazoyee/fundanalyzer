@@ -3,6 +3,8 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.RecalculationPreview;
+import github.com.ioridazo.fundanalyzer.domain.value.RecalculationResult;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -102,5 +104,33 @@ class AnalysisControllerTest {
     void importStock2() {
         assertEquals("redirect:/v3/corporate?code=1234", controller.importStockByCode("12345"));
         Mockito.verify(analysisService, Mockito.times(1)).importStock(CodeInputData.of("12345"));
+    }
+
+    @DisplayName("previewRecalculate : 係数一括再計算の対象件数を確認する")
+    @Test
+    void previewRecalculate() {
+        Mockito.when(analyzeUseCase.previewRecalculation()).thenReturn(new RecalculationPreview(10, 20));
+
+        var actual = UriComponentsBuilder.fromUriString(controller.previewRecalculate()).build();
+
+        assertEquals("/v3/index", actual.getPath());
+        assertEquals(
+                "係数一括再計算対象件数: analysis_result=10件, valuation=20件",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
+    }
+
+    @DisplayName("recalculate : 係数一括再計算を実行する")
+    @Test
+    void recalculate() {
+        Mockito.when(analyzeUseCase.recalculate()).thenReturn(new RecalculationResult(10, 3, 6, 1, 4));
+
+        var actual = UriComponentsBuilder.fromUriString(controller.recalculate()).build();
+
+        assertEquals("/v3/index", actual.getPath());
+        assertEquals(
+                "係数一括再計算完了: target=10, updated=3, skipped=6, failed=1, valuationUpdated=4",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
+        Mockito.verify(viewService, Mockito.times(1)).updateCorporateView();
+        Mockito.verify(viewService, Mockito.times(1)).updateValuationView();
     }
 }

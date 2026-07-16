@@ -27,9 +27,9 @@ VALUES ('S0000010', '120', 'E91110', '2024-03-31', '2024-06-25', '1', '1', '1', 
        ('S0000011', '120', 'E91110', '2025-03-31', '2025-06-25', '1', '1', '1', '1', '1', '1', '0');
 
 -- analysis_result（最新=分割後 S0000011。corporate_value は分割後株式数ベース）
-INSERT INTO `analysis_result` (`company_code`, `document_period`, `corporate_value`, `bps`, `eps`, `roe`, `roa`, `document_type_code`, `submit_date`, `document_id`)
-VALUES ('91110', '2024-03-31', 6000.0, 1500.0, 230.0, 0.15, 0.10, '120', '2024-06-25', 'S0000010'),
-       ('91110', '2025-03-31', 1300.0, 320.0, 48.0, 0.15, 0.10, '120', '2025-06-25', 'S0000011');
+INSERT INTO `analysis_result` (`company_code`, `document_period`, `corporate_value`, `document_type_code`, `submit_date`, `document_id`)
+VALUES ('91110', '2024-03-31', 6000.0, '120', '2024-06-25', 'S0000010'),
+       ('91110', '2025-03-31', 1300.0, '120', '2025-06-25', 'S0000011');
 
 -- financial_statement: 発行株式数（financial_statement_id='4', subject_id='0'）の ×5 変化
 INSERT INTO `financial_statement` (`company_code`, `edinet_code`, `financial_statement_id`, `subject_id`, `period_start`, `period_end`, `value`, `document_type_code`, `submit_date`, `document_id`, `created_type`)
