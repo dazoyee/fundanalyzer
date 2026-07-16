@@ -71,10 +71,10 @@ class AnalysisResultSpecificationTest {
         @DisplayName("yearAverageCorporateValue : 平均の企業価値を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult3 = new AnalysisResultEntity(3, "code", LocalDate.parse("2018-06-30"), BigDecimal.valueOf(1400), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult4 = new AnalysisResultEntity(4, "code", LocalDate.parse("2017-06-30"), BigDecimal.valueOf(10000), null, null, null, null, "120", "4", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), null, "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
+            var analysisResult3 = new AnalysisResultEntity(3, "code", LocalDate.parse("2018-06-30"), BigDecimal.valueOf(1400), null, "120", "4", null, null, null);
+            var analysisResult4 = new AnalysisResultEntity(4, "code", LocalDate.parse("2017-06-30"), BigDecimal.valueOf(10000), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2, analysisResult3, analysisResult4))
                     .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
@@ -94,8 +94,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("yearAverageCorporateValue : 企業価値がないときは空で返却する")
         @Test
         void not_enough() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), null, "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2))
                     .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
@@ -111,9 +111,6 @@ class AnalysisResultSpecificationTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
-                    null,
-                    null,
-                    null,
                     null,
                     DocumentTypeCode.DTC_120.toValue(),
                     QuarterType.QT_4.toValue(),
@@ -134,8 +131,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("allYearAverageCorporateValue : 平均の企業価値を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), null, "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
             var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
@@ -160,9 +157,6 @@ class AnalysisResultSpecificationTest {
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
                     null,
-                    null,
-                    null,
-                    null,
                     DocumentTypeCode.DTC_120.toValue(),
                     QuarterType.QT_4.toValue(),
                     LocalDate.parse("2020-09-30"),
@@ -182,8 +176,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("standardDeviation : 企業価値の標準偏差を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, null, null, null, "120", "4", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(100000, 2));
@@ -216,9 +210,6 @@ class AnalysisResultSpecificationTest {
                     "code",
                     LocalDate.parse("2020-06-30"),
                     BigDecimal.valueOf(500.250515),
-                    null,
-                    null,
-                    null,
                     null,
                     DocumentTypeCode.DTC_120.toValue(),
                     QuarterType.QT_4.toValue(),
@@ -275,8 +266,8 @@ class AnalysisResultSpecificationTest {
         @DisplayName("countYear : 分析年数を取得する")
         @Test
         void present() {
-            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, null, null, null, "120", "4", null, null, null);
-            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, null, null, null, "120", "4", null, null, null);
+            var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
+            var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
             var actual = analysisResultSpecification.countYear(company);
@@ -316,7 +307,7 @@ class AnalysisResultSpecificationTest {
         void boolean_true() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
             when(analysisResultDao.selectByUniqueKey(any(), any(), any(), any()))
-                    .thenReturn(Optional.of(new AnalysisResultEntity(null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                    .thenReturn(Optional.of(new AnalysisResultEntity(null, null, null, null, null, null, null, null, null, null)));
 
             assertTrue(analysisResultSpecification.isAnalyzed(new Document(
                     null,
@@ -438,7 +429,7 @@ class AnalysisResultSpecificationTest {
         void byId_present() {
             final AnalysisResultEntity entity = new AnalysisResultEntity(
                     10, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
-                    null, null, null, null, "120", "4", null, null, null);
+                    null, "120", "4", null, null, null);
             when(analysisResultDao.selectById(10)).thenReturn(Optional.of(entity));
 
             final Optional<AnalysisResultEntity> actual = analysisResultSpecification.findAnalysisResult(10);
@@ -462,7 +453,7 @@ class AnalysisResultSpecificationTest {
         void byDocumentId_present() {
             final AnalysisResultEntity entity = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
-                    null, null, null, null, "120", "4", null, "doc-1", null);
+                    null, "120", "4", null, "doc-1", null);
             when(analysisResultDao.selectByDocumentId("doc-1")).thenReturn(Optional.of(entity));
 
             final Optional<AnalysisResultEntity> actual = analysisResultSpecification.findAnalysisResult("doc-1");
@@ -491,10 +482,10 @@ class AnalysisResultSpecificationTest {
         void latestByDocumentPeriod() {
             final AnalysisResultEntity older = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900),
-                    null, null, null, null, "120", "4", LocalDate.parse("2019-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2019-09-30"), null, null);
             final AnalysisResultEntity newer = new AnalysisResultEntity(
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
             doReturn(List.of(older, newer))
                     .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
@@ -509,10 +500,10 @@ class AnalysisResultSpecificationTest {
         void tieBreakBySubmitDate() {
             final AnalysisResultEntity earlySubmit = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
             final AnalysisResultEntity lateSubmit = new AnalysisResultEntity(
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-12-31"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-12-31"), null, null);
             doReturn(List.of(earlySubmit, lateSubmit))
                     .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
 
@@ -543,7 +534,7 @@ class AnalysisResultSpecificationTest {
             final LocalDate submitDate = LocalDate.parse("2021-04-01");
             final AnalysisResultEntity entity = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
-                    null, null, null, null, "120", "4", submitDate, null, null);
+                    null, "120", "4", submitDate, null, null);
             when(analysisResultDao.selectBySubmitDateAndCreatedAt(submitDate, LocalDate.now()))
                     .thenReturn(List.of(entity));
 
@@ -577,7 +568,7 @@ class AnalysisResultSpecificationTest {
             final List<String> documentTypeCode = List.of("120");
             final AnalysisResultEntity entity = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
-                    null, null, null, null, "120", "4", null, null, null);
+                    null, "120", "4", null, null, null);
             when(analysisResultDao.selectByCompanyCodeAndType("code", documentTypeCode))
                     .thenReturn(List.of(entity));
 
@@ -597,10 +588,10 @@ class AnalysisResultSpecificationTest {
         void filtersOutEpoch() {
             final AnalysisResultEntity epoch = new AnalysisResultEntity(
                     1, "code", LocalDate.EPOCH, BigDecimal.valueOf(500),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
             final AnalysisResultEntity normal = new AnalysisResultEntity(
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
             when(analysisResultDao.selectByCompanyCodeAndType("code", targetTypeCodes))
                     .thenReturn(List.of(epoch, normal));
 
@@ -615,13 +606,13 @@ class AnalysisResultSpecificationTest {
         void picksLatestSubmitDatePerPeriod() {
             final AnalysisResultEntity oldSubmit = new AnalysisResultEntity(
                     1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
             final AnalysisResultEntity newSubmit = new AnalysisResultEntity(
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100),
-                    null, null, null, null, "120", "4", LocalDate.parse("2020-12-31"), null, null);
+                    null, "120", "4", LocalDate.parse("2020-12-31"), null, null);
             final AnalysisResultEntity otherPeriod = new AnalysisResultEntity(
                     3, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(700),
-                    null, null, null, null, "120", "4", LocalDate.parse("2019-09-30"), null, null);
+                    null, "120", "4", LocalDate.parse("2019-09-30"), null, null);
             when(analysisResultDao.selectByCompanyCodeAndType("code", targetTypeCodes))
                     .thenReturn(List.of(oldSubmit, newSubmit, otherPeriod));
 
@@ -712,7 +703,7 @@ class AnalysisResultSpecificationTest {
             verify(analysisResultDao, times(1)).insert(any(AnalysisResultEntity.class));
         }
 
-        @DisplayName("insert : BPS/EPS/ROE/ROA は永続化せず corporate_value と rim_value のみ書き込む")
+        @DisplayName("insert : corporate_value と rim_value を書き込む（BPS/EPS/ROE/ROA は永続列を持たない）")
         @Test
         void doesNotPersistIndicatorColumns() {
             final Company target = new Company(
@@ -750,10 +741,6 @@ class AnalysisResultSpecificationTest {
             final AnalysisResultEntity actual = captor.getValue();
             assertEquals(BigDecimal.valueOf(500), actual.getCorporateValue());
             assertEquals(BigDecimal.valueOf(77), actual.getRimValue().orElseThrow());
-            assertTrue(actual.getBps().isEmpty());
-            assertTrue(actual.getEps().isEmpty());
-            assertTrue(actual.getRoe().isEmpty());
-            assertTrue(actual.getRoa().isEmpty());
         }
 
         @DisplayName("insert : 企業が見つからないときは FundanalyzerNotExistException")
