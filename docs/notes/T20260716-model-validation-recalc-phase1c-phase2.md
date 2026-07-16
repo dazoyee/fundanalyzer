@@ -174,3 +174,25 @@ DROP COLUMN は不可逆のため、実装・マージと本番リリース判�
   failed の原因は dev シードに financial_statement 行が存在しないため（環境要因）。
   本番は全 analysis_result 行が財務諸表値由来（フェーズ1a 検証で 31,776 行の再計算一致を確認済み）のため入力は揃う
 - 本番相当件数での詳細画面応答時間はローカルで実測不能のため、リリース後の運用確認項目とする
+
+## 検証（code-reviewer レビューと対応）
+
+- code-reviewer エージェントによる統合差分レビュー: CRITICAL 0 / HIGH 3 / MEDIUM 3 / LOW 3
+- HIGH 対応（すべて修正済み・全テストグリーンで再確認）:
+  1. recalculate の例外継続漏れ → 想定外の実行時例外も該当行のみ失敗として継続（検証テスト追加）
+  2. InvestmentIndicatorReconciliationService のテスト欠如 → 境界条件の単体テスト9件を新設
+  3. parallelUpdateView の FinanceValue 二重計算 → 事前計算済み AnalysisResult を渡す reconcilePrecomputed で解消
+     （検証テストで findDocument / getFinanceValue が1回のみであることを確認）
+- MEDIUM 対応: SQL コメントの精度主張是正・WHERE 句の防御意図明記（2件）。
+  「同期HTTP実行のタイムアウトリスク」は本番実行時の運用確認項目とする（下記）
+- マージ統合の整合性・新設 SQL の正しさ・冪等性・N+1 回避はレビュー側でも確認済み（消し残し・デッドコードなし）
+
+## 本番運用手順（リリース後の再計算実行）
+
+1. 対象テーブルのバックアップ取得: `analysis_result`・`valuation`（mysqldump 等）
+2. `GET /v1/admin/analysis/recalculate/preview` で対象件数を確認
+3. `POST /v1/admin/analysis/recalculate` を実行（リバースプロキシのタイムアウト設定に注意。
+   数万件規模の同期実行のため、必要ならプロキシを経由せずループバックから直接実行する）
+4. ログの完了メッセージ（対象/更新/スキップ/失敗/valuation更新件数)と、失敗行の warn ログを確認
+5. 画面（一覧・詳細・バックテスト）で値が一貫していることを確認。`updateCorporateView` / `updateValuationView` は実行後に自動連鎖する
+6. `updateCorporateView` バッチの実行時間を切替前後で比較する（reconcilePrecomputed による軽減済みだが実測で確認）
