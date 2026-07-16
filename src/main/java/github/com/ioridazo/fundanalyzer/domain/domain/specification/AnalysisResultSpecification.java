@@ -104,17 +104,13 @@ public class AnalysisResultSpecification {
     public void insert(final Document document, final AnalysisResult analysisResult) {
         final Company company = companySpecification.findCompanyByEdinetCode(document.getEdinetCode()).orElseThrow(FundanalyzerNotExistException::new);
         try {
-            // BPS/EPS/ROE/ROA（係数非依存指標）は読み取り時に財務諸表値から都度計算するため永続化しない。
+            // BPS/EPS/ROE/ROA は財務諸表値から都度計算する（永続列は持たない）。
             // corporate_value / rim_value は算出時点の係数を凍結した値として書き込みを継続する
             analysisResultDao.insert(AnalysisResultEntity.of(
                     company.code(),
                     document.getDocumentPeriod().orElseThrow(() -> new FundanalyzerNotExistException("documentPeriod")),
                     analysisResult.getCorporateValue(),
                     analysisResult.getRimValue().orElse(null),
-                    null,
-                    null,
-                    null,
-                    null,
                     document.getDocumentTypeCode(),
                     document.getQuarterType(),
                     document.getSubmitDate(),

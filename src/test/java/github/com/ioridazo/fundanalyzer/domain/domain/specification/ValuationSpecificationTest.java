@@ -159,9 +159,6 @@ class ValuationSpecificationTest {
                             null,
                             null,
                             null,
-                            null,
-                            null,
-                            null,
                             submitDate,
                             "documentId",
                             null
@@ -202,9 +199,6 @@ class ValuationSpecificationTest {
                             null,
                             null,
                             null,
-                            null,
-                            null,
-                            null,
                             submitDate,
                             "documentId",
                             null
@@ -240,9 +234,6 @@ class ValuationSpecificationTest {
                             null,
                             null,
                             null,
-                            null,
-                            null,
-                            null,
                             LocalDate.parse(submitDate),
                             null,
                             null
@@ -271,9 +262,6 @@ class ValuationSpecificationTest {
                             companyCode,
                             null,
                             BigDecimal.valueOf(2000),
-                            null,
-                            null,
-                            null,
                             null,
                             null,
                             null,
@@ -308,9 +296,6 @@ class ValuationSpecificationTest {
                             null,
                             null,
                             null,
-                            null,
-                            null,
-                            null,
                             LocalDate.parse("2022-06-12"),
                             null,
                             null
@@ -342,9 +327,6 @@ class ValuationSpecificationTest {
                             null,
                             null,
                             null,
-                            null,
-                            null,
-                            null,
                             LocalDate.parse("2022-06-12"),
                             null,
                             null
@@ -373,9 +355,6 @@ class ValuationSpecificationTest {
                             null,
                             null,
                             BigDecimal.valueOf(latestCorporateValue),
-                            null,
-                            null,
-                            null,
                             null,
                             null,
                             null,
@@ -595,9 +574,6 @@ class ValuationSpecificationTest {
                     null,
                     null,
                     null,
-                    null,
-                    null,
-                    null,
                     submitDate,
                     "documentId",
                     null
@@ -732,7 +708,7 @@ class ValuationSpecificationTest {
         private AnalysisResultEntity analysisResult() {
             return new AnalysisResultEntity(
                     4, companyCode, null, BigDecimal.valueOf(2000),
-                    null, null, null, null, null, null,
+                    null, null, null,
                     submitDate, "documentId", null
             );
         }

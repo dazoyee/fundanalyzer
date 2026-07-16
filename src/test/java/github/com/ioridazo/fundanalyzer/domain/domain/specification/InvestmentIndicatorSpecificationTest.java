@@ -70,7 +70,7 @@ class InvestmentIndicatorSpecificationTest {
     private AnalysisResultEntity analysisResult(final BigDecimal bps, final BigDecimal eps) {
         return new AnalysisResultEntity(
                 10, "1234", LocalDate.parse("2024-03-01"),
-                BigDecimal.valueOf(3000), bps, eps, null, null,
+                BigDecimal.valueOf(3000), null,
                 "120", "year-1",
                 LocalDate.parse("2024-04-01"), "doc-1",
                 LocalDateTime.parse("2024-04-01T00:00:00"));

@@ -35,14 +35,6 @@ public class AnalysisResultEntity {
 
     private final BigDecimal rimValue;
 
-    private final BigDecimal bps;
-
-    private final BigDecimal eps;
-
-    private final BigDecimal roe;
-
-    private final BigDecimal roa;
-
     private final String documentTypeCode;
 
     private final String quarterType;
@@ -54,50 +46,11 @@ public class AnalysisResultEntity {
     @Column(updatable = false)
     private final LocalDateTime createdAt;
 
-    /**
-     * RIM 値を持たない旧シグネチャ互換コンストラクタ（rimValue は null）。
-     *
-     * @param id                id
-     * @param companyCode       企業コード
-     * @param documentPeriod    期間
-     * @param corporateValue    企業価値
-     * @param bps               BPS
-     * @param eps               EPS
-     * @param roe               ROE
-     * @param roa               ROA
-     * @param documentTypeCode  書類種別コード
-     * @param quarterType       四半期種別
-     * @param submitDate        提出日
-     * @param documentId        書類ID
-     * @param createdAt         登録日時
-     */
-    public AnalysisResultEntity(
-            final Integer id,
-            final String companyCode,
-            final LocalDate documentPeriod,
-            final BigDecimal corporateValue,
-            final BigDecimal bps,
-            final BigDecimal eps,
-            final BigDecimal roe,
-            final BigDecimal roa,
-            final String documentTypeCode,
-            final String quarterType,
-            final LocalDate submitDate,
-            final String documentId,
-            final LocalDateTime createdAt) {
-        this(id, companyCode, documentPeriod, corporateValue, null, bps, eps, roe, roa,
-                documentTypeCode, quarterType, submitDate, documentId, createdAt);
-    }
-
     public static AnalysisResultEntity of(
             final String companyCode,
             final LocalDate period,
             final BigDecimal corporateValue,
             final BigDecimal rimValue,
-            final BigDecimal bps,
-            final BigDecimal eps,
-            final BigDecimal roe,
-            final BigDecimal roa,
             final DocumentTypeCode documentTypeCode,
             final QuarterType quarterType,
             final LocalDate submitDate,
@@ -113,10 +66,6 @@ public class AnalysisResultEntity {
                 period,
                 corporateValue,
                 rimValue,
-                bps,
-                eps,
-                roe,
-                roa,
                 documentTypeCode.toValue(),
                 quarterType.toValue(),
                 submitDate,
@@ -127,21 +76,5 @@ public class AnalysisResultEntity {
 
     public Optional<BigDecimal> getRimValue() {
         return Optional.ofNullable(rimValue);
-    }
-
-    public Optional<BigDecimal> getBps() {
-        return Optional.ofNullable(bps);
-    }
-
-    public Optional<BigDecimal> getEps() {
-        return Optional.ofNullable(eps);
-    }
-
-    public Optional<BigDecimal> getRoe() {
-        return Optional.ofNullable(roe);
-    }
-
-    public Optional<BigDecimal> getRoa() {
-        return Optional.ofNullable(roa);
     }
 }
