@@ -16,6 +16,16 @@ import java.util.function.Supplier;
 @Getter
 public class AnalysisResult {
 
+    /**
+     * 企業価値モデル
+     */
+    public enum CorporateValueModel {
+        /** 営業利益×倍率＋運転資本ベース。 */
+        STANDARD,
+        /** 経常利益×倍率＋純資産ベース〔銀行・保険等の業法様式向け〕。 */
+        NET_ASSET
+    }
+
     private final BigDecimal corporateValue;
 
     private final BigDecimal rimValue;
@@ -67,7 +77,17 @@ public class AnalysisResult {
     }
 
     public AnalysisResult(final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient) {
-        this.corporateValue = calculateCorporateValue(financeValue, document, coefficient);
+        this(financeValue, document, coefficient, CorporateValueModel.STANDARD);
+    }
+
+    public AnalysisResult(
+            final FinanceValue financeValue,
+            final Document document,
+            final AnalysisCoefficient coefficient,
+            final CorporateValueModel model) {
+        this.corporateValue = CorporateValueModel.NET_ASSET.equals(model)
+                ? calculateCorporateValueOfNetAssetModel(financeValue, document, coefficient)
+                : calculateCorporateValue(financeValue, document, coefficient);
         this.bps = calculateBps(financeValue, document).orElse(null);
         this.eps = calculateEps(financeValue, document).orElse(null);
         this.roe = calculateRoe(financeValue, document).orElse(null);
@@ -237,6 +257,63 @@ public class AnalysisResult {
         return annualizedOperatingProfit
                 .add(totalCurrentAssets).subtract(totalCurrentLiabilities.multiply(coefficient.getCurrentLiabilitiesRatio())).add(totalInvestmentsAndOtherAssets)
                 .subtract(totalFixedLiabilities)
+                .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * 純資産ベース企業価値を指定係数で算出する。
+     *
+     * <p>年換算は経常利益にのみ適用し、BS のストック項目（純資産・新株予約権）は
+     * 四半期末時点の残高を等倍で加減算する。
+     *
+     * <p>書類種別 140/150（四半期報告書・訂正四半期報告書）は保存されても集計・表示対象外であり、
+     * 既存保存データの再計算は行わない。
+     *
+     * @param financeValue 財務諸表値
+     * @param document     ドキュメント
+     * @param coefficient  算出係数
+     * @return 企業価値
+     * @throws FundanalyzerNotExistException 値が存在しないとき
+     */
+    BigDecimal calculateCorporateValueOfNetAssetModel(
+            final FinanceValue financeValue, final Document document, final AnalysisCoefficient coefficient)
+            throws FundanalyzerNotExistException {
+        // 経常利益
+        final BigDecimal ordinaryIncome = financeValue.getOrdinaryIncome().map(BigDecimal::new)
+                .orElseThrow(() -> new FundanalyzerNotExistException(
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                        PlSubject.PlEnum.ORDINARY_INCOME.getSubject(),
+                        document
+                ));
+        // 純資産
+        final BigDecimal totalNetAssets = financeValue.getNetAssets().map(BigDecimal::new)
+                .orElseThrow(() -> new FundanalyzerNotExistException(
+                        FinancialStatementEnum.BALANCE_SHEET,
+                        BsSubject.BsEnum.TOTAL_NET_ASSETS.getSubject(),
+                        document
+                ));
+        // 新株予約権
+        final BigDecimal subscriptionWarrant = financeValue.getSubscriptionWarrant().map(BigDecimal::new).orElse(BigDecimal.ZERO);
+        // 四半期種別の重みづけ（QuarterType 未設定時は年次想定の ANNUAL_WEIGHT をフォールバックに使う）
+        final BigDecimal weightingQuarterType = Optional.of(document)
+                .map(Document::getQuarterType)
+                .map(QuarterType::getWeight)
+                .map(BigDecimal::new)
+                .orElse(ANNUAL_WEIGHT);
+        // 株式総数
+        final BigDecimal numberOfShares = financeValue.getNumberOfShares().map(BigDecimal::new)
+                .orElseThrow(() -> new FundanalyzerNotExistException(
+                        FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
+                        "株式総数",
+                        document
+                ));
+        final BigDecimal annualizedOrdinaryIncome = ordinaryIncome.multiply(coefficient.getOperatingProfitWeight())
+                .divide(weightingQuarterType, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP)
+                .multiply(ANNUAL_WEIGHT);
+
+        return annualizedOrdinaryIncome
+                .add(totalNetAssets)
+                .subtract(subscriptionWarrant)
                 .divide(numberOfShares, TENTH_DECIMAL_PLACE, RoundingMode.HALF_UP);
     }
 

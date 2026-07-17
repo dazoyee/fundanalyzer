@@ -37,6 +37,7 @@ class FinanceValueViewModelTest {
             106L,
             107L,
             108L,
+            null,
             109L,
             110L
     );

@@ -397,6 +397,12 @@ public class FinancialStatementSpecification {
                         document,
                         subjectSpecification.findPlSubjectList(PlSubject.PlEnum.OPERATING_PROFIT)
                 ).orElse(null),
+                // 経常利益
+                findValue(
+                        FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                        document,
+                        subjectSpecification.findPlSubjectList(PlSubject.PlEnum.ORDINARY_INCOME)
+                ).orElse(null),
                 // 当期純利益
                 findValue(
                         FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,

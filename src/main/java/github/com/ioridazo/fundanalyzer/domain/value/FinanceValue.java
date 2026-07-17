@@ -32,6 +32,9 @@ public class FinanceValue {
     // 営業利益
     private final Long operatingProfit;
 
+    // 経常利益
+    private final Long ordinaryIncome;
+
     // 当期純利益
     private final Long netIncome;
 
@@ -68,6 +71,10 @@ public class FinanceValue {
 
     public Optional<Long> getOperatingProfit() {
         return Optional.ofNullable(operatingProfit);
+    }
+
+    public Optional<Long> getOrdinaryIncome() {
+        return Optional.ofNullable(ordinaryIncome);
     }
 
     public Optional<Long> getNetIncome() {
