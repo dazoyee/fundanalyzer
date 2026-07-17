@@ -199,6 +199,14 @@ DROP COLUMN は不可逆のため、実装・マージと本番リリース判�
 - v2.3.15（1a/1b 含む）反映後のスケジューラ一巡について、人間レビュアが本番を確認し問題なしと判断（2026-07-16、AskUserQuestion 経由）。
   これをもって V0.4.2（DROP COLUMN）を含むリリースの前提条件を充足とする
 
+## 本番反映（v2.4.0）
+
+- GitHub Actions Pipeline（version=2.4.0、run 29499152564）でリリースし、release ジョブ成功（2026-07-16）
+- 起動時の Flyway で V0.4.2（指標4列 DROP COLUMN）が適用される構成。全期間再計算バッチの実行は下記手順で別途実施
+- 教訓: Pipeline は version 入力を渡すと **リリースコミット・main マージ・タグ付与・SNAPSHOT バンプまで自動実行する**。
+  CONTRIBUTING.md の手動 Git Flow を並行して行うと release コミットが二重になる（今回発生・実害なし）。
+  リリース時は「develop を push → Pipeline を version 指定でトリガ」だけでよい
+
 ## 本番運用手順（リリース後の再計算実行）
 
 1. 対象テーブルのバックアップ取得: `analysis_result`・`valuation`（mysqldump 等）
@@ -208,3 +216,22 @@ DROP COLUMN は不可逆のため、実装・マージと本番リリース判�
 4. ログの完了メッセージ（対象/更新/スキップ/失敗/valuation更新件数)と、失敗行の warn ログを確認
 5. 画面（一覧・詳細・バックテスト）で値が一貫していることを確認。`updateCorporateView` / `updateValuationView` は実行後に自動連鎖する
 6. `updateCorporateView` バッチの実行時間を切替前後で比較する（reconcilePrecomputed による軽減済みだが実測で確認）
+
+## 本番での再計算実行結果（2026-07-16）
+
+- 実行経路: 本番機（HP-PAVILION）上で backup → 署名付きトラストヘッダーでループバックから preview → CSRF（`<meta name="_csrf">` のトークンを `X-CSRF-TOKEN` ヘッダーで送信）→ 再計算 POST
+- バックアップ: `analysis_result` / `valuation` を mysqldump（26.59MB、両テーブル＋完了マーカー検証済み）
+- preview: analysis_result=75,233件、valuation=165,038件
+- 再計算（所要 7.52 分・POST 302 正常終了）:
+  - target=75,233 / **updated=70,579** / skipped=0 / **failed=4,654** / valuationUpdated=165,038
+  - skipped=0 は「処理できた行はすべて旧係数で、現行係数で値が変わった」ことを示す（= ばらつき解消が全期間に及んだ）
+  - failed=4,654 の内訳はアプリログ集計で **入力欠損（NotExist）4,654件・想定外例外 0件**。
+    フェーズ1a 調査で判明済みの元データ欠損（当期純利益欠損・証券コード NULL 企業等）と同性質で想定内
+- 実行時の運用上の知見（次回のため）:
+  - 本番機は Wi-Fi が断続的に不通。SSH 直実行（フォアグラウンド）で keepalive を強めるのが確実。
+    `Start-Process` によるデタッチは SSH セッション終了時に子プロセスごと終了しログも残らないため不可
+  - CSRF は `<meta name="_csrf" content>` のトークンを `X-CSRF-TOKEN` ヘッダーで送る（フォーム hidden ではない）。
+    トークン長は約96文字（Spring Security 6 の XOR マスク済みトークン）
+  - 再計算 POST はサーバ側 Tomcat スレッドで完走するため、クライアント切断でも DB 更新は完了する
+- データ整合性確認: 最新 2,000 件のサンプルで `valuation.discount_value` と再計算後の
+  `analysis_result.corporate_value - valuation.stock_price` の乖離（0.5円超）は 0 件。ばらつき解消を確認

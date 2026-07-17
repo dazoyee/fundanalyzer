@@ -55,7 +55,7 @@ import static org.mockito.Mockito.when;
 
 class ViewCorporateInteractorTest {
 
-    private static final List<String> targetTypeCodes = List.of("120", "130", "140", "150");
+    private static final List<String> targetTypeCodes = List.of("120", "130", "140", "150", "160", "170");
 
     private CompanySpecification companySpecification;
     private DocumentSpecification documentSpecification;
@@ -104,8 +104,36 @@ class ViewCorporateInteractorTest {
         viewCorporateInteractor.configCoefficientOfVariation = BigDecimal.valueOf(0.6);
         viewCorporateInteractor.configDiffForecastStock = BigDecimal.valueOf(100);
         viewCorporateInteractor.configCorporateSize = 300;
-        viewCorporateInteractor.targetTypeCodes = List.of("120", "130", "140", "150");
+        viewCorporateInteractor.targetTypeCodes = targetTypeCodes;
         viewCorporateInteractor.updateViewEnabled = true;
+    }
+
+    @Nested
+    @DisplayName("viewMain / viewQuart メソッド")
+    class ViewTabs {
+
+        @Test
+        @DisplayName("viewQuart は 160/170 を含み、viewMain は含まない")
+        void semiannualOnlyInQuart() {
+            when(viewSpecification.findAllCorporateView()).thenReturn(List.of(
+                    corporateViewWithSubmitDateAndType("1200", "120", LocalDate.parse("2026-07-16")),
+                    corporateViewWithSubmitDateAndType("1300", "130", LocalDate.parse("2026-07-15")),
+                    corporateViewWithSubmitDateAndType("1400", "140", LocalDate.parse("2026-07-14")),
+                    corporateViewWithSubmitDateAndType("1500", "150", LocalDate.parse("2026-07-13")),
+                    corporateViewWithSubmitDateAndType("1600", "160", LocalDate.parse("2026-07-12")),
+                    corporateViewWithSubmitDateAndType("1700", "170", LocalDate.parse("2026-07-11"))
+            ));
+
+            final List<String> mainCodes = viewCorporateInteractor.viewMain().stream()
+                    .map(CorporateViewModel::getLatestDocumentTypeCode)
+                    .toList();
+            final List<String> quartCodes = viewCorporateInteractor.viewQuart().stream()
+                    .map(CorporateViewModel::getLatestDocumentTypeCode)
+                    .toList();
+
+            assertEquals(List.of("120", "130"), mainCodes);
+            assertEquals(List.of("140", "150", "160", "170"), quartCodes);
+        }
     }
 
     @Nested
@@ -636,7 +664,7 @@ class ViewCorporateInteractorTest {
             var entity = analysisResultEntity();
             var analysisDocument = analysisDocument();
             var financeValue = FinanceValue.of(
-                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+                    null, null, 1200L, null, null, 0L, 800L, null, null, 150L, 10L);
 
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
             when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(document));
@@ -664,7 +692,7 @@ class ViewCorporateInteractorTest {
             var entity = analysisResultEntity();
             var analysisDocument = analysisDocument();
             var financeValue = FinanceValue.of(
-                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+                    null, null, 1200L, null, null, 0L, 800L, null, null, 150L, 10L);
             var stockPriceEntity = new StockPriceEntity(
                     null,
                     "code",
@@ -1012,8 +1040,18 @@ class ViewCorporateInteractorTest {
     }
 
     private CorporateViewModel corporateViewWithSubmitDate(String code, LocalDate submitDate) {
+        return corporateViewWithSubmitDateAndType(code, "120", submitDate);
+    }
+
+    private CorporateViewModel corporateViewWithSubmitDateAndType(String code, String latestDocumentTypeCode, LocalDate submitDate) {
         var model = defaultCorporateViewModel(code);
+        model.setLatestDocumentTypeCode(latestDocumentTypeCode);
         model.setSubmitDate(submitDate);
+        model.setLatestCorporateValue(BigDecimal.valueOf(20));
+        model.setAverageCorporateValueToDisplay(BigDecimal.TEN);
+        model.setStandardDeviationToDisplay(BigDecimal.TEN);
+        model.setCoefficientOfVariationToDisplay(BigDecimal.valueOf(0.1));
+        model.setDiscountRateToDisplay(BigDecimal.valueOf(200));
         return model;
     }
 

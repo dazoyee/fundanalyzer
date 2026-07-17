@@ -41,7 +41,7 @@ class AnalysisPresenterTest {
         this.viewService = mock(ViewService.class);
         this.objectMapper = mock(ObjectMapper.class);
         this.presenter = new AnalysisPresenter(viewService, objectMapper);
-        ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130"));
+        ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130", "140", "150", "160", "170"));
         ReflectionTestUtils.setField(presenter, "rankingSize", 2);
     }
 
@@ -118,7 +118,14 @@ class AnalysisPresenterTest {
                                     new BigDecimal("1200"),
                                     null,
                                     "140",
-                                    "FY")
+                                    "Q"),
+                            new AnalysisResultViewModel(
+                                    LocalDate.of(2026, 11, 15),
+                                    LocalDate.of(2027, 3, 31),
+                                    new BigDecimal("1300"),
+                                    null,
+                                    "160",
+                                    "H")
                     ),
                     List.of(
                             new StockPriceViewModel(LocalDate.of(2024, 5, 1), 90.0, null, null, null),
@@ -129,9 +136,9 @@ class AnalysisPresenterTest {
                     companyValuation(code, "AAA", LocalDate.of(2024, 4, 1), new BigDecimal("5"), new BigDecimal("1.2"), new BigDecimal("0.9"))
             ));
             when(objectMapper.writeValueAsString(any())).thenReturn(
-                    "[\"2024-03-31\",\"2025-03-31\"]",
-                    "[1000,1100]",
-                    "[90.0,120.0]",
+                    "[\"2024-03-31\",\"2025-03-31\",\"2026-03-31\",\"2027-03-31\"]",
+                    "[1000,1100,1200,1300]",
+                    "[90.0,120.0,120.0,120.0]",
                     "[\"2024-04-01\",\"2024-05-01\"]",
                     "[5,10]",
                     "[1.2,1.5]",
@@ -142,9 +149,9 @@ class AnalysisPresenterTest {
 
             assertEquals("fragments/analysis-chart :: chart", result);
             verify(model).addAttribute("chartId", "analysisChart-" + code);
-            verify(model).addAttribute("labelsJson", "[\"2024-03-31\",\"2025-03-31\"]");
-            verify(model).addAttribute("cvJson", "[1000,1100]");
-            verify(model).addAttribute("stJson", "[90.0,120.0]");
+            verify(model).addAttribute("labelsJson", "[\"2024-03-31\",\"2025-03-31\",\"2026-03-31\",\"2027-03-31\"]");
+            verify(model).addAttribute("cvJson", "[1000,1100,1200,1300]");
+            verify(model).addAttribute("stJson", "[90.0,120.0,120.0,120.0]");
             verify(model).addAttribute("trendLabelsJson", "[\"2024-04-01\",\"2024-05-01\"]");
             verify(model).addAttribute("discJson", "[5,10]");
             verify(model).addAttribute("grahamJson", "[1.2,1.5]");
@@ -153,13 +160,14 @@ class AnalysisPresenterTest {
             final ArgumentCaptor<Object> jsonCaptor = ArgumentCaptor.forClass(Object.class);
             verify(objectMapper, org.mockito.Mockito.times(7)).writeValueAsString(jsonCaptor.capture());
             assertIterableEquals(
-                    List.of("2024-03-31", "2025-03-31"),
+                    List.of("2024-03-31", "2025-03-31", "2026-03-31", "2027-03-31"),
                     castList(jsonCaptor.getAllValues().get(0)));
             assertIterableEquals(
-                    List.of(new BigDecimal("1000"), new BigDecimal("1100")),
+                    List.of(new BigDecimal("1000"), new BigDecimal("1100"),
+                            new BigDecimal("1200"), new BigDecimal("1300")),
                     castList(jsonCaptor.getAllValues().get(1)));
             assertIterableEquals(
-                    List.of(90.0, 120.0),
+                    List.of(90.0, 120.0, 120.0, 120.0),
                     castList(jsonCaptor.getAllValues().get(2)));
             assertIterableEquals(
                     List.of("2024-04-01", "2024-05-01"),

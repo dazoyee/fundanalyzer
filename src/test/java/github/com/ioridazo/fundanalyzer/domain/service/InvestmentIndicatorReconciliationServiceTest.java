@@ -138,7 +138,7 @@ class InvestmentIndicatorReconciliationServiceTest {
             when(documentSpecification.findDocument("docA")).thenReturn(document);
             // 純資産・株式総数・当期純利益のいずれも欠損 → bps/eps は算出できない
             when(financialStatementSpecification.getFinanceValue(document))
-                    .thenReturn(FinanceValue.of(null, null, null, null, null, null, null, null, null, null));
+                    .thenReturn(FinanceValue.of(null, null, null, null, null, null, null, null, null, null, null));
 
             final List<StockPriceEntity> stockPriceList = List.of(stockPrice(LocalDate.parse("2024-01-10"), 100.0d));
 
@@ -203,7 +203,7 @@ class InvestmentIndicatorReconciliationServiceTest {
             final Document document = document(documentId, submitDate, null);
             when(documentSpecification.findDocument(documentId)).thenReturn(document);
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(
-                    FinanceValue.of(null, null, null, null, null, null, netAssets, null, netIncome, numberOfShares));
+                    FinanceValue.of(null, null, null, null, null, null, netAssets, null, null, netIncome, numberOfShares));
         }
     }
 

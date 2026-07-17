@@ -200,6 +200,7 @@ app:
 
     analysis:
       ranking-size: 50
+      net-asset-model-industry: 銀行業,保険業  # 純資産ベース企業価値モデル（経常利益×倍率＋純資産）を適用する業種
       bucket-boundaries: 1.0,1.2,1.5,2.0
       discount-bins: 100,120,150,200,300
       graham-bins: 10,15,22.5,40,70
@@ -207,6 +208,7 @@ app:
 
     view:
       document-type-code: 120,130  # 分析表示処理対象
+      latest-document-type-code: 120,130,140,150,160,170
       discount-rate: 120  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
       coefficient-of-variation: 0.5  # 以下を表示
@@ -215,14 +217,12 @@ app:
       edinet-list.size: 400  # 日間を表示
 
     scraping:
-      document-type-code: 120,130,140,150  # スクレイピング処理対象
+      document-type-code: 120,130,140,150,160,170  # スクレイピング処理対象
       validation:
         lower-limit-ratio: 0.1  # 前回値比で下限未満なら警告
         upper-limit-ratio: 10.0  # 前回値比で上限超なら警告
       no-industry: # 処理対象外
-        銀行業
-        ,保険業
-        ,内国法人・組合（有価証券報告書等の提出義務者以外）
+        内国法人・組合（有価証券報告書等の提出義務者以外）
         ,外国法人・組合
         ,外国法人・組合（有価証券報告書等の提出義務者以外）
         ,外国政府等
@@ -245,7 +245,7 @@ app:
         ratio-tolerance: 0.1         # 整数倍判定許容誤差
 
     remove-document:
-      document-type-code: 140,150
+      document-type-code: 140,150,160,170
       company: E03815,E03041,E01737,E34537,E33624,E01542,E33625,E03724,E02611,E05080,E00334,E00678,E01124,E00816,E05047,E00840,E05156,E02274,E00939,E34177,E27486,E05199,E00991,E05599,E01317,E05523,E04850,E05304,E02127,E33615,E02958,E01121,E02529
       # マネックスグループ株式会社,株式会社クレディセゾン,株式会社日立製作所,ポート株式会社,プレミアグループ株式会社,株式会社荏原製作所
       # アルヒ株式会社,Ｊトラスト株式会社,日本ユニシス株式会社,楽天グループ株式会社,日本ハム株式会社,ユニ・チャーム株式会社,ＨＯＹＡ株式会社

@@ -42,7 +42,7 @@ public class AnalysisPresenter {
     private static final String ANALYSIS_BACKTEST_FRAGMENT = "fragments/analysis-backtest :: backtest";
     private static final String ANALYSIS_DISTRIBUTION_FRAGMENT = "fragments/analysis-distribution :: distribution";
 
-    @Value("${app.config.view.document-type-code}")
+    @Value("${app.config.view.latest-document-type-code}")
     private List<String> targetTypeCodes;
 
     @Value("${app.config.analysis.ranking-size}")

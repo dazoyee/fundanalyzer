@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.Model;
 
 import java.util.List;
@@ -42,6 +43,7 @@ class IndexPresenterTest {
         this.analysisService = mock(AnalysisService.class);
         this.objectMapper = mock(ObjectMapper.class);
         this.presenter = new IndexPresenter(viewService, analysisService, objectMapper);
+        ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130", "140", "150", "160", "170"));
     }
 
 

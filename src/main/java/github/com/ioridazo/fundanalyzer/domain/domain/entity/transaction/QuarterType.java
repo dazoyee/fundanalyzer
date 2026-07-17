@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public enum QuarterType {
 
@@ -11,6 +12,7 @@ public enum QuarterType {
     QT_2("2", 2, "第2四半期"),
     QT_3("3", 3, "第3四半期"),
     QT_4("4", 4, "第4四半期"),
+    QT_SEMI("H", 2, "半期"),
     QT_OTHER(null, null, "定義外");
 
     private final String code;
@@ -28,9 +30,18 @@ public enum QuarterType {
     @JsonCreator
     public static QuarterType fromValue(final String code) {
         return Arrays.stream(values())
-                .filter(v -> v.code.equals(code))
+                .filter(v -> Objects.equals(v.code, code))
                 .findFirst()
                 .orElse(QT_OTHER);
+    }
+
+    public static QuarterType from(
+            final DocumentTypeCode documentTypeCode,
+            final String docDescription) {
+        if (DocumentTypeCode.DTC_160 == documentTypeCode || DocumentTypeCode.DTC_170 == documentTypeCode) {
+            return QT_SEMI;
+        }
+        return fromDocDescription(docDescription);
     }
 
     @JsonCreator
@@ -38,7 +49,7 @@ public enum QuarterType {
         try {
             final String code = docDescription.substring(docDescription.indexOf("期第") + 2, docDescription.indexOf("四半期("));
             return Arrays.stream(values())
-                    .filter(v -> v.code.equals(code))
+                    .filter(v -> Objects.equals(v.code, code))
                     .findFirst()
                     .orElse(QT_OTHER);
         } catch (NullPointerException | StringIndexOutOfBoundsException e) {

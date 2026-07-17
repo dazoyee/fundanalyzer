@@ -8,6 +8,45 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class QuarterTypeTest {
 
     @Nested
+    class from {
+
+        @Test
+        void semi_by_doc_type_160() {
+            assertEquals(
+                    QuarterType.QT_SEMI,
+                    QuarterType.from(DocumentTypeCode.DTC_160, "半期報告書")
+            );
+        }
+
+        @Test
+        void semi_by_doc_type_170() {
+            assertEquals(
+                    QuarterType.QT_SEMI,
+                    QuarterType.from(DocumentTypeCode.DTC_170, "訂正半期報告書")
+            );
+        }
+
+        @Test
+        void quarterly_regression_uses_doc_description() {
+            assertEquals(
+                    QuarterType.QT_2,
+                    QuarterType.from(
+                            DocumentTypeCode.DTC_140,
+                            "四半期報告書－第21期第2四半期(令和1年12月1日－令和2年2月29日)"
+                    )
+            );
+        }
+
+        @Test
+        void unknown_format_falls_back_to_other() {
+            assertEquals(
+                    QuarterType.QT_OTHER,
+                    QuarterType.from(DocumentTypeCode.DTC_140, "フォーマット不明")
+            );
+        }
+    }
+
+    @Nested
     class fromDocDescription {
 
         @Test
