@@ -99,7 +99,7 @@ public class EdinetDocumentSpecification {
             // period start is present
             edinetDocument.setPeriodStart(LocalDate.parse(
                     edinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodStart).orElseThrow()));
-        } else if (edinetDocumentEntity.map(EdinetDocumentEntity::getParentDocId).isPresent()) {
+        } else if (edinetDocumentEntity.flatMap(EdinetDocumentEntity::getParentDocId).isPresent()) {
             final Optional<EdinetDocumentEntity> parentEdinetDocumentEntity =
                     edinetDocumentDao.selectByDocId(edinetDocumentEntity.flatMap(EdinetDocumentEntity::getParentDocId).orElseThrow());
             if (parentEdinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodStart).isPresent()) {
@@ -119,7 +119,7 @@ public class EdinetDocumentSpecification {
             // period end is present
             edinetDocument.setPeriodEnd(LocalDate.parse(
                     edinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodEnd).orElseThrow()));
-        } else if (edinetDocumentEntity.map(EdinetDocumentEntity::getParentDocId).isPresent()) {
+        } else if (edinetDocumentEntity.flatMap(EdinetDocumentEntity::getParentDocId).isPresent()) {
             final Optional<EdinetDocumentEntity> parentEdinetDocumentEntity =
                     edinetDocumentDao.selectByDocId(edinetDocumentEntity.flatMap(EdinetDocumentEntity::getParentDocId).orElseThrow());
             if (parentEdinetDocumentEntity.flatMap(EdinetDocumentEntity::getPeriodEnd).isPresent()) {
