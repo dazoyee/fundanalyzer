@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.text.MessageFormat;
 import java.util.List;
 
 @Service
@@ -103,16 +104,28 @@ public class AnalysisService {
                 .datesUntil(inputData.getToDate().plusDays(1))
                 .map(DateInputData::of)
                 .forEach(date -> {
-                    // scraping
-                    documentUseCase.allProcess(date);
-                    // remove
-                    documentUseCase.removeDocument(date);
-                    // analysis
-                    analyzeUseCase.analyze(date);
-                    // view corporate
-                    viewCorporateUseCase.updateView(date);
-                    // view edinet
-                    viewEdinetUseCase.updateView(date);
+                    try {
+                        // scraping
+                        documentUseCase.allProcess(date);
+                        // remove
+                        documentUseCase.removeDocument(date);
+                        // analysis
+                        analyzeUseCase.analyze(date);
+                        // view corporate
+                        viewCorporateUseCase.updateView(date);
+                        // view edinet
+                        viewEdinetUseCase.updateView(date);
+                    } catch (final Exception e) {
+                        // 1日分の失敗で期間全体の処理が止まらないよう、記録して翌日以降を継続する
+                        log.error(FundanalyzerLogClient.toInteractorLogObject(
+                                MessageFormat.format(
+                                        "{0}付の一連処理で想定外のエラーが発生しました。翌日以降の処理を継続します。",
+                                        date.getDate()
+                                ),
+                                Category.ANALYSIS,
+                                Process.ANALYSIS
+                        ), e);
+                    }
                 });
     }
 

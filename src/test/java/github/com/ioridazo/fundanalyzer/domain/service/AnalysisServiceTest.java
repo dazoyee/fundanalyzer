@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -109,6 +110,29 @@ class AnalysisServiceTest {
             verify(stockUseCase, times(0)).importStockPrice(any(DateInputData.class), any());
             verify(stockUseCase, times(0)).importStockPrice(any(CodeInputData.class), any());
             verify(noticeUseCase, times(0)).noticeSlack(any());
+        }
+
+        @DisplayName("executePartOfMain : 1日目で例外が発生しても2日目の処理を継続する")
+        @Test
+        void continues_when_first_date_fails() {
+            final BetweenDateInputData input = BetweenDateInputData.of(
+                    LocalDate.parse("2024-04-01"),
+                    LocalDate.parse("2024-04-02"));
+            final DateInputData firstDate = DateInputData.of(LocalDate.parse("2024-04-01"));
+            final DateInputData secondDate = DateInputData.of(LocalDate.parse("2024-04-02"));
+
+            doThrow(new RuntimeException("unexpected"))
+                    .when(documentUseCase).allProcess(firstDate);
+            doNothing().when(documentUseCase).allProcess(secondDate);
+
+            assertDoesNotThrow(() -> service.executePartOfMain(input));
+
+            verify(documentUseCase, times(1)).allProcess(firstDate);
+            verify(documentUseCase, times(1)).allProcess(secondDate);
+            verify(documentUseCase, times(1)).removeDocument(secondDate);
+            verify(analyzeUseCase, times(1)).analyze(secondDate);
+            verify(viewCorporateUseCase, times(1)).updateView(secondDate);
+            verify(viewEdinetUseCase, times(1)).updateView(secondDate);
         }
     }
 
