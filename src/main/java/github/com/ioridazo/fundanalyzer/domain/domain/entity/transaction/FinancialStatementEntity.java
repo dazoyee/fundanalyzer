@@ -65,7 +65,8 @@ public class FinancialStatementEntity {
             final String documentId,
             final String createdType,
             final LocalDateTime createdAt) {
-        if (DocumentTypeCode.DTC_140 == documentTypeCode && Objects.isNull(quarterType.toValue())) {
+        if ((DocumentTypeCode.DTC_140 == documentTypeCode || DocumentTypeCode.DTC_160 == documentTypeCode)
+            && Objects.isNull(quarterType.toValue())) {
             throw new FundanalyzerNotExistException("四半期種別");
         }
 

@@ -131,6 +131,7 @@ class ScrapingInteractorTest {
 
         Document document = defaultDocument(DocumentTypeCode.DTC_120);
         Document documentOfDTC140 = defaultDocument(DocumentTypeCode.DTC_140);
+        Document documentOfDTC160 = defaultDocument(DocumentTypeCode.DTC_160);
         Company company = defaultCompany();
 
         File file = new File("file");
@@ -248,6 +249,19 @@ class ScrapingInteractorTest {
                     .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
             verify(financialStatementSpecification, times(0))
                     .insert(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC140, 0L, CreatedType.AUTO);
+        }
+
+        @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 半期報告書で投資その他の資産合計が存在しないとき、投資その他の資産合計に0としてDBに登録する")
+        @Test
+        void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget_insert_160() {
+            var bsSubject1 = new BsSubject("1", null, null, "TOTAL_INVESTMENTS_AND_OTHER_ASSETS");
+
+            when(financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(documentOfDTC160)).thenReturn(false);
+            when(subjectSpecification.findBsSubject(BsSubject.BsEnum.TOTAL_INVESTMENTS_AND_OTHER_ASSETS)).thenReturn(List.of(bsSubject1));
+
+            assertDoesNotThrow(() -> scrapingInteractor.doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(company, documentOfDTC160));
+            verify(financialStatementSpecification, times(1))
+                    .insertWithoutValidation(company, FinancialStatementEnum.BALANCE_SHEET, "1", documentOfDTC160, 0L, CreatedType.AUTO);
         }
 
         @DisplayName("doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget : 四半期報告書で投資その他の資産合計が存在したら、DBに登録しない")

@@ -71,6 +71,10 @@ class AnalysisResultTest {
                     analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_4), defaultCoefficient)
             );
             assertEquals(
+                    expectedCorporateValue(defaultCoefficient, QuarterType.QT_SEMI),
+                    analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_SEMI), defaultCoefficient)
+            );
+            assertEquals(
                     expectedCorporateValue(defaultCoefficient, QuarterType.QT_OTHER),
                     analysisResult.calculateCorporateValue(financeValue, documentOf(QuarterType.QT_OTHER), defaultCoefficient)
             );
@@ -256,6 +260,27 @@ class AnalysisResultTest {
             assertEquals(expected, actual);
         }
 
+        @DisplayName("calculateBps : 半期報告書でも等倍で算出する")
+        @Test
+        void semiannual_present() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    1001L,
+                    null,
+                    null,
+                    999L
+            );
+
+            var expected = BigDecimal.valueOf(1001).divide(BigDecimal.valueOf(999), 10, RoundingMode.HALF_UP);
+            var actual = analysisResult.calculateBps(financeValue, documentOf(QuarterType.QT_SEMI)).orElseThrow();
+            assertEquals(expected, actual);
+        }
+
         @DisplayName("calculateBps : 純資産が存在しないとき")
         @Test
         void totalNetAssets_isEmpty() {
@@ -300,6 +325,25 @@ class AnalysisResultTest {
                     () -> analysisResult.calculateBps(financeValue, document)
             );
             assertEquals("株式総数", exception.getSubjectName().orElseThrow());
+        }
+
+        @DisplayName("calculateEps : 半期報告書では算出しない")
+        @Test
+        void semiannual_returnsEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    1000L,
+                    999L
+            );
+
+            assertTrue(analysisResult.calculateEps(financeValue, documentOf(QuarterType.QT_SEMI)).isEmpty());
         }
     }
 
@@ -471,6 +515,25 @@ class AnalysisResultTest {
             );
             assertEquals(BsSubject.BsEnum.TOTAL_NET_ASSETS.getSubject(), exception.getSubjectName().orElseThrow());
         }
+
+        @DisplayName("calculateRoe : 半期報告書では算出しない")
+        @Test
+        void semiannual_returnsEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    123L,
+                    1000L,
+                    null,
+                    880L,
+                    null
+            );
+
+            assertTrue(analysisResult.calculateRoe(financeValue, documentOf(QuarterType.QT_SEMI)).isEmpty());
+        }
     }
 
     @Nested
@@ -541,6 +604,25 @@ class AnalysisResultTest {
             );
 
             assertNull(analysisResult.calculateRoa(financeValue, document).orElse(null));
+        }
+
+        @DisplayName("calculateRoa : 半期報告書では算出しない")
+        @Test
+        void semiannual_returnsEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    1009L,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    1010L,
+                    null
+            );
+
+            assertTrue(analysisResult.calculateRoa(financeValue, documentOf(QuarterType.QT_SEMI)).isEmpty());
         }
     }
 

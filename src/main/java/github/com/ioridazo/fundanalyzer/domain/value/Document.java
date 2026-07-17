@@ -52,7 +52,10 @@ public class Document {
         return new Document(
                 entity.getDocumentId(),
                 DocumentTypeCode.fromValue(entity.getDocumentTypeCode().orElse(null)),
-                QuarterType.fromDocDescription(edinetDocument.getDocDescription().orElse(null)),
+                QuarterType.from(
+                        DocumentTypeCode.fromValue(entity.getDocumentTypeCode().orElse(null)),
+                        edinetDocument.getDocDescription().orElse(null)
+                ),
                 entity.getEdinetCode().orElse(null),
                 entity.getDocumentPeriod().orElse(null),
                 entity.getSubmitDate(),

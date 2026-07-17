@@ -39,7 +39,9 @@ public class AnalysisResultSpecification {
     private final CompanySpecification companySpecification;
 
     @Value("${app.config.view.document-type-code}")
-    List<String> targetTypeCodes;
+    List<String> annualStatTypeCodes;
+    @Value("${app.config.view.latest-document-type-code}")
+    List<String> latestTypeCodes;
 
     public AnalysisResultSpecification(
             final AnalysisResultDao analysisResultDao,
@@ -69,7 +71,7 @@ public class AnalysisResultSpecification {
      * @return 最新の分析結果
      */
     public Optional<AnalysisResultEntity> findLatestAnalysisResult(final String companyCode) {
-        return analysisTargetList(companyCode, targetTypeCodes).stream()
+        return analysisTargetList(companyCode, latestTypeCodes).stream()
                 // latest
                 .max(Comparator.comparing(AnalysisResultEntity::getDocumentPeriod)
                         .thenComparing(AnalysisResultEntity::getSubmitDate));
@@ -177,7 +179,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> yearAverageCorporateValue(final Company company, final Integer year) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), annualStatTypeCodes);
         if (targetList.isEmpty() || targetList.size() < year) {
             return Optional.empty();
         } else {
@@ -203,7 +205,7 @@ public class AnalysisResultSpecification {
      * @return 平均の企業価値
      */
     public Optional<BigDecimal> allYearAverageCorporateValue(final Company company) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), annualStatTypeCodes);
         if (targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -224,7 +226,7 @@ public class AnalysisResultSpecification {
      * @return 標準偏差
      */
     public Optional<BigDecimal> standardDeviation(final Company company, final BigDecimal averageCorporateValue) {
-        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), targetTypeCodes);
+        final List<AnalysisResultEntity> targetList = analysisTargetList(company.code(), annualStatTypeCodes);
         if (Objects.isNull(averageCorporateValue) || targetList.isEmpty()) {
             return Optional.empty();
         } else {
@@ -264,7 +266,7 @@ public class AnalysisResultSpecification {
      * @return 分析年数
      */
     public BigDecimal countYear(final Company company) {
-        return BigDecimal.valueOf(analysisTargetList(company.code(), targetTypeCodes).size());
+        return BigDecimal.valueOf(analysisTargetList(company.code(), annualStatTypeCodes).size());
     }
 
     /**

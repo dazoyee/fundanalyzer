@@ -48,7 +48,7 @@ public class IndexPresenter {
     private static final List<String> ALLOWED_SORT_FIELDS = List.of(
             SORT_FIELD_CODE, "name", SORT_FIELD_SUBMIT_DATE, "latestCorporateValue", "discountRate", "grahamIndex");
 
-    @Value("${app.config.view.document-type-code}")
+    @Value("${app.config.view.latest-document-type-code}")
     private List<String> targetTypeCodes;
 
     private final ViewService viewService;

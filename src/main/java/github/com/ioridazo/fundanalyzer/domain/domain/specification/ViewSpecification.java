@@ -46,7 +46,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -282,7 +281,7 @@ public class ViewSpecification {
                 company.companyName(),
                 document.getSubmitDate(),
                 document.getDocumentTypeCode().toValue(),
-                isAnnualOrSemiAnnualReport(document),
+                isAnnualReport(document),
                 corporateValue.getLatestCorporateValue().orElse(null),
                 averageCorporateValueOf(corporateValue, AverageInfo.Year.THREE),
                 standardDeviationOf(corporateValue, AverageInfo.Year.THREE),
@@ -321,14 +320,19 @@ public class ViewSpecification {
     }
 
     /**
-     * ドキュメント種別が有価証券報告書もしくは半期報告書か判定する
+     * ドキュメント種別が有価証券報告書系（120/130）か判定する。
      *
      * @param document ドキュメント
      * @return DTC_120 または DTC_130 のとき true
      */
-    private boolean isAnnualOrSemiAnnualReport(final Document document) {
+    private boolean isAnnualReport(final Document document) {
+        return isAnnualReport(document.getDocumentTypeCode().toValue());
+    }
+
+    public static boolean isAnnualReport(final String documentTypeCode) {
         return Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
-                .anyMatch(dtc -> document.getDocumentTypeCode().equals(dtc));
+                .map(DocumentTypeCode::toValue)
+                .anyMatch(dtc -> dtc.equals(documentTypeCode));
     }
 
     /**

@@ -315,7 +315,12 @@ public class ScrapingInteractor implements ScrapingUseCase {
      * @param document ドキュメント
      */
     void doBsOptionOfTotalInvestmentsAndOtherAssetsIfTarget(final Company company, final Document document) {
-        if (List.of(DocumentTypeCode.DTC_140, DocumentTypeCode.DTC_150).contains(document.getDocumentTypeCode())
+        if (List.of(
+                DocumentTypeCode.DTC_140,
+                DocumentTypeCode.DTC_150,
+                DocumentTypeCode.DTC_160,
+                DocumentTypeCode.DTC_170
+        ).contains(document.getDocumentTypeCode())
             && !financialStatementSpecification.isPresentTotalInvestmentsAndOtherAssets(document)) {
             financialStatementSpecification.insertWithoutValidation(
                     company,
