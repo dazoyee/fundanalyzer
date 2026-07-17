@@ -113,7 +113,8 @@ public class SubjectSpecification {
         return inquiryBsSubjectList().stream()
                 .filter(bsSubject -> Objects.equals(bsEnum.getOutlineSubjectId(), bsSubject.getOutlineSubjectId()))
                 .map(BsSubject::of)
-                .sorted(Comparator.comparing(BsSubject::getDetailSubjectId))
+                .sorted(Comparator.comparing(BsSubject::getDetailSubjectId,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 
@@ -127,7 +128,8 @@ public class SubjectSpecification {
         return inquiryPlSubjectList().stream()
                 .filter(plSubject -> Objects.equals(plEnum.getOutlineSubjectId(), plSubject.outlineSubjectId()))
                 .map(PlSubject::of)
-                .sorted(Comparator.comparing(PlSubject::getDetailSubjectId))
+                .sorted(Comparator.comparing(PlSubject::getDetailSubjectId,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 
