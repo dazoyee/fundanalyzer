@@ -38,6 +38,7 @@ class IndustrySpecificationTest {
 
         industrySpecification = Mockito.spy(new IndustrySpecification(industryDao));
         industrySpecification.noTargetList = List.of("銀行業", "保険業");
+        industrySpecification.netAssetModelIndustryList = List.of("銀行業", "保険業");
     }
 
     @Nested
@@ -140,6 +141,31 @@ class IndustrySpecificationTest {
         void boolean_false() {
             var id = 28;
             assertFalse(industrySpecification.isTarget(id));
+        }
+    }
+
+    @Nested
+    class isNetAssetModel {
+
+        @BeforeEach
+        void setUp() {
+            when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(
+                    new IndustryEntity(28, "銀行業", null),
+                    new IndustryEntity(29, "保険業", null)));
+        }
+
+        @DisplayName("isNetAssetModel : true")
+        @Test
+        void boolean_true() {
+            var id = 28;
+            assertTrue(industrySpecification.isNetAssetModel(id));
+        }
+
+        @DisplayName("isNetAssetModel : false")
+        @Test
+        void boolean_false() {
+            var id = 1;
+            assertFalse(industrySpecification.isNetAssetModel(id));
         }
     }
 

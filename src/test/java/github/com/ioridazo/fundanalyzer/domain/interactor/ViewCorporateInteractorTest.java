@@ -664,7 +664,7 @@ class ViewCorporateInteractorTest {
             var entity = analysisResultEntity();
             var analysisDocument = analysisDocument();
             var financeValue = FinanceValue.of(
-                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+                    null, null, 1200L, null, null, 0L, 800L, null, null, 150L, 10L);
 
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
             when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(document));
@@ -692,7 +692,7 @@ class ViewCorporateInteractorTest {
             var entity = analysisResultEntity();
             var analysisDocument = analysisDocument();
             var financeValue = FinanceValue.of(
-                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+                    null, null, 1200L, null, null, 0L, 800L, null, null, 150L, 10L);
             var stockPriceEntity = new StockPriceEntity(
                     null,
                     "code",

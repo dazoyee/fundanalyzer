@@ -121,6 +121,7 @@ class AnalyzeInteractorTest {
                     105L,
                     106L,
                     107L,
+                    null,
                     108L,
                     109L
             );
@@ -145,6 +146,7 @@ class AnalyzeInteractorTest {
                     105L,
                     106L,
                     107L,
+                    null,
                     108L,
                     109L
             );
@@ -165,13 +167,62 @@ class AnalyzeInteractorTest {
             assertEquals(expected, captor.getValue().getCorporateValue());
         }
 
+        @DisplayName("analyze : 純資産モデル対象業種のときは純資産モデルで企業価値を算出する")
+        @Test
+        void document_usesNetAssetModel() {
+            var company = new Company(
+                    "code",
+                    null,
+                    28,
+                    null,
+                    "edinetCode",
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    false,
+                    true
+            );
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    100L,
+                    1001L,
+                    null,
+                    10005L,
+                    1009L,
+                    1006L
+            );
+            var expected = BigDecimal.valueOf(10005).multiply(BigDecimal.valueOf(10))
+                    .divide(BigDecimal.valueOf(4), 10, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(4))
+                    .add(BigDecimal.valueOf(1001))
+                    .subtract(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+
+            when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
+            when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.of(company));
+            when(industrySpecification.isNetAssetModel(28)).thenReturn(true);
+            var captor = ArgumentCaptor.forClass(AnalysisResult.class);
+
+            assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
+
+            verify(analysisResultSpecification, times(1)).insert(eq(document), captor.capture());
+            verify(documentSpecification, never()).updateFsToHalfWay(any(), any());
+            assertEquals(expected, captor.getValue().getCorporateValue());
+        }
+
         @DisplayName("analyze : 業種別係数が解決できないときはスキップし、バッチを中断しない")
         @Test
         void resolveCoefficient_notExist_skips() {
             when(industrySpecification.resolveCoefficient(any()))
                     .thenThrow(new FundanalyzerNotExistException("業種別係数が存在しません。"));
             final FinanceValue financeValue = FinanceValue.of(
-                    100L, 101L, 102L, 103L, 104L, 105L, 106L, 107L, 108L, 109L);
+                    100L, 101L, 102L, 103L, 104L, 105L, 106L, 107L, null, 108L, 109L);
             when(financialStatementSpecification.getFinanceValue(document)).thenReturn(financeValue);
 
             assertDoesNotThrow(() -> analyzeInteractor.analyze(document));
@@ -182,6 +233,7 @@ class AnalyzeInteractorTest {
         @Test
         void exception() {
             var financeValue = FinanceValue.of(
+                    null,
                     null,
                     null,
                     null,
@@ -457,6 +509,7 @@ class AnalyzeInteractorTest {
                     105L,
                     106L,
                     107L,
+                    null,
                     108L,
                     109L
             );

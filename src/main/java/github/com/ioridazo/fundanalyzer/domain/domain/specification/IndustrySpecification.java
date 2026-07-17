@@ -25,6 +25,9 @@ public class IndustrySpecification {
     @Value("${app.config.scraping.no-industry}")
     List<String> noTargetList;
 
+    @Value("${app.config.analysis.net-asset-model-industry}")
+    List<String> netAssetModelIndustryList;
+
     public IndustrySpecification(
             final IndustryDao industryDao) {
         this.industryDao = industryDao;
@@ -127,6 +130,19 @@ public class IndustrySpecification {
                 .map(this::convertFromNameToId)
                 .filter(Objects::nonNull)
                 .noneMatch(id::equals);
+    }
+
+    /**
+     * 純資産ベース企業価値モデル適用対象かどうか
+     *
+     * @param id 業種ID
+     * @return boolean
+     */
+    public boolean isNetAssetModel(final Integer id) {
+        return netAssetModelIndustryList.stream()
+                .map(this::convertFromNameToId)
+                .filter(Objects::nonNull)
+                .anyMatch(id::equals);
     }
 
     /**

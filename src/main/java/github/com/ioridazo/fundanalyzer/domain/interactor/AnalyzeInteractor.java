@@ -150,7 +150,12 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                     .map(Company::industryId)
                     .orElse(null);
             final AnalysisCoefficient coefficient = industrySpecification.resolveCoefficient(industryId);
-            final AnalysisResult analysisResult = new AnalysisResult(financeValue, document, coefficient);
+            final AnalysisResult analysisResult = new AnalysisResult(
+                    financeValue,
+                    document,
+                    coefficient,
+                    resolveCorporateValueModel(industryId)
+            );
 
             analysisResultSpecification.insert(document, analysisResult);
 
@@ -300,7 +305,12 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
                         .map(Company::industryId)
                         .orElse(null);
                 final AnalysisCoefficient coefficient = industrySpecification.resolveCoefficient(industryId);
-                final AnalysisResult recalculated = new AnalysisResult(financeValue, document, coefficient);
+                final AnalysisResult recalculated = new AnalysisResult(
+                        financeValue,
+                        document,
+                        coefficient,
+                        resolveCorporateValueModel(industryId)
+                );
 
                 if (hasChanged(entity, recalculated)) {
                     analysisResultSpecification.updateCorporateValueAndRimValue(
@@ -362,6 +372,12 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
         ));
 
         return result;
+    }
+
+    private AnalysisResult.CorporateValueModel resolveCorporateValueModel(final Integer industryId) {
+        return industrySpecification.isNetAssetModel(industryId)
+                ? AnalysisResult.CorporateValueModel.NET_ASSET
+                : AnalysisResult.CorporateValueModel.STANDARD;
     }
 
     /**

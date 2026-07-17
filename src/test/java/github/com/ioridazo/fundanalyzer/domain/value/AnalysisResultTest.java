@@ -107,6 +107,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -122,6 +123,7 @@ class AnalysisResultTest {
         void totalInvestmentsAndOtherAssets_isEmpty() {
             var financeValue = FinanceValue.of(
                     1000L,
+                    null,
                     null,
                     null,
                     null,
@@ -154,6 +156,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -172,6 +175,7 @@ class AnalysisResultTest {
                     1000L,
                     null,
                     1000L,
+                    null,
                     null,
                     null,
                     null,
@@ -200,6 +204,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -223,6 +228,7 @@ class AnalysisResultTest {
                     null,
                     1000L,
                     null,
+                    null,
                     null
             );
 
@@ -231,6 +237,151 @@ class AnalysisResultTest {
                     () -> analysisResult.calculateCorporateValue(financeValue, document, defaultCoefficient)
             );
             assertEquals("株式総数", exception.getSubjectName().orElseThrow());
+        }
+    }
+
+    @Nested
+    class calculateCorporateValueOfNetAssetModel {
+
+        Document document = defaultDocument();
+
+        @DisplayName("calculateCorporateValueOfNetAssetModel : 各値を取得して計算する")
+        @Test
+        void present() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    100L,
+                    1001L,
+                    null,
+                    10005L,
+                    null,
+                    1006L
+            );
+
+            var expected = expectedCorporateValueOfNetAssetModel(defaultCoefficient, null, BigDecimal.valueOf(100));
+            var actual = analysisResult.calculateCorporateValueOfNetAssetModel(financeValue, document, defaultCoefficient);
+            assertEquals(expected, actual);
+        }
+
+        @DisplayName("calculateCorporateValueOfNetAssetModel : 新株予約権が存在しないときは0として計算する")
+        @Test
+        void subscriptionWarrant_isEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    1001L,
+                    null,
+                    10005L,
+                    null,
+                    1006L
+            );
+
+            var expected = expectedCorporateValueOfNetAssetModel(defaultCoefficient, null, BigDecimal.ZERO);
+            var actual = analysisResult.calculateCorporateValueOfNetAssetModel(financeValue, document, defaultCoefficient);
+            assertEquals(expected, actual);
+        }
+
+        @DisplayName("calculateCorporateValueOfNetAssetModel : 経常利益が存在しないとき")
+        @Test
+        void ordinaryIncome_isEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    100L,
+                    1001L,
+                    null,
+                    null,
+                    null,
+                    1006L
+            );
+
+            var exception = assertThrows(
+                    FundanalyzerNotExistException.class,
+                    () -> analysisResult.calculateCorporateValueOfNetAssetModel(financeValue, document, defaultCoefficient)
+            );
+            assertEquals(PlSubject.PlEnum.ORDINARY_INCOME.getSubject(), exception.getSubjectName().orElseThrow());
+        }
+
+        @DisplayName("calculateCorporateValueOfNetAssetModel : 純資産が存在しないとき")
+        @Test
+        void totalNetAssets_isEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    100L,
+                    null,
+                    null,
+                    10005L,
+                    null,
+                    1006L
+            );
+
+            var exception = assertThrows(
+                    FundanalyzerNotExistException.class,
+                    () -> analysisResult.calculateCorporateValueOfNetAssetModel(financeValue, document, defaultCoefficient)
+            );
+            assertEquals(BsSubject.BsEnum.TOTAL_NET_ASSETS.getSubject(), exception.getSubjectName().orElseThrow());
+        }
+
+        @DisplayName("calculateCorporateValueOfNetAssetModel : 株式総数が存在しないとき")
+        @Test
+        void numberOfShares_isEmpty() {
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    100L,
+                    1001L,
+                    null,
+                    10005L,
+                    null,
+                    null
+            );
+
+            var exception = assertThrows(
+                    FundanalyzerNotExistException.class,
+                    () -> analysisResult.calculateCorporateValueOfNetAssetModel(financeValue, document, defaultCoefficient)
+            );
+            assertEquals("株式総数", exception.getSubjectName().orElseThrow());
+        }
+
+        @DisplayName("calculateCorporateValueOfNetAssetModel : 四半期報告書の各値を取得して計算する")
+        @Test
+        void quarter() {
+            var document = documentOf(QuarterType.QT_3);
+            var financeValue = FinanceValue.of(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    100L,
+                    1001L,
+                    null,
+                    10005L,
+                    null,
+                    1006L
+            );
+
+            var expected = expectedCorporateValueOfNetAssetModel(defaultCoefficient, QuarterType.QT_3, BigDecimal.valueOf(100));
+            var actual = analysisResult.calculateCorporateValueOfNetAssetModel(financeValue, document, defaultCoefficient);
+            assertEquals(expected, actual);
         }
     }
 
@@ -250,6 +401,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     1001L,
+                    null,
                     null,
                     null,
                     999L
@@ -273,6 +425,7 @@ class AnalysisResultTest {
                     1001L,
                     null,
                     null,
+                    null,
                     999L
             );
 
@@ -285,6 +438,7 @@ class AnalysisResultTest {
         @Test
         void totalNetAssets_isEmpty() {
             var financeValue = FinanceValue.of(
+                    null,
                     null,
                     null,
                     null,
@@ -317,6 +471,7 @@ class AnalysisResultTest {
                     1000L,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -331,6 +486,7 @@ class AnalysisResultTest {
         @Test
         void semiannual_returnsEmpty() {
             var financeValue = FinanceValue.of(
+                    null,
                     null,
                     null,
                     null,
@@ -364,6 +520,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     null,
+                    null,
                     2001L,
                     1991L
             );
@@ -377,6 +534,7 @@ class AnalysisResultTest {
         @Test
         void netIncome_isEmpty() {
             var financeValue = FinanceValue.of(
+                    null,
                     null,
                     null,
                     null,
@@ -400,6 +558,7 @@ class AnalysisResultTest {
         @Test
         void numberOfShares_isEmpty() {
             var financeValue = FinanceValue.of(
+                    null,
                     null,
                     null,
                     null,
@@ -437,6 +596,7 @@ class AnalysisResultTest {
                     123L,
                     1000L,
                     null,
+                    null,
                     880L,
                     null
             );
@@ -459,6 +619,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     1001L,
+                    null,
                     null,
                     888L,
                     null
@@ -483,6 +644,7 @@ class AnalysisResultTest {
                     1000L,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -497,6 +659,7 @@ class AnalysisResultTest {
         @Test
         void totalNetAssets_isEmpty() {
             var financeValue = FinanceValue.of(
+                    null,
                     null,
                     null,
                     null,
@@ -528,6 +691,7 @@ class AnalysisResultTest {
                     123L,
                     1000L,
                     null,
+                    null,
                     880L,
                     null
             );
@@ -548,6 +712,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     1009L,
+                    null,
                     null,
                     null,
                     null,
@@ -577,6 +742,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -599,6 +765,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     null,
+                    null,
                     880L,
                     null
             );
@@ -613,6 +780,7 @@ class AnalysisResultTest {
                     null,
                     null,
                     1009L,
+                    null,
                     null,
                     null,
                     null,
@@ -641,6 +809,7 @@ class AnalysisResultTest {
                 null,
                 null,
                 10005L,
+                null,
                 null,
                 1006L
         );
@@ -735,7 +904,7 @@ class AnalysisResultTest {
         @Test
         void computesIndicatorsFromFinanceValue() {
             var financeValue = FinanceValue.of(
-                    null, null, 1200L, null, null, 0L, 800L, null, 150L, 10L);
+                    null, null, 1200L, null, null, 0L, 800L, null, null, 150L, 10L);
 
             var actual = AnalysisResult.of(entity(), financeValue, defaultDocument());
 
@@ -753,7 +922,7 @@ class AnalysisResultTest {
         @Test
         void missingInputsYieldEmptyIndicatorsWithoutThrowing() {
             var financeValue = FinanceValue.of(
-                    null, null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, null, null);
 
             var actual = AnalysisResult.of(entity(), financeValue, defaultDocument());
 
@@ -763,6 +932,85 @@ class AnalysisResultTest {
             assertTrue(actual.getEps().isEmpty());
             assertTrue(actual.getRoe().isEmpty());
             assertTrue(actual.getRoa().isEmpty());
+        }
+
+        @DisplayName("NET_ASSETモデル指定時は純資産ベース式で企業価値を算出する")
+        @Test
+        void constructor_netAssetModel() {
+            var financeValue = FinanceValue.of(
+                    1001L,
+                    1002L,
+                    1008L,
+                    1003L,
+                    1004L,
+                    100L,
+                    1001L,
+                    10005L,
+                    10005L,
+                    1009L,
+                    1006L
+            );
+
+            var actual = new AnalysisResult(
+                    financeValue,
+                    defaultDocument(),
+                    defaultCoefficient,
+                    AnalysisResult.CorporateValueModel.NET_ASSET
+            );
+
+            assertEquals(
+                    expectedCorporateValueOfNetAssetModel(defaultCoefficient, null, BigDecimal.valueOf(100)),
+                    actual.getCorporateValue()
+            );
+        }
+
+        @DisplayName("STANDARDモデル指定時は従来式で企業価値を算出する")
+        @Test
+        void constructor_standardModel() {
+            var financeValue = FinanceValue.of(
+                    1001L,
+                    1002L,
+                    1008L,
+                    1003L,
+                    1004L,
+                    100L,
+                    1001L,
+                    10005L,
+                    10005L,
+                    1009L,
+                    1006L
+            );
+
+            var actual = new AnalysisResult(
+                    financeValue,
+                    defaultDocument(),
+                    defaultCoefficient,
+                    AnalysisResult.CorporateValueModel.STANDARD
+            );
+
+            assertEquals(expectedCorporateValue(defaultCoefficient, null), actual.getCorporateValue());
+        }
+
+        @DisplayName("3引数コンストラクタは従来式で企業価値を算出する")
+        @Test
+        void constructor_defaultModel() {
+            var financeValue = FinanceValue.of(
+                    1001L,
+                    1002L,
+                    1008L,
+                    1003L,
+                    1004L,
+                    100L,
+                    1001L,
+                    10005L,
+                    10005L,
+                    1009L,
+                    1006L
+            );
+
+            var actual = new AnalysisResult(financeValue, defaultDocument(), defaultCoefficient);
+
+            assertEquals(expectedCorporateValue(defaultCoefficient, null), actual.getCorporateValue());
         }
     }
 
@@ -803,6 +1051,7 @@ class AnalysisResultTest {
                 null,
                 10005L,
                 null,
+                null,
                 1006L
         );
     }
@@ -828,6 +1077,20 @@ class AnalysisResultTest {
                 .subtract(BigDecimal.valueOf(1004))
                 .divide(weightingQuarterType, 10, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(4))
+                .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal expectedCorporateValueOfNetAssetModel(
+            final AnalysisCoefficient coefficient,
+            final QuarterType quarterType,
+            final BigDecimal subscriptionWarrant) {
+        var weightingQuarterType = quarterType == null || quarterType.getWeight() == null ? BigDecimal.valueOf(4) : BigDecimal.valueOf(quarterType.getWeight());
+
+        return BigDecimal.valueOf(10005).multiply(coefficient.getOperatingProfitWeight())
+                .divide(weightingQuarterType, 10, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(4))
+                .add(BigDecimal.valueOf(1001))
+                .subtract(subscriptionWarrant)
                 .divide(BigDecimal.valueOf(1006), 10, RoundingMode.HALF_UP);
     }
 }
