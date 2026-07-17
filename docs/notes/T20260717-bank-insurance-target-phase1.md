@@ -38,7 +38,15 @@ STANDARD : corporate_value = ( 営業利益 × operating_profit_weight（年換�
 
 ## リリース後に必要な運用
 
-1. 過去提出分の取り込み: 銀行・保険の書類は `document` テーブルに登録済みだが未ダウンロードのため、過去の提出日（有報は毎年6月に集中）について `POST /v1/document/analysis` を提出日ごとに実行する
-2. `GET /v1/admin/analysis/recalculate/preview` で既存業種の変更が 0 件であることを確認する（リグレッション確認）
+1. 過去提出分の取り込み: 銀行・保険の書類は `document` テーブルに登録済みだが未ダウンロードのため、過去の提出日（有報は毎年6月に集中）について `POST /v1/document/analysis` を期間指定で実行する。`fromToDate` パラメータの形式は **`MM/dd/uuuu ~ MM/dd/uuuu`（米国式）**。処理は `@Async` のため即時に 302 が返り、実体はサーバ側で日付ループ（一覧取得→DL→スクレイプ→分析→ビュー更新）が走る
+2. `GET /v1/admin/analysis/recalculate/preview` の件数は**テーブル全件数（走査対象）であり「変更される件数」ではない**（`AnalyzeInteractor.previewRecalculation` は countAll を返す）。既存業種のリグレッション確認には使えないため、テストスイートと翌日の定時バッチ確認で担保する
 3. 株価取得の開始: 対象化時点から取得が始まるため、平均株価・バリュエーションが安定するまで取得期間を要する
 4. スクレイピングエラーログから IFRS・特殊様式の残存提出者を検出し、後続フェーズの対象リストに繰り入れる
+
+## 本番反映で顕在化した潜在バグと hotfix
+
+- v2.5.0 反映後の初回取り込み（提出日 2026-06-15）で、分析・ビュー更新が `NullPointerException` で全企業について失敗した
+- 原因: `SubjectSpecification.findBsSubjectList` / `findPlSubjectList` のソート `Comparator.comparing(detailSubjectId)` が null 非対応で、**同一 outline 内に detail_subject_id が NULL の行と非 NULL の行が混在すると `String.compareTo(null)` になる**。V0.4.4 が outline 7/10/14 に業法様式ラベル行を追加したことで混在が初めて発生し顕在化した（それまでは各 outline 単一行でソート比較自体が走らなかった）
+- 修正: `Comparator.nullsFirst(Comparator.naturalOrder())` 化（NULL＝標準ラベル行を先頭に維持するため科目解決の優先順位は不変）。リグレッションテストを `SubjectSpecificationTest` に追加
+- 教訓: **科目マスタに「同一 outline への行追加」を行うマイグレーションは、detail_subject_id の NULL 混在ソートを踏む**。以後の科目追加時は findXxSubjectList の挙動をテストで確認する
+- 調査手順の教訓: 本ログ（ECS 形式）の `error.stack_trace` は1行 JSON 内に `\r\n` エスケープで格納される。`Select-String` の行抽出で足りるが、フィールド抽出の正規表現が改行エスケープを跨げず「スタックなし」に見えることがある。生行をファイル経由で取得して解析するのが確実
