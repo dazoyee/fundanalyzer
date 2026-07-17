@@ -133,48 +133,110 @@
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
 
-    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="表示切替">
-        <a th:href="@{/v3/index(q=${keyword},sort=${sortParam})}"
-           role="tab"
-           th:attr="aria-selected=${#strings.isEmpty(target)}"
-           th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
-           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
-            <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
-            メイン
-        </a>
-        <a th:href="@{/v3/index(target='quart',q=${keyword},sort=${sortParam})}"
-           role="tab"
-           th:attr="aria-selected=${target == 'quart'}"
-           th:classappend="${target == 'quart'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
-           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
-            <i data-lucide="calendar-days" class="h-4 w-4" aria-hidden="true"></i>
-            中間
-        </a>
-        <a th:href="@{/v3/index(target='all',q=${keyword},sort=${sortParam})}"
-           role="tab"
-           th:attr="aria-selected=${target == 'all'}"
-           th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
-           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
-            <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
-            すべて
-        </a>
-        <a th:href="@{/v3/index(target='favorite',q=${keyword},sort=${sortParam})}"
-           role="tab"
-           th:attr="aria-selected=${target == 'favorite'}"
-           th:classappend="${target == 'favorite'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
-           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
-            <i data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
-            お気に入り
-        </a>
-        <a th:href="@{/v3/index(target='star',q=${keyword},sort=${sortParam})}"
-           role="tab"
-           th:attr="aria-selected=${target == 'star'}"
-           th:classappend="${target == 'star'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
-           class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
-            <i data-lucide="star" class="h-4 w-4" aria-hidden="true"></i>
-            注目
-        </a>
-    </nav>
+    <div x-data="{ open: false }"
+         @keydown.escape.window="open = false"
+         class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700">
+        <nav class="flex flex-wrap gap-1" role="tablist" aria-label="表示切替">
+            <a th:href="@{/v3/index(q=${keyword},sort=${sortParam})}"
+               role="tab"
+               th:attr="aria-selected=${#strings.isEmpty(target)}"
+               th:classappend="${#strings.isEmpty(target)} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+               class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+                <i data-lucide="layout-grid" class="h-4 w-4" aria-hidden="true"></i>
+                メイン
+            </a>
+            <a th:href="@{/v3/index(target='quart',q=${keyword},sort=${sortParam})}"
+               role="tab"
+               th:attr="aria-selected=${target == 'quart'}"
+               th:classappend="${target == 'quart'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+               class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+                <i data-lucide="calendar-days" class="h-4 w-4" aria-hidden="true"></i>
+                中間
+            </a>
+            <a th:href="@{/v3/index(target='all',q=${keyword},sort=${sortParam})}"
+               role="tab"
+               th:attr="aria-selected=${target == 'all'}"
+               th:classappend="${target == 'all'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+               class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+                <i data-lucide="layers" class="h-4 w-4" aria-hidden="true"></i>
+                すべて
+            </a>
+            <a th:href="@{/v3/index(target='favorite',q=${keyword},sort=${sortParam})}"
+               role="tab"
+               th:attr="aria-selected=${target == 'favorite'}"
+               th:classappend="${target == 'favorite'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+               class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+                <i data-lucide="heart" class="h-4 w-4" aria-hidden="true"></i>
+                お気に入り
+            </a>
+            <a th:href="@{/v3/index(target='star',q=${keyword},sort=${sortParam})}"
+               role="tab"
+               th:attr="aria-selected=${target == 'star'}"
+               th:classappend="${target == 'star'} ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'"
+               class="inline-flex items-center gap-1 border-b-2 px-4 py-2 text-sm font-medium">
+                <i data-lucide="star" class="h-4 w-4" aria-hidden="true"></i>
+                注目
+            </a>
+        </nav>
+        <button type="button"
+                @click="open = true"
+                hx-get="/v3/index/filter-setting"
+                hx-trigger="click"
+                hx-target="#index-filter-setting-modal-body"
+                hx-swap="innerHTML"
+                class="mb-2 inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label="メイン表示フィルタ設定を開く">
+            <i data-lucide="settings" class="h-4 w-4" aria-hidden="true"></i>
+            設定
+        </button>
+
+        <template x-teleport="body">
+            <div>
+                <div x-show="open"
+                     @click="open = false"
+                     x-transition:enter="transition-opacity ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition-opacity ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     style="display: none;"
+                     class="fixed inset-0 z-50 bg-black/50"></div>
+                <div x-show="open"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="translate-y-full opacity-0 sm:translate-y-4 sm:scale-95"
+                     x-transition:enter-end="translate-y-0 opacity-100 sm:scale-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="translate-y-0 opacity-100 sm:scale-100"
+                     x-transition:leave-end="translate-y-full opacity-0 sm:translate-y-4 sm:scale-95"
+                     style="display: none;"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-labelledby="filter-setting-title"
+                     class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-4 text-slate-900 shadow-xl dark:bg-slate-800 dark:text-slate-100 sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
+                    <div class="mb-3 flex items-center justify-between">
+                        <h2 id="filter-setting-title" class="text-base font-bold">メイン表示フィルタ設定</h2>
+                        <button type="button"
+                                @click="open = false"
+                                class="rounded-md p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700"
+                                aria-label="閉じる">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M18 6 6 18"/>
+                                <path d="m6 6 12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="index-filter-setting-modal-body" class="min-h-[12rem]">
+                        <div class="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
+                            読み込み中...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
 
     <div class="flex items-center gap-2">
         <i data-lucide="search" class="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true"></i>

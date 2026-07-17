@@ -1,0 +1,77 @@
+<div th:fragment="panel"
+     id="index-filter-setting-panel"
+     class="space-y-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <div class="flex items-start justify-between gap-3">
+        <div>
+            <h3 class="text-base font-bold">メイン表示フィルタ設定</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">会社一覧のメインタブに即時反映されます。</p>
+        </div>
+    </div>
+
+    <div th:if="${successMessage != null}"
+         class="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage != null}"
+         class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+         th:text="${errorMessage}"></div>
+
+    <form class="space-y-4"
+          th:action="@{/v3/index/filter-setting}"
+          hx-post="/v3/index/filter-setting"
+          hx-target="#index-filter-setting-panel"
+          hx-swap="outerHTML">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">割安度</span>
+                <input type="number"
+                       name="discountRate"
+                       step="0.01"
+                       min="0"
+                       th:value="${discountRate}"
+                       class="w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"/>
+            </label>
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">標準偏差の外れ値</span>
+                <input type="number"
+                       name="outlierOfStandardDeviation"
+                       step="0.01"
+                       min="0"
+                       th:value="${outlierOfStandardDeviation}"
+                       class="w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"/>
+            </label>
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">変動係数</span>
+                <input type="number"
+                       name="coefficientOfVariation"
+                       step="0.001"
+                       min="0"
+                       th:value="${coefficientOfVariation}"
+                       class="w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"/>
+            </label>
+            <label class="block text-sm">
+                <span class="mb-1 block font-medium">予想株価差</span>
+                <input type="number"
+                       name="diffForecastStock"
+                       step="0.01"
+                       min="0"
+                       th:value="${diffForecastStock}"
+                       class="w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"/>
+            </label>
+            <label class="block text-sm sm:col-span-2">
+                <span class="mb-1 block font-medium">提出日の表示範囲(日数)</span>
+                <input type="number"
+                       name="corporateSize"
+                       step="1"
+                       min="1"
+                       th:value="${corporateSize}"
+                       class="w-full rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"/>
+            </label>
+        </div>
+        <div class="flex justify-end">
+            <button type="submit"
+                    class="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                保存
+            </button>
+        </div>
+    </form>
+</div>

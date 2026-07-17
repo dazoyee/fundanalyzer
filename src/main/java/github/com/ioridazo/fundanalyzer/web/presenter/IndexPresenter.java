@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewFilterSettingUseCase;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.model.ViewFilterSettingInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
@@ -37,6 +40,7 @@ public class IndexPresenter {
     private static final String INDEX_SUMMARY_CHART_FRAGMENT = "fragments/index-summary-chart :: chart";
     private static final String INDEX_FAVORITE_BUTTON_FRAGMENT = "fragments/index-table :: favorite-button";
     private static final String INDEX_STAR_BUTTON_FRAGMENT = "fragments/index-table :: star-button";
+    private static final String INDEX_FILTER_SETTING_FRAGMENT = "fragments/index-filter-setting :: panel";
 
     private static final String TARGET = "target";
 
@@ -53,14 +57,17 @@ public class IndexPresenter {
 
     private final ViewService viewService;
     private final AnalysisService analysisService;
+    private final ViewFilterSettingUseCase viewFilterSettingUseCase;
     private final ObjectMapper objectMapper;
 
     public IndexPresenter(
             final ViewService viewService,
             final AnalysisService analysisService,
+            final ViewFilterSettingUseCase viewFilterSettingUseCase,
             final ObjectMapper objectMapper) {
         this.viewService = viewService;
         this.analysisService = analysisService;
+        this.viewFilterSettingUseCase = viewFilterSettingUseCase;
         this.objectMapper = objectMapper;
     }
 
@@ -108,6 +115,38 @@ public class IndexPresenter {
             final Model model) {
         addCommonAttributes(model, target, keyword, page, size, sortParam);
         return INDEX_TABLE_FRAGMENT;
+    }
+
+    @GetMapping("/v3/index/filter-setting")
+    public String filterSetting(final Model model) {
+        addFilterSettingAttributes(model);
+        return INDEX_FILTER_SETTING_FRAGMENT;
+    }
+
+    @PostMapping("/v3/index/filter-setting")
+    public String updateFilterSetting(
+            @RequestParam(name = "discountRate") final String discountRate,
+            @RequestParam(name = "outlierOfStandardDeviation") final String outlierOfStandardDeviation,
+            @RequestParam(name = "coefficientOfVariation") final String coefficientOfVariation,
+            @RequestParam(name = "diffForecastStock") final String diffForecastStock,
+            @RequestParam(name = "corporateSize") final String corporateSize,
+            final Model model) {
+        final ViewFilterSettingInputData inputData = new ViewFilterSettingInputData(
+                discountRate,
+                outlierOfStandardDeviation,
+                coefficientOfVariation,
+                diffForecastStock,
+                corporateSize
+        );
+        try {
+            viewFilterSettingUseCase.updateSetting(inputData);
+            addFilterSettingAttributes(model);
+            model.addAttribute("successMessage", "フィルタ設定を更新しました。");
+        } catch (FundanalyzerBadDataException e) {
+            addFilterSettingAttributes(model, inputData);
+            model.addAttribute("errorMessage", e.getMessage());
+        }
+        return INDEX_FILTER_SETTING_FRAGMENT;
     }
 
     /**
@@ -258,6 +297,23 @@ public class IndexPresenter {
         model.addAttribute("keyword", keyword);
         model.addAttribute("table", tablePage);
         model.addAttribute("sortParam", sortParam);
+    }
+
+    private void addFilterSettingAttributes(final Model model) {
+        final var setting = viewFilterSettingUseCase.getSetting();
+        model.addAttribute("discountRate", setting.discountRate());
+        model.addAttribute("outlierOfStandardDeviation", setting.outlierOfStandardDeviation());
+        model.addAttribute("coefficientOfVariation", setting.coefficientOfVariation());
+        model.addAttribute("diffForecastStock", setting.diffForecastStock());
+        model.addAttribute("corporateSize", setting.corporateSize());
+    }
+
+    private void addFilterSettingAttributes(final Model model, final ViewFilterSettingInputData inputData) {
+        model.addAttribute("discountRate", inputData.discountRate());
+        model.addAttribute("outlierOfStandardDeviation", inputData.outlierOfStandardDeviation());
+        model.addAttribute("coefficientOfVariation", inputData.coefficientOfVariation());
+        model.addAttribute("diffForecastStock", inputData.diffForecastStock());
+        model.addAttribute("corporateSize", inputData.corporateSize());
     }
 
     private static Sort parseSort(final String sortParam) {
