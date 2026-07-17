@@ -190,6 +190,27 @@ class SubjectSpecificationTest {
             );
         }
 
+        @DisplayName("findBsSubjectList : detailSubjectIdがnullと非nullで混在してもnullが先頭になる")
+        @Test
+        void ok_mixedNullDetailSubjectId() {
+            when(subjectSpecification.inquiryBsSubjectList()).thenReturn(List.of(
+                    new BsSubjectEntity("21", "1", "11", "業法様式ラベル"),
+                    new BsSubjectEntity("2", "1", null, "流動資産合計")));
+
+            var actual = subjectSpecification.findBsSubjectList(BsSubject.BsEnum.TOTAL_CURRENT_ASSETS);
+
+            assertAll(
+                    () -> assertEquals("2", actual.get(0).getId()),
+                    () -> assertEquals("1", actual.get(0).getOutlineSubjectId()),
+                    () -> assertNull(actual.get(0).getDetailSubjectId()),
+                    () -> assertEquals("流動資産合計", actual.get(0).getName()),
+                    () -> assertEquals("21", actual.get(1).getId()),
+                    () -> assertEquals("1", actual.get(1).getOutlineSubjectId()),
+                    () -> assertEquals("11", actual.get(1).getDetailSubjectId()),
+                    () -> assertEquals("業法様式ラベル", actual.get(1).getName())
+            );
+        }
+
         @DisplayName("findBsSubjectList : 貸借対照表の科目を取得できないときはエラーを発生する")
         @Test
         void error() {
@@ -220,6 +241,27 @@ class SubjectSpecificationTest {
                     () -> assertEquals("3", actual.get(1).getOutlineSubjectId()),
                     () -> assertEquals("2", actual.get(1).getDetailSubjectId()),
                     () -> assertEquals("営業利益又は営業損失（△）", actual.get(1).getName())
+            );
+        }
+
+        @DisplayName("findPlSubjectList : detailSubjectIdがnullと非nullで混在してもnullが先頭になる")
+        @Test
+        void ok_mixedNullDetailSubjectId() {
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(
+                    new PlSubjectEntity("5", "3", "11", "業法様式ラベル"),
+                    new PlSubjectEntity("3", "3", null, "営業利益")));
+
+            var actual = subjectSpecification.findPlSubjectList(PlSubject.PlEnum.OPERATING_PROFIT);
+
+            assertAll(
+                    () -> assertEquals("3", actual.get(0).getId()),
+                    () -> assertEquals("3", actual.get(0).getOutlineSubjectId()),
+                    () -> assertNull(actual.get(0).getDetailSubjectId()),
+                    () -> assertEquals("営業利益", actual.get(0).getName()),
+                    () -> assertEquals("5", actual.get(1).getId()),
+                    () -> assertEquals("3", actual.get(1).getOutlineSubjectId()),
+                    () -> assertEquals("11", actual.get(1).getDetailSubjectId()),
+                    () -> assertEquals("業法様式ラベル", actual.get(1).getName())
             );
         }
 
