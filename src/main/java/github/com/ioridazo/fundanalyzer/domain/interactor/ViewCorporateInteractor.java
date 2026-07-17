@@ -138,7 +138,9 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         return filter(viewSpecification.findAllCorporateView()).stream()
                 .filter(cvm -> Stream.of(
                                 DocumentTypeCode.DTC_140,
-                                DocumentTypeCode.DTC_150
+                                DocumentTypeCode.DTC_150,
+                                DocumentTypeCode.DTC_160,
+                                DocumentTypeCode.DTC_170
                         )
                         .anyMatch(dtc -> DocumentTypeCode.fromValue(cvm.getLatestDocumentTypeCode()).equals(dtc)))
                 .sorted(Comparator

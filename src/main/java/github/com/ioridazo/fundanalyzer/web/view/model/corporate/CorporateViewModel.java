@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.web.view.model.corporate;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.view.CorporateViewBean;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.stream.Stream;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -252,9 +251,7 @@ public class CorporateViewModel {
                 viewBean.getName(),
                 viewBean.getSubmitDate().orElse(null),
                 viewBean.getLatestDocumentTypeCode(),
-                Stream.of(DocumentTypeCode.DTC_120, DocumentTypeCode.DTC_130)
-                        .map(DocumentTypeCode::toValue)
-                        .anyMatch(dtc -> viewBean.getLatestDocumentTypeCode().equals(dtc)),
+                ViewSpecification.isAnnualReport(viewBean.getLatestDocumentTypeCode()),
                 viewBean.getLatestCorporateValue().map(v -> v.setScale(THIRD_DECIMAL_PLACE, RoundingMode.HALF_UP)).orElse(null),
                 viewBean.getFiveAverageCorporateValue().orElse(viewBean.getAllAverageCorporateValue().orElse(null)),
                 viewBean.getFiveStandardDeviation().orElse(viewBean.getAllStandardDeviation().orElse(null)),

@@ -38,7 +38,7 @@ public class CorporatePresenter {
     private final ViewService viewService;
     private final AnalysisService analysisService;
 
-    @Value("${app.config.view.document-type-code}")
+    @Value("${app.config.view.latest-document-type-code}")
     List<String> targetTypeCodes;
 
     public CorporatePresenter(

@@ -44,7 +44,8 @@ import static org.mockito.Mockito.when;
 
 class AnalysisResultSpecificationTest {
 
-    private static final List<String> targetTypeCodes = List.of("120", "130");
+    private static final List<String> annualStatTypeCodes = List.of("120", "130");
+    private static final List<String> latestTypeCodes = List.of("120", "130", "140", "150", "160", "170");
 
     private AnalysisResultDao analysisResultDao;
     private CompanySpecification companySpecification;
@@ -60,7 +61,8 @@ class AnalysisResultSpecificationTest {
                 analysisResultDao,
                 companySpecification
         ));
-        analysisResultSpecification.targetTypeCodes = List.of("120", "130");
+        analysisResultSpecification.annualStatTypeCodes = annualStatTypeCodes;
+        analysisResultSpecification.latestTypeCodes = latestTypeCodes;
     }
 
     @Nested
@@ -76,7 +78,7 @@ class AnalysisResultSpecificationTest {
             var analysisResult3 = new AnalysisResultEntity(3, "code", LocalDate.parse("2018-06-30"), BigDecimal.valueOf(1400), null, "120", "4", null, null, null);
             var analysisResult4 = new AnalysisResultEntity(4, "code", LocalDate.parse("2017-06-30"), BigDecimal.valueOf(10000), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2, analysisResult3, analysisResult4))
-                    .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+                    .when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.yearAverageCorporateValue(company, THREE);
             assertEquals(BigDecimal.valueOf(100000, 2), actual.orElseThrow());
@@ -85,7 +87,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("yearAverageCorporateValue : 企業価値がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.yearAverageCorporateValue(company, THREE);
             assertNull(actual.orElse(null));
@@ -97,7 +99,7 @@ class AnalysisResultSpecificationTest {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500), null, "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
             doReturn(List.of(analysisResult1, analysisResult2))
-                    .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+                    .when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.yearAverageCorporateValue(company, THREE);
             assertNull(actual.orElse(null));
@@ -118,7 +120,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null
             );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.yearAverageCorporateValue(company, 1);
             assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
@@ -133,7 +135,7 @@ class AnalysisResultSpecificationTest {
         void present() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900), null, "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
             assertEquals(BigDecimal.valueOf(100000, 2), actual.orElseThrow());
@@ -142,7 +144,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("allYearAverageCorporateValue : 企業価値がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
             assertNull(actual.orElse(null));
@@ -163,7 +165,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null
             );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.allYearAverageCorporateValue(company);
             assertEquals(BigDecimal.valueOf(500.25), actual.orElseThrow());
@@ -178,7 +180,7 @@ class AnalysisResultSpecificationTest {
         void present() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(100000, 2));
             assertEquals(BigDecimal.valueOf(100.0), actual.orElseThrow());
@@ -187,7 +189,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("standardDeviation : 企業価値がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(100000, 2));
             assertNull(actual.orElse(null));
@@ -196,7 +198,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("standardDeviation : 平均の企業価値がないときは空で返却する")
         @Test
         void averageCorporateValue_isNull() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, null);
             assertNull(actual.orElse(null));
@@ -217,7 +219,7 @@ class AnalysisResultSpecificationTest {
                     null,
                     null
             );
-            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of(analysisResult1)).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.standardDeviation(company, BigDecimal.valueOf(500.25));
             assertEquals(BigDecimal.valueOf(0, 1), actual.orElseThrow());
@@ -237,7 +239,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("coefficientOfVariation : 標準偏差がないときは空で返却する")
         @Test
         void coefficientOfVariation_isNull() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.coefficientOfVariation(null, BigDecimal.valueOf(100000, 2));
             assertNull(actual.orElse(null));
@@ -246,7 +248,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("coefficientOfVariation : 平均の企業価値がないときは空で返却する")
         @Test
         void averageCorporateValue_isNull() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.coefficientOfVariation(BigDecimal.valueOf(100.0), null);
             assertNull(actual.orElse(null));
@@ -268,7 +270,7 @@ class AnalysisResultSpecificationTest {
         void present() {
             var analysisResult1 = new AnalysisResultEntity(1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100), null, "120", "4", null, null, null);
             var analysisResult2 = new AnalysisResultEntity(2, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(900), null, "120", "4", null, null, null);
-            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of(analysisResult1, analysisResult2)).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.countYear(company);
             assertEquals(BigDecimal.valueOf(2), actual);
@@ -277,7 +279,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("countYear : 企業価値がないときは0で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", annualStatTypeCodes);
 
             var actual = analysisResultSpecification.countYear(company);
             assertEquals(BigDecimal.valueOf(0), actual);
@@ -487,7 +489,7 @@ class AnalysisResultSpecificationTest {
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100),
                     null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
             doReturn(List.of(older, newer))
-                    .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+                    .when(analysisResultSpecification).analysisTargetList("code", latestTypeCodes);
 
             final Optional<AnalysisResultEntity> actual = analysisResultSpecification.findLatestAnalysisResult("code");
 
@@ -505,7 +507,25 @@ class AnalysisResultSpecificationTest {
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(1100),
                     null, "120", "4", LocalDate.parse("2020-12-31"), null, null);
             doReturn(List.of(earlySubmit, lateSubmit))
-                    .when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+                    .when(analysisResultSpecification).analysisTargetList("code", latestTypeCodes);
+
+            final Optional<AnalysisResultEntity> actual = analysisResultSpecification.findLatestAnalysisResult("code");
+
+            assertTrue(actual.isPresent());
+            assertEquals(2, actual.get().getId());
+        }
+
+        @DisplayName("findLatestAnalysisResult : 半期報告書は latest 母集団に含まれる")
+        @Test
+        void includesSemiannualInLatestPopulation() {
+            final AnalysisResultEntity annual = new AnalysisResultEntity(
+                    1, "code", LocalDate.parse("2025-03-31"), BigDecimal.valueOf(900),
+                    null, "120", "4", LocalDate.parse("2025-06-30"), null, null);
+            final AnalysisResultEntity semiannual = new AnalysisResultEntity(
+                    2, "code", LocalDate.parse("2025-09-30"), BigDecimal.valueOf(1100),
+                    null, "160", "H", LocalDate.parse("2025-11-15"), null, null);
+            doReturn(List.of(annual, semiannual))
+                    .when(analysisResultSpecification).analysisTargetList("code", latestTypeCodes);
 
             final Optional<AnalysisResultEntity> actual = analysisResultSpecification.findLatestAnalysisResult("code");
 
@@ -516,7 +536,7 @@ class AnalysisResultSpecificationTest {
         @DisplayName("findLatestAnalysisResult : 対象がないときは空で返却する")
         @Test
         void empty() {
-            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", targetTypeCodes);
+            doReturn(List.of()).when(analysisResultSpecification).analysisTargetList("code", latestTypeCodes);
 
             final Optional<AnalysisResultEntity> actual = analysisResultSpecification.findLatestAnalysisResult("code");
 
@@ -628,10 +648,10 @@ class AnalysisResultSpecificationTest {
             final AnalysisResultEntity normal = new AnalysisResultEntity(
                     2, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(900),
                     null, "120", "4", LocalDate.parse("2020-09-30"), null, null);
-            when(analysisResultDao.selectByCompanyCodeAndType("code", targetTypeCodes))
+            when(analysisResultDao.selectByCompanyCodeAndType("code", annualStatTypeCodes))
                     .thenReturn(List.of(epoch, normal));
 
-            final List<AnalysisResultEntity> actual = analysisResultSpecification.analysisTargetList("code", targetTypeCodes);
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.analysisTargetList("code", annualStatTypeCodes);
 
             assertEquals(1, actual.size());
             assertEquals(2, actual.get(0).getId());
@@ -649,10 +669,10 @@ class AnalysisResultSpecificationTest {
             final AnalysisResultEntity otherPeriod = new AnalysisResultEntity(
                     3, "code", LocalDate.parse("2019-06-30"), BigDecimal.valueOf(700),
                     null, "120", "4", LocalDate.parse("2019-09-30"), null, null);
-            when(analysisResultDao.selectByCompanyCodeAndType("code", targetTypeCodes))
+            when(analysisResultDao.selectByCompanyCodeAndType("code", annualStatTypeCodes))
                     .thenReturn(List.of(oldSubmit, newSubmit, otherPeriod));
 
-            final List<AnalysisResultEntity> actual = analysisResultSpecification.analysisTargetList("code", targetTypeCodes);
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.analysisTargetList("code", annualStatTypeCodes);
 
             assertEquals(2, actual.size());
             assertTrue(actual.stream().anyMatch(e -> e.getId() == 2));
@@ -663,13 +683,36 @@ class AnalysisResultSpecificationTest {
         @DisplayName("analysisTargetList : DAO が空のときは空リストを返す")
         @Test
         void empty() {
-            when(analysisResultDao.selectByCompanyCodeAndType("code", targetTypeCodes))
+            when(analysisResultDao.selectByCompanyCodeAndType("code", annualStatTypeCodes))
                     .thenReturn(List.of());
 
-            final List<AnalysisResultEntity> actual = analysisResultSpecification.analysisTargetList("code", targetTypeCodes);
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.analysisTargetList("code", annualStatTypeCodes);
 
             assertNotNull(actual);
             assertTrue(actual.isEmpty());
+        }
+
+        @DisplayName("analysisTargetList : latest 母集団と annual 母集団を別々に扱える")
+        @Test
+        void supportsSeparatedPopulations() {
+            final AnalysisResultEntity annual = new AnalysisResultEntity(
+                    1, "code", LocalDate.parse("2025-03-31"), BigDecimal.valueOf(900),
+                    null, "120", "4", LocalDate.parse("2025-06-30"), null, null);
+            final AnalysisResultEntity semiannual = new AnalysisResultEntity(
+                    2, "code", LocalDate.parse("2025-09-30"), BigDecimal.valueOf(1100),
+                    null, "160", "H", LocalDate.parse("2025-11-15"), null, null);
+            when(analysisResultDao.selectByCompanyCodeAndType("code", annualStatTypeCodes))
+                    .thenReturn(List.of(annual));
+            when(analysisResultDao.selectByCompanyCodeAndType("code", latestTypeCodes))
+                    .thenReturn(List.of(annual, semiannual));
+
+            final List<AnalysisResultEntity> annualActual =
+                    analysisResultSpecification.analysisTargetList("code", annualStatTypeCodes);
+            final List<AnalysisResultEntity> latestActual =
+                    analysisResultSpecification.analysisTargetList("code", latestTypeCodes);
+
+            assertEquals(List.of(1), annualActual.stream().map(AnalysisResultEntity::getId).toList());
+            assertEquals(List.of(1, 2), latestActual.stream().map(AnalysisResultEntity::getId).toList());
         }
     }
 

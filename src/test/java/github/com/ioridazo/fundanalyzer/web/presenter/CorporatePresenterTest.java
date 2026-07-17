@@ -39,7 +39,7 @@ class CorporatePresenterTest {
         viewService = Mockito.mock(ViewService.class);
         analysisService = Mockito.mock(AnalysisService.class);
         presenter = new CorporatePresenter(viewService, analysisService);
-        presenter.targetTypeCodes = List.of("120", "130");
+        presenter.targetTypeCodes = List.of("120", "130", "140", "150", "160", "170");
     }
 
     /**
