@@ -112,6 +112,20 @@ class EdinetDocumentSpecificationTest {
             assertEquals(LocalDate.EPOCH, actual.getPeriodStart().orElseThrow());
             assertEquals(LocalDate.EPOCH, actual.getPeriodEnd().orElseThrow());
         }
+
+        @DisplayName("parsePeriod : period_start/period_end/parent_doc_id がすべて空でも EPOCH を返す")
+        @Test
+        void null_parentDocId_and_periods_returns_epoch() {
+            var edinetDocument = new EdinetDocumentEntity();
+
+            when(edinetDocumentDao.selectByDocId(documentId)).thenReturn(Optional.of(edinetDocument));
+
+            assertDoesNotThrow(() -> {
+                var actual = edinetDocumentSpecification.parsePeriod(documentId);
+                assertEquals(LocalDate.EPOCH, actual.getPeriodStart().orElseThrow());
+                assertEquals(LocalDate.EPOCH, actual.getPeriodEnd().orElseThrow());
+            });
+        }
     }
 
     @Nested
