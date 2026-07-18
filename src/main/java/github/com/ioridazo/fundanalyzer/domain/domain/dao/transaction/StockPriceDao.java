@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceLatestTargetDateEntity;
 import org.seasar.doma.Dao;
 import org.seasar.doma.Delete;
 import org.seasar.doma.Insert;
@@ -34,6 +35,9 @@ public interface StockPriceDao {
 
     @Select
     Optional<LocalDate> selectMaxTargetDateBySource(String sourceOf);
+
+    @Select
+    List<StockPriceLatestTargetDateEntity> selectLatestTargetDateAll();
 
     @Insert
     Result<StockPriceEntity> insert(StockPriceEntity stockPriceEntity);
