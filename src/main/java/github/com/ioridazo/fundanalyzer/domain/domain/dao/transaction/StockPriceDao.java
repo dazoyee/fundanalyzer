@@ -27,6 +27,9 @@ public interface StockPriceDao {
     List<StockPriceEntity> selectByCode(String code);
 
     @Select
+    Optional<StockPriceEntity> selectFirstByCodeFromDate(String code, LocalDate fromDate, LocalDate toDate);
+
+    @Select
     List<LocalDate> selectDistinctTargetDate();
 
     @Select

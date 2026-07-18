@@ -9,6 +9,7 @@ import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,4 +51,7 @@ public interface ValuationDao {
      */
     @Update(sqlFile = true)
     int updateDerivedValuesFromAnalysisResult();
+
+    @Update(sqlFile = true)
+    int updateGrahamIndexById(Integer id, BigDecimal grahamIndex);
 }
