@@ -1,5 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification.StaleCompany;
 import github.com.ioridazo.fundanalyzer.domain.usecase.BacktestUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DistributionUseCase;
@@ -48,6 +50,7 @@ class ViewServiceTest {
     private ViewValuationUseCase viewValuationUseCase;
     private BacktestUseCase backtestUseCase;
     private DistributionUseCase distributionUseCase;
+    private StockCompanyStalenessSpecification stockCompanyStalenessSpecification;
     private ViewService service;
 
     @BeforeEach
@@ -59,9 +62,11 @@ class ViewServiceTest {
         viewValuationUseCase = mock(ViewValuationUseCase.class);
         backtestUseCase = mock(BacktestUseCase.class);
         distributionUseCase = mock(DistributionUseCase.class);
+        stockCompanyStalenessSpecification = mock(StockCompanyStalenessSpecification.class);
         service = new ViewService(
                 companyUseCase, documentUseCase,
-                viewCorporateUseCase, viewEdinetUseCase, viewValuationUseCase, backtestUseCase, distributionUseCase);
+                viewCorporateUseCase, viewEdinetUseCase, viewValuationUseCase, backtestUseCase, distributionUseCase,
+                stockCompanyStalenessSpecification);
     }
 
     @Nested
@@ -233,6 +238,17 @@ class ViewServiceTest {
             when(viewValuationUseCase.viewAllValuation()).thenReturn(List.of());
             service.getAllValuationView();
             verify(viewValuationUseCase, times(1)).viewAllValuation();
+        }
+
+        @DisplayName("getStaleStockCompanies : StockCompanyStalenessSpecification.findStaleCompanies に委譲する")
+        @Test
+        void staleStockCompanies() {
+            when(stockCompanyStalenessSpecification.findStaleCompanies())
+                    .thenReturn(List.of(new StaleCompany("9278", LocalDate.of(2026, 5, 27), 52)));
+
+            service.getStaleStockCompanies();
+
+            verify(stockCompanyStalenessSpecification, times(1)).findStaleCompanies();
         }
 
         @DisplayName("getDistributionView : distributionUseCase.distribution に委譲する")

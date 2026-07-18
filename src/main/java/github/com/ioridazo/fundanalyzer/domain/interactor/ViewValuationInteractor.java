@@ -20,11 +20,13 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -39,6 +41,8 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
 
     @Value("${app.slack.update-view.enabled:true}")
     boolean updateViewEnabled;
+    @Value("${app.config.view.analysis.ranking-exclude-days}")
+    int rankingExcludeDays;
 
     public ViewValuationInteractor(
             final CompanySpecification companySpecification,
@@ -73,10 +77,19 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
      */
     @Override
     public List<CompanyValuationViewModel> viewAllValuation() {
+        final Set<String> targetCodes = companySpecification.targetCode4Set();
+        final LocalDate thresholdDate = nowLocalDate().minusDays(rankingExcludeDays);
         return viewSpecification.findAllCompanyValuationView().stream()
                 // 提出日は除外
                 .filter(cvvm -> cvvm.daySinceSubmitDate() != 0L)
+                .filter(cvvm -> targetCodes.contains(cvvm.code()))
+                .filter(cvvm -> cvvm.targetDate() != null)
+                .filter(cvvm -> !cvvm.targetDate().isBefore(thresholdDate))
                 .toList();
+    }
+
+    LocalDate nowLocalDate() {
+        return LocalDate.now();
     }
 
     /** 業種内zスコアを算出する最小社数（これ未満の業種は算出対象外）。 */

@@ -1,5 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.service;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification.StaleCompany;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DistributionUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
@@ -44,6 +46,7 @@ public class ViewService {
     private final ViewValuationUseCase viewValuationUseCase;
     private final BacktestUseCase backtestUseCase;
     private final DistributionUseCase distributionUseCase;
+    private final StockCompanyStalenessSpecification stockCompanyStalenessSpecification;
 
     public ViewService(
             final CompanyUseCase companyUseCase,
@@ -52,7 +55,8 @@ public class ViewService {
             final ViewEdinetUseCase viewEdinetUseCase,
             final ViewValuationUseCase viewValuationUseCase,
             final BacktestUseCase backtestUseCase,
-            final DistributionUseCase distributionUseCase) {
+            final DistributionUseCase distributionUseCase,
+            final StockCompanyStalenessSpecification stockCompanyStalenessSpecification) {
         this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
         this.viewValuationUseCase = viewValuationUseCase;
@@ -60,6 +64,7 @@ public class ViewService {
         this.viewEdinetUseCase = viewEdinetUseCase;
         this.backtestUseCase = backtestUseCase;
         this.distributionUseCase = distributionUseCase;
+        this.stockCompanyStalenessSpecification = stockCompanyStalenessSpecification;
     }
 
     /**
@@ -372,6 +377,11 @@ public class ViewService {
     @Observed
     public List<CompanyValuationViewModel> getAllValuationView() {
         return viewValuationUseCase.viewAllValuation();
+    }
+
+    @Observed
+    public List<StaleCompany> getStaleStockCompanies() {
+        return stockCompanyStalenessSpecification.findStaleCompanies();
     }
 
     /**
