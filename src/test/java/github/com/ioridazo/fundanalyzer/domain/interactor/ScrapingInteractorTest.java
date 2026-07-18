@@ -83,6 +83,7 @@ class ScrapingInteractorTest {
         ));
         scrapingInteractor.pathEdinet = "pathEdinet";
         scrapingInteractor.pathDecode = "pathDecode";
+        scrapingInteractor.numberOfSharesLowerLimit = 1L;
     }
 
     @Nested
@@ -403,6 +404,19 @@ class ScrapingInteractorTest {
                     .insertWithoutValidation(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1000L, CreatedType.AUTO);
             verify(scrapingInteractor, times(0)).doBsOptionOfTotalFixedLiabilitiesIfTarget(company, document);
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
+        }
+
+        @DisplayName("ns : 株式総数が下限未満のときはエラーにする")
+        @Test
+        void tooSmallNumberOfShares() {
+            scrapingInteractor.numberOfSharesLowerLimit = 10000L;
+            when(xbrlScraping.scrapeNumberOfShares(file, "keyword")).thenReturn("9999");
+
+            assertDoesNotThrow(() -> scrapingInteractor.ns(document));
+            verify(financialStatementSpecification, times(0))
+                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 9999L, CreatedType.AUTO);
+            verify(documentSpecification, times(0)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
+            verify(documentSpecification, times(1)).updateFsToError(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
         }
 
         @DisplayName("ns : キーワードに合致するファイルが存在しないときはエラーにする")

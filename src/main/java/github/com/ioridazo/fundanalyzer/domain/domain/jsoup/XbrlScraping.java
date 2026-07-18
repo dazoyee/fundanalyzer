@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
 public class XbrlScraping {
 
     private static final Logger log = LogManager.getLogger(XbrlScraping.class);
+    private static final Pattern UNEXPECTED_SHARE_UNIT_PATTERN = Pattern.compile("(千|百|百万|億)株");
 
     private static final String TOTAL = "計";
 
@@ -280,55 +282,78 @@ public class XbrlScraping {
      * @return 株式総数
      */
     public String scrapeNumberOfShares(final File file, final String keyWord) {
-        final var scrapingList = elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
-                .select(Tag.TABLE.getName())
-                .select(Tag.TR.getName()).stream()
-                // tdの要素をリストにする
-                .map(tr -> tr.select(Tag.TD.getName()).stream()
-                        .map(Element::text)
-                        .toList()
-                )
-                .toList();
+        final var tables = elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
+                .select(Tag.TABLE.getName());
 
-        if (scrapingList.isEmpty()) {
+        if (tables.isEmpty()) {
             throw new FundanalyzerScrapingException("株式総数取得のためのテーブルが存在しなかったため、株式総数取得に失敗しました。");
         }
 
-        try {
-            // "事業年度末現在発行数"を含む項目を探す
-            final var key1 = scrapingList.stream()
-                    // 対象行の取得
+        boolean foundHeaderInAnyTable = false;
+        boolean foundTotalInAnyTable = false;
+
+        for (final Element table : tables) {
+            final var scrapingList = table.select(Tag.TR.getName()).stream()
+                    .map(tr -> tr.select(Tag.TD.getName()).stream()
+                            .map(Element::text)
+                            .toList())
+                    .filter(tdList -> !tdList.isEmpty())
+                    .toList();
+
+            if (scrapingList.isEmpty()) {
+                continue;
+            }
+
+            final Optional<List<String>> headerRow = scrapingList.stream()
                     .filter(tdList -> tdList.stream().anyMatch(this::isTargetKey))
-                    .findFirst().orElseThrow().stream()
-                    // 対象行から"事業年度末現在発行数"を含むカラムを取得
-                    .filter(this::isTargetKey)
-                    .findFirst()
-                    .orElseThrow();
-
-            // "事業年度末現在発行数"を含む項目の列数
-            final var indexOfKey1 = scrapingList.stream()
-                    .filter(tdList -> tdList.stream().anyMatch(key1::equals))
-                    .findFirst().orElseThrow()
-                    .indexOf(key1);
-
-            // "計"を含む項目を探す
-            final var key2 = scrapingList.stream()
-                    // 対象行の取得
+                    .findFirst();
+            final Optional<List<String>> totalRow = scrapingList.stream()
                     .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(TOTAL) && !td.contains("会計")))
-                    .findFirst().orElseThrow().stream()
-                    // 対象行から"計"を含むカラムを取得
-                    .filter(td -> td.contains(TOTAL))
-                    .findFirst().orElseThrow();
+                    .findFirst();
 
-            // "計"を含む項目の列数
-            final var indexOfKey2 = scrapingList.indexOf(scrapingList.stream()
-                    .filter(strings -> strings.stream().anyMatch(key2::equals))
-                    .findFirst().orElseThrow());
+            foundHeaderInAnyTable |= headerRow.isPresent();
+            foundTotalInAnyTable |= totalRow.isPresent();
 
-            return scrapingList.get(indexOfKey2).get(indexOfKey1);
-        } catch (NoSuchElementException e) {
-            throw new FundanalyzerScrapingException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
+            if (headerRow.isEmpty() || totalRow.isEmpty()) {
+                continue;
+            }
+
+            if (containsUnexpectedShareUnit(table)) {
+                throw new FundanalyzerScrapingException("株式総数テーブル周辺に想定外の単位注記が存在したため、株式総数取得に失敗しました。");
+            }
+
+            try {
+                final String key1 = headerRow.orElseThrow().stream()
+                        .filter(this::isTargetKey)
+                        .findFirst()
+                        .orElseThrow();
+                final int indexOfKey1 = headerRow.orElseThrow().indexOf(key1);
+
+                return totalRow.orElseThrow().get(indexOfKey1);
+            } catch (NoSuchElementException | IndexOutOfBoundsException e) {
+                throw new FundanalyzerScrapingException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
+            }
         }
+
+        if (foundHeaderInAnyTable && foundTotalInAnyTable) {
+            throw new FundanalyzerScrapingException("株式総数テーブルのヘッダ行と計行が同一テーブル内に存在しなかったため、株式総数取得に失敗しました。");
+        }
+
+        throw new FundanalyzerScrapingException("株式総数取得のためのキーワードが存在しなかったため、株式総数取得に失敗しました。");
+    }
+
+    private boolean containsUnexpectedShareUnit(final Element table) {
+        return shareUnitTextsAround(table).stream()
+                .anyMatch(text -> UNEXPECTED_SHARE_UNIT_PATTERN.matcher(text).find());
+    }
+
+    private List<String> shareUnitTextsAround(final Element table) {
+        return List.of(
+                table.select("caption").text(),
+                table.parent() != null ? table.parent().ownText() : "",
+                table.previousElementSibling() != null ? table.previousElementSibling().text() : "",
+                table.nextElementSibling() != null ? table.nextElementSibling().text() : ""
+        );
     }
 
     private boolean isTargetKey(final String td) {

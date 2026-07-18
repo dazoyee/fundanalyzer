@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -205,6 +206,12 @@ public class CompanySpecification {
     public Map<String, Integer> industryIdByCode4() {
         return inquiryAllTargetCompanies().stream()
                 .collect(Collectors.toMap(Company::getCode4, Company::industryId, (existing, ignored) -> existing));
+    }
+
+    public Set<String> targetCode4Set() {
+        return inquiryAllTargetCompanies().stream()
+                .map(Company::getCode4)
+                .collect(Collectors.toSet());
     }
 
     @CachePut(CACHE_KEY_ALL_TARGET_COMPANIES)

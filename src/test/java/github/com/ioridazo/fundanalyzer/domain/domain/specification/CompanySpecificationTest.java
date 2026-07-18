@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -285,6 +286,24 @@ class CompanySpecificationTest {
             final Map<String, Integer> actual = companySpecification.industryIdByCode4();
 
             assertEquals(Map.of("1234", 10, "5678", 30), actual);
+        }
+    }
+
+    @Nested
+    @DisplayName("targetCode4Set メソッド")
+    class TargetCode4Set {
+
+        @DisplayName("targetCode4Set : 重複する5桁コードがあっても4桁コード集合を返す")
+        @Test
+        void collectsDistinctCode4() {
+            final Company first = new Company("12340", "A", 10, "業種A", "E1", null, null, null, null, false, false, true);
+            final Company duplicate = new Company("12349", "B", 20, "業種B", "E2", null, null, null, null, false, false, true);
+            final Company other = new Company("56780", "C", 30, "業種C", "E3", null, null, null, null, false, false, true);
+            doReturn(List.of(first, duplicate, other)).when(companySpecification).inquiryAllTargetCompanies();
+
+            final Set<String> actual = companySpecification.targetCode4Set();
+
+            assertEquals(Set.of("1234", "5678"), actual);
         }
     }
 
