@@ -2,6 +2,7 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification.StaleCompany;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase.SummaryChartData;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
@@ -40,9 +41,12 @@ class AnalysisPresenterTest {
     void setUp() {
         this.viewService = mock(ViewService.class);
         this.objectMapper = mock(ObjectMapper.class);
-        this.presenter = new AnalysisPresenter(viewService, objectMapper);
+        this.presenter = org.mockito.Mockito.spy(new AnalysisPresenter(viewService, objectMapper));
         ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130", "140", "150", "160", "170"));
         ReflectionTestUtils.setField(presenter, "rankingSize", 2);
+        ReflectionTestUtils.setField(presenter, "rankingStaleBadgeDays", 45);
+        ReflectionTestUtils.setField(presenter, "stockCompanyStalenessAlertDays", 14);
+        org.mockito.Mockito.doReturn(LocalDate.of(2026, 7, 18)).when(presenter).nowLocalDate();
     }
 
     @Nested
@@ -53,11 +57,15 @@ class AnalysisPresenterTest {
         @DisplayName("ランキング上位を model に設定して analysis-v2 を返す")
         void returnsAnalysisViewWithRanking() {
             final Model model = mock(Model.class);
+            when(viewService.getStaleStockCompanies()).thenReturn(List.of(
+                    new StaleCompany("9278", LocalDate.of(2026, 5, 27), 52),
+                    new StaleCompany("7034", LocalDate.of(2026, 7, 1), 17)
+            ));
             when(viewService.getAllValuationView()).thenReturn(List.of(
-                    companyValuation("1111", "A", new BigDecimal("10")),
+                    companyValuation("1111", "A", LocalDate.of(2026, 6, 2), new BigDecimal("10"), BigDecimal.ONE, BigDecimal.ONE),
                     companyValuation("2222", "B", null),
-                    companyValuation("3333", "C", new BigDecimal("30")),
-                    companyValuation("4444", "D", new BigDecimal("20"))
+                    companyValuation("3333", "C", LocalDate.of(2026, 5, 31), new BigDecimal("30"), BigDecimal.ONE, BigDecimal.ONE),
+                    companyValuation("4444", "D", LocalDate.of(2026, 6, 3), new BigDecimal("20"), BigDecimal.ONE, BigDecimal.ONE)
             ));
 
             final String result = presenter.analysisView(model);
@@ -65,12 +73,14 @@ class AnalysisPresenterTest {
             assertEquals("analysis-v2", result);
             final ArgumentCaptor<Object> rankingCaptor = ArgumentCaptor.forClass(Object.class);
             verify(model).addAttribute(eq("ranking"), rankingCaptor.capture());
-            assertIterableEquals(
-                    List.of(
-                            companyValuation("3333", "C", new BigDecimal("30")),
-                            companyValuation("4444", "D", new BigDecimal("20"))
-                    ),
-                    castList(rankingCaptor.getValue()));
+            final List<Object> ranking = castList(rankingCaptor.getValue());
+            assertEquals(2, ranking.size());
+            assertEquals("3333", ReflectionTestUtils.getField(ranking.get(0), "code"));
+            assertEquals(true, ReflectionTestUtils.getField(ranking.get(0), "stale"));
+            assertEquals("4444", ReflectionTestUtils.getField(ranking.get(1), "code"));
+            assertEquals(false, ReflectionTestUtils.getField(ranking.get(1), "stale"));
+            verify(model).addAttribute("staleStockCompanyCount", 2);
+            verify(model).addAttribute("stockCompanyStalenessAlertDays", 14);
         }
 
         @Test

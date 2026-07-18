@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -56,6 +57,7 @@ class ViewValuationInteractorTest {
                 slackClient
         ));
         interactor.updateViewEnabled = true;
+        interactor.rankingExcludeDays = 90;
     }
 
     private ValuationEntity emptyValuation() {
@@ -75,7 +77,7 @@ class ViewValuationInteractorTest {
         return new CompanyValuationViewModel(
                 code,
                 "テスト企業",
-                LocalDate.parse("2024-04-01"),
+                LocalDate.parse("2026-07-01"),
                 BigDecimal.valueOf(1000),
                 BigDecimal.valueOf(0.5),
                 BigDecimal.valueOf(500),
@@ -102,7 +104,11 @@ class ViewValuationInteractorTest {
             final ValuationEntity entityA = emptyValuation(1);
             final ValuationEntity entityB = emptyValuation(2);
 
-            final CompanyValuationViewModel oldView = valuationView("1234", BigDecimal.valueOf(2.0), 1L);
+            final CompanyValuationViewModel oldView = new CompanyValuationViewModel(
+                    "1234", "テスト企業", LocalDate.parse("2024-04-01"),
+                    BigDecimal.valueOf(1000), BigDecimal.valueOf(0.5), BigDecimal.valueOf(500), BigDecimal.valueOf(2.0),
+                    LocalDate.parse("2024-03-01"), BigDecimal.valueOf(900), 1L, BigDecimal.valueOf(100),
+                    BigDecimal.valueOf(1.1), BigDecimal.valueOf(0.4), BigDecimal.valueOf(1500), BigDecimal.valueOf(2.0));
             final CompanyValuationViewModel newView = new CompanyValuationViewModel(
                     "1234", "テスト企業", LocalDate.parse("2024-05-01"),
                     null, null, null, BigDecimal.valueOf(2.0),
@@ -131,7 +137,9 @@ class ViewValuationInteractorTest {
         void excludesSubmitDateRow() {
             final CompanyValuationViewModel onSubmit = valuationView("1000", BigDecimal.valueOf(2.0), 0L);
             final CompanyValuationViewModel afterSubmit = valuationView("2000", BigDecimal.valueOf(2.0), 5L);
+            when(companySpecification.targetCode4Set()).thenReturn(Set.of("1000", "2000"));
             when(viewSpecification.findAllCompanyValuationView()).thenReturn(List.of(onSubmit, afterSubmit));
+            doReturn(LocalDate.of(2026, 7, 18)).when(interactor).nowLocalDate();
 
             final List<CompanyValuationViewModel> actual = interactor.viewAllValuation();
 
@@ -139,6 +147,44 @@ class ViewValuationInteractorTest {
                     () -> assertEquals(1, actual.size()),
                     () -> assertEquals("2000", actual.get(0).code())
             );
+        }
+
+        @DisplayName("viewAllValuation : 生存対象外コードを除外する")
+        @Test
+        void excludesRemovedCompanies() {
+            when(companySpecification.targetCode4Set()).thenReturn(Set.of("1000"));
+            when(viewSpecification.findAllCompanyValuationView()).thenReturn(List.of(
+                    valuationView("1000", BigDecimal.valueOf(2.0), 5L),
+                    valuationView("2000", BigDecimal.valueOf(3.0), 5L)
+            ));
+            doReturn(LocalDate.of(2026, 7, 18)).when(interactor).nowLocalDate();
+
+            final List<CompanyValuationViewModel> actual = interactor.viewAllValuation();
+
+            assertEquals(List.of("1000"), actual.stream().map(CompanyValuationViewModel::code).toList());
+        }
+
+        @DisplayName("viewAllValuation : 対象日が90日を超えて古い行を除外し、境界日は残す")
+        @Test
+        void excludesStaleTargetDate() {
+            when(companySpecification.targetCode4Set()).thenReturn(Set.of("2000", "3000"));
+            doReturn(LocalDate.of(2026, 7, 18)).when(interactor).nowLocalDate();
+            when(viewSpecification.findAllCompanyValuationView()).thenReturn(List.of(
+                    new CompanyValuationViewModel(
+                            "2000", "テスト企業", LocalDate.of(2026, 4, 18), BigDecimal.valueOf(1000), BigDecimal.valueOf(0.5),
+                            BigDecimal.valueOf(500), BigDecimal.valueOf(2.0), LocalDate.parse("2024-03-01"),
+                            BigDecimal.valueOf(900), 5L, BigDecimal.valueOf(100), BigDecimal.valueOf(1.1),
+                            BigDecimal.valueOf(0.4), BigDecimal.valueOf(1500), BigDecimal.valueOf(2.0)),
+                    new CompanyValuationViewModel(
+                            "3000", "テスト企業", LocalDate.of(2026, 4, 19), BigDecimal.valueOf(1000), BigDecimal.valueOf(0.5),
+                            BigDecimal.valueOf(500), BigDecimal.valueOf(2.0), LocalDate.parse("2024-03-01"),
+                            BigDecimal.valueOf(900), 5L, BigDecimal.valueOf(100), BigDecimal.valueOf(1.1),
+                            BigDecimal.valueOf(0.4), BigDecimal.valueOf(1500), BigDecimal.valueOf(2.0))
+            ));
+
+            final List<CompanyValuationViewModel> actual = interactor.viewAllValuation();
+
+            assertEquals(List.of("3000"), actual.stream().map(CompanyValuationViewModel::code).toList());
         }
     }
 

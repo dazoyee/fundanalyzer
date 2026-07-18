@@ -647,6 +647,24 @@ class XbrlScrapingTest {
 
             assertEquals("1,251,404,367", actual);
         }
+
+        @DisplayName("scrapeNumberOfShares : ヘッダ行と計行が別テーブルにまたがるときは例外にする")
+        @Test
+        void scrapeNumberOfShares_FundanalyzerScrapingException_crossTable() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_failure_cross_table.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            assertThrows(FundanalyzerScrapingException.class, () -> xbrlScraping.scrapeNumberOfShares(file, keyword));
+        }
+
+        @DisplayName("scrapeNumberOfShares : 想定外の単位注記があるときは例外にする")
+        @Test
+        void scrapeNumberOfShares_FundanalyzerScrapingException_unit() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_failure_unit.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            assertThrows(FundanalyzerScrapingException.class, () -> xbrlScraping.scrapeNumberOfShares(file, keyword));
+        }
     }
 
     private Document defaultDocument() {

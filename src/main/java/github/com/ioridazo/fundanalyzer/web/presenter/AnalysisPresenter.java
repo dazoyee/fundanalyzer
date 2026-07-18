@@ -2,11 +2,13 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification.StaleCompany;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase.SummaryChartData;
 import github.com.ioridazo.fundanalyzer.domain.value.Horizon;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
+import github.com.ioridazo.fundanalyzer.web.view.model.analysis.AnalysisRankingRowViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult.BacktestScatterPoint;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.BacktestResult.HorizonResult;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +50,10 @@ public class AnalysisPresenter {
 
     @Value("${app.config.analysis.ranking-size}")
     private int rankingSize;
+    @Value("${app.config.view.analysis.ranking-stale-badge-days}")
+    private int rankingStaleBadgeDays;
+    @Value("${app.config.stock.company-staleness-alert-days}")
+    private int stockCompanyStalenessAlertDays;
 
     private final ViewService viewService;
     private final ObjectMapper objectMapper;
@@ -66,14 +73,26 @@ public class AnalysisPresenter {
      */
     @GetMapping("/v3/analysis")
     public String analysisView(final Model model) {
-        final List<CompanyValuationViewModel> ranking = viewService.getAllValuationView().stream()
+        final LocalDate staleBadgeThresholdDate = nowLocalDate().minusDays(rankingStaleBadgeDays);
+        final List<AnalysisRankingRowViewModel> ranking = viewService.getAllValuationView().stream()
                 .sorted(Comparator.comparing(
                         CompanyValuationViewModel::discountRate,
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(rankingSize)
+                .map(item -> AnalysisRankingRowViewModel.of(
+                        item,
+                        item.targetDate() != null && item.targetDate().isBefore(staleBadgeThresholdDate)))
                 .toList();
+        final List<StaleCompany> staleStockCompanies = viewService.getStaleStockCompanies();
         model.addAttribute("ranking", ranking);
+        model.addAttribute("staleStockCompanies", staleStockCompanies.stream().limit(5).toList());
+        model.addAttribute("staleStockCompanyCount", staleStockCompanies.size());
+        model.addAttribute("stockCompanyStalenessAlertDays", stockCompanyStalenessAlertDays);
         return ANALYSIS_V2;
+    }
+
+    LocalDate nowLocalDate() {
+        return LocalDate.now();
     }
 
     /**

@@ -202,6 +202,9 @@ app:
       match-tolerance-days: 7
 
     view:
+      analysis:
+        ranking-exclude-days: 90
+        ranking-stale-badge-days: 45
       document-type-code: 120,130  # 分析表示処理対象
       latest-document-type-code: 120,130,140,150,160,170
       discount-rate: 120  # 以上を表示
@@ -217,6 +220,7 @@ app:
 
     scraping:
       document-type-code: 120,130,140,150,160,170  # スクレイピング処理対象
+      number-of-shares-lower-limit: 10000
       validation:
         lower-limit-ratio: 0.1  # 前回値比で下限未満なら警告
         upper-limit-ratio: 10.0  # 前回値比で上限超なら警告
@@ -237,6 +241,7 @@ app:
       minkabu.enabled: true
       yahoo-finance.enabled: false   # P2: Yahooページ構造変更(URL .T欠落+日付形式)で取得不能。復旧せず無効化(T20260621-yahoo-finance-scraping-stopped)
       staleness-alert-days: 7
+      company-staleness-alert-days: 14
       average-stock-price-for-last-days: 30   # 株価平均値の期間
       store-stock-price-for-last-days: 99999  # 株価の保存期間
       corporate-action:

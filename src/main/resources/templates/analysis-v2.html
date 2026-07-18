@@ -13,6 +13,18 @@
 
 <section layout:fragment="content" class="space-y-4"
          x-data="{ tab: 'trend' }">
+    <section th:if="${staleStockCompanyCount > 0}"
+             class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+        <p class="font-semibold" th:text="|株価が${stockCompanyStalenessAlertDays}日以上更新されていない銘柄が ${staleStockCompanyCount} 件あります。|">
+            株価が14日以上更新されていない銘柄があります。
+        </p>
+        <p class="mt-1 text-xs text-amber-800 dark:text-amber-200">
+            <span th:each="item, stat : ${staleStockCompanies}">
+                <span th:text="|${item.code} (${item.staleDays}日)|">1111 (20日)</span><span th:if="${!stat.last}">, </span>
+            </span>
+        </p>
+    </section>
+
     <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700" role="tablist" aria-label="分析タブ">
         <button type="button"
                 role="tab"
@@ -78,7 +90,11 @@
                         <td class="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-slate-100" th:text="${item.name}">会社名</td>
                         <td class="whitespace-nowrap px-4 py-3 text-emerald-600 dark:text-emerald-400" th:text="${item.discountRate != null ? #numbers.formatDecimal(item.discountRate * 100, 1, 0) + '%' : '-'}">0%</td>
                         <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300" th:text="${item.grahamIndex}">0</td>
-                        <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300" th:text="${item.targetDate}">2026-01-01</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-slate-600 dark:text-slate-300">
+                            <span th:text="${item.targetDate}">2026-01-01</span>
+                            <span th:if="${item.stale}"
+                                  class="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-200">古い</span>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
@@ -108,7 +124,11 @@
                         </div>
                         <div class="col-span-2">
                             <dt class="text-slate-500 dark:text-slate-400">対象日</dt>
-                            <dd class="text-slate-600 dark:text-slate-300" th:text="${item.targetDate}">2026-01-01</dd>
+                            <dd class="text-slate-600 dark:text-slate-300">
+                                <span th:text="${item.targetDate}">2026-01-01</span>
+                                <span th:if="${item.stale}"
+                                      class="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-200">古い</span>
+                            </dd>
                         </div>
                     </dl>
                 </li>

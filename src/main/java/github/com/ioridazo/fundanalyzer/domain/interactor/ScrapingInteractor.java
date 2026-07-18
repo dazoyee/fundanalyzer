@@ -63,6 +63,8 @@ public class ScrapingInteractor implements ScrapingUseCase {
     String pathEdinet;
     @Value("${app.settings.file.path.decode}")
     String pathDecode;
+    @Value("${app.config.scraping.number-of-shares-lower-limit}")
+    long numberOfSharesLowerLimit;
 
     public ScrapingInteractor(
             final ScrapingKeywordDao scrapingKeywordDao,
@@ -217,13 +219,16 @@ public class ScrapingInteractor implements ScrapingUseCase {
                 document,
                 (company, targetFile) -> {
                     final String value = xbrlScraping.scrapeNumberOfShares(targetFile.getFirst(), targetFile.getSecond().getKeyword());
+                    final Long parsedValue = parseValue(value, document)
+                            .orElseThrow(() -> new FundanalyzerScrapingException("株式総数を数値として解釈できなかったため、株式総数取得に失敗しました。"));
+                    validateNumberOfShares(parsedValue);
 
                     financialStatementSpecification.insert(
                             company,
                             FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES,
                             "0",
                             document,
-                            parseValue(value, document).orElse(null),
+                            parsedValue,
                             CreatedType.AUTO
                     );
 
@@ -533,6 +538,18 @@ public class ScrapingInteractor implements ScrapingUseCase {
                     Process.SCRAPING
             ));
             return Optional.empty();
+        }
+    }
+
+    private void validateNumberOfShares(final long numberOfShares) {
+        if (numberOfShares < numberOfSharesLowerLimit) {
+            throw new FundanalyzerScrapingException(
+                    MessageFormat.format(
+                            "株式総数が想定下限を下回ったため、株式総数取得に失敗しました。 value:{0} lowerLimit:{1}",
+                            numberOfShares,
+                            numberOfSharesLowerLimit
+                    )
+            );
         }
     }
 
