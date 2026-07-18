@@ -50,3 +50,27 @@ STANDARD : corporate_value = ( 営業利益 × operating_profit_weight（年換�
 - 修正: `Comparator.nullsFirst(Comparator.naturalOrder())` 化（NULL＝標準ラベル行を先頭に維持するため科目解決の優先順位は不変）。リグレッションテストを `SubjectSpecificationTest` に追加
 - 教訓: **科目マスタに「同一 outline への行追加」を行うマイグレーションは、detail_subject_id の NULL 混在ソートを踏む**。以後の科目追加時は findXxSubjectList の挙動をテストで確認する
 - 調査手順の教訓: 本ログ（ECS 形式）の `error.stack_trace` は1行 JSON 内に `\r\n` エスケープで格納される。`Select-String` の行抽出で足りるが、フィールド抽出の正規表現が改行エスケープを跨げず「スタックなし」に見えることがある。生行をファイル経由で取得して解析するのが確実
+
+## 過去分取り込みの実施記録（v2.5.0〜v2.5.3）
+
+全期間（2017-01-01〜2026-07-17）の提出日について `POST /v1/document/analysis` を期間チャンクで投入し、銀行・保険の過去有報のダウンロード・スクレイピング・分析・ビュー更新を完走した。
+
+### 実施中に顕在化した既存潜在バグと対処（時系列）
+
+| リリース | 事象 | 原因と対処 |
+|---|---|---|
+| v2.5.1 | 初回取り込みで全企業の分析・ビュー更新がNPE | `SubjectSpecification.findBsSubjectList/findPlSubjectList` のソートがdetail_subject_idのNULL非対応（V0.4.4で同一outline内にNULL/非NULL混在が発生し顕在化）。`Comparator.nullsFirst` 化 |
+| v2.5.2 | 期間バッチが `NoSuchElementException` で全体停止 | `EdinetDocumentSpecification.parsePeriod` のparentDocId判定が `map(...).isPresent()`（Optional二重包み）でNULL親に `orElseThrow` が発火。`flatMap` 化＋`AnalysisService.executePartOfMain` に日次try-catchを追加し1日の失敗で期間全体が止まらないようにした |
+| v2.5.3 | DB瞬断後にバッチスレッドが無限ブロック（2回発生・サービス再起動で暫定復旧） | Connector/Jの `socketTimeout` 既定が無限のため、死んだTCP接続の読み待ちで永久停止（HikariCPの `connection-timeout` はプール取得のみが対象）。JDBC URLに `connectTimeout=10000&socketTimeout=180000` を設定 |
+
+### 取り込み結果の検証
+
+- 地銀（七十七銀行）: 企業ページに最新企業価値・平均企業価値・RIMが表示され、複数年の分析結果が生成されている（NET_ASSETモデルの実働確認）
+- JGAAP保険（T&D HD）: 同様に企業価値が算出されている
+- IFRS移行済み保険（東京海上HD）: **IFRS移行前のJGAAP年度分は正常に取り込まれ**、IFRS年度分の書類のみ既存のエラー→処理対象外フローに乗る（設計どおり）。IFRS移行済み提出者の最新年度は企業価値が更新されない点に留意
+- 業務エラーは把握済みの事象のみ（毒データ・DB瞬断起因）で、データ欠損が疑われる日付はビュー全体更新（`GET /v1/update/corporate/view`）で回復させた
+
+### 運用上の知見
+
+- 期間バッチはEDINETレートリミッタが実効ボトルネックのため、チャンクの並行投入による短縮効果は限定的。DB負荷観点でも逐次投入を推奨
+- 書類の少ない期間は高速、四半期報告書期（廃止前の2・5・8・11月）と有報期（6月）・半期報告書期（11月）は低速という処理ペース特性がある
