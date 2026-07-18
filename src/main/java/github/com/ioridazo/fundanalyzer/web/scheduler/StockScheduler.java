@@ -8,6 +8,8 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceO
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSourceStalenessSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +34,7 @@ public class StockScheduler {
     private final AnalysisService analysisService;
     private final StockSpecification stockSpecification;
     private final StockSourceStalenessSpecification stockSourceStalenessSpecification;
+    private final ValuationUseCase valuationUseCase;
     private final SlackClient slackClient;
 
     @Value("${app.scheduler.hour.stock}")
@@ -51,10 +55,12 @@ public class StockScheduler {
             final AnalysisService analysisService,
             final StockSpecification stockSpecification,
             final StockSourceStalenessSpecification stockSourceStalenessSpecification,
+            final ValuationUseCase valuationUseCase,
             final SlackClient slackClient) {
         this.analysisService = analysisService;
         this.stockSpecification = stockSpecification;
         this.stockSourceStalenessSpecification = stockSourceStalenessSpecification;
+        this.valuationUseCase = valuationUseCase;
         this.slackClient = slackClient;
     }
 
@@ -62,7 +68,7 @@ public class StockScheduler {
             final AnalysisService analysisService,
             final StockSpecification stockSpecification,
             final SlackClient slackClient) {
-        this(analysisService, stockSpecification, null, slackClient);
+        this(analysisService, stockSpecification, null, null, slackClient);
     }
 
     public LocalDateTime nowLocalDateTime() {
@@ -85,12 +91,18 @@ public class StockScheduler {
 
             try {
                 insert();
-                notifyStaleSources();
                 // delete();
             } catch (Throwable t) {
                 // slack通知
                 slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "株価更新", t);
                 throw new FundanalyzerRuntimeException("株価更新スケジューラ処理中に想定外のエラーが発生しました。", t);
+            } finally {
+                try {
+                    notifyStaleSources();
+                } catch (final Exception e) {
+                    // 元例外を握り潰さないよう、通知処理の失敗はログのみに留める
+                    log.warn("株価ソースの停滞通知処理に失敗しました。", e);
+                }
             }
         }
     }
@@ -113,10 +125,24 @@ public class StockScheduler {
                 final long startTime = System.currentTimeMillis();
 
                 final int countValuation = analysisService.evaluate();
+                final ValuationCatchUpResult catchUpResult = valuationUseCase == null
+                        ? new ValuationCatchUpResult(0, 0, 0)
+                        : valuationUseCase.catchUp();
 
                 if (evaluateEnabled) {
                     slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.evaluate", countValuation);
                 }
+                log.info(FundanalyzerLogClient.toAccessLogObject(
+                        Category.SCHEDULER,
+                        Process.END,
+                        MessageFormat.format(
+                                "valuationCatchUp target={0} advanced={1} unresolved={2}",
+                                catchUpResult.targetCompanyCount(),
+                                catchUpResult.advancedCount(),
+                                catchUpResult.unresolvedCompanyCount()
+                        ),
+                        System.currentTimeMillis() - startTime
+                ));
                 log.info(FundanalyzerLogClient.toAccessLogObject(
                         Category.SCHEDULER,
                         Process.END,
@@ -140,7 +166,20 @@ public class StockScheduler {
         final List<String> targetCodeList = stockSpecification.findTargetCodeForStockScheduler();
         targetCodeList.stream()
                 .map(CodeInputData::of)
-                .forEach(analysisService::importStock);
+                .forEach(inputData -> {
+                    try {
+                        analysisService.importStock(inputData);
+                    } catch (final Exception e) {
+                        log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                                MessageFormat.format(
+                                        "株価取得処理で例外が発生したため、当該企業をスキップして継続します。\t企業コード:{0}",
+                                        inputData.getCode()
+                                ),
+                                Category.STOCK,
+                                Process.IMPORT
+                        ), e);
+                    }
+                });
 
         if (insertStockEnabled) {
             slackClient.sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.insert", targetCodeList.size());

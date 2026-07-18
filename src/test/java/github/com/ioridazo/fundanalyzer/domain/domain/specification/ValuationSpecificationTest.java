@@ -6,6 +6,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ListCategori
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.IndicatorValue;
@@ -71,6 +72,7 @@ class ValuationSpecificationTest {
     private ValuationDao valuationDao;
     private CompanySpecification companySpecification;
     private StockSpecification stockSpecification;
+    private AnalysisResultSpecification analysisResultSpecification;
     private InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private CorporateActionSpecification corporateActionSpecification;
 
@@ -81,6 +83,7 @@ class ValuationSpecificationTest {
         valuationDao = mock(ValuationDao.class);
         companySpecification = mock(CompanySpecification.class);
         stockSpecification = mock(StockSpecification.class);
+        analysisResultSpecification = mock(AnalysisResultSpecification.class);
         investmentIndicatorReconciliationService = mock(InvestmentIndicatorReconciliationService.class);
         corporateActionSpecification = mock(CorporateActionSpecification.class);
         when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
@@ -92,6 +95,7 @@ class ValuationSpecificationTest {
                 valuationDao,
                 companySpecification,
                 stockSpecification,
+                analysisResultSpecification,
                 investmentIndicatorReconciliationService,
                 corporateActionSpecification
         );
@@ -128,6 +132,61 @@ class ValuationSpecificationTest {
 
             assertEquals(5, valuationSpecification.updateDerivedValuesFromAnalysisResult());
             verify(valuationDao, times(1)).updateDerivedValuesFromAnalysisResult();
+        }
+
+        @DisplayName("updateNullGrahamIndexFromAnalysisResult : graham_index が null の行だけ更新する")
+        @Test
+        void updateNullGrahamIndexFromAnalysisResult() {
+            final ValuationEntity valuation = new ValuationEntity(
+                    1,
+                    "code",
+                    LocalDate.parse("2022-06-12"),
+                    LocalDate.parse("2022-07-02"),
+                    11,
+                    BigDecimal.TEN,
+                    null,
+                    null,
+                    20L,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    BigDecimal.ONE,
+                    4,
+                    LocalDateTime.now()
+            );
+            final StockPriceEntity stock = new StockPriceEntity(
+                    11,
+                    "code",
+                    LocalDate.parse("2022-07-02"),
+                    500.0,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    LocalDateTime.now(),
+                    LocalDateTime.now()
+            );
+            final AnalysisResultEntity analysisResult = new AnalysisResultEntity(
+                    4, "code", null, BigDecimal.valueOf(2000),
+                    null, null, null, LocalDate.parse("2022-06-12"), "documentId", null
+            );
+            when(valuationDao.selectAll()).thenReturn(List.of(valuation));
+            when(analysisResultSpecification.findAnalysisResult(4)).thenReturn(Optional.of(analysisResult));
+            when(stockSpecification.findStock("code", LocalDate.parse("2022-07-02"))).thenReturn(Optional.of(stock));
+            when(investmentIndicatorReconciliationService.reconcile("code", List.of(stock), List.of(analysisResult)))
+                    .thenReturn(List.of(new IndicatorValue(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(22.5), LocalDate.now())));
+            when(valuationDao.updateGrahamIndexById(1, BigDecimal.valueOf(22.5))).thenReturn(1);
+
+            assertEquals(1, valuationSpecification.updateNullGrahamIndexFromAnalysisResult());
+            verify(valuationDao, times(1)).updateGrahamIndexById(1, BigDecimal.valueOf(22.5));
         }
     }
 
