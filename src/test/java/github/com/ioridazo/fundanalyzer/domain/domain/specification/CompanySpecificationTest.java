@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -226,51 +228,6 @@ class CompanySpecificationTest {
     }
 
     @Nested
-    @DisplayName("findCompanyByIndustry メソッド")
-    class FindCompanyByIndustry {
-
-        @DisplayName("findCompanyByIndustry : 証券コードを持ち存続する企業のみが返る")
-        @Test
-        void onlyLivedWithCode() {
-            final CompanyEntity lived = livedCompanyEntity("1111", "E0001", 10);
-            final CompanyEntity removed = removedCompanyEntity("2222", "E0002", 10);
-            final CompanyEntity noCode = new CompanyEntity(
-                    null,
-                    "no-code",
-                    10,
-                    "E0003",
-                    null,
-                    null,
-                    null,
-                    null,
-                    "0",
-                    "0",
-                    null,
-                    null,
-                    LocalDateTime.of(2021, 5, 8, 23, 37)
-            );
-            when(companyDao.selectByIndustryId(10)).thenReturn(List.of(lived, removed, noCode));
-            when(industrySpecification.convertFromIdToName(10)).thenReturn("情報・通信業");
-
-            final List<Company> actual = companySpecification.findCompanyByIndustry(10);
-
-            assertEquals(1, actual.size());
-            assertEquals("1111", actual.get(0).code());
-            assertTrue(actual.get(0).lived());
-        }
-
-        @DisplayName("findCompanyByIndustry : 該当データがない場合は空のリストを返す")
-        @Test
-        void empty() {
-            when(companyDao.selectByIndustryId(99)).thenReturn(List.of());
-
-            final List<Company> actual = companySpecification.findCompanyByIndustry(99);
-
-            assertTrue(actual.isEmpty());
-        }
-    }
-
-    @Nested
     @DisplayName("findFavoriteCompanies メソッド")
     class FindFavoriteCompanies {
 
@@ -310,6 +267,24 @@ class CompanySpecificationTest {
             final List<Company> actual = companySpecification.findFavoriteCompanies();
 
             assertTrue(actual.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("industryIdByCode4 メソッド")
+    class IndustryIdByCode4 {
+
+        @DisplayName("industryIdByCode4 : 同一4桁コードが複数ある場合は先勝ちで業種IDを採用する")
+        @Test
+        void firstWinsOnDuplicateCode4() {
+            final Company first = new Company("12340", "A", 10, "業種A", "E1", null, null, null, null, false, false, true);
+            final Company duplicate = new Company("12349", "B", 20, "業種B", "E2", null, null, null, null, false, false, true);
+            final Company other = new Company("56780", "C", 30, "業種C", "E3", null, null, null, null, false, false, true);
+            doReturn(List.of(first, duplicate, other)).when(companySpecification).inquiryAllTargetCompanies();
+
+            final Map<String, Integer> actual = companySpecification.industryIdByCode4();
+
+            assertEquals(Map.of("1234", 10, "5678", 30), actual);
         }
     }
 

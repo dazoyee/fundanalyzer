@@ -165,21 +165,6 @@ public class ViewSpecification {
     }
 
     /**
-     * 産業毎の評価ビューを取得する
-     *
-     * @return 産業毎の評価ビュー
-     */
-    public List<CompanyValuationViewModel> findCompanyValuationViewList(final Integer industryId) {
-        return companySpecification.findCompanyByIndustry(industryId).stream()
-                .map(Company::getCode4)
-                .map(valuationViewDao::selectByCode)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(CompanyValuationViewModel::of)
-                .toList();
-    }
-
-    /**
      * 企業情報ビューを登録・更新する
      *
      * @param viewModel 企業情報ビュー

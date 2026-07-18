@@ -42,6 +42,10 @@ logging:
 management:
   server:
     port: 8989
+  endpoints:
+    web:
+      exposure:
+        include: health,info
   metrics:
     tags:
       application: ${spring.application.name}-dev

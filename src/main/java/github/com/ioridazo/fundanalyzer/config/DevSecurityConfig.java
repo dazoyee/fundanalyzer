@@ -14,7 +14,8 @@ import org.springframework.security.web.SecurityFilterChain;
  *
  * <p>H2 コンソールは iframe を使用するため {@code X-Frame-Options: SAMEORIGIN} を設定し、
  * 独自の CSRF トークン機構を持つため CSRF 保護を無効化する。
- * このチェーンは {@link SecurityConfig} の主チェーン（Order=100）より先に評価される。
+ * このチェーンは {@code @Order(1)} で明示的に優先度を指定しており、
+ * 優先度を指定しない {@link SecurityConfig} の主チェーンより先に評価される。
  */
 @Configuration
 @Profile("dev")

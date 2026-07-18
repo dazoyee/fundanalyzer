@@ -170,8 +170,28 @@ public class CorporateActionSpecification {
      * @return 施行日順の株式アクション一覧
      */
     public List<CorporateAction> findActions(final String companyCode) {
-        final List<ActionCandidate> shareCandidates = extractShareCandidates(companyCode);
-        final List<ActionCandidate> cliffCandidates = extractCliffCandidates(companyCode);
+        return findActionsInternal(
+                companySpecification.findCompanyByCode(companyCode),
+                stockPriceDao.selectByCode(companyCode)
+        );
+    }
+
+    /**
+     * 企業情報に紐づく株式アクション一覧を返す。
+     *
+     * @param company 企業情報
+     * @param stockPrices 取得済み株価一覧
+     * @return 施行日順の株式アクション一覧
+     */
+    public List<CorporateAction> findActions(final Company company, final List<StockPriceEntity> stockPrices) {
+        return findActionsInternal(Optional.of(company), stockPrices);
+    }
+
+    private List<CorporateAction> findActionsInternal(
+            final Optional<Company> company,
+            final List<StockPriceEntity> stockPrices) {
+        final List<ActionCandidate> shareCandidates = extractShareCandidates(company);
+        final List<ActionCandidate> cliffCandidates = extractCliffCandidates(stockPrices);
         final Map<LocalDate, CorporateAction> actions = new LinkedHashMap<>();
 
         for (final ActionCandidate cliffCandidate : cliffCandidates) {
@@ -195,8 +215,8 @@ public class CorporateActionSpecification {
                         Math.abs(cliffCandidate.effectiveDate().toEpochDay() - shareCandidate.referenceDate().toEpochDay())));
     }
 
-    private List<ActionCandidate> extractShareCandidates(final String companyCode) {
-        final List<FinancialStatementEntity> orderedStatements = latestShareStatements(companyCode);
+    private List<ActionCandidate> extractShareCandidates(final Optional<Company> company) {
+        final List<FinancialStatementEntity> orderedStatements = latestShareStatements(company);
         final List<ActionCandidate> candidates = new ArrayList<>();
 
         for (int index = 1; index < orderedStatements.size(); index++) {
@@ -208,8 +228,7 @@ public class CorporateActionSpecification {
         return candidates;
     }
 
-    private List<FinancialStatementEntity> latestShareStatements(final String companyCode) {
-        final Optional<Company> company = companySpecification.findCompanyByCode(companyCode);
+    private List<FinancialStatementEntity> latestShareStatements(final Optional<Company> company) {
         if (company.isEmpty()) {
             return List.of();
         }
@@ -234,8 +253,8 @@ public class CorporateActionSpecification {
                 .toList();
     }
 
-    private List<ActionCandidate> extractCliffCandidates(final String companyCode) {
-        final List<StockPriceEntity> prices = stockPriceDao.selectByCode(companyCode).stream()
+    private List<ActionCandidate> extractCliffCandidates(final List<StockPriceEntity> stockPrices) {
+        final List<StockPriceEntity> prices = stockPrices.stream()
                 .filter(price -> Objects.nonNull(price.getStockPrice()) && price.getStockPrice() > 0.0d)
                 .sorted(Comparator.comparing(StockPriceEntity::getTargetDate))
                 .toList();

@@ -48,7 +48,6 @@ class ManualMobileScreenshotTest {
 
     private static Playwright playwright;
     private static Browser browser;
-    private static String storageState;
 
     /**
      * 出力先ディレクトリを返す。-DupdateBaselines=true 指定時は baseline ディレクトリ、
@@ -58,24 +57,6 @@ class ManualMobileScreenshotTest {
      */
     private static Path outputDir() {
         return UPDATE_BASELINES ? BASELINE_DIR : SHOT_DIR;
-    }
-
-    private static String login(final String baseUrl) {
-        try (BrowserContext ctx = browser.newContext()) {
-            try (Page page = ctx.newPage()) {
-                page.setDefaultNavigationTimeout(15_000);
-                page.navigate(baseUrl + "/login",
-                        new Page.NavigateOptions()
-                                .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED));
-                page.fill("input[name='username']",
-                        System.getProperty("manualScreenshotUser", "admin"));
-                page.fill("input[name='password']",
-                        System.getProperty("manualScreenshotPassword", "fundanalyzer-local-dev"));
-                page.click("button[type='submit']");
-                page.waitForTimeout(2_000);
-            }
-            return ctx.storageState();
-        }
     }
 
     @BeforeAll
@@ -96,7 +77,6 @@ class ManualMobileScreenshotTest {
 
         playwright = Playwright.create();
         browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        storageState = login(BASE);
         outputDir().toFile().mkdirs();
         if (UPDATE_BASELINES) {
             System.out.println("[ManualScreenshot] -DupdateBaselines=true: 出力先を " + BASELINE_DIR + " に切り替え");
@@ -142,8 +122,7 @@ class ManualMobileScreenshotTest {
     @Test
     @DisplayName("index 画面 mobile 390x844 のフルページスクショを撮る")
     void shootIndexMobile() throws Exception {
-        try (BrowserContext ctx = browser.newContext(
-                new Browser.NewContextOptions().setStorageState(storageState));
+        try (BrowserContext ctx = browser.newContext();
              Page page = ctx.newPage()) {
             page.setViewportSize(390, 844);
             page.setDefaultNavigationTimeout(15_000);
@@ -166,8 +145,7 @@ class ManualMobileScreenshotTest {
     @Test
     @DisplayName("index 画面 desktop 1280x800 のフルページスクショを撮る")
     void shootIndexDesktop() throws Exception {
-        try (BrowserContext ctx = browser.newContext(
-                new Browser.NewContextOptions().setStorageState(storageState));
+        try (BrowserContext ctx = browser.newContext();
              Page page = ctx.newPage()) {
             page.setViewportSize(1280, 800);
             page.setDefaultNavigationTimeout(15_000);
@@ -196,8 +174,7 @@ class ManualMobileScreenshotTest {
     }
 
     private void shootViewport(final String label, final String path, final int width, final int height, final String viewport) throws Exception {
-        try (BrowserContext ctx = browser.newContext(
-                new Browser.NewContextOptions().setStorageState(storageState));
+        try (BrowserContext ctx = browser.newContext();
              Page page = ctx.newPage()) {
             page.setViewportSize(width, height);
             page.setDefaultNavigationTimeout(15_000);

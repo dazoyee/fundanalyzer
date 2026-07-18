@@ -596,6 +596,29 @@ class AnalysisResultSpecificationTest {
             assertSame(entity, actual.get(0));
         }
 
+        @DisplayName("findAnalysisResults : DAO の結果をそのまま返却する")
+        @Test
+        void findAnalysisResults() {
+            final AnalysisResultEntity entity = new AnalysisResultEntity(
+                    1, "code", LocalDate.parse("2020-06-30"), BigDecimal.valueOf(500),
+                    null, "120", "4", LocalDate.now(), null, null);
+            when(analysisResultDao.selectByIds(List.of(1, 2))).thenReturn(List.of(entity));
+
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.findAnalysisResults(List.of(1, 2));
+
+            assertEquals(1, actual.size());
+            assertSame(entity, actual.get(0));
+        }
+
+        @DisplayName("findAnalysisResults : 空リストなら DAO を呼ばず空を返す")
+        @Test
+        void findAnalysisResultsEmpty() {
+            final List<AnalysisResultEntity> actual = analysisResultSpecification.findAnalysisResults(List.of());
+
+            assertTrue(actual.isEmpty());
+            verify(analysisResultDao, never()).selectByIds(any());
+        }
+
         @DisplayName("countAll : DAO の件数をそのまま返却する")
         @Test
         void countAll() {

@@ -48,6 +48,26 @@ import static org.mockito.Mockito.when;
 
 class ValuationSpecificationTest {
 
+    private static ValuationEntity valuationEntity(final LocalDate targetDate, final LocalDate submitDate) {
+        return new ValuationEntity(
+                null,
+                "code",
+                submitDate,
+                targetDate,
+                null,
+                BigDecimal.TEN,
+                null,
+                BigDecimal.TEN,
+                (long) 10,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                BigDecimal.TEN,
+                null,
+                null
+        );
+    }
+
     private ValuationDao valuationDao;
     private CompanySpecification companySpecification;
     private StockSpecification stockSpecification;
@@ -89,6 +109,18 @@ class ValuationSpecificationTest {
             assertEquals(42, valuationSpecification.countAll());
         }
 
+        @DisplayName("findAllValuationEntities : DAO の結果をそのまま返却する")
+        @Test
+        void findAllValuationEntities() {
+            final ValuationEntity entity = valuationEntity(LocalDate.parse("2022-07-09"), LocalDate.parse("2022-07-01"));
+            when(valuationDao.selectAll()).thenReturn(List.of(entity));
+
+            final List<ValuationEntity> actual = valuationSpecification.findAllValuationEntities();
+
+            assertEquals(1, actual.size());
+            assertEquals(entity, actual.get(0));
+        }
+
         @DisplayName("updateDerivedValuesFromAnalysisResult : DAO の更新件数をそのまま返却する")
         @Test
         void updateDerivedValuesFromAnalysisResult() {
@@ -101,26 +133,6 @@ class ValuationSpecificationTest {
 
     @Nested
     class findValuationView {
-
-        private ValuationEntity valuationEntity(LocalDate targetDate, LocalDate submitDate) {
-            return new ValuationEntity(
-                    null,
-                    "code",
-                    submitDate,
-                    targetDate,
-                    null,
-                    BigDecimal.TEN,
-                    null,
-                    BigDecimal.TEN,
-                    (long) 10,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    BigDecimal.TEN,
-                    null,
-                    null
-            );
-        }
 
         @DisplayName("findAllValuationView : 企業ごとの評価結果を取得する")
         @Test

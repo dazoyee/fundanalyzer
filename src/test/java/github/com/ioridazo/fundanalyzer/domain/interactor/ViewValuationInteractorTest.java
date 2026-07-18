@@ -318,8 +318,7 @@ class ViewValuationInteractorTest {
         @DisplayName("findGrahamIndustryZScore : 全対象企業の業種と評価ビューから業種内zスコアを返す")
         @Test
         void returnsZScoreByCode() {
-            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(
-                    company("1234", 1), company("5678", 1), company("9012", 1)));
+            when(companySpecification.industryIdByCode4()).thenReturn(Map.of("1234", 1, "5678", 1, "9012", 1));
             doReturn(List.of(
                     cvvm("1234", BigDecimal.valueOf(10)),
                     cvvm("5678", BigDecimal.valueOf(20)),
@@ -339,7 +338,4 @@ class ViewValuationInteractorTest {
                 code, code, null, null, grahamIndex, null, null, null, null, null, null, null, null, null, null);
     }
 
-    private static Company company(final String code, final Integer industryId) {
-        return new Company(code, code, industryId, "業種", "E" + code, null, null, null, null, false, false, true);
-    }
 }

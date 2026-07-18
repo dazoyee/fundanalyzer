@@ -18,7 +18,9 @@ import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class CompanySpecification {
@@ -73,20 +75,6 @@ public class CompanySpecification {
         return companyDao.maxUpdatedAt().stream()
                 .map(dateTime -> dateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")))
                 .findFirst();
-    }
-
-    /**
-     * 企業情報を取得する
-     *
-     * @param industryId 業種ID
-     * @return 企業情報リスト
-     */
-    public List<Company> findCompanyByIndustry(final Integer industryId) {
-        return companyDao.selectByIndustryId(industryId).stream()
-                .filter(entity -> entity.getCode().isPresent())
-                .map(entity -> Company.of(entity, industrySpecification.convertFromIdToName(entity.getIndustryId())))
-                .filter(Company::lived)
-                .toList();
     }
 
     /**
@@ -204,6 +192,19 @@ public class CompanySpecification {
     @Cacheable(CACHE_KEY_ALL_TARGET_COMPANIES)
     public List<Company> inquiryAllTargetCompanies() {
         return findAllTargetCompanies();
+    }
+
+    /**
+     * 処理対象企業から 4 桁コード→業種ID のマップを構築する。
+     *
+     * <p>同一の 4 桁コードを持つ企業が複数存在する場合は、{@link #inquiryAllTargetCompanies()} の走査順で
+     * 最初に現れた企業の業種IDを採用する。
+     *
+     * @return 4桁コード→業種ID
+     */
+    public Map<String, Integer> industryIdByCode4() {
+        return inquiryAllTargetCompanies().stream()
+                .collect(Collectors.toMap(Company::getCode4, Company::industryId, (existing, ignored) -> existing));
     }
 
     @CachePut(CACHE_KEY_ALL_TARGET_COMPANIES)

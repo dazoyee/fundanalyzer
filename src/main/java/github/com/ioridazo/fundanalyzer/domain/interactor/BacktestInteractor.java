@@ -27,7 +27,9 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * バックテスト集計結果を構築する。
@@ -69,18 +71,23 @@ public class BacktestInteractor implements BacktestUseCase {
     public BacktestResult backtest() {
         final List<EpisodeOutcome> outcomes = new ArrayList<>();
         final EnumMap<Horizon, long[]> exclusions = initializeExclusions();
+        final List<Company> companies = companySpecification.inquiryAllTargetCompanies();
+        final List<ValuationEntity> allValuations = valuationSpecification.findAllValuationEntities();
+        final Map<String, List<ValuationEntity>> valuationsByCode = allValuations.stream()
+                .collect(Collectors.groupingBy(ValuationEntity::getCompanyCode));
+        final Map<Integer, BigDecimal> corporateValuesByAnalysisResultId =
+                buildCorporateValuesByAnalysisResultId(allValuations);
 
-        for (final Company company : companySpecification.inquiryAllTargetCompanies()) {
-            final List<ValuationEntity> valuations = valuationSpecification.findAllValuationEntities(company.code());
+        for (final Company company : companies) {
+            final List<ValuationEntity> valuations = valuationsByCode.getOrDefault(company.code(), List.of());
             if (valuations.isEmpty()) {
                 continue;
             }
 
             final List<StockPriceEntity> stocks = stockSpecification.findEntityList(company.code());
             final List<CorporateActionSpecification.CorporateAction> actions =
-                    corporateActionSpecification.findActions(company.code());
+                    corporateActionSpecification.findActions(company, stocks);
             final List<ValuationEntity> representativeValuations = selectRepresentativeValuations(valuations);
-            final Map<Integer, Optional<BigDecimal>> analysisResultCache = new HashMap<>();
 
             for (final ValuationEntity valuation : representativeValuations) {
                 final BigDecimal adjustedJudgePrice = valuation.getStockPrice();
@@ -89,7 +96,10 @@ public class BacktestInteractor implements BacktestUseCase {
                     continue;
                 }
 
-                final Optional<BigDecimal> corporateValue = resolveCorporateValue(valuation, analysisResultCache);
+                final Optional<BigDecimal> corporateValue = resolveCorporateValue(
+                        valuation,
+                        corporateValuesByAnalysisResultId
+                );
                 final LocalDate judgeDate = valuation.getTargetDate();
                 final LocalDate submitBasis = valuation.getSubmitDate();
 
@@ -156,17 +166,31 @@ public class BacktestInteractor implements BacktestUseCase {
                 .toList();
     }
 
-    private Optional<BigDecimal> resolveCorporateValue(
-            final ValuationEntity valuation, final Map<Integer, Optional<BigDecimal>> analysisResultCache) {
-        final Integer analysisResultId = valuation.getAnalysisResultId();
-        if (!analysisResultCache.containsKey(analysisResultId)) {
-            final Optional<BigDecimal> corporateValue = analysisResultId == null
-                    ? Optional.empty()
-                    : analysisResultSpecification.findAnalysisResult(analysisResultId)
-                            .map(AnalysisResultEntity::getCorporateValue);
-            analysisResultCache.put(analysisResultId, corporateValue);
+    private Map<Integer, BigDecimal> buildCorporateValuesByAnalysisResultId(final List<ValuationEntity> valuations) {
+        final List<Integer> analysisResultIds = valuations.stream()
+                .map(ValuationEntity::getAnalysisResultId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (analysisResultIds.isEmpty()) {
+            return Map.of();
         }
-        return analysisResultCache.getOrDefault(analysisResultId, Optional.empty());
+        return analysisResultSpecification.findAnalysisResults(analysisResultIds).stream()
+                .filter(entity -> entity.getId() != null)
+                .collect(Collectors.toMap(
+                        AnalysisResultEntity::getId,
+                        AnalysisResultEntity::getCorporateValue,
+                        (left, right) -> left
+                ));
+    }
+
+    private Optional<BigDecimal> resolveCorporateValue(
+            final ValuationEntity valuation, final Map<Integer, BigDecimal> corporateValuesByAnalysisResultId) {
+        final Integer analysisResultId = valuation.getAnalysisResultId();
+        if (analysisResultId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(corporateValuesByAnalysisResultId.get(analysisResultId));
     }
 
     private Optional<StockPriceEntity> findMatchedStockPrice(

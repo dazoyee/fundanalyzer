@@ -20,16 +20,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -72,7 +71,9 @@ class BacktestInteractorTest {
         );
         interactor.matchToleranceDays = 7;
 
-        when(corporateActionSpecification.findActions(any())).thenReturn(List.of());
+        when(valuationSpecification.findAllValuationEntities()).thenReturn(List.of());
+        when(analysisResultSpecification.findAnalysisResults(anyList())).thenReturn(List.of());
+        when(corporateActionSpecification.findActions(any(Company.class), anyList())).thenReturn(List.of());
         when(corporateActionSpecification.adjustToBasisWithActions(any(), any(), any(), any(), eq(true)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -86,6 +87,7 @@ class BacktestInteractorTest {
         void singleEpisodeAcrossHorizons() {
             final Company company = company("10000", "Tech", true);
             final ValuationEntity valuation = valuation(
+                    "10000",
                     LocalDate.parse("2024-01-01"),
                     LocalDate.parse("2024-01-10"),
                     BigDecimal.valueOf(100),
@@ -100,7 +102,6 @@ class BacktestInteractorTest {
             );
 
             stubCompanyScenario(company, List.of(valuation), stocks);
-            when(analysisResultSpecification.findAnalysisResult(10)).thenReturn(Optional.empty());
 
             final BacktestResult actual = interactor.backtest();
 
@@ -120,6 +121,7 @@ class BacktestInteractorTest {
         void missingForLivedCompany() {
             final Company company = company("10000", "Tech", true);
             final ValuationEntity valuation = valuation(
+                    "10000",
                     LocalDate.parse("2024-01-01"),
                     LocalDate.parse("2024-01-10"),
                     BigDecimal.valueOf(100),
@@ -129,7 +131,6 @@ class BacktestInteractorTest {
             );
 
             stubCompanyScenario(company, List.of(valuation), List.of());
-            when(analysisResultSpecification.findAnalysisResult(10)).thenReturn(Optional.empty());
 
             final BacktestResult actual = interactor.backtest();
 
@@ -147,6 +148,7 @@ class BacktestInteractorTest {
         void delistedForNonLivedCompany() {
             final Company company = company("10000", "Tech", false);
             final ValuationEntity valuation = valuation(
+                    "10000",
                     LocalDate.parse("2024-01-01"),
                     LocalDate.parse("2024-01-10"),
                     BigDecimal.valueOf(100),
@@ -156,7 +158,6 @@ class BacktestInteractorTest {
             );
 
             stubCompanyScenario(company, List.of(valuation), List.of());
-            when(analysisResultSpecification.findAnalysisResult(10)).thenReturn(Optional.empty());
 
             final BacktestResult actual = interactor.backtest();
 
@@ -174,6 +175,7 @@ class BacktestInteractorTest {
         void computesConvergence() {
             final Company company = company("10000", "Tech", true);
             final ValuationEntity valuation = valuation(
+                    "10000",
                     LocalDate.parse("2024-01-01"),
                     LocalDate.parse("2024-01-10"),
                     BigDecimal.valueOf(100),
@@ -187,7 +189,7 @@ class BacktestInteractorTest {
                     stock(LocalDate.parse("2025-01-09"), 125.0)
             );
             stubCompanyScenario(company, List.of(valuation), stocks);
-            when(analysisResultSpecification.findAnalysisResult(10)).thenReturn(Optional.of(analysisResult(
+            when(analysisResultSpecification.findAnalysisResults(List.of(10))).thenReturn(List.of(analysisResult(
                     10,
                     "10000",
                     BigDecimal.valueOf(150)
@@ -197,7 +199,7 @@ class BacktestInteractorTest {
 
             assertEquals(3, actual.horizons().size());
             assertEquals(0.6, actual.horizons().get(0).buckets().get(0).avgConvergence(), DELTA);
-            verify(analysisResultSpecification, times(1)).findAnalysisResult(10);
+            verify(analysisResultSpecification).findAnalysisResults(List.of(10));
         }
 
         @Test
@@ -206,6 +208,7 @@ class BacktestInteractorTest {
             final Company tech = company("10000", "Tech", true);
             final Company retail = company("20000", "Retail", true);
             final ValuationEntity techValuation = valuation(
+                    "10000",
                     LocalDate.parse("2024-01-01"),
                     LocalDate.parse("2024-01-10"),
                     BigDecimal.valueOf(100),
@@ -214,6 +217,7 @@ class BacktestInteractorTest {
                     10
             );
             final ValuationEntity retailValuation = valuation(
+                    "20000",
                     LocalDate.parse("2024-02-01"),
                     LocalDate.parse("2024-02-10"),
                     BigDecimal.valueOf(100),
@@ -221,10 +225,10 @@ class BacktestInteractorTest {
                     0,
                     20
             );
+            final List<ValuationEntity> valuations = List.of(techValuation, retailValuation);
 
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(tech, retail));
-            when(valuationSpecification.findAllValuationEntities("10000")).thenReturn(List.of(techValuation));
-            when(valuationSpecification.findAllValuationEntities("20000")).thenReturn(List.of(retailValuation));
+            when(valuationSpecification.findAllValuationEntities()).thenReturn(valuations);
             when(stockSpecification.findEntityList("10000")).thenReturn(List.of(
                     stock(LocalDate.parse("2024-04-09"), 110.0),
                     stock(LocalDate.parse("2024-07-08"), 120.0),
@@ -235,10 +239,8 @@ class BacktestInteractorTest {
                     stock(LocalDate.parse("2024-08-08"), 80.0),
                     stock(LocalDate.parse("2025-02-10"), 70.0)
             ));
-            when(corporateActionSpecification.findActions("10000")).thenReturn(List.of());
-            when(corporateActionSpecification.findActions("20000")).thenReturn(List.of());
-            when(analysisResultSpecification.findAnalysisResult(10)).thenReturn(Optional.empty());
-            when(analysisResultSpecification.findAnalysisResult(20)).thenReturn(Optional.empty());
+            when(corporateActionSpecification.findActions(eq(tech), anyList())).thenReturn(List.of());
+            when(corporateActionSpecification.findActions(eq(retail), anyList())).thenReturn(List.of());
 
             final BacktestResult actual = interactor.backtest();
 
@@ -260,9 +262,9 @@ class BacktestInteractorTest {
             final List<ValuationEntity> valuations,
             final List<StockPriceEntity> stocks) {
         when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
-        when(valuationSpecification.findAllValuationEntities(company.code())).thenReturn(valuations);
+        when(valuationSpecification.findAllValuationEntities()).thenReturn(valuations);
         when(stockSpecification.findEntityList(company.code())).thenReturn(stocks);
-        when(corporateActionSpecification.findActions(company.code())).thenReturn(List.of());
+        when(corporateActionSpecification.findActions(eq(company), anyList())).thenReturn(List.of());
     }
 
     private static Company company(final String code, final String industryName, final boolean lived) {
@@ -270,6 +272,7 @@ class BacktestInteractorTest {
     }
 
     private static ValuationEntity valuation(
+            final String companyCode,
             final LocalDate submitDate,
             final LocalDate targetDate,
             final BigDecimal stockPrice,
@@ -278,7 +281,7 @@ class BacktestInteractorTest {
             final Integer analysisResultId) {
         return new ValuationEntity(
                 1,
-                "10000",
+                companyCode,
                 submitDate,
                 targetDate,
                 null,

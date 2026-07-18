@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
@@ -13,12 +14,12 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,14 +27,16 @@ import static org.mockito.Mockito.when;
 class DistributionInteractorTest {
 
     private ViewSpecification viewSpecification;
+    private CompanySpecification companySpecification;
     private IndustrySpecification industrySpecification;
     private DistributionInteractor interactor;
 
     @BeforeEach
     void setUp() {
         viewSpecification = mock(ViewSpecification.class);
+        companySpecification = mock(CompanySpecification.class);
         industrySpecification = mock(IndustrySpecification.class);
-        interactor = new DistributionInteractor(viewSpecification, industrySpecification);
+        interactor = new DistributionInteractor(viewSpecification, companySpecification, industrySpecification);
         interactor.discountBins = List.of(
                 BigDecimal.valueOf(100),
                 BigDecimal.valueOf(120),
@@ -62,45 +65,44 @@ class DistributionInteractorTest {
             final IndustryEntity nonTarget = new IndustryEntity(3, "対象外業種", null);
 
             when(viewSpecification.findAllCompanyValuationView()).thenReturn(List.of(
-                    valuation("1000", BigDecimal.valueOf(0.9), BigDecimal.valueOf(5)),
-                    valuation("1001", BigDecimal.valueOf(1.2), null),
-                    valuation("1002", null, BigDecimal.valueOf(30)),
-                    valuation("1003", BigDecimal.valueOf(2.5), BigDecimal.valueOf(80))
+                    valuation("2000", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10)),
+                    valuation("2001", BigDecimal.valueOf(1.3), null),
+                    valuation("2002", BigDecimal.valueOf(2.0), BigDecimal.valueOf(30)),
+                    valuation("3000", BigDecimal.valueOf(1.5), BigDecimal.valueOf(20)),
+                    valuation("3001", BigDecimal.valueOf(1.6), BigDecimal.valueOf(40))
             ));
             when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(
                     targetIncluded, targetExcludedBySize, nonTarget
             ));
+            when(companySpecification.industryIdByCode4()).thenReturn(Map.of(
+                    "2000", 1,
+                    "2001", 1,
+                    "2002", 1,
+                    "3000", 2,
+                    "3001", 2
+            ));
             when(industrySpecification.isTarget(1)).thenReturn(true);
             when(industrySpecification.isTarget(2)).thenReturn(true);
             when(industrySpecification.isTarget(3)).thenReturn(false);
-            when(viewSpecification.findCompanyValuationViewList(1)).thenReturn(List.of(
-                    valuation("2000", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10)),
-                    valuation("2001", BigDecimal.valueOf(1.3), null),
-                    valuation("2002", BigDecimal.valueOf(2.0), BigDecimal.valueOf(30))
-            ));
-            when(viewSpecification.findCompanyValuationViewList(2)).thenReturn(List.of(
-                    valuation("3000", BigDecimal.valueOf(1.5), BigDecimal.valueOf(20)),
-                    valuation("3001", BigDecimal.valueOf(1.6), BigDecimal.valueOf(40))
-            ));
 
             final DistributionResult actual = interactor.distribution();
 
             assertAll(
                     () -> assertEquals(6, actual.discountHistogram().size()),
                     () -> assertEquals(6, actual.grahamHistogram().size()),
-                    () -> assertEquals(1L, actual.discountHistogram().get(0).count()),
-                    () -> assertEquals(0L, actual.discountHistogram().get(1).count()),
+                    () -> assertEquals(0L, actual.discountHistogram().get(0).count()),
+                    () -> assertEquals(1L, actual.discountHistogram().get(1).count()),
                     () -> assertEquals(1L, actual.discountHistogram().get(2).count()),
-                    () -> assertEquals(0L, actual.discountHistogram().get(3).count()),
+                    () -> assertEquals(2L, actual.discountHistogram().get(3).count()),
                     () -> assertEquals(1L, actual.discountHistogram().get(4).count()),
                     () -> assertEquals(0L, actual.discountHistogram().get(5).count()),
-                    () -> assertEquals(1L, actual.grahamHistogram().get(0).count()),
-                    () -> assertEquals(0L, actual.grahamHistogram().get(1).count()),
-                    () -> assertEquals(0L, actual.grahamHistogram().get(2).count()),
+                    () -> assertEquals(0L, actual.grahamHistogram().get(0).count()),
+                    () -> assertEquals(1L, actual.grahamHistogram().get(1).count()),
+                    () -> assertEquals(1L, actual.grahamHistogram().get(2).count()),
                     () -> assertEquals(1L, actual.grahamHistogram().get(3).count()),
-                    () -> assertEquals(0L, actual.grahamHistogram().get(4).count()),
-                    () -> assertEquals(1L, actual.grahamHistogram().get(5).count()),
-                    () -> assertEquals(120.0, actual.discountMedian()),
+                    () -> assertEquals(1L, actual.grahamHistogram().get(4).count()),
+                    () -> assertEquals(0L, actual.grahamHistogram().get(5).count()),
+                    () -> assertEquals(150.0, actual.discountMedian()),
                     () -> assertEquals(1, actual.industries().size()),
                     () -> assertEquals("対象業種A", actual.industries().get(0).industryName()),
                     () -> assertEquals(130.0, actual.industries().get(0).discountMedian()),
@@ -112,10 +114,8 @@ class DistributionInteractorTest {
             );
 
             verify(viewSpecification).findAllCompanyValuationView();
+            verify(companySpecification).industryIdByCode4();
             verify(industrySpecification).inquiryIndustryList();
-            verify(viewSpecification).findCompanyValuationViewList(1);
-            verify(viewSpecification).findCompanyValuationViewList(2);
-            verify(viewSpecification, never()).findCompanyValuationViewList(3);
         }
     }
 

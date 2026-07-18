@@ -24,6 +24,9 @@ public interface ValuationDao {
     List<ValuationEntity> selectByCode(String code);
 
     @Select
+    List<ValuationEntity> selectAll();
+
+    @Select
     List<ValuationEntity> selectByCodeAndSubmitDate(String code, LocalDate submitDate);
 
     /**

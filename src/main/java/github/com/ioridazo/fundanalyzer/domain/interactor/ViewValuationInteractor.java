@@ -91,11 +91,7 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
      */
     @Override
     public Map<String, BigDecimal> findGrahamIndustryZScore() {
-        final Map<String, Integer> industryByCode = companySpecification.inquiryAllTargetCompanies().stream()
-                .filter(company -> company.code() != null)
-                // 同一の4桁コードが複数存在する場合は最初に出現した業種IDを採用する
-                .collect(Collectors.toMap(Company::getCode4, Company::industryId, (existing, ignored) -> existing));
-        return computeGrahamIndustryZScore(viewAllValuation(), industryByCode);
+        return computeGrahamIndustryZScore(viewAllValuation(), companySpecification.industryIdByCode4());
     }
 
     /**

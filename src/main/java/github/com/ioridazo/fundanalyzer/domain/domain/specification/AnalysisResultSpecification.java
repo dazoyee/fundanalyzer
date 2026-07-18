@@ -65,6 +65,19 @@ public class AnalysisResultSpecification {
     }
 
     /**
+     * 分析結果を一括取得する
+     *
+     * @param ids ID リスト
+     * @return 分析結果
+     */
+    public List<AnalysisResultEntity> findAnalysisResults(final List<Integer> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return analysisResultDao.selectByIds(ids);
+    }
+
+    /**
      * 最新の分析結果を取得する
      *
      * @param companyCode 企業コード
