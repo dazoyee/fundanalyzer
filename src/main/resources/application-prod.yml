@@ -10,7 +10,9 @@ server:
 spring:
   datasource:
     # DB 資格情報は環境変数で必須化（フォールバックなし → 未設定なら起動失敗で検知）。release/env に DB_USERNAME / DB_PASSWORD を設定する。
-    url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=Asia/Tokyo
+    # connectTimeout/socketTimeout: 死んだTCP接続での無限読み待ちを防ぐ（Connector/J の既定は無限のため、
+    # DB側の瞬断で業務スレッドが永久にブロックする）。socketTimeout は正当な最長クエリを十分上回る値にする
+    url: jdbc:mysql://localhost:3306/fundanalyzer?serverTimezone=Asia/Tokyo&connectTimeout=10000&socketTimeout=180000
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driverClassName: com.mysql.cj.jdbc.Driver
