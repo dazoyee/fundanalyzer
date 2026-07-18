@@ -21,6 +21,8 @@ public class RestClientProperties {
 
         private String baseUri;
 
+        private String userAgent;
+
         private Duration connectTimeout;
 
         private Duration readTimeout;
