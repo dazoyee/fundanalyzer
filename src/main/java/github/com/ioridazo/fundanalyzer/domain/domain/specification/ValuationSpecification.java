@@ -112,6 +112,15 @@ public class ValuationSpecification {
     }
 
     /**
+     * 全企業の評価エンティティを取得する（重複排除なし）。
+     *
+     * @return 評価エンティティリスト（重複あり）
+     */
+    public List<ValuationEntity> findAllValuationEntities() {
+        return valuationDao.selectAll();
+    }
+
+    /**
      * 評価結果を取得する
      *
      * @param companyCode 企業コード

@@ -21,6 +21,9 @@ public interface AnalysisResultDao {
     @Select
     Optional<AnalysisResultEntity> selectById(Integer id);
 
+    @Select
+    List<AnalysisResultEntity> selectByIds(List<Integer> ids);
+
     /**
      * 全件取得する（係数一括再計算バッチの走査対象）。
      *
