@@ -3,8 +3,11 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.RecalculationPreview;
 import github.com.ioridazo.fundanalyzer.domain.value.RecalculationResult;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpPreview;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpResult;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -28,6 +31,7 @@ class AnalysisControllerTest {
     private AnalysisService analysisService;
     private ViewService viewService;
     private AnalyzeUseCase analyzeUseCase;
+    private ValuationUseCase valuationUseCase;
 
     private AnalysisController controller;
 
@@ -36,12 +40,14 @@ class AnalysisControllerTest {
         analysisService = Mockito.mock(AnalysisService.class);
         viewService = Mockito.mock(ViewService.class);
         analyzeUseCase = Mockito.mock(AnalyzeUseCase.class);
+        valuationUseCase = Mockito.mock(ValuationUseCase.class);
 
         controller = new AnalysisController(
                 analysisService,
                 viewService,
                 Mockito.mock(MessageSource.class),
-                analyzeUseCase
+                analyzeUseCase,
+                valuationUseCase
         );
     }
 
@@ -131,6 +137,33 @@ class AnalysisControllerTest {
                 "係数一括再計算完了: target=10, updated=3, skipped=6, failed=1, valuationUpdated=4",
                 UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
         Mockito.verify(viewService, Mockito.times(1)).updateCorporateView();
+        Mockito.verify(viewService, Mockito.times(1)).updateValuationView();
+    }
+
+    @DisplayName("previewValuationCatchUp : catch-up 対象会社数を確認する")
+    @Test
+    void previewValuationCatchUp() {
+        Mockito.when(valuationUseCase.previewCatchUp()).thenReturn(new ValuationCatchUpPreview(7));
+
+        var actual = UriComponentsBuilder.fromUriString(controller.previewValuationCatchUp()).build();
+
+        assertEquals("/v3/index", actual.getPath());
+        assertEquals(
+                "valuation catch-up 対象会社数: 7件",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
+    }
+
+    @DisplayName("catchUpValuation : catch-up を実行する")
+    @Test
+    void catchUpValuation() {
+        Mockito.when(valuationUseCase.catchUp()).thenReturn(new ValuationCatchUpResult(7, 12, 1));
+
+        var actual = UriComponentsBuilder.fromUriString(controller.catchUpValuation()).build();
+
+        assertEquals("/v3/index", actual.getPath());
+        assertEquals(
+                "valuation catch-up 完了: targetCompany=7, advanced=12, unresolvedCompany=1",
+                UriUtils.decode(Objects.requireNonNull(actual.getQueryParams().getFirst("message")), "UTF-8"));
         Mockito.verify(viewService, Mockito.times(1)).updateValuationView();
     }
 }

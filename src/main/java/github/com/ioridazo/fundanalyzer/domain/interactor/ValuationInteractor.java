@@ -12,16 +12,20 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecifi
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpPreview;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -34,6 +38,10 @@ public class ValuationInteractor implements ValuationUseCase {
     private final AnalysisResultSpecification analysisResultSpecification;
     private final StockSpecification stockSpecification;
     private final ValuationSpecification valuationSpecification;
+    @Value("${app.config.valuation.forward-snap-limit-days:45}")
+    int forwardSnapLimitDays = 45;
+    @Value("${app.config.valuation.catch-up-max-iterations:60}")
+    int catchUpMaxIterations = 60;
 
     public ValuationInteractor(
             final CompanySpecification companySpecification,
@@ -66,35 +74,20 @@ public class ValuationInteractor implements ValuationUseCase {
     public boolean evaluate(final CodeInputData inputData) {
         final long startTime = System.currentTimeMillis();
         try {
-            final String companyCode = inputData.getCode();
-            final Optional<AnalysisResultEntity> latestAnalysisResult = analysisResultSpecification.findLatestAnalysisResult(companyCode);
+            final Optional<EvaluationTarget> evaluationTarget = resolveEvaluationTarget(inputData.getCode());
 
-            if (latestAnalysisResult.isPresent()) {
-                final LocalDate targetDate =
-                        valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.get().getSubmitDate())
-                                // 最新の評価した対象日を取得
-                                .map(ValuationEntity::getTargetDate)
-                                .map(td -> generateValuationDate(td, latestAnalysisResult.get().getSubmitDate()))
-                                // 過去の評価から1ヶ月後を対象日付とする
-                                .map(td -> td.plusMonths(1))
-                                // はじめての評価ならば提出日を対象日付とする
-                                .orElseGet(() -> latestAnalysisResult.get().getSubmitDate());
+            if (evaluationTarget.isPresent() && evaluationTarget.get().stock().isPresent()) {
+                valuationSpecification.insert(evaluationTarget.get().stock().get(), evaluationTarget.get().analysisResult());
 
-                final Optional<StockPriceEntity> targetStock = findPresentStock(companyCode, targetDate);
+                log.trace(FundanalyzerLogClient.toInteractorLogObject(
+                        MessageFormat.format("株価を評価しました。\t企業コード:{0}", inputData.getCode()),
+                        companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
+                        Category.STOCK,
+                        Process.EVALUATE,
+                        System.currentTimeMillis() - startTime
+                ));
 
-                if (targetStock.isPresent()) {
-                    valuationSpecification.insert(targetStock.get(), latestAnalysisResult.get());
-
-                    log.trace(FundanalyzerLogClient.toInteractorLogObject(
-                            MessageFormat.format("株価を評価しました。\t企業コード:{0}", inputData.getCode()),
-                            companySpecification.findCompanyByCode(inputData.getCode()).map(Company::edinetCode).orElse("null"),
-                            Category.STOCK,
-                            Process.EVALUATE,
-                            System.currentTimeMillis() - startTime
-                    ));
-
-                    return true;
-                }
+                return true;
             }
 
             log.trace(FundanalyzerLogClient.toInteractorLogObject(
@@ -121,6 +114,43 @@ public class ValuationInteractor implements ValuationUseCase {
             ), e);
         }
         return false;
+    }
+
+    @Override
+    public ValuationCatchUpPreview previewCatchUp() {
+        final int targetCompanyCount = (int) companySpecification.inquiryAllTargetCompanies().stream()
+                .map(Company::code)
+                .map(this::resolveEvaluationTarget)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(this::isCatchUpTarget)
+                .count();
+        return new ValuationCatchUpPreview(targetCompanyCount);
+    }
+
+    @Override
+    public ValuationCatchUpResult catchUp() {
+        final List<EvaluationTarget> targetCompanies = companySpecification.inquiryAllTargetCompanies().stream()
+                .map(Company::code)
+                .map(this::resolveEvaluationTarget)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(this::isCatchUpTarget)
+                .toList();
+        int advancedCount = 0;
+        int unresolvedCompanyCount = 0;
+
+        for (final EvaluationTarget target : targetCompanies) {
+            int count = 0;
+            while (count < catchUpMaxIterations && evaluate(CodeInputData.of(target.companyCode()))) {
+                advancedCount++;
+                count++;
+            }
+            if (isUnresolved(target.companyCode())) {
+                unresolvedCompanyCount++;
+            }
+        }
+        return new ValuationCatchUpResult(targetCompanies.size(), advancedCount, unresolvedCompanyCount);
     }
 
     /**
@@ -186,6 +216,55 @@ public class ValuationInteractor implements ValuationUseCase {
             }
             i++;
         }
-        return Optional.empty();
+        return stockSpecification.findFirstStockFromDate(
+                companyCode,
+                targetDate,
+                targetDate.plusDays(forwardSnapLimitDays));
+    }
+
+    private Optional<EvaluationTarget> resolveEvaluationTarget(final String companyCode) {
+        return analysisResultSpecification.findLatestAnalysisResult(companyCode)
+                .map(analysisResult -> {
+                    final LocalDate targetDate = nextTargetDate(companyCode, analysisResult);
+                    return new EvaluationTarget(
+                            companyCode,
+                            analysisResult,
+                            targetDate,
+                            findPresentStock(companyCode, targetDate)
+                    );
+                });
+    }
+
+    private LocalDate nextTargetDate(final String companyCode, final AnalysisResultEntity latestAnalysisResult) {
+        return valuationSpecification.findLatestValuation(companyCode, latestAnalysisResult.getSubmitDate())
+                .map(ValuationEntity::getTargetDate)
+                .map(td -> generateValuationDate(td, latestAnalysisResult.getSubmitDate()))
+                .map(td -> td.plusMonths(1))
+                .orElseGet(latestAnalysisResult::getSubmitDate);
+    }
+
+    private boolean isCatchUpTarget(final EvaluationTarget target) {
+        return latestStockDate(target.companyCode())
+                .map(latestStockDate -> !latestStockDate.isBefore(target.targetDate()))
+                .orElse(false);
+    }
+
+    private boolean isUnresolved(final String companyCode) {
+        return resolveEvaluationTarget(companyCode)
+                .filter(this::isCatchUpTarget)
+                .filter(target -> target.stock().isEmpty())
+                .isPresent();
+    }
+
+    private Optional<LocalDate> latestStockDate(final String companyCode) {
+        return stockSpecification.findLatestStock(companyCode)
+                .map(StockPriceEntity::getTargetDate);
+    }
+
+    private record EvaluationTarget(
+            String companyCode,
+            AnalysisResultEntity analysisResult,
+            LocalDate targetDate,
+            Optional<StockPriceEntity> stock) {
     }
 }

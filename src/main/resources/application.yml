@@ -211,6 +211,10 @@ app:
       corporate.size: 300  # 日間を表示
       edinet-list.size: 400  # 日間を表示
 
+    valuation:
+      forward-snap-limit-days: 45
+      catch-up-max-iterations: 60
+
     scraping:
       document-type-code: 120,130,140,150,160,170  # スクレイピング処理対象
       validation:

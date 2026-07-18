@@ -349,7 +349,8 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
             }
         }
 
-        final int valuationUpdatedCount = valuationSpecification.updateDerivedValuesFromAnalysisResult();
+        final int valuationUpdatedCount = valuationSpecification.updateDerivedValuesFromAnalysisResult()
+                                          + valuationSpecification.updateNullGrahamIndexFromAnalysisResult();
 
         Optional.ofNullable(cacheManager.getCache(BACKTEST_CACHE_NAME)).ifPresent(Cache::clear);
 

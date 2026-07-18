@@ -103,6 +103,21 @@ public class StockSpecification {
     }
 
     /**
+     * 指定日以降で最初に存在する株価情報を取得する
+     *
+     * @param companyCode 企業コード
+     * @param fromDate    開始日
+     * @param toDate      終了日
+     * @return 株価情報
+     */
+    public Optional<StockPriceEntity> findFirstStockFromDate(
+            final String companyCode,
+            final LocalDate fromDate,
+            final LocalDate toDate) {
+        return stockPriceDao.selectFirstByCodeFromDate(companyCode, fromDate, toDate);
+    }
+
+    /**
      * 株価情報を取得する
      *
      * @param companyCode 企業コード

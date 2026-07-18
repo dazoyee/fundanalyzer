@@ -38,6 +38,7 @@ public class ValuationSpecification {
     private final ValuationDao valuationDao;
     private final CompanySpecification companySpecification;
     private final StockSpecification stockSpecification;
+    private final AnalysisResultSpecification analysisResultSpecification;
     private final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private final CorporateActionSpecification corporateActionSpecification;
 
@@ -45,11 +46,13 @@ public class ValuationSpecification {
             final ValuationDao valuationDao,
             final CompanySpecification companySpecification,
             final StockSpecification stockSpecification,
+            final AnalysisResultSpecification analysisResultSpecification,
             final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService,
             final CorporateActionSpecification corporateActionSpecification) {
         this.valuationDao = valuationDao;
         this.companySpecification = companySpecification;
         this.stockSpecification = stockSpecification;
+        this.analysisResultSpecification = analysisResultSpecification;
         this.investmentIndicatorReconciliationService = investmentIndicatorReconciliationService;
         this.corporateActionSpecification = corporateActionSpecification;
     }
@@ -156,6 +159,35 @@ public class ValuationSpecification {
      */
     public int updateDerivedValuesFromAnalysisResult() {
         return valuationDao.updateDerivedValuesFromAnalysisResult();
+    }
+
+    /**
+     * graham_index が null の valuation 行を再計算して更新する。
+     *
+     * @return 更新件数
+     */
+    public int updateNullGrahamIndexFromAnalysisResult() {
+        int updatedCount = 0;
+        for (final ValuationEntity valuation : valuationDao.selectAll()) {
+            if (valuation.getGrahamIndex().isPresent()) {
+                continue;
+            }
+            final Optional<AnalysisResultEntity> analysisResult = Optional.ofNullable(valuation.getAnalysisResultId())
+                    .flatMap(analysisResultSpecification::findAnalysisResult);
+            final Optional<StockPriceEntity> stock = stockSpecification.findStock(valuation.getCompanyCode(), valuation.getTargetDate());
+            if (analysisResult.isEmpty() || stock.isEmpty()) {
+                continue;
+            }
+            final Optional<BigDecimal> grahamIndex = investmentIndicatorReconciliationService
+                    .reconcile(valuation.getCompanyCode(), List.of(stock.get()), List.of(analysisResult.get()))
+                    .stream()
+                    .findFirst()
+                    .flatMap(IndicatorValue::getGrahamIndex);
+            if (grahamIndex.isPresent()) {
+                updatedCount += valuationDao.updateGrahamIndexById(valuation.getId(), grahamIndex.get());
+            }
+        }
+        return updatedCount;
     }
 
     /**

@@ -568,6 +568,8 @@ class AnalyzeInteractorTest {
         void updatesOnlyChangedRow() {
             final AnalysisResultEntity staleEntity = entity(1, BigDecimal.ZERO, null, "documentId");
             when(analysisResultSpecification.findAll()).thenReturn(List.of(staleEntity));
+            when(valuationSpecification.updateDerivedValuesFromAnalysisResult()).thenReturn(4);
+            when(valuationSpecification.updateNullGrahamIndexFromAnalysisResult()).thenReturn(2);
 
             final AnalysisResult expected = new AnalysisResult(financeValue(), document(), coefficient());
             final Cache cache = mock(Cache.class);
@@ -581,9 +583,11 @@ class AnalyzeInteractorTest {
                     () -> assertEquals(1, actual.targetCount()),
                     () -> assertEquals(1, actual.updatedCount()),
                     () -> assertEquals(0, actual.skippedCount()),
-                    () -> assertEquals(0, actual.failedCount())
+                    () -> assertEquals(0, actual.failedCount()),
+                    () -> assertEquals(6, actual.valuationUpdatedCount())
             );
             verify(valuationSpecification, times(1)).updateDerivedValuesFromAnalysisResult();
+            verify(valuationSpecification, times(1)).updateNullGrahamIndexFromAnalysisResult();
             verify(cache, times(1)).clear();
         }
 

@@ -3,8 +3,11 @@ package github.com.ioridazo.fundanalyzer.web.controller;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.RecalculationPreview;
 import github.com.ioridazo.fundanalyzer.domain.value.RecalculationResult;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpPreview;
+import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
@@ -39,16 +42,19 @@ public class AnalysisController {
     private final ViewService viewService;
     private final MessageSource messageSource;
     private final AnalyzeUseCase analyzeUseCase;
+    private final ValuationUseCase valuationUseCase;
 
     public AnalysisController(
             final AnalysisService analysisService,
             final ViewService viewService,
             final MessageSource messageSource,
-            final AnalyzeUseCase analyzeUseCase) {
+            final AnalyzeUseCase analyzeUseCase,
+            final ValuationUseCase valuationUseCase) {
         this.analysisService = analysisService;
         this.viewService = viewService;
         this.messageSource = messageSource;
         this.analyzeUseCase = analyzeUseCase;
+        this.valuationUseCase = valuationUseCase;
     }
 
     /**
@@ -119,6 +125,37 @@ public class AnalysisController {
                                 + ", skipped=" + result.skippedCount()
                                 + ", failed=" + result.failedCount()
                                 + ", valuationUpdated=" + result.valuationUpdatedCount())
+                .build().encode().toUriString();
+    }
+
+    /**
+     * valuation catch-up バッチの対象件数を確認する
+     *
+     * @return Index
+     */
+    @GetMapping("/v1/admin/valuation/catch-up/preview")
+    public String previewValuationCatchUp() {
+        final ValuationCatchUpPreview preview = valuationUseCase.previewCatchUp();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
+                .queryParam(MESSAGE, "valuation catch-up 対象会社数: " + preview.targetCompanyCount() + "件")
+                .build().encode().toUriString();
+    }
+
+    /**
+     * valuation catch-up バッチを実行する
+     *
+     * @return Index
+     */
+    @PostMapping("/v1/admin/valuation/catch-up")
+    public String catchUpValuation() {
+        final ValuationCatchUpResult result = valuationUseCase.catchUp();
+        viewService.updateValuationView();
+        return REDIRECT + UriComponentsBuilder.fromUri(V3_INDEX_PATH)
+                .queryParam(
+                        MESSAGE,
+                        "valuation catch-up 完了: targetCompany=" + result.targetCompanyCount()
+                                + ", advanced=" + result.advancedCount()
+                                + ", unresolvedCompany=" + result.unresolvedCompanyCount())
                 .build().encode().toUriString();
     }
 
