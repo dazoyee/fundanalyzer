@@ -36,6 +36,11 @@
     <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}"/>
     <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}"/>
     <title layout:title-pattern="$CONTENT_TITLE - fundanalyzer">fundanalyzer</title>
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" th:href="@{/icons/icon.svg}">
+    <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+    <link rel="manifest" th:href="@{/manifest.json}">
+    <meta name="theme-color" content="#1e3a8a">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="flex min-h-full bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100"
