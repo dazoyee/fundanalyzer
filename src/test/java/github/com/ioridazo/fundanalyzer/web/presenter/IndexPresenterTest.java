@@ -3,6 +3,9 @@ package github.com.ioridazo.fundanalyzer.web.presenter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewFilterSettingUseCase;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ViewFilterSettingEntity;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
@@ -17,6 +20,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.Model;
 
 import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,6 +39,7 @@ class IndexPresenterTest {
 
     private ViewService viewService;
     private AnalysisService analysisService;
+    private ViewFilterSettingUseCase viewFilterSettingUseCase;
     private ObjectMapper objectMapper;
     private IndexPresenter presenter;
 
@@ -41,9 +47,19 @@ class IndexPresenterTest {
     void setUp() {
         this.viewService = mock(ViewService.class);
         this.analysisService = mock(AnalysisService.class);
+        this.viewFilterSettingUseCase = mock(ViewFilterSettingUseCase.class);
         this.objectMapper = mock(ObjectMapper.class);
-        this.presenter = new IndexPresenter(viewService, analysisService, objectMapper);
+        this.presenter = new IndexPresenter(viewService, analysisService, viewFilterSettingUseCase, objectMapper);
         ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130", "140", "150", "160", "170"));
+        when(viewFilterSettingUseCase.getSetting()).thenReturn(new ViewFilterSettingEntity(
+                1,
+                BigDecimal.valueOf(120),
+                BigDecimal.valueOf(10000),
+                BigDecimal.valueOf(0.5),
+                BigDecimal.valueOf(100),
+                300,
+                LocalDateTime.parse("2026-07-17T00:00:00")
+        ));
     }
 
 

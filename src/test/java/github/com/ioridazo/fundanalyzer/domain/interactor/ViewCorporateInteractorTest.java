@@ -9,12 +9,14 @@ import github.com.ioridazo.fundanalyzer.domain.value.AnalysisResult;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.MinkabuEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ViewFilterSettingEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewFilterSettingSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -64,6 +66,7 @@ class ViewCorporateInteractorTest {
     private StockSpecification stockSpecification;
     private InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private ViewSpecification viewSpecification;
+    private ViewFilterSettingSpecification viewFilterSettingSpecification;
     private SlackClient slackClient;
     private CorporateActionSpecification corporateActionSpecification;
 
@@ -78,6 +81,7 @@ class ViewCorporateInteractorTest {
         stockSpecification = Mockito.mock(StockSpecification.class);
         investmentIndicatorReconciliationService = Mockito.mock(InvestmentIndicatorReconciliationService.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
+        viewFilterSettingSpecification = Mockito.mock(ViewFilterSettingSpecification.class);
         slackClient = Mockito.mock(SlackClient.class);
         corporateActionSpecification = Mockito.mock(CorporateActionSpecification.class);
         when(corporateActionSpecification.adjustToBasis(any(), any(), any(), any(), eq(true)))
@@ -86,6 +90,15 @@ class ViewCorporateInteractorTest {
         lenient().when(investmentIndicatorReconciliationService.reconcile(any(), any(), any())).thenReturn(List.of());
         lenient().when(investmentIndicatorReconciliationService.reconcilePrecomputed(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
+        lenient().when(viewFilterSettingSpecification.findSetting()).thenReturn(new ViewFilterSettingEntity(
+                1,
+                BigDecimal.valueOf(120),
+                BigDecimal.valueOf(10000),
+                BigDecimal.valueOf(0.6),
+                BigDecimal.valueOf(100),
+                300,
+                LocalDateTime.parse("2026-07-17T00:00:00")
+        ));
 
         viewCorporateInteractor = Mockito.spy(new ViewCorporateInteractor(
                 Mockito.mock(AnalyzeInteractor.class),
@@ -96,14 +109,10 @@ class ViewCorporateInteractorTest {
                 stockSpecification,
                 investmentIndicatorReconciliationService,
                 viewSpecification,
+                viewFilterSettingSpecification,
                 slackClient,
                 corporateActionSpecification
         ));
-        viewCorporateInteractor.configDiscountRate = BigDecimal.valueOf(120);
-        viewCorporateInteractor.configOutlierOfStandardDeviation = BigDecimal.valueOf(10000);
-        viewCorporateInteractor.configCoefficientOfVariation = BigDecimal.valueOf(0.6);
-        viewCorporateInteractor.configDiffForecastStock = BigDecimal.valueOf(100);
-        viewCorporateInteractor.configCorporateSize = 300;
         viewCorporateInteractor.targetTypeCodes = targetTypeCodes;
         viewCorporateInteractor.updateViewEnabled = true;
     }

@@ -7,6 +7,7 @@ import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ViewFilterSettingEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.AnalysisResultSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateActionSpecification;
@@ -14,6 +15,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CorporateAct
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewFilterSettingSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
 import github.com.ioridazo.fundanalyzer.domain.service.InvestmentIndicatorReconciliationService;
@@ -39,7 +41,6 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.MinkabuV
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -69,22 +70,13 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final StockSpecification stockSpecification;
     private final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private final ViewSpecification viewSpecification;
+    private final ViewFilterSettingSpecification viewFilterSettingSpecification;
     private final SlackClient slackClient;
     private final CorporateActionSpecification corporateActionSpecification;
 
-    @Value("${app.config.view.discount-rate}")
-    BigDecimal configDiscountRate;
-    @Value("${app.config.view.outlier-of-standard-deviation}")
-    BigDecimal configOutlierOfStandardDeviation;
-    @Value("${app.config.view.coefficient-of-variation}")
-    BigDecimal configCoefficientOfVariation;
-    @Value("${app.config.view.diff-forecast-stock}")
-    BigDecimal configDiffForecastStock;
-    @Value("${app.config.view.corporate.size}")
-    int configCorporateSize;
-    @Value("${app.config.scraping.document-type-code}")
+    @org.springframework.beans.factory.annotation.Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
-    @Value("${app.slack.update-view.enabled:true}")
+    @org.springframework.beans.factory.annotation.Value("${app.slack.update-view.enabled:true}")
     boolean updateViewEnabled;
 
     public ViewCorporateInteractor(
@@ -96,6 +88,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final StockSpecification stockSpecification,
             final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService,
             final ViewSpecification viewSpecification,
+            final ViewFilterSettingSpecification viewFilterSettingSpecification,
             final SlackClient slackClient,
             final CorporateActionSpecification corporateActionSpecification) {
         this.analyzeInteractor = analyzeInteractor;
@@ -106,6 +99,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.stockSpecification = stockSpecification;
         this.investmentIndicatorReconciliationService = investmentIndicatorReconciliationService;
         this.viewSpecification = viewSpecification;
+        this.viewFilterSettingSpecification = viewFilterSettingSpecification;
         this.slackClient = slackClient;
         this.corporateActionSpecification = corporateActionSpecification;
     }
@@ -510,17 +504,18 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     }
 
     List<CorporateViewModel> filter(final List<CorporateViewModel> list) {
+        final ViewFilterSettingEntity setting = viewFilterSettingSpecification.findSetting();
         return list.stream()
                 // not null
                 .filter(cvm -> Objects.nonNull(cvm.getDiscountRateToDisplay()))
                 .filter(cvm -> Objects.nonNull(cvm.getStandardDeviationToDisplay()))
                 .filter(cvm -> Objects.nonNull(cvm.getLatestCorporateValue()))
                 // 表示する提出日は一定期間のみ
-                .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(configCorporateSize)))
+                .filter(cvm -> cvm.getSubmitDate().isAfter(nowLocalDate().minusDays(setting.corporateSize())))
                 // 割安度が170%(外部設定値)以上を表示
-                .filter(cvm -> cvm.getDiscountRateToDisplay().compareTo(configDiscountRate) >= 0)
+                .filter(cvm -> cvm.getDiscountRateToDisplay().compareTo(setting.discountRate()) >= 0)
                 // 標準偏差が外れ値となっていたら除外
-                .filter(cvm -> cvm.getStandardDeviationToDisplay().compareTo(configOutlierOfStandardDeviation) < 0)
+                .filter(cvm -> cvm.getStandardDeviationToDisplay().compareTo(setting.outlierOfStandardDeviation()) < 0)
                 // 最新企業価値がマイナスの場合は除外
                 .filter(cvm -> cvm.getLatestCorporateValue().compareTo(BigDecimal.ZERO) > 0)
                 // 最新企業価値が平均（x1.1倍）より低い場合は除外
@@ -532,7 +527,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                         return true;
                     } else {
                         // 変動係数が0.6未満であること
-                        if (cvm.getCoefficientOfVariationToDisplay().compareTo(configCoefficientOfVariation) < 1) {
+                        if (cvm.getCoefficientOfVariationToDisplay().compareTo(setting.coefficientOfVariation()) < 1) {
                             return true;
                         } else {
                             // 変動係数が0.6以上でも最新企業価値が高ければOK
@@ -545,7 +540,7 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
                     if (Objects.nonNull(cvb.getForecastStock())) {
                         // 株価予想が存在する場合、最新株価より高ければOK
                         return (cvb.getForecastStock().divide(cvb.getLatestStockPrice(), 3, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(1.1)) > 0)
-                               && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(configDiffForecastStock) >= 0);
+                               && (cvb.getForecastStock().subtract(cvb.getLatestStockPrice()).compareTo(setting.diffForecastStock()) >= 0);
                     } else {
                         return true;
                     }
