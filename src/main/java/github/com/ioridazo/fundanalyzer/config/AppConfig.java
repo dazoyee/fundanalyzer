@@ -10,6 +10,8 @@ import org.springframework.retry.support.RetryTemplate;
 import org.springframework.retry.support.RetryTemplateBuilder;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
@@ -60,10 +62,13 @@ public class AppConfig {
     @Bean("restJsoup")
     public RestTemplate restTemplateJsoup(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(JSOUP);
-        return new RestTemplateBuilder()
+        RestTemplateBuilder builder = new RestTemplateBuilder()
                 .setConnectTimeout(settings.getConnectTimeout())
-                .setReadTimeout(settings.getReadTimeout())
-                .build();
+                .setReadTimeout(settings.getReadTimeout());
+        if (StringUtils.hasText(settings.getUserAgent())) {
+            builder = builder.defaultHeader(HttpHeaders.USER_AGENT, settings.getUserAgent());
+        }
+        return builder.build();
     }
 
     @Bean("retryEdinet")

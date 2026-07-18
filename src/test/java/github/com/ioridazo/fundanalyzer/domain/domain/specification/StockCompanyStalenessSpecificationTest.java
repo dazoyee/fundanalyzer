@@ -1,7 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceOfStockPrice;
-import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceLatestTargetDateEntity;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,9 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -26,7 +24,7 @@ class StockCompanyStalenessSpecificationTest {
     @Mock
     private CompanySpecification companySpecification;
     @Mock
-    private StockSpecification stockSpecification;
+    private StockPriceDao stockPriceDao;
 
     @Nested
     @DisplayName("findStaleCompanies")
@@ -39,12 +37,10 @@ class StockCompanyStalenessSpecificationTest {
             final Company fresh = company("1111");
             final Company noData = company("7034");
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(stale, fresh, noData));
-            when(stockSpecification.findLatestStock("9278"))
-                    .thenReturn(Optional.of(stock("9278", FIXED_NOW.minusDays(20))));
-            when(stockSpecification.findLatestStock("1111"))
-                    .thenReturn(Optional.of(stock("1111", FIXED_NOW.minusDays(14))));
-            when(stockSpecification.findLatestStock("7034"))
-                    .thenReturn(Optional.empty());
+            when(stockPriceDao.selectLatestTargetDateAll()).thenReturn(List.of(
+                    stock("9278", FIXED_NOW.minusDays(20)),
+                    stock("1111", FIXED_NOW.minusDays(14))
+            ));
 
             final StockCompanyStalenessSpecification specification = newFixedNowSpecification(14);
 
@@ -53,10 +49,26 @@ class StockCompanyStalenessSpecificationTest {
             assertEquals(List.of("9278", "7034"), actual.stream().map(StockCompanyStalenessSpecification.StaleCompany::code).toList());
             assertEquals(List.of(20L, 15L), actual.stream().map(StockCompanyStalenessSpecification.StaleCompany::staleDays).toList());
         }
+
+        @Test
+        @DisplayName("閾値ちょうどの企業は stale に含めない")
+        void excludesThresholdDate() {
+            final Company threshold = company("1111");
+            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(threshold));
+            when(stockPriceDao.selectLatestTargetDateAll()).thenReturn(List.of(
+                    stock("1111", FIXED_NOW.minusDays(14))
+            ));
+
+            final StockCompanyStalenessSpecification specification = newFixedNowSpecification(14);
+
+            final List<StockCompanyStalenessSpecification.StaleCompany> actual = specification.findStaleCompanies();
+
+            assertEquals(List.of(), actual);
+        }
     }
 
     private StockCompanyStalenessSpecification newFixedNowSpecification(final int alertDays) {
-        return new StockCompanyStalenessSpecification(companySpecification, stockSpecification, alertDays) {
+        return new StockCompanyStalenessSpecification(companySpecification, stockPriceDao, alertDays) {
             @Override
             LocalDate nowLocalDate() {
                 return FIXED_NOW;
@@ -68,26 +80,10 @@ class StockCompanyStalenessSpecificationTest {
         return new Company(code, code, 1, "業種", "E" + code, null, null, null, null, false, false, true);
     }
 
-    private StockPriceEntity stock(final String code, final LocalDate targetDate) {
-        return new StockPriceEntity(
-                1,
+    private StockPriceLatestTargetDateEntity stock(final String code, final LocalDate targetDate) {
+        return new StockPriceLatestTargetDateEntity(
                 code,
-                targetDate,
-                1000.0,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                SourceOfStockPrice.NIKKEI.toValue(),
-                LocalDateTime.of(2026, 7, 18, 0, 0),
-                LocalDateTime.of(2026, 7, 18, 0, 0)
+                targetDate
         );
     }
 }
