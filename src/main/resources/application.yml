@@ -145,13 +145,8 @@ resilience4j:
 app:
   version: @pom.version@
 
-  # 認証方式: form-login（既定・ローカル dev / テスト用）または trust-header（本番・orbit からの署名付き
-  # トラストヘッダーに認証を委譲。application-prod.yml で指定）。
-  # user / password はフォームログイン用の資格情報で、既定値はローカル dev 専用（trust-header 時は未使用）。
+  # 認証はアプリケーション層で行わない。アクセス制御はネットワーク境界（ファイアウォール等）に委ねる。
   security:
-    mode: form-login
-    user: ${SECURITY_USER:admin}
-    password: ${SECURITY_PASSWORD:fundanalyzer-local-dev}
     # Content-Security-Policy。バンドル済み自前 JS（Alpine.js が unsafe-eval、corporate-v2.html の
     # インライン Chart.js データが unsafe-inline を要する）を許可しつつ外部オリジンを遮断する。
     csp: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"

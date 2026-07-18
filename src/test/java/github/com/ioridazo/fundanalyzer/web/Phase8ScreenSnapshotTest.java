@@ -35,9 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>初回実行時に ~/.cache/ms-playwright/ に Chromium バイナリ（約 200 MB）が自動取得される。
  * 通常ビルドから除外する場合は -DexcludedGroups=playwright を指定する。
  */
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"app.security.user=playwright", "app.security.password=playwright"})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Tag("playwright")
 @DisplayName("Phase 8 スナップショット回帰検証")
 class Phase8ScreenSnapshotTest {
@@ -67,19 +65,6 @@ class Phase8ScreenSnapshotTest {
         }
     }
 
-    /**
-     * フォームログインを実行する。
-     *
-     * @param page ログイン操作を行う Page
-     */
-    private void login(final Page page) {
-        page.navigate("http://localhost:" + port + "/fundanalyzer/login");
-        page.fill("input[name='username']", "playwright");
-        page.fill("input[name='password']", "playwright");
-        page.click("button[type='submit']");
-        page.waitForLoadState();
-    }
-
     static Stream<Arguments> screenViewportMatrix() {
         return Stream.of(
                 Arguments.of("index", "/v3/index", "desktop", 1280, 800),
@@ -102,7 +87,6 @@ class Phase8ScreenSnapshotTest {
             final int height) {
         try (final Page page = browser.newPage()) {
             page.setViewportSize(width, height);
-            login(page);
             final String url = "http://localhost:" + port + "/fundanalyzer" + path;
             page.navigate(url);
             page.waitForLoadState();
@@ -143,7 +127,6 @@ class Phase8ScreenSnapshotTest {
     void darkModeToggleExists(final ViewportSize viewport) {
         try (final Page page = browser.newPage()) {
             page.setViewportSize(viewport.width, viewport.height);
-            login(page);
             page.navigate("http://localhost:" + port + "/fundanalyzer/v3/index");
             page.waitForLoadState();
 
@@ -157,7 +140,6 @@ class Phase8ScreenSnapshotTest {
     void backtestTabRenders() {
         try (final Page page = browser.newPage()) {
             page.setViewportSize(1280, 800);
-            login(page);
             page.navigate("http://localhost:" + port + "/fundanalyzer/v3/analysis");
             page.waitForLoadState();
             page.click("button:has-text('バックテスト')");
@@ -176,7 +158,6 @@ class Phase8ScreenSnapshotTest {
     void distributionTabRenders() {
         try (final Page page = browser.newPage()) {
             page.setViewportSize(1280, 800);
-            login(page);
             page.navigate("http://localhost:" + port + "/fundanalyzer/v3/analysis");
             page.waitForLoadState();
             page.click("button:has-text('分布')");

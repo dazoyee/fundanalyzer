@@ -125,10 +125,10 @@ exception/   … 業務例外
 
 ### セキュリティ
 
-全リクエスト認証必須（Spring Security）。認証方式は `app.security.mode` で切り替える。
+アプリケーション層では認証を行わない（全リクエスト `permitAll`）。アクセス制御はネットワーク境界
+（ファイアウォール・バインドアドレス等）に委ねる。セキュリティヘッダー（CSP/HSTS 等）と CSRF 保護のみ
+アプリケーション層で維持する。
 
-- dev（既定 `form-login`）: フォームログイン＋メモリ内単一ユーザー。`application.yml` の既定値（`admin` / `fundanalyzer-local-dev`）で単独起動可能
-- prod（`trust-header`）: リバースプロキシ **orbit** からの署名付きトラストヘッダー（`X-Orbit-Auth-*`）に認証を委譲。環境変数 `ORBIT_TRUST_HEADER_SECRET`（orbit と同一値）が必須（未設定だと起動失敗）。バインドはループバック限定（`server.address: 127.0.0.1`）
 - Slack トークン: `SLACK_WEBHOOK_T` / `SLACK_WEBHOOK_B` / `SLACK_WEBHOOK_X`（`release/env` 経由）
 
 詳細は [SECURITY.md](SECURITY.md) を参照。

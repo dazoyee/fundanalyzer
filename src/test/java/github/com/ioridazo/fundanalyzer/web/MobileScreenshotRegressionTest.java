@@ -46,9 +46,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * <p>本テストはサイズの大きい Chromium バイナリを取得するため -Dgroups=playwright が必要。
  * 通常ビルドから除外する場合は -DexcludedGroups=playwright を指定する。
  */
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"app.security.user=playwright", "app.security.password=playwright"})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Tag("playwright")
 @DisplayName("スマホ UI PNG ビジュアルリグレッション")
 class MobileScreenshotRegressionTest {
@@ -64,8 +62,6 @@ class MobileScreenshotRegressionTest {
 
     private static Playwright playwright;
     private static Browser browser;
-    /** フォームログイン済みのストレージ状態（クッキー）。 */
-    private static String authenticatedStorageState;
 
     @LocalServerPort
     int port;
@@ -75,28 +71,6 @@ class MobileScreenshotRegressionTest {
         playwright = Playwright.create();
         browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         DIFF_DIR.toFile().mkdirs();
-    }
-
-    /**
-     * フォームログインを実行してセッションクッキーを取得する。
-     * 各テストで認証済みページにアクセスするために使用する。
-     *
-     * @param baseUrl アプリケーションのベース URL（例: http://localhost:8080/fundanalyzer）
-     * @return Playwright ストレージ状態 JSON（クッキーを含む）
-     */
-    private static String login(final String baseUrl) {
-        try (BrowserContext ctx = browser.newContext()) {
-            try (Page page = ctx.newPage()) {
-                page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
-                page.navigate(baseUrl + "/login",
-                        new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-                page.fill("input[name='username']", "playwright");
-                page.fill("input[name='password']", "playwright");
-                page.click("button[type='submit']");
-                page.waitForTimeout(2_000);
-            }
-            return ctx.storageState();
-        }
     }
 
     @AfterAll
@@ -143,12 +117,8 @@ class MobileScreenshotRegressionTest {
                         + " (ManualMobileScreenshotTest を -DupdateBaselines=true で実行して再生成すること)");
 
         final String baseUrl = "http://localhost:" + port + "/fundanalyzer";
-        if (authenticatedStorageState == null) {
-            authenticatedStorageState = login(baseUrl);
-        }
 
-        try (BrowserContext ctx = browser.newContext(
-                new Browser.NewContextOptions().setStorageState(authenticatedStorageState));
+        try (BrowserContext ctx = browser.newContext();
              Page page = ctx.newPage()) {
             page.setViewportSize(width, height);
             page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
