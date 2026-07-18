@@ -73,7 +73,7 @@ class BacktestInteractorTest {
 
         when(valuationSpecification.findAllValuationEntities()).thenReturn(List.of());
         when(analysisResultSpecification.findAnalysisResults(anyList())).thenReturn(List.of());
-        when(corporateActionSpecification.findActions(any(), anyList())).thenReturn(List.of());
+        when(corporateActionSpecification.findActions(any(Company.class), anyList())).thenReturn(List.of());
         when(corporateActionSpecification.adjustToBasisWithActions(any(), any(), any(), any(), eq(true)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -239,8 +239,8 @@ class BacktestInteractorTest {
                     stock(LocalDate.parse("2024-08-08"), 80.0),
                     stock(LocalDate.parse("2025-02-10"), 70.0)
             ));
-            when(corporateActionSpecification.findActions(eq("10000"), anyList())).thenReturn(List.of());
-            when(corporateActionSpecification.findActions(eq("20000"), anyList())).thenReturn(List.of());
+            when(corporateActionSpecification.findActions(eq(tech), anyList())).thenReturn(List.of());
+            when(corporateActionSpecification.findActions(eq(retail), anyList())).thenReturn(List.of());
 
             final BacktestResult actual = interactor.backtest();
 
@@ -264,7 +264,7 @@ class BacktestInteractorTest {
         when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
         when(valuationSpecification.findAllValuationEntities()).thenReturn(valuations);
         when(stockSpecification.findEntityList(company.code())).thenReturn(stocks);
-        when(corporateActionSpecification.findActions(eq(company.code()), anyList())).thenReturn(List.of());
+        when(corporateActionSpecification.findActions(eq(company), anyList())).thenReturn(List.of());
     }
 
     private static Company company(final String code, final String industryName, final boolean lived) {

@@ -4,7 +4,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.IndustryEnti
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
-import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,12 +74,12 @@ class DistributionInteractorTest {
             when(industrySpecification.inquiryIndustryList()).thenReturn(List.of(
                     targetIncluded, targetExcludedBySize, nonTarget
             ));
-            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(
-                    company("20000", 1),
-                    company("20010", 1),
-                    company("20020", 1),
-                    company("30000", 2),
-                    company("30010", 2)
+            when(companySpecification.industryIdByCode4()).thenReturn(Map.of(
+                    "2000", 1,
+                    "2001", 1,
+                    "2002", 1,
+                    "3000", 2,
+                    "3001", 2
             ));
             when(industrySpecification.isTarget(1)).thenReturn(true);
             when(industrySpecification.isTarget(2)).thenReturn(true);
@@ -114,13 +114,9 @@ class DistributionInteractorTest {
             );
 
             verify(viewSpecification).findAllCompanyValuationView();
-            verify(companySpecification).inquiryAllTargetCompanies();
+            verify(companySpecification).industryIdByCode4();
             verify(industrySpecification).inquiryIndustryList();
         }
-    }
-
-    private Company company(final String code, final Integer industryId) {
-        return new Company(code, "テスト企業", industryId, "業種" + industryId, "E" + code, null, null, null, null, false, false, true);
     }
 
     private CompanyValuationViewModel valuation(

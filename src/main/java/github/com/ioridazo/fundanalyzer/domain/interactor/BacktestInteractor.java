@@ -72,13 +72,11 @@ public class BacktestInteractor implements BacktestUseCase {
         final List<EpisodeOutcome> outcomes = new ArrayList<>();
         final EnumMap<Horizon, long[]> exclusions = initializeExclusions();
         final List<Company> companies = companySpecification.inquiryAllTargetCompanies();
-        final Map<String, List<ValuationEntity>> valuationsByCode = valuationSpecification.findAllValuationEntities().stream()
+        final List<ValuationEntity> allValuations = valuationSpecification.findAllValuationEntities();
+        final Map<String, List<ValuationEntity>> valuationsByCode = allValuations.stream()
                 .collect(Collectors.groupingBy(ValuationEntity::getCompanyCode));
-        final Map<Integer, BigDecimal> corporateValuesByAnalysisResultId = buildCorporateValuesByAnalysisResultId(
-                valuationsByCode.values().stream()
-                        .flatMap(List::stream)
-                        .toList()
-        );
+        final Map<Integer, BigDecimal> corporateValuesByAnalysisResultId =
+                buildCorporateValuesByAnalysisResultId(allValuations);
 
         for (final Company company : companies) {
             final List<ValuationEntity> valuations = valuationsByCode.getOrDefault(company.code(), List.of());
@@ -88,7 +86,7 @@ public class BacktestInteractor implements BacktestUseCase {
 
             final List<StockPriceEntity> stocks = stockSpecification.findEntityList(company.code());
             final List<CorporateActionSpecification.CorporateAction> actions =
-                    corporateActionSpecification.findActions(company.code(), stocks);
+                    corporateActionSpecification.findActions(company, stocks);
             final List<ValuationEntity> representativeValuations = selectRepresentativeValuations(valuations);
 
             for (final ValuationEntity valuation : representativeValuations) {

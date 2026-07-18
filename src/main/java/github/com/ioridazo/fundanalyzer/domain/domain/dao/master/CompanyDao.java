@@ -34,9 +34,6 @@ public interface CompanyDao {
     @Select
     List<CompanyEntity> selectByStar();
 
-    @Select
-    List<CompanyEntity> selectByIndustryId(Integer industryId);
-
     @Insert
     Result<CompanyEntity> insert(CompanyEntity company);
 

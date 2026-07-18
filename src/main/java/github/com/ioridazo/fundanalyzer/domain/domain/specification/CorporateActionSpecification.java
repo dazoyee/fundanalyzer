@@ -170,18 +170,27 @@ public class CorporateActionSpecification {
      * @return 施行日順の株式アクション一覧
      */
     public List<CorporateAction> findActions(final String companyCode) {
-        return findActions(companyCode, stockPriceDao.selectByCode(companyCode));
+        return findActionsInternal(
+                companySpecification.findCompanyByCode(companyCode),
+                stockPriceDao.selectByCode(companyCode)
+        );
     }
 
     /**
-     * 会社コードに紐づく株式アクション一覧を返す。
+     * 企業情報に紐づく株式アクション一覧を返す。
      *
-     * @param companyCode 会社コード
+     * @param company 企業情報
      * @param stockPrices 取得済み株価一覧
      * @return 施行日順の株式アクション一覧
      */
-    public List<CorporateAction> findActions(final String companyCode, final List<StockPriceEntity> stockPrices) {
-        final List<ActionCandidate> shareCandidates = extractShareCandidates(companyCode);
+    public List<CorporateAction> findActions(final Company company, final List<StockPriceEntity> stockPrices) {
+        return findActionsInternal(Optional.of(company), stockPrices);
+    }
+
+    private List<CorporateAction> findActionsInternal(
+            final Optional<Company> company,
+            final List<StockPriceEntity> stockPrices) {
+        final List<ActionCandidate> shareCandidates = extractShareCandidates(company);
         final List<ActionCandidate> cliffCandidates = extractCliffCandidates(stockPrices);
         final Map<LocalDate, CorporateAction> actions = new LinkedHashMap<>();
 
@@ -206,8 +215,8 @@ public class CorporateActionSpecification {
                         Math.abs(cliffCandidate.effectiveDate().toEpochDay() - shareCandidate.referenceDate().toEpochDay())));
     }
 
-    private List<ActionCandidate> extractShareCandidates(final String companyCode) {
-        final List<FinancialStatementEntity> orderedStatements = latestShareStatements(companyCode);
+    private List<ActionCandidate> extractShareCandidates(final Optional<Company> company) {
+        final List<FinancialStatementEntity> orderedStatements = latestShareStatements(company);
         final List<ActionCandidate> candidates = new ArrayList<>();
 
         for (int index = 1; index < orderedStatements.size(); index++) {
@@ -219,8 +228,7 @@ public class CorporateActionSpecification {
         return candidates;
     }
 
-    private List<FinancialStatementEntity> latestShareStatements(final String companyCode) {
-        final Optional<Company> company = companySpecification.findCompanyByCode(companyCode);
+    private List<FinancialStatementEntity> latestShareStatements(final Optional<Company> company) {
         if (company.isEmpty()) {
             return List.of();
         }

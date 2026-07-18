@@ -6,7 +6,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpec
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.DistributionCalculator;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DistributionUseCase;
-import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.DistributionResult;
 import github.com.ioridazo.fundanalyzer.web.view.model.analysis.IndustryInput;
 import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuationViewModel;
@@ -56,8 +55,7 @@ public class DistributionInteractor implements DistributionUseCase {
     @Cacheable("distribution")
     public DistributionResult distribution() {
         final List<CompanyValuationViewModel> all = viewSpecification.findAllCompanyValuationView();
-        final Map<String, Integer> industryIdByCode = companySpecification.inquiryAllTargetCompanies().stream()
-                .collect(Collectors.toMap(Company::getCode4, Company::industryId, (left, right) -> left));
+        final Map<String, Integer> industryIdByCode = companySpecification.industryIdByCode4();
         final Map<Integer, List<CompanyValuationViewModel>> valuationsByIndustryId = all.stream()
                 .filter(valuation -> industryIdByCode.containsKey(valuation.code()))
                 .collect(Collectors.groupingBy(valuation -> industryIdByCode.get(valuation.code())));
