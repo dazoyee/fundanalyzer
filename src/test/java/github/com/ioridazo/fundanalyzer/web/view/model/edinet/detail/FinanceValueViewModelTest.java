@@ -24,8 +24,8 @@ class FinanceValueViewModelTest {
     );
 
     private final List<PlSubjectEntity> plSubjectEntityList = List.of(
-            new PlSubjectEntity("1", "3", "11", "営業利益"),
-            new PlSubjectEntity("2", "11", "12", "当期純利益")
+            new PlSubjectEntity("1", "3", "11", null, "営業利益"),
+            new PlSubjectEntity("2", "11", "12", null, "当期純利益")
     );
 
     private final FinanceValue financeValue = FinanceValue.of(

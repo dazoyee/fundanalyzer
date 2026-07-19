@@ -84,7 +84,7 @@ class SubjectSpecificationTest {
 
         @BeforeEach
         void setUp() {
-            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("3", "3", "1", "営業利益")));
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("3", "3", "1", null, "営業利益")));
         }
 
         @DisplayName("findPlSubject : 損益計算書の科目を取得する")
@@ -112,7 +112,7 @@ class SubjectSpecificationTest {
         @BeforeEach
         void setUp() {
             when(subjectSpecification.inquiryBsSubjectList()).thenReturn(List.of(new BsSubjectEntity("1", "1", "1", "name")));
-            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("1", "1", "1", "name")));
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(new PlSubjectEntity("1", "1", "1", null, "name")));
         }
 
         @DisplayName("findSubject : BSの科目情報を取得する")
@@ -224,8 +224,8 @@ class SubjectSpecificationTest {
         @BeforeEach
         void setUp() {
             when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(
-                    new PlSubjectEntity("3", "3", "1", "営業利益"),
-                    new PlSubjectEntity("4", "3", "2", "営業利益又は営業損失（△）")));
+                    new PlSubjectEntity("3", "3", "1", null, "営業利益"),
+                    new PlSubjectEntity("4", "3", "2", null, "営業利益又は営業損失（△）")));
         }
 
         @DisplayName("findPlSubjectList : 損益計算書の科目を取得する")
@@ -248,8 +248,8 @@ class SubjectSpecificationTest {
         @Test
         void ok_mixedNullDetailSubjectId() {
             when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(
-                    new PlSubjectEntity("5", "3", "11", "業法様式ラベル"),
-                    new PlSubjectEntity("3", "3", null, "営業利益")));
+                    new PlSubjectEntity("5", "3", "11", null, "業法様式ラベル"),
+                    new PlSubjectEntity("3", "3", null, null, "営業利益")));
 
             var actual = subjectSpecification.findPlSubjectList(PlSubject.PlEnum.OPERATING_PROFIT);
 
@@ -265,9 +265,25 @@ class SubjectSpecificationTest {
             );
         }
 
+        @DisplayName("findPlSubjectList : priority 昇順を優先し、同順位内は detailSubjectId 昇順で返す")
+        @Test
+        void sortsByPriorityThenDetailSubjectId() {
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of(
+                    new PlSubjectEntity("1", "11", "1", 2, "当期純利益"),
+                    new PlSubjectEntity("7", "11", "7", 1, "親会社株主に帰属する当期純利益"),
+                    new PlSubjectEntity("8", "11", "8", 1, "親会社株主に帰属する当期純利益又は親会社株主に帰属する当期純損失（△）"),
+                    new PlSubjectEntity("2", "11", "2", 2, "当期純利益又は当期純損失（△）"),
+                    new PlSubjectEntity("9", "11", "11", null, "優先度未設定科目")));
+
+            var actual = subjectSpecification.findPlSubjectList(PlSubject.PlEnum.NET_INCOME);
+
+            assertEquals(List.of("7", "8", "1", "2", "11"), actual.stream().map(subject -> subject.getDetailSubjectId()).toList());
+        }
+
         @DisplayName("findPlSubjectList : 損益計算書の科目を取得できないときはエラーを発生する")
-            // @Test
+        @Test
         void error() {
+            when(subjectSpecification.inquiryPlSubjectList()).thenReturn(List.of());
             assertEquals(List.of(), subjectSpecification.findPlSubjectList(PlSubject.PlEnum.OPERATING_PROFIT));
         }
     }

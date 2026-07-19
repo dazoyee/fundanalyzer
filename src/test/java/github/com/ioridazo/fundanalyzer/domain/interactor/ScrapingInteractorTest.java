@@ -314,7 +314,7 @@ class ScrapingInteractorTest {
         @DisplayName("pl : 損益計算書をスクレイピングする")
         @Test
         void insert() {
-            var plSubject = new PlSubject("id", null, null, null);
+            var plSubject = new PlSubject("id", null, null, null, null);
             var resultBean = FinancialTableResultBean.of("subject", null, "1", Unit.THOUSANDS_OF_YEN);
 
             when(xbrlScraping.scrapeFinancialStatement(file, "keyword")).thenReturn(List.of(resultBean));
@@ -409,14 +409,27 @@ class ScrapingInteractorTest {
         @DisplayName("ns : 株式総数が下限未満のときはエラーにする")
         @Test
         void tooSmallNumberOfShares() {
-            scrapingInteractor.numberOfSharesLowerLimit = 10000L;
-            when(xbrlScraping.scrapeNumberOfShares(file, "keyword")).thenReturn("9999");
+            scrapingInteractor.numberOfSharesLowerLimit = 100000L;
+            when(xbrlScraping.scrapeNumberOfShares(file, "keyword")).thenReturn("99999");
 
             assertDoesNotThrow(() -> scrapingInteractor.ns(document));
             verify(financialStatementSpecification, times(0))
-                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 9999L, CreatedType.AUTO);
+                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 99999L, CreatedType.AUTO);
             verify(documentSpecification, times(0)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
             verify(documentSpecification, times(1)).updateFsToError(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
+        }
+
+        @DisplayName("ns : 株式総数が下限ちょうどのときは登録する")
+        @Test
+        void acceptsLowerBoundaryNumberOfShares() {
+            scrapingInteractor.numberOfSharesLowerLimit = 100000L;
+            when(xbrlScraping.scrapeNumberOfShares(file, "keyword")).thenReturn("100000");
+
+            assertDoesNotThrow(() -> scrapingInteractor.ns(document));
+            verify(financialStatementSpecification, times(1))
+                    .insert(company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 100000L, CreatedType.AUTO);
+            verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "file");
+            verify(documentSpecification, times(0)).updateFsToError(document, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES);
         }
 
         @DisplayName("ns : キーワードに合致するファイルが存在しないときはエラーにする")

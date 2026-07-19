@@ -221,7 +221,7 @@ app:
 
     scraping:
       document-type-code: 120,130,140,150,160,170  # スクレイピング処理対象
-      number-of-shares-lower-limit: 10000
+      number-of-shares-lower-limit: 100000  # 発行済10万株未満の上場企業はほぼ存在しない
       validation:
         lower-limit-ratio: 0.1  # 前回値比で下限未満なら警告
         upper-limit-ratio: 10.0  # 前回値比で上限超なら警告

@@ -1,15 +1,21 @@
 package github.com.ioridazo.fundanalyzer.config;
 
+import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification;
+import github.com.ioridazo.fundanalyzer.domain.interactor.ViewValuationInteractor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -47,6 +53,26 @@ class AppConfigTest {
         final var actual = new AppConfig().restTemplateJsoup(new RestClientProperties(Map.of("jsoup", jsoup)));
 
         assertTrue(actual.getInterceptors().isEmpty());
+    }
+
+    @Test
+    @DisplayName("viewAllValuation は allValuationView キャッシュを使用する")
+    void viewAllValuation_hasCacheableAnnotation() throws NoSuchMethodException {
+        final Method method = ViewValuationInteractor.class.getMethod("viewAllValuation");
+        final Cacheable cacheable = method.getAnnotation(Cacheable.class);
+
+        assertNotNull(cacheable);
+        assertEquals("allValuationView", cacheable.value()[0]);
+    }
+
+    @Test
+    @DisplayName("findStaleCompanies は staleStockCompanies キャッシュを使用する")
+    void findStaleCompanies_hasCacheableAnnotation() throws NoSuchMethodException {
+        final Method method = StockCompanyStalenessSpecification.class.getMethod("findStaleCompanies");
+        final Cacheable cacheable = method.getAnnotation(Cacheable.class);
+
+        assertNotNull(cacheable);
+        assertEquals("staleStockCompanies", cacheable.value()[0]);
     }
 
     private RestClientProperties.Settings jsoupSettings() {

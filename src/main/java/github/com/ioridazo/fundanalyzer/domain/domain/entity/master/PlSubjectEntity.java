@@ -15,6 +15,8 @@ public record PlSubjectEntity(
 
         String detailSubjectId,
 
+        Integer priority,
+
         String name
 ) {
 }
