@@ -44,11 +44,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 @Component
 public class ScrapingInteractor implements ScrapingUseCase {
 
     private static final Logger log = LogManager.getLogger(ScrapingInteractor.class);
+    private static final Pattern SUBJECT_MATCH_WHITESPACE = Pattern.compile("[\\s\u3000]+");
 
     private final ScrapingKeywordDao scrapingKeywordDao;
     private final CompanySpecification companySpecification;
@@ -161,6 +163,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             xbrlScraping.scrapeFinancialStatement(targetFile.getFirst(), targetFile.getSecond().getKeyword());
 
                     resultBeanList.forEach(resultBean -> resultBean.getSubject()
+                            .map(this::normalizeSubjectForMatching)
                             .flatMap(subjectSpecification::findBsSubject)
                             .ifPresent(subject -> financialStatementSpecification.insert(
                                     company,
@@ -193,6 +196,7 @@ public class ScrapingInteractor implements ScrapingUseCase {
                             xbrlScraping.scrapeFinancialStatement(targetFile.getFirst(), targetFile.getSecond().getKeyword());
 
                     resultBeanList.forEach(resultBean -> resultBean.getSubject()
+                            .map(this::normalizeSubjectForMatching)
                             .flatMap(subjectSpecification::findPlSubject)
                             .ifPresent(subject -> financialStatementSpecification.insert(
                                     company,
@@ -254,6 +258,10 @@ public class ScrapingInteractor implements ScrapingUseCase {
             }
         }
         throw new FundanalyzerFileException("キーワードに合致するファイルが存在しませんでした。");
+    }
+
+    String normalizeSubjectForMatching(final String subject) {
+        return SUBJECT_MATCH_WHITESPACE.matcher(subject).replaceAll("");
     }
 
     /**
