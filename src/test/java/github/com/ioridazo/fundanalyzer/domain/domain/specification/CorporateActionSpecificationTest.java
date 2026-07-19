@@ -260,6 +260,31 @@ class CorporateActionSpecificationTest {
             assertEquals(0, new BigDecimal("5.0").compareTo(factor));
             assertEquals(0, new BigDecimal("500").compareTo(adjusted));
         }
+
+        @Test
+        @DisplayName("提出日基準の株式数に対しては提出日以降の株価を再補正しない")
+        void shouldNotDoubleAdjustPriceWhenBasisDateIsSubmitDate() {
+            when(financialStatementSpecification.findByCompany(any()))
+                    .thenReturn(List.of(
+                            statement(LocalDate.of(2023, 3, 31), 100L, LocalDate.of(2023, 5, 1)),
+                            statement(LocalDate.of(2023, 6, 30), 500L, LocalDate.of(2023, 8, 1))
+                    ));
+            when(stockPriceDao.selectByCode(COMPANY_CODE))
+                    .thenReturn(List.of(
+                            price(LocalDate.of(2023, 7, 31), 1000.0),
+                            price(LocalDate.of(2023, 8, 1), 200.0)
+                    ));
+
+            final BigDecimal adjusted = specification.adjustToBasis(
+                    new BigDecimal("200"),
+                    COMPANY_CODE,
+                    LocalDate.of(2023, 8, 2),
+                    LocalDate.of(2023, 8, 1),
+                    true
+            );
+
+            assertEquals(0, new BigDecimal("200").compareTo(adjusted));
+        }
     }
 
     private Company company() {
