@@ -593,6 +593,28 @@ class XbrlScrapingTest {
             assertEquals("15,560,000", actual);
         }
 
+        @DisplayName("scrapeNumberOfShares : 提出日現在発行数列があればそちらを優先する")
+        @Test
+        void scrapeNumberOfShares_prefersFilingDateColumn() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_ok_filing_date_priority.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
+
+            assertEquals("77,500,000", actual);
+        }
+
+        @DisplayName("scrapeNumberOfShares : 提出日現在発行数列が無い書類では従来の期末列にフォールバックする")
+        @Test
+        void scrapeNumberOfShares_fallbackToLegacyHeaderWhenFilingDateColumnMissing() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-number-of-shares/jsoup_ok_fallback_legacy_header.html");
+            var keyword = "jpcrp_cor:IssuedSharesTotalNumberOfSharesEtcTextBlock";
+
+            var actual = xbrlScraping.scrapeNumberOfShares(file, keyword);
+
+            assertEquals("12,345,678", actual);
+        }
+
         @DisplayName("scrapeNumberOfShares : ファイルから株式総数を取得するためのテーブルが存在しなかったときの挙動を確認する")
         @Test
         void scrapeNumberOfShares_FundanalyzerFileException_table() {

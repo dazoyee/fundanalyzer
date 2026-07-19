@@ -305,7 +305,7 @@ public class XbrlScraping {
             }
 
             final Optional<List<String>> headerRow = scrapingList.stream()
-                    .filter(tdList -> tdList.stream().anyMatch(this::isTargetKey))
+                    .filter(tdList -> tdList.stream().anyMatch(this::isShareCountHeaderKey))
                     .findFirst();
             final Optional<List<String>> totalRow = scrapingList.stream()
                     .filter(tdList -> tdList.stream().anyMatch(td -> td.contains(TOTAL) && !td.contains("会計")))
@@ -323,9 +323,7 @@ public class XbrlScraping {
             }
 
             try {
-                final String key1 = headerRow.orElseThrow().stream()
-                        .filter(this::isTargetKey)
-                        .findFirst()
+                final String key1 = findPreferredShareCountHeaderKey(headerRow.orElseThrow())
                         .orElseThrow();
                 final int indexOfKey1 = headerRow.orElseThrow().indexOf(key1);
 
@@ -354,6 +352,26 @@ public class XbrlScraping {
                 table.previousElementSibling() != null ? table.previousElementSibling().text() : "",
                 table.nextElementSibling() != null ? table.nextElementSibling().text() : ""
         );
+    }
+
+    private Optional<String> findPreferredShareCountHeaderKey(final List<String> headers) {
+        return headers.stream()
+                .filter(this::isFilingDateTargetKey)
+                .findFirst()
+                .or(() -> headers.stream()
+                        .filter(this::isTargetKey)
+                        .findFirst());
+    }
+
+    private boolean isShareCountHeaderKey(final String td) {
+        return isFilingDateTargetKey(td) || isTargetKey(td);
+    }
+
+    private boolean isFilingDateTargetKey(final String td) {
+        return td.contains("提出日")
+               && td.contains("現在")
+               && td.contains("発行")
+               && (td.contains("数") || td.contains("株"));
     }
 
     private boolean isTargetKey(final String td) {
