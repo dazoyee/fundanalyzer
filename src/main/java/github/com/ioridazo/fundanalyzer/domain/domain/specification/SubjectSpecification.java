@@ -128,8 +128,11 @@ public class SubjectSpecification {
         return inquiryPlSubjectList().stream()
                 .filter(plSubject -> Objects.equals(plEnum.getOutlineSubjectId(), plSubject.outlineSubjectId()))
                 .map(PlSubject::of)
-                .sorted(Comparator.comparing(PlSubject::getDetailSubjectId,
-                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .sorted(Comparator
+                        .comparing((PlSubject plSubject) -> plSubject.getPriority().orElse(null),
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(PlSubject::getDetailSubjectId,
+                                Comparator.nullsFirst(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 

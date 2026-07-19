@@ -5,6 +5,7 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import lombok.AllArgsConstructor;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 @AllArgsConstructor
 public class PlSubject extends Subject {
@@ -15,6 +16,8 @@ public class PlSubject extends Subject {
 
     private final String detailSubjectId;
 
+    private final Integer priority;
+
     private final String name;
 
     public static PlSubject of(final PlSubjectEntity entity) {
@@ -22,6 +25,7 @@ public class PlSubject extends Subject {
                 entity.id(),
                 entity.outlineSubjectId(),
                 entity.detailSubjectId(),
+                entity.priority(),
                 entity.name()
         );
     }
@@ -39,6 +43,10 @@ public class PlSubject extends Subject {
     @Override
     public String getDetailSubjectId() {
         return detailSubjectId;
+    }
+
+    public Optional<Integer> getPriority() {
+        return Optional.ofNullable(priority);
     }
 
     @Override

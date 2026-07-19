@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -32,6 +33,7 @@ public class StockCompanyStalenessSpecification {
         return LocalDate.now();
     }
 
+    @Cacheable("staleStockCompanies")
     public List<StaleCompany> findStaleCompanies() {
         final LocalDate today = nowLocalDate();
         final LocalDate thresholdDate = today.minusDays(companyStalenessAlertDays);

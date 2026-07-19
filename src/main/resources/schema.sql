@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS `pl_subject`
     `id`                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `outline_subject_id` VARCHAR(10) DEFAULT NULL COMMENT '大科目ID',
     `detail_subject_id`  VARCHAR(10) DEFAULT NULL COMMENT '小科目ID',
+    `priority`           INT(2)      DEFAULT NULL COMMENT '優先度',
     `name`               VARCHAR(100)    NOT NULL COMMENT '科目名',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_pl_subject_id` (`outline_subject_id`, `detail_subject_id`)
