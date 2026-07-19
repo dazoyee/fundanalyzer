@@ -344,6 +344,28 @@ class ScrapingInteractorTest {
             verify(documentSpecification, times(1)).updateFsToDone(document, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "file");
         }
 
+        @DisplayName("pl : 科目名に改行や空白が含まれていても正規化して照合する")
+        @Test
+        void insert_normalizedSubject() {
+            var plSubject = new PlSubject("id", null, null, null, null);
+            var resultBean = FinancialTableResultBean.of(
+                    "親会社株主に帰属する当期純利益又は\n 親会社株主に帰属する当期純損失（△）",
+                    null,
+                    "1",
+                    Unit.THOUSANDS_OF_YEN
+            );
+
+            when(xbrlScraping.scrapeFinancialStatement(file, "keyword")).thenReturn(List.of(resultBean));
+            when(subjectSpecification.findPlSubject("親会社株主に帰属する当期純利益又は親会社株主に帰属する当期純損失（△）"))
+                    .thenReturn(Optional.of(plSubject));
+
+            assertDoesNotThrow(() -> scrapingInteractor.pl(document));
+            verify(subjectSpecification, times(1))
+                    .findPlSubject("親会社株主に帰属する当期純利益又は親会社株主に帰属する当期純損失（△）");
+            verify(financialStatementSpecification, times(1))
+                    .insert(company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "id", document, 1000L, CreatedType.AUTO);
+        }
+
         @DisplayName("pl : キーワードに合致するファイルが存在しないときはエラーにする")
         @Test
         void fundanalyzerFileException() {
@@ -448,6 +470,19 @@ class ScrapingInteractorTest {
         void fundanalyzerRuntimeException() {
             when(companySpecification.findCompanyByEdinetCode("edinetCode")).thenReturn(Optional.empty());
             assertThrows(FundanalyzerRuntimeException.class, () -> scrapingInteractor.ns(document));
+        }
+    }
+
+    @Nested
+    class normalizeSubjectForMatching {
+
+        @DisplayName("normalizeSubjectForMatching : 改行と半角全角空白を除去する")
+        @Test
+        void normalize() {
+            assertEquals(
+                    "四半期(当期)純利益",
+                    scrapingInteractor.normalizeSubjectForMatching(" 四半期\n(当期)　純利益 ")
+            );
         }
     }
 
