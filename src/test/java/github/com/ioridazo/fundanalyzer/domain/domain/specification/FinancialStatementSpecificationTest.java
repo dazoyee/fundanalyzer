@@ -206,7 +206,7 @@ class FinancialStatementSpecificationTest {
         @BeforeEach
         void setUp() {
             when(subjectSpecification.findSubject(any(), any()))
-                    .thenReturn(new PlSubject(null, null, null, "name"));
+                    .thenReturn(new PlSubject(null, null, null, null, "name"));
         }
 
         @DisplayName("parsePlSubjectValue : PLの値だったら返却する")
@@ -298,6 +298,41 @@ class FinancialStatementSpecificationTest {
             final Optional<Long> actual = financialStatementSpecification.findValue(fs, document, List.of(subject));
 
             org.junit.jupiter.api.Assertions.assertTrue(actual.isEmpty());
+        }
+
+        @DisplayName("findValue : 当期純利益候補が両方あるときは親会社株主帰属を優先する")
+        @Test
+        void returnsOwnersNetIncomeWhenBothExist() {
+            final FinancialStatementEnum pl = FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT;
+            final Subject owners = new PlSubject("7", "11", "7", 1, "親会社株主に帰属する当期純利益");
+            final Subject consolidated = new PlSubject("1", "11", "1", 2, "当期純利益");
+            when(financialStatementDao.selectByUniqueKey(any(), any(), org.mockito.ArgumentMatchers.eq("7")))
+                    .thenReturn(Optional.of(new FinancialStatementEntity(
+                            null, null, null, null, null, null, null, 100L, null, null, null, null, null, null)));
+            when(financialStatementDao.selectByUniqueKey(any(), any(), org.mockito.ArgumentMatchers.eq("1")))
+                    .thenReturn(Optional.of(new FinancialStatementEntity(
+                            null, null, null, null, null, null, null, 200L, null, null, null, null, null, null)));
+
+            final Optional<Long> actual = financialStatementSpecification.findValue(pl, document, List.of(owners, consolidated));
+
+            assertEquals(Optional.of(100L), actual);
+        }
+
+        @DisplayName("findValue : 親会社株主帰属が無いときは連結全体の当期純利益を返す")
+        @Test
+        void returnsConsolidatedNetIncomeWhenOwnersMissing() {
+            final FinancialStatementEnum pl = FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT;
+            final Subject owners = new PlSubject("7", "11", "7", 1, "親会社株主に帰属する当期純利益");
+            final Subject consolidated = new PlSubject("1", "11", "1", 2, "当期純利益");
+            when(financialStatementDao.selectByUniqueKey(any(), any(), org.mockito.ArgumentMatchers.eq("7")))
+                    .thenReturn(Optional.empty());
+            when(financialStatementDao.selectByUniqueKey(any(), any(), org.mockito.ArgumentMatchers.eq("1")))
+                    .thenReturn(Optional.of(new FinancialStatementEntity(
+                            null, null, null, null, null, null, null, 200L, null, null, null, null, null, null)));
+
+            final Optional<Long> actual = financialStatementSpecification.findValue(pl, document, List.of(owners, consolidated));
+
+            assertEquals(Optional.of(200L), actual);
         }
     }
 

@@ -15,6 +15,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.valuation.CompanyValuatio
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -76,6 +77,7 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
      * @return 評価結果ビュー
      */
     @Override
+    @Cacheable("allValuationView")
     public List<CompanyValuationViewModel> viewAllValuation() {
         final Set<String> targetCodes = companySpecification.targetCode4Set();
         final LocalDate thresholdDate = nowLocalDate().minusDays(rankingExcludeDays);
