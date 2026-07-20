@@ -336,9 +336,9 @@
             <!-- 企業価値推移グラフ -->
             <div class="relative h-48 sm:h-64"><canvas id="analysisChartAll"></canvas></div>
             <!-- 分析結果テーブル (PC) / カード (スマホ) -->
-            <div class="hidden overflow-x-auto sm:block" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+            <div class="hidden max-h-96 overflow-y-auto overflow-x-auto sm:block" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
+                    <thead class="sticky top-0 bg-slate-50 dark:bg-slate-700">
                     <tr>
                         <th class="px-3 py-2 text-left text-xs font-semibold">提出日<th:block th:replace="~{fragments/tooltip :: hint('submit-date')}"></th:block></th>
                         <th class="px-3 py-2 text-left text-xs font-semibold">対象期間<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
@@ -358,7 +358,7 @@
                     </tbody>
                 </table>
             </div>
-            <ul class="block space-y-2 sm:hidden" aria-label="分析結果" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+            <ul class="block max-h-96 space-y-2 overflow-y-auto sm:hidden" aria-label="分析結果" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
                 <li th:each="r : ${analysisResults}" class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
                     <div class="flex items-center justify-between">
                         <span class="font-mono" th:text="${r.submitDate}">-</span>
