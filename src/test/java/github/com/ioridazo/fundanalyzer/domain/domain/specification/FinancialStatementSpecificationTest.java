@@ -1,6 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
@@ -13,6 +13,7 @@ import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
 import github.com.ioridazo.fundanalyzer.domain.value.PlSubject;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,7 +41,7 @@ class FinancialStatementSpecificationTest {
 
     private FinancialStatementDao financialStatementDao;
     private SubjectSpecification subjectSpecification;
-    private SlackClient slackClient;
+    private SystemEventUseCase systemEventUseCase;
 
     private FinancialStatementSpecification financialStatementSpecification;
 
@@ -48,16 +49,15 @@ class FinancialStatementSpecificationTest {
     void setUp() {
         financialStatementDao = Mockito.mock(FinancialStatementDao.class);
         subjectSpecification = Mockito.mock(SubjectSpecification.class);
-        slackClient = Mockito.mock(SlackClient.class);
+        systemEventUseCase = Mockito.mock(SystemEventUseCase.class);
 
         financialStatementSpecification = Mockito.spy(new FinancialStatementSpecification(
                 financialStatementDao,
                 subjectSpecification,
-                slackClient
+                systemEventUseCase
         ));
         financialStatementSpecification.validationLowerLimitRatio = BigDecimal.valueOf(0.1d);
         financialStatementSpecification.validationUpperLimitRatio = BigDecimal.TEN;
-        financialStatementSpecification.financialStatementValidationEnabled = true;
     }
 
     @Nested
@@ -373,7 +373,7 @@ class FinancialStatementSpecificationTest {
                 false
         );
 
-        @DisplayName("insert : 比率が閾値内なら登録してSlack通知しない")
+        @DisplayName("insert : 比率が閾値内なら登録してSystemEvent記録しない")
         @Test
         void noWarningWithinThreshold() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
@@ -383,7 +383,7 @@ class FinancialStatementSpecificationTest {
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
-            verify(slackClient, never()).sendMessage(anyString(), any());
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
         @DisplayName("insert : 下限閾値ちょうどなら警告しない")
@@ -395,7 +395,7 @@ class FinancialStatementSpecificationTest {
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
 
-            verify(slackClient, never()).sendMessage(anyString(), any());
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
         @DisplayName("insert : 上限閾値ちょうどなら警告しない")
@@ -407,10 +407,10 @@ class FinancialStatementSpecificationTest {
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1000L, CreatedType.AUTO));
 
-            verify(slackClient, never()).sendMessage(anyString(), any());
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
-        @DisplayName("insert : 下限未満なら警告付きで登録してSlack通知する")
+        @DisplayName("insert : 下限未満なら警告付きで登録してSystemEventを記録する")
         @Test
         void warningAtLowerOutsideBoundary() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
@@ -420,22 +420,15 @@ class FinancialStatementSpecificationTest {
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 99L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
-            verify(slackClient, times(1)).sendMessage(
-                    eq("github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert"),
-                    eq("1234"),
-                    eq("E12345"),
-                    eq(FinancialStatementEnum.BALANCE_SHEET.getName()),
-                    eq("1"),
-                    eq("DOC001"),
-                    eq(LocalDate.parse("2026-03-31")),
-                    eq(LocalDate.parse("2025-03-31")),
-                    eq(1000L),
-                    eq(99L),
-                    eq("0.099")
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING),
+                    eq("FinancialStatementSpecification"),
+                    eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.BALANCE_SHEET.getName()
+                            + " 科目ID:1 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:1,000 今回値:99 比率:0.099")
             );
         }
 
-        @DisplayName("insert : 上限超なら警告付きで登録してSlack通知する")
+        @DisplayName("insert : 上限超なら警告付きで登録してSystemEventを記録する")
         @Test
         void warningAtUpperOutsideBoundary() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
@@ -444,18 +437,11 @@ class FinancialStatementSpecificationTest {
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1001L, CreatedType.AUTO));
 
-            verify(slackClient, times(1)).sendMessage(
-                    eq("github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert"),
-                    eq("1234"),
-                    eq("E12345"),
-                    eq(FinancialStatementEnum.BALANCE_SHEET.getName()),
-                    eq("1"),
-                    eq("DOC001"),
-                    eq(LocalDate.parse("2026-03-31")),
-                    eq(LocalDate.parse("2025-03-31")),
-                    eq(100L),
-                    eq(1001L),
-                    eq("10.01")
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING),
+                    eq("FinancialStatementSpecification"),
+                    eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.BALANCE_SHEET.getName()
+                            + " 科目ID:1 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:100 今回値:1,001 比率:10.01")
             );
         }
 
@@ -469,7 +455,7 @@ class FinancialStatementSpecificationTest {
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, -500L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
-            verify(slackClient, never()).sendMessage(anyString(), any());
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
         @DisplayName("insert : 初回登録は比較せず登録する")
@@ -481,10 +467,10 @@ class FinancialStatementSpecificationTest {
                     company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
-            verify(slackClient, never()).sendMessage(anyString(), any());
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
-        @DisplayName("insert : 前回0で今回非0なら警告付きで登録してSlack通知する")
+        @DisplayName("insert : 前回0で今回非0なら警告付きで登録してSystemEventを記録する")
         @Test
         void warningWhenPreviousZero() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
@@ -493,22 +479,15 @@ class FinancialStatementSpecificationTest {
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
                     company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1L, CreatedType.AUTO));
 
-            verify(slackClient, times(1)).sendMessage(
-                    eq("github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert"),
-                    eq("1234"),
-                    eq("E12345"),
-                    eq(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getName()),
-                    eq("0"),
-                    eq("DOC001"),
-                    eq(LocalDate.parse("2026-03-31")),
-                    eq(LocalDate.parse("2025-03-31")),
-                    eq(0L),
-                    eq(1L),
-                    eq("INF")
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING),
+                    eq("FinancialStatementSpecification"),
+                    eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getName()
+                            + " 科目ID:0 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:0 今回値:1 比率:INF")
             );
         }
 
-        @DisplayName("insertWithoutValidation : 補完登録では乖離チェックもSlack通知も行わない")
+        @DisplayName("insertWithoutValidation : 補完登録では乖離チェックもSystemEvent記録も行わない")
         @Test
         void skipValidationForSupplementalInsert() {
             assertDoesNotThrow(() -> financialStatementSpecification.insertWithoutValidation(
@@ -516,7 +495,7 @@ class FinancialStatementSpecificationTest {
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
             verify(financialStatementDao, never()).selectByCode(anyString());
-            verify(slackClient, never()).sendMessage(anyString(), any());
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
         private FinancialStatementEntity previousEntity(

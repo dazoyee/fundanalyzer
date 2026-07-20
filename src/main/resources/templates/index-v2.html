@@ -133,6 +133,38 @@
         <div th:replace="~{fragments/alert :: warning(message=${message})}"></div>
     </th:block>
 
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">システムイベント</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">直近20件のエラー・警告を表示します</p>
+            </div>
+        </div>
+        <div th:if="${#lists.isEmpty(recentSystemEvents)}"
+             class="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400">
+            直近のシステムイベントはありません。
+        </div>
+        <div th:unless="${#lists.isEmpty(recentSystemEvents)}" class="space-y-3">
+            <article th:each="event : ${recentSystemEvents}"
+                     class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span th:text="${event.eventTypeLabel()}"
+                                  th:classappend="${event.badgeClass()}"
+                                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold tracking-wide"></span>
+                            <span th:text="${event.source()}"
+                                  class="text-sm font-medium text-slate-800 dark:text-slate-100"></span>
+                        </div>
+                        <p th:text="${event.message()}" class="text-sm text-slate-600 dark:text-slate-300"></p>
+                    </div>
+                    <time th:text="${event.occurredAt()}"
+                          class="shrink-0 text-xs text-slate-500 dark:text-slate-400"></time>
+                </div>
+            </article>
+        </div>
+    </section>
+
     <div x-data="{ open: false }"
          @keydown.escape.window="open = false"
          class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700">

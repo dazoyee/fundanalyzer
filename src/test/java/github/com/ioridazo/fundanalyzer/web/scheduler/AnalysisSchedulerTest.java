@@ -1,8 +1,9 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -27,7 +28,7 @@ class AnalysisSchedulerTest {
 
     private AnalysisService analysisService;
     private ViewService viewService;
-    private SlackClient slackClient;
+    private SystemEventUseCase systemEventUseCase;
 
     private AnalysisScheduler scheduler;
 
@@ -35,12 +36,12 @@ class AnalysisSchedulerTest {
     void setUp() {
         this.analysisService = Mockito.mock(AnalysisService.class);
         this.viewService = Mockito.mock(ViewService.class);
-        this.slackClient = Mockito.mock(SlackClient.class);
+        this.systemEventUseCase = Mockito.mock(SystemEventUseCase.class);
 
         this.scheduler = Mockito.spy(new AnalysisScheduler(
                 analysisService,
                 viewService,
-                slackClient
+                systemEventUseCase
         ));
         scheduler.hourOfAnalysis = 14;
         scheduler.hourOfUpdateView = 21;
@@ -63,7 +64,7 @@ class AnalysisSchedulerTest {
                     .executeAllMain(BetweenDateInputData.of(LocalDate.parse("2021-01-09"), LocalDate.parse("2021-02-08")));
         }
 
-        @DisplayName("analysisScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @DisplayName("analysisScheduler : 想定外のエラーが発生したときはSystemEventを記録する")
         @Test
         void analysisScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 14, 0)).when(scheduler).nowLocalDateTime();
@@ -72,7 +73,9 @@ class AnalysisSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).executeAllMain(any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.analysisScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any(), any());
+            verify(systemEventUseCase, times(1))
+                    .record(SystemEventType.ERROR, "AnalysisScheduler",
+                            "財務分析: github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException");
         }
 
         @DisplayName("analysisScheduler : 処理時間外")
@@ -98,14 +101,16 @@ class AnalysisSchedulerTest {
             verify(viewService, times(1)).updateEdinetView();
         }
 
-        @DisplayName("updateViewScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @DisplayName("updateViewScheduler : 想定外のエラーが発生したときはSystemEventを記録する")
         @Test
         void updateViewScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 21, 0)).when(scheduler).nowLocalDateTime();
 
             doThrow(new FundanalyzerRuntimeException()).when(viewService).updateCorporateView();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.updateViewScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any(), any());
+            verify(systemEventUseCase, times(1))
+                    .record(SystemEventType.ERROR, "AnalysisScheduler",
+                            "画面更新: github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException");
         }
 
         @DisplayName("updateViewScheduler : 処理時間外")
@@ -135,7 +140,7 @@ class AnalysisSchedulerTest {
             verify(analysisService, times(0)).analyzeByDate(DateInputData.of(LocalDate.parse("2021-11-04")));
         }
 
-        @DisplayName("recoverDocumentPeriodScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @DisplayName("recoverDocumentPeriodScheduler : 想定外のエラーが発生したときはSystemEventを記録する")
         @Test
         void recoverDocumentPeriodScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 11, 3, 1, 0)).when(scheduler).nowLocalDateTime();
@@ -143,7 +148,9 @@ class AnalysisSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).analyzeByDate(any());
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.recoverDocumentPeriodScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any(), any());
+            verify(systemEventUseCase, times(1))
+                    .record(SystemEventType.ERROR, "AnalysisScheduler",
+                            "対象期間リカバリ: github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException");
         }
 
         @DisplayName("recoverDocumentPeriodScheduler : 処理時間外")

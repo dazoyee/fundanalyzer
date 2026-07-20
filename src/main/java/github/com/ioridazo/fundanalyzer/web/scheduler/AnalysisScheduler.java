@@ -3,9 +3,10 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
 import github.com.ioridazo.fundanalyzer.web.model.DateInputData;
@@ -27,7 +28,7 @@ public class AnalysisScheduler {
 
     private final AnalysisService analysisService;
     private final ViewService viewService;
-    private final SlackClient slackClient;
+    private final SystemEventUseCase systemEventUseCase;
 
     @Value("${app.scheduler.hour.analysis}")
     int hourOfAnalysis;
@@ -43,10 +44,10 @@ public class AnalysisScheduler {
     public AnalysisScheduler(
             final AnalysisService analysisService,
             final ViewService viewService,
-            final SlackClient slackClient) {
+            final SystemEventUseCase systemEventUseCase) {
         this.analysisService = analysisService;
         this.viewService = viewService;
-        this.slackClient = slackClient;
+        this.systemEventUseCase = systemEventUseCase;
     }
 
     public LocalDate nowLocalDate() {
@@ -77,8 +78,7 @@ public class AnalysisScheduler {
 
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "analysisScheduler", durationTime));
             } catch (Throwable t) {
-                // Slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "財務分析", t);
+                systemEventUseCase.record(SystemEventType.ERROR, "AnalysisScheduler", buildErrorMessage("財務分析", t));
                 throw new FundanalyzerRuntimeException("財務分析スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
@@ -104,8 +104,7 @@ public class AnalysisScheduler {
 
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "updateViewScheduler", durationTime));
             } catch (Throwable t) {
-                // Slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "画面更新", t);
+                systemEventUseCase.record(SystemEventType.ERROR, "AnalysisScheduler", buildErrorMessage("画面更新", t));
                 throw new FundanalyzerRuntimeException("画面更新スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
@@ -133,10 +132,13 @@ public class AnalysisScheduler {
 
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "recoverDocumentPeriodScheduler", durationTime));
             } catch (Throwable t) {
-                // Slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "対象期間リカバリ", t);
+                systemEventUseCase.record(SystemEventType.ERROR, "AnalysisScheduler", buildErrorMessage("対象期間リカバリ", t));
                 throw new FundanalyzerRuntimeException("対象期間リカバリスケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
+    }
+
+    private String buildErrorMessage(final String label, final Throwable throwable) {
+        return label + ": " + throwable;
     }
 }

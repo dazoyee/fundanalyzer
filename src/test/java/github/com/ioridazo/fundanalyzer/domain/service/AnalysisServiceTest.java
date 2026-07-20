@@ -4,7 +4,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceO
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
-import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
@@ -46,7 +45,6 @@ class AnalysisServiceTest {
     private ValuationUseCase valuationUseCase;
     private ViewCorporateUseCase viewCorporateUseCase;
     private ViewEdinetUseCase viewEdinetUseCase;
-    private NoticeUseCase noticeUseCase;
     private AnalysisService service;
 
     @BeforeEach
@@ -58,17 +56,16 @@ class AnalysisServiceTest {
         valuationUseCase = mock(ValuationUseCase.class);
         viewCorporateUseCase = mock(ViewCorporateUseCase.class);
         viewEdinetUseCase = mock(ViewEdinetUseCase.class);
-        noticeUseCase = mock(NoticeUseCase.class);
         service = new AnalysisService(
                 companyUseCase, documentUseCase, analyzeUseCase, stockUseCase,
-                valuationUseCase, viewCorporateUseCase, viewEdinetUseCase, noticeUseCase);
+                valuationUseCase, viewCorporateUseCase, viewEdinetUseCase);
     }
 
     @Nested
     @DisplayName("executeAllMain メソッド")
     class ExecuteAllMain {
 
-        @DisplayName("executeAllMain : 期間内の各日付に対して 9 種の処理を順に呼ぶ")
+        @DisplayName("executeAllMain : 期間内の各日付に対して 8 種の処理を順に呼ぶ")
         @Test
         void invokesAllStepsPerDate() {
             final BetweenDateInputData input = BetweenDateInputData.of(
@@ -85,7 +82,6 @@ class AnalysisServiceTest {
             verify(analyzeUseCase, times(2)).analyze(any(DateInputData.class));
             verify(viewCorporateUseCase, times(2)).updateView(any(DateInputData.class));
             verify(viewEdinetUseCase, times(2)).updateView(any(DateInputData.class));
-            verify(noticeUseCase, times(2)).noticeSlack(any(DateInputData.class));
         }
     }
 
@@ -93,7 +89,7 @@ class AnalysisServiceTest {
     @DisplayName("executePartOfMain メソッド")
     class ExecutePartOfMain {
 
-        @DisplayName("executePartOfMain : 株価取得と Slack 通知を除いた処理を呼ぶ")
+        @DisplayName("executePartOfMain : 株価取得を除いた処理を呼ぶ")
         @Test
         void skipsStockAndNotice() {
             final BetweenDateInputData input = BetweenDateInputData.of(
@@ -109,7 +105,6 @@ class AnalysisServiceTest {
             verify(viewEdinetUseCase, times(1)).updateView(any(DateInputData.class));
             verify(stockUseCase, times(0)).importStockPrice(any(DateInputData.class), any());
             verify(stockUseCase, times(0)).importStockPrice(any(CodeInputData.class), any());
-            verify(noticeUseCase, times(0)).noticeSlack(any());
         }
 
         @DisplayName("executePartOfMain : 1日目で例外が発生しても2日目の処理を継続する")

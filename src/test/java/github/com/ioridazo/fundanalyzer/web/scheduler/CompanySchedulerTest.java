@@ -1,7 +1,8 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +14,6 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -23,16 +23,16 @@ import static org.mockito.Mockito.verify;
 class CompanySchedulerTest {
 
     private CompanyUseCase companyUseCase;
-    private SlackClient slackClient;
+    private SystemEventUseCase systemEventUseCase;
 
     private CompanyScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         this.companyUseCase = Mockito.mock(CompanyUseCase.class);
-        this.slackClient = Mockito.mock(SlackClient.class);
+        this.systemEventUseCase = Mockito.mock(SystemEventUseCase.class);
 
-        this.scheduler = Mockito.spy(new CompanyScheduler(companyUseCase, slackClient));
+        this.scheduler = Mockito.spy(new CompanyScheduler(companyUseCase, systemEventUseCase));
         scheduler.hourOfCompany = 12;
     }
 
@@ -48,14 +48,16 @@ class CompanySchedulerTest {
             assertDoesNotThrow(() -> scheduler.companyScheduler());
         }
 
-        @DisplayName("companyScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @DisplayName("companyScheduler : 想定外のエラーが発生したときはSystemEventを記録する")
         @Test
         void companyScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 12, 0)).when(scheduler).nowLocalDateTime();
 
             doThrow(FundanalyzerRuntimeException.class).when(companyUseCase).importCompanyInfo();
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.companyScheduler());
-            verify(slackClient, times(1)).sendMessage(any(), any(), any());
+            verify(systemEventUseCase, times(1))
+                    .record(SystemEventType.ERROR, "CompanyScheduler",
+                            "会社情報更新: github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException");
         }
 
         @DisplayName("companyScheduler : 処理時間外")

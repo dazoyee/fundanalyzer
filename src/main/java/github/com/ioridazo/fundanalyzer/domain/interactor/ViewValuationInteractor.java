@@ -4,7 +4,6 @@ import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Logged;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ViewSpecification;
@@ -38,22 +37,17 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
     private final CompanySpecification companySpecification;
     private final ValuationSpecification valuationSpecification;
     private final ViewSpecification viewSpecification;
-    private final SlackClient slackClient;
 
-    @Value("${app.slack.update-view.enabled:true}")
-    boolean updateViewEnabled;
     @Value("${app.config.view.analysis.ranking-exclude-days}")
     int rankingExcludeDays;
 
     public ViewValuationInteractor(
             final CompanySpecification companySpecification,
             final ValuationSpecification valuationSpecification,
-            final ViewSpecification viewSpecification,
-            final SlackClient slackClient) {
+            final ViewSpecification viewSpecification) {
         this.companySpecification = companySpecification;
         this.valuationSpecification = valuationSpecification;
         this.viewSpecification = viewSpecification;
-        this.slackClient = slackClient;
     }
 
     /**
@@ -161,9 +155,6 @@ public class ViewValuationInteractor implements ViewValuationUseCase {
                 .map(viewSpecification::generateCompanyValuationView)
                 .forEach(viewSpecification::upsert);
 
-        if (updateViewEnabled) {
-            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.valuation");
-        }
     }
 
     @Override
