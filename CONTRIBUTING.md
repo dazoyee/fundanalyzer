@@ -75,29 +75,60 @@ Gate 1 / Gate 3 は人間レビュアの承認が必須です（スキップ不�
 
 ## リリースフロー
 
-Git Flow 標準の手順でリリースします。
+### 自動リリースパイプライン（推奨）
 
-### 1. リリースブランチを作成
+`.github/workflows/pipeline.yml` の `Pipeline` ワークフローが、リリースブランチ作成から
+本番デプロイ・`develop` へのバックマージまでを自動実行する。トリガーは `workflow_dispatch` で、
+`version` 入力を空にすると CI（テストのみ）、バージョンを指定するとリリース＋本番デプロイが走る。
+
+```bash
+# CIのみ実行（テスト）
+gh workflow run pipeline.yml --repo dazoyee/fundanalyzer
+
+# リリース＋本番デプロイを実行（例: 2.5.11）
+gh workflow run pipeline.yml -f version=2.5.11 --repo dazoyee/fundanalyzer
+```
+
+リリースジョブ（`release`）は本番ホスト上の self-hosted runner（ラベル: `fundanalyzer`）で動作し、
+以下を順に行う。
+
+1. `origin/develop` から `release/vX.Y.Z` を作成し、SNAPSHOT を外してリリースコミット
+2. `main` へ `--no-ff` マージし、タグ `vX.Y.Z` を付けて `origin` へ push
+3. `mvnw.cmd clean package -DskipTests` でビルド
+4. Windows サービス（`fundanalyzer`）を停止し、現行 JAR をバックアップした上で新 JAR に差し替えて起動
+5. Actuator ヘルスチェック（`http://localhost:8990/actuator/health`）に成功するまでリトライし、
+   失敗時はバックアップ JAR へ自動ロールバックしてジョブを失敗させる
+6. ヘルスチェック成功時のみ、リリースブランチを `develop` へバックマージし、次期 `SNAPSHOT` バージョンを
+   コミットして `origin/develop` へ push する
+
+このため、手元での `git checkout`/`merge`/`tag`/SSH デプロイ操作は本来不要であり、
+下記「手動リリース手順」は自動パイプラインが使えない場合の参考手順として残す。
+
+### 手動リリース手順（参考）
+
+Git Flow 標準の手順でリリースする場合の操作は以下の通り。
+
+#### 1. リリースブランチを作成
 
 ```bash
 git checkout develop
 git checkout -b release/vX.Y.Z
 ```
 
-### 2. pom.xml のバージョンを更新（SNAPSHOT を外す）
+#### 2. pom.xml のバージョンを更新（SNAPSHOT を外す）
 
 ```bash
 ./mvnw versions:set -DnewVersion=X.Y.Z
 ./mvnw versions:commit
 ```
 
-### 3. リリースコミット
+#### 3. リリースコミット
 
 ```bash
 git commit -am "release: vX.Y.Z"
 ```
 
-### 4. main にマージ＋タグ付け
+#### 4. main にマージ＋タグ付け
 
 ```bash
 git checkout main
@@ -106,14 +137,14 @@ git tag vX.Y.Z
 git push origin main --tags
 ```
 
-### 5. develop にバックマージ
+#### 5. develop にバックマージ
 
 ```bash
 git checkout develop
 git merge --no-ff release/vX.Y.Z
 ```
 
-### 6. 次バージョンの SNAPSHOT を develop にコミット
+#### 6. 次バージョンの SNAPSHOT を develop にコミット
 
 ```bash
 ./mvnw versions:set -DnewVersion=X.Y.(Z+1)-SNAPSHOT
@@ -122,7 +153,7 @@ git commit -am "chore: prepare next development version X.Y.(Z+1)-SNAPSHOT"
 git push origin develop
 ```
 
-### 7. リリースブランチを削除
+#### 7. リリースブランチを削除
 
 ```bash
 git branch -d release/vX.Y.Z
