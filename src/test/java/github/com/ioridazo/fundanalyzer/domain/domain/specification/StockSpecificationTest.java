@@ -67,6 +67,14 @@ class StockSpecificationTest {
                 any(LocalDate.class),
                 eq(true)
         )).thenAnswer(invocation -> invocation.getArgument(0));
+        when(corporateActionSpecification.adjustToBasisWithActions(
+                any(BigDecimal.class),
+                any(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(true)
+        )).thenAnswer(invocation -> invocation.getArgument(0));
+        when(corporateActionSpecification.findActions(any())).thenReturn(List.of());
 
         stockSpecification = Mockito.spy(new StockSpecification(
                 stockPriceDao,
@@ -257,7 +265,7 @@ class StockSpecificationTest {
             assertEquals(BigDecimal.valueOf(75000, 2), actual.getAverageStockPrice().orElseThrow());
         }
 
-        @DisplayName("split correction : adjustToBasisの結果で最新株価と平均株価を補正する")
+        @DisplayName("split correction : adjustToBasisWithActionsの結果で最新株価と平均株価を補正する")
         @Test
         void splitCorrection() {
             when(documentSpecification.findLatestDocument(company)).thenReturn(Optional.of(new Document(
@@ -279,7 +287,7 @@ class StockSpecificationTest {
                     null,
                     false
             )));
-            when(corporateActionSpecification.adjustToBasis(
+            when(corporateActionSpecification.adjustToBasisWithActions(
                     any(BigDecimal.class),
                     any(),
                     any(LocalDate.class),
@@ -319,7 +327,7 @@ class StockSpecificationTest {
             stockSpecification.findStock(company);
 
             ArgumentCaptor<Boolean> confirmedOnlyCaptor = ArgumentCaptor.forClass(Boolean.class);
-            verify(corporateActionSpecification, times(3)).adjustToBasis(
+            verify(corporateActionSpecification, times(3)).adjustToBasisWithActions(
                     any(BigDecimal.class),
                     any(),
                     any(LocalDate.class),

@@ -282,7 +282,6 @@ public class CorporatePresenter {
     }
 
     private void setStockPriceView(final CorporateDetailViewModel view, final Model model) {
-        model.addAttribute("stockPrices", view.getStockPriceList());
         model.addAttribute("splitDates", view.getSplitDates());
 
         final List<StockPriceViewModel> stockPrice = view.getStockPriceList().stream()

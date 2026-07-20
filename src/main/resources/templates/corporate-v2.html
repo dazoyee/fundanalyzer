@@ -336,9 +336,9 @@
             <!-- 企業価値推移グラフ -->
             <div class="relative h-48 sm:h-64"><canvas id="analysisChartAll"></canvas></div>
             <!-- 分析結果テーブル (PC) / カード (スマホ) -->
-            <div class="hidden overflow-x-auto sm:block" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+            <div class="hidden max-h-96 overflow-y-auto overflow-x-auto sm:block" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
+                    <thead class="sticky top-0 bg-slate-50 dark:bg-slate-700">
                     <tr>
                         <th class="px-3 py-2 text-left text-xs font-semibold">提出日<th:block th:replace="~{fragments/tooltip :: hint('submit-date')}"></th:block></th>
                         <th class="px-3 py-2 text-left text-xs font-semibold">対象期間<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
@@ -358,7 +358,7 @@
                     </tbody>
                 </table>
             </div>
-            <ul class="block space-y-2 sm:hidden" aria-label="分析結果" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
+            <ul class="block max-h-96 space-y-2 overflow-y-auto sm:hidden" aria-label="分析結果" th:if="${analysisResults != null and !analysisResults.isEmpty()}">
                 <li th:each="r : ${analysisResults}" class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
                     <div class="flex items-center justify-between">
                         <span class="font-mono" th:text="${r.submitDate}">-</span>
@@ -413,42 +413,6 @@
                 <div x-show="stockSub===365"  class="relative h-48 sm:h-64"><canvas id="stockChart365"></canvas></div>
                 <div x-show="stockSub==='all'" class="relative h-48 sm:h-64"><canvas id="stockChartAll"></canvas></div>
             </div>
-            <!-- OHLC テーブル (PC) / カード (スマホ) -->
-            <div class="hidden overflow-x-auto sm:block" th:if="${stockPrices != null and !stockPrices.isEmpty()}">
-                <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
-                    <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold">対象日付<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">終値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">始値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">高値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold">安値<th:block th:replace="~{fragments/tooltip :: hint('ohlc')}"></th:block></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="s : ${stockPrices}">
-                        <td class="px-3 py-2" th:text="${s.targetDate}">-</td>
-                        <td class="px-3 py-2 text-right font-mono" th:text="${s.stockPrice}">-</td>
-                        <td class="px-3 py-2 text-right font-mono" th:text="${s.openingPrice}">-</td>
-                        <td class="px-3 py-2 text-right font-mono" th:text="${s.highPrice}">-</td>
-                        <td class="px-3 py-2 text-right font-mono" th:text="${s.lowPrice}">-</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <ul class="block space-y-2 sm:hidden" aria-label="株価 OHLC" th:if="${stockPrices != null and !stockPrices.isEmpty()}">
-                <li th:each="s : ${stockPrices}" class="rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
-                    <div class="flex items-center justify-between">
-                        <span class="font-mono" th:text="${s.targetDate}">-</span>
-                        <span class="font-mono font-semibold" th:text="${s.stockPrice}">-</span>
-                    </div>
-                    <dl class="mt-1 grid grid-cols-3 gap-x-2 text-slate-500 dark:text-slate-400">
-                        <div><dt class="inline">始</dt><dd class="ml-1 inline font-mono text-slate-700 dark:text-slate-300" th:text="${s.openingPrice}">-</dd></div>
-                        <div><dt class="inline">高</dt><dd class="ml-1 inline font-mono text-slate-700 dark:text-slate-300" th:text="${s.highPrice}">-</dd></div>
-                        <div><dt class="inline">安</dt><dd class="ml-1 inline font-mono text-slate-700 dark:text-slate-300" th:text="${s.lowPrice}">-</dd></div>
-                    </dl>
-                </li>
-            </ul>
             <!-- 株価予想グラフ (3 サブタブ) -->
             <div>
                 <h3 class="mb-3 text-sm font-bold text-slate-600 dark:text-slate-300">株価予想<th:block th:replace="~{fragments/tooltip :: hint('forecast-stock')}"></th:block></h3>
