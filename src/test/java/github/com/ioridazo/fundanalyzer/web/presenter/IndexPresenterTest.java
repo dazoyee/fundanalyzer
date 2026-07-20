@@ -1,15 +1,19 @@
 package github.com.ioridazo.fundanalyzer.web.presenter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventEntity;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
-import github.com.ioridazo.fundanalyzer.domain.usecase.ViewFilterSettingUseCase;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.ViewFilterSettingEntity;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.ViewFilterSettingUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.index.SystemEventViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,11 +21,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
-import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,6 +44,7 @@ class IndexPresenterTest {
 
     private ViewService viewService;
     private AnalysisService analysisService;
+    private SystemEventUseCase systemEventUseCase;
     private ViewFilterSettingUseCase viewFilterSettingUseCase;
     private ObjectMapper objectMapper;
     private IndexPresenter presenter;
@@ -47,10 +53,12 @@ class IndexPresenterTest {
     void setUp() {
         this.viewService = mock(ViewService.class);
         this.analysisService = mock(AnalysisService.class);
+        this.systemEventUseCase = mock(SystemEventUseCase.class);
         this.viewFilterSettingUseCase = mock(ViewFilterSettingUseCase.class);
         this.objectMapper = mock(ObjectMapper.class);
-        this.presenter = new IndexPresenter(viewService, analysisService, viewFilterSettingUseCase, objectMapper);
+        this.presenter = new IndexPresenter(viewService, analysisService, systemEventUseCase, viewFilterSettingUseCase, objectMapper);
         ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130", "140", "150", "160", "170"));
+        when(systemEventUseCase.findRecent(20)).thenReturn(List.of());
         when(viewFilterSettingUseCase.getSetting()).thenReturn(new ViewFilterSettingEntity(
                 1,
                 BigDecimal.valueOf(120),
@@ -80,6 +88,7 @@ class IndexPresenterTest {
             verify(model).addAttribute("target", (String) null);
             verify(model).addAttribute("keyword", (String) null);
             verify(model).addAttribute("table", page);
+            verify(model).addAttribute("recentSystemEvents", List.of());
             verify(model).addAttribute("sortParam", "code,asc");
         }
 
@@ -100,6 +109,36 @@ class IndexPresenterTest {
             assertEquals(2, query.pageable().getPageNumber());
             assertEquals(50, query.pageable().getPageSize());
             assertEquals(Sort.by(Sort.Direction.DESC, "name"), query.pageable().getSort());
+        }
+
+        @Test
+        @DisplayName("フルページ表示では recentSystemEvents をモデルに含める")
+        void fullPage_includesRecentSystemEvents() {
+            final ExtendedModelMap model = new ExtendedModelMap();
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
+            final SystemEventEntity entity = SystemEventEntity.of(
+                    SystemEventType.ERROR,
+                    "AnalysisScheduler",
+                    "想定外のエラーが発生しました。 test",
+                    LocalDateTime.parse("2026-07-20T12:00:00"));
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+            when(systemEventUseCase.findRecent(20)).thenReturn(List.of(entity));
+
+            presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
+
+            assertEquals(List.of(SystemEventViewModel.of(entity)), model.getAttribute("recentSystemEvents"));
+        }
+
+        @Test
+        @DisplayName("テーブル fragment 取得では recentSystemEvents を再取得しない")
+        void tableFragment_doesNotFetchSystemEvents() {
+            final Model model = mock(Model.class);
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+
+            presenter.corporateViewV3Table(null, null, 0, 25, "code,asc", model);
+
+            verify(systemEventUseCase, never()).findRecent(20);
         }
 
         @Test
@@ -270,7 +309,7 @@ class IndexPresenterTest {
         }
 
         @Test
-        @DisplayName("v3 全画面と同じ共通属性が設定される")
+        @DisplayName("テーブル fragment 用の共通属性が設定される")
         void sameCommonAttributesAsFullPage() {
             final Model model = mock(Model.class);
             final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("submitDate"));
@@ -283,6 +322,27 @@ class IndexPresenterTest {
             verify(model).addAttribute("table", page);
             verify(model).addAttribute("sortParam", "submitDate,desc");
             assertNotNull(page);
+        }
+
+        @Test
+        @DisplayName("recentSystemEvents が model に設定される")
+        void recentSystemEvents_addedToModel() {
+            final Model model = mock(Model.class);
+            final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
+            final List<SystemEventEntity> events = List.of(
+                    SystemEventEntity.of(
+                            SystemEventType.ERROR,
+                            "AnalysisScheduler",
+                            "想定外のエラーが発生しました。 failure",
+                            LocalDateTime.parse("2026-07-20T09:00:00")
+                    )
+            );
+            when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
+            when(systemEventUseCase.findRecent(20)).thenReturn(events);
+
+            presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
+
+            verify(model).addAttribute("recentSystemEvents", List.of(SystemEventViewModel.of(events.get(0))));
         }
     }
 

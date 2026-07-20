@@ -43,9 +43,6 @@ htmx によるテーブル fragment は全て GET リクエストのため対象
 
 | 環境変数 | 用途 |
 |---|---|
-| `SLACK_WEBHOOK_T` | Slack Webhook トークン（t 部） |
-| `SLACK_WEBHOOK_B` | Slack Webhook トークン（b 部） |
-| `SLACK_WEBHOOK_X` | Slack Webhook トークン（x 部） |
 | `edinet.api-key` | EDINET API キー |
 
 設定テンプレートは [`release/env.example`](release/env.example) を参照してください。

@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.DocumentSpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification;
@@ -33,24 +32,19 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
     private final DocumentSpecification documentSpecification;
     private final FinancialStatementSpecification financialStatementSpecification;
     private final ViewSpecification viewSpecification;
-    private final SlackClient slackClient;
 
     @Value("${app.config.view.edinet-list.size}")
     int edinetListSize;
-    @Value("${app.slack.update-view.enabled:true}")
-    boolean updateViewEnabled;
 
     public ViewEdinetInteractor(
             final CompanySpecification companySpecification,
             final DocumentSpecification documentSpecification,
             final FinancialStatementSpecification financialStatementSpecification,
-            final ViewSpecification viewSpecification,
-            final SlackClient slackClient) {
+            final ViewSpecification viewSpecification) {
         this.companySpecification = companySpecification;
         this.documentSpecification = documentSpecification;
         this.financialStatementSpecification = financialStatementSpecification;
         this.viewSpecification = viewSpecification;
-        this.slackClient = slackClient;
     }
 
     LocalDate nowLocalDate() {
@@ -118,10 +112,6 @@ public class ViewEdinetInteractor implements ViewEdinetUseCase {
                 .toList();
 
         viewModelList.parallelStream().forEach(viewSpecification::upsert);
-
-        if (updateViewEnabled) {
-            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.edinet.list");
-        }
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "処理状況アップデートが正常に終了しました。",

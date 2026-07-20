@@ -9,7 +9,7 @@ EDINETから取得した有価証券報告書（XBRL）と各種株価サイト�
 - **Java 17 / Spring Boot 3.1.0**
 - **永続化**: Doma 2 + Flyway + MySQL（本番） / H2（dev・test）
 - **View**: Thymeleaf + Tailwind CSS 3.4 / htmx 2.0 / Alpine.js 3 / Chart.js 4
-- **外部I/O**: EDINET API、日経/kabuoji3/minkabu/Yahoo Finance スクレイピング、Slack Webhook
+- **外部I/O**: EDINET API、日経/kabuoji3/minkabu/Yahoo Finance スクレイピング
 - **可観測性**: log4j2、Micrometer + OpenTelemetry/Zipkin、Resilience4j（CircuitBreaker / RateLimiter）
 
 ## ビルド・テストコマンド
@@ -54,7 +54,7 @@ Actuator: `http://localhost:8989/actuator/*`（dev）/ `http://localhost:8990/ac
 ルートパッケージ: `github.com.ioridazo.fundanalyzer`。**クリーンアーキテクチャ風の分離**を採用しており、これを崩さないこと。
 
 ```
-client/      … 外部I/O（EDINET API, jsoup スクレイパ, Selenium, Slack, CSV, ログ）
+client/      … 外部I/O（EDINET API, jsoup スクレイパ, Selenium, CSV, ログ）
 config/      … Spring設定・Bean定義
 domain/
   usecase/      … ユースケースのインタフェース（XxxUseCase）
@@ -88,7 +88,7 @@ exception/   … 業務例外
 | `StockUseCase` | 各種株価サイトからの株価取得 |
 | `ValuationUseCase` | 株価とバリュエーション指標の評価（Graham等） |
 | `ViewCorporateUseCase` / `ViewEdinetUseCase` / `ViewValuationUseCase` | 画面表示用ビューの集計 |
-| `NoticeUseCase` | Slack通知 |
+| `SystemEventUseCase` | システムイベント（エラー・警告）の記録とダッシュボード表示 |
 
 ### 外部呼び出しのレジリエンス
 
@@ -109,7 +109,7 @@ exception/   … 業務例外
 
 | URL | Presenter |
 |---|---|
-| `/v3/index` | IndexPresenter |
+| `/v3/index` | IndexPresenter（会社一覧 + 直近システムイベント） |
 | `/v3/corporate` | CorporatePresenter |
 | `/v3/edinet-list` | EdinetPresenter |
 | `/v3/edinet-list-detail` | EdinetDetailPresenter |
@@ -128,8 +128,6 @@ exception/   … 業務例外
 アプリケーション層では認証を行わない（全リクエスト `permitAll`）。アクセス制御はネットワーク境界
 （ファイアウォール・バインドアドレス等）に委ねる。セキュリティヘッダー（CSP/HSTS 等）と CSRF 保護のみ
 アプリケーション層で維持する。
-
-- Slack トークン: `SLACK_WEBHOOK_T` / `SLACK_WEBHOOK_B` / `SLACK_WEBHOOK_X`（`release/env` 経由）
 
 詳細は [SECURITY.md](SECURITY.md) を参照。
 

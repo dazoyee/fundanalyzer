@@ -23,7 +23,6 @@ public class AppConfig {
 
     private static final String EDINET = "edinet";
     private static final String SELENIUM = "selenium";
-    private static final String SLACK = "slack";
     private static final String JSOUP = "jsoup";
 
     @Bean("restEdinet")
@@ -40,17 +39,6 @@ public class AppConfig {
     @Bean("restSelenium")
     public RestTemplate restTemplateSelenium(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
-        final RestTemplate restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(settings.getConnectTimeout())
-                .setReadTimeout(settings.getReadTimeout())
-                .build();
-        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
-        return restTemplate;
-    }
-
-    @Bean("restSlack")
-    public RestTemplate restTemplateSlack(final RestClientProperties properties) {
-        final RestClientProperties.Settings settings = properties.getRestClient().get(SLACK);
         final RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(settings.getConnectTimeout())
                 .setReadTimeout(settings.getReadTimeout())
@@ -83,15 +71,6 @@ public class AppConfig {
     @Bean("retrySelenium")
     public RetryTemplate retryTemplateSelenium(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
-        return new RetryTemplateBuilder()
-                .maxAttempts(settings.getMaxAttempts())
-                .fixedBackoff(settings.getBackOff().toMillis())
-                .build();
-    }
-
-    @Bean("retrySlack")
-    public RetryTemplate retryTemplateSlack(final RestClientProperties properties) {
-        final RestClientProperties.Settings settings = properties.getRestClient().get(SLACK);
         return new RetryTemplateBuilder()
                 .maxAttempts(settings.getMaxAttempts())
                 .fixedBackoff(settings.getBackOff().toMillis())

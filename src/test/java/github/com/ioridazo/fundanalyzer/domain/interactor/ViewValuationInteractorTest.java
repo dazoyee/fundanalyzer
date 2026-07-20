@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.ValuationEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.ValuationSpecification;
@@ -25,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -39,7 +37,6 @@ class ViewValuationInteractorTest {
     private CompanySpecification companySpecification;
     private ValuationSpecification valuationSpecification;
     private ViewSpecification viewSpecification;
-    private SlackClient slackClient;
 
     private ViewValuationInteractor interactor;
 
@@ -48,15 +45,12 @@ class ViewValuationInteractorTest {
         companySpecification = mock(CompanySpecification.class);
         valuationSpecification = mock(ValuationSpecification.class);
         viewSpecification = mock(ViewSpecification.class);
-        slackClient = mock(SlackClient.class);
 
         interactor = spy(new ViewValuationInteractor(
                 companySpecification,
                 valuationSpecification,
-                viewSpecification,
-                slackClient
+                viewSpecification
         ));
-        interactor.updateViewEnabled = true;
         interactor.rankingExcludeDays = 90;
     }
 
@@ -192,9 +186,9 @@ class ViewValuationInteractorTest {
     @DisplayName("updateView() メソッド")
     class UpdateView {
 
-        @DisplayName("updateView : 全対象企業の最新評価をビューに upsert し、Slack 通知が有効なら送信する")
+        @DisplayName("updateView : 全対象企業の最新評価をビューに upsert する")
         @Test
-        void upsertsAllAndNotifiesSlack() {
+        void upsertsAll() {
             final Company company = new Company(
                     "10000", "対象企業", null, null, "edinet1", null, null, null, null, false, false, true);
             when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of(company));
@@ -205,21 +199,7 @@ class ViewValuationInteractorTest {
 
             interactor.updateView();
 
-            assertAll(
-                    () -> verify(viewSpecification, times(1)).upsert(view),
-                    () -> verify(slackClient, times(1)).sendMessage(anyString())
-            );
-        }
-
-        @DisplayName("updateView : Slack 通知が無効なら送信しない")
-        @Test
-        void skipsSlackWhenDisabled() {
-            interactor.updateViewEnabled = false;
-            when(companySpecification.inquiryAllTargetCompanies()).thenReturn(List.of());
-
-            interactor.updateView();
-
-            verify(slackClient, times(0)).sendMessage(anyString());
+            verify(viewSpecification, times(1)).upsert(view);
         }
     }
 

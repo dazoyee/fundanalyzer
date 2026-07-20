@@ -3,8 +3,9 @@ package github.com.ioridazo.fundanalyzer.web.scheduler;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,16 +23,16 @@ public class CompanyScheduler {
     private static final Logger log = LogManager.getLogger(CompanyScheduler.class);
 
     private final CompanyUseCase companyUseCase;
-    private final SlackClient slackClient;
+    private final SystemEventUseCase systemEventUseCase;
 
     @Value("${app.scheduler.hour.company}")
     int hourOfCompany;
 
     public CompanyScheduler(
             final CompanyUseCase companyUseCase,
-            final SlackClient slackClient) {
+            final SystemEventUseCase systemEventUseCase) {
         this.companyUseCase = companyUseCase;
-        this.slackClient = slackClient;
+        this.systemEventUseCase = systemEventUseCase;
     }
 
     public LocalDateTime nowLocalDateTime() {
@@ -56,10 +57,13 @@ public class CompanyScheduler {
 
                 log.info(FundanalyzerLogClient.toAccessLogObject(Category.SCHEDULER, Process.END, "companyScheduler", durationTime));
             } catch (Throwable t) {
-                // Slack通知
-                slackClient.sendMessage("g.c.i.f.web.scheduler.notice.error", "会社情報更新", t);
+                systemEventUseCase.record(SystemEventType.ERROR, "CompanyScheduler", buildErrorMessage("会社情報更新", t));
                 throw new FundanalyzerRuntimeException("会社情報更新スケジューラ処理中に想定外のエラーが発生しました。", t);
             }
         }
+    }
+
+    private String buildErrorMessage(final String label, final Throwable throwable) {
+        return label + ": " + throwable;
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
 import github.com.ioridazo.fundanalyzer.domain.service.ViewService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewFilterSettingUseCase;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerBadDataException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
@@ -14,6 +15,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQue
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.index.SystemEventViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,16 +59,19 @@ public class IndexPresenter {
 
     private final ViewService viewService;
     private final AnalysisService analysisService;
+    private final SystemEventUseCase systemEventUseCase;
     private final ViewFilterSettingUseCase viewFilterSettingUseCase;
     private final ObjectMapper objectMapper;
 
     public IndexPresenter(
             final ViewService viewService,
             final AnalysisService analysisService,
+            final SystemEventUseCase systemEventUseCase,
             final ViewFilterSettingUseCase viewFilterSettingUseCase,
             final ObjectMapper objectMapper) {
         this.viewService = viewService;
         this.analysisService = analysisService;
+        this.systemEventUseCase = systemEventUseCase;
         this.viewFilterSettingUseCase = viewFilterSettingUseCase;
         this.objectMapper = objectMapper;
     }
@@ -90,7 +95,7 @@ public class IndexPresenter {
             @RequestParam(name = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) final int size,
             @RequestParam(name = "sort", defaultValue = DEFAULT_SORT) final String sortParam,
             final Model model) {
-        addCommonAttributes(model, target, keyword, page, size, sortParam);
+        addCommonAttributes(model, target, keyword, page, size, sortParam, true);
         return INDEX_V2;
     }
 
@@ -113,7 +118,7 @@ public class IndexPresenter {
             @RequestParam(name = "size", defaultValue = "" + DEFAULT_PAGE_SIZE) final int size,
             @RequestParam(name = "sort", defaultValue = DEFAULT_SORT) final String sortParam,
             final Model model) {
-        addCommonAttributes(model, target, keyword, page, size, sortParam);
+        addCommonAttributes(model, target, keyword, page, size, sortParam, false);
         return INDEX_TABLE_FRAGMENT;
     }
 
@@ -285,7 +290,8 @@ public class IndexPresenter {
             final String keyword,
             final int page,
             final int size,
-            final String sortParam) {
+            final String sortParam,
+            final boolean includeRecentSystemEvents) {
         final int safePage = Math.max(0, page);
         final int safeSize = Math.min(Math.max(1, size), MAX_PAGE_SIZE);
         final Sort sort = parseSort(sortParam);
@@ -296,6 +302,11 @@ public class IndexPresenter {
         model.addAttribute(TARGET, target);
         model.addAttribute("keyword", keyword);
         model.addAttribute("table", tablePage);
+        if (includeRecentSystemEvents) {
+            model.addAttribute("recentSystemEvents", systemEventUseCase.findRecent(20).stream()
+                    .map(SystemEventViewModel::of)
+                    .toList());
+        }
         model.addAttribute("sortParam", sortParam);
     }
 

@@ -10,7 +10,7 @@ EDINET から取得した有価証券報告書（XBRL）と各種株価サイト
 | フロントエンド | Tailwind CSS 3.4 / htmx 2.0 / Alpine.js 3 / Chart.js 4 |
 | データベース | MySQL（本番） / H2（dev・test） |
 | 可観測性 | log4j2 / Micrometer / OpenTelemetry / Zipkin / Resilience4j |
-| 外部連携 | EDINET API / 日経・kabuoji3・minkabu・Yahoo Finance / Slack Webhook |
+| 外部連携 | EDINET API / 日経・kabuoji3・minkabu・Yahoo Finance |
 
 ## エンドポイント一覧
 

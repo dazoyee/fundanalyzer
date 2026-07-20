@@ -3,12 +3,13 @@ package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.FinancialStatementDao;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.master.Subject;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.CreatedType;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.BsSubject;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
 import github.com.ioridazo.fundanalyzer.domain.value.Document;
@@ -39,26 +40,20 @@ import java.util.Optional;
 public class FinancialStatementSpecification {
 
     private static final Logger log = LogManager.getLogger(FinancialStatementSpecification.class);
-    private static final String FINANCIAL_STATEMENT_VALIDATION_NOTICE =
-            "github.com.ioridazo.fundanalyzer.domain.domain.specification.FinancialStatementSpecification.validationAlert";
-
     private final FinancialStatementDao financialStatementDao;
     private final SubjectSpecification subjectSpecification;
-    private final SlackClient slackClient;
+    private final SystemEventUseCase systemEventUseCase;
     @Value("${app.config.scraping.validation.lower-limit-ratio}")
     BigDecimal validationLowerLimitRatio;
     @Value("${app.config.scraping.validation.upper-limit-ratio}")
     BigDecimal validationUpperLimitRatio;
-    @Value("${app.slack.financial-statement-validation.enabled:true}")
-    boolean financialStatementValidationEnabled;
-
     public FinancialStatementSpecification(
             final FinancialStatementDao financialStatementDao,
             final SubjectSpecification subjectSpecification,
-            final SlackClient slackClient) {
+            final SystemEventUseCase systemEventUseCase) {
         this.financialStatementDao = financialStatementDao;
         this.subjectSpecification = subjectSpecification;
-        this.slackClient = slackClient;
+        this.systemEventUseCase = systemEventUseCase;
     }
 
     LocalDateTime nowLocalDateTime() {
@@ -308,21 +303,23 @@ public class FinancialStatementSpecification {
                 Process.of(fs)
         ));
 
-        if (financialStatementValidationEnabled) {
-            slackClient.sendMessage(
-                    FINANCIAL_STATEMENT_VALIDATION_NOTICE,
-                    company.code(),
-                    company.edinetCode(),
-                    fs.getName(),
-                    dId,
-                    document.getDocumentId(),
-                    document.getPeriodEnd(),
-                    previousStatement.getPeriodEnd(),
-                    previousValue,
-                    currentValue,
-                    ratio
-            );
-        }
+        systemEventUseCase.record(
+                SystemEventType.WARNING,
+                "FinancialStatementSpecification",
+                MessageFormat.format(
+                        "企業コード:{0} EDINET:{1} 財務諸表:{2} 科目ID:{3} 書類ID:{4} 当期末:{5} 前回期末:{6} 前回値:{7} 今回値:{8} 比率:{9}",
+                        company.code(),
+                        company.edinetCode(),
+                        fs.getName(),
+                        dId,
+                        document.getDocumentId(),
+                        document.getPeriodEnd(),
+                        previousStatement.getPeriodEnd(),
+                        previousValue,
+                        currentValue,
+                        ratio
+                )
+        );
     }
 
     private String formatRatio(final Long previousValue, final Long currentValue) {
