@@ -137,6 +137,10 @@ public class StockSpecification {
         final List<StockPriceEntity> stockPriceList = stockPriceDao.selectByCode(company.code());
         final Optional<LocalDate> basisDate = documentSpecification.findLatestDocument(company)
                 .map(Document::getSubmitDate);
+        // findActions()はDB問い合わせ＋全株価履歴の走査を伴うため、株価件数分ループするadjustToBasis経由の
+        // 都度呼び出し(N+1)を避けて1回だけ取得し、adjustToBasisWithActionsで使い回す。
+        final List<CorporateActionSpecification.CorporateAction> actions =
+                corporateActionSpecification.findActions(company.code());
 
         final Optional<StockPriceEntity> latestStockEntity = stockPriceList.stream()
                 .max(Comparator.comparing(StockPriceEntity::getTargetDate))
@@ -147,16 +151,16 @@ public class StockSpecification {
         final Optional<BigDecimal> latestStock = latestStockEntity
                 .map(stockPrice -> BigDecimal.valueOf(stockPrice.getStockPrice()));
         final Optional<BigDecimal> adjustedLatestStock = latestStockEntity
-                .flatMap(stockPrice -> basisDate.map(submitDate -> corporateActionSpecification.adjustToBasis(
+                .flatMap(stockPrice -> basisDate.map(submitDate -> corporateActionSpecification.adjustToBasisWithActions(
                         BigDecimal.valueOf(stockPrice.getStockPrice()),
-                        stockPrice.getCompanyCode(),
+                        actions,
                         stockPrice.getTargetDate(),
                         submitDate,
                         true
                 )));
 
         final Optional<BigDecimal> averageStockPrice = basisDate
-                .flatMap(sd -> getAverageStockPriceOfLatestSubmitDate(sd, stockPriceList));
+                .flatMap(sd -> getAverageStockPriceOfLatestSubmitDate(sd, stockPriceList, actions));
 
         final List<MinkabuEntity> minkabuList = minkabuDao.selectByCode(company.code());
         final Optional<BigDecimal> latestForecastStock = minkabuList.stream()
@@ -372,7 +376,8 @@ public class StockSpecification {
         final Company company = companySpecification.findCompanyByCode(companyCode).orElseThrow(() -> new FundanalyzerNotExistException("企業"));
         return getAverageStockPriceOfLatestSubmitDate(
                 targetDate,
-                stockPriceDao.selectByCode(company.code())
+                stockPriceDao.selectByCode(company.code()),
+                corporateActionSpecification.findActions(company.code())
         );
     }
 
@@ -381,16 +386,19 @@ public class StockSpecification {
      *
      * @param targetDate     対象日
      * @param stockPriceList 株価情報リスト
+     * @param actions        事前取得したコーポレートアクションリスト（findActions()を対象日ごとに再問い合わせしないため）
      * @return 平均の株価
      */
     private Optional<BigDecimal> getAverageStockPriceOfLatestSubmitDate(
-            final LocalDate targetDate, final List<StockPriceEntity> stockPriceList) {
+            final LocalDate targetDate,
+            final List<StockPriceEntity> stockPriceList,
+            final List<CorporateActionSpecification.CorporateAction> actions) {
         final List<BigDecimal> certainPeriodList = stockPriceList.stream()
                 .filter(stockPrice -> targetDate.minusDays(daysToAverageStockPrice).isBefore(stockPrice.getTargetDate()))
                 .filter(stockPrice -> targetDate.isAfter(stockPrice.getTargetDate()))
-                .map(stockPrice -> corporateActionSpecification.adjustToBasis(
+                .map(stockPrice -> corporateActionSpecification.adjustToBasisWithActions(
                         BigDecimal.valueOf(stockPrice.getStockPrice()),
-                        stockPrice.getCompanyCode(),
+                        actions,
                         stockPrice.getTargetDate(),
                         targetDate,
                         true
