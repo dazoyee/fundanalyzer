@@ -7,7 +7,6 @@ import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SourceO
 import github.com.ioridazo.fundanalyzer.domain.usecase.AnalyzeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.DocumentUseCase;
-import github.com.ioridazo.fundanalyzer.domain.usecase.NoticeUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
@@ -40,7 +39,6 @@ public class AnalysisService {
     private final ValuationUseCase valuationUseCase;
     private final ViewCorporateUseCase viewCorporateUseCase;
     private final ViewEdinetUseCase viewEdinetUseCase;
-    private final NoticeUseCase noticeUseCase;
 
     public AnalysisService(
             final CompanyUseCase companyUseCase,
@@ -49,8 +47,7 @@ public class AnalysisService {
             final StockUseCase stockUseCase,
             final ValuationUseCase valuationUseCase,
             final ViewCorporateUseCase viewCorporateUseCase,
-            final ViewEdinetUseCase viewEdinetUseCase,
-            final NoticeUseCase noticeUseCase) {
+            final ViewEdinetUseCase viewEdinetUseCase) {
         this.companyUseCase = companyUseCase;
         this.documentUseCase = documentUseCase;
         this.analyzeUseCase = analyzeUseCase;
@@ -58,7 +55,6 @@ public class AnalysisService {
         this.valuationUseCase = valuationUseCase;
         this.viewCorporateUseCase = viewCorporateUseCase;
         this.viewEdinetUseCase = viewEdinetUseCase;
-        this.noticeUseCase = noticeUseCase;
     }
 
     /**
@@ -87,8 +83,6 @@ public class AnalysisService {
                     viewCorporateUseCase.updateView(date);
                     // view edinet
                     viewEdinetUseCase.updateView(date);
-                    // slack
-                    noticeUseCase.noticeSlack(date);
                 });
     }
 

@@ -22,7 +22,6 @@ public enum Process {
     IMPORT("import"),
     REGISTER("register"),
     UPDATE("update"),
-    SLACK("slack"),
     EVALUATE("evaluate"),
     INDICATE("indicate"),
     ;

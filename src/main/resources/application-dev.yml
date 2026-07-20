@@ -51,13 +51,6 @@ management:
       application: ${spring.application.name}-dev
 
 app:
-  config:
-    slack:
-      parameter:
-        t: ${SLACK_WEBHOOK_T:}
-        b: ${SLACK_WEBHOOK_B:}
-        x: ${SLACK_WEBHOOK_X:}
-
   # dev プロファイル限定で OS 非依存パスへ上書き。
   # application.yml は Windows サービス向けデフォルト (C:/fundanalyzer/...) を維持し、
   # release/config/application-prod.yml で prod 用に再定義する。

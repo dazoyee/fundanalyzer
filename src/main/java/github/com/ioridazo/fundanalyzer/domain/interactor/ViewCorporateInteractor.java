@@ -3,7 +3,6 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.AnalysisResultEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
@@ -71,13 +70,10 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     private final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService;
     private final ViewSpecification viewSpecification;
     private final ViewFilterSettingSpecification viewFilterSettingSpecification;
-    private final SlackClient slackClient;
     private final CorporateActionSpecification corporateActionSpecification;
 
     @org.springframework.beans.factory.annotation.Value("${app.config.scraping.document-type-code}")
     List<String> targetTypeCodes;
-    @org.springframework.beans.factory.annotation.Value("${app.slack.update-view.enabled:true}")
-    boolean updateViewEnabled;
 
     public ViewCorporateInteractor(
             final AnalyzeInteractor analyzeInteractor,
@@ -89,7 +85,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
             final InvestmentIndicatorReconciliationService investmentIndicatorReconciliationService,
             final ViewSpecification viewSpecification,
             final ViewFilterSettingSpecification viewFilterSettingSpecification,
-            final SlackClient slackClient,
             final CorporateActionSpecification corporateActionSpecification) {
         this.analyzeInteractor = analyzeInteractor;
         this.companySpecification = companySpecification;
@@ -100,7 +95,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
         this.investmentIndicatorReconciliationService = investmentIndicatorReconciliationService;
         this.viewSpecification = viewSpecification;
         this.viewFilterSettingSpecification = viewFilterSettingSpecification;
-        this.slackClient = slackClient;
         this.corporateActionSpecification = corporateActionSpecification;
     }
 
@@ -453,10 +447,6 @@ public class ViewCorporateInteractor implements ViewCorporateUseCase {
     public void updateView() {
         final long startTime = System.currentTimeMillis();
         parallelUpdateView(companySpecification.inquiryAllTargetCompanies());
-
-        if (updateViewEnabled) {
-            slackClient.sendMessage("g.c.i.f.domain.service.ViewService.display.update.complete.corporate");
-        }
 
         log.info(FundanalyzerLogClient.toInteractorLogObject(
                 "表示アップデートが正常に終了しました。",

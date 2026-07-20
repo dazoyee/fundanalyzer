@@ -1,6 +1,5 @@
 package github.com.ioridazo.fundanalyzer.domain.interactor;
 
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentStatus;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
@@ -27,7 +26,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,7 +37,6 @@ class ViewEdinetInteractorTest {
     private DocumentSpecification documentSpecification;
     private FinancialStatementSpecification financialStatementSpecification;
     private ViewSpecification viewSpecification;
-    private SlackClient slackClient;
 
     private ViewEdinetInteractor viewEdinetInteractor;
 
@@ -49,17 +46,14 @@ class ViewEdinetInteractorTest {
         documentSpecification = Mockito.mock(DocumentSpecification.class);
         financialStatementSpecification = Mockito.mock(FinancialStatementSpecification.class);
         viewSpecification = Mockito.mock(ViewSpecification.class);
-        slackClient = Mockito.mock(SlackClient.class);
 
         viewEdinetInteractor = Mockito.spy(new ViewEdinetInteractor(
                 companySpecification,
                 documentSpecification,
                 financialStatementSpecification,
-                viewSpecification,
-                slackClient
+                viewSpecification
         ));
         viewEdinetInteractor.edinetListSize = 400;
-        viewEdinetInteractor.updateViewEnabled = true;
     }
 
     @Nested
@@ -155,7 +149,6 @@ class ViewEdinetInteractorTest {
 
             assertDoesNotThrow(() -> viewEdinetInteractor.updateView());
             verify(viewSpecification, times(1)).upsert(viewModel);
-            verify(slackClient, times(1)).sendMessage(any());
         }
 
         @DisplayName("updateView : 過去の提出日に関してはビューを更新しない")
@@ -167,7 +160,6 @@ class ViewEdinetInteractorTest {
 
             assertDoesNotThrow(() -> viewEdinetInteractor.updateView());
             verify(viewSpecification, times(0)).upsert(viewModel);
-            verify(slackClient, times(1)).sendMessage(any());
         }
 
         @DisplayName("updateView : ビューを更新する")
@@ -178,7 +170,6 @@ class ViewEdinetInteractorTest {
 
             assertDoesNotThrow(() -> viewEdinetInteractor.updateView(inputData));
             verify(viewSpecification, times(1)).upsert(viewModel);
-            verify(slackClient, times(0)).sendMessage(any());
         }
     }
 

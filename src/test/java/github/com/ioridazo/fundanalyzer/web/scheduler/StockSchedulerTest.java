@@ -1,8 +1,9 @@
 package github.com.ioridazo.fundanalyzer.web.scheduler;
 
-import github.com.ioridazo.fundanalyzer.client.slack.SlackClient;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.SystemEventType;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockSpecification;
 import github.com.ioridazo.fundanalyzer.domain.service.AnalysisService;
+import github.com.ioridazo.fundanalyzer.domain.usecase.SystemEventUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.ValuationCatchUpResult;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException;
@@ -19,7 +20,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -31,7 +31,7 @@ class StockSchedulerTest {
     private AnalysisService analysisService;
     private StockSpecification stockSpecification;
     private ValuationUseCase valuationUseCase;
-    private SlackClient slackClient;
+    private SystemEventUseCase systemEventUseCase;
 
     private StockScheduler scheduler;
 
@@ -40,20 +40,17 @@ class StockSchedulerTest {
         this.analysisService = Mockito.mock(AnalysisService.class);
         this.stockSpecification = Mockito.mock(StockSpecification.class);
         this.valuationUseCase = Mockito.mock(ValuationUseCase.class);
-        this.slackClient = Mockito.mock(SlackClient.class);
+        this.systemEventUseCase = Mockito.mock(SystemEventUseCase.class);
 
-        this.scheduler = Mockito.spy(new StockScheduler(analysisService, stockSpecification, null, valuationUseCase, slackClient));
+        this.scheduler = Mockito.spy(new StockScheduler(analysisService, stockSpecification, valuationUseCase, systemEventUseCase));
         scheduler.hourOfStock = List.of(13);
         scheduler.hourOfEvaluate = 13;
-        scheduler.insertStockEnabled = true;
-        scheduler.deleteStockEnabled = true;
-        scheduler.evaluateEnabled = true;
     }
 
     @Nested
     class stockScheduler {
 
-        @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @DisplayName("stockScheduler : 個社失敗は握りつぶし SystemEvent は記録しない")
         @Test
         void insertStockScheduler_throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
@@ -61,10 +58,10 @@ class StockSchedulerTest {
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).importStock((CodeInputData) any());
 
             assertDoesNotThrow(() -> scheduler.stockScheduler());
-            verify(slackClient, times(0)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any(), any());
+            verify(systemEventUseCase, times(0)).record(any(), any(), any());
         }
 
-        @DisplayName("stockScheduler : 個社失敗でも後続企業を継続し stale 通知も実行する")
+        @DisplayName("stockScheduler : 個社失敗でも後続企業を継続する")
         @Test
         void continuesPerCompanyFailure() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
@@ -75,28 +72,7 @@ class StockSchedulerTest {
 
             verify(analysisService, times(1)).importStock(CodeInputData.of("1111"));
             verify(analysisService, times(1)).importStock(CodeInputData.of("2222"));
-            verify(slackClient, times(1)).sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.insert", 2);
-        }
-
-        @DisplayName("stockScheduler : 株価を削除する")
-//        @Test
-        void deleteStockScheduler_ok() {
-            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
-            when(analysisService.deleteStock()).thenReturn(1);
-
-            assertDoesNotThrow(() -> scheduler.stockScheduler());
-            verify(analysisService, times(1)).deleteStock();
-            verify(slackClient, times(1)).sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.delete", 1);
-        }
-
-        @DisplayName("stockScheduler : 想定外のエラーが発生したときはSlack通知する")
-//        @Test
-        void deleteStockScheduler_throwable() {
-            doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
-            doThrow(new FundanalyzerRuntimeException()).when(analysisService).deleteStock();
-
-            assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.stockScheduler());
-            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any());
+            verify(systemEventUseCase, times(0)).record(any(), any(), any());
         }
 
         @DisplayName("stockScheduler : 処理時間外")
@@ -112,14 +88,16 @@ class StockSchedulerTest {
     @Nested
     class evaluateScheduler {
 
-        @DisplayName("evaluateScheduler : 想定外のエラーが発生したときはSlack通知する")
+        @DisplayName("evaluateScheduler : 想定外のエラーが発生したときはSystemEventを記録する")
         @Test
         void throwable() {
             doReturn(LocalDateTime.of(2021, 5, 29, 13, 0)).when(scheduler).nowLocalDateTime();
             doThrow(new FundanalyzerRuntimeException()).when(analysisService).evaluate();
 
             assertThrows(FundanalyzerRuntimeException.class, () -> scheduler.evaluateScheduler());
-            verify(slackClient, times(1)).sendMessage(eq("g.c.i.f.web.scheduler.notice.error"), any(), any());
+            verify(systemEventUseCase, times(1))
+                    .record(SystemEventType.ERROR, "StockScheduler",
+                            "株価評価: github.com.ioridazo.fundanalyzer.exception.FundanalyzerRuntimeException");
         }
 
         @DisplayName("evaluateScheduler : 株価を評価する")
@@ -132,7 +110,6 @@ class StockSchedulerTest {
             assertDoesNotThrow(() -> scheduler.evaluateScheduler());
             verify(analysisService, times(1)).evaluate();
             verify(valuationUseCase, times(1)).catchUp();
-            verify(slackClient, times(1)).sendMessage("github.com.ioridazo.fundanalyzer.web.scheduler.StockScheduler.evaluate", 1);
         }
 
         @DisplayName("evaluateScheduler : 処理時間外")

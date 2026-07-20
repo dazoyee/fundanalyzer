@@ -115,12 +115,6 @@ app:
         read-timeout: 120s
         max-attempts: 3
         back-off: 60s
-      slack:
-        base-uri: https://hooks.slack.com
-        connect-timeout: 5s
-        read-timeout: 30s
-        max-attempts: 3
-        back-off: 5s
       jsoup:
         connect-timeout: 5s
         read-timeout: 15s
@@ -140,12 +134,6 @@ app:
       queue-capacity: 50
       max-pool-size: 500
 
-    slack:
-      parameter:
-        t: ${SLACK_WEBHOOK_T:}
-        b: ${SLACK_WEBHOOK_B:}
-        x: ${SLACK_WEBHOOK_X:} # 任意の値を設定
-
     view:
       discount-rate: 120  # 以上を表示
       outlier-of-standard-deviation: 10000  # 除外する標準偏差の外れ値
@@ -163,7 +151,6 @@ app:
       kabuoji3.enabled: false
       minkabu.enabled: true
       yahoo-finance.enabled: false   # P2: Yahooページ構造変更(URL .T欠落+日付形式)で取得不能。復旧せず無効化(T20260621-yahoo-finance-scraping-stopped)
-      staleness-alert-days: 7
       average-stock-price-for-last-days: 30  # 株価平均値の期間
       store-stock-price-for-last-days: 99999  # 株価の保存期間
 
@@ -197,10 +184,3 @@ app:
     stock.target-company.number: 100  # 件の会社に対して処理実施
     analysis.past-days: 30  # 日間に遡って処理実施
     recover-document-period.past-days: 30  # 日間に遡って処理実施
-
-  slack:
-    analysis-result.enabled: true
-    update-view.enabled: false
-    insert-stock.enabled: false
-    delete-stock.enabled: false
-    evaluate.enabled: true
