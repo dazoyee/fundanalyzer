@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * dev プロファイル専用のセキュリティ設定。H2 コンソールへのアクセスを許可する。
@@ -31,8 +32,11 @@ public class DevSecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain h2ConsoleSecurityFilterChain(final HttpSecurity http) throws Exception {
+        // H2 コンソールは DispatcherServlet を経由しない専用 Servlet で処理されるため、
+        // デフォルトの MVC ベース securityMatcher（HandlerMappingIntrospector 依存）ではマッチせず
+        // 主チェーンにフォールバックしてしまう。AntPathRequestMatcher で明示的にパス一致させる。
         http
-                .securityMatcher("/h2-console/**")
+                .securityMatcher(new AntPathRequestMatcher("/h2-console/**"))
                 .authorizeHttpRequests(a -> a.anyRequest().permitAll())
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
