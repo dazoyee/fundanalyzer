@@ -483,7 +483,9 @@ class FinancialStatementSpecificationTest {
                     eq(SystemEventType.WARNING),
                     eq("FinancialStatementSpecification"),
                     eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getName()
-                            + " 科目ID:0 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:0 今回値:1 比率:INF")
+                            + " 科目ID:0 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:0 今回値:1 比率:INF"
+                            + " （参考: 株式総数は提出日現在発行数を優先して採用する仕様のため、"
+                            + "期末後の株式分割・株式併合・新株発行による想定内の乖離である可能性があります）")
             );
         }
 
