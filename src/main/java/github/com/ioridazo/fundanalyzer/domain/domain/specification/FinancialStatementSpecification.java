@@ -307,7 +307,7 @@ public class FinancialStatementSpecification {
                 SystemEventType.WARNING,
                 "FinancialStatementSpecification",
                 MessageFormat.format(
-                        "企業コード:{0} EDINET:{1} 財務諸表:{2} 科目ID:{3} 書類ID:{4} 当期末:{5} 前回期末:{6} 前回値:{7} 今回値:{8} 比率:{9}",
+                        "企業コード:{0} EDINET:{1} 財務諸表:{2} 科目ID:{3} 書類ID:{4} 当期末:{5} 前回期末:{6} 前回値:{7} 今回値:{8} 比率:{9}{10}",
                         company.code(),
                         company.edinetCode(),
                         fs.getName(),
@@ -317,9 +317,18 @@ public class FinancialStatementSpecification {
                         previousStatement.getPeriodEnd(),
                         previousValue,
                         currentValue,
-                        ratio
+                        ratio,
+                        validationWarningNote(fs)
                 )
         );
+    }
+
+    private String validationWarningNote(final FinancialStatementEnum fs) {
+        if (FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.equals(fs)) {
+            return " （参考: 株式総数は提出日現在発行数を優先して採用する仕様のため、"
+                   + "期末後の株式分割・株式併合・新株発行による想定内の乖離である可能性があります）";
+        }
+        return "";
     }
 
     private String formatRatio(final Long previousValue, final Long currentValue) {
