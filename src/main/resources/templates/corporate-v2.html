@@ -426,9 +426,9 @@
                 <div x-show="forecastSub==='all'" class="relative h-48 sm:h-64"><canvas id="forecastStockChartAll"></canvas></div>
             </div>
             <!-- 株価予想テーブル (PC) / カード (スマホ) -->
-            <div class="hidden overflow-x-auto sm:block" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
+            <div class="hidden max-h-96 overflow-y-auto overflow-x-auto sm:block" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
                 <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
+                    <thead class="sticky top-0 bg-slate-50 dark:bg-slate-700">
                     <tr>
                         <th class="px-3 py-2 text-left text-xs font-semibold">対象日付<th:block th:replace="~{fragments/tooltip :: hint('period')}"></th:block></th>
                         <th class="px-3 py-2 text-right text-xs font-semibold">目標株価<th:block th:replace="~{fragments/tooltip :: hint('forecast-stock')}"></th:block></th>
@@ -444,7 +444,7 @@
                     </tbody>
                 </table>
             </div>
-            <ul class="block space-y-2 sm:hidden" aria-label="株価予想" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
+            <ul class="block max-h-96 space-y-2 overflow-y-auto sm:hidden" aria-label="株価予想" th:if="${forecastStocks != null and !forecastStocks.isEmpty()}">
                 <li th:each="m : ${forecastStocks}" class="flex items-center justify-between rounded border border-slate-200 p-3 text-xs dark:border-slate-700">
                     <span class="font-mono" th:text="${m.targetDate}">-</span>
                     <div class="flex gap-3">
