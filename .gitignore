@@ -44,3 +44,4 @@ src/main/frontend/node_modules/
 logs/
 e2e-tests/
 .playwright-cli/
+bin/

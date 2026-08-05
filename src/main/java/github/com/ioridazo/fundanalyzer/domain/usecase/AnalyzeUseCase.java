@@ -44,6 +44,14 @@ public interface AnalyzeUseCase {
     RecalculationPreview previewRecalculation();
 
     /**
+     * analysis_result の全件数を返す。
+     *
+     * @return analysis_result の全件数
+     */
+    @Observed
+    int countAnalyzed();
+
+    /**
      * 業種係数変更に伴い、全期間の企業価値・RIM理論株価を現行係数で一括再計算する。
      *
      * <p>値が変わる行のみ更新し、連動して valuation の割引値・割引率も一括更新する。

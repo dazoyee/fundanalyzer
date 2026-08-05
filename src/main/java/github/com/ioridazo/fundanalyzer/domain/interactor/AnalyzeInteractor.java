@@ -272,6 +272,16 @@ public class AnalyzeInteractor implements AnalyzeUseCase {
     }
 
     /**
+     * analysis_result の全件数を返す。
+     *
+     * @return analysis_result の全件数
+     */
+    @Override
+    public int countAnalyzed() {
+        return analysisResultSpecification.countAll();
+    }
+
+    /**
      * 業種係数変更に伴い、全期間の企業価値・RIM理論株価を現行係数で一括再計算する。
      *
      * <p>処理順序: (1) 業種係数キャッシュを最新化 (2) analysis_result を全件走査し、値が変わる行のみ更新

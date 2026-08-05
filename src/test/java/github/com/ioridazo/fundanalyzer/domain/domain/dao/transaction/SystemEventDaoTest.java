@@ -44,4 +44,30 @@ class SystemEventDaoTest {
         assertEquals(SystemEventType.WARNING, actual.get(1).getEventTypeEnum());
         assertEquals("first", actual.get(1).getMessage());
     }
+
+    @DisplayName("countRecentByType : 直近 N 件を確定してから種別件数を集計する")
+    @Test
+    void countRecentByType() {
+        final LocalDateTime baseTime = LocalDateTime.parse("2026-07-20T09:00:00");
+        for (int i = 0; i < 21; i++) {
+            systemEventDao.insert(SystemEventEntity.of(
+                    SystemEventType.ERROR,
+                    "AnalysisScheduler",
+                    "error-" + i,
+                    baseTime.plusMinutes(i)
+            ));
+        }
+        systemEventDao.insert(SystemEventEntity.of(
+                SystemEventType.WARNING,
+                "AnalysisScheduler",
+                "warning-latest",
+                baseTime.plusMinutes(21)
+        ));
+
+        final long recentErrorCount = systemEventDao.countRecentByType(SystemEventType.ERROR.name(), 20);
+        final long recentWarningCount = systemEventDao.countRecentByType(SystemEventType.WARNING.name(), 20);
+
+        assertEquals(19L, recentErrorCount);
+        assertEquals(1L, recentWarningCount);
+    }
 }

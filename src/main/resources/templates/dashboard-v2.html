@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout-v2}">
+<head>
+    <title>ダッシュボード</title>
+</head>
+<body>
+<h1 layout:fragment="page-title" class="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">ダッシュボード</h1>
+
+<section layout:fragment="content" class="space-y-6">
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="text-sm font-semibold text-blue-600 dark:text-blue-400">fundanalyzer</p>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">ホームダッシュボード</h2>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">主要KPIをまとめて確認できます</p>
+        </div>
+    </section>
+
+    <div id="dashboard-kpi"
+         hx-get="/v3/dashboard/kpi"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-700/40"></div>
+            <div class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-700/40"></div>
+            <div class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-700/40"></div>
+            <div class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-700/40"></div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
