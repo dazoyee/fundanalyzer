@@ -21,7 +21,7 @@
         <spring-cloud.version>2022.0.3</spring-cloud.version>
 
         <spring-retry.version>2.0.1</spring-retry.version>
-        <jsoup.version>1.15.4</jsoup.version>
+        <jsoup.version>1.23.1</jsoup.version>
         <doma-spring-boot-starter.version>1.7.0</doma-spring-boot-starter.version>
         <doma-processor.version>2.53.2</doma-processor.version>
         <thymeleaf-layout-dialect.version>3.2.0</thymeleaf-layout-dialect.version>
