@@ -13,7 +13,7 @@ import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CorporateViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.index.SystemEventViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.index.SystemEventSummaryViewModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -88,7 +88,7 @@ class IndexPresenterTest {
             verify(model).addAttribute("target", (String) null);
             verify(model).addAttribute("keyword", (String) null);
             verify(model).addAttribute("table", page);
-            verify(model).addAttribute("recentSystemEvents", List.of());
+            verify(model).addAttribute("systemEventSummary", SystemEventSummaryViewModel.of(List.of()));
             verify(model).addAttribute("sortParam", "code,asc");
         }
 
@@ -112,8 +112,8 @@ class IndexPresenterTest {
         }
 
         @Test
-        @DisplayName("フルページ表示では recentSystemEvents をモデルに含める")
-        void fullPage_includesRecentSystemEvents() {
+        @DisplayName("フルページ表示では systemEventSummary をモデルに含める")
+        void fullPage_includesSystemEventSummary() {
             final ExtendedModelMap model = new ExtendedModelMap();
             final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
             final SystemEventEntity entity = SystemEventEntity.of(
@@ -126,11 +126,11 @@ class IndexPresenterTest {
 
             presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
 
-            assertEquals(List.of(SystemEventViewModel.of(entity)), model.getAttribute("recentSystemEvents"));
+            assertEquals(SystemEventSummaryViewModel.of(List.of(entity)), model.getAttribute("systemEventSummary"));
         }
 
         @Test
-        @DisplayName("テーブル fragment 取得では recentSystemEvents を再取得しない")
+        @DisplayName("テーブル fragment 取得では systemEventSummary を再取得しない")
         void tableFragment_doesNotFetchSystemEvents() {
             final Model model = mock(Model.class);
             final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
@@ -325,8 +325,8 @@ class IndexPresenterTest {
         }
 
         @Test
-        @DisplayName("recentSystemEvents が model に設定される")
-        void recentSystemEvents_addedToModel() {
+        @DisplayName("systemEventSummary が model に設定される")
+        void systemEventSummary_addedToModel() {
             final Model model = mock(Model.class);
             final CompanyTablePage page = new CompanyTablePage(List.of(), 0, 0L, 0, 25, Sort.by("code"));
             final List<SystemEventEntity> events = List.of(
@@ -342,7 +342,7 @@ class IndexPresenterTest {
 
             presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
 
-            verify(model).addAttribute("recentSystemEvents", List.of(SystemEventViewModel.of(events.get(0))));
+            verify(model).addAttribute("systemEventSummary", SystemEventSummaryViewModel.of(events));
         }
     }
 
