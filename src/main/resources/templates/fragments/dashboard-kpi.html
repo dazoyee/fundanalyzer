@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="kpi-grid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <i data-lucide="building-2" class="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true"></i>
+            <span>企業カバレッジ</span>
+        </div>
+        <dl class="mt-4 grid grid-cols-2 gap-4">
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">総企業数</dt>
+                <dd class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100" th:text="${companyCount}">0</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">分析済件数</dt>
+                <dd class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100" th:text="${analyzedCount}">0</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <i data-lucide="files" class="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <span>EDINET本日処理状況</span>
+        </div>
+        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400"
+           th:text="${latestEdinet != null ? latestEdinet.submitDate() : 'データなし'}">データなし</p>
+        <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">総件数</dt>
+                <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                    th:text="${latestEdinet != null ? latestEdinet.countAll() : 0}">0</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">対象件数</dt>
+                <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                    th:text="${latestEdinet != null ? latestEdinet.countTarget() : 0}">0</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">処理済</dt>
+                <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                    th:text="${latestEdinet != null ? latestEdinet.countScraped() : 0}">0</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">分析済</dt>
+                <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                    th:text="${latestEdinet != null ? latestEdinet.countAnalyzed() : 0}">0</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500 dark:text-slate-400">未処理</dt>
+                <dd class="mt-1 font-semibold text-slate-900 dark:text-slate-100"
+                    th:text="${latestEdinet != null ? latestEdinet.countNotScraped() : 0}">0</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <i data-lucide="triangle-alert" class="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true"></i>
+            <span>直近エラー / 警告</span>
+        </div>
+        <dl class="mt-4 grid grid-cols-2 gap-4">
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/60 dark:bg-red-950/40">
+                <dt class="text-xs text-red-700 dark:text-red-300">ERROR</dt>
+                <dd class="mt-1 text-2xl font-bold text-red-900 dark:text-red-100" th:text="${recentErrorCount}">0</dd>
+            </div>
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/60 dark:bg-amber-950/40">
+                <dt class="text-xs text-amber-700 dark:text-amber-300">WARNING</dt>
+                <dd class="mt-1 text-2xl font-bold text-amber-900 dark:text-amber-100" th:text="${recentWarningCount}">0</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+            <i data-lucide="star" class="h-4 w-4 text-fuchsia-600 dark:text-fuchsia-400" aria-hidden="true"></i>
+            <span>ショートカット</span>
+        </div>
+        <div class="mt-4 grid gap-3">
+            <a th:href="@{/v3/index(target='favorite')}"
+               class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-pink-300 hover:bg-pink-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-pink-800 dark:hover:bg-pink-950/30">
+                <span class="inline-flex items-center gap-2">
+                    <i data-lucide="heart" class="h-4 w-4 text-pink-500" aria-hidden="true"></i>
+                    お気に入り企業
+                </span>
+                <i data-lucide="arrow-right" class="h-4 w-4" aria-hidden="true"></i>
+            </a>
+            <a th:href="@{/v3/index(target='star')}"
+               class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-amber-300 hover:bg-amber-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-amber-800 dark:hover:bg-amber-950/30">
+                <span class="inline-flex items-center gap-2">
+                    <i data-lucide="sparkles" class="h-4 w-4 text-amber-500" aria-hidden="true"></i>
+                    注目企業
+                </span>
+                <i data-lucide="arrow-right" class="h-4 w-4" aria-hidden="true"></i>
+            </a>
+        </div>
+    </article>
+</div>
+
+</body>
+</html>

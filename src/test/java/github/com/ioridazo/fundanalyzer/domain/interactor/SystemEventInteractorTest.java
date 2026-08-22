@@ -14,6 +14,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -107,5 +108,23 @@ class SystemEventInteractorTest {
     void findRecent_nonPositiveLimitReturnsEmpty() {
         assertIterableEquals(List.of(), interactor.findRecent(0));
         verify(systemEventDao, times(0)).selectRecent(anyInt());
+    }
+
+    @Test
+    @DisplayName("countRecentByType : 指定種別の件数を返す")
+    void countRecentByType_returnsCount() {
+        when(systemEventDao.countRecentByType("ERROR", 20)).thenReturn(4L);
+
+        final long actual = interactor.countRecentByType(SystemEventType.ERROR, 20);
+
+        assertEquals(4L, actual);
+        verify(systemEventDao, times(1)).countRecentByType("ERROR", 20);
+    }
+
+    @Test
+    @DisplayName("countRecentByType : limit が 0 以下なら DAO を呼ばず 0 を返す")
+    void countRecentByType_nonPositiveLimitReturnsZero() {
+        assertEquals(0L, interactor.countRecentByType(SystemEventType.WARNING, 0));
+        verify(systemEventDao, times(0)).countRecentByType(anyString(), anyInt());
     }
 }

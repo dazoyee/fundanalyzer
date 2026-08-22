@@ -219,6 +219,7 @@ app:
       validation:
         lower-limit-ratio: 0.1  # 前回値比で下限未満なら警告
         upper-limit-ratio: 10.0  # 前回値比で上限超なら警告
+        minimum-amount: 100000000  # 前回値・今回値の絶対値がともにこの金額未満なら警告しない（重要性の閾値）
       no-industry: # 処理対象外
         内国法人・組合（有価証券報告書等の提出義務者以外）
         ,外国法人・組合

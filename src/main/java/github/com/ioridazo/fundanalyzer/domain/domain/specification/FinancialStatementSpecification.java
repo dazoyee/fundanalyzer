@@ -31,6 +31,7 @@ import java.math.RoundingMode;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +41,13 @@ import java.util.Optional;
 public class FinancialStatementSpecification {
 
     private static final Logger log = LogManager.getLogger(FinancialStatementSpecification.class);
+
+    /**
+     * フロー項目の比較で許容する会計期間長の差（月数）。
+     * 決算日のずれによる 1 ヶ月程度の差は同一区分の書類として扱う。
+     */
+    private static final long COMPARABLE_PERIOD_TOLERANCE_MONTHS = 1L;
+
     private final FinancialStatementDao financialStatementDao;
     private final SubjectSpecification subjectSpecification;
     private final SystemEventUseCase systemEventUseCase;
@@ -47,6 +55,8 @@ public class FinancialStatementSpecification {
     BigDecimal validationLowerLimitRatio;
     @Value("${app.config.scraping.validation.upper-limit-ratio}")
     BigDecimal validationUpperLimitRatio;
+    @Value("${app.config.scraping.validation.minimum-amount}")
+    long validationMinimumAmount;
     public FinancialStatementSpecification(
             final FinancialStatementDao financialStatementDao,
             final SubjectSpecification subjectSpecification,
@@ -257,11 +267,69 @@ public class FinancialStatementSpecification {
                 .filter(entity -> entity.getPeriodEnd() != null)
                 .filter(entity -> document.getPeriodEnd() != null)
                 .filter(entity -> entity.getPeriodEnd().isBefore(document.getPeriodEnd()))
+                .filter(entity -> isComparablePeriod(fs, document, entity))
                 .max(Comparator.comparing(FinancialStatementEntity::getPeriodEnd));
+    }
+
+    /**
+     * 前回値との比較対象として期間が妥当かどうかを判定する。
+     * 損益計算書・キャッシュ・フロー計算書は期間に依存するフロー項目のため、
+     * 通期と中間・四半期のように会計期間の長さが異なるレコードを比較すると
+     * 正常なデータでも比率が大きく乖離してしまう。よって期間長が同等のものだけを比較対象とする。
+     * 貸借対照表・株式総数は期末時点のストック項目のため期間長の制約をかけない。
+     *
+     * @param fs       財務諸表種別
+     * @param document 登録対象の書類
+     * @param entity   比較候補の財務諸表
+     * @return 比較対象として妥当であれば true
+     */
+    private boolean isComparablePeriod(
+            final FinancialStatementEnum fs,
+            final Document document,
+            final FinancialStatementEntity entity) {
+        if (!isFlowStatement(fs)) {
+            return true;
+        }
+        final Optional<Long> currentMonths = periodMonths(document.getPeriodStart(), document.getPeriodEnd());
+        final Optional<Long> previousMonths = periodMonths(entity.getPeriodStart(), entity.getPeriodEnd());
+        if (currentMonths.isEmpty() || previousMonths.isEmpty()) {
+            return false;
+        }
+        return Math.abs(currentMonths.get() - previousMonths.get()) <= COMPARABLE_PERIOD_TOLERANCE_MONTHS;
+    }
+
+    /**
+     * 期間に依存するフロー項目の財務諸表かどうかを判定する。
+     *
+     * @param fs 財務諸表種別
+     * @return フロー項目であれば true
+     */
+    private boolean isFlowStatement(final FinancialStatementEnum fs) {
+        return FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT.equals(fs)
+               || FinancialStatementEnum.CASH_FLOW_STATEMENT.equals(fs);
+    }
+
+    /**
+     * 会計期間の長さを月数で返す。
+     *
+     * @param periodStart 期間開始日
+     * @param periodEnd   期間終了日
+     * @return 月数。期間が特定できないときは empty
+     */
+    private Optional<Long> periodMonths(final LocalDate periodStart, final LocalDate periodEnd) {
+        if (periodStart == null || periodEnd == null || periodEnd.isBefore(periodStart)) {
+            return Optional.empty();
+        }
+        // 期間終了日は期間に含まれるため、翌日との差分で月数を算出する
+        return Optional.of(ChronoUnit.MONTHS.between(periodStart, periodEnd.plusDays(1)));
     }
 
     private boolean isValidationWarning(final Long previousValue, final Long currentValue) {
         if (previousValue == null || currentValue == null) {
+            return false;
+        }
+        // 重要性の閾値未満の金額は企業価値への影響が乏しく、比率だけが大きく振れるためスクレイピング異常の判定材料にしない
+        if (Math.max(Math.abs(previousValue), Math.abs(currentValue)) < validationMinimumAmount) {
             return false;
         }
         if (previousValue == 0L || currentValue == 0L) {

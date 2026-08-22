@@ -15,7 +15,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQue
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.AnalysisResultViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.CorporateDetailViewModel;
 import github.com.ioridazo.fundanalyzer.web.view.model.corporate.detail.StockPriceViewModel;
-import github.com.ioridazo.fundanalyzer.web.view.model.index.SystemEventViewModel;
+import github.com.ioridazo.fundanalyzer.web.view.model.index.SystemEventSummaryViewModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +47,7 @@ public class IndexPresenter {
     private static final String TARGET = "target";
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int RECENT_SYSTEM_EVENT_LIMIT = 20;
     private static final int DEFAULT_PAGE_SIZE = 25;
     private static final String DEFAULT_SORT = "submitDate,desc";
     private static final String SORT_FIELD_SUBMIT_DATE = "submitDate";
@@ -303,9 +304,8 @@ public class IndexPresenter {
         model.addAttribute("keyword", keyword);
         model.addAttribute("table", tablePage);
         if (includeRecentSystemEvents) {
-            model.addAttribute("recentSystemEvents", systemEventUseCase.findRecent(20).stream()
-                    .map(SystemEventViewModel::of)
-                    .toList());
+            model.addAttribute("systemEventSummary",
+                    SystemEventSummaryViewModel.of(systemEventUseCase.findRecent(RECENT_SYSTEM_EVENT_LIMIT)));
         }
         model.addAttribute("sortParam", sortParam);
     }

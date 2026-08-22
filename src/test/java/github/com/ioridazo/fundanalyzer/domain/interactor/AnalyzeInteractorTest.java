@@ -695,6 +695,20 @@ class AnalyzeInteractorTest {
     }
 
     @Nested
+    class countAnalyzed {
+
+        @DisplayName("countAnalyzed : analysis_result の全件数を取得する")
+        @Test
+        void count() {
+            when(analysisResultSpecification.countAll()).thenReturn(10);
+
+            final int actual = analyzeInteractor.countAnalyzed();
+
+            assertEquals(10, actual);
+        }
+    }
+
+    @Nested
     class hasChangedTest {
 
         @DisplayName("bigDecimalChanged : 両方nullのときは変化なし")

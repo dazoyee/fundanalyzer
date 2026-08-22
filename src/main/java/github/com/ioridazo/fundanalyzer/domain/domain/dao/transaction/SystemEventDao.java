@@ -18,4 +18,7 @@ public interface SystemEventDao {
 
     @Select
     List<SystemEventEntity> selectRecent(int limit);
+
+    @Select
+    long countRecentByType(String eventType, int limit);
 }

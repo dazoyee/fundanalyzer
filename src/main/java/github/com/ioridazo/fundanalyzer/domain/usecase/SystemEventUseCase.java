@@ -10,4 +10,6 @@ public interface SystemEventUseCase {
     void record(SystemEventType type, String source, String message);
 
     List<SystemEventEntity> findRecent(int limit);
+
+    long countRecentByType(SystemEventType type, int limit);
 }

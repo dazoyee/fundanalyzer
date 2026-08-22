@@ -43,6 +43,14 @@ public class SystemEventInteractor implements SystemEventUseCase {
         return systemEventDao.selectRecent(limit);
     }
 
+    @Override
+    public long countRecentByType(final SystemEventType type, final int limit) {
+        if (limit <= 0) {
+            return 0;
+        }
+        return systemEventDao.countRecentByType(type.toValue(), limit);
+    }
+
     private String buildMessage(final SystemEventType type, final String message) {
         final String safeMessage = StringUtils.hasText(message) ? message.trim() : "詳細メッセージなし";
         final String builtMessage = switch (type) {
