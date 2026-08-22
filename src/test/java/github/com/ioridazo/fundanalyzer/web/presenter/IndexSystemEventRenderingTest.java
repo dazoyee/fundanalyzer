@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -52,13 +53,16 @@ class IndexSystemEventRenderingTest {
     @DisplayName("同一企業・同一書類の警告は1グループに集約して描画する")
     @Test
     void events_rendersGroupedSummary() throws Exception {
-        insertValidationWarning("10", "2026-08-20T02:06:49");
-        insertValidationWarning("25", "2026-08-20T02:06:48");
+        // 表示は発生日時の期間で絞られるため、固定日時ではなく現在時刻を基準に登録する
+        final LocalDateTime latest = LocalDateTime.now().minusHours(1).withNano(0);
+        insertValidationWarning("10", latest);
+        insertValidationWarning("25", latest.minusSeconds(1));
 
         mockMvc.perform(get("/v3/index").accept(MediaType.TEXT_HTML))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("WARNING 2")))
-                .andExpect(content().string(containsString("最終発生 2026-08-20 02:06:49")))
+                .andExpect(content().string(containsString(
+                        "最終発生 " + latest.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))))
                 // グループ行は企業コードと書類IDで 1 行になる
                 .andExpect(content().string(containsString("S100YXHH")))
                 // 明細は科目単位に要約される
@@ -67,14 +71,25 @@ class IndexSystemEventRenderingTest {
                 .andExpect(content().string(not(containsString("異常なし"))));
     }
 
-    private void insertValidationWarning(final String subjectId, final String occurredAt) {
+    @DisplayName("表示期間より古い警告は描画しない")
+    @Test
+    void oldEvent_notRendered() throws Exception {
+        insertValidationWarning("10", LocalDateTime.now().minusDays(30).withNano(0));
+
+        mockMvc.perform(get("/v3/index").accept(MediaType.TEXT_HTML))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("異常なし")))
+                .andExpect(content().string(not(containsString("科目ID:10"))));
+    }
+
+    private void insertValidationWarning(final String subjectId, final LocalDateTime occurredAt) {
         systemEventDao.insert(SystemEventEntity.of(
                 SystemEventType.WARNING,
                 "FinancialStatementSpecification",
                 "企業コード:27760 EDINET:E02960 財務諸表:損益計算書 科目ID:" + subjectId
                 + " 書類ID:S100YXHH 当期末:2025-01-31 前回期末:2024-01-31"
                 + " 前回値:1,430,000 今回値:21,879,000 比率:15.3",
-                LocalDateTime.parse(occurredAt)
+                occurredAt
         ));
     }
 }

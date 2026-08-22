@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
@@ -41,6 +42,8 @@ class DashboardPresenterTest {
         this.analyzeUseCase = mock(AnalyzeUseCase.class);
         this.systemEventUseCase = mock(SystemEventUseCase.class);
         this.presenter = new DashboardPresenter(viewService, analyzeUseCase, systemEventUseCase);
+        ReflectionTestUtils.setField(presenter, "systemEventDays", 7);
+        ReflectionTestUtils.setField(presenter, "systemEventMaxCount", 100);
     }
 
     @Nested
@@ -59,8 +62,8 @@ class DashboardPresenterTest {
             when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(companyTable);
             when(viewService.findEdinetListTable(any(EdinetListTableQuery.class))).thenReturn(edinetTable);
             when(analyzeUseCase.countAnalyzed()).thenReturn(77);
-            when(systemEventUseCase.countRecentByType(SystemEventType.ERROR, 20)).thenReturn(3L);
-            when(systemEventUseCase.countRecentByType(SystemEventType.WARNING, 20)).thenReturn(5L);
+            when(systemEventUseCase.countRecentByType(SystemEventType.ERROR, 7, 100)).thenReturn(3L);
+            when(systemEventUseCase.countRecentByType(SystemEventType.WARNING, 7, 100)).thenReturn(5L);
 
             final String result = presenter.dashboardViewV3(model);
 
@@ -81,8 +84,8 @@ class DashboardPresenterTest {
             when(viewService.findEdinetListTable(any(EdinetListTableQuery.class))).thenReturn(
                     new EdinetListTablePage(List.of(), 0, 0L, 0, 1, Sort.by("submitDate")));
             when(analyzeUseCase.countAnalyzed()).thenReturn(0);
-            when(systemEventUseCase.countRecentByType(SystemEventType.ERROR, 20)).thenReturn(0L);
-            when(systemEventUseCase.countRecentByType(SystemEventType.WARNING, 20)).thenReturn(0L);
+            when(systemEventUseCase.countRecentByType(SystemEventType.ERROR, 7, 100)).thenReturn(0L);
+            when(systemEventUseCase.countRecentByType(SystemEventType.WARNING, 7, 100)).thenReturn(0L);
 
             presenter.dashboardViewV3(model);
 
@@ -110,8 +113,8 @@ class DashboardPresenterTest {
             when(viewService.findEdinetListTable(any(EdinetListTableQuery.class))).thenReturn(
                     new EdinetListTablePage(List.of(), 0, 0L, 0, 1, Sort.by("submitDate")));
             when(analyzeUseCase.countAnalyzed()).thenReturn(0);
-            when(systemEventUseCase.countRecentByType(SystemEventType.ERROR, 20)).thenReturn(0L);
-            when(systemEventUseCase.countRecentByType(SystemEventType.WARNING, 20)).thenReturn(0L);
+            when(systemEventUseCase.countRecentByType(SystemEventType.ERROR, 7, 100)).thenReturn(0L);
+            when(systemEventUseCase.countRecentByType(SystemEventType.WARNING, 7, 100)).thenReturn(0L);
 
             final String result = presenter.dashboardKpi(model);
 

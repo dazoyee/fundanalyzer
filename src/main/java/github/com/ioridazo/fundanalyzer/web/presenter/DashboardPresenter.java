@@ -9,6 +9,7 @@ import github.com.ioridazo.fundanalyzer.web.view.model.corporate.CompanyTableQue
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTablePage;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListTableQuery;
 import github.com.ioridazo.fundanalyzer.web.view.model.edinet.EdinetListViewModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -20,7 +21,12 @@ public class DashboardPresenter {
 
     private static final String DASHBOARD_V2 = "dashboard-v2";
     private static final String DASHBOARD_KPI_FRAGMENT = "fragments/dashboard-kpi :: kpi-grid";
-    private static final int RECENT_SYSTEM_EVENT_LIMIT = 20;
+
+    @Value("${app.config.view.system-event.size}")
+    private int systemEventDays;
+
+    @Value("${app.config.view.system-event.max-count}")
+    private int systemEventMaxCount;
 
     private final ViewService viewService;
     private final AnalyzeUseCase analyzeUseCase;
@@ -64,9 +70,10 @@ public class DashboardPresenter {
         model.addAttribute("companyCount", companyTable.totalElements());
         model.addAttribute("analyzedCount", analyzedCount);
         model.addAttribute("latestEdinet", latestEdinet);
-        model.addAttribute("recentErrorCount",
-                systemEventUseCase.countRecentByType(SystemEventType.ERROR, RECENT_SYSTEM_EVENT_LIMIT));
-        model.addAttribute("recentWarningCount",
-                systemEventUseCase.countRecentByType(SystemEventType.WARNING, RECENT_SYSTEM_EVENT_LIMIT));
+        model.addAttribute("systemEventDays", systemEventDays);
+        model.addAttribute("recentErrorCount", systemEventUseCase.countRecentByType(
+                SystemEventType.ERROR, systemEventDays, systemEventMaxCount));
+        model.addAttribute("recentWarningCount", systemEventUseCase.countRecentByType(
+                SystemEventType.WARNING, systemEventDays, systemEventMaxCount));
     }
 }

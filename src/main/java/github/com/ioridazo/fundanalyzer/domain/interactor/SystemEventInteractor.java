@@ -36,19 +36,30 @@ public class SystemEventInteractor implements SystemEventUseCase {
     }
 
     @Override
-    public List<SystemEventEntity> findRecent(final int limit) {
-        if (limit <= 0) {
+    public List<SystemEventEntity> findRecent(final int days, final int limit) {
+        if (days <= 0 || limit <= 0) {
             return List.of();
         }
-        return systemEventDao.selectRecent(limit);
+        return systemEventDao.selectRecent(occurredAtSince(days), limit);
     }
 
     @Override
-    public long countRecentByType(final SystemEventType type, final int limit) {
-        if (limit <= 0) {
+    public long countRecentByType(final SystemEventType type, final int days, final int limit) {
+        if (days <= 0 || limit <= 0) {
             return 0;
         }
-        return systemEventDao.countRecentByType(type.toValue(), limit);
+        return systemEventDao.countRecentByType(type.toValue(), occurredAtSince(days), limit);
+    }
+
+    /**
+     * 取得対象とする発生日時の下限を返す。
+     * 件数ではなく期間で区切ることで、新しいイベントが積まれるのを待たずに古いイベントが表示から外れる。
+     *
+     * @param days 現在から遡る日数
+     * @return 発生日時の下限
+     */
+    private LocalDateTime occurredAtSince(final int days) {
+        return nowLocalDateTime().minusDays(days);
     }
 
     private String buildMessage(final SystemEventType type, final String message) {

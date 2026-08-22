@@ -7,6 +7,7 @@ import org.seasar.doma.Select;
 import org.seasar.doma.boot.ConfigAutowireable;
 import org.seasar.doma.jdbc.Result;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @ConfigAutowireable
@@ -17,8 +18,8 @@ public interface SystemEventDao {
     Result<SystemEventEntity> insert(SystemEventEntity systemEventEntity);
 
     @Select
-    List<SystemEventEntity> selectRecent(int limit);
+    List<SystemEventEntity> selectRecent(LocalDateTime occurredAtSince, int limit);
 
     @Select
-    long countRecentByType(String eventType, int limit);
+    long countRecentByType(String eventType, LocalDateTime occurredAtSince, int limit);
 }

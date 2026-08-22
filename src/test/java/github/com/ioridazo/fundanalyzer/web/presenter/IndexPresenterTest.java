@@ -58,7 +58,9 @@ class IndexPresenterTest {
         this.objectMapper = mock(ObjectMapper.class);
         this.presenter = new IndexPresenter(viewService, analysisService, systemEventUseCase, viewFilterSettingUseCase, objectMapper);
         ReflectionTestUtils.setField(presenter, "targetTypeCodes", List.of("120", "130", "140", "150", "160", "170"));
-        when(systemEventUseCase.findRecent(20)).thenReturn(List.of());
+        ReflectionTestUtils.setField(presenter, "systemEventDays", 7);
+        ReflectionTestUtils.setField(presenter, "systemEventMaxCount", 100);
+        when(systemEventUseCase.findRecent(7, 100)).thenReturn(List.of());
         when(viewFilterSettingUseCase.getSetting()).thenReturn(new ViewFilterSettingEntity(
                 1,
                 BigDecimal.valueOf(120),
@@ -122,7 +124,7 @@ class IndexPresenterTest {
                     "想定外のエラーが発生しました。 test",
                     LocalDateTime.parse("2026-07-20T12:00:00"));
             when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
-            when(systemEventUseCase.findRecent(20)).thenReturn(List.of(entity));
+            when(systemEventUseCase.findRecent(7, 100)).thenReturn(List.of(entity));
 
             presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
 
@@ -138,7 +140,7 @@ class IndexPresenterTest {
 
             presenter.corporateViewV3Table(null, null, 0, 25, "code,asc", model);
 
-            verify(systemEventUseCase, never()).findRecent(20);
+            verify(systemEventUseCase, never()).findRecent(7, 100);
         }
 
         @Test
@@ -338,7 +340,7 @@ class IndexPresenterTest {
                     )
             );
             when(viewService.findCompanyTable(any(CompanyTableQuery.class))).thenReturn(page);
-            when(systemEventUseCase.findRecent(20)).thenReturn(events);
+            when(systemEventUseCase.findRecent(7, 100)).thenReturn(events);
 
             presenter.corporateViewV3(null, null, 0, 25, "code,asc", model);
 

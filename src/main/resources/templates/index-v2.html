@@ -139,6 +139,8 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100">システムイベント</h2>
+                <span th:text="'直近' + ${systemEventDays} + '日'"
+                      class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400"></span>
                 <span th:if="${systemEventSummary.errorCount() > 0}"
                       class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
                     <i data-lucide="octagon-alert" class="h-3.5 w-3.5" aria-hidden="true"></i>
