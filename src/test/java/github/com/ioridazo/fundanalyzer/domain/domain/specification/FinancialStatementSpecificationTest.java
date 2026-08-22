@@ -58,6 +58,7 @@ class FinancialStatementSpecificationTest {
         ));
         financialStatementSpecification.validationLowerLimitRatio = BigDecimal.valueOf(0.1d);
         financialStatementSpecification.validationUpperLimitRatio = BigDecimal.TEN;
+        financialStatementSpecification.validationMinimumAmount = 100_000_000L;
     }
 
     @Nested
@@ -377,10 +378,10 @@ class FinancialStatementSpecificationTest {
         @Test
         void noWarningWithinThreshold() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
-                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100L, LocalDate.parse("2025-03-31"))));
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100_000_000L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100_000_000L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
             verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
@@ -390,10 +391,10 @@ class FinancialStatementSpecificationTest {
         @Test
         void noWarningAtLowerBoundary() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
-                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1_000_000_000L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100_000_000L, CreatedType.AUTO));
 
             verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
@@ -402,10 +403,10 @@ class FinancialStatementSpecificationTest {
         @Test
         void noWarningAtUpperBoundary() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
-                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100L, LocalDate.parse("2025-03-31"))));
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100_000_000L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1000L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1_000_000_000L, CreatedType.AUTO));
 
             verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
@@ -414,17 +415,17 @@ class FinancialStatementSpecificationTest {
         @Test
         void warningAtLowerOutsideBoundary() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
-                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1_000_000_000L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 99L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 99_000_000L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
             verify(systemEventUseCase, times(1)).record(
                     eq(SystemEventType.WARNING),
                     eq("FinancialStatementSpecification"),
                     eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.BALANCE_SHEET.getName()
-                            + " 科目ID:1 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:1,000 今回値:99 比率:0.099")
+                            + " 科目ID:1 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:1,000,000,000 今回値:99,000,000 比率:0.099")
             );
         }
 
@@ -432,16 +433,16 @@ class FinancialStatementSpecificationTest {
         @Test
         void warningAtUpperOutsideBoundary() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
-                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100L, LocalDate.parse("2025-03-31"))));
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100_000_000L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1001L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1_001_000_000L, CreatedType.AUTO));
 
             verify(systemEventUseCase, times(1)).record(
                     eq(SystemEventType.WARNING),
                     eq("FinancialStatementSpecification"),
                     eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.BALANCE_SHEET.getName()
-                            + " 科目ID:1 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:100 今回値:1,001 比率:10.01")
+                            + " 科目ID:1 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:100,000,000 今回値:1,001,000,000 比率:10.01")
             );
         }
 
@@ -449,10 +450,10 @@ class FinancialStatementSpecificationTest {
         @Test
         void noWarningOnSignReversal() {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
-                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1000L, LocalDate.parse("2025-03-31"))));
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1_000_000_000L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, -500L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, -500_000_000L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
             verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
@@ -464,7 +465,7 @@ class FinancialStatementSpecificationTest {
             when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of());
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100_000_000L, CreatedType.AUTO));
 
             verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
             verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
@@ -477,13 +478,13 @@ class FinancialStatementSpecificationTest {
                     previousEntity(FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", 0L, LocalDate.parse("2025-03-31"))));
 
             assertDoesNotThrow(() -> financialStatementSpecification.insert(
-                    company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 1L, CreatedType.AUTO));
+                    company, FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES, "0", document, 100_000_000L, CreatedType.AUTO));
 
             verify(systemEventUseCase, times(1)).record(
                     eq(SystemEventType.WARNING),
                     eq("FinancialStatementSpecification"),
                     eq("企業コード:1234 EDINET:E12345 財務諸表:" + FinancialStatementEnum.TOTAL_NUMBER_OF_SHARES.getName()
-                            + " 科目ID:0 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:0 今回値:1 比率:INF"
+                            + " 科目ID:0 書類ID:DOC001 当期末:2026-03-31 前回期末:2025-03-31 前回値:0 今回値:100,000,000 比率:INF"
                             + " （参考: 株式総数は提出日現在発行数を優先して採用する仕様のため、"
                             + "期末後の株式分割・株式併合・新株発行による想定内の乖離である可能性があります）")
             );
@@ -500,10 +501,110 @@ class FinancialStatementSpecificationTest {
             verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
         }
 
+        @DisplayName("insert : フロー項目で会計期間長が異なる前回値は比較対象外とし警告しない")
+        @Test
+        void noWarningWhenFlowStatementPeriodLengthDiffers() {
+            // 通期12ヶ月の損益計算書に対し、中間6ヶ月の値しか存在しないケース
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(
+                            FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                            "1",
+                            100_000_000L,
+                            LocalDate.parse("2025-04-01"),
+                            LocalDate.parse("2025-09-30"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company,
+                    FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                    "1",
+                    document,
+                    1_001_000_000L,
+                    CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
+        }
+
+        @DisplayName("insert : フロー項目で会計期間長が同等なら閾値外で警告する")
+        @Test
+        void warningWhenFlowStatementPeriodLengthMatches() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(
+                            FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                            "1",
+                            100_000_000L,
+                            LocalDate.parse("2024-04-01"),
+                            LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company,
+                    FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT,
+                    "1",
+                    document,
+                    1_001_000_000L,
+                    CreatedType.AUTO));
+
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING), eq("FinancialStatementSpecification"), anyString());
+        }
+
+        @DisplayName("insert : ストック項目は会計期間長が異なっても閾値外で警告する")
+        @Test
+        void warningWhenStockStatementPeriodLengthDiffers() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(
+                            FinancialStatementEnum.BALANCE_SHEET,
+                            "1",
+                            100_000_000L,
+                            LocalDate.parse("2025-04-01"),
+                            LocalDate.parse("2025-09-30"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 1_001_000_000L, CreatedType.AUTO));
+
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING), eq("FinancialStatementSpecification"), anyString());
+        }
+
+        @DisplayName("insert : 前回値・今回値がともに重要性の閾値未満なら警告しない")
+        @Test
+        void noWarningWhenAmountBelowMinimum() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1_000_000L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 90_000_000L, CreatedType.AUTO));
+
+            verify(financialStatementDao, times(1)).insert(any(FinancialStatementEntity.class));
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
+        }
+
+        @DisplayName("insert : いずれかが重要性の閾値以上なら閾値外で警告する")
+        @Test
+        void warningWhenAmountReachesMinimum() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 1_000_000L, LocalDate.parse("2025-03-31"))));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", document, 100_000_000L, CreatedType.AUTO));
+
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING), eq("FinancialStatementSpecification"), anyString());
+        }
+
         private FinancialStatementEntity previousEntity(
                 final FinancialStatementEnum fs,
                 final String subjectId,
                 final Long value,
+                final LocalDate periodEnd) {
+            return previousEntity(fs, subjectId, value, LocalDate.parse("2024-04-01"), periodEnd);
+        }
+
+        private FinancialStatementEntity previousEntity(
+                final FinancialStatementEnum fs,
+                final String subjectId,
+                final Long value,
+                final LocalDate periodStart,
                 final LocalDate periodEnd) {
             return new FinancialStatementEntity(
                     1,
@@ -511,7 +612,7 @@ class FinancialStatementSpecificationTest {
                     "E12345",
                     fs.getId(),
                     subjectId,
-                    LocalDate.parse("2024-04-01"),
+                    periodStart,
                     periodEnd,
                     value,
                     DocumentTypeCode.DTC_120.toValue(),
