@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -89,42 +90,60 @@ class SystemEventInteractorTest {
     }
 
     @Test
-    @DisplayName("findRecent : 直近N件を新しい順で取得する")
+    @DisplayName("findRecent : 指定日数だけ遡った発生日時を下限に新しい順で取得する")
     void findRecent_returnsNewestFirst() {
         final List<SystemEventEntity> expected = List.of(
                 SystemEventEntity.of(SystemEventType.WARNING, "StockScheduler", "newest", LocalDateTime.parse("2026-07-20T12:00:00")),
                 SystemEventEntity.of(SystemEventType.ERROR, "AnalysisScheduler", "older", LocalDateTime.parse("2026-07-20T11:00:00"))
         );
-        when(systemEventDao.selectRecent(anyInt())).thenReturn(expected);
+        doReturn(LocalDateTime.parse("2026-07-20T12:00:00")).when(interactor).nowLocalDateTime();
+        when(systemEventDao.selectRecent(any(LocalDateTime.class), anyInt())).thenReturn(expected);
 
-        final List<SystemEventEntity> actual = interactor.findRecent(2);
+        final List<SystemEventEntity> actual = interactor.findRecent(7, 100);
 
-        verify(systemEventDao, times(1)).selectRecent(2);
+        verify(systemEventDao, times(1)).selectRecent(LocalDateTime.parse("2026-07-13T12:00:00"), 100);
         assertIterableEquals(expected, actual);
+    }
+
+    @Test
+    @DisplayName("findRecent : days が 0 以下なら DAO を呼ばず空を返す")
+    void findRecent_nonPositiveDaysReturnsEmpty() {
+        assertIterableEquals(List.of(), interactor.findRecent(0, 100));
+        verify(systemEventDao, times(0)).selectRecent(any(LocalDateTime.class), anyInt());
     }
 
     @Test
     @DisplayName("findRecent : limit が 0 以下なら DAO を呼ばず空を返す")
     void findRecent_nonPositiveLimitReturnsEmpty() {
-        assertIterableEquals(List.of(), interactor.findRecent(0));
-        verify(systemEventDao, times(0)).selectRecent(anyInt());
+        assertIterableEquals(List.of(), interactor.findRecent(7, 0));
+        verify(systemEventDao, times(0)).selectRecent(any(LocalDateTime.class), anyInt());
     }
 
     @Test
     @DisplayName("countRecentByType : 指定種別の件数を返す")
     void countRecentByType_returnsCount() {
-        when(systemEventDao.countRecentByType("ERROR", 20)).thenReturn(4L);
+        doReturn(LocalDateTime.parse("2026-07-20T12:00:00")).when(interactor).nowLocalDateTime();
+        when(systemEventDao.countRecentByType("ERROR", LocalDateTime.parse("2026-07-13T12:00:00"), 100))
+                .thenReturn(4L);
 
-        final long actual = interactor.countRecentByType(SystemEventType.ERROR, 20);
+        final long actual = interactor.countRecentByType(SystemEventType.ERROR, 7, 100);
 
         assertEquals(4L, actual);
-        verify(systemEventDao, times(1)).countRecentByType("ERROR", 20);
+        verify(systemEventDao, times(1))
+                .countRecentByType("ERROR", LocalDateTime.parse("2026-07-13T12:00:00"), 100);
+    }
+
+    @Test
+    @DisplayName("countRecentByType : days が 0 以下なら DAO を呼ばず 0 を返す")
+    void countRecentByType_nonPositiveDaysReturnsZero() {
+        assertEquals(0L, interactor.countRecentByType(SystemEventType.WARNING, 0, 100));
+        verify(systemEventDao, times(0)).countRecentByType(anyString(), any(LocalDateTime.class), anyInt());
     }
 
     @Test
     @DisplayName("countRecentByType : limit が 0 以下なら DAO を呼ばず 0 を返す")
     void countRecentByType_nonPositiveLimitReturnsZero() {
-        assertEquals(0L, interactor.countRecentByType(SystemEventType.WARNING, 0));
-        verify(systemEventDao, times(0)).countRecentByType(anyString(), anyInt());
+        assertEquals(0L, interactor.countRecentByType(SystemEventType.WARNING, 7, 0));
+        verify(systemEventDao, times(0)).countRecentByType(anyString(), any(LocalDateTime.class), anyInt());
     }
 }

@@ -47,7 +47,6 @@ public class IndexPresenter {
     private static final String TARGET = "target";
 
     private static final int MAX_PAGE_SIZE = 100;
-    private static final int RECENT_SYSTEM_EVENT_LIMIT = 20;
     private static final int DEFAULT_PAGE_SIZE = 25;
     private static final String DEFAULT_SORT = "submitDate,desc";
     private static final String SORT_FIELD_SUBMIT_DATE = "submitDate";
@@ -57,6 +56,12 @@ public class IndexPresenter {
 
     @Value("${app.config.view.latest-document-type-code}")
     private List<String> targetTypeCodes;
+
+    @Value("${app.config.view.system-event.size}")
+    private int systemEventDays;
+
+    @Value("${app.config.view.system-event.max-count}")
+    private int systemEventMaxCount;
 
     private final ViewService viewService;
     private final AnalysisService analysisService;
@@ -304,8 +309,9 @@ public class IndexPresenter {
         model.addAttribute("keyword", keyword);
         model.addAttribute("table", tablePage);
         if (includeRecentSystemEvents) {
-            model.addAttribute("systemEventSummary",
-                    SystemEventSummaryViewModel.of(systemEventUseCase.findRecent(RECENT_SYSTEM_EVENT_LIMIT)));
+            model.addAttribute("systemEventDays", systemEventDays);
+            model.addAttribute("systemEventSummary", SystemEventSummaryViewModel.of(
+                    systemEventUseCase.findRecent(systemEventDays, systemEventMaxCount)));
         }
         model.addAttribute("sortParam", sortParam);
     }

@@ -208,6 +208,9 @@ app:
       diff-forecast-stock: 100  # 株価予想と最新株価との差が100以上を表示
       corporate.size: 300  # 日間を表示
       edinet-list.size: 400  # 日間を表示
+      system-event:
+        size: 7  # 日間を表示
+        max-count: 100  # 期間内で表示する最大件数
 
     valuation:
       forward-snap-limit-days: 45
