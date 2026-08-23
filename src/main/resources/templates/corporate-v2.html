@@ -564,7 +564,7 @@
             <div th:if="${financialStatements != null and !financialStatements.isEmpty()}" class="space-y-4">
                 <div th:each="fs : ${financialStatements}" class="rounded border border-slate-200 dark:border-slate-700">
                     <h3 class="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold dark:border-slate-700 dark:bg-slate-700"
-                        th:text="${fs.key.documentTypeName} + ' (' + ${fs.key.periodStart} + ' 〜 ' + ${fs.key.periodEnd} + ')'">書類種別 (期間)</h3>
+                        th:text="${fs.key.documentTypeName} + ' (' + ${fs.key.periodLabel()} + ' ／ 提出 ' + ${fs.key.submitDate} + ')'">書類種別 (期間)</h3>
                     <div class="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
                         <div th:if="${fs.bs != null and !fs.bs.isEmpty()}">
                             <h4 class="mb-2 text-xs font-bold">貸借対照表 (BS)<th:block th:replace="~{fragments/tooltip :: hint('bs')}"></th:block></h4>

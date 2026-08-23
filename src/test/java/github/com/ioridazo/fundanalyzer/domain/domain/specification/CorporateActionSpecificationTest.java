@@ -164,6 +164,49 @@ class CorporateActionSpecificationTest {
             assertTrue(confirmed.get(0).confirmed());
             assertEquals(0, new BigDecimal("5.0").compareTo(confirmed.get(0).ratio()));
         }
+        @Test
+        @DisplayName("同一期末に半期報告書が後から提出されても有価証券報告書の株式総数を採用する")
+        void shouldPreferAnnualReportOverSemiannualForSamePeriodEnd() {
+            // 半期報告書の期末は EDINET メタデータ上は事業年度末となり有報と一致するが、
+            // 記録される株式総数は提出日現在の発行数のため期末系列には採用しない
+            when(financialStatementSpecification.findByCompany(any()))
+                    .thenReturn(List.of(
+                            statement(LocalDate.of(2023, 3, 31), 100L, LocalDate.of(2023, 5, 1)),
+                            statement(LocalDate.of(2023, 6, 30), 500L, LocalDate.of(2023, 8, 1)),
+                            statement(LocalDate.of(2023, 6, 30), 100L, LocalDate.of(2023, 9, 1), "170")
+                    ));
+            when(stockPriceDao.selectByCode(COMPANY_CODE))
+                    .thenReturn(List.of(
+                            price(LocalDate.of(2023, 7, 31), 1000.0),
+                            price(LocalDate.of(2023, 8, 1), 200.0)
+                    ));
+
+            final List<CorporateActionSpecification.CorporateAction> actions = specification.findActions(COMPANY_CODE);
+
+            assertEquals(1, actions.size());
+            assertEquals(0, new BigDecimal("5.0").compareTo(actions.get(0).ratio()));
+            assertTrue(actions.get(0).confirmed());
+        }
+
+        @Test
+        @DisplayName("同一期末に有価証券報告書が無ければ半期報告書の株式総数を採用する")
+        void shouldUseSemiannualWhenAnnualReportIsAbsent() {
+            when(financialStatementSpecification.findByCompany(any()))
+                    .thenReturn(List.of(
+                            statement(LocalDate.of(2023, 3, 31), 100L, LocalDate.of(2023, 5, 1)),
+                            statement(LocalDate.of(2023, 6, 30), 500L, LocalDate.of(2023, 8, 1), "160")
+                    ));
+            when(stockPriceDao.selectByCode(COMPANY_CODE))
+                    .thenReturn(List.of(
+                            price(LocalDate.of(2023, 7, 31), 1000.0),
+                            price(LocalDate.of(2023, 8, 1), 200.0)
+                    ));
+
+            final List<CorporateActionSpecification.CorporateAction> actions = specification.findActions(COMPANY_CODE);
+
+            assertEquals(1, actions.size());
+            assertEquals(0, new BigDecimal("5.0").compareTo(actions.get(0).ratio()));
+        }
     }
 
     @Nested
@@ -308,6 +351,14 @@ class CorporateActionSpecificationTest {
             final LocalDate periodEnd,
             final long value,
             final LocalDate submitDate) {
+        return statement(periodEnd, value, submitDate, "120");
+    }
+
+    private FinancialStatementEntity statement(
+            final LocalDate periodEnd,
+            final long value,
+            final LocalDate submitDate,
+            final String documentTypeCode) {
         return new FinancialStatementEntity(
                 1,
                 COMPANY_CODE,
@@ -317,7 +368,7 @@ class CorporateActionSpecificationTest {
                 periodEnd.minusMonths(3),
                 periodEnd,
                 value,
-                "120",
+                documentTypeCode,
                 null,
                 submitDate,
                 "DOC-" + submitDate,

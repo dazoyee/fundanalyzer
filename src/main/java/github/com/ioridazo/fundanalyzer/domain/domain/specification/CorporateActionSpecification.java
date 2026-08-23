@@ -1,6 +1,7 @@
 package github.com.ioridazo.fundanalyzer.domain.domain.specification;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.dao.transaction.StockPriceDao;
+import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.DocumentTypeCode;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEntity;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.FinancialStatementEnum;
 import github.com.ioridazo.fundanalyzer.domain.domain.entity.transaction.StockPriceEntity;
@@ -244,13 +245,49 @@ public class CorporateActionSpecification {
                 continue;
             }
             final FinancialStatementEntity current = latestByPeriod.get(statement.getPeriodEnd());
-            if (current == null || current.getSubmitDate().isBefore(statement.getSubmitDate())) {
+            if (current == null || isPreferredForPeriod(statement, current)) {
                 latestByPeriod.put(statement.getPeriodEnd(), statement);
             }
         }
         return latestByPeriod.values().stream()
                 .sorted(Comparator.comparing(FinancialStatementEntity::getPeriodEnd))
                 .toList();
+    }
+
+    /**
+     * 同一期末に複数書類の株式総数があるときに、採用を差し替えるべきかを判定する。
+     * <p>
+     * 半期報告書の期間は EDINET のメタデータ上は事業年度そのものとなり、期末が
+     * 有価証券報告書と一致する。一方で記録される株式総数は提出日現在の発行数であり
+     * 期末時点の残高ではないため、期末ごとの系列としては有価証券報告書を優先する。
+     * 同順位のときは提出日が新しいものを採る。
+     *
+     * @param candidate 比較対象の財務諸表
+     * @param current   現在採用している財務諸表
+     * @return 採用を差し替えるべきであれば true
+     */
+    private boolean isPreferredForPeriod(
+            final FinancialStatementEntity candidate,
+            final FinancialStatementEntity current) {
+        final int candidateRank = periodEndRank(candidate);
+        final int currentRank = periodEndRank(current);
+        if (candidateRank != currentRank) {
+            return candidateRank < currentRank;
+        }
+        return current.getSubmitDate().isBefore(candidate.getSubmitDate());
+    }
+
+    /**
+     * 期末時点の残高としての確度による優先順位を返す。数値が小さいほど優先する。
+     *
+     * @param entity 財務諸表
+     * @return 優先順位
+     */
+    private int periodEndRank(final FinancialStatementEntity entity) {
+        final DocumentTypeCode documentTypeCode = DocumentTypeCode.fromValue(entity.getDocumentTypeCode());
+        return DocumentTypeCode.DTC_160.equals(documentTypeCode) || DocumentTypeCode.DTC_170.equals(documentTypeCode)
+                ? 1
+                : 0;
     }
 
     private List<ActionCandidate> extractCliffCandidates(final List<StockPriceEntity> stockPrices) {
