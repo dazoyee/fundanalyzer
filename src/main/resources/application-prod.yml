@@ -104,7 +104,7 @@ app:
 
     rest-client:
       edinet:
-        base-uri: https://disclosure.edinet-fsa.go.jp
+        base-uri: https://api.edinet-fsa.go.jp
         connect-timeout: 5s
         read-timeout: 30s
         max-attempts: 6
