@@ -83,11 +83,8 @@ public class StockInteractor implements StockUseCase {
                 .toList();
 
         try {
-            if (inputDataList.size() > 10) {
-                inputDataList.parallelStream().forEach(code -> importStockPrice(code, place));
-            } else {
-                inputDataList.forEach(code -> importStockPrice(code, place));
-            }
+            // 取得先への負荷を抑えるため、並列にせず 1 社ずつ取得する
+            inputDataList.forEach(code -> importStockPrice(code, place));
         } catch (final FundanalyzerShortCircuitException e) {
             log.warn(FundanalyzerLogClient.toInteractorLogObject(
                     e.getMessage(),
