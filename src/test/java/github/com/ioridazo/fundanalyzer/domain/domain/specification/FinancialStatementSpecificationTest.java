@@ -548,6 +548,61 @@ class FinancialStatementSpecificationTest {
                     eq(SystemEventType.WARNING), eq("FinancialStatementSpecification"), anyString());
         }
 
+        @DisplayName("insert : フロー項目で会計期間長が同等でも四半期種別が異なる前回値は比較対象外")
+        @Test
+        void noWarningWhenFlowStatementQuarterTypeDiffers() {
+            final Document halfYearDocument = halfYearDocument();
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "1", 100_000_000L,
+                            LocalDate.parse("2024-04-01"), LocalDate.parse("2025-03-31"), null)));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "1", halfYearDocument,
+                    1_001_000_000L, CreatedType.AUTO));
+
+            verify(systemEventUseCase, never()).record(any(), anyString(), anyString());
+        }
+
+        @DisplayName("insert : フロー項目で四半期種別が同じなら閾値外で警告する")
+        @Test
+        void warningWhenFlowStatementQuarterTypeMatches() {
+            final Document halfYearDocument = halfYearDocument();
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "1", 100_000_000L,
+                            LocalDate.parse("2024-04-01"), LocalDate.parse("2025-03-31"), QuarterType.QT_SEMI.toValue())));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.PROFIT_AND_LESS_STATEMENT, "1", halfYearDocument,
+                    1_001_000_000L, CreatedType.AUTO));
+
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING), eq("FinancialStatementSpecification"), anyString());
+        }
+
+        @DisplayName("insert : ストック項目は四半期種別が異なっても閾値外で警告する")
+        @Test
+        void warningWhenStockStatementQuarterTypeDiffers() {
+            when(financialStatementDao.selectByCode("E12345")).thenReturn(List.of(
+                    previousEntity(FinancialStatementEnum.BALANCE_SHEET, "1", 100_000_000L,
+                            LocalDate.parse("2024-04-01"), LocalDate.parse("2025-03-31"), null)));
+
+            assertDoesNotThrow(() -> financialStatementSpecification.insert(
+                    company, FinancialStatementEnum.BALANCE_SHEET, "1", halfYearDocument(),
+                    1_001_000_000L, CreatedType.AUTO));
+
+            verify(systemEventUseCase, times(1)).record(
+                    eq(SystemEventType.WARNING), eq("FinancialStatementSpecification"), anyString());
+        }
+
+        private Document halfYearDocument() {
+            return new Document(
+                    "DOC001", DocumentTypeCode.DTC_160, QuarterType.QT_SEMI, "E12345",
+                    LocalDate.parse("2026-03-31"), LocalDate.parse("2026-03-31"),
+                    LocalDate.parse("2025-04-01"), LocalDate.parse("2026-03-31"),
+                    DocumentStatus.DONE, DocumentStatus.DONE, DocumentStatus.DONE, null,
+                    DocumentStatus.DONE, null, DocumentStatus.DONE, null, false);
+        }
+
         @DisplayName("insert : ストック項目は会計期間長が異なっても閾値外で警告する")
         @Test
         void warningWhenStockStatementPeriodLengthDiffers() {
@@ -606,6 +661,16 @@ class FinancialStatementSpecificationTest {
                 final Long value,
                 final LocalDate periodStart,
                 final LocalDate periodEnd) {
+            return previousEntity(fs, subjectId, value, periodStart, periodEnd, QuarterType.QT_4.toValue());
+        }
+
+        private FinancialStatementEntity previousEntity(
+                final FinancialStatementEnum fs,
+                final String subjectId,
+                final Long value,
+                final LocalDate periodStart,
+                final LocalDate periodEnd,
+                final String quarterType) {
             return new FinancialStatementEntity(
                     1,
                     "1234",
@@ -616,7 +681,7 @@ class FinancialStatementSpecificationTest {
                     periodEnd,
                     value,
                     DocumentTypeCode.DTC_120.toValue(),
-                    QuarterType.QT_4.toValue(),
+                    quarterType,
                     LocalDate.parse("2025-06-30"),
                     "DOC000",
                     CreatedType.AUTO.toValue(),
