@@ -170,13 +170,13 @@ public class XbrlScraping {
                 .select(Tag.TABLE.getName())
                 .stream()
                 .map(Element::text)
-                .anyMatch(text -> Unit.THOUSANDS_OF_YEN.getName().stream().anyMatch(text::contains))) {
+                .anyMatch(Unit.THOUSANDS_OF_YEN::matches)) {
             return Unit.THOUSANDS_OF_YEN;
         } else if (elementsByKeyMatch(file, KeyMatch.of("name", keyWord))
                 .select(Tag.TABLE.getName())
                 .stream()
                 .map(Element::text)
-                .anyMatch(text -> Unit.MILLIONS_OF_YEN.getName().stream().anyMatch(text::contains))) {
+                .anyMatch(Unit.MILLIONS_OF_YEN::matches)) {
             return Unit.MILLIONS_OF_YEN;
         } else {
             throw new FundanalyzerScrapingException("財務諸表の金額単位を識別できませんでした。");
