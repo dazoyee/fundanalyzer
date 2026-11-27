@@ -275,7 +275,7 @@ public class FinancialStatementSpecification {
      * 前回値との比較対象として期間が妥当かどうかを判定する。
      * 損益計算書・キャッシュ・フロー計算書は期間に依存するフロー項目のため、
      * 通期と中間・四半期のように会計期間の長さが異なるレコードを比較すると
-     * 正常なデータでも比率が大きく乖離してしまう。よって期間長が同等のものだけを比較対象とする。
+     * 正常なデータでも比率が大きく乖離してしまう。よって期間長と四半期種別が同等のものだけを比較対象とする。
      * 貸借対照表・株式総数は期末時点のストック項目のため期間長の制約をかけない。
      *
      * @param fs       財務諸表種別
@@ -289,6 +289,12 @@ public class FinancialStatementSpecification {
             final FinancialStatementEntity entity) {
         if (!isFlowStatement(fs)) {
             return true;
+        }
+        final String currentQuarterType = document.getQuarterType() == null
+                ? null
+                : document.getQuarterType().toValue();
+        if (!Objects.equals(currentQuarterType, entity.getQuarterType())) {
+            return false;
         }
         final Optional<Long> currentMonths = periodMonths(document.getPeriodStart(), document.getPeriodEnd());
         final Optional<Long> previousMonths = periodMonths(entity.getPeriodStart(), entity.getPeriodEnd());
