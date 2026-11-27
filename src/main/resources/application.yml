@@ -43,7 +43,8 @@ management:
     circuitbreakers.enabled: true
 
   tracing:
-    enabled: true
+    enabled: false
+    # 送信先の Zipkin を運用していないため無効化。トレース導入時に true へ戻す
     propagation:
       type: w3c
     sampling:
