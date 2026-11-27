@@ -7,6 +7,11 @@ import github.com.ioridazo.fundanalyzer.client.edinet.EdinetCodeListClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.ListingStatus;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
@@ -15,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -262,25 +269,41 @@ class CompanyInteractorTest {
     }
 
     @Nested
-    @DisplayName("isLived メソッド")
-    class IsLived {
+    @DisplayName("inquiryListingStatus メソッド")
+    class InquiryListingStatus {
 
-        @DisplayName("isLived : JsoupClient.isLivedCompanyFromMinkabu の結果を返す")
+        @DisplayName("inquiryListingStatus : 上場中の場合は LISTED を返す")
         @Test
-        void delegates() {
+        void listed() {
             final CodeInputData input = CodeInputData.of("1234");
             when(jsoupClient.isLivedCompanyFromMinkabu("1234")).thenReturn(true);
 
-            assertEquals(true, companyInteractor.isLived(input));
+            assertEquals(ListingStatus.LISTED, companyInteractor.inquiryListingStatus(input));
         }
 
-        @DisplayName("isLived : 上場廃止の場合は false を返す")
+        @DisplayName("inquiryListingStatus : 上場廃止の場合は DELISTED を返す")
         @Test
         void delisted() {
             final CodeInputData input = CodeInputData.of("9999");
             when(jsoupClient.isLivedCompanyFromMinkabu("9999")).thenReturn(false);
 
-            assertEquals(false, companyInteractor.isLived(input));
+            assertEquals(ListingStatus.DELISTED, companyInteractor.inquiryListingStatus(input));
+        }
+
+        @DisplayName("inquiryListingStatus : 取得先との通信に失敗した場合は UNKNOWN を返す")
+        @ParameterizedTest
+        @ValueSource(strings = {"shortCircuit", "circuitBreakerRecord", "rateLimiter", "scraping"})
+        void unknown(final String type) {
+            final CodeInputData input = CodeInputData.of("1234");
+            final RuntimeException exception = switch (type) {
+                case "shortCircuit" -> new FundanalyzerShortCircuitException("minkabu open");
+                case "circuitBreakerRecord" -> new FundanalyzerCircuitBreakerRecordException("403", null);
+                case "rateLimiter" -> new FundanalyzerRateLimiterException("minkabu limit");
+                default -> new FundanalyzerScrapingException("no html");
+            };
+            when(jsoupClient.isLivedCompanyFromMinkabu("1234")).thenThrow(exception);
+
+            assertEquals(ListingStatus.UNKNOWN, companyInteractor.inquiryListingStatus(input));
         }
     }
 

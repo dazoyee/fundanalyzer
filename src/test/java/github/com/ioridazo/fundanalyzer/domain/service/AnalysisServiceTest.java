@@ -8,6 +8,7 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.ListingStatus;
 import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
@@ -230,7 +231,7 @@ class AnalysisServiceTest {
         @Test
         void invokesWhenLived() {
             final CodeInputData input = CodeInputData.of("1234");
-            when(companyUseCase.isLived(input)).thenReturn(true);
+            when(companyUseCase.inquiryListingStatus(input)).thenReturn(ListingStatus.LISTED);
 
             service.importStock(input);
 
@@ -245,7 +246,7 @@ class AnalysisServiceTest {
         @Test
         void removesWhenNotLived() {
             final CodeInputData input = CodeInputData.of("1234");
-            when(companyUseCase.isLived(input)).thenReturn(false);
+            when(companyUseCase.inquiryListingStatus(input)).thenReturn(ListingStatus.DELISTED);
 
             service.importStock(input);
 
@@ -253,11 +254,24 @@ class AnalysisServiceTest {
             verify(stockUseCase, times(0)).importStockPrice(any(CodeInputData.class), any());
         }
 
+        @DisplayName("importStock : 上場状況を確認できない場合は除外せずに株価取得を続ける")
+        @Test
+        void invokesWhenUnknown() {
+            final CodeInputData input = CodeInputData.of("1234");
+            when(companyUseCase.inquiryListingStatus(input)).thenReturn(ListingStatus.UNKNOWN);
+
+            service.importStock(input);
+
+            verify(stockUseCase, times(1)).importStockPrice(input, SourceOfStockPrice.NIKKEI);
+            verify(stockUseCase, times(1)).importStockPrice(input, SourceOfStockPrice.MINKABU);
+            verify(companyUseCase, times(0)).updateRemovedCompany(input);
+        }
+
         @DisplayName("importStock : ShortCircuit 例外発生時はログ出力で握りつぶし、後続の取得を続行する")
         @Test
         void swallowsShortCircuitException() {
             final CodeInputData input = CodeInputData.of("1234");
-            when(companyUseCase.isLived(input)).thenReturn(true);
+            when(companyUseCase.inquiryListingStatus(input)).thenReturn(ListingStatus.LISTED);
             doThrow(new FundanalyzerShortCircuitException("kabuoji3 down"))
                     .when(stockUseCase).importStockPrice(input, SourceOfStockPrice.KABUOJI3);
 
