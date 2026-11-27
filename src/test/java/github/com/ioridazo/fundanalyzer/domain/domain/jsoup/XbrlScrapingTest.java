@@ -567,15 +567,24 @@ class XbrlScrapingTest {
             assertEquals(Unit.MILLIONS_OF_YEN, actual);
         }
 
-        @DisplayName("unit : ファイルから財務諸表の金額単位をスクレイピングに失敗したときの挙動を確認する")
+        @DisplayName("unit : 空白を含む単位表記から財務諸表の金額単位（千円）をスクレイピングする")
         @Test
-        void unit_millions_FundanalyzerFileException() {
+        void unit_thousands_with_whitespace_ok() {
             var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_failure.html");
             var keyword = "jpcrp_cor:BalanceSheetTextBlock";
 
-            var actual = assertThrows(FundanalyzerScrapingException.class, () -> xbrlScraping.unit(file, keyword));
+            var actual = xbrlScraping.unit(file, keyword);
 
-            System.out.println(actual.getMessage());
+            assertEquals(Unit.THOUSANDS_OF_YEN, actual);
+        }
+
+        @DisplayName("unit : 財務諸表の金額単位を特定できないときはエラー発生させる")
+        @Test
+        void unit_unrecognized_FundanalyzerScrapingException() {
+            var file = new File("src/test/resources/github/com/ioridazo/fundanalyzer/domain/logic/scraping/jsoup/scrape-financial-statement/jsoup_unit_unrecognized.html");
+            var keyword = "jpcrp_cor:BalanceSheetTextBlock";
+
+            assertThrows(FundanalyzerScrapingException.class, () -> xbrlScraping.unit(file, keyword));
         }
     }
 

@@ -3,6 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.domain.jsoup.bean;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public enum Unit {
 
@@ -13,6 +14,8 @@ public enum Unit {
     private final List<String> name;
 
     private final int value;
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("[\\s\\u3000\\u00A0]+");
 
     Unit(final List<String> name, final int value) {
         this.name = name;
@@ -27,5 +30,15 @@ public enum Unit {
     @JsonValue
     public int getValue() {
         return this.value;
+    }
+
+    public boolean matches(final String text) {
+        final String normalizedText = normalize(text);
+        return name.stream().map(Unit::normalize).anyMatch(normalizedText::contains);
+    }
+
+    private static String normalize(final String text) {
+        return WHITESPACE_PATTERN.matcher(text.replace('(', '（').replace(')', '）').replace(':', '：'))
+                .replaceAll("");
     }
 }
