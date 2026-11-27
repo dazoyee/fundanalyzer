@@ -22,7 +22,7 @@ import java.util.concurrent.Executor;
 public class AppConfig {
 
     private static final String EDINET = "edinet";
-    private static final String SELENIUM = "selenium";
+    private static final String EDINET_CODE_LIST = "edinet-codelist";
     private static final String JSOUP = "jsoup";
 
     @Bean("restEdinet")
@@ -36,9 +36,9 @@ public class AppConfig {
         return restTemplate;
     }
 
-    @Bean("restSelenium")
-    public RestTemplate restTemplateSelenium(final RestClientProperties properties) {
-        final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
+    @Bean("restEdinetCodeList")
+    public RestTemplate restTemplateEdinetCodeList(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET_CODE_LIST);
         final RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(settings.getConnectTimeout())
                 .setReadTimeout(settings.getReadTimeout())
@@ -68,9 +68,9 @@ public class AppConfig {
                 .build();
     }
 
-    @Bean("retrySelenium")
-    public RetryTemplate retryTemplateSelenium(final RestClientProperties properties) {
-        final RestClientProperties.Settings settings = properties.getRestClient().get(SELENIUM);
+    @Bean("retryEdinetCodeList")
+    public RetryTemplate retryTemplateEdinetCodeList(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET_CODE_LIST);
         return new RetryTemplateBuilder()
                 .maxAttempts(settings.getMaxAttempts())
                 .fixedBackoff(settings.getBackOff().toMillis())
