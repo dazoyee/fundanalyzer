@@ -7,7 +7,7 @@ import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
 import github.com.ioridazo.fundanalyzer.client.log.Category;
 import github.com.ioridazo.fundanalyzer.client.log.FundanalyzerLogClient;
 import github.com.ioridazo.fundanalyzer.client.log.Process;
-import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetCodeListClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
@@ -42,7 +42,7 @@ public class CompanyInteractor implements CompanyUseCase {
     private final CompanySpecification companySpecification;
     private final FileOperator fileOperator;
     private final CsvCommander csvCommander;
-    private final SeleniumClient seleniumClient;
+    private final EdinetCodeListClient edinetCodeListClient;
     private final JsoupClient jsoupClient;
 
     @Value("${app.settings.file.path.company.company}")
@@ -55,13 +55,13 @@ public class CompanyInteractor implements CompanyUseCase {
             final CompanySpecification companySpecification,
             final FileOperator fileOperator,
             final CsvCommander csvCommander,
-            final SeleniumClient seleniumClient,
+            final EdinetCodeListClient edinetCodeListClient,
             final JsoupClient jsoupClient) {
         this.industrySpecification = industrySpecification;
         this.companySpecification = companySpecification;
         this.fileOperator = fileOperator;
         this.csvCommander = csvCommander;
-        this.seleniumClient = seleniumClient;
+        this.edinetCodeListClient = edinetCodeListClient;
         this.jsoupClient = jsoupClient;
     }
 
@@ -83,7 +83,7 @@ public class CompanyInteractor implements CompanyUseCase {
         final String inputFilePath = makeTargetPath(pathCompanyZip, LocalDate.now()).getPath();
         try {
             // ファイルダウンロード
-            final String fileName = seleniumClient.edinetCodeList(inputFilePath);
+            final String fileName = edinetCodeListClient.download(new File(inputFilePath));
 
             final File inputFile = new File(String.format("%s/%s", inputFilePath, fileName.replace(".zip", "")));
             final File outputFile = new File(pathCompany);
@@ -91,7 +91,7 @@ public class CompanyInteractor implements CompanyUseCase {
             // zipファイル解凍
             fileOperator.decodeZipFile(inputFile, outputFile);
         } catch (FundanalyzerRestClientException e) {
-            log.warn("Selenium通信が完了しなかったため、ファイルダウンロードをスキップします。", e);
+            log.warn("EDINETコードリストを取得できなかったため、ファイルダウンロードをスキップします。", e);
         } catch (IOException e) {
             throw new FundanalyzerFileException("zipファイルの解凍処理に失敗しました。スタックトレースから原因を確認してください。", e);
         }

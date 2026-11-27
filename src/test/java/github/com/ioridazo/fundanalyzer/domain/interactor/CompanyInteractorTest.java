@@ -3,7 +3,7 @@ package github.com.ioridazo.fundanalyzer.domain.interactor;
 import github.com.ioridazo.fundanalyzer.client.csv.CsvCommander;
 import github.com.ioridazo.fundanalyzer.client.file.FileOperator;
 import github.com.ioridazo.fundanalyzer.client.jsoup.JsoupClient;
-import github.com.ioridazo.fundanalyzer.client.selenium.SeleniumClient;
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetCodeListClient;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpecification;
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
@@ -36,7 +36,7 @@ class CompanyInteractorTest {
 
     private CompanySpecification companySpecification;
     private FileOperator fileOperator;
-    private SeleniumClient seleniumClient;
+    private EdinetCodeListClient edinetCodeListClient;
     private JsoupClient jsoupClient;
 
     private CompanyInteractor companyInteractor;
@@ -45,7 +45,7 @@ class CompanyInteractorTest {
     void setUp() {
         companySpecification = Mockito.mock(CompanySpecification.class);
         fileOperator = Mockito.mock(FileOperator.class);
-        seleniumClient = Mockito.mock(SeleniumClient.class);
+        edinetCodeListClient = Mockito.mock(EdinetCodeListClient.class);
         jsoupClient = Mockito.mock(JsoupClient.class);
 
         companyInteractor = Mockito.spy(new CompanyInteractor(
@@ -53,7 +53,7 @@ class CompanyInteractorTest {
                 companySpecification,
                 fileOperator,
                 Mockito.mock(CsvCommander.class),
-                seleniumClient,
+                edinetCodeListClient,
                 jsoupClient
         ));
         companyInteractor.pathCompany = "pathCompany";
@@ -86,30 +86,30 @@ class CompanyInteractorTest {
         @DisplayName("importCompanyInfo : 企業情報ファイルを取得して登録する")
         @Test
         void ok() throws IOException {
-            when(seleniumClient.edinetCodeList(any())).thenReturn("fileName");
+            when(edinetCodeListClient.download(any())).thenReturn("fileName");
             doNothing().when(companyInteractor).saveCompanyInfo();
 
             assertDoesNotThrow(() -> companyInteractor.importCompanyInfo());
-            verify(seleniumClient, times(1)).edinetCodeList(any());
+            verify(edinetCodeListClient, times(1)).download(any());
             verify(fileOperator, times(1)).decodeZipFile(any(), any());
             verify(companyInteractor, times(1)).saveCompanyInfo();
         }
 
-        @DisplayName("importCompanyInfo : Selenium処理中にエラーが発生したときの挙動を確認する")
+        @DisplayName("importCompanyInfo : EDINETコードリスト取得中にエラーが発生したときの挙動を確認する")
         @Test
         void fundanalyzerRestClientException() {
-            when(seleniumClient.edinetCodeList(any())).thenThrow(FundanalyzerRestClientException.class);
+            when(edinetCodeListClient.download(any())).thenThrow(FundanalyzerRestClientException.class);
             doNothing().when(companyInteractor).saveCompanyInfo();
 
             assertDoesNotThrow(() -> companyInteractor.importCompanyInfo());
-            verify(seleniumClient, times(1)).edinetCodeList(any());
+            verify(edinetCodeListClient, times(1)).download(any());
             verify(companyInteractor, times(1)).saveCompanyInfo();
         }
 
         @DisplayName("importCompanyInfo : zipファイル解凍処理中にエラーが発生したときの挙動を確認する")
         @Test
         void iOException() throws IOException {
-            when(seleniumClient.edinetCodeList(any())).thenReturn("fileName");
+            when(edinetCodeListClient.download(any())).thenReturn("fileName");
             doThrow(IOException.class).when(fileOperator).decodeZipFile(any(), any());
             assertThrows(FundanalyzerFileException.class, () -> companyInteractor.importCompanyInfo());
         }
