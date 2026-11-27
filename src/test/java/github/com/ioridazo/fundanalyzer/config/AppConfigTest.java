@@ -2,6 +2,9 @@ package github.com.ioridazo.fundanalyzer.config;
 
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.StockCompanyStalenessSpecification;
 import github.com.ioridazo.fundanalyzer.domain.interactor.ViewValuationInteractor;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.annotation.Cacheable;
@@ -12,10 +15,13 @@ import org.springframework.test.web.client.MockRestServiceServer;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -42,6 +48,35 @@ class AppConfigTest {
         actual.getForEntity("https://example.com/test", String.class);
 
         server.verify();
+    }
+
+    @Test
+    @DisplayName("retryTemplateJsoup はサーキットブレーカーとレートリミッターによる失敗を再試行しない")
+    void retryTemplateJsoup_doesNotRetryWithoutCommunication() {
+        final var actual = new AppConfig().retryTemplateJsoup(new RestClientProperties(Map.of("jsoup", retrySettings())));
+
+        for (final RuntimeException exception : List.of(
+                new FundanalyzerShortCircuitException("open"), new FundanalyzerRateLimiterException("limit"))) {
+            final AtomicInteger count = new AtomicInteger();
+            assertThrows(exception.getClass(), () -> actual.execute(context -> {
+                count.incrementAndGet();
+                throw exception;
+            }));
+            assertEquals(1, count.get());
+        }
+    }
+
+    @Test
+    @DisplayName("retryTemplateJsoup は通信に失敗した場合は再試行する")
+    void retryTemplateJsoup_retriesOnCommunicationFailure() {
+        final var actual = new AppConfig().retryTemplateJsoup(new RestClientProperties(Map.of("jsoup", retrySettings())));
+        final AtomicInteger count = new AtomicInteger();
+
+        assertThrows(FundanalyzerCircuitBreakerRecordException.class, () -> actual.execute(context -> {
+            count.incrementAndGet();
+            throw new FundanalyzerCircuitBreakerRecordException("403", null);
+        }));
+        assertEquals(2, count.get());
     }
 
     @Test
@@ -73,6 +108,13 @@ class AppConfigTest {
 
         assertNotNull(cacheable);
         assertEquals("staleStockCompanies", cacheable.value()[0]);
+    }
+
+    private RestClientProperties.Settings retrySettings() {
+        final RestClientProperties.Settings jsoup = jsoupSettings();
+        jsoup.setMaxAttempts(2);
+        jsoup.setBackOff(Duration.ofMillis(1));
+        return jsoup;
     }
 
     private RestClientProperties.Settings jsoupSettings() {
