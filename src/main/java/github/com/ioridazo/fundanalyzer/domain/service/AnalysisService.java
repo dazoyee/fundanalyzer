@@ -11,6 +11,7 @@ import github.com.ioridazo.fundanalyzer.domain.usecase.StockUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ValuationUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewCorporateUseCase;
 import github.com.ioridazo.fundanalyzer.domain.usecase.ViewEdinetUseCase;
+import github.com.ioridazo.fundanalyzer.domain.value.ListingStatus;
 import github.com.ioridazo.fundanalyzer.domain.value.Result;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import github.com.ioridazo.fundanalyzer.web.model.BetweenDateInputData;
@@ -214,8 +215,8 @@ public class AnalysisService {
      */
     @Observed
     public void importStock(final CodeInputData inputData) {
-        // is lived?
-        if (companyUseCase.isLived(inputData)) {
+        // 上場廃止と確認できた場合だけ除外し、確認できなかった場合は株価取得を続ける
+        if (ListingStatus.DELISTED != companyUseCase.inquiryListingStatus(inputData)) {
             // stock
             List.of(
                     SourceOfStockPrice.KABUOJI3,

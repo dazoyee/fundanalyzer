@@ -89,7 +89,7 @@ resilience4j:
     minkabu:
       registerHealthIndicator: true
       limitRefreshPeriod: 1s          # 計測する期間
-      limitForPeriod: 15              # 指定した期間の間に呼び出し可能な回数
+      limitForPeriod: 2               # 指定した期間の間に呼び出し可能な回数
       timeoutDuration: 10s            # スレッドが待機するデフォルトの時間
     yahoo-finance:
       registerHealthIndicator: true

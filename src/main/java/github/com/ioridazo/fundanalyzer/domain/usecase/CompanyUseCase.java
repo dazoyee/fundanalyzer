@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.domain.usecase;
 
+import github.com.ioridazo.fundanalyzer.domain.value.ListingStatus;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import io.micrometer.observation.annotation.Observed;
 
@@ -69,13 +70,13 @@ public interface CompanyUseCase {
     Set<String> findStarCodes();
 
     /**
-     * 上場中かどうか
+     * 上場状況を確認する
      *
      * @param inputData 企業コード
-     * @return boolean
+     * @return 上場状況。確認できなかった場合は {@link ListingStatus#UNKNOWN}
      */
     @Observed
-    boolean isLived(CodeInputData inputData);
+    ListingStatus inquiryListingStatus(CodeInputData inputData);
 
     /**
      * 企業の除外

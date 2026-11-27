@@ -1,6 +1,8 @@
 package github.com.ioridazo.fundanalyzer.config;
 
 import github.com.ioridazo.fundanalyzer.client.edinet.EdinetResponseErrorHandler;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.aop.ObservedAspect;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -96,9 +99,11 @@ public class AppConfig {
     @Bean("retryJsoup")
     public RetryTemplate retryTemplateJsoup(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(JSOUP);
+        // サーキットブレーカーやレートリミッターで通信せずに失敗した場合は、待って再試行しても結果が変わらない
         return new RetryTemplateBuilder()
                 .maxAttempts(settings.getMaxAttempts())
                 .fixedBackoff(settings.getBackOff().toMillis())
+                .notRetryOn(List.of(FundanalyzerShortCircuitException.class, FundanalyzerRateLimiterException.class))
                 .build();
     }
 

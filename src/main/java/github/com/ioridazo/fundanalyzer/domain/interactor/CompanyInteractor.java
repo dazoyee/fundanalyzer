@@ -12,9 +12,14 @@ import github.com.ioridazo.fundanalyzer.domain.domain.specification.CompanySpeci
 import github.com.ioridazo.fundanalyzer.domain.domain.specification.IndustrySpecification;
 import github.com.ioridazo.fundanalyzer.domain.usecase.CompanyUseCase;
 import github.com.ioridazo.fundanalyzer.domain.value.Company;
+import github.com.ioridazo.fundanalyzer.domain.value.ListingStatus;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerCircuitBreakerRecordException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerFileException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerNotExistException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRateLimiterException;
 import github.com.ioridazo.fundanalyzer.exception.FundanalyzerRestClientException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerScrapingException;
+import github.com.ioridazo.fundanalyzer.exception.FundanalyzerShortCircuitException;
 import github.com.ioridazo.fundanalyzer.web.model.CodeInputData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -237,14 +242,28 @@ public class CompanyInteractor implements CompanyUseCase {
     }
 
     /**
-     * 上場しているか確認する
+     * 上場状況を確認する
      *
      * @param inputData 企業コード
-     * @return boolean
+     * @return 上場状況。取得先との通信に失敗した場合は {@link ListingStatus#UNKNOWN}
      */
     @Override
-    public boolean isLived(final CodeInputData inputData) {
-        return jsoupClient.isLivedCompanyFromMinkabu(inputData.getCode());
+    public ListingStatus inquiryListingStatus(final CodeInputData inputData) {
+        try {
+            return jsoupClient.isLivedCompanyFromMinkabu(inputData.getCode()) ? ListingStatus.LISTED : ListingStatus.DELISTED;
+        } catch (final FundanalyzerShortCircuitException | FundanalyzerCircuitBreakerRecordException
+                       | FundanalyzerRateLimiterException | FundanalyzerScrapingException e) {
+            log.warn(FundanalyzerLogClient.toInteractorLogObject(
+                    MessageFormat.format(
+                            "上場状況を確認できなかったため、上場中とみなして処理を続けます。\t企業コード:{0}\t理由:{1}",
+                            inputData.getCode(),
+                            e.getMessage()
+                    ),
+                    Category.COMPANY,
+                    Process.UPDATE
+            ));
+            return ListingStatus.UNKNOWN;
+        }
     }
 
     /**
