@@ -184,12 +184,6 @@ app:
         read-timeout: 60s
         max-attempts: 3
         back-off: 30s
-      selenium:
-        base-uri: http://localhost:9001
-        connect-timeout: 5s
-        read-timeout: 120s
-        max-attempts: 3
-        back-off: 60s
       jsoup:
         connect-timeout: 5s
         read-timeout: 15s
