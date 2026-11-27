@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClientResponseException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * EDINET のリダイレクト応答を HTTP エラーとして扱う。
@@ -28,21 +28,34 @@ public class EdinetResponseErrorHandler extends DefaultResponseErrorHandler {
     public void handleError(final ClientHttpResponse response) throws IOException {
         final HttpStatusCode statusCode = response.getStatusCode();
         if (statusCode.is3xxRedirection()) {
-            final HttpHeaders headers = response.getHeaders();
-            final byte[] body = getResponseBody(response);
-            final Charset charset = getCharset(response);
-            final String location = headers.getFirst(HttpHeaders.LOCATION);
-            final String message = "Redirect returned. status=" + statusCode.value()
-                    + " location=" + sanitizeLocation(location);
+            // 移転先の URL やクエリに API キーが含まれうるため、本文は捨て、Location はクエリを除いて渡す
+            final String rawLocation = response.getHeaders().getFirst(HttpHeaders.LOCATION);
+            final String location = sanitizeLocation(rawLocation);
+            final HttpHeaders headers = new HttpHeaders();
+            if (rawLocation != null && !rawLocation.isEmpty()) {
+                headers.set(HttpHeaders.LOCATION, location);
+            }
+            final String message = "Redirect returned. status=" + statusCode.value() + " location=" + location;
             throw new RestClientResponseException(
                     message,
                     statusCode,
                     response.getStatusText(),
                     headers,
-                    body,
-                    charset);
+                    new byte[0],
+                    StandardCharsets.UTF_8);
         }
         super.handleError(response);
+    }
+
+    /**
+     * 例外が持つ Location ヘッダを取り出す。
+     *
+     * @param e HTTP エラー
+     * @return Location ヘッダ。無い場合は (none)
+     */
+    public static String locationOf(final RestClientResponseException e) {
+        final HttpHeaders headers = e.getResponseHeaders();
+        return sanitizeLocation(headers == null ? null : headers.getFirst(HttpHeaders.LOCATION));
     }
 
     /**
