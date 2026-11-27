@@ -22,12 +22,24 @@ import java.util.concurrent.Executor;
 public class AppConfig {
 
     private static final String EDINET = "edinet";
+    private static final String EDINET_CODE_LIST = "edinet-codelist";
     private static final String SELENIUM = "selenium";
     private static final String JSOUP = "jsoup";
 
     @Bean("restEdinet")
     public RestTemplate restTemplateEdinet(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
+        final RestTemplate restTemplate = new RestTemplateBuilder()
+                .setConnectTimeout(settings.getConnectTimeout())
+                .setReadTimeout(settings.getReadTimeout())
+                .build();
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
+        return restTemplate;
+    }
+
+    @Bean("restEdinetCodeList")
+    public RestTemplate restTemplateEdinetCodeList(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET_CODE_LIST);
         final RestTemplate restTemplate = new RestTemplateBuilder()
                 .setConnectTimeout(settings.getConnectTimeout())
                 .setReadTimeout(settings.getReadTimeout())
@@ -62,6 +74,15 @@ public class AppConfig {
     @Bean("retryEdinet")
     public RetryTemplate retryTemplateEdinet(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
+        return new RetryTemplateBuilder()
+                .maxAttempts(settings.getMaxAttempts())
+                .fixedBackoff(settings.getBackOff().toMillis())
+                .build();
+    }
+
+    @Bean("retryEdinetCodeList")
+    public RetryTemplate retryTemplateEdinetCodeList(final RestClientProperties properties) {
+        final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET_CODE_LIST);
         return new RetryTemplateBuilder()
                 .maxAttempts(settings.getMaxAttempts())
                 .fixedBackoff(settings.getBackOff().toMillis())
