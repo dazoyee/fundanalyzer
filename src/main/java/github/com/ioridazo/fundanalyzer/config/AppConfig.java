@@ -1,5 +1,6 @@
 package github.com.ioridazo.fundanalyzer.config;
 
+import github.com.ioridazo.fundanalyzer.client.edinet.EdinetResponseErrorHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.aop.ObservedAspect;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,11 +12,14 @@ import org.springframework.retry.support.RetryTemplateBuilder;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 @EnableAsync
 @Configuration
@@ -29,8 +33,14 @@ public class AppConfig {
     public RestTemplate restTemplateEdinet(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET);
         final RestTemplate restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(settings.getConnectTimeout())
-                .setReadTimeout(settings.getReadTimeout())
+                .requestFactory((Supplier<ClientHttpRequestFactory>) () -> new OkHttp3ClientHttpRequestFactory(
+                        new okhttp3.OkHttpClient.Builder()
+                                .followRedirects(false)
+                                .followSslRedirects(false)
+                                .connectTimeout(settings.getConnectTimeout())
+                                .readTimeout(settings.getReadTimeout())
+                                .build()))
+                .errorHandler(new EdinetResponseErrorHandler())
                 .build();
         restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
         return restTemplate;
@@ -40,8 +50,14 @@ public class AppConfig {
     public RestTemplate restTemplateEdinetCodeList(final RestClientProperties properties) {
         final RestClientProperties.Settings settings = properties.getRestClient().get(EDINET_CODE_LIST);
         final RestTemplate restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(settings.getConnectTimeout())
-                .setReadTimeout(settings.getReadTimeout())
+                .requestFactory((Supplier<ClientHttpRequestFactory>) () -> new OkHttp3ClientHttpRequestFactory(
+                        new okhttp3.OkHttpClient.Builder()
+                                .followRedirects(false)
+                                .followSslRedirects(false)
+                                .connectTimeout(settings.getConnectTimeout())
+                                .readTimeout(settings.getReadTimeout())
+                                .build()))
+                .errorHandler(new EdinetResponseErrorHandler())
                 .build();
         restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(settings.getBaseUri()));
         return restTemplate;

@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -82,9 +83,12 @@ public class EdinetCodeListClient {
                                         "/searchdocument/codelist/Edinetcode.zip",
                                         HttpMethod.GET,
                                         request -> request.getHeaders().setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
-                                        response -> copyFile(response.getBody(), filePath)
+                                        response -> copyFile(response, filePath)
                                 );
                             } catch (final RestClientResponseException e) {
+                                if (e.getStatusCode().is3xxRedirection()) {
+                                    throw EdinetClient.redirected(e, Category.COMPANY, Process.DOWNLOAD);
+                                }
                                 log.warn(FundanalyzerLogClient.toClientLogObject(
                                         MessageFormat.format("EDINETコードリスト取得でHTTPエラーが返却されました。\tHTTPステータスコード:{0}\tHTTPレスポンスボディ:{1}",
                                                 e.getStatusCode(), e.getResponseBodyAsString()),
@@ -113,7 +117,8 @@ public class EdinetCodeListClient {
         }
     }
 
-    private Object copyFile(final InputStream input, final Path path) throws IOException {
+    private Object copyFile(final ClientHttpResponse response, final Path path) throws IOException {
+        final InputStream input = EdinetZipResponse.requireZip(response, Category.COMPANY);
         Files.copy(input, path, StandardCopyOption.REPLACE_EXISTING);
         return null;
     }
