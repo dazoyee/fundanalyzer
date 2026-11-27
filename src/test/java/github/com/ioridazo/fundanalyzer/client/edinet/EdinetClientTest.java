@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
@@ -28,14 +29,18 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -795,6 +800,91 @@ class EdinetClientTest {
             );
             verify(restTemplate, times(2)).execute(anyString(), any(), any(), any(), anyMap());
             assertEquals(2, circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getMetrics().getNumberOfFailedCalls());
+        }
+    }
+
+    @Nested
+    class redirectAndContent {
+
+        @DisplayName("list : リダイレクトを追わず、クエリを除いた移転先を含めて失敗すること")
+        @Test
+        void list_redirect() {
+            var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
+            for (int i = 0; i < 2; i++) {
+                server.enqueue(new MockResponse().setResponseCode(301)
+                        .setHeader("Location", server.url("/moved/documents.json?Subscription-Key=secret").toString())
+                        .setBody("moved to ?Subscription-Key=secret"));
+            }
+
+            var actual = assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+
+            assertTrue(Objects.requireNonNull(actual.getMessage()).contains("移転先:" + server.url("/moved/documents.json")));
+            assertFalse(actual.getMessage().contains("secret"));
+            assertEquals(2, server.getRequestCount());
+            assertEquals(2, circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getMetrics().getNumberOfFailedCalls());
+        }
+
+        @DisplayName("list : HTMLが返却されたときに失敗すること")
+        @Test
+        void list_html() {
+            var parameter = new ListRequestParameter(LocalDate.parse("2019-04-01"), ListType.DEFAULT);
+            for (int i = 0; i < 2; i++) {
+                server.enqueue(new MockResponse().setResponseCode(200)
+                        .setHeader("Content-Type", "text/html")
+                        .setBody("<html>error</html>"));
+            }
+
+            assertThrows(FundanalyzerRestClientException.class, () -> client.list(parameter));
+            assertEquals(2, circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getMetrics().getNumberOfFailedCalls());
+        }
+
+        @DisplayName("acquisition : リダイレクトを追わずに失敗すること")
+        @Test
+        void acquisition_redirect(@TempDir final Path storagePath) {
+            var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+            for (int i = 0; i < 2; i++) {
+                server.enqueue(new MockResponse().setResponseCode(302)
+                        .setHeader("Location", server.url("/moved?Subscription-Key=secret").toString()));
+            }
+
+            var actual = assertThrows(FundanalyzerRestClientException.class,
+                    () -> client.acquisition(storagePath.toFile(), parameter));
+
+            assertTrue(Objects.requireNonNull(actual.getMessage()).contains("移転先:" + server.url("/moved")));
+            assertFalse(actual.getMessage().contains("secret"));
+            assertEquals(2, server.getRequestCount());
+            assertFalse(Files.exists(storagePath.resolve("docId.zip")));
+        }
+
+        @DisplayName("acquisition : zip以外の応答を保存せずに失敗すること")
+        @Test
+        void acquisition_not_zip(@TempDir final Path storagePath) {
+            var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+            for (int i = 0; i < 2; i++) {
+                server.enqueue(new MockResponse().setResponseCode(200)
+                        .setHeader("Content-Type", "application/octet-stream")
+                        .setBody("<html>error</html>"));
+            }
+
+            var actual = assertThrows(FundanalyzerRestClientException.class,
+                    () -> client.acquisition(storagePath.toFile(), parameter));
+
+            assertTrue(Objects.requireNonNull(actual.getMessage()).contains("zip以外の応答"));
+            assertTrue(actual.getMessage().contains("<html>error</html>"));
+            assertFalse(Files.exists(storagePath.resolve("docId.zip")));
+            assertEquals(2, circuitBreakerRegistry.circuitBreaker(CIRCUIT_BREAKER_EDINET).getMetrics().getNumberOfFailedCalls());
+        }
+
+        @DisplayName("acquisition : zipの応答を保存すること")
+        @Test
+        void acquisition_zip(@TempDir final Path storagePath) throws IOException {
+            var parameter = new AcquisitionRequestParameter("docId", AcquisitionType.DEFAULT);
+            var body = new byte[]{'P', 'K', 3, 4, 1, 2, 3};
+            server.enqueue(new MockResponse().setResponseCode(200).setBody(new okio.Buffer().write(body)));
+
+            assertDoesNotThrow(() -> client.acquisition(storagePath.toFile(), parameter));
+
+            assertArrayEquals(body, Files.readAllBytes(storagePath.resolve("docId.zip")));
         }
     }
 

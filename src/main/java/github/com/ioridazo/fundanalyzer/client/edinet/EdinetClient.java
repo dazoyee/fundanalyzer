@@ -23,6 +23,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -140,6 +141,10 @@ public class EdinetClient {
                                                     )
                                             );
                                         } catch (final RestClientResponseException e) {
+                                            if (e.getStatusCode().is3xxRedirection()) {
+                                                throw redirected(e, Category.DOCUMENT, Process.EDINET);
+                                            }
+
                                             log.warn(FundanalyzerLogClient.toClientLogObject(
                                                     MessageFormat.format(
                                                             "EDINETから200以外のHTTPステータスコードが返却されました。" +
@@ -168,6 +173,17 @@ public class EdinetClient {
                                             throw new FundanalyzerCircuitBreakerRecordException(
                                                     "IO系のエラーにより、HTTP通信に失敗しました。スタックトレースを参考に原因を特定してください。", e);
                                         } catch (final UnknownContentTypeException e) {
+                                            log.warn(FundanalyzerLogClient.toClientLogObject(
+                                                    MessageFormat.format(
+                                                            "EDINETから想定外の形式の応答が返却されました。" +
+                                                            "\tHTTPステータスコード:{0}\tContent-Type:{1}\tHTTPレスポンスボディ（先頭）:{2}",
+                                                            e.getStatusCode().value(),
+                                                            e.getContentType(),
+                                                            EdinetZipResponse.toHeadText(e.getResponseBodyAsString())
+                                                    ),
+                                                    Category.DOCUMENT,
+                                                    Process.EDINET
+                                            ));
                                             throw new FundanalyzerCircuitBreakerRecordException(
                                                     "HttpMessageConverter応答を抽出するのに適したものが見つかりませんでした。" +
                                                     "外部機関のサービス稼働状況を確認してください。※システムメンテナンスの疑いあり", e
@@ -259,7 +275,7 @@ public class EdinetClient {
                                                     request -> request
                                                             .getHeaders()
                                                             .setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL)),
-                                                    response -> copyFile(response.getBody(), Paths.get(storagePath + "/" + parameter.docId() + ".zip")),
+                                                    response -> copyFile(response, Paths.get(storagePath + "/" + parameter.docId() + ".zip")),
                                                     Map.of(
                                                             "docId", parameter.docId(),
                                                             "type", parameter.type().toValue(),
@@ -267,6 +283,10 @@ public class EdinetClient {
                                                     )
                                             );
                                         } catch (final RestClientResponseException e) {
+                                            if (e.getStatusCode().is3xxRedirection()) {
+                                                throw redirected(e, Category.DOCUMENT, Process.DOWNLOAD);
+                                            }
+
                                             if (HttpStatusCode.valueOf(403) == e.getStatusCode()) {
                                                 log.info(FundanalyzerLogClient.toClientLogObject(
                                                         MessageFormat.format(
@@ -351,15 +371,36 @@ public class EdinetClient {
     }
 
     /**
-     * ダウンロードしたファイルを保存する
+     * リダイレクト応答をログに出力し、サーキットブレーカーの失敗として扱う例外にする
      *
-     * @param file ダウンロードしたファイル
-     * @param path 保存先
+     * @param e        リダイレクト応答
+     * @param category ログのカテゴリ
+     * @param process  ログの処理
+     * @return サーキットブレーカーの失敗として扱う例外
+     */
+    static FundanalyzerCircuitBreakerRecordException redirected(
+            final RestClientResponseException e, final Category category, final Process process) {
+        final String message = MessageFormat.format(
+                "EDINETからリダイレクトが返却されました。接続先が移転した可能性があるため、base-uri を確認してください。"
+                + "\tHTTPステータスコード:{0}\t移転先:{1}",
+                e.getStatusCode().value(),
+                EdinetResponseErrorHandler.locationOf(e)
+        );
+        log.warn(FundanalyzerLogClient.toClientLogObject(message, category, process));
+        return new FundanalyzerCircuitBreakerRecordException(message, e);
+    }
+
+    /**
+     * ダウンロードしたファイルが zip であることを確かめて保存する
+     *
+     * @param response HTTP レスポンス
+     * @param path     保存先
      * @return null
      * @throws IOException エラー発生時
      */
     @SuppressWarnings("SameReturnValue")
-    Object copyFile(final InputStream file, final Path path) throws IOException {
+    Object copyFile(final ClientHttpResponse response, final Path path) throws IOException {
+        final InputStream file = EdinetZipResponse.requireZip(response, Category.DOCUMENT);
         try {
             Files.copy(file, path);
         } catch (final FileAlreadyExistsException e) {
